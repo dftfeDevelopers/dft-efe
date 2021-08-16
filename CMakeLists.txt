@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.17)
-project(dft-efe)
+project(dft-efe VERSION 0.1)
+
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(MPI REQUIRED)
 
 if (MPI_FOUND)
