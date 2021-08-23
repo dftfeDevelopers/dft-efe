@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(MPI REQUIRED)
 
+find_package(BLAS REQUIRED)
+
+message( STATUS BLAS found: ${BLAS_LIBRARIES} )
+
 include_directories(${MPI_CXX_INCLUDE_PATH})
 set(MPI_LIBS ${MPI_CXX_LIBRARIES})
 
