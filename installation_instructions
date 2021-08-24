@@ -1,0 +1,20 @@
+
+module list
+
+ouput should be 
+
+ 1) cmake/3.17.3   3) cuda/11.2.1    5) mkl/2018.0.4
+  2) gcc/8.2.0      4) openmpi/4.0.6
+
+install sphinx, sphinx-rtd-theme and breathe using pip
+
+mkdir build 
+cmake .. -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DDFT_EFE_BLAS_DIR=$MKLROOT -DDFT_EFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl" -DBUILD_DOCS=ON -DCMAKE_PREFIX_PATH=$Sphinx_DIR
+
+make
+
+see generated sphinx doc at "build/docs/sphinx/index.html" 
+
+mpirun --oversubscribe -n 4 dft-efe
+
+
