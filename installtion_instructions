@@ -3,8 +3,8 @@ module list
 
 ouput should be 
 
- 1) cmake/3.17.3   3) cuda/10.1.243   5) mkl/2018.0.4
-  2) gcc/8.2.0      4) openmpi/3.1.4
+ 1) cmake/3.17.3   3) cuda/11.2.1    5) mkl/2018.0.4
+  2) gcc/8.2.0      4) openmpi/4.0.6
 
 
 mkdir build 
