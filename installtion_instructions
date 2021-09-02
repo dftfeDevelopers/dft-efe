@@ -8,10 +8,12 @@ ouput should be
 
 
 mkdir build 
-cmake .. -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DDFT_EFE_BLAS_DIR=$MKLROOT -DDFT_EFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"
+cmake .. -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DDFT_EFE_BLAS_DIR=$MKLROOT -DDFT_EFE_SCALAPACK_DIR=$MKLROOT -DDFT_EFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  -DDFT_EFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_openmpi_lp64 -lgomp5 -lpthread -lm -ldl"
 
 make
 
 mpirun --oversubscribe -n 4 dft-efe
 
+
+ 
 
