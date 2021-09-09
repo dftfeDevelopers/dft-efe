@@ -1,3 +1,12 @@
+
+//
+// deal.II header
+//
+#include <deal.II/base/data_out_base.h>
+
+//
+//
+//
 #include <mpi.h>
 #include <stdio.h>
 
@@ -18,8 +27,9 @@
 }
 
 int main(int argc, char** argv) {
-    // Initialize the MPI environment
-    MPI_Init(NULL, NULL);
+    // Initialize the MPI environment via dealii, as dealii internally takes care
+    // of p4est MPI intialization
+    dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv);
 
     // Get the number of processes
     int world_size;
@@ -37,8 +47,5 @@ int main(int argc, char** argv) {
     // Print off a hello world message
     printf("Hello world from processor %s, rank %d out of %d processors\n",
            processor_name, world_rank, world_size);
-
-    // Finalize the MPI environment.
-    MPI_Finalize();
 }
 
