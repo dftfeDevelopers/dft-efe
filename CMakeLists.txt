@@ -23,6 +23,8 @@ ENDIF()
 
 message (" DFT_EFE_BLAS_DIR = ${DFT_EFE_BLAS_DIR}")
 message (" DFT_EFE_BLAS_LIBRARIES = ${DFT_EFE_BLAS_LIBRARIES}")
+message (" DFT_EFE_SCALAPACK_LIBRARIES = ${DFT_EFE_SCALAPACK_LIBRARIES}")
+message (" DFT_EFE_SCALAPACK_DIR = ${DFT_EFE_SCALAPACK_DIR}")
 
 if (NOT EXISTS ${DFT_EFE_BLAS_DIR})
 	message (FATAL_ERROR  "DFT_EFE_Blas directory not specified. Please specify -DDFT_EFE_BLAS_DIR in command line")
@@ -32,11 +34,18 @@ if ("${DFT_EFE_BLAS_LIBRARIES}" STREQUAL "")
 	message (FATAL_ERROR  "DFT_EFE_BLAS libraries not specified. Please specify -DDFT_EFE_BLAS_LIBRARIES in command line")
 endif ()	
 
-link_directories(${DFT_EFE_BLAS_DIR})
+if ("${DFT_EFE_SCALAPACK_DIR}" STREQUAL "")
+	message (FATAL_ERROR  "DFT_EFE_SCALAPACK directory not specified. Please specify -DDFT_EFE_SCALAPACK_DIR in command line")
+endif ()
+
+if ("${DFT_EFE_SCALAPACK_LIBRARIES}" STREQUAL "")
+	message (FATAL_ERROR  "DFT_EFE_SCALAPACK libraries not specified. Please specify -DDFT_EFE_SCALAPACK_LIBRARIES in command line")
+endif ()
+
+link_directories(${DFT_EFE_BLAS_DIR} ${DFT_EFE_SCALAPACK_DIR})
 
 
-set(DFT_EFE_LIBRARIES ${DFT_EFE_MPI_LIBRARIES} ${DFT_EFE_BLAS_LIBRARIES})
-
+set(DFT_EFE_LIBRARIES ${DFT_EFE_MPI_LIBRARIES} ${DFT_EFE_BLAS_LIBRARIES} ${DFT_EFE_SCALAPACK_LIBRARIES})
 target_link_libraries(dft-efe ${DFT_EFE_LIBRARIES})		
 
 # Build documentation
