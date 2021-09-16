@@ -12,9 +12,9 @@ class MakefileTest(rfm.RegressionTest):
     descr = 'Test demonstrating use of CMake'
     valid_systems = ['*']
     valid_prog_environs = ['gnu']
-    executable = './untitled1'
+    executable = './test'
     build_system = 'CMake'
-    builddir ='/home/bikash/softwares/reframe/tutorials/build_systems/cmake/build'
+    builddir ='./build'
 
     @run_before('compile')
     def set_compiler_flags(self):
@@ -23,7 +23,7 @@ class MakefileTest(rfm.RegressionTest):
     @run_before('sanity')
     def set_sanity_patterns(self):
         self.sanity_patterns = sn.assert_found(
-            r'7', self.stdout
+            r'5 5 5 5 5', self.stdout
         )
 
 
@@ -33,7 +33,7 @@ class MakeOnlyTest(rfm.CompileOnlyRegressionTest):
     valid_systems = ['*']
     valid_prog_environs = ['gnu']
     build_system = 'CMake'
-    builddir ='/home/bikash/softwares/reframe/tutorials/build_systems/cmake/build'
+    builddir ='./build'
     #variables = {'DFT_EFE_LINKER': '"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"'}
 
     @run_before('compile')

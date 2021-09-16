@@ -10,8 +10,8 @@ int main() {
   double a = 3.0;
   int incx = 1, incy = 1;
   auto print = [](const int& n) { std::cout << " " << n; };
-  std::for_each(x.begin(), x.end(), print); std::cout << std::endl;
-  std::for_each(y.begin(), y.end(), print); std::cout << std::endl;
+//  std::for_each(x.begin(), x.end(), print); std::cout << std::endl;
+//  std::for_each(y.begin(), y.end(), print); std::cout << std::endl;
   daxpy_(&n, &a, x.data(), &incx, y.data(), &incy);
   std::for_each(y.begin(), y.end(), print); std::cout << std::endl;
   return 0;
