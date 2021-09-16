@@ -19,13 +19,13 @@ this.
 ````
 [ReFrame Setup]  
 version:           3.8.1  
-command:           '/home/iancclin/.local/bin/reframe -C ./config/mysettings.py -c ./test.py -r'  
-launched by:       iancclin@gl-login2.arc-ts.umich.edu  
-working directory: '/home/iancclin/project/DFT-EFE-hackathon/dft-efe/test'  
+command:           'reframe -C ./config/mysettings.py -c ./test.py -r'  
+launched by:       $USER@gl-login2.arc-ts.umich.edu  
+working directory: '$PROJECT_HOME/test'  
 settings file:     './config/mysettings.py'  
-check search path: '/home/iancclin/project/DFT-EFE-hackathon/dft-efe/test/test.py'  
-stage directory:   '/home/iancclin/project/DFT-EFE-hackathon/dft-efe/test/stage'  
-output directory:  '/home/iancclin/project/DFT-EFE-hackathon/dft-efe/test/output'
+check search path: '$PROJECT_HOME/test/test.py'  
+stage directory:   '$PROJECT_HOME/test/stage'  
+output directory:  '$PROJECT_HOME/test/output'
 
 [==========] Running 0 check(s)  
 [==========] Started on Thu Sep 16 16:03:57 2021
@@ -35,6 +35,6 @@ output directory:  '/home/iancclin/project/DFT-EFE-hackathon/dft-efe/test/output
 
 [  PASSED  ] Ran 0/0 test case(s) from 0 check(s) (0 failure(s), 0 skipped)  
 [==========] Finished on Thu Sep 16 16:03:57 2021  
-Run report saved in '/home/iancclin/.reframe/reports/run-report.json'  
+Run report saved in '$HOME/.reframe/reports/run-report.json'  
 Log file(s) saved in '/tmp/rfm-u5fn74m6.log'
 ````
