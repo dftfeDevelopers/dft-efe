@@ -28,19 +28,19 @@ source devHelpers/indentationStandard/indent_common.sh
 # Process all source and header files:
 #
 
-process "tests include src" ".*\.(cpp|hpp|cu|cuh)" format_file
+process "src" ".*\.(h|cpp|hpp|cu|cuh)" format_file
 
 #
 # Removing trailing whitespace
 #
 
-process "tests include src" \
-  ".*\.(cpp|hpp|cu|cuh|html|dox|txt)" remove_trailing_whitespace
+process "src" \
+  ".*\.(h|cpp|hpp|cu|cuh|html|dox|txt)" remove_trailing_whitespace
 
 #
 # Ensure only a single newline at end of files
 #
 
-process "tests include src" \
-  ".*\.(cpp|hpp|cu|cuh|html|dox|txt)" ensure_single_trailing_newline
+process "src" \
+  ".*\.(h|cpp|hpp|cu|cuh|html|dox|txt)" ensure_single_trailing_newline
 
