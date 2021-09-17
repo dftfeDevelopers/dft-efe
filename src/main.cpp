@@ -10,6 +10,9 @@
 #include <mpi.h>
 #include <stdio.h>
 
+#include <MemoryManager.h>
+#include <iostream>
+
  extern "C"
   {
     void
@@ -47,5 +50,8 @@ int main(int argc, char** argv) {
     // Print off a hello world message
     printf("Hello world from processor %s, rank %d out of %d processors\n",
            processor_name, world_rank, world_size);
+
+    double * data  = dftefe::MemoryManager<double, dftefe::MemorySpace::HOST>::allocate(100);
+    std::cout << data[0] << " " << data[99] << std::endl;
 }
 

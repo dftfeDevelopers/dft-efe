@@ -22,7 +22,7 @@ source devHelpers/indentationStandard/indent_common.sh
 # Run sanity checks:
 #
 
-checks
+#checks
 
 #
 # Process all source and header files:

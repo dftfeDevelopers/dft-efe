@@ -48,6 +48,9 @@ link_directories(${DFT_EFE_BLAS_DIR} ${DFT_EFE_SCALAPACK_DIR})
 set(DFT_EFE_LIBRARIES ${DFT_EFE_MPI_LIBRARIES} ${DFT_EFE_BLAS_LIBRARIES} ${DFT_EFE_SCALAPACK_LIBRARIES})
 target_link_libraries(dft-efe ${DFT_EFE_LIBRARIES})		
 
+add_subdirectory(src)
+target_link_libraries(dft-efe utils-lib)
+
 # Build documentation
 option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)
 if(BUILD_DOCS)
