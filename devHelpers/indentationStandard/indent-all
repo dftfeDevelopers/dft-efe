@@ -15,6 +15,8 @@
 ## This file is adapted by Sambit Das for use with dft-efe code
 ## -------------------------------------------------------------------------------------
 
+sh ./devHelpers/indentationStandard/install_clang_format
+
 
 source devHelpers/indentationStandard/indent_common.sh
 
