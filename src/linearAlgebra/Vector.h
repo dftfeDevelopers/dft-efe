@@ -4,30 +4,32 @@
 // FIXME fix relative path
 #include "./../MemorySpace.h"
 
-namespace dftefe {
+namespace dftefe
+{
+  template <typename NumberType, typename MemorySpace>
+  class Vector
+  {
+  public:
+    using size_type = unsigned int;
 
-template <typename NumberType, typename MemorySpace>
-class Vector {
+    Vector() = default;
 
-public:
-  using size_type = unsigned int;
+    Vector(const size_type size, const NumberType initVal = 0);
 
-  Vector() = default;
-
-  Vector(const size_type size, const NumberType initVal = 0);
-
-private:
-  NumberType *d_data;
-};
+  private:
+    NumberType *d_data;
+  };
 
 } // end of namespace dftefe
 
-class Vector {
+class Vector
+{
 public:
   using size_type = unsigned int;
 };
 
-class ParallelVector : public Vector {
+class ParallelVector : public Vector
+{
 public:
   using size_type = unsigned long;
 };
