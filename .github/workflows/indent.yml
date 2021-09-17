@@ -15,4 +15,4 @@ jobs:
         fetch-depth: 100
     - name: indent
       run: |
-        ./contrib/utilities/check_indentation.sh
+        ./devHelpers/indentationStandard/check_indentation.sh
