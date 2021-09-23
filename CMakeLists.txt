@@ -24,17 +24,17 @@ find_package(deal.II 9.3.0 REQUIRED)
 include_directories(${DEAL_II_INCLUDE_DIRS})
 
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  target_link_libraries (dft-efe ${DEAL_II_LIBRARIES_RELEASE})
+  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
 ELSE()
-  target_link_libraries (dft-efe ${DEAL_II_LIBRARIES_DEBUG})
+  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
 ENDIF()
 
 
 
-target_link_libraries(dft-efe ${DFTEFE_MPI_LIBRARIES})		
+target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})		
 
 add_subdirectory(src)
-target_link_libraries(dft-efe dft-efe-utils dft-efe-linalg)
+target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
 
 # Build documentation
 option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)

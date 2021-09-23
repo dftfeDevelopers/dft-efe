@@ -24,7 +24,7 @@ target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 IF (ENABLE_CUDA)
    find_package(CUDAToolkit REQUIRED)
-   target_link_libraries(dft-efe-linalg CUDA::cudart CUDA::cublas)
+   target_link_libraries(dft-efe-linalg PRIVATE CUDA::cudart CUDA::cublas)
 ENDIF()
 
-target_link_libraries(dft-efe-linalg dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
+target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})

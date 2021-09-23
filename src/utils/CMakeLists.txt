@@ -10,5 +10,4 @@ ENDIF()
 add_library(dft-efe-utils   ${DFT-EFE-UTILS-SOURCES} )
 target_include_directories(dft-efe-utils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-
-target_link_libraries(dft-efe-utils ${DFTEFE_LIBRARIES})
+target_link_libraries(dft-efe-utils PRIVATE ${DFTEFE_MPI_LIBRARIES})
