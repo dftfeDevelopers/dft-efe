@@ -9,7 +9,8 @@ ouput should be
 install sphinx, sphinx-rtd-theme and breathe using pip
 
 mkdir build 
-cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DDFT_EFE_BLAS_DIR=$MKLROOT -DDFT_EFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl" -DDFT_EFE_SCALAPACK_DIR=$MKLROOT  -DDFT_EFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" -DBUILD_DOCS=OFF -DCMAKE_PREFIX_PATH="/home/dsambit/.local/bin;/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_real_cpu"
+
+cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx  -DDFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  -DDFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" -DBUILD_DOCS=OFF -DCMAKE_PREFIX_PATH="/home/dsambit/.local/bin;/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_real_cpu" -DENABLE_CUDA=ON -DCMAKE_CUDA_FLAGS="-arch=sm_70"
 
 make
 

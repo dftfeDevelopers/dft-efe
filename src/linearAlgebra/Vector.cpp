@@ -2,4 +2,8 @@
 
 
 namespace dftefe
-{}
+{
+  template class Vector<double, MemorySpace::HOST>;
+
+
+}

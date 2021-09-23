@@ -7,26 +7,27 @@
 //
 //
 //
-#include <MemoryManager.h>
 #include <iostream>
 #include <mpi.h>
 #include <stdio.h>
 
-extern "C"
-{
-  void
-  dgemv_(const char *        TRANS,
-         const unsigned int *M,
-         const unsigned int *N,
-         const double *      alpha,
-         const double *      A,
-         const unsigned int *LDA,
-         const double *      X,
-         const unsigned int *INCX,
-         const double *      beta,
-         double *            C,
-         const unsigned int *INCY);
-}
+#include <Vector.h>
+
+// extern "C"
+//{
+//  void
+//  dgemv_(const char *        TRANS,
+//         const unsigned int *M,
+//         const unsigned int *N,
+//         const double *      alpha,
+//         const double *      A,
+//         const unsigned int *LDA,
+//         const double *      X,
+//         const unsigned int *INCX,
+//         const double *      beta,
+//         double *            C,
+//         const unsigned int *INCY);
+//}
 
 int
 main(int argc, char **argv)
@@ -54,7 +55,7 @@ main(int argc, char **argv)
          world_rank,
          world_size);
 
-  double *data =
-    dftefe::MemoryManager<double, dftefe::MemorySpace::HOST>::allocate(100);
-  std::cout << data[0] << " " << data[99] << std::endl;
+
+  dftefe::Vector<double, dftefe::MemorySpace::HOST> v1;
+  v1.testDgemv();
 }
