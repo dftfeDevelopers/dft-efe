@@ -3,6 +3,7 @@ import reframe.utility.sanity as sn
 #import CompareUtil as cu
 import re
 import numpy as np
+cu = rfm.utility.import_module_from_file("CompareUtil.py")
 """
 Types of tags
 --------------
@@ -183,15 +184,11 @@ class RunTestWithExternalInput(rfm.RegressionTest):
         msg = 'Failed for some reason'
         bmfilename = "benchmark_test1"
         outfilename = "out_test1"
-        bmParser = Parser(bmfilename)
-        outParser = Parser(outfilename)
+        bmParser = cu.Parser(bmfilename)
+        outParser = cu.Parser(outfilename)
         bmVal = bmParser.extractKeyValue("Values")
         outVal = outParser.extractKeyValue("Values")
-        of = open("out_rfm", "w")
-        print("Benchmark: ", bmVal, file = of)
-        print("Output: ", outVal, file = of)
-        of.close()
-        hasTestPassed, msg = Compare().cmp(bmVal, outVal)
+        hasTestPassed, msg = cu.Compare().cmp(bmVal, outVal)
         return sn.assert_true(hasTestPassed, msg=msg)
 
 
