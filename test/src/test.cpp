@@ -15,9 +15,10 @@ int main() {
 //  std::for_each(y.begin(), y.end(), print); std::cout << std::endl;
   std::ofstream out;
   out.open("out_test1");
+  out << "Values:";
   auto print = [&out](const int& n) { out << " " << n; };
   daxpy_(&n, &a, x.data(), &incx, y.data(), &incy);
   std::for_each(y.begin(), y.end(), print); 
-  out.close()
+  out.close();
   return 0;
 }
