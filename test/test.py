@@ -1,5 +1,6 @@
 import reframe as rfm
 import reframe.utility.sanity as sn
+from reframe.utility.sanity import evaluate
 #import CompareUtil as cu
 parser = rfm.utility.import_module_from_file("Parser.py")
 cu = rfm.utility.import_module_from_file("CompareUtil.py")
@@ -18,7 +19,7 @@ gpu: Tests to be run on gpu only
 
 @rfm.simple_test
 class MakeOnlyTest(rfm.CompileOnlyRegressionTest):
-    descr = 'Test demonstrating use of CMake'
+    descr = 'Compile one test using CMake'
     valid_systems = ['*']
     valid_prog_environs = ['*']
     build_system = 'CMake'
@@ -49,14 +50,32 @@ class MakeOnlyTest(rfm.CompileOnlyRegressionTest):
         # same configuration through CMake
 
 
-    @run_before('sanity')
+    @sanity_function
     def set_sanity_patterns(self):
-        self.sanity_patterns = sn.assert_not_found(r'warning/i', self.stdout)
+        hasWarning = True
+        hasError = True
+        msgWarning = ""
+        msgError = ""
+        matches = evaluate(sn.findall(r'warning/i', evaluate(self.stdout)))
+        if len(matches) == 0:
+            hasWarning = False
+            msgWarning = "Found warning(s) while compiling."
+
+        matches = evaluate(sn.findall(r'error/i', evaluate(self.stdout)))
+        if len(matches) == 0:
+            hasError = False
+            msgError = "Found error(s) while compiling."
+        
+        hasTestPassed = not hasWarning and not hasError
+        msg = msgWarning + msgError
+        return sn.assert_true(hasTestPassed, msg=msg)
+
+
 
 
 @rfm.simple_test
-class NoExternalInputTest(rfm.RegressionTest):
-    descr = 'Test demonstrating a Regression Test using CMake'
+class FileOutTest(rfm.RegressionTest):
+    descr = 'Regression Test using CMake and output to a file'
     valid_systems = ['*']
     valid_prog_environs = ['gnu']
     build_system = 'CMake'
@@ -109,11 +128,18 @@ class NoExternalInputTest(rfm.RegressionTest):
         # reframe.utility.sanity.assert_true(hasTestPassed, msg) function
         hasTestPassed = True
         msg = 'Failed for some reason'
+        bmfilename = "benchmark_test1"
+        outfilename = "out_test1"
+        bmParser = parser.Parser.fromFilename(bmfilename)
+        outParser = parser.Parser.fromFilename(outfilename)
+        bmVal = bmParser.extractKeyValues("Values")
+        outVal = outParser.extractKeyValues("Values")
+        hasTestPassed, msg = cu.Compare().cmp(bmVal[0], outVal[0])
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class ExternalInputTest(rfm.RegressionTest):
-    descr = 'Test demonstrating a Regression Test using CMake'
+class StdOutTest(rfm.RegressionTest):
+    descr = 'Regression Test using CMake and stdout'
     valid_systems = ['*']
     valid_prog_environs = ['gnu']
     build_system = 'CMake'
@@ -171,9 +197,8 @@ class ExternalInputTest(rfm.RegressionTest):
         hasTestPassed = True
         msg = 'Failed for some reason'
         bmfilename = "benchmark_test1"
-        outfilename = "out_test1"
-        bmParser = parser.Parser(bmfilename)
-        outParser = parser.Parser(outfilename)
+        bmParser = parser.Parser.fromFilename(bmfilename)
+        outParser = parser.Parser.fromFilename(evaluate(self.stdout))
         bmVal = bmParser.extractKeyValues("Values")
         outVal = outParser.extractKeyValues("Values")
         hasTestPassed, msg = cu.Compare().cmp(bmVal[0], outVal[0])

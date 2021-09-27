@@ -10,11 +10,20 @@ class Parser():
     @brief Constructor
     @param filename Name of the file to parse
     '''
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, data):
+        self.data = data 
+
+    @classmethod
+    def fromFilename(cls, filename):
         f = open(filename, "r")
-        self.data = f.read()
+        data = f.read()
         f.close()
+        return cls(data)
+
+    @classmethod
+    def fromString(cls, dataString):
+        return cls(dataString)
+
 
     def __checkbool__(self, x):
         if(x.lower()=='true' or x.lower()=='yes'):
@@ -22,9 +31,9 @@ class Parser():
         elif(x.lower()=='false' or x.lower()=='no'):
             return False
         else:
-            raise ValueError("Invalid string passed. Valid string include case insensitive \
-                             forms of either of the following: 'True', 'False', 'Yes', 'No'. \
-                             String passed is {}".format(x))
+            raise ValueError('''Invalid string passed. Valid string include case insensitive
+                             forms of either of the following: 'True', 'False', 'Yes', 'No'.
+                             String passed is {}'''.format(x))
 
     def __getRegex__(self, dtype):
         if(dtype=='int'):
@@ -48,15 +57,15 @@ class Parser():
         elif(dtype=='complex'):
             return complex
         else:
-            raise ValueError("Invalied string for dtype passed. Valid strings \
-                             are: 'int', 'float', 'complex', 'bool'. dtype \
-                             string passed is {}".format(dtype))
+            raise ValueError('''Invalied string for dtype passed. Valid strings
+                             are: 'int', 'float', 'complex', 'bool'. dtype
+                             string passed is {}'''.format(dtype))
 
     def __checkValidDType__(self, dtype):
         if dtype not in ['int', 'float', 'bool', 'complex']:
-            raise ValueError("Invalied string for dtype passed. Valid strings \
-                             are: 'int', 'float', 'complex', 'bool'. dtype \
-                             string passed is {}".format(dtype))
+            raise ValueError('''Invalied string for dtype passed. Valid strings
+                             are: 'int', 'float', 'complex', 'bool'. dtype
+                             string passed is {}'''.format(dtype))
 
     def __splitValues__(self, string, dtype, dtypeRegex):
         if dtypeRegex is None:
@@ -118,6 +127,12 @@ class Parser():
         pattern = re.compile(patternToSearch)
         values = []
         matches = pattern.finditer(self.data)
+        numMatches = len(pattern.findall(self.data))
+        #numMatches = sum (1 for _ in matches)
+        if numMatches==0:
+            msg = '''No match for key='{}' and the given patternToCapture='{}'
+                   found.'''.format(key,patternToCapture)
+            raise ValueError(msg)
         for match in matches:
             #NOTE: The way patternToSearch is defined,
             # groupId 0 is the whole string
@@ -125,6 +140,11 @@ class Parser():
             # groupId 2 is the `patternToCapture` match
             valueString = match.group(groupId+2) 
             splitValues = self.__splitValues__(valueString, dtype, dtypePattern)
+            if len(splitValues)==0:
+                msg = '''No matching {} value found in
+                      string='{}' '''.format(dtype, valueString)
+                raise ValueError(msg) 
+
             values.append([converter(x) for x in splitValues])
-        
+
         return values

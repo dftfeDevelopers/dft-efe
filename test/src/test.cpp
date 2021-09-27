@@ -16,9 +16,12 @@ int main() {
   std::ofstream out;
   out.open("out_test1");
   out << "Values:";
-  auto print = [&out](const int& n) { out << " " << n; };
+  auto printFile = [&out](const int& n) { out << " " << n; };
+  std::cout << "Values:";
+  auto printStd = [](const int& n) { std::cout << " " << n; };
   daxpy_(&n, &a, x.data(), &incx, y.data(), &incy);
-  std::for_each(y.begin(), y.end(), print); 
+  std::for_each(y.begin(), y.end(), printStd); 
+  std::for_each(y.begin(), y.end(), printFile); 
   out.close();
   return 0;
 }
