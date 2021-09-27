@@ -59,11 +59,9 @@ class Parser():
                              string passed is {}".format(dtype))
 
     def __splitValues__(self, string, dtype, dtypeRegex):
-        print(dtype)
         if dtypeRegex is None:
             dtypeRegex = self.__getRegex__(dtype)
 
-        print(dtypeRegex)
         pattern = re.compile(dtypeRegex)
         matches = pattern.finditer(string)
         values = [] 
