@@ -23,7 +23,7 @@ https://reframe-hpc.readthedocs.io/en/stable/
   ```
 
 
-## ReFrame Basics
+## ReFrame Regression Test Basics
 Although ReFrame provides many features, we will be using a limited number of features. Each test must be a python class. Typically, a test class should be
 split into three parts: 
 + A constructor part which sets the important attributes (source dir, build system type, etc)
@@ -156,7 +156,6 @@ The above loads the Parser.py and CompareUtil.py from the directory containing t
 
 ### Resource allocation part
 
-
 # Test Utils
 In order to help in parsing the output of a test and comparing it against some benchmark values, we have provided two util files:
 + Parser.py
@@ -203,9 +202,7 @@ _Default_: "L2"
 + `return` Returns a pair `areComparable, msg` where `areComparable` is True when val1 and val2 are deemed the same (based on the `tol`, `cmpType`, and `normType` provided) and `msg` is a message that contains useful info when the two lists are not comparable
 
 
-
-
-
-
-
-
+__TO DO <Ian>__
++ Add config instructions for ReFrame
++ CMake with multiple targets
++ Test Parser.py and CompareUtil.py
