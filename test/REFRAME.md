@@ -25,7 +25,7 @@ https://reframe-hpc.readthedocs.io/en/stable/
 
 ## ReFrame Regression Test Basics
 Although ReFrame provides many features, we will be using a limited number of features. Each test must be a python class. Typically, a test class should be
-split into three parts: 
+split into four parts: 
 + A constructor part which sets the important attributes (source dir, build system type, etc)
 + A compiler flag setter to set any compilation flag or environment   
 + A test validation part which decides whether the test passed or failed and define a message to display if the test fails
@@ -204,5 +204,6 @@ _Default_: "L2"
 
 __TO DO <Ian>__
 + Add config instructions for ReFrame
++ Added Resources instructions for ReFrame 
 + CMake with multiple targets
 + Test Parser.py and CompareUtil.py
