@@ -1,7 +1,7 @@
 import Parser as parser
 
 filename = "testParser.txt"
-p = parser.Parser(filename)
+p = parser.Parser.fromFilename(filename)
 key = "Val"
 values = p.extractKeyValues(key)
 print(key, values)

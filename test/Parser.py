@@ -10,7 +10,11 @@ class Parser():
     @brief Constructor
     @param filename Name of the file to parse
     '''
-    def __init__(self, data):
+    def __init__(self, data, _is_direct_ = True):
+        if _is_direct_:
+            msg = '''__init__ of Parser cannot be called directly, use either
+            fromFilename(filename) or fromString(dataString) methods'''
+            raise ValueError(msg) 
         self.data = data 
 
     @classmethod
@@ -18,11 +22,11 @@ class Parser():
         f = open(filename, "r")
         data = f.read()
         f.close()
-        return cls(data)
+        return cls(data, _is_direct_=False)
 
     @classmethod
     def fromString(cls, dataString):
-        return cls(dataString)
+        return cls(dataString, _is_direct_=False)
 
 
     def __checkbool__(self, x):
@@ -121,28 +125,29 @@ class Parser():
         of `key` in the file and the inner list contains the list of `dtype`
         values extracted from a given occurence of `key`
         '''
-        self.__checkValidDType__(dtype)
-        converter = self.__dtypeConverter__(dtype)
-        patternToSearch = "(" + key + ")" + "(" + patternToCapture + ")"
+        dtypeLower = dtype.lower()
+        self.__checkValidDType__(dtypeLower)
+        converter = self.__dtypeConverter__(dtypeLower)
+        patternToSearch = r"(" + key + r")" + r"(" + patternToCapture + r")"
         pattern = re.compile(patternToSearch)
         values = []
         matches = pattern.finditer(self.data)
         numMatches = len(pattern.findall(self.data))
         #numMatches = sum (1 for _ in matches)
-        if numMatches==0:
-            msg = '''No match for key='{}' and the given patternToCapture='{}'
-                   found.'''.format(key,patternToCapture)
-            raise ValueError(msg)
+        #if numMatches==0:
+        #    msg = '''No match for key='{}' and the given patternToCapture='{}'
+        #           found.'''.format(key,patternToCapture)
+        #    raise ValueError(msg)
         for match in matches:
             #NOTE: The way patternToSearch is defined,
             # groupId 0 is the whole string
             # groupId 1 is the `key` match itself
             # groupId 2 is the `patternToCapture` match
-            valueString = match.group(groupId+2) 
-            splitValues = self.__splitValues__(valueString, dtype, dtypePattern)
+            valueString = match.group(groupId+2)
+            splitValues = self.__splitValues__(valueString, dtypeLower, dtypePattern)
             if len(splitValues)==0:
                 msg = '''No matching {} value found in
-                      string='{}' '''.format(dtype, valueString)
+                      string='{}' '''.format(dtypeLower, valueString)
                 raise ValueError(msg) 
 
             values.append([converter(x) for x in splitValues])
