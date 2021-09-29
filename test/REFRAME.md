@@ -121,7 +121,7 @@ Some useful attributes and an example is provided for reference.
 [back to top](#contents)
 
 ### logging <a name="logging"></a>
-We suggest using the default setting in `./config/mysettings`.py.
+We suggest using the default setting in `./config/mysettings.py`.
 
 [back to top](#contents)
 
