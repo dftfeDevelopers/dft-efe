@@ -119,7 +119,7 @@ of the generated header for the above example is
     #SBATCH --time=48:00:00
     ```
 It is possible to replace `#SBATCH` for specific lines. Refer to [extra_resources](https://reframe-hpc.readthedocs.io/en/stable/regression_test_api.html?highlight=extra_resource#reframe.core.pipeline.RegressionTest.extra_resources)
-page on ReFrame website. Please also refer to [here](https://reframe-hpc.readthedocs.io/en/stable/regression_test_api.html?highlight=extra_resource#mapping-of-test-attributes-to-job-scheduler-backendsfor) the scheduler specific attribute mapping.
+page on ReFrame website. Please also refer to [here](https://reframe-hpc.readthedocs.io/en/stable/regression_test_api.html?highlight=extra_resource#mapping-of-test-attributes-to-job-scheduler-backends) the scheduler specific attribute mapping.
 
 [back to top](#contents)
 
