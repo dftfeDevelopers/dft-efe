@@ -3,7 +3,17 @@
 ## ReFrame Guide
 https://reframe-hpc.readthedocs.io/en/stable/
 
-## Installation
+## Table of contents <a name="contents"></a>
++ [Installation](#installation)
++ [ReFrame Regression Test Basics](#reframeregression)
+  + [Constructor part](#constructor)
+  + [Compiler setting part](#compiler)
+  + [Test Validation part](#testvalidation)
+  + [Resource allocation part](#resourceallocation)
+
+[Test Utils](#testutils)
+
+## Installation <a name="installation"></a> 
 + Download ReFrame to a directory (preferably put it in dftefe/test directory)
   ```shell
   cd dftefe/test
@@ -21,16 +31,19 @@ https://reframe-hpc.readthedocs.io/en/stable/
   ```shell
   ./bin/reframe -V
   ```
+[back to top](#contents)
 
-
-## ReFrame Regression Test Basics
+## ReFrame Regression Test Basics <a name="reframeregression"></a>
 Although ReFrame provides many features, we will be using a limited number of features. Each test must be a python class. Typically, a test class should be
 split into four parts: 
 + A constructor part which sets the important attributes (source dir, build system type, etc)
 + A compiler flag setter to set any compilation flag or environment   
 + A test validation part which decides whether the test passed or failed and define a message to display if the test fails
 + An optional resource allocation part (useful when running in parallel or requesting access via a queueing system)
-### Constructor part
+
+[back to top](#contents)
+
+### Constructor part <a name="constructor"></a>
 The following are the usual attributes that one requires to set in each test class. The ones marked as __required__ 
 are the mandatory ones that must be specified for each test class.
 + `valid_systems` list of 'system:partition' on which to run the test (__required__)  
@@ -96,7 +109,10 @@ of the generated header for the above example is
     ```
 It is possible to replace `#SBATCH` for specific lines. Refer to [extra_resources](https://reframe-hpc.readthedocs.io/en/stable/regression_test_api.html?highlight=extra_resource#reframe.core.pipeline.RegressionTest.extra_resources)
 page on ReFrame website.
-### Compiler setting part 
+
+[back to top](#contents)
+
+### Compiler setting part  <a name="compiler"></a>
 For each test, one might need to set certain compilation and environment flags. We do this within the following member function
   ```python
   @run_before('compile')
@@ -144,7 +160,9 @@ should run prior to any compilation. The following are commonly used attributes 
 	+ `current_environ.cppflags` list of string containing preprocessor flags
 	+ `current_environ.ldflags` list of string containing linker flags
 
-### Test Validation part
+[back to top](#contents)
+
+### Test Validation part <a name="testvalidation"></a>
 For each test, one must define a function that determines whether the test passed or not and provide
 a custom message that should be displayed when the test fails. For the sake of standardization, we do this within the 
 following member function
@@ -165,14 +183,20 @@ __NOTE__: In order to help in parsing an output from test and comparing it with 
   ```
 The above loads the Parser.py and CompareUtil.py from the directory containing the test.py and aliases them to ```parser``` and ```cu```, respectively. 
 
-### Resource allocation part
+[back to top](#contents)
 
-# Test Utils
+### Resource allocation part <a name="resourceallocation"></a>
+
+[back to top](#contents)
+
+# Test Utils <a name="testutils"></a>
 In order to help in parsing the output of a test and comparing it against some benchmark values, we have provided two util files:
-+ Parser.py
-+ CompareUtil.py
++ [Parser.py](#parser)
++ [CompareUtil.py](#compareutil)
 
-## Parser.py
+[back to top](#contents)
+
+## Parser.py <a name="parser"></a>
 It is a simple parser class to match a given string in a file and return the associated values. One can create an object in the following two ways:
 + ```parserObj = Parser.fromFilename(filename)```, where it takes a filename and parses the content of the file
 + ```parserObj = Parser.fromString(stringData)```, where it takes a string and parses the string
@@ -194,7 +218,9 @@ _Default_: 0 (i.e., uses the entire string matched after the `key`)
 _Default_: None (i.e., we use in-built regular expressions based on the `dtype`). This should work for most cases while dealing with int, float, complex, and bool datatypes.
 + `return` list of list where the outer list is the index of the occurence of `key` in the file and the inner list contains the list of `dtype` values extracted from a given occurence of `key`
 
-## CompareUtil.py
+[back to top](#contents)
+
+## CompareUtil.py <a name="compareutil"></a>
 __Requires__ ```numpy``` in the python environment.
 The CompareUtil.py provides the ```Compare``` class that takes in two list of values and performs various comparison on them. It relies on numpy to perform some of the comparison. The most useful aspect of this class is the ```cmp``` member function
 ```python
@@ -211,6 +237,7 @@ _Default_: 'absolute'
 _Default_: "L2"
 + `return` Returns a pair `areComparable, msg` where `areComparable` is True when val1 and val2 are deemed the same (based on the `tol`, `cmpType`, and `normType` provided) and `msg` is a message that contains useful info when the two lists are not comparable
 
+[back to top](#contents)
 
 __TO DO <Ian>__
 + Add config instructions for ReFrame
