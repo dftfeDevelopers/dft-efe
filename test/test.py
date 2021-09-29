@@ -54,17 +54,16 @@ class MakeOnlyTest(rfm.CompileOnlyRegressionTest):
     def set_sanity_patterns(self):
         hasWarning = True
         hasError = True
-        msgWarning = ""
-        msgError = ""
+        msgWarning = "Found warning(s) while compiling."
+        msgError = "Found error(s) while compiling."
         matches = evaluate(sn.findall(r'warning/i', evaluate(self.stdout)))
         if len(matches) == 0:
             hasWarning = False
-            msgWarning = "Found warning(s) while compiling."
 
-        matches = evaluate(sn.findall(r'error/i', evaluate(self.stdout)))
-        if len(matches) == 0:
+        matchesOut = evaluate(sn.findall(r'error/i', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'error/i', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
-            msgError = "Found error(s) while compiling."
         
         hasTestPassed = not hasWarning and not hasError
         msg = msgWarning + msgError
@@ -79,7 +78,7 @@ class FileOutTest(rfm.RegressionTest):
     valid_systems = ['*']
     valid_prog_environs = ['gnu']
     build_system = 'CMake'
-    make_opts = ['all']
+    make_opts = ['test1']
     #NOTE: Need to specify the name of the executable, as
     # ReFrame has no way of knowing that while building from CMake
     executable = './test1'
@@ -143,10 +142,10 @@ class StdOutTest(rfm.RegressionTest):
     valid_systems = ['*']
     valid_prog_environs = ['gnu']
     build_system = 'CMake'
-    make_opts = ['all']
+    make_opts = ['test2']
     #NOTE: Need to specify the name of the executable, as
     # ReFrame has no way of knowing that while building from CMake
-    executable = './test1'
+    executable = './test2'
     # Provide the input through command line arguments
     # e.g., executable_opts = ['arg1', 'arg2'] where arg1, arg2,... are the command
     # line arguments
