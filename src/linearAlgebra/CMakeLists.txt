@@ -19,7 +19,7 @@ IF (ENABLE_CUDA)
     set_source_files_properties(${DFT-EFE-LINALG-SOURCES} PROPERTIES LANGUAGE CUDA)
 ENDIF()
 
-add_library(dft-efe-linalg   ${DFT-EFE-LINALG-SOURCES} )
+add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES} )
 target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 IF (ENABLE_CUDA)
