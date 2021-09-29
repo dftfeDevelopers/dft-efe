@@ -39,12 +39,12 @@ are the mandatory ones that must be specified for each test class.
 	+ `valid_systems = ['greatlakes:*']` to specify all the partitions for the greatlakes system
 	+ `valid_systems = ['greatlakes:compute', 'cori:login']` to specify greatlakes compute parition 
 	   and cori login parition 
-	+ You can provide any regular expression (regex) to filter the system:partition from the config file
-   __Recommendation__: `valid_systems = ['*']` 
+	+ You can provide any regular expression (regex) to filter the system:partition from the config file  
+   __Recommended__: `valid_systems = ['*']` 
 + `valid_prog_environs` list of programming environment to run the test in (__required__)
   Examples:
 	+ `valid_prog_environs = ['*']` to specify all the programming environments defined in the config file
-	+ `valid_prog_environs = ['gnu', 'intel']`  to use both gnu and intel environments, as defined in the config file
+	+ `valid_prog_environs = ['gnu', 'intel']`  to use both gnu and intel environments, as defined in the config file  
   __Recommended__: `valid_prog_environs = ['*']`
 + `sourcepath` string containing path to source file. Use it when you have a single source file to test (__required__ if `sourcesdir` is not set)
    Examples `source_path = 'test.cc'`
