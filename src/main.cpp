@@ -13,22 +13,6 @@
 
 #include <Vector.h>
 
-// extern "C"
-//{
-//  void
-//  dgemv_(const char *        TRANS,
-//         const unsigned int *M,
-//         const unsigned int *N,
-//         const double *      alpha,
-//         const double *      A,
-//         const unsigned int *LDA,
-//         const double *      X,
-//         const unsigned int *INCX,
-//         const double *      beta,
-//         double *            C,
-//         const unsigned int *INCY);
-//}
-
 int
 main(int argc, char **argv)
 {
