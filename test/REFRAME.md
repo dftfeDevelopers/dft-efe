@@ -5,6 +5,8 @@ https://reframe-hpc.readthedocs.io/en/stable/
 
 ## Table of contents <a name="contents"></a>
 + [Installation](#installation)
++ [How to run](#howtorun)
++ [Config](#config)
 + [ReFrame Regression Test Basics](#reframeregression)
   + [Constructor part](#constructor)
   + [Compiler setting part](#compiler)
@@ -31,6 +33,15 @@ https://reframe-hpc.readthedocs.io/en/stable/
   ```shell
   ./bin/reframe -V
   ```
+[back to top](#contents)
+
+## How to run <a name="howtorun"></a>
+Under the test folder, execute `reframe -C ./config/mysettings.py -c ./test.py -r`
+
+[back to top](#contents)
+
+## Config <a name="config"></a>
+
 [back to top](#contents)
 
 ## ReFrame Regression Test Basics <a name="reframeregression"></a>
