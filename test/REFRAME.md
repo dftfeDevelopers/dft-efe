@@ -45,13 +45,47 @@ Under the test folder, execute `reframe -C ./config/mysettings.py -c ./test.py -
 
 ## Config <a name="config"></a>
 While there are multiple ways to set the configuration file, we stick to the command in [How to run](#howtorun): 
-define a big variable in a python file called `mysettings.py` and stored in `${PROJECT_HOME}/test/config`. The 
-object is split into three parts:
+define a big variable in a python file called `mysettings.py` and stored in `${PROJECT_HOME}/test/config`. In this 
+instruction, useful features for testing DFT-EFE is introduced. A more elaborative tutorial can be found 
+[here](https://reframe-hpc.readthedocs.io/en/stable/configure.html?highlight=site_configuration#) and a verbose 
+explanation to variable config files can be found [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html). 
+
+The big variable storing the configuration information is split into three parts:
 + [`systems`](#systems):
 + [`environments`](#environments): 
 + [`logging`](#logging):
 
+A minimal example of mysettings.py looks like
+
+[back to top](#contents)
+
 ### systems <a name="systems"></a>
+System is used to define different machines (local computer, mac, greatlakes, summit, cori), some useful attributes are
++ `name` (__Required__): the name of the machine (__Required__), e.g, `'name': 'localhost'`, `'name': 'greatlakes'`, etc.
++ `dscr` (optional): description of the machine (optional)
++ `hostnames` (__Required__): 
++ `launcher` (__Required__): 
++ `modules_system` (optional): The system used to manage `module load`, a full list of supported module system in 
+  ReFrame can be found [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html#.systems[].modules_system).
++ `partition` (__Required__): 
+    ```python
+    {
+        'name': 'compute',
+        'scheduler': 'slurm',
+        'launcher': 'srun',
+        'access': ['-A vikramg1'],
+        'environs': ['builtin', 'gnu']
+    }
+    ```
+  + `name`(__Required__): the name of the partition/queue 
+  + `scheduler`(__Required__): job scheduler used by the machine, currently support `local`, `oar`, `pbs`, `sge`, `slurm`, 
+    `squeue`, `torque`
+  + `launcher`(__Required__): ReFrame supports various types of parallel launchers, e.g, `srun`, `local`, `mpirun`, 
+    `ibrun`. A full list of ReFrame supported launcher can be found at [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html#systems-.partitions-.launcher). 
+  + `access` (optional): A list of job scheduler options to be passed to the job script generator. This is where the 
+    charging account should be specified. e.g, `'access': ['-A vikramg1']`.
+  + `environs: (optional)` The [environments](#environments) defined in [`environments`](#environments) used to be 
+    run on this partition.
 
 [back to top](#contents)
 
