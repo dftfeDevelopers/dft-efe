@@ -7,6 +7,9 @@ https://reframe-hpc.readthedocs.io/en/stable/
 + [Installation](#installation)
 + [How to run](#howtorun)
 + [Config](#config)
+  + [`systems`](#systems):
+  + [`environments`](#environments):
+  + [`logging`](#logging):
 + [ReFrame Regression Test Basics](#reframeregression)
   + [Constructor part](#constructor)
   + [Compiler setting part](#compiler)
@@ -41,16 +44,35 @@ Under the test folder, execute `reframe -C ./config/mysettings.py -c ./test.py -
 [back to top](#contents)
 
 ## Config <a name="config"></a>
+While there are multiple ways to set the configuration file, we stick to the command in [How to run](#howtorun): 
+define a big variable in a python file called `mysettings.py` and stored in `${PROJECT_HOME}/test/config`. The 
+object is split into three parts:
++ [`systems`](#systems):
++ [`environments`](#environments): 
++ [`logging`](#logging):
+
+### systems <a name="systems"></a>
+
+[back to top](#contents)
+
+### environments <a name="environments"></a>
+
+[back to top](#contents)
+
+### logging <a name="logging"></a>
+
+[back to top](#contents)
 
 [back to top](#contents)
 
 ## ReFrame Regression Test Basics <a name="reframeregression"></a>
 Although ReFrame provides many features, we will be using a limited number of features. Each test must be a python class. Typically, a test class should be
 split into four parts: 
-+ A constructor part which sets the important attributes (source dir, build system type, etc)
-+ A compiler flag setter to set any compilation flag or environment   
-+ A test validation part which decides whether the test passed or failed and define a message to display if the test fails
-+ An optional resource allocation part (useful when running in parallel or requesting access via a queueing system)
++ A [constructor part](#constructor) which sets the important attributes (source dir, build system type, etc)
++ A [compiler flag setter](#compiler) to set any compilation flag or environment   
++ A [test validation part](#testvalidation) which decides whether the test passed or failed and define a message to display if the 
+  test fails
++ An [optional resource allocation part](#resourceallocation) (useful when running in parallel or requesting access via a queueing system)
 
 [back to top](#contents)
 
