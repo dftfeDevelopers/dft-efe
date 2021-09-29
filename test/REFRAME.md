@@ -5,7 +5,7 @@ https://reframe-hpc.readthedocs.io/en/stable/
 
 ## Installation
 + Download ReFrame to a directory (preferably put it in dftefe/test directory)
-  ```
+  ```shell
   cd dftefe/test
   git clone https://github.com/eth-cscs/reframe.git
   ```
@@ -13,12 +13,12 @@ https://reframe-hpc.readthedocs.io/en/stable/
 (e.g., `module load python3.7` or `module load python 3.9`)
 
 + Change directory to ReFrame directory and run the ./bootstrap.sh script
-  ```
+  ```shell
   cd reframe
   ./bootstrap.sh
   ```
 + Verify the installation by running the following to display the version
-  ```
+  ```shell
   ./bin/reframe -V
   ```
 
@@ -33,42 +33,43 @@ split into four parts:
 ### Constructor part
 The following are the usual attributes that one requires to set in each test class. The ones marked as __required__ 
 are the mandatory ones that must be specified for each test class.
-+ `valid_systems` list of 'system:partition' on which to run the test (__required__)
++ `valid_systems` list of 'system:partition' on which to run the test (__required__)  
    Examples:  
-	+ `valid_systems = ['*']` to specify all the system:paritions defined in the config file
-	+ `valid_systems = ['greatlakes:*']` to specify all the partitions for the greatlakes system
-	+ `valid_systems = ['greatlakes:compute', 'cori:login']` to specify greatlakes compute parition 
-	   and cori login parition 
-	+ You can provide any regular expression (regex) to filter the system:partition from the config file  
+    + `valid_systems = ['*']` to specify all the system:paritions defined in the config file
+    + `valid_systems = ['greatlakes:*']` to specify all the partitions for the greatlakes system
+    + `valid_systems = ['greatlakes:compute', 'cori:login']` to specify greatlakes compute parition 
+       and cori login parition 
+    + You can provide any regular expression (regex) to filter the system:partition from the config file  
    __Recommended__: `valid_systems = ['*']` 
-+ `valid_prog_environs` list of programming environment to run the test in (__required__)
++ `valid_prog_environs` list of programming environment to run the test in (__required__)  
   Examples:
-	+ `valid_prog_environs = ['*']` to specify all the programming environments defined in the config file
-	+ `valid_prog_environs = ['gnu', 'intel']`  to use both gnu and intel environments, as defined in the config file  
+    + `valid_prog_environs = ['*']` to specify all the programming environments defined in the config file
+    + `valid_prog_environs = ['gnu', 'intel']`  to use both gnu and intel environments, as defined in the config file  
   __Recommended__: `valid_prog_environs = ['*']`
-+ `sourcepath` string containing path to source file. Use it when you have a single source file to test (__required__ if `sourcesdir` is not set)
-   Examples `source_path = 'test.cc'`
+    + `sourcepath` string containing path to source file. Use it when you have a single source file to test 
+      (__required__ if `sourcesdir` is not set)  
+       Examples: `source_path = 'test.cc'`
 + `sourcesdir` string containing the path to the source directory. Use it when you have multiple source files (__required__ if `sourcepath` is not set) 
-+ `executable_opts` string containing command line arguments to the test executable (optional)
++ `executable_opts` string containing command line arguments to the test executable (optional)  
   Examples:
-	+ `executable_opts = '> outfile'` to redirect the `stdout` to outfile
+    + `executable_opts = '> outfile'` to redirect the `stdout` to outfile
         + `executable_opts = 'arg1 arg2'` to provide arg1 and arg2 as command line input 
 
 + `descr` description of the test (optional)
-+ `build_system` string to define the build system (optional). 
++ `build_system` string to define the build system (optional).   
    Example: 
-	+`build_system = 'CMake'` to indicate CMake based build) 
+    + `build_system = 'CMake'` to indicate CMake based build 
 
 + `extra_resources` a dictionary setting resources that should be allocated to the test by the scheduler. 
    Typically, the resources are defined in the configuration of a system partition, e.g,  
-  ```
+  ```python
   'resources': 
     [{ 
         'name': 'gpu',
         'options': ['--gres=gpu:{num_gpus_per_node}'] 	
      },
      {
-	'name': 'cpu',
+    'name': 'cpu',
         'options': [
             '--mem={memory}',
             '--time={time}'
@@ -76,8 +77,8 @@ are the mandatory ones that must be specified for each test class.
      }
    ]
   ```
-In that case, a test class then specify the resources using the `extra_resources` attribute, e.g.,
-  ```
+    In that case, a test class then specify the resources using the `extra_resources` attribute, e.g.,
+  ```python
   self.extra_resources = {
     'gpu': {'num_gpus_per_node': 2}
     'cpu': {
@@ -86,13 +87,23 @@ In that case, a test class then specify the resources using the `extra_resources
     }
   }
   ```
+    This setup will generate a submission script based on the backend scheduling system. For `slurm`, an example output 
+of the generated header for the above example is
+    ```shell
+    #SBATCH --gres=gpu:2
+    #SBATCH --mem=4GB
+    #SBATCH --time=48:00:00
+    ```
+It is possible to replace `#SBATCH` for specific lines. Refer to [extra_resources](https://reframe-hpc.readthedocs.io/en/stable/regression_test_api.html?highlight=extra_resource#reframe.core.pipeline.RegressionTest.extra_resources)
+page on ReFrame website.
 ### Compiler setting part 
 For each test, one might need to set certain compilation and environment flags. We do this within the following member function
-  ```    
+  ```python
   @run_before('compile')
   def set_compiler_flags(self):
   ```
-The ```@run_before('compile')``` ReFrame decorator marks the ```set_compiler_flags(self)``` function as something that 
+The ```@run_before('compile')``` ReFrame decorator marks the ```set_compiler_flags(self)``` function as 
+something that 
 should run prior to any compilation. The following are commonly used attributes that one might need to set in this function
 + `self.build_system.make_opts` list of strings to be passed as command line options to cmake (optional)
   Typically, this should be used to specify any target for cmake.For example, 
@@ -137,7 +148,7 @@ should run prior to any compilation. The following are commonly used attributes 
 For each test, one must define a function that determines whether the test passed or not and provide
 a custom message that should be displayed when the test fails. For the sake of standardization, we do this within the 
 following member function
-  ```
+  ```python
     @sanity_function
     def validate_test(self):
     ...
@@ -148,7 +159,7 @@ The developer must assign `hasTestPassed` to True if the test passed, or else as
 must assign a custom message to the variable `msg` that can be displayed when the test fails. 
 
 __NOTE__: In order to help in parsing an output from test and comparing it with benchmark values, we have provided two files: Parser.py and CompareUtil.py (see below for details) that can be imported in the ReFrame test.py file. How to import?
-  ```
+  ```python
   parser = rfm.utility.import_module_from_file("Parser.py")
   cu = rfm.utility.import_module_from_file("CompareUtil.py")
   ```
@@ -167,7 +178,7 @@ It is a simple parser class to match a given string in a file and return the ass
 + ```parserObj = Parser.fromString(stringData)```, where it takes a string and parses the string
 
 The most useful aspect of this class is the ```extactKeyValues``` member function
-```
+```python
 extractKeyValues(self, key, dtype='float', patternToCapture = r".*",
                          groupId = 0, dtypePattern = None):
 ```
@@ -186,10 +197,9 @@ _Default_: None (i.e., we use in-built regular expressions based on the `dtype`)
 ## CompareUtil.py
 __Requires__ ```numpy``` in the python environment.
 The CompareUtil.py provides the ```Compare``` class that takes in two list of values and performs various comparison on them. It relies on numpy to perform some of the comparison. The most useful aspect of this class is the ```cmp``` member function
-  ```
-  cmp(self, val1, val2, tol = 1.0e-16, cmpType = 'absolute', normType="L2"):
-
-  ```
+```python
+cmp(self, val1, val2, tol = 1.0e-16, cmpType = 'absolute', normType="L2")
+```
 The function arguments are:
 + `val1`: [Input] The first list
 + `val2`: [Tnput] The second list
