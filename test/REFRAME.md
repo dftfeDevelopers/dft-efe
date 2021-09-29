@@ -60,12 +60,13 @@ A minimal example of mysettings.py looks like
 [back to top](#contents)
 
 ### systems <a name="systems"></a>
-System is used to define different machines (local computer, mac, greatlakes, summit, cori), some useful attributes are
+`systems` is used to define different machines (local computer, mac, greatlakes, summit, cori), some useful attributes are
 + `name` (__Required__): the name of the machine (__Required__), e.g, `'name': 'localhost'`, `'name': 'greatlakes'`, etc.
 + `dscr` (optional): description of the machine (optional)
 + `hostnames` (__Required__): 
 + `launcher` (__Required__): 
-+ `modules_system` (optional): The system used to manage `module load`, a full list of supported module system in 
++ `modules_system` (optional): The module system on the machine used to manage `module load`, a full list of supported 
+  module system in 
   ReFrame can be found [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html#.systems[].modules_system).
 + `partition` (__Required__): 
     ```python
@@ -90,12 +91,37 @@ System is used to define different machines (local computer, mac, greatlakes, su
 [back to top](#contents)
 
 ### environments <a name="environments"></a>
+`environments` is used to determine the environment configurations in ReFRame. The running and compilation environment 
+for the test is set up through this part. This piece is related to the `eviron` attribute in [`systems`](#systems). 
+Some useful attributes and an example is provided for reference.
+```python
+{
+    'name': 'intel',
+    'modules': ['intel', 'mkl'],
+    'variables': [['DFT_EFE_LINKER','"-mkl=parallel"']]
+    'cc': 'icc',
+    'cxx': 'icpc',
+    'ftn': 'ifort',
+    'target_systems': ['greatlakes'],
+},
+```
++ `name` (__Required__): the user defined name of the environment.
++ `modules` (optional): modules to be loaded from `module load`. The modules will be loaded using the module 
+  management system specified by `modules_system` attribute in [`systems`](#systems).
++ `variables` (optional): the environmental variables can be set here for `cmake` and compilation.
++ `cc` `cxx` `ftn` (optional): Specify the compilers used to compile the test for C, C++, or Fortran respectively.   
+  _Default_: `cc`, `CC`, `ftn`
++ `target_systems` (optional): Specify which systems set in `systems` are allowed to run the test using this 
+  environment.
+  _Default_: `["*"]` (all available systems.)
++ `cppflags`, `cflags`, `cxxflags`, `fflags` (optional): A list of flags to be used with the specified environment by 
+  default for C preprocessor, C, C++, or Fortran. Be careful that `cppflags` is for C preprocessor instead of C++.
++ `ldflags` (optional): A list of linker's flags to be used with the specified environment by default.
 
 [back to top](#contents)
 
 ### logging <a name="logging"></a>
-
-[back to top](#contents)
+We suggest using the default setting in `./config/mysettings.py`.
 
 [back to top](#contents)
 
@@ -307,7 +333,7 @@ _Default_: "L2"
 [back to top](#contents)
 
 __TO DO <Ian>__
-+ Add config instructions for ReFrame
++ ~~Add config instructions for ReFrame~~
 + Added Resources instructions for ReFrame 
-+ CMake with multiple targets
++ ~~CMake with multiple targets~~
 + Test Parser.py and CompareUtil.py
