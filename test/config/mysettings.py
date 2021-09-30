@@ -22,11 +22,39 @@ site_configuration = {
                     'environs': ['builtin', 'gnu']
                 },
                 {
-                    'name': 'compute',
+                    'name': 'standard',
                     'scheduler': 'slurm',
                     'launcher': 'srun',
                     'access': ['-A vikramg1'],
-                    'environs': ['builtin', 'gnu']
+                    'environs': ['builtin', 'gnu'],
+                    'resources': [
+                        {
+                            'name': 'cpu',
+                            'options': ['--partition=standard',
+                                        '--time={time_limit}',
+                                        '--nodes={num_nodes}',
+                                        '--ntasks-per-node={num_tasks_per_node}',
+                                        '--mem-per-cpu={mem_per_cpu}']
+                        }
+                    ]
+                },
+                {
+                    'name': 'gpu',
+                    'scheduler': 'slurm',
+                    'launcher': 'srun',
+                    'access': ['-A vikramg1'],
+                    'environs': ['builtin', 'gnu'],
+                    'resources': [
+                        {
+                            'name': 'gpu',
+                            'options': ['--partition=gpu',
+                                        '--time={time_limit}',
+                                        '--nodes={num_nodes}',
+                                        '--gpus-per-node={gpus_per_node}'
+                                        '--ntasks-per-node={num_tasks_per_node}',
+                                        '--mem-per-cpu={mem_per_cpu}']
+                        }
+                    ]
                 }
             ]
         },

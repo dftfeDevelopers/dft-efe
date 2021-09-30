@@ -247,28 +247,25 @@ class StdOutTest(rfm.RegressionTest):
         hasTestPassed, msg = cu.Compare().cmp(bmVal[0], outVal[0])
         return sn.assert_true(hasTestPassed, msg=msg)
 
-    @run_before('run')
+    @run_after('compile')
     def set_resources(self):
-        # equivalent of --time=hh:mm:ss in slurm
-        # The format is a string of the format <days>d<hours>h<minutes>m<seconds>s
         if "parallel" in self.tags:
-          self.time_limit = "0d1h1m1s" 
-          # equivalent of --ntasks in slurm
-          self.num_tasks = 1
-          # equivalent of --ntasks-per-node in slurm
-          self.num_tasks_per_node = 1
-          # equivalent of --ntasks-per-core in slurm
-          self.num_tasks_per_core = 1
-          # equivalent of --ntasks-per-socket in slurm
-          self.num_tasks_per_socket = 1
-          # equivalent of --cpus-per-task in slurm
-          self.num_cpus_per_task = 1
-          # equivalent of --exclusive in slurm
-          self.exclusive_access = True
           if "cpu" in self.tags:
             self.extra_resources = {
                 'cpu': {
-                'memory': '4GB',
+                    'time_limit': '1:00:00',
+                    'num_nodes': '1',
+                    'num_tasks_per_node': '2',
+                    'mem_per_cpu': '5gb'
                 }
             }
-
+          elif "gpu" in self.tags:
+              self.extra_resources = {
+                  'gpu': {
+                      'time_limit': '1:00:00',
+                      'num_nodes': '1',
+                      'num_tasks_per_node': '2',
+                      'gpus_per_node': '1',
+                      'mem_per_cpu': '5gb'
+                  }
+              }
