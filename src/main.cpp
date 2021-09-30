@@ -13,6 +13,10 @@
 
 #include <Vector.h>
 
+#ifdef DFTEFE_WITH_CUDA
+#  include <CUDAUtils.h>
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -39,6 +43,13 @@ main(int argc, char **argv)
          world_rank,
          world_size);
 
+#ifdef DFTEFE_WITH_CUDA
+  const bool useGPU = false;
+  if (useGPU)
+    {
+      dftefe::CUDAUtils::initialize(world_rank);
+    }
+#endif
 
   dftefe::Vector<double, dftefe::MemorySpace::HOST> v1;
   v1.testDgemv();
