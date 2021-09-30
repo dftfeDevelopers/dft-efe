@@ -9,17 +9,33 @@ namespace dftefe
   class Vector
   {
   public:
-    using size_type = unsigned int;
+
+   // FIXME initVal not used
+    Vector(const size_type size, const NumberType initVal = 0);
+    ~Vector();
 
     Vector() = default;
 
-    Vector(const size_type size, const NumberType initVal = 0);
+    // FIXME: does it even make sense to have a copy constructor for gpu vector
+    Vector(const Vector & vector);
 
+// Will overwrite old data
+    void resize(const size_type size, const NumberType initVal = 0);
+
+    size_type size() const;
+
+
+    //
+    // temporary function to test dgemv
+    //
     void
     testDgemv();
 
+
   private:
-    NumberType *d_data;
+    // FIXME does nullptr exist for cuda 
+    NumberType *d_data = nullptr;
+    size_type d_size = 0; 
   };
 } // end of namespace dftefe
 

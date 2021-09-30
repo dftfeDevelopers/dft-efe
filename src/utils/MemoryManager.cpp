@@ -17,7 +17,8 @@ namespace dftefe
   void
   MemoryManager<NumType, MemorySpace::HOST>::deallocate(NumType *ptr)
   {
-    delete[] ptr;
+    if ( ptr != nullptr)
+    	delete[] ptr;
   }
 
   template <typename NumType>
@@ -36,6 +37,7 @@ namespace dftefe
   void
   MemoryManager<NumType, MemorySpace::DEVICE_NVIDIA>::deallocate(NumType *ptr)
   {
+// FIXME check if the pointer is not null before de allocating 
     // cudaFree(ptr);
   }
 
