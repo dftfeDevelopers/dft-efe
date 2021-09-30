@@ -20,12 +20,12 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class MakeOnlyTest(rfm.CompileOnlyRegressionTest):
+class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
     descr = 'Compile one test using CMake'
     valid_systems = ['*']
     valid_prog_environs = ['*']
     build_system = 'CMake'
-    make_opts = ['test1']
+    make_opts = ['all']
     builddir ='./build'
     sourcesdir = './src'
     # As a standard convention, we use 4 categories of tags that can help 
