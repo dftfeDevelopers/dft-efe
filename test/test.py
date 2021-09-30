@@ -251,20 +251,24 @@ class StdOutTest(rfm.RegressionTest):
     def set_resources(self):
         # equivalent of --time=hh:mm:ss in slurm
         # The format is a string of the format <days>d<hours>h<minutes>m<seconds>s
-        self.time_limit = "0d1h1m1s" 
-        # equivalent of --ntasks in slurm
-        self.num_tasks = 1
-        # equivalent of --ntasks-per-node in slurm
-        self.num_tasks_per_node = 1
-        # equivalent of --ntasks-per-core in slurm
-        self.num_tasks_per_core = 1
-        # equivalent of --ntasks-per-socket in slurm
-        self.num_tasks_per_socket = 1
-        # equivalent of --cpus-per-task in slurm
-        self.num_cpus_per_task = 1
-        # equivalent of --exclusive in slurm
-        self.exclusive_access = True
-        # equivalent of '--gres=gpu:{num_gpus_per_node}
-        self.num_gpus_per_node = 1
-
+        if "parallel" in self.tags:
+          self.time_limit = "0d1h1m1s" 
+          # equivalent of --ntasks in slurm
+          self.num_tasks = 1
+          # equivalent of --ntasks-per-node in slurm
+          self.num_tasks_per_node = 1
+          # equivalent of --ntasks-per-core in slurm
+          self.num_tasks_per_core = 1
+          # equivalent of --ntasks-per-socket in slurm
+          self.num_tasks_per_socket = 1
+          # equivalent of --cpus-per-task in slurm
+          self.num_cpus_per_task = 1
+          # equivalent of --exclusive in slurm
+          self.exclusive_access = True
+          if "cpu" in self.tags:
+            self.extra_resources = {
+                'cpu': {
+                'memory': '4GB',
+                }
+            }
 
