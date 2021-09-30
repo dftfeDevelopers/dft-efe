@@ -13,6 +13,7 @@ set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 
 
 if(ENABLE_CUDA)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_CUDA)
     message ("CUDA Enabled")
     enable_language(CUDA)
     set_target_properties(dft-efe PROPERTIES

@@ -10,8 +10,8 @@ namespace dftefe
   //
   enum class MemorySpace
   {
-    HOST,         //
-    DEVICE_NVIDIA //
+    HOST,       //
+    DEVICE_CUDA //
   };
 
   //
@@ -38,7 +38,7 @@ namespace dftefe
   };
 
   template <typename NumType>
-  class MemoryManager<NumType, MemorySpace::DEVICE_NVIDIA>
+  class MemoryManager<NumType, MemorySpace::DEVICE_CUDA>
   {
   public:
     static NumType *
