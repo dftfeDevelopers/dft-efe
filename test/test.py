@@ -62,7 +62,7 @@ class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
 
 
     @sanity_function
-    def set_sanity_patterns(self):
+    def validate_test(self):
         hasWarning = True
         hasError = True
         msgWarning = "Found warning(s) while compiling."
