@@ -77,7 +77,13 @@ class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
             hasError = False
         
         hasTestPassed = not hasWarning and not hasError
-        msg = msgWarning + msgError
+	msg = ""
+	if hasError:
+	  msg = msgError
+	elif hasWarning:
+	  msg = msgWarning
+	else:
+	  msg = ""
         return sn.assert_true(hasTestPassed, msg=msg)
 
 
