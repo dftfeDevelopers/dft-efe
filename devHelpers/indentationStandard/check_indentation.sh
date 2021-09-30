@@ -15,34 +15,25 @@
 ## This file is adapted by Sambit Das for use with dft-efe code
 ## -------------------------------------------------------------------------------------
 
-./devHelpers/indentationStandard/install_clang_format.sh
-
-
-source devHelpers/indentationStandard/indent_common.sh
-
 #
-# Run sanity checks:
+# This is a script that is used by the continuous integration servers
+# to make sure that the currently checked out version of a git repository
+# satisfies our "indentation" standards. This does no longer only cover
+# indentation, but other automated checks as well.
 #
-
-checks
-
-#
-# Process all source and header files:
+# WARNING: The continuous integration services return a failure code for a
+# pull request if this script returns a failure, so the return value of this
+# script is important.
 #
 
-process "src" ".*\.(h|cpp|hpp|cu|cuh)" format_file
+# Run indent-all and fail if script fails:
+./devHelpers/indentationStandard/indent-all || exit $?
 
-#
-# Removing trailing whitespace
-#
+# Show the diff in the output:
+git diff
 
-process "src" \
-  ".*\.(h|cpp|hpp|cu|cuh|html|dox|txt)" remove_trailing_whitespace
+# Make this script fail if any changes were applied by indent above:
+git diff-files --quiet || exit $?
 
-#
-# Ensure only a single newline at end of files
-#
-
-process "src" \
-  ".*\.(h|cpp|hpp|cu|cuh|html|dox|txt)" ensure_single_trailing_newline
-
+# Success!
+exit 0

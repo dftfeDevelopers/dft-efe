@@ -1,3 +1,2 @@
 Follow following steps to auto indent the source code. From the top directory run:
-1) ./devHelpers/indentationStandard/install_clang_format
-2) ./devHelpers/indentationStandard/indent-all
+ ./devHelpers/indentationStandard/indent-all
