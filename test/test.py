@@ -90,7 +90,7 @@ class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class FileOutTest(rfm.RegressionTest):
+class FileOutRunTest(rfm.RegressionTest):
     descr = 'Regression Test using CMake and output to a file'
     valid_systems = ['*']
     valid_prog_environs = ['*']
