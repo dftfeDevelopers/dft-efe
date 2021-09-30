@@ -1,7 +1,7 @@
 import numpy as np
 
 class Compare():
-    def cmp(self, val1, val2, tol = 1.0e-16, cmpType = 'absolute', normType="L2"):
+    def cmp(self, val1, val2, tol = 1.0e-16, cmpType = 'absolute', normType="inf"):
         msg = ""
         areComparable = False
         v1 = np.array(val1)
