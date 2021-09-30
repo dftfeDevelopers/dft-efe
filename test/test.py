@@ -25,7 +25,7 @@ class MakeOnlyTest(rfm.CompileOnlyRegressionTest):
     valid_systems = ['*']
     valid_prog_environs = ['*']
     build_system = 'CMake'
-    make_opts = ['all']
+    make_opts = ['test1']
     builddir ='./build'
     sourcesdir = './src'
     # As a standard convention, we use 4 categories of tags that can help 
