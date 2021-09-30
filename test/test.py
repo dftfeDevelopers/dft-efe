@@ -36,7 +36,7 @@ class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'cpuOrgpu': 'cpu',
                 'serialOrParallel': 'serial'}
-    tags = {x for x in tagsDict.values()}
+    tags = {x.lower() for x in tagsDict.values()}
 
 
     @run_before('compile')
