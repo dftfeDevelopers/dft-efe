@@ -1,25 +1,36 @@
+import re
+system_partition_list = ["greatlakes:standard", "greatlakes:gpu", "greatlakes:login", 
+                         "generic:default"]
 
 def getValidSystems(key):
-    if key.lower() not in ["cpu", "gpu", "any"]:
+    if key.lower() not in ["cpu", "gpu", "both"]:
         msg = '''The tag passed should be one of: 'cpu', 'gpu', or
-        'any'. Tag passed is {}'''.format(key)
+        'both'. Tag passed is {}'''.format(key)
         raise ValueError(msg)
 
     else:
         if key.lower() == "cpu":
-            return [r'.*:.*cpu.*']
+            returnVal = []
+            sys_part_string = "\n".join(system_partition_list)
+            for match in re.finditer('^((?!gpu).)*$', sys_part_string, flags=re.M):
+                returnVal.append(match.group(0))
+
+            return returnVal
 
         elif key.lower() == "gpu":
-            return [r'.*:.*gpu.*']
-
+            returnVal = []
+            sys_part_string = "\n".join(system_partition_list)
+            for match in re.finditer(r'.*gpu.*', sys_part_string, flags=re.M):
+                returnVal.append(match.group(0))
+        
         else:
-            return [r'.*:.*']
+            return system_partition_list
 
-def setResources(archTag = 'any', time_limit = "00:02:00", num_nodes = 1, num_tasks_per_node = 1, mem_per_cpu =
+def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_tasks_per_node = 1, mem_per_cpu =
                  '5gb', gpus_per_node = 1):
-    if archTag.lower() not in ["cpu", "gpu", "any"]:
+    if archTag.lower() not in ["cpu", "gpu", "both"]:
         msg = '''The tag passed should be one of: 'cpu', 'gpu', or
-        'any'. Tag passed is {}'''.format(archTag)
+        'both'. Tag passed is {}'''.format(archTag)
         raise ValueError(msg)
 
     returnVal = {}
@@ -40,7 +51,7 @@ def setResources(archTag = 'any', time_limit = "00:02:00", num_nodes = 1, num_ta
             'gpus_per_node': gpus_per_node
         }
 
-    if archTag.lower() == 'any':
+    if archTag.lower() == 'both':
         returnVal['cpu'] = {
             'time_limit': time_limit,
             'num_nodes': num_nodes,
@@ -55,12 +66,4 @@ def setResources(archTag = 'any', time_limit = "00:02:00", num_nodes = 1, num_ta
             'gpus_per_node': gpus_per_node
         }
 
-
-def setLauncher(launcher, mpiTag = 'serial'):
-    if mpiTag.lower() not in ["serial", "parallel"]:
-        msg = '''The mpiTag passed should be either 'serial' or 'parallel'. The
-        value passed is {}'''.format(mpiTag)
-        raise ValueError(msg)
-
-    if mpiTag.lower() == 'serial':
-        return f'{launcher} -n 1'
+    return returnVal

@@ -1,6 +1,7 @@
 import reframe as rfm
 import reframe.utility.sanity as sn
 from reframe.utility.sanity import evaluate
+from reframe.core.backends import getlauncher
 #import CompareUtil as cu
 parser = rfm.utility.import_module_from_file("Parser.py")
 cu = rfm.utility.import_module_from_file("CompareUtil.py")
@@ -16,6 +17,7 @@ slow: Tests requiring more than 30s of wall time
 fast: Tests requiring less than 30s of wall time
 cpu: Tests to be run on cpu only
 gpu: Tests to be run on gpu only
+both: Tests to be run on  both cpu and gpu
 serial: Serial tests (ideally requires no mpi or openmp)
 parallel: Parallel tests that requires mpi or openmp
 """
@@ -33,11 +35,25 @@ class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
     # us run only tests matching certain tag(s). See the top of this file 
     # for the description on types. A user should populate the tagsDict with 
     # the appropriate values for each of the four keys: 'compileOrRun',
-    # 'unitOrAggregate', 'cpuOrgpu', 'serialOrParallel'
+    # 'unitOrAggregate', 'arch', 'serialOrParallel'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
-                'unit', 'slowOrFast': 'fast', 'cpuOrgpu': 'cpu',
+                'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
+
+    #Define valid_systems as a list of strings of the format
+    #'system:partiion'. Over here, based on the 'arch' 
+    #(i.e,,'cpu', 'gpu', or 'both'), we filter out
+    #the system:partitions from a list named system_partition_list
+    #in setupSystems.py. The convention is for 'arch'='cpu', we
+    #select only those system:partitions that do not contain the string 'gpu' 
+    #in it. Conversely, for 'arch'='gpu', only those system:partitions are
+    #included which contains the string 'gpu'. For 'arch'='both', all the
+    #system:partiions are selected.
+    #NOTE: For any new systems:partition added to the config file, 
+    # they must also be added to the system_partition_in setupSystems.py
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
 
 
     @run_before('compile')
@@ -46,14 +62,14 @@ class BuildOnlyAll(rfm.CompileOnlyRegressionTest):
         ''' Set any compilation flag, configuration, environment variables, etc'''
         #NOTE: In most cases, setting the following attribues within a test should be avoided, 
         #it should be set within the config file. 
-        #+ `build_system.cc` string to specify the C compiler
-	    #+ `build_system.cflags` list of string to specify the C compiler flags
-	    #+ `build_system.cxx` string to specify the C++ compiler
-	    #+ `build_system.cxxflags` list of string to specify the C++ compiler flags
-	    #+ `build_system.cppflags` list of string to specify the preprocessor flags
-	    #+ `build_system.ldflags` list of string to specify the linker flags
-	    #+ `build_system.nvcc` string to specify the CUDA compiler
-        #+ `variables` a dictionary to set environment variables. e.g, 
+        #+ `self.build_system.cc` string to specify the C compiler
+	    #+ `self.build_system.cflags` list of string to specify the C compiler flags
+	    #+ `self.build_system.cxx` string to specify the C++ compiler
+	    #+ `self.build_system.cxxflags` list of string to specify the C++ compiler flags
+	    #+ `self.build_system.cppflags` list of string to specify the preprocessor flags
+	    #+ `self.build_system.ldflags` list of string to specify the linker flags
+	    #+ `self.build_system.nvcc` string to specify the CUDA compiler
+        #+ `self.variables` a dictionary to set environment variables. e.g, 
         #  self.variables = {'DFT_EFE_LINKER': '"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"'}
         # Any special configuration that needs to be done externally can be done
         # using the prebuild_cmds attribute 
@@ -110,18 +126,30 @@ class FileOutRunTest(rfm.RegressionTest):
     # us run only tests matching certain tag(s). See the top of this file 
     # for the description on types. A user should populate the tagsDict with 
     # the appropriate values for each of the four keys: 'compileOrRun',
-    # 'unitOrAggregate', 'cpuOrgpu', 'serialOrParallel'
+    # 'unitOrAggregate', 'arch', 'serialOrParallel'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
-                'unit','slowOrFast': 'fast', 'cpuOrgpu': 'cpu',
+                'unit','slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
-    tags = {x for x in tagsDict.values()}
-    valid_systems = ss.getValidSystems(tagsDict['cpuOrgpu']) #['*']
+    tags = {x.lower() for x in tagsDict.values()}
+
+    #Define valid_systems as a list of strings of the format
+    #'system:partiion'. Over here, based on the 'arch' 
+    #(i.e,,'cpu', 'gpu', or 'both'), we filter out
+    #the system:partitions from a list named system_partition_list
+    #in setupSystems.py. The convention is for 'arch'='cpu', we
+    #select only those system:partitions that do not contain the string 'gpu' 
+    #in it. Conversely, for 'arch'='gpu', only those system:partitions are
+    #included which contains the string 'gpu'. For 'arch'='both', all the
+    #system:partiions are selected.
+    #NOTE: For any new systems:partition added to the config file, 
+    # they must also be added to the system_partition_in setupSystems.py
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
-    extra_resources = ss.setResources(tagsDict['cpuorgpu']) 
+    
     # By default ReFrame deletes all the output files generated by the test
     # In case you want to retain any of the files in the output folder of the
     # test, list them in keep_files attribute
-    keep_files = ['out_test1', 'out_test2', 'out_test3']
+    keep_files = ['out_test1']
 
     @run_before('compile')
     def set_compiler_flags(self):
@@ -130,20 +158,27 @@ class FileOutRunTest(rfm.RegressionTest):
         self.build_system.make_opts = self.make_opts
         #NOTE: In most cases, setting the following attribues within a test should be avoided, 
         #it should be set within the config file. 
-        #+ `build_system.cc` string to specify the C compiler
-        #+ `build_system.cflags` list of string to specify the C compiler flags
-        #+ `build_system.cxx` string to specify the C++ compiler
-        #+ `build_system.cxxflags` list of string to specify the C++ compiler flags
-        #+ `build_system.cppflags` list of string to specify the preprocessor flags
-        #+ `build_system.ldflags` list of string to specify the linker flags
-        #+ `build_system.nvcc` string to specify the CUDA compiler
-        #+ `variables` a dictionary to set environment variables. e.g, 
+        #+ `self.build_system.cc` string to specify the C compiler
+	    #+ `self.build_system.cflags` list of string to specify the C compiler flags
+	    #+ `self.build_system.cxx` string to specify the C++ compiler
+	    #+ `self.build_system.cxxflags` list of string to specify the C++ compiler flags
+	    #+ `self.build_system.cppflags` list of string to specify the preprocessor flags
+	    #+ `self.build_system.ldflags` list of string to specify the linker flags
+	    #+ `self.build_system.nvcc` string to specify the CUDA compiler
+        #+ `self.variables` a dictionary to set environment variables. e.g, 
         #  self.variables = {'DFT_EFE_LINKER': '"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"'}
         # Any special configuration that needs to be done externally can be done
         # using the prebuild_cmds attribute 
         # e.g., self.prebuild_cmds = ['./custom_configure -with-mylib']
         # Avoid using it as far as possible, in most cases one can invoke the
         # same configuration through CMake
+    
+    @run_before('run')
+    def set_launcher(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+        
+        self.extra_resources = ss.setResources(self.tagsDict['arch']) 
 
     @sanity_function
     def validate_test(self):
@@ -167,7 +202,8 @@ class FileOutRunTest(rfm.RegressionTest):
         outParser = parser.Parser.fromFilename(outfilename)
         bmVal = bmParser.extractKeyValues("Values")
         outVal = outParser.extractKeyValues("Values")
-        hasTestPassed, msg = cu.Compare().cmp(bmVal[0], outVal[0])
+        hasTestPassed, norm, msg = cu.Compare().cmp(bmVal[0], outVal[0],
+                                                    normType='inf')
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
@@ -194,11 +230,27 @@ class StdOutTest(rfm.RegressionTest):
     # us run only tests matching certain tag(s). See the top of this file 
     # for the description on types. A user should populate the tagsDict with 
     # the appropriate values for each of the four keys: 'compileOrRun',
-    # 'unitOrAggregate', 'cpuOrgpu', 'serialOrParallel'
+    # 'unitOrAggregate', 'arch', 'serialOrParallel'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
-                'aggregate', 'slowOrFast': 'fast', 'cpuOrgpu': 'cpu',
+                'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
     tags = {x for x in tagsDict.values()}
+    
+    #Define valid_systems as a list of strings of the format
+    #'system:partiion'. Over here, based on the 'arch' 
+    #(i.e,,'cpu', 'gpu', or 'both'), we filter out
+    #the system:partitions from a list named system_partition_list
+    #in setupSystems.py. The convention is for 'arch'='cpu', we
+    #select only those system:partitions that do not contain the string 'gpu' 
+    #in it. Conversely, for 'arch'='gpu', only those system:partitions are
+    #included which contains the string 'gpu'. For 'arch'='both', all the
+    #system:partiions are selected.
+    #NOTE: For any new systems:partition added to the config file, 
+    # they must also be added to the system_partition_in setupSystems.py
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+
+
     # By default ReFrame deletes all the output files generated by the test
     # In case you want to retain any of the files in the output folder of the
     # test, list them in keep_files attribute
@@ -209,23 +261,29 @@ class StdOutTest(rfm.RegressionTest):
         # set the make_opts as defined in the Constructor 
         self.build_system.make_opts = self.make_opts
         ''' Set any compilation flag, configuration, environment variables, etc'''
-        self.build_system.make_opts = self.make_opts
         #NOTE: In most cases, setting the following attribues within a test should be avoided, 
         #it should be set within the config file. 
-        #+ `build_system.cc` string to specify the C compiler
-        #+ `build_system.cflags` list of string to specify the C compiler flags
-        #+ `build_system.cxx` string to specify the C++ compiler
-        #+ `build_system.cxxflags` list of string to specify the C++ compiler flags
-        #+ `build_system.cppflags` list of string to specify the preprocessor flags
-        #+ `build_system.ldflags` list of string to specify the linker flags
-        #+ `build_system.nvcc` string to specify the CUDA compiler
-        #+ `variables` a dictionary to set environment variables. e.g, 
+        #+ `self.build_system.cc` string to specify the C compiler
+	    #+ `self.build_system.cflags` list of string to specify the C compiler flags
+	    #+ `self.build_system.cxx` string to specify the C++ compiler
+	    #+ `self.build_system.cxxflags` list of string to specify the C++ compiler flags
+	    #+ `self.build_system.cppflags` list of string to specify the preprocessor flags
+	    #+ `self.build_system.ldflags` list of string to specify the linker flags
+	    #+ `self.build_system.nvcc` string to specify the CUDA compiler
+        #+ `self.variables` a dictionary to set environment variables. e.g, 
         #  self.variables = {'DFT_EFE_LINKER': '"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"'}
         # Any special configuration that needs to be done externally can be done
         # using the prebuild_cmds attribute 
         # e.g., self.prebuild_cmds = ['./custom_configure -with-mylib']
         # Avoid using it as far as possible, in most cases one can invoke the
         # same configuration through CMake
+    
+    @run_before('run')
+    def set_launcher(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+        
+        self.extra_resources = ss.setResources(self.tagsDict['arch']) 
 
     @sanity_function
     def validate_test(self):
@@ -248,28 +306,5 @@ class StdOutTest(rfm.RegressionTest):
         outParser = parser.Parser.fromFilename(evaluate(self.stdout))
         bmVal = bmParser.extractKeyValues("Values")
         outVal = outParser.extractKeyValues("Values")
-        hasTestPassed, msg = cu.Compare().cmp(bmVal[0], outVal[0])
+        hasTestPassed, norm, msg = cu.Compare().cmp(bmVal[0], outVal[0])
         return sn.assert_true(hasTestPassed, msg=msg)
-
-    @run_after('compile')
-    def set_resources(self):
-        if "parallel" in self.tags:
-            if "cpu" in self.tags:
-                self.extra_resources = {
-                    'cpu': {
-                        'time_limit': '1:00:00',
-                        'num_nodes': '1',
-                        'num_tasks_per_node': '2',
-                        'mem_per_cpu': '5gb'
-                    }
-                }
-            elif "gpu" in self.tags:
-                self.extra_resources = {
-                    'gpu': {
-                        'time_limit': '1:00:00',
-                        'num_nodes': '1',
-                        'num_tasks_per_node': '2',
-                        'gpus_per_node': '1',
-                        'mem_per_cpu': '5gb'
-                    }
-                }
