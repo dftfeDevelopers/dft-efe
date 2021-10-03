@@ -163,20 +163,30 @@ are the mandatory ones that must be specified for each test class.
         + `executable_opts = 'arg1 arg2'` to provide arg1 and arg2 as command line input 
 
 + `tagsDict` (__Required__): A dictionary specifying various attributes to the test.  As a standard convention, we use 5 keys, each of which are allowed certain possible values. These key:value pairs help us filter and run tests matching certain tag(s). The five keys and their their possible values are:
-    1. Key: `'compileOrRun'`. Possible values: `'compile'`, `'run'`. It determines whether the test is a 
-	1. compile only test: A test which only tests the compilation of the test sources, in which case `'compileOrRun': 'compile'`; or
-        2. a run test: A test which compiles and runs the test, in which case (i.e., `'compileOrRun': 'run'`)
-    2. Key: `'unitOrAggregate'`. Possible values: `'unit'`, `'aggregate'`. It determines whether a test is a 
-	1. unit test: It tests only a single function, in which case `'unitOrAggregate': 'unit'`; or
+    1. Key: `'compileOrRun'`. Possible values: `'compile'`, `'run'`. It determines whether the test is a:
+        1. compile only test: A test which only tests the compilation of the test sources, in which case `'compileOrRun': 'compile'`; or
+        2. a run test: A test which compiles and runs the test, in which case (i.e., `'compileOrRun': 'run'`) 
+    2. Key: `'unitOrAggregate'`. Possible values: `'unit'`, `'aggregate'`. It determines whether a test is a:
+    	1. unit test: It tests only a single function, in which case `'unitOrAggregate': 'unit'`; or
         2. aggregate test: It tests a set of functions or a class, in which case `'unitOrAggregate': 'aggregate'`
-    3. Key: `'slowOrFast'`. Possible values: `'slow'`, `'fast'`. It determines whether a test is slow (i.e., it takes more than 30 seconds, in which case `'slowOrFast': 'slow'`) or fast (i.e., it takes less than 30 seconds, in which case `'slowOrFast': 'fast'`).
-    4. Key: `'arch'`: Possible values: `'cpu'`,`'gpu'`, `'both'`. It determines whether the test is to be run on a cpu (in which case ', gpu, or both architectures.  	
-A user should populate the tagsDict with 
-    # the appropriate values for each of the four keys: 'compileOrRun',
-    # 'unitOrAggregate', 'arch', 'serialOrParallel'
-    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+    3. Key: `'slowOrFast'`. Possible values: `'slow'`, `'fast'`. It determines whether a test is: 
+    	1. slow: A test that takes more than 30 seconds, in which case `'slowOrFast': 'slow'`; or 
+    	2. fast: A test that takes less than 30 seconds, in which case `'slowOrFast': 'fast'`)
+    4. Key: `'arch'`: Possible values: `'cpu'`,`'gpu'`, `'both'`. It determines whether the test is to be run on a:
+    	1. cpu: A test that should run only on cpu(s), in which case `'arch':'cpu'`; or
+    	2. gpu: A test that should run only on gpu(s), in which case `'arch':'gpu'`; or
+        3. both: A test that should be run on both cpu(s) and gpu(s), in which case `'arch':'both'`
+    5. Key: `serialOrParallel`. Possible values: `'serial'`, `'parallel'`. It determines whether the test is to be run on:
+	1. serial: A serial test which does not require any dependence on mpi or openmp, in which case `'serialOrParallel':'serial`; or
+	2. parallel: A parallel test which depends on mpi or openmp, in which case `serialOrParallel: 'parallel'` 	
+
+A user should populate the tagsDict with  the appropriate values for each of the five keys.
+Example: 
+```
+tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
+```
 + `build_system` (Optional): A string to define the build system.
    Example: 
     + `build_system = 'CMake'` to indicate CMake based build 
