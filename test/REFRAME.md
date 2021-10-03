@@ -180,13 +180,13 @@ are the mandatory ones that must be specified for each test class.
 	1. serial: A serial test which does not require any dependence on mpi or openmp, in which case `'serialOrParallel':'serial`; or
 	2. parallel: A parallel test which depends on mpi or openmp, in which case `serialOrParallel: 'parallel'` 	
 
-A user should populate the tagsDict with  the appropriate values for each of the five keys.
-Example: 
-```
-tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+    A user should populate the tagsDict with  the appropriate values for each of the five keys.
+    Example: 
+    ```
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
-```
+    ```
 + `build_system` (Optional): A string to define the build system.
    Example: 
     + `build_system = 'CMake'` to indicate CMake based build 
