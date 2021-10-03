@@ -162,13 +162,13 @@ are the mandatory ones that must be specified for each test class.
     + `executable_opts = '> outfile'` to redirect the `stdout` to outfile
         + `executable_opts = 'arg1 arg2'` to provide arg1 and arg2 as command line input 
 
-+ `tagsDict` (__Required__): A dictionary specifying various attributes to the test.  As a standard convention, we use 5 keys, each of which are allowed certain possible values. These key:value pairs are then use to elp us runonly tests matching certain tag(s). The four keys and their their possible values are:
++ `tagsDict` (__Required__): A dictionary specifying various attributes to the test.  As a standard convention, we use 5 keys, each of which are allowed certain possible values. These key:value pairs help us filter and run tests matching certain tag(s). The five keys and their their possible values are:
     1. Key: `'compileOrRun'`. Possible values: `'compile'`, `'run'`. It determines whether the test is a 
-	a. compile only test: A test which only tests the compilation of the test sources, in which case `'compileOrRun': 'compile'`; or
-        b. a run test: A test which compiles and runs the test, in which case (i.e., `'compileOrRun': 'run'`)
+	1. compile only test: A test which only tests the compilation of the test sources, in which case `'compileOrRun': 'compile'`; or
+        2. a run test: A test which compiles and runs the test, in which case (i.e., `'compileOrRun': 'run'`)
     2. Key: `'unitOrAggregate'`. Possible values: `'unit'`, `'aggregate'`. It determines whether a test is a 
-	a. unit test: It tests only a single function, in which case `'unitOrAggregate': 'unit'`; or
-        b. aggregate test: It tests a set of functions or a class, in which case `'unitOrAggregate': 'aggregate'`
+	1. unit test: It tests only a single function, in which case `'unitOrAggregate': 'unit'`; or
+        2. aggregate test: It tests a set of functions or a class, in which case `'unitOrAggregate': 'aggregate'`
     3. Key: `'slowOrFast'`. Possible values: `'slow'`, `'fast'`. It determines whether a test is slow (i.e., it takes more than 30 seconds, in which case `'slowOrFast': 'slow'`) or fast (i.e., it takes less than 30 seconds, in which case `'slowOrFast': 'fast'`).
     4. Key: `'arch'`: Possible values: `'cpu'`,`'gpu'`, `'both'`. It determines whether the test is to be run on a cpu (in which case ', gpu, or both architectures.  	
 A user should populate the tagsDict with 
