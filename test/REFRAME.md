@@ -13,8 +13,8 @@ https://reframe-hpc.readthedocs.io/en/stable/
 + [ReFrame Regression Test Basics](#reframeregression)
   + [Constructor part](#constructor)
   + [Compiler setting part](#compiler)
-  + [Test Validation part](#testvalidation)
   + [Resource allocation part](#resourceallocation)
+  + [Test Validation part](#testvalidation)
 
 [Test Utils](#testutils)
 
@@ -132,39 +132,60 @@ split into four parts:
 + A [compiler flag setter](#compiler) to set any compilation flag or environment   
 + A [test validation part](#testvalidation) which decides whether the test passed or failed and define a message to display if the 
   test fails
-+ An [optional resource allocation part](#resourceallocation) (useful when running in parallel or requesting access via a queueing system)
++ A [resource allocation part](#resourceallocation) which sets the resources needed by the test and the launcher options via a queueing system
 
 [back to top](#contents)
 
 ### Constructor part <a name="constructor"></a>
-The following are the usual attributes that one requires to set in each test class. The ones marked as __required__ 
+The following are the usual attributes that one requires to set in each test class. The ones marked as __Required__ 
 are the mandatory ones that must be specified for each test class.
-+ `valid_systems` list of 'system:partition' on which to run the test (__required__)  
++ `descr` (Optional): A string containing description of the test 
++ `valid_systems` (__Required__): A list of 'system:partition' on which to run the test  
    Examples:  
     + `valid_systems = ['*']` to specify all the system:paritions defined in the config file
     + `valid_systems = ['greatlakes:*']` to specify all the partitions for the greatlakes system
     + `valid_systems = ['greatlakes:compute', 'cori:login']` to specify greatlakes compute parition 
        and cori login parition 
-    + You can provide any regular expression (regex) to filter the system:partition from the config file  
-   __Recommended__: `valid_systems = ['*']` 
-+ `valid_prog_environs` list of programming environment to run the test in (__required__)  
+   __Recommended__: `valid_systems = ['*']` in which case it selects all the systems:partitions defined in the config file 
++ `valid_prog_environs` (__Required__): A list of programming environment on which to run the test 
   Examples:
     + `valid_prog_environs = ['*']` to specify all the programming environments defined in the config file
     + `valid_prog_environs = ['gnu', 'intel']`  to use both gnu and intel environments, as defined in the config file  
   __Recommended__: `valid_prog_environs = ['*']`
-    + `sourcepath` string containing path to source file. Use it when you have a single source file to test 
-      (__required__ if `sourcesdir` is not set)  
+    + `sourcepath`: A string containing path to source file. Use it when you have a single source file to test 
+      (__Required__ if `sourcesdir` is not set)  
        Examples: `source_path = 'test.cc'`
-+ `sourcesdir` string containing the path to the source directory. Use it when you have multiple source files (__required__ if `sourcepath` is not set) 
-+ `executable_opts` string containing command line arguments to the test executable (optional)  
++ `sourcesdir`: A string containing the path to the source directory. Use it when you have multiple source files 
+   (__Required__ if `sourcepath` is not set) 
++ `executable_opts` (Optional) : A string containing the command line arguments to the test executable
   Examples:
     + `executable_opts = '> outfile'` to redirect the `stdout` to outfile
         + `executable_opts = 'arg1 arg2'` to provide arg1 and arg2 as command line input 
 
-+ `descr` description of the test (optional)
-+ `build_system` string to define the build system (optional).   
++ `tagsDict` (__Required__): A dictionary specifying various attributes to the test.  As a standard convention, we use 5 keys, each of which are allowed certain possible values. These key:value pairs are then use to elp us runonly tests matching certain tag(s). The four keys and their their possible values are:
+    1. Key: `'compileOrRun'`. Possible values: `'compile'`, `'run'`. It determines whether the test is a 
+	a. compile only test: A test which only tests the compilation of the test sources, in which case `'compileOrRun': 'compile'`; or
+        b. a run test: A test which compiles and runs the test, in which case (i.e., `'compileOrRun': 'run'`)
+    2. Key: `'unitOrAggregate'`. Possible values: `'unit'`, `'aggregate'`. It determines whether a test is a 
+	a. unit test: It tests only a single function, in which case `'unitOrAggregate': 'unit'`; or
+        b. aggregate test: It tests a set of functions or a class, in which case `'unitOrAggregate': 'aggregate'`
+    3. Key: `'slowOrFast'`. Possible values: `'slow'`, `'fast'`. It determines whether a test is slow (i.e., it takes more than 30 seconds, in which case `'slowOrFast': 'slow'`) or fast (i.e., it takes less than 30 seconds, in which case `'slowOrFast': 'fast'`).
+    4. Key: `'arch'`: Possible values: `'cpu'`,`'gpu'`, `'both'`. It determines whether the test is to be run on a cpu (in which case ', gpu, or both architectures.  	
+A user should populate the tagsDict with 
+    # the appropriate values for each of the four keys: 'compileOrRun',
+    # 'unitOrAggregate', 'arch', 'serialOrParallel'
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+                'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'serial'}
++ `build_system` (Optional): A string to define the build system.
    Example: 
     + `build_system = 'CMake'` to indicate CMake based build 
+   (__Recommended__): build_system = 'CMake'. We will be using a CMake build system for most of our tests
+    
++ `make_opts` (Optional): A list of string which provides additional options to be used along with `make` command while compiling a test. 
+    The most common use case is when the CMakeLists defines multiple targets to be built, but the test requires only one or more of them to be built. 
+    By default it will build all the targets specified in the CMakeLists. In that case you can define the selected list of targets to be built through make_opts, i.e.,
+    make_opts = ['target-name']
 
 + `extra_resources` a dictionary setting resources that should be allocated to the test by the scheduler. 
    Typically, the resources are defined in the configuration of a system partition, e.g,  
