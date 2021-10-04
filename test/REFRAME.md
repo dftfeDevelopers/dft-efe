@@ -442,6 +442,7 @@ The setupSystems.py provides two functions to help delegate the task of selectin
     #SBATCH --num_tasks_per_node=2
     #SBATCH --mem=3GB
     #SBATCH --gres=gpu:2
+  ```
   However, providing all these details in the test.py might make the body of the test too cluttered. Therefore, we delegate the task of resource allocation to setResources() which creates 
 
 [back to top](#contents)
