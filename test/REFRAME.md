@@ -365,7 +365,8 @@ _Default_: "inf"
 
 ## setupSystems.py <a name="setupsystems"></a>
 The setupSystems.py provides two functions to help delegate the task of selecting the valid systems to run the test on and the allocation of resources for the test. 
-+ ```python
++ ```getValidSystems``` function:
+  ```python
     def getValidSystems(key):
   ```
   where the function parameters and return values are:
@@ -374,10 +375,12 @@ The setupSystems.py provides two functions to help delegate the task of selectin
    
   The function fetches all the system:partition pairs from the config file (or the command line argument) and then filters them based on the `key`. The convention is for `key='cpu'`, we select only those system:partitions that do not contain the string 'gpu' in it. Conversely, for `key = 'gpu'`, only those system:partitions are included which contains the string 'gpu'. For `key='both'`, all the system:partiions are selected.
 
-+```python
-def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_tasks_per_node = 1, mem_per_cpu =
++ The ```setResources``` function:
+
+  ```python
+  def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_tasks_per_node = 1, mem_per_cpu =
                  '2gb', gpus_per_node = 1):
- ``` 
+   ``` 
   where the function parameters and return values are:
   + `archTag` string that can be 'cpu', 'gpu', or 'both'. It defines the architecture type on which the test is supposed to be run (__Default__: 'both')
   + `time_limit`: string of the format "hrs:mins:secs". It defines the maximum wall time for the test. (__Default__: "00:02:00")
