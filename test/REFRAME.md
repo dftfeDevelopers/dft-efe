@@ -409,25 +409,26 @@ The setupSystems.py provides two functions to help delegate the task of selectin
           '--mem-per-cpu={mem_per_cpu}']
         }
       ]
-  ```
-  In that case, the setupResources returns the following dictionary:
-  ```python
-  return {
-    'cpu': {'time_limit': time_limit,
+    ```
+    
+    In that case, the setupResources returns the following dictionary:
+    ```python
+    return {
+      'cpu': {'time_limit': time_limit,
             'num_nodes': num_nodes,
             'num_tasks_per_node': num_tasks_per_node,
             'mem_per_cpu': mem_per_cpu
            },
-    'gpu': {
+      'gpu': {
             'time_limit': time_limit,
             'num_nodes': num_nodes,
             'num_tasks_per_node': num_tasks_per_node,
             'mem_per_cpu': mem_per_cpu,
             'gpus_per_node': gpus_per_node
     	   }
-   }
-  ```
-  where `time_limit`, `num_nodes`, `num_tasks_per_node`, `mem_per_cpu`, and `gpus_per_node` are defined through the input parameters to the function. 
+     }
+    ```
+    where `time_limit`, `num_nodes`, `num_tasks_per_node`, `mem_per_cpu`, and `gpus_per_node` are defined through the input parameters to the function. 
 
   The setResources() function is typically called from the ```set_launcher_and_resources()``` function of a test (see the [resource allocation part of test](#resourceallocation)). For example,
   ```python
