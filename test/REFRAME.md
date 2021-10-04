@@ -126,8 +126,12 @@ We suggest using the default setting in `./config/mysettings.py`.
 [back to top](#contents)
 
 ## ReFrame Regression Test Basics <a name="reframeregression"></a>
-Although ReFrame provides many features, we will be using a limited number of features. Each test must be a python class. Typically, a test class should be
-split into four parts: 
+Although ReFrame provides many features, we will be using a limited number of features. Each test must be:
+1. a python class,
+2. be decorated with `@reframe.simple_test`, and
+3. inherit from `reframe.RegressionTest` or `reframe.CompileOnlyRegressionTest`, for run or compile only tests, respectively,  
+
+Typically, a test class should be split into four parts: 
 + A [constructor part](#constructor) which sets the important attributes (source dir, build system type, etc)
 + A [compiler flag setter](#compiler) to set any compilation flag or environment   
 + A [test validation part](#testvalidation) which decides whether the test passed or failed and define a message to display if the 
@@ -189,8 +193,8 @@ are the mandatory ones that must be specified for each test class.
     ```
 + `build_system` (Optional): A string to define the build system.
    Example: 
-    + `build_system = 'CMake'` to indicate CMake based build 
-   (__Recommended__): build_system = 'CMake'. We will be using a CMake build system for most of our tests
+    + `build_system = 'CMake'` to indicate CMake based build
+    (__Recommended__): build_system = 'CMake'. We will be using a CMake build system for most of our tests
     
 + `make_opts` (Optional): A list of string which provides additional options to be used along with `make` command while compiling a test. 
     The most common use case is when the CMakeLists defines multiple targets to be built, but the test requires only one or more of them to be built. 
@@ -243,16 +247,15 @@ For each test, one might need to set certain compilation and environment flags. 
   def set_compiler_flags(self):
   ```
 The ```@run_before('compile')``` ReFrame decorator marks the ```set_compiler_flags(self)``` function as 
-something that 
-should run prior to any compilation. The following are commonly used attributes that one might need to set in this function
-+ `self.build_system.make_opts` list of strings to be passed as command line options to cmake (optional)
-  Typically, this should be used to specify any target for cmake.For example, 
+something that should run prior to any compilation. The following are commonly used attributes that one might need to set in this function
++ `self.build_system.make_opts` (Optional): list of strings to be passed as command line options to cmake 
+  Typically, this should be used to specify any target for cmake. For example, 
   if the CMakeLists contains various targets and we want to test only one of them, 
   we can provide the target here. e.g., `self.build_system.make_opts` = ['all'] 
-+ There are several `build_system` attributes (e.e., compiler type, compiler flags, linker flags, etc). 
-  One can set these attributes within the ReFrame test class. However, in most circumstances, _one should avoid_, 
-  setting these attributes within a ReFrame test class. As far as possible, these attribues should be set globally for
-  all tests within the config file. Important `build_system` attributes are:
+  __Recommended__: We define the options in the constructor of the class using the `make_opts` variable (see `make_opts` in the [Constructor part of a test](#constructor)). Subsequently, 
+  we assign `self.build_system.make_opts=self.make_opts`   
++ `build_system` attributes (Optional): There are several build system attributes (e.g., compiler type, compiler flags, linker flags, etc) that one can set within the ReFrame test class. However, in most circumstances, _one should avoid_ setting these attributes within a ReFrame test class. As far as possible, these attribues should be set globally for  all tests within the config file. 
+  Important `build_system` attributes are:
 	+ `self.build_system.cc` string to specify the C compiler
 	+ `self.build_system.cflags` list of string to specify the C compiler flags
 	+ `self.build_system.cxx` string to specify the C++ compiler
@@ -261,28 +264,27 @@ should run prior to any compilation. The following are commonly used attributes 
 	+ `self.build_system.ldflags` list of string to specify the linker flags
 	+ `self.build_system.nvcc` string to specify the CUDA compiler
 
-
-+ `current_system` an object containing info of the the system the regression test is currently executing on
++ `current_system`: An object containing info of the the system the regression test is currently executing on
    Usage:
-	+ `current_system.descr` a string containing the description of the system (usually provided in the config file)
-	+ `current_system.name` a string containing the name of the system
-	+ `current_system.paritions` a list of string containing the partitions in the system
+	+ `self.current_system.descr` a string containing the description of the system (usually provided in the config file)
+	+ `self.current_system.name` a string containing the name of the system
+	+ `self.current_system.paritions` a list of string containing the partitions in the system
 	+ More attributes on https://reframe-hpc.readthedocs.io/en/stable/regression\_test\_api.html#reframe.core.systems.System
-+ `current_partition` an object containing info of the system partition the regression test is currently executing on (usually provided in the config file)
++ `current_partition`: An object containing info of the system partition the regression test is currently executing on (usually provided in the config file)
   Usage:
 	+ `curren_partition.name` a string containing the name of the partition
 	+ `current_partition.descr` a string containing the description of the parition
 	+ `current_partition.access` list of string containing scheduler options for accessing this system partition 
 	+ `current_partition.environs` list of string containing the programming environments associated with this system partition
 	+ Other attributes on https://reframe-hpc.readthedocs.io/en/stable/regression\_test\_api.html#reframe.core.systems.SystemPartition
-+ `current_environ` an object containing info of the programming environment that the regression test is currently executing with (usually provided in the config file)
++ `current_environ`: An object containing info of the programming environment that the regression test is currently executing with (usually provided in the config file)
    Usage:
-	+ `current_environ.cc` string containing the C compiler
-	+ `current_environ.cflags` list of string containing C compiler flags
-	+ `current_environ.cxx` string containing the C++ compiler
-	+ `current_environ.cxxflags` list of string containing C++ compiler flags
-	+ `current_environ.cppflags` list of string containing preprocessor flags
-	+ `current_environ.ldflags` list of string containing linker flags
+	+ `self.current_environ.cc` string containing the C compiler
+	+ `self.current_environ.cflags` list of string containing C compiler flags
+	+ `self.current_environ.cxx` string containing the C++ compiler
+	+ `self.current_environ.cxxflags` list of string containing C++ compiler flags
+	+ `self.current_environ.cppflags` list of string containing preprocessor flags
+	+ `self.current_environ.ldflags` list of string containing linker flags
 
 [back to top](#contents)
 
@@ -297,15 +299,14 @@ following member function
     ...
     return reframe.utility.sanity.assert_true(hasTestPassed, msg) 
   ```
-The developer must assign `hasTestPassed` to True if the test passed, or else assign it to False. Additionally, the developer
-must assign a custom message to the variable `msg` that can be displayed when the test fails. 
+The developer __must__ assign `hasTestPassed` to True if the test passed, or else assign it to False. Additionally, the developer __must__ assign a custom message to the variable `msg` that can be displayed when the test fails. 
 
-__NOTE__: In order to help in parsing an output from test and comparing it with benchmark values, we have provided two files: Parser.py and CompareUtil.py (see below for details) that can be imported in the ReFrame test.py file. How to import?
+__NOTE__: In order to help in parsing an output from test and comparing it with benchmark values, we have provided two files: Parser.py and CompareUtil.py that can be imported in the ReFrame test.py file. How to import?
   ```python
   parser = rfm.utility.import_module_from_file("Parser.py")
   cu = rfm.utility.import_module_from_file("CompareUtil.py")
   ```
-The above loads the Parser.py and CompareUtil.py from the directory containing the test.py and aliases them to ```parser``` and ```cu```, respectively. 
+The above loads the Parser.py and CompareUtil.py from the directory containing the test.py and aliases them to ```parser``` and ```cu```, respectively. See below the [Test Utils](#testutils) section for more details about the Parser.py and CompareUtil.py.
 
 [back to top](#contents)
 
@@ -315,8 +316,9 @@ The above loads the Parser.py and CompareUtil.py from the directory containing t
 
 # Test Utils <a name="testutils"></a>
 In order to help in parsing the output of a test and comparing it against some benchmark values, we have provided two util files:
-+ [Parser.py](#parser)
-+ [CompareUtil.py](#compareutil)
++ [Parser.py](#parser): To parse the output of a test or any file/string
++ [CompareUtil.py](#compareutil): To compare two list of values based on user-defined tolerance and vector-norm
++ [setupSystems.py](#setupsystems): To filter valid system:partition pairs and allocate resources based on user inputs.
 
 [back to top](#contents)
 
@@ -358,8 +360,86 @@ The function arguments are:
 + `cmpType`: [Input] String defining the type of comparison (absolute or  relative). The valid values are: 'absolute', 'relative'.
 _Default_: 'absolute'
 + `normType`: [Input] String containing the vector-norm to apply to perform the comparison between the two lists. The Valid values are: "L1", "L2", "inf", "point". The normType="point" performs element wise comparison of the two lists and checks if the maximum absolute difference for any element is below the `tol`.
-_Default_: "L2"
-+ `return` Returns a pair `areComparable, msg` where `areComparable` is True when val1 and val2 are deemed the same (based on the `tol`, `cmpType`, and `normType` provided) and `msg` is a message that contains useful info when the two lists are not comparable
+_Default_: "inf"
++ `return` Returns a tuple of `areComparable, norm, msg` where `areComparable` is True when val1 and val2 are deemed the same (based on the `tol`, `cmpType`, and `normType` provided), `norm` is the difference between val1 and val2 based on the `normType`, and `msg` is a message that contains useful info when the two lists are not comparable
+
+## setupSystems.py <a name="setupsystems"></a>
+The setupSystems.py provides two functions to help delegate the task of selecting the valid systems to run the test on and the allocation of resources for the test. 
++ ```python
+    def getValidSystems(key):
+  ```
+  where the function parameters and return values are:
+  + `key`: A string containing either of the following values: `'cpu'`, `'gpu'`, or `'both'`. It defines the architecture type on which the test is supposed to be run.
+  + `return`: A list of string of the format 'system:partition' based on the `key`  
+   
+  The function fetches all the system:partition pairs from the config file (or the command line argument) and then filters them based on the `key`. The convention is for `key='cpu'`, we select only those system:partitions that do not contain the string 'gpu' in it. Conversely, for `key = 'gpu'`, only those system:partitions are included which contains the string 'gpu'. For `key='both'`, all the system:partiions are selected.
+
++```python
+def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_tasks_per_node = 1, mem_per_cpu =
+                 '2gb', gpus_per_node = 1):
+ ``` 
+  where the function parameters and return values are:
+  + `archTag` string that can be 'cpu', 'gpu', or 'both'. It defines the architecture type on which the test is supposed to be run (__Default__: 'both')
+  + `time_limit`: string of the format "hrs:mins:secs". It defines the maximum wall time for the test. (__Default__: "00:02:00")
+  + `num_nodes`: integer for number of nodes to allocate (__Default__: 1)
+  + `num_tasks_per_node`: integer for number of tasks to use per node (__Default__: 1)
+  +  `mem_per_cpu`: string of the format "<number>mb" or "<number>gb" to define the memory to allocate per cpu (__Default__: "2gb")
+  +  `gpus_per_node`: integer for number of gpus to allocate per node. This is used only when the `archTag='cpu'` or `archTag='both'`. (Default: 1) 
+  + `return`: A dictionary containing the key:value pairs required by the `'resources'` list in the config file. To elaborate, `'resources'` list is defined in the config file for a system partition, e.g,  
+    ```python
+      'resources': 
+       [{
+	  'name': 'cpu',
+          'options': ['--partition=standard',
+          '--time={time_limit}',
+          '--nodes={num_nodes}',
+          '--ntasks-per-node={num_tasks_per_node}',
+          '--mem-per-cpu={mem_per_cpu}']
+        },
+        {
+          'name': 'gpu',
+          'options': ['--partition=gpu',
+          '--time={time_limit}',
+          '--nodes={num_nodes}',
+          '--gpus-per-node={gpus_per_node}'
+          '--ntasks-per-node={num_tasks_per_node}',
+          '--mem-per-cpu={mem_per_cpu}']
+        }
+      ]
+  ```
+  In that case, the setupResources returns the following dictionary:
+  ```python
+  return {
+    'cpu': {'time_limit': time_limit,
+            'num_nodes': num_nodes,
+            'num_tasks_per_node': num_tasks_per_node,
+            'mem_per_cpu': mem_per_cpu
+           },
+    'gpu': {
+            'time_limit': time_limit,
+            'num_nodes': num_nodes,
+            'num_tasks_per_node': num_tasks_per_node,
+            'mem_per_cpu': mem_per_cpu,
+            'gpus_per_node': gpus_per_node
+    	   }
+   }
+  ```
+  where `time_limit`, `num_nodes`, `num_tasks_per_node`, `mem_per_cpu`, and `gpus_per_node` are defined through the input parameters to the function. 
+
+  The setResources() function is typically called from the ```set_launcher_and_resources()``` function of a test (see the [resource allocation part of test](#resourceallocation)). For example,
+  ```python
+    @run_before('run')
+      def set_launcher_and_resources(self):
+        self.extra_resources = ss.setResources(archTag = 'gpu', time_limit = "02:00:00", num_nodes = 1, num_tasks_per_node = 2, mem_per_cpu = "3gb", gpus_per_node = 2)
+  ```
+  where ```ss = rfm.utility.import_module_from_file("setupSystems.py")``` (i.e., an alias for ```setupSystems```). This setup will generate a submission script based on the backend scheduling system. For `slurm`  it will generate 
+    ```shell
+    #SBATCH --time=02:00:00
+    #SBATCH --nodes=1
+    #SBATCH --num_tasks_per_node=2
+    #SBATCH --mem=3GB
+    #SBATCH --gres=gpu:2
+  However, providing all these details in the test.py might make the body of the test too cluttered. Therefore, we delegate the task of resource allocation to setResources() which creates 
 
 [back to top](#contents)
 
