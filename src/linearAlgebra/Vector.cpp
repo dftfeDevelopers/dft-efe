@@ -49,11 +49,11 @@ namespace dftefe
   template class Vector<float, MemorySpace::HOST>;
   template class Vector<std::complex<double>, MemorySpace::HOST>;
   template class Vector<std::complex<float>, MemorySpace::HOST>;
-#ifdef DFTEFE_WITH_CUDA
-  template class Vector<double, MemorySpace::DEVICE_CUDA>;
-  template class Vector<float, MemorySpace::DEVICE_CUDA>;
-  template class Vector<std::complex<double>, MemorySpace::DEVICE_CUDA>;
-  template class Vector<std::complex<float>, MemorySpace::DEVICE_CUDA>;
+#ifdef DFTEFE_WITH_DEVICE
+  template class Vector<double, MemorySpace::DEVICE>;
+  template class Vector<float, MemorySpace::DEVICE>;
+  template class Vector<std::complex<double>, MemorySpace::DEVICE>;
+  template class Vector<std::complex<float>, MemorySpace::DEVICE>;
 #endif
 
 

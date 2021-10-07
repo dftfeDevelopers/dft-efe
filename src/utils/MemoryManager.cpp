@@ -22,25 +22,29 @@ namespace dftefe
       delete[] ptr;
   }
 
-#ifdef DFTEFE_WITH_CUDA
+#ifdef DFTEFE_WITH_DEVICE
   template <typename NumType>
   NumType *
-  MemoryManager<NumType, MemorySpace::DEVICE_CUDA>::allocate(
+  MemoryManager<NumType, MemorySpace::DEVICE>::allocate(
     const size_type size)
   {
     NumType *tempPtr;
+#ifdef DFTEFE_WITH_DEVICE_CUDA    
     cudaMalloc((void **)&tempPtr, size * sizeof(NumType));
     cudaMemset(tempPtr, 0, size * sizeof(NumType));
+#endif    
 
     return tempPtr;
   }
 
   template <typename NumType>
   void
-  MemoryManager<NumType, MemorySpace::DEVICE_CUDA>::deallocate(NumType *ptr)
+  MemoryManager<NumType, MemorySpace::DEVICE>::deallocate(NumType *ptr)
   {
+#ifdef DFTEFE_WITH_DEVICE_CUDA     
     if (ptr != nullptr)
       cudaFree(ptr);
+#endif      
   }
 #endif
 
@@ -52,11 +56,11 @@ namespace dftefe
   template class MemoryManager<std::complex<double>, MemorySpace::HOST>;
   template class MemoryManager<std::complex<float>, MemorySpace::HOST>;
 
-#ifdef DFTEFE_WITH_CUDA
-  template class MemoryManager<double, MemorySpace::DEVICE_CUDA>;
-  template class MemoryManager<float, MemorySpace::DEVICE_CUDA>;
-  template class MemoryManager<std::complex<double>, MemorySpace::DEVICE_CUDA>;
-  template class MemoryManager<std::complex<float>, MemorySpace::DEVICE_CUDA>;
+#ifdef DFTEFE_WITH_DEVICE
+  template class MemoryManager<double, MemorySpace::DEVICE>;
+  template class MemoryManager<float, MemorySpace::DEVICE>;
+  template class MemoryManager<std::complex<double>, MemorySpace::DEVICE>;
+  template class MemoryManager<std::complex<float>, MemorySpace::DEVICE>;
 #endif
 
 } // namespace dftefe

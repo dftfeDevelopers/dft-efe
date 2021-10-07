@@ -16,3 +16,7 @@ if(ENABLE_CUDA)
     find_package(CUDAToolkit REQUIRED)
     target_link_libraries(dft-efe-utils PRIVATE CUDA::cudart)
 endif()
+
+IF (ENABLE_CUDA)
+    set_source_files_properties(${DFT-EFE-UTILS-SOURCES} PROPERTIES LANGUAGE CUDA)
+ENDIF()

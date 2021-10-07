@@ -26,5 +26,8 @@ if(ENABLE_CUDA)
    target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
 endif()
 
+IF (ENABLE_CUDA)
+    set_source_files_properties(${DFT-EFE-LINALG-SOURCES} PROPERTIES LANGUAGE CUDA)
+ENDIF()
 
 target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
