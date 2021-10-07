@@ -1,5 +1,3 @@
-#ifdef DFTEFE_WITH_DEVICE
-
 #include "DeviceUtils.h"
 #include "DeviceAPICalls.h"
 #include <stdexcept>
@@ -21,5 +19,3 @@ namespace dftefe {
     }
 
 } // end of namespace dftefe
-
-#endif

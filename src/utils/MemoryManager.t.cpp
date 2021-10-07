@@ -1,8 +1,5 @@
-//#include "MemoryManager.h"
-
-#include <cstring>
-#include <complex>
 #include "DeviceAPICalls.h"
+#include <cstring>
 
 
 namespace dftefe {
@@ -20,8 +17,6 @@ namespace dftefe {
         if (ptr != nullptr)
             delete[] ptr;
     }
-
-//#ifdef DFTEFE_WITH_DEVICE_CUDA
 
     template<typename NumType>
     NumType *
@@ -41,7 +36,5 @@ namespace dftefe {
             deviceFree(ptr);
         }
     }
-
-//#endif
 
 } // namespace dftefe
