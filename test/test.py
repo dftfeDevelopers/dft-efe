@@ -3,9 +3,9 @@ import reframe.utility.sanity as sn
 from reframe.utility.sanity import evaluate
 from reframe.core.backends import getlauncher
 #import CompareUtil as cu
-parser = rfm.utility.import_module_from_file("parser.py")
-cu = rfm.utility.import_module_from_file("compareUtil.py")
-ss = rfm.utility.import_module_from_file("setupSystems.py")
+parser = rfm.utility.import_module_from_file("Parser.py")
+cu = rfm.utility.import_module_from_file("CompareUtil.py")
+ss = rfm.utility.import_module_from_file("SetupSystems.py")
 """
 Types of tags
 --------------

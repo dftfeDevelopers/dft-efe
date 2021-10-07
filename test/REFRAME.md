@@ -44,13 +44,13 @@ Under the test folder, execute `reframe -C ./config/mysettings.py -c ./test.py -
 [back to top](#contents)
 
 ## Config <a name="config"></a>
-While there are multiple ways to set the configuration file, we stick to the command in [How to run](#howtorun): 
-define a big variable in a python file called `mysettings.py` and stored in `${PROJECT_HOME}/test/config`. In this 
+While there are multiple ways to set the configuration file, stick to the command in [How to run](#howtorun) and 
+define a big list named `site_configuration` in a python file called `mysettings.py` in `${PROJECT_HOME}/test/config`. In this 
 instruction, useful features for testing DFT-EFE is introduced. A more elaborative tutorial can be found 
 [here](https://reframe-hpc.readthedocs.io/en/stable/configure.html?highlight=site_configuration#) and a verbose 
 explanation to variable config files can be found [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html). 
 
-The big variable storing the configuration information is split into three parts:
+For our purpose, the `site_configuration` list should contain the following three parts:
 + [`systems`](#systems):
 + [`environments`](#environments): 
 + [`logging`](#logging):
@@ -60,33 +60,104 @@ A minimal example of mysettings.py looks like
 [back to top](#contents)
 
 ### systems <a name="systems"></a>
-`systems` is used to define different machines (local computer, mac, greatlakes, summit, cori), some useful attributes are
-+ `name` (__Required__): the name of the machine (__Required__), e.g, `'name': 'localhost'`, `'name': 'greatlakes'`, etc.
-+ `dscr` (optional): description of the machine (optional)
-+ `hostnames` (__Required__): 
-+ `launcher` (__Required__): 
-+ `modules_system` (optional): The module system on the machine used to manage `module load`, a full list of supported 
-  module system in 
-  ReFrame can be found [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html#.systems[].modules_system).
-+ `partition` (__Required__): 
-    ```python
-    {
-        'name': 'compute',
-        'scheduler': 'slurm',
-        'launcher': 'srun',
-        'access': ['-A vikramg1'],
-        'environs': ['builtin', 'gnu']
-    }
-    ```
-  + `name`(__Required__): the name of the partition/queue 
-  + `scheduler`(__Required__): job scheduler used by the machine, currently support `local`, `oar`, `pbs`, `sge`, `slurm`, 
-    `squeue`, `torque`
+`'systems'` is used to define different machines (local computer, mac, greatlakes, summit, cori), some useful attributes are
++ `'name'` (__Required__): A string containing the name of the machine, e.g., `'name': 'localhost'`, `'name': 'greatlakes'`, etc. 
+  This name is meant for the user to identify the machine through a meaningful name, which can then be used inside the body of a test to select a certain machine. 
+  Internally, ReFrame identifies the machine through the `hostnames` value (see below). To elaborate, one might refer to greatlakes cluster at the University of 
+  Michigan as `'name':'greatlakes'`. However, the actual hostname might be of the form gl-login1.arc-ts.umich.edu for a login node or gl-1234.arc-ts.umich.edu 
+  for a compute node with ID 1234.  
++ `'dscr'` (optional): description of the machine (optional)
++ `'hostnames'` (__Required__): A list of strings (including any regular expressions) that can be used to identify the machine. 
+  Internally, ReFrame fetches the hostname by running the `hostname` Linux command and tallying the output against the list of strings provided
+  in `'hostnames'`.
+  __Recommended__: __Do not__ use a catch-all regular expression like `'hostnames'=['.*']`. Otherwise ReFrame will match the first such system 
+  listed in the config file, which need not be the machine you are working on. Instead, run the `hostname` command from your machine and create a 
+  generic regular expression that would only select that hostname. For example, on greatlakes given that the hostnames are of the form 
+  'gl-login1.arc-ts.umich.edu' or 'gl-1234.arc-ts.umich.edu', one can use `'hostnames'=['gl.*arc-ts.umich.edu']` to select them.
++ `'launcher'` (Optional): A string containing the launcher. For example, `srun`, `mpirun`, or just the local launcher (`./`). 
+  The __standard practice__ we follow is to provide the launcher for a specific partition (see below in `partition`).   
++ `'modules_system'` (Optional): A string specifying the the module system on the machine used to manage `module load`.
+  For example, for Lua based module, use `'module_system'='lmod'`A full list of supported module system in ReFrame can be found [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html#.systems[].modules_system).
++ `'partition'` (__Required__): A dictionary that specifies a partition in the system (machine). For example, a machine can have separate login, compute partitions, 
+  or it can have multiple partitions based on the architecture (cpu, gpu, hybrid partitions, etc.). A system partition in ReFrame is not bound to a real scheduler partition. 
+  It is a virtual partition or separation of the system. The binding to a real scheduler partition happens through the resource allocation options within a partition 
+  (see the `'resources'` attribute below).
+  A minimal example for a partition is given below 
+  ```python
+  'partition' = {
+    'name': 'compute',
+    'scheduler': 'slurm',
+    'launcher': 'srun',
+    'access': ['-A vikramg1'],
+    'environs': ['builtin', 'gnu']
+    'resources': 
+      [
+        {
+          'name': 'cpu',
+          'options': ['--partition=standard',
+          '--time={time_limit}',
+          '--nodes={num_nodes}',
+          '--ntasks-per-node={num_tasks_per_node}',
+          '--mem-per-cpu={mem_per_cpu}']
+        }
+      ]
+    
+  }
+  ```
+  The important keys in the partition dictionary are: 
+  + `name`(__Required__): A string containing name of the partition. This name is meant for the user to identify the partition through a meaningful name. 
+    The __standard practice__ we follow is to include the string 'gpu' for any GPU based partition.
+  + `scheduler`(__Required__): job scheduler used by the machine, currently ReFrame supports `local`, `oar`, `pbs`, `sge`, `slurm`, 
+    `squeue`, `torque`.
   + `launcher`(__Required__): ReFrame supports various types of parallel launchers, e.g, `srun`, `local`, `mpirun`, 
     `ibrun`. A full list of ReFrame supported launcher can be found at [here](https://reframe-hpc.readthedocs.io/en/stable/config_reference.html#systems-.partitions-.launcher). 
-  + `access` (optional): A list of job scheduler options to be passed to the job script generator. This is where the 
-    charging account should be specified. e.g, `'access': ['-A vikramg1']`.
-  + `environs: (optional)` The [environments](#environments) defined in [`environments`](#environments) used to be 
-    run on this partition.
+  + `'access'` (Optional): A list of job scheduler options to be passed to the job script generator. This is where the charging account should be specified.  
+     For example, `'access': ['-A vikramg1']`. If you are running the test on a cluster, it is very likely that you will need to set the access to able to launch any job.
+  + `'environs': (Optional)` A list of strings defining the programming environments on which the test must be run. The actual configuration of these environments are defined in the 
+    `environments` section (see [environments](#environments))
+  + `'resources':` (Optional) A list of dictionaries which specifies the resource allocation options (specific to a queueing system like slurm, pbs). Additionally, 
+    it can provide any placeholders that can be specified in the test file. For example, for Slurm, we can define two separate dictionaries named 'cpu' and 'gpu' 
+    each with different resource allocation options,
+    ```python
+      'resources': 
+       [{
+	  'name': 'cpu',
+          'options': ['--partition=standard',
+          '--time={time_limit}',
+          '--nodes={num_nodes}',
+          '--ntasks-per-node={num_tasks_per_node}',
+          '--mem-per-cpu={mem_per_cpu}']
+        },
+        {
+          'name': 'gpu',
+          'options': ['--partition=gpu',
+          '--time={time_limit}',
+          '--nodes={num_nodes}',
+          '--gpus-per-node={gpus_per_node}'
+          '--ntasks-per-node={num_tasks_per_node}',
+          '--mem-per-cpu={mem_per_cpu}']
+        }
+      ]
+    ```
+    In that case, the a test file can specify the resource options using the `extra_resources` attribute as follows: 
+    ```python
+    self.extra_resources{
+      'cpu': {'time_limit': time_limit,
+            'num_nodes': num_nodes,
+            'num_tasks_per_node': num_tasks_per_node,
+            'mem_per_cpu': mem_per_cpu
+           },
+      'gpu': {
+            'time_limit': time_limit,
+            'num_nodes': num_nodes,
+            'num_tasks_per_node': num_tasks_per_node,
+            'mem_per_cpu': mem_per_cpu,
+            'gpus_per_node': gpus_per_node
+    	   }
+     }
+    ```
+    In the above, the `'name'` defined in the `'resources'` is for the user to identify the resources. The queueing system only relies on the `--partition` options to decide the cpu or gpu resources.  
+    
 
 [back to top](#contents)
 
@@ -108,7 +179,7 @@ Some useful attributes and an example is provided for reference.
 + `name` (__Required__): the user defined name of the environment.
 + `modules` (optional): modules to be loaded from `module load`. The modules will be loaded using the module 
   management system specified by `modules_system` attribute in [`systems`](#systems).
-+ `variables` (optional): the environmental variables can be set here for `cmake` and compilation.
++ `variables` (Optional): the environmental variables can be set here for `cmake` and compilation. 
 + `cc` `cxx` `ftn` (optional): Specify the compilers used to compile the test for C, C++, or Fortran respectively.   
   _Default_: `cc`, `CC`, `ftn`
 + `target_systems` (optional): Specify which systems set in `systems` are allowed to run the test using this 
@@ -363,7 +434,7 @@ _Default_: 'absolute'
 _Default_: "inf"
 + `return` Returns a tuple of `areComparable, norm, msg` where `areComparable` is True when val1 and val2 are deemed the same (based on the `tol`, `cmpType`, and `normType` provided), `norm` is the difference between val1 and val2 based on the `normType`, and `msg` is a message that contains useful info when the two lists are not comparable
 
-## setupSystems.py <a name="setupsystems"></a>
+## SetupSystems.py <a name="setupsystems"></a>
 The setupSystems.py provides two functions to help delegate the task of selecting the valid systems to run the test on and the allocation of resources for the test. 
 + ```getValidSystems``` function:
   ```python
