@@ -1,12 +1,12 @@
-#ifndef dftefeCUDAUtils_h
-#define dftefeCUDAUtils_h
+#ifndef dftefeDeviceUtils_h
+#define dftefeDeviceUtils_h
 
 
-#ifdef DFTEFE_WITH_CUDA
+#ifdef DFTEFE_WITH_DEVICE
 
 namespace dftefe
 {
-  class CUDAUtils
+  class DeviceUtils
   {
   public:
     static void
