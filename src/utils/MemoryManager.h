@@ -1,55 +1,54 @@
 #ifndef dftefeMemoryManager_h
 #define dftefeMemoryManager_h
 
-#include "typeConfig.h"
+#include "TypeConfig.h"
 
-namespace dftefe
-{
-  //
-  // MemorySpace
-  //
-  enum class MemorySpace
-  {
-    HOST, //
-    DEVICE_CUDA //
-  };
+namespace dftefe {
+    //
+    // MemorySpace
+    //
+    enum class MemorySpace {
+        HOST, //
+        DEVICE //
+    };
 
-  //
-  // MemoryManager
-  //
-  template <typename NumType, MemorySpace memorySpace>
-  class MemoryManager
-  {
-  public:
-    static NumType *
-    allocate(const size_type size);
-    static void
-    deallocate(NumType *ptr);
-  };
+    //
+    // MemoryManager
+    //
+    template<typename NumType, MemorySpace memorySpace>
+    class MemoryManager {
+    public:
+        static NumType *
+        allocate(const size_type size);
 
-  template <typename NumType>
-  class MemoryManager<NumType, MemorySpace::HOST>
-  {
-  public:
-    static NumType *
-    allocate(const size_type size);
-    static void
-    deallocate(NumType *ptr);
-  };
+        static void
+        deallocate(NumType *ptr);
+    };
 
-#ifdef DFTEFE_WITH_DEVICE_CUDA
-  template <typename NumType>
-  class MemoryManager<NumType, MemorySpace::DEVICE_CUDA>
-  {
-  public:
-    static NumType *
-    allocate(const size_type size);
-    static void
-    deallocate(NumType *ptr);
-  };
-#endif  
-  
+    template<typename NumType>
+    class MemoryManager<NumType, MemorySpace::HOST> {
+    public:
+        static NumType *
+        allocate(const size_type size);
+
+        static void
+        deallocate(NumType *ptr);
+    };
+
+//#ifdef DFTEFE_WITH_DEVICE_CUDA
+    template<typename NumType>
+    class MemoryManager<NumType, MemorySpace::DEVICE> {
+    public:
+        static NumType *
+        allocate(const size_type size);
+
+        static void
+        deallocate(NumType *ptr);
+    };
+//#endif
+
 } // namespace dftefe
 
-#include "MemoryManager.cpp"
+#include "MemoryManager.t.cpp"
+
 #endif
