@@ -1,9 +1,6 @@
 #ifndef dftefeDeviceUtils_h
 #define dftefeDeviceUtils_h
 
-
-#ifdef DFTEFE_WITH_DEVICE
-
 namespace dftefe
 {
   class DeviceUtils
@@ -14,8 +11,5 @@ namespace dftefe
   };
 
 } // namespace dftefe
-
-#endif
-
 
 #endif

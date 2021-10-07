@@ -35,7 +35,6 @@ namespace dftefe {
         deallocate(NumType *ptr);
     };
 
-//#ifdef DFTEFE_WITH_DEVICE_CUDA
     template<typename NumType>
     class MemoryManager<NumType, MemorySpace::DEVICE> {
     public:
@@ -45,7 +44,6 @@ namespace dftefe {
         static void
         deallocate(NumType *ptr);
     };
-//#endif
 
 } // namespace dftefe
 
