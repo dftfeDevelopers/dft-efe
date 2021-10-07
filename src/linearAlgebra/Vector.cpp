@@ -1,41 +1,8 @@
 #include "Vector.h"
-#include "blasTemplates.h"
-#include <typeConfig.h>
-#include <MemoryManager.h>
+#include <complex>
 
 namespace dftefe
 {
-  template <typename NumberType, MemorySpace memorySpace>
-  void
-  Vector<NumberType, memorySpace>::testDgemv()
-  {
-    char                transA = 'N';
-    char                transB = 'T';
-    const double        alpha = 1.0, beta = 0.0;
-    unsigned int        numberWaveFunctions = 10;
-    unsigned int        numberDofs          = 10;
-    std::vector<double> X, Y, output;
-    X.resize(100);
-    Y.resize(100);
-    output.resize(100);
-
-
-
-    dgemm_(&transA,
-           &transB,
-           &numberWaveFunctions,
-           &numberWaveFunctions,
-           &numberDofs,
-           &alpha,
-           &X[0],
-           &numberWaveFunctions,
-           &Y[0],
-           &numberWaveFunctions,
-           &beta,
-           &output[0],
-           &numberWaveFunctions);
-  }
-
   //
   // Constructor
   //
@@ -44,9 +11,7 @@ namespace dftefe
                                           const NumberType initVal)
     : d_size(size)
     , d_data(MemoryManager<NumberType, memorySpace>::allocate(size))
-  {
-    // FIXME : initVal is not used
-  }
+  {}
   template <typename NumberType, MemorySpace memorySpace>
   void
   Vector<NumberType, memorySpace>::resize(const size_type  size,
@@ -54,9 +19,10 @@ namespace dftefe
   {
     MemoryManager<NumberType, memorySpace>::deallocate(d_data);
     d_size = size;
-    d_data = MemoryManager<NumberType, memorySpace>::allocate(size);
-
-    // FIXME : initVal is not used
+    if (size > 0)
+      d_data = MemoryManager<NumberType, memorySpace>::allocate(size);
+    else
+      d_data = nullptr;
   }
 
   //
@@ -70,9 +36,7 @@ namespace dftefe
 
   template <typename NumberType, MemorySpace memorySpace>
   Vector<NumberType, memorySpace>::Vector(const Vector &v)
-  {
-    // FIXME :  not implemented
-  }
+  {}
 
   template <typename NumberType, MemorySpace memorySpace>
   size_type
@@ -82,6 +46,15 @@ namespace dftefe
   }
 
   template class Vector<double, MemorySpace::HOST>;
+  template class Vector<float, MemorySpace::HOST>;
+  template class Vector<std::complex<double>, MemorySpace::HOST>;
+  template class Vector<std::complex<float>, MemorySpace::HOST>;
+#ifdef DFTEFE_WITH_CUDA
+  template class Vector<double, MemorySpace::DEVICE_CUDA>;
+  template class Vector<float, MemorySpace::DEVICE_CUDA>;
+  template class Vector<std::complex<double>, MemorySpace::DEVICE_CUDA>;
+  template class Vector<std::complex<float>, MemorySpace::DEVICE_CUDA>;
+#endif
 
 
 } // namespace dftefe

@@ -11,15 +11,12 @@ find_package(MPI REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_PATH})
 set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 
-
 if(ENABLE_CUDA)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_CUDA)
-    message ("CUDA Enabled")
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
     enable_language(CUDA)
-    set_target_properties(dft-efe PROPERTIES
-                          CUDA_STANDARD 14
-                          CUDA_STANDARD_REQUIRED ON)
 endif()
+
 
 find_package(deal.II 9.3.0 REQUIRED)
 include_directories(${DEAL_II_INCLUDE_DIRS})

@@ -1,6 +1,7 @@
 #include "MemoryManager.h"
 
 #include <cstring>
+#include <complex>
 
 namespace dftefe
 {
@@ -47,9 +48,15 @@ namespace dftefe
   // explicitly instantiating MemoryManager
   //
   template class MemoryManager<double, MemorySpace::HOST>;
+  template class MemoryManager<float, MemorySpace::HOST>;
+  template class MemoryManager<std::complex<double>, MemorySpace::HOST>;
+  template class MemoryManager<std::complex<float>, MemorySpace::HOST>;
 
 #ifdef DFTEFE_WITH_CUDA
   template class MemoryManager<double, MemorySpace::DEVICE_CUDA>;
+  template class MemoryManager<float, MemorySpace::DEVICE_CUDA>;
+  template class MemoryManager<std::complex<double>, MemorySpace::DEVICE_CUDA>;
+  template class MemoryManager<std::complex<float>, MemorySpace::DEVICE_CUDA>;
 #endif
 
 } // namespace dftefe
