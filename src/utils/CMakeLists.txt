@@ -1,7 +1,8 @@
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
         DeviceAPICalls.cu
-        DeviceUtils.cpp)
+        DeviceUtils.cpp
+        MemoryManager.cpp)
 
 
 
