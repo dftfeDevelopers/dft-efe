@@ -11,7 +11,7 @@ namespace dftefe
   enum class MemorySpace
   {
     HOST, //
-    DEVICE //
+    DEVICE_CUDA //
   };
 
   //
@@ -37,9 +37,9 @@ namespace dftefe
     deallocate(NumType *ptr);
   };
 
-#ifdef DFTEFE_WITH_DEVICE
+#ifdef DFTEFE_WITH_DEVICE_CUDA
   template <typename NumType>
-  class MemoryManager<NumType, MemorySpace::DEVICE>
+  class MemoryManager<NumType, MemorySpace::DEVICE_CUDA>
   {
   public:
     static NumType *
@@ -48,6 +48,8 @@ namespace dftefe
     deallocate(NumType *ptr);
   };
 #endif  
-
+  
 } // namespace dftefe
+
+#include "MemoryManager.cpp"
 #endif
