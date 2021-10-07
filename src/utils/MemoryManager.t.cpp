@@ -1,0 +1,47 @@
+//#include "MemoryManager.h"
+
+#include <cstring>
+#include <complex>
+#include "DeviceAPICalls.h"
+
+
+namespace dftefe {
+    template<typename NumType>
+    NumType *
+    MemoryManager<NumType, MemorySpace::HOST>::allocate(const size_type size) {
+        NumType *tempPtr = new NumType[size];
+        std::memset(tempPtr, 0, size * sizeof(NumType));
+        return tempPtr;
+    }
+
+    template<typename NumType>
+    void
+    MemoryManager<NumType, MemorySpace::HOST>::deallocate(NumType *ptr) {
+        if (ptr != nullptr)
+            delete[] ptr;
+    }
+
+//#ifdef DFTEFE_WITH_DEVICE_CUDA
+
+    template<typename NumType>
+    NumType *
+    MemoryManager<NumType, MemorySpace::DEVICE>::allocate(
+            const size_type size) {
+        NumType *tempPtr;
+        deviceMalloc((void **) &tempPtr, size * sizeof(NumType));
+        deviceMemset(tempPtr, 0, size * sizeof(NumType));
+
+        return tempPtr;
+    }
+
+    template<typename NumType>
+    void
+    MemoryManager<NumType, MemorySpace::DEVICE>::deallocate(NumType *ptr) {
+        if (ptr != nullptr) {
+            deviceFree(ptr);
+        }
+    }
+
+//#endif
+
+} // namespace dftefe

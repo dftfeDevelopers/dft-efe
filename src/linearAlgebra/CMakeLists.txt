@@ -12,8 +12,8 @@ if ("${DFTEFE_SCALAPACK_LIBRARIES}" STREQUAL "")
 endif ()
 
 # Add source files here
-set(DFT-EFE-LINALG-SOURCES 
-    Vector.cpp)
+set(DFT-EFE-LINALG-SOURCES
+        Vector.t.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES} )
 target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -25,9 +25,5 @@ if(ENABLE_CUDA)
    find_package(CUDAToolkit REQUIRED)
    target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
 endif()
-
-IF (ENABLE_CUDA)
-    set_source_files_properties(${DFT-EFE-LINALG-SOURCES} PROPERTIES LANGUAGE CUDA)
-ENDIF()
 
 target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
