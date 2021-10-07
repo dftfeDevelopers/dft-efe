@@ -1,7 +1,7 @@
 
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
-    MemoryManager.cpp
+    #MemoryManager.cpp
     DeviceUtils.cpp)
 
 add_library(dft-efe-utils SHARED  ${DFT-EFE-UTILS-SOURCES} )

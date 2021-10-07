@@ -12,7 +12,7 @@ if ("${DFTEFE_SCALAPACK_LIBRARIES}" STREQUAL "")
 endif ()
 
 # Add source files here
-set(DFT-EFE-LINALG-SOURCES
+set(DFT-EFE-LINALG-SOURCES 
     Vector.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES} )

@@ -31,6 +31,7 @@ namespace dftefe
   };
 } // end of namespace dftefe
 
+#include "Vector.t.cpp"
 
 
 #endif
