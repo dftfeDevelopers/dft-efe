@@ -1,8 +1,8 @@
 #ifdef DFTEFE_WITH_DEVICE
-#include "DeviceUtils.h"
-#include "DeviceAPICalls.h"
-#include <stdexcept>
-#include <string>
+#  include "DeviceUtils.h"
+#  include "DeviceAPICalls.h"
+#  include <stdexcept>
+#  include <string>
 
 namespace dftefe
 {
