@@ -1,9 +1,9 @@
-#ifndef dftefeCell_h
-#define dftefeCell_h
+#ifndef dftefeFECell_h
+#define dftefeFECell_h
 
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
-#include "CellMapping.h"
+#include "FECellLinearMapping.h"
 
 #include <memory>
 namespace dftefe
@@ -13,11 +13,11 @@ namespace dftefe
    * This is created primarily to be a wrapper around deal.ii cells, so as to
    *avoid the cascading of template parameters.
    **/
-  class Cell
+  class FECell
   {
   public:
-    Cell();
-    ~Cell();
+    FECell();
+    ~FECell();
 
     virtual std::vector<std::shared_ptr<Point>>
     getVertices() const = 0;
@@ -75,7 +75,7 @@ namespace dftefe
     getRealPoint(std::shared_ptr<const Point> parametricPoint,
                  const CellMapping &          cellMapping) const = 0;
 
-  }; // end of class Cell
+  }; // end of class FECell
 
 } // end of namespace dftefe
-#endif // dftefeCell_h
+#endif // dftefeFECell_h
