@@ -3,12 +3,15 @@
 
 namespace dftefe
 {
-  class DeviceUtils
+  namespace utils
   {
-  public:
-    static void
-    initialize(const int world_rank);
-  };
+    class DeviceUtils
+    {
+    public:
+      static void
+      initialize(const int world_rank);
+    };
+  } // namespace utils
 
 } // namespace dftefe
 
