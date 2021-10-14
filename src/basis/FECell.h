@@ -69,11 +69,11 @@ namespace dftefe
 
     virtual std::shared_ptr<Point>
     getParametricPoint(std::shared_ptr<const Point> realPoint,
-                       const CellMapping &          cellMapping) const = 0;
+                       const FECellMapping &          feCellMapping) const = 0;
 
     virtual std::shared_ptr<Point>
     getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                 const CellMapping &          cellMapping) const = 0;
+                 const FECellMapping &          feCellMapping) const = 0;
 
   }; // end of class FECell
 
