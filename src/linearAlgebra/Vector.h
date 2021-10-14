@@ -20,6 +20,15 @@ namespace dftefe
 
       Vector(const Vector &vector);
 
+      void
+      add(const NumberType a, const Vector<NumberType, memorySpace> &V);
+
+      NumberType
+      operator[](size_type i) const;
+
+      NumberType &
+      operator[](size_type i);
+
       // Will overwrite old data
       void
       resize(const size_type size, const NumberType initVal = 0);

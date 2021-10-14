@@ -19,7 +19,6 @@ namespace dftefe
     void
     MemoryManager<NumType, MemorySpace::HOST>::deallocate(NumType *ptr)
     {
-      if (ptr != nullptr)
         delete[] ptr;
     }
 

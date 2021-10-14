@@ -1,5 +1,7 @@
 #include <complex>
 #include "MemoryManager.h"
+#include "Vector.h"
+
 
 namespace dftefe
 {
@@ -23,8 +25,6 @@ namespace dftefe
       d_size = size;
       if (size > 0)
         d_data = MemoryManager<NumberType, memorySpace>::allocate(size);
-      else
-        d_data = nullptr;
     }
 
     //
@@ -46,5 +46,25 @@ namespace dftefe
     {
       return d_size;
     }
+    template <typename NumberType, MemorySpace memorySpace>
+    void
+    Vector<NumberType, memorySpace>::add(
+      const NumberType                       a,
+      const Vector<NumberType, memorySpace> &V)
+    {}
+    template <typename NumberType, MemorySpace memorySpace>
+    NumberType
+    Vector<NumberType, memorySpace>::operator[](size_type i) const
+    {
+      return d_data[i];
+    }
+    template <typename NumberType, MemorySpace memorySpace>
+    NumberType &
+    Vector<NumberType, memorySpace>::operator[](size_type i)
+    {
+      return d_data[i];
+    }
+
+
   } // namespace utils
 } // namespace dftefe
