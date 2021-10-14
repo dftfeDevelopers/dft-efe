@@ -3,19 +3,22 @@
 #include <stdexcept>
 #include <string>
 
-namespace dftefe {
-    void
-    DeviceUtils::initialize(const int world_rank) {
-        int n_devices = 0;
-        deviceGetDeviceCount(&n_devices);
+namespace dftefe
+{
+  void
+  DeviceUtils::initialize(const int world_rank)
+  {
+    int n_devices = 0;
+    deviceGetDeviceCount(&n_devices);
 
-        if (n_devices == 0) {
-            std::string message = "Number of devices cannot be zero";
-            throw std::invalid_argument(message);
-        }
+    if (n_devices == 0)
+      {
+        std::string message = "Number of devices cannot be zero";
+        throw std::invalid_argument(message);
+      }
 
-        int device_id = world_rank % n_devices;
-        deviceSetDevice(device_id);
-    }
+    int device_id = world_rank % n_devices;
+    deviceSetDevice(device_id);
+  }
 
 } // end of namespace dftefe
