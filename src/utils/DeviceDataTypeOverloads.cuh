@@ -9,54 +9,70 @@ namespace dftefe
   {
     template <typename NumType>
     __device__ NumType
-    mult(NumType x, NumType y);
+    mult(NumType a, NumType b);
+
+    __device__ cuDoubleComplex
+    mult(double a, cuDoubleComplex b);
+
+    __device__ cuDoubleComplex
+    mult(cuDoubleComplex a, double b);
+
+    __device__ cuFloatComplex
+    mult(double a, cuFloatComplex b);
+
+    __device__ cuFloatComplex
+    mult(cuFloatComplex a, double b);
+
+    template <typename NumType>
+    __device__ NumType
+    add(NumType a, NumType b);
 
     inline double *
-    makeDataTypeGPUCompatible(double *x)
+    makeDataTypeGPUCompatible(double *a)
     {
-      return reinterpret_cast<double *>(x);
+      return reinterpret_cast<double *>(a);
     }
 
     inline const double *
-    makeDataTypeGPUCompatible(const double *x)
+    makeDataTypeGPUCompatible(const double *a)
     {
-      return reinterpret_cast<const double *>(x);
+      return reinterpret_cast<const double *>(a);
     }
 
     inline float *
-    makeDataTypeGPUCompatible(float *x)
+    makeDataTypeGPUCompatible(float *a)
     {
-      return reinterpret_cast<float *>(x);
+      return reinterpret_cast<float *>(a);
     }
 
     inline const float *
-    makeDataTypeGPUCompatible(const float *x)
+    makeDataTypeGPUCompatible(const float *a)
     {
-      return reinterpret_cast<const float *>(x);
+      return reinterpret_cast<const float *>(a);
     }
 
     inline cuDoubleComplex *
-    makeDataTypeGPUCompatible(std::complex<double> *x)
+    makeDataTypeGPUCompatible(std::complex<double> *a)
     {
-      return reinterpret_cast<cuDoubleComplex *>(x);
+      return reinterpret_cast<cuDoubleComplex *>(a);
     }
 
     inline const cuDoubleComplex *
-    makeDataTypeGPUCompatible(const std::complex<double> *x)
+    makeDataTypeGPUCompatible(const std::complex<double> *a)
     {
-      return reinterpret_cast<const cuDoubleComplex *>(x);
+      return reinterpret_cast<const cuDoubleComplex *>(a);
     }
 
     inline cuFloatComplex *
-    makeDataTypeGPUCompatible(std::complex<float> *x)
+    makeDataTypeGPUCompatible(std::complex<float> *a)
     {
-      return reinterpret_cast<cuFloatComplex *>(x);
+      return reinterpret_cast<cuFloatComplex *>(a);
     }
 
     inline const cuFloatComplex *
-    makeDataTypeGPUCompatible(const std::complex<float> *x)
+    makeDataTypeGPUCompatible(const std::complex<float> *a)
     {
-      return reinterpret_cast<const cuFloatComplex *>(x);
+      return reinterpret_cast<const cuFloatComplex *>(a);
     }
   } // namespace utils
 

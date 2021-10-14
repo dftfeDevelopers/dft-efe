@@ -13,7 +13,9 @@ endif ()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-        Vector.cpp)
+        VectorKernels.cu
+        Vector.cpp
+        VectorKernels.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES} )
 target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
