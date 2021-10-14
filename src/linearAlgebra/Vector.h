@@ -6,29 +6,32 @@
 #include <vector>
 namespace dftefe
 {
-  template <typename NumberType, MemorySpace memorySpace>
-  class Vector
+  namespace utils
   {
-  public:
-    Vector(const size_type size, const NumberType initVal = 0);
+    template <typename NumberType, MemorySpace memorySpace>
+    class Vector
+    {
+    public:
+      Vector(const size_type size, const NumberType initVal = 0);
 
-    ~Vector();
+      ~Vector();
 
-    Vector() = default;
+      Vector() = default;
 
-    Vector(const Vector &vector);
+      Vector(const Vector &vector);
 
-    // Will overwrite old data
-    void
-    resize(const size_type size, const NumberType initVal = 0);
+      // Will overwrite old data
+      void
+      resize(const size_type size, const NumberType initVal = 0);
 
-    size_type
-    size() const;
+      size_type
+      size() const;
 
-  private:
-    NumberType *d_data = nullptr;
-    size_type   d_size = 0;
-  };
+    private:
+      NumberType *d_data = nullptr;
+      size_type   d_size = 0;
+    };
+  } // namespace utils
 } // end of namespace dftefe
 
 #include "Vector.t.cpp"

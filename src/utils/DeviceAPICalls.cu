@@ -3,6 +3,8 @@
 #  include <stdio.h>
 namespace dftefe
 {
+  namespace utils
+  {
 #  define CUDACHECK(cmd)                              \
     do                                                \
       {                                               \
@@ -19,34 +21,35 @@ namespace dftefe
     while (0)
 
 
-  void
-  deviceMalloc(void **devPtr, size_t size)
-  {
-    CUDACHECK(cudaMalloc(devPtr, size));
-  }
+    void
+    deviceMalloc(void **devPtr, size_t size)
+    {
+      CUDACHECK(cudaMalloc(devPtr, size));
+    }
 
-  void
-  deviceMemset(void *devPtr, int value, size_t count)
-  {
-    CUDACHECK(cudaMemset(devPtr, value, count));
-  }
+    void
+    deviceMemset(void *devPtr, int value, size_t count)
+    {
+      CUDACHECK(cudaMemset(devPtr, value, count));
+    }
 
-  void
-  deviceFree(void *devPtr)
-  {
-    CUDACHECK(cudaFree(devPtr));
-  }
+    void
+    deviceFree(void *devPtr)
+    {
+      CUDACHECK(cudaFree(devPtr));
+    }
 
-  void
-  deviceGetDeviceCount(int *count)
-  {
-    CUDACHECK(cudaGetDeviceCount(count));
-  }
+    void
+    deviceGetDeviceCount(int *count)
+    {
+      CUDACHECK(cudaGetDeviceCount(count));
+    }
 
-  void
-  deviceSetDevice(int count)
-  {
-    CUDACHECK(cudaSetDevice(count));
-  }
+    void
+    deviceSetDevice(int count)
+    {
+      CUDACHECK(cudaSetDevice(count));
+    }
+  } // namespace utils
 } // namespace dftefe
 #endif

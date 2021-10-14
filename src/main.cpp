@@ -47,7 +47,7 @@ main(int argc, char **argv)
   const bool useDevice = false;
   if (useDevice)
     {
-      dftefe::DeviceUtils::initialize(world_rank);
+      dftefe::utils::DeviceUtils::initialize(world_rank);
     }
 #endif
 }
