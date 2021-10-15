@@ -20,23 +20,23 @@ namespace dftefe
     2. dftefe::utils::AssertWithMsg(expr,msg): same as above but takes an
     additional message in the form of string to display if expr is false.
 
-    It also provides two preprocessor flags, DFTEFE_DISABLE_ASSERT and DFTEFE_ENABLE_ASSERT, 
-    that you can set to override the NDEBUG flag in a particular source file. This is provided 
-    to allow selective enabling or disabling of Assert and AssertWithMsg without any relation
-    to whether NDEBUG is defined or not (NDEBUG is typically defined globally for all files 
+    It also provides two preprocessor flags, DFTEFE_DISABLE_ASSERT and
+    DFTEFE_ENABLE_ASSERT, that you can set to override the NDEBUG flag in a
+    particular source file. This is provided to allow selective enabling or
+    disabling of Assert and AssertWithMsg without any relation to whether NDEBUG
+    is defined or not (NDEBUG is typically defined globally for all files
     through compiler options).
     For example, if in a file you have
     #define DFTEFE_DISABLE_ASSERT
     #include "Exceptions.h"
     then it would disable all any calls to Assert or AssertWithMsg in that file,
-    regardless of whether NDEBUG is defined. Also, it has no bearing on std::assert 
-    (i.e., any calls to std::assert in that file will still be governed by NDEBUG)
-    Similarly, if in a file you have
-    #define DFTEFE_ENABLE_ASSERT
-    #include "Exceptions.h" 
-    then it would enable all calls to Assert or AssertWithMsg regardless in that file, 
-    regardless of whether NDEBUG is defined. Also, it has no bearning on std::assert  
-    (i.e., any calls to std::assert in that file will still be governed by NDEBUG)
+    regardless of whether NDEBUG is defined. Also, it has no bearing on
+    std::assert (i.e., any calls to std::assert in that file will still be
+    governed by NDEBUG) Similarly, if in a file you have #define
+    DFTEFE_ENABLE_ASSERT #include "Exceptions.h" then it would enable all calls
+    to Assert or AssertWithMsg regardless in that file, regardless of whether
+    NDEBUG is defined. Also, it has no bearning on std::assert (i.e., any calls
+    to std::assert in that file will still be governed by NDEBUG)
 
     It also provides two wrappers on std::exception and its derived classes
     (e.g., std::runtime_error, std::domain_error, etc.) The two wrappers are:
@@ -63,13 +63,16 @@ namespace dftefe
 #undef Assert
 #undef AssertWithMsg
 
-#if defined(DFTEFE_DISABLE_ASSERT) || (!defined(DFTEFE_ENABLE_ASSERT) && defined(NDEBUG))
+#if defined(DFTEFE_DISABLE_ASSERT) || \
+  (!defined(DFTEFE_ENABLE_ASSERT) && defined(NDEBUG))
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
 #  define Assert(expr) ((void)0)
 #  define AssertWithMsg(expr, msg) ((void)0)
 
 #elif defined(DFTEFE_ENABLE_ASSERT) && defined(NDEBUG)
-#undef NDEBUG // disabling NDEBUG to forcibly enable assert for sources that set DFTEFE_ENABLE_ASSERT even when in release mode (with NDEBUG)
+#  undef NDEBUG // disabling NDEBUG to forcibly enable assert for sources that
+                // set DFTEFE_ENABLE_ASSERT even when in release mode (with
+                // NDEBUG)
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
 #  define Assert(expr) assert(expr)
 #  define AssertWithMsg(expr, msg) assert((expr) && (msg))
