@@ -104,4 +104,4 @@ namespace dftefe
   } // namespace utils
 } // namespace dftefe
 #include "Exceptions.t.cpp"
-#endif // dftefeAssert_h
+#endif // dftefeExceptions_h
