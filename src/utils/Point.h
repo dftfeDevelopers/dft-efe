@@ -43,13 +43,6 @@ namespace dftefe
        */
       Point(const double *x, size_type N);
 
-      /**
-       * @brief Constructor for an N-dimensional point where N=1,2,3.
-       *        Each component is initialized to zero.
-       * @param[in] N dimension of the point
-       * @throws exception if N > 3
-       */
-      Point(size_type N);
 
       /**
        * @brief Constructor for an N-dimensional point where N=1,2,3
@@ -58,7 +51,7 @@ namespace dftefe
        * point
        * @throws exception if N > 3
        */
-      Point(size_type N, double init);
+      Point(size_type N, double init = 0.0);
 
       /**
        * @brief Copy  Constructor for a point
@@ -76,7 +69,7 @@ namespace dftefe
        * @brief Returns the dimension of the point
        * @param[out] dimension of the point
        */
-      int
+      size_type
       getDim() const;
 
       /**
@@ -88,9 +81,18 @@ namespace dftefe
       data() const;
 
       /**
+       * @brief Operator overload for assignment q=p
+       * @param[in] p the rhs point from which to copy
+       *
+       * @returns reference to the lhs point
+       */
+      Point &
+      operator=(const Point &p);
+
+      /**
        * @brief Operator to get a reference to a component of the point
        * @param[in] i is the index to the component of the point
-       * @param[out] reference to the component of the point
+       * @returns reference to the component of the point
        * @throws exception if i >= dimension of the point
        */
       double &
@@ -99,7 +101,7 @@ namespace dftefe
       /**
        * @brief Operator to get a const reference to a component of the point
        * @param[in] i is the index to the component of the point
-       * @param[out] const reference to the component of the point
+       * @returns const reference to the component of the point
        * @throws exception if i >= dimension of the point
        */
       const double &
@@ -148,7 +150,7 @@ namespace dftefe
        * @throws exception if the two points have different dimensions
        */
       Point &
-      operator+=(Ppint &p, const Point &q);
+      operator+=(Point &p, const Point &q);
 
       /**
        * @brief Addition of two points r = p + q.
@@ -187,8 +189,8 @@ namespace dftefe
       operator-(const Point &p, const Point &q);
 
     private:
-      double *d_data;
-      int     d_dim;
+      double *  d_data;
+      size_type d_dim;
     };
 
   } // end of namespace utils

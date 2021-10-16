@@ -9,25 +9,25 @@
 namespace dftefe
 {
   namespace basis
-{
-  /**
-   * @brief An abstract class for a finite element cell (can be of any dimension)
-   * This is created primarily to be a wrapper around deal.ii cells, so as to
-   *avoid the cascading of template parameters.
-   **/
-
-  class FEBase: public TriaBase
   {
-  public:
+    /**
+     * @brief An abstract class for a finite element cell (can be of any dimension)
+     * This is created primarily to be a wrapper around deal.ii cells, so as to
+     *avoid the cascading of template parameters.
+     **/
+
+    class FEBase : public TriaBase
+    {
+    public:
       FE();
-    ~FE();
-      
+      ~FE();
+
       virtual std::vector<std::shared_ptr<Point>>
       getVertices() const = 0;
 
       virtual std::shared_ptr<Point>
       getVertex(size_type i) const = 0;
-      
+
       virtual std::vector<std::shared_ptr<Point>>
       getNodalPoints() const = 0;
 
@@ -72,17 +72,16 @@ namespace dftefe
 
       virtual std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const FECellMapping &          feCellMapping) const = 0;
+                         const FECellMapping &        feCellMapping) const = 0;
 
       virtual std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const FECellMapping &          feCellMapping) const = 0;
+                   const FECellMapping &        feCellMapping) const = 0;
 
 
-   
 
-  }; // end of class FEBase
-  } // end of namespace basis
+    }; // end of class FEBase
+  }    // end of namespace basis
 
 } // end of namespace dftefe
 #endif // dftefeFEBase_h
