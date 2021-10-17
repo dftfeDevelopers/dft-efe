@@ -89,7 +89,6 @@ namespace dftefe
     typedef std::domain_error     DomainError;
     typedef std::length_error     LengthError;
     typedef std::out_of_range     OutOfRangeError;
-    typedef std::future_error     FutureError;
     typedef std::runtime_error    RuntimeError;
     typedef std::overflow_error   OverflowError;
     typedef std::underflow_error  UnderflowError;
