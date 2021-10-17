@@ -1,20 +1,28 @@
 #include "VectorKernels.h"
+#include <complex>
 
 namespace dftefe
 {
-  namespace utils
+  namespace linearAlgebra
   {
     template <typename NumberType>
     void
-    addKernel(const NumberType                             a,
-              const Vector<NumberType, MemorySpace::HOST> &V1,
-              Vector<NumberType, MemorySpace::HOST>       &V2)
+    VectorKernels<NumberType, dftefe::utils::MemorySpace::HOST>::add(
+      const size_type   size,
+      const NumberType *u,
+      NumberType *      v)
     {
-      // todo: add assert condition: V1.size() == V2.size();
-      for (size_type i = 0; i < V1.size(); ++i)
+      for (size_type i = 0; i < size; ++i)
         {
-          V2[i] += a * V1[i];
+          v[i] += u[i];
         }
     }
-  } // namespace utils
+
+    template class VectorKernels<double, dftefe::utils::MemorySpace::HOST>;
+    template class VectorKernels<float, dftefe::utils::MemorySpace::HOST>;
+    template class VectorKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::HOST>;
+    template class VectorKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::HOST>;
+  } // namespace linearAlgebra
 } // namespace dftefe

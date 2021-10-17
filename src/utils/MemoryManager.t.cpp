@@ -19,7 +19,7 @@ namespace dftefe
     void
     MemoryManager<NumType, MemorySpace::HOST>::deallocate(NumType *ptr)
     {
-        delete[] ptr;
+      delete[] ptr;
     }
 
     template <typename NumType>
@@ -37,10 +37,7 @@ namespace dftefe
     void
     MemoryManager<NumType, MemorySpace::DEVICE>::deallocate(NumType *ptr)
     {
-      if (ptr != nullptr)
-        {
-          deviceFree(ptr);
-        }
+      deviceFree(ptr);
     }
   } // namespace utils
 

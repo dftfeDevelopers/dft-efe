@@ -2,28 +2,54 @@
 #define dftefeVectorKernels_h
 
 #include "MemoryManager.h"
-#include "Vector.h"
 
 namespace dftefe
 {
-  namespace utils
+  namespace linearAlgebra
   {
-    /**
-     * @tparam NumberType
-     * @tparam memorySpace
-     * @param a
-     * @param V1
-     * @param V2
-     */
-    template <typename NumberType, MemorySpace memorySpace>
-    void
-    addKernel(const NumberType                       a,
-              const Vector<NumberType, memorySpace> &V1,
-              Vector<NumberType, memorySpace>       &V2);
+    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    class VectorKernels
+    {
+    public:
+      /**
+       * @tparam NumberType
+       * @tparam memorySpace
+       * @param u
+       * @param v
+       */
+      static void
+      add(const size_type size, const NumberType *u, NumberType *v);
+    };
 
-  } // namespace utils
+    template <typename NumberType>
+    class VectorKernels<NumberType, dftefe::utils::MemorySpace::HOST>
+    {
+    public:
+      /**
+       * @tparam NumberType
+       * @param u
+       * @param v
+       */
+      static void
+      add(const size_type size, const NumberType *u, NumberType *v);
+    };
+
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename NumberType>
+    class VectorKernels<NumberType, dftefe::utils::MemorySpace::DEVICE>
+    {
+    public:
+      /**
+       * @tparam NumberType
+       * @param u
+       * @param v
+       */
+      static void
+      add(const size_type size, const NumberType *u, NumberType *v);
+    };
+#endif
+
+  } // namespace linearAlgebra
 } // namespace dftefe
-
-
 
 #endif // dftefeVectorKernels_h
