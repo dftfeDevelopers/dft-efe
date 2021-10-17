@@ -3,31 +3,60 @@
 #  include "VectorKernels.h"
 namespace dftefe
 {
-  namespace utils
+  namespace linearAlgebra
   {
-    template <typename NumberType>
-    __global__ void
-    addKernel(const NumberType  a,
-              size_t            size,
-              const NumberType *V1,
-              NumberType       *V2)
+    namespace
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (unsigned int i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        {
-          V2[i] = add(mult(a, V1[i]), V2[i]);
-        }
-    }
+      template <typename NumberType>
+      __global__ void
+      addCUDAKernel(const NumberType  a,
+                    size_type         size,
+                    const NumberType *u,
+                    NumberType *      v)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        for (unsigned int i = globalThreadId; i < size;
+             i += blockDim.x * gridDim.x)
+          {
+            v[i] = dftefe::utils::add(dftefe::utils::mult(a, u[i]), v[i]);
+          }
+      }
+
+      template <typename NumberType>
+      __global__ void
+      addCUDAKernel(size_type size, const NumberType *u, NumberType *v)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        for (unsigned int i = globalThreadId; i < size;
+             i += blockDim.x * gridDim.x)
+          {
+            v[i] = dftefe::utils::add(u[i], v[i]);
+          }
+      }
+
+    } // namespace
 
     template <typename NumberType>
     void
-    addKernel(const NumberType                               a,
-              const Vector<NumberType, MemorySpace::DEVICE> &V1,
-              Vector<NumberType, MemorySpace::DEVICE>       &V2)
+    VectorKernels<NumberType, dftefe::utils::MemorySpace::DEVICE>::add(
+      const size_type   size,
+      const NumberType *u,
+      NumberType *      v)
     {
-      // todo: add assert condition: V1.size() == V2.size();
+      addCUDAKernel<<<size / 256 + 1, 256>>>(
+        size,
+        dftefe::utils::makeDataTypeDeviceCompatible(u),
+        dftefe::utils::makeDataTypeDeviceCompatible(v));
     }
-  } // namespace utils
+
+    template class VectorKernels<double, dftefe::utils::MemorySpace::DEVICE>;
+    template class VectorKernels<float, dftefe::utils::MemorySpace::DEVICE>;
+    template class VectorKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::DEVICE>;
+    template class VectorKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::DEVICE>;
+  } // namespace linearAlgebra
 } // namespace dftefe
 #endif

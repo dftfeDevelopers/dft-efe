@@ -7,70 +7,123 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename NumType>
-    __device__ NumType
-    mult(NumType a, NumType b);
+    __inline__ __device__ double
+    mult(double a, double b)
+    {
+      return a * b;
+    }
 
-    __device__ cuDoubleComplex
-    mult(double a, cuDoubleComplex b);
+    __inline__ __device__ float
+    mult(float a, float b)
+    {
+      return a * b;
+    }
 
-    __device__ cuDoubleComplex
-    mult(cuDoubleComplex a, double b);
+    __inline__ __device__ cuDoubleComplex
+    mult(cuDoubleComplex a, cuDoubleComplex b)
+    {
+      return cuCmul(a, b);
+    }
 
-    __device__ cuFloatComplex
-    mult(double a, cuFloatComplex b);
+    __inline__ __device__ cuFloatComplex
+    mult(cuFloatComplex a, cuFloatComplex b)
+    {
+      return cuCmulf(a, b);
+    }
 
-    __device__ cuFloatComplex
-    mult(cuFloatComplex a, double b);
+    __inline__ __device__ double
+    add(double a, double b)
+    {
+      return a + b;
+    }
 
-    template <typename NumType>
-    __device__ NumType
-    add(NumType a, NumType b);
+    __inline__ __device__ float
+    add(float a, float b)
+    {
+      return a + b;
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    add(cuDoubleComplex a, cuDoubleComplex b)
+    {
+      return cuCadd(a, b);
+    }
+
+
+    __inline__ __device__ cuFloatComplex
+    add(cuFloatComplex a, cuFloatComplex b)
+    {
+      return cuCaddf(a, b);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(double a, cuDoubleComplex b)
+    {
+      return make_cuDoubleComplex(a * b.x, a * b.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(cuDoubleComplex a, double b)
+    {
+      return make_cuDoubleComplex(b * a.x, b * a.y);
+    }
+
+    __inline__ __device__ cuFloatComplex
+    mult(double a, cuFloatComplex b)
+    {
+      return make_cuFloatComplex(a * b.x, a * b.y);
+    }
+
+    __inline__ __device__ cuFloatComplex
+    mult(cuFloatComplex a, double b)
+    {
+      return make_cuFloatComplex(b * a.x, b * a.y);
+    }
 
     inline double *
-    makeDataTypeGPUCompatible(double *a)
+    makeDataTypeDeviceCompatible(double *a)
     {
       return reinterpret_cast<double *>(a);
     }
 
     inline const double *
-    makeDataTypeGPUCompatible(const double *a)
+    makeDataTypeDeviceCompatible(const double *a)
     {
       return reinterpret_cast<const double *>(a);
     }
 
     inline float *
-    makeDataTypeGPUCompatible(float *a)
+    makeDataTypeDeviceCompatible(float *a)
     {
       return reinterpret_cast<float *>(a);
     }
 
     inline const float *
-    makeDataTypeGPUCompatible(const float *a)
+    makeDataTypeDeviceCompatible(const float *a)
     {
       return reinterpret_cast<const float *>(a);
     }
 
     inline cuDoubleComplex *
-    makeDataTypeGPUCompatible(std::complex<double> *a)
+    makeDataTypeDeviceCompatible(std::complex<double> *a)
     {
       return reinterpret_cast<cuDoubleComplex *>(a);
     }
 
     inline const cuDoubleComplex *
-    makeDataTypeGPUCompatible(const std::complex<double> *a)
+    makeDataTypeDeviceCompatible(const std::complex<double> *a)
     {
       return reinterpret_cast<const cuDoubleComplex *>(a);
     }
 
     inline cuFloatComplex *
-    makeDataTypeGPUCompatible(std::complex<float> *a)
+    makeDataTypeDeviceCompatible(std::complex<float> *a)
     {
       return reinterpret_cast<cuFloatComplex *>(a);
     }
 
     inline const cuFloatComplex *
-    makeDataTypeGPUCompatible(const std::complex<float> *a)
+    makeDataTypeDeviceCompatible(const std::complex<float> *a)
     {
       return reinterpret_cast<const cuFloatComplex *>(a);
     }
