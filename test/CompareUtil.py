@@ -1,7 +1,7 @@
 import numpy as np
 
 class Compare():
-    def cmp(self, val1, val2, tol = 1.0e-16, cmpType = 'absolute', normType="inf"):
+    def cmp(self, val1, val2, tol = 1.0e-16, cmpType = 'absolute', normType="L2"):
         msg = ""
         areComparable = False
         v1 = np.array(val1)
@@ -45,9 +45,9 @@ class Compare():
             
         if normTypeLower=='inf':
             diff = v1-v2
-            norm = np.linalg.norm(diff, 'inf')
+            norm = np.linalg.norm(diff, np.inf)
             if cmpTypeLower=='relative':
-                norm = norm/np.linalg.norm(v2, 'inf')
+                norm = norm/np.linalg.norm(v2, np.inf)
             
             areComparable = norm < tol
         
@@ -69,4 +69,4 @@ class Compare():
                     elementwise difference={norm} and \
                     tolerance={tol}".format(norm=norm,tol=tol)
 
-        return areComparable, msg
+        return areComparable, norm, msg
