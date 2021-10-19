@@ -106,6 +106,7 @@ namespace dftefe
               const Vector<NumberType, memorySpace> &u)
     {
       VectorKernels<NumberType, memorySpace>::add(u.size(), u, v);
+      return v;
     }
 
   } // namespace linearAlgebra
