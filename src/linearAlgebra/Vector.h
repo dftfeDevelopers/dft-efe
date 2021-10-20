@@ -20,11 +20,11 @@ namespace dftefe
 
     public:
       /**
-       * @brief Constructor for Vector with size and inital value arguments
+       * @brief Constructor for Vector with size and initial value arguments
        * @param[in] size size of the Vector
        * @param[in] initVal initial value of elements of the Vector
        */
-      Vector(const size_type size, const NumberType initVal = 0);
+      explicit Vector(size_type size, NumberType initVal = 0);
 
       /**
        * @brief Destructor
@@ -40,19 +40,19 @@ namespace dftefe
       Vector(const Vector<NumberType, memorySpace> &u);
 
       /**
-       * @brief Return iterator pointing to the begining of point
+       * @brief Return iterator pointing to the beginning of point
        * data.
        *
-       * @returns Iterator pointing to the begingin of Vector.
+       * @returns Iterator pointing to the beginning of Vector.
        */
       iterator
       begin();
 
       /**
-       * @brief Return iterator pointing to the begining of Vector
+       * @brief Return iterator pointing to the beginning of Vector
        * data.
        *
-       * @returns Constant iterator pointing to the begining of
+       * @returns Constant iterator pointing to the beginning of
        * Vector.
        */
       const_iterator
@@ -105,12 +105,12 @@ namespace dftefe
 
       /**
        * @brief Deallocates and then resizes Vector with new size
-       * and inital value arguments
+       * and initial value arguments
        * @param[in] size size of the Vector
        * @param[in] initVal initial value of elements of the Vector
        */
       void
-      resize(const size_type size, const NumberType initVal = 0);
+      resize(size_type size, NumberType initVal = 0);
 
       /**
        * @brief Returns the dimension of the Vector
@@ -149,6 +149,5 @@ namespace dftefe
 } // end of namespace dftefe
 
 #include "Vector.t.cpp"
-
 
 #endif

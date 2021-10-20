@@ -24,7 +24,7 @@ namespace dftefe
     {
     public:
       static NumType *
-      allocate(const size_type size);
+      allocate(size_type size);
 
       static void
       deallocate(NumType *ptr);
@@ -35,7 +35,7 @@ namespace dftefe
     {
     public:
       static NumType *
-      allocate(const size_type size);
+      allocate(size_type size);
 
       static void
       deallocate(NumType *ptr);
@@ -46,7 +46,7 @@ namespace dftefe
     {
     public:
       static NumType *
-      allocate(const size_type size);
+      allocate(size_type size);
 
       static void
       deallocate(NumType *ptr);

@@ -9,7 +9,7 @@ namespace dftefe
     {
     public:
       static void
-      initialize(const int world_rank);
+      initialize(int world_rank);
     };
   } // namespace utils
 

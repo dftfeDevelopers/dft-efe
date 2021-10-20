@@ -18,7 +18,7 @@ namespace dftefe
        * @param v
        */
       static void
-      add(const size_type size, const NumberType *u, NumberType *v);
+      add(size_type size, const NumberType *u, NumberType *v);
     };
 
     template <typename NumberType>
@@ -31,7 +31,7 @@ namespace dftefe
        * @param v
        */
       static void
-      add(const size_type size, const NumberType *u, NumberType *v);
+      add(size_type size, const NumberType *u, NumberType *v);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -45,7 +45,7 @@ namespace dftefe
        * @param v
        */
       static void
-      add(const size_type size, const NumberType *u, NumberType *v);
+      add(size_type size, const NumberType *u, NumberType *v);
     };
 #endif
 
