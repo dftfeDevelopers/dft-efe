@@ -23,9 +23,8 @@ class TriangulationDealii : public  TriangulationBase
      void     clearUserFlags () override;
     
      void     executeCoarseningAndRefinement () override;
-     unsigned int     nLocallOwnedActiveCells () const  override;
-    size_type     nGlobalActiveCells () const override ;
-    size_type     locallyOwnedSubdomain () const override;
+     unsigned int     nLocallyOwnedCells () const  override;
+    size_type     nGlobalCells () const override ;
      std::vector< size_type >     getBoundaryIds () const override;
 
       TriaCellBase  &   beginActive (const unsigned int level=0) const override;
@@ -38,7 +37,7 @@ class TriangulationDealii : public  TriangulationBase
     
     private :
     
-    dealii::parallel::distributed::Triangulation<dim> triangDealii;
+    dealii::Triangulation<dim> triangDealii;
     
     std::vector<TriaCellDealii<dim> > triaVectorCell;
     

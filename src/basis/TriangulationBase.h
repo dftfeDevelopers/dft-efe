@@ -25,9 +25,8 @@ namespace basis
     virtual void     clearUserFlags () = 0;
     
     virtual void     executeCoarseningAndRefinement () = 0;
-    virtual unsigned int     nLocallOwnedActiveCells () const = 0 ;
-    virtual size_type     nGlobalActiveCells () const = 0 ;
-    virtual size_type     locallyOwnedSubdomain () const = 0;
+    virtual unsigned int     nLocallyOwnedCells () const = 0 ;
+    virtual size_type     nGlobalCells () const = 0 ;
     virtual std::vector< size_type >     getBoundaryIds () const = 0;
 
     virtual  TriaCellBase  &   beginActive () const = 0;
