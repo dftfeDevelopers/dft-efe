@@ -1,6 +1,8 @@
 #ifndef dftefeTriangulationDealii_h
 #define dftefeTriangulationDealii_h
 
+#include "TriangulationBase.h"
+
 namespace dftefe {
 
 namespace basis
@@ -13,25 +15,25 @@ class TriangulationDealii : public  TriangulationBase
     TriangulationDealii();
     ~TriangulationDealii();
     
-     TriangulationBase & getTriangulationObject() ;
-     void     refine_global (const unsigned int times=1) ;
+     TriangulationBase & getTriangulationObject()  override;
+     void     refineGlobal (const unsigned int times=1) override;
     
-     void     coarsen_global (const unsigned int times=1) ;
+     void     coarsenGlobal (const unsigned int times=1) override;
     
-     void     clear_user_flags () ;
+     void     clearUserFlags () override;
     
-     void     execute_coarsening_and_refinement () ;
-     unsigned int     n_locally_owned_active_cells () const  ;
-     dealii::types::global_cell_index     n_global_active_cells () const  ;
-     dealii::types::subdomain_id     locally_owned_subdomain () const ;
-     std::vector< types::boundary_id >     get_boundary_ids () const ;
+     void     executeCoarseningAndRefinement () override;
+     unsigned int     nLocallOwnedActiveCells () const  override;
+    size_type     nGlobalActiveCells () const override ;
+    size_type     locallyOwnedSubdomain () const override;
+     std::vector< size_type >     getBoundaryIds () const override;
 
-      TriaCellBase  &   begin_active (const unsigned int level=0) const ;
+      TriaCellBase  &   beginActive (const unsigned int level=0) const override;
     
-     TriaCellBase &     end_active (const unsigned int level) const ;
+     TriaCellBase &     endActive (const unsigned int level) const override;
     
     
-    unsigned int getDim() const ;
+    unsigned int getDim() const override;
     
     
     private :
