@@ -4,6 +4,7 @@
 #include "VectorKernels.h"
 #include "Exceptions.h"
 #include "MemoryTransfer.h"
+#include <iostream>
 
 namespace dftefe
 {
@@ -16,10 +17,9 @@ namespace dftefe
     Vector<NumberType, memorySpace>::Vector(const size_type  size,
                                             const NumberType initVal)
       : d_size(size)
-      , d_data(dftefe::utils::MemoryManager<NumberType, memorySpace>::allocate(
-          size,
-          d_data))
     {
+      dftefe::utils::MemoryManager<NumberType, memorySpace>::allocate(size,
+                                                                      &d_data);
       dftefe::utils::MemoryManager<NumberType, memorySpace>::set(size,
                                                                  d_data,
                                                                  initVal);
@@ -104,7 +104,10 @@ namespace dftefe
     {
       if (&rhs != this)
         {
-          this->resize(rhs.d_size);
+          if (rhs.d_size != d_size)
+            {
+              this->resize(rhs.d_size);
+            }
           utils::MemoryTransfer<NumberType, memorySpace, memorySpace>::copy(
             rhs.d_size, this->d_data, rhs.d_data);
         }
@@ -113,14 +116,14 @@ namespace dftefe
 
     template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
     typename Vector<NumberType, memorySpace>::reference
-    Vector<NumberType, memorySpace>::operator[](size_type i)
+    Vector<NumberType, memorySpace>::operator[](const size_type i)
     {
       return d_data[i];
     }
 
     template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
     typename Vector<NumberType, memorySpace>::const_reference
-    Vector<NumberType, memorySpace>::operator[](size_type i) const
+    Vector<NumberType, memorySpace>::operator[](const size_type i) const
     {
       return d_data[i];
     }

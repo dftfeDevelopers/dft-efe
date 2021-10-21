@@ -20,6 +20,22 @@ namespace dftefe
       }                                               \
     while (0)
 
+    // todo
+    //  namespace {
+    //    __global__ void
+    //    setValueKernel(void *devPtr, int value, size_t size)
+    //    {
+    //
+    //      const unsigned int globalThreadId =
+    //        blockIdx.x * blockDim.x + threadIdx.x;
+    //      for (unsigned int i = globalThreadId; i < size;
+    //           i += blockDim.x * gridDim.x)
+    //        {
+    //          v[i] = dftefe::utils::add(dftefe::utils::mult(a, u[i]), v[i]);
+    //        }
+    //    }
+    //  }
+
 
     void
     deviceMalloc(void **devPtr, size_t size)
@@ -28,10 +44,17 @@ namespace dftefe
     }
 
     void
-    deviceMemset(void *devPtr, int value, size_t count)
+    deviceMemset(void *devPtr, size_t count)
     {
-      CUDACHECK(cudaMemset(devPtr, value, count));
+      CUDACHECK(cudaMemset(devPtr, 0, count));
     }
+
+    // todo
+    //    void
+    //    deviceSetValue(void *devPtr, int value, size_t size)
+    //    {
+    //
+    //    }
 
     void
     deviceFree(void *devPtr)
