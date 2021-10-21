@@ -17,7 +17,18 @@ namespace dftefe
     deviceSetDevice(int count);
 
     void
-    deviceMemset(void *devPtr, int value, size_t count);
+    deviceMemset(void *devPtr, size_t count);
+
+    // todo
+    /**
+     * @brief
+     * @param devPtr
+     * @param value
+     * @param size
+     */
+    template <typename NumberType>
+    void
+    deviceSetValue(void *devPtr, NumberType value, size_t size);
 
     void
     deviceFree(void *devPtr);

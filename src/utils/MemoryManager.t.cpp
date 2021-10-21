@@ -1,5 +1,6 @@
 #include "DeviceAPICalls.h"
 #include <cstring>
+#include <algorithm>
 
 
 namespace dftefe
@@ -9,9 +10,9 @@ namespace dftefe
     template <typename NumType>
     void
     MemoryManager<NumType, MemorySpace::HOST>::allocate(size_type size,
-                                                        NumType  *ptr)
+                                                        NumType **ptr)
     {
-      ptr = new NumType[size];
+      *ptr = new NumType[size];
     }
 
     template <typename NumType>
@@ -21,22 +22,26 @@ namespace dftefe
       delete[] ptr;
     }
 
+    // todo
     template <typename NumType>
     void
     MemoryManager<NumType, MemorySpace::HOST>::set(size_type size,
                                                    NumType  *ptr,
                                                    NumType   val)
     {
-      std::memset(ptr, val, size * sizeof(NumType));
+      for (int i = 0; i < size; ++i)
+        {
+          ptr[i] = val;
+        }
     }
 
     template <typename NumType>
     void
     MemoryManager<NumType, MemorySpace::DEVICE>::allocate(size_type size,
-                                                          NumType  *ptr)
+                                                          NumType **ptr)
     {
-      deviceMalloc((void **)&ptr, size * sizeof(NumType));
-      deviceMemset(ptr, 0, size * sizeof(NumType));
+      deviceMalloc((void **)ptr, size * sizeof(NumType));
+      deviceMemset(*ptr, size * sizeof(NumType));
     }
 
     template <typename NumType>
@@ -52,7 +57,8 @@ namespace dftefe
                                                      NumType  *ptr,
                                                      NumType   val)
     {
-      deviceMemset(ptr, val, size * sizeof(NumType));
+      // todo
+      deviceMemset(ptr, size * sizeof(NumType));
     }
   } // namespace utils
 

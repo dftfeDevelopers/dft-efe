@@ -8,15 +8,15 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    template <typename NumType, dftefe::utils::MemorySpace memorySpace>
     class Vector
     {
-      typedef NumberType        value_type;
-      typedef NumberType       *pointer;
-      typedef NumberType       &reference;
-      typedef const NumberType &const_reference;
-      typedef NumberType       *iterator;
-      typedef const NumberType *const_iterator;
+      typedef NumType        value_type;
+      typedef NumType       *pointer;
+      typedef NumType       &reference;
+      typedef const NumType &const_reference;
+      typedef NumType       *iterator;
+      typedef const NumType *const_iterator;
 
     public:
       /**
@@ -24,7 +24,7 @@ namespace dftefe
        * @param[in] size size of the Vector
        * @param[in] initVal initial value of elements of the Vector
        */
-      explicit Vector(size_type size, NumberType initVal = 0);
+      explicit Vector(size_type size, NumType initVal = 0);
 
       /**
        * @brief Destructor
@@ -110,7 +110,7 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the Vector
        */
       void
-      resize(size_type size, NumberType initVal = 0);
+      resize(size_type size, NumType initVal = 0);
 
       /**
        * @brief Compound addition for elementwise addition lhs += rhs
@@ -135,31 +135,31 @@ namespace dftefe
        * @brief Return the raw pointer to the Vector
        * @return pointer to data
        */
-      NumberType *
+      NumType *
       data() noexcept;
 
       /**
        * @brief Return the raw pointer to the Vector without modifying the values
        * @return pointer to const data
        */
-      const NumberType *
+      const NumType *
       data() const noexcept;
 
     private:
-      NumberType *d_data = nullptr;
-      size_type   d_size = 0;
+      NumType  *d_data = nullptr;
+      size_type d_size = 0;
     };
 
     // helper functions
 
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    template <typename NumType, dftefe::utils::MemorySpace memorySpace>
     void
-    add(NumberType                             a,
-        const Vector<NumberType, memorySpace> &u,
-        NumberType                             b,
-        const Vector<NumberType, memorySpace> &v,
-        Vector<NumberType, memorySpace>       &w);
+    add(NumType                             a,
+        const Vector<NumType, memorySpace> &u,
+        NumType                             b,
+        const Vector<NumType, memorySpace> &v,
+        Vector<NumType, memorySpace>       &w);
 
   } // namespace linearAlgebra
 } // end of namespace dftefe
