@@ -5,32 +5,6 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename T>
-    inline PointImpl<T>::PointImpl(T x)
-      : d_size(1)
-      , d_data(new T[1])
-    {
-      d_data[0] = x;
-    }
-
-    template <typename T>
-    inline PointImpl<T>::PointImpl(T x, T y)
-      : d_size(2)
-      , d_data(new T[2])
-    {
-      d_data[0] = x;
-      d_data[1] = y;
-    }
-
-    template <typename T>
-    inline PointImpl<T>::PointImpl(T x, T y, T z)
-      : d_size(3)
-      , d_data(new T[3])
-    {
-      d_data[0] = x;
-      d_data[1] = y;
-      d_data[2] = z;
-    }
 
     template <typename T>
     inline PointImpl<T>::PointImpl(const std::vector<T> &x)

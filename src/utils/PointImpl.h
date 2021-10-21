@@ -21,24 +21,6 @@ namespace dftefe
 
 	public:
 	/**
-	 * @brief Constructor for a 1D point
-	 * @param[in] x coordinate of the point
-	 */
-	PointImpl(T x);
-
-	/**
-	 * @brief Constructor for a 2D point
-	 * @param[in] x, y  are the coordinates of the point
-	 */
-	PointImpl(T x, T y);
-
-	/**
-	 * @brief Constructor for a 3D point
-	 * @param[in] x, y, z  are the coordinates of the point
-	 */
-	PointImpl(T x, T y, T z);
-
-	/**
 	 * @brief Constructor for an N-dimensional point where N=1,2,3
 	 * @param[in] x is reference to std::vector contaning the coordinates of
 	 * the point
