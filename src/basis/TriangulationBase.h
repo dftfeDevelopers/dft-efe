@@ -1,7 +1,8 @@
 #ifndef dftefeTriangulationBase_h
 #define dftefeTriangulationBase_h
 
-
+#include <utils/TypeConfig.h>
+#include "TriaCellBase.h"
 namespace dftefe {
 
 namespace basis
@@ -17,21 +18,21 @@ namespace basis
     
     
     virtual TriangulationBase & getTriangulationObject() = 0;
-    virtual void     refine_global (const unsigned int times=1) = 0;
+    virtual void     refineGlobal (const unsigned int times=1) = 0;
     
-    virtual void     coarsen_global (const unsigned int times=1) = 0;
+    virtual void     coarsenGlobal (const unsigned int times=1) = 0;
     
-    virtual void     clear_user_flags () = 0;
+    virtual void     clearUserFlags () = 0;
     
-    virtual void     execute_coarsening_and_refinement () = 0;
-    virtual unsigned int     n_locally_owned_active_cells () const = 0 ;
-    virtual dealii::types::global_cell_index     n_global_active_cells () const = 0 ;
-    virtual dealii::types::subdomain_id     locally_owned_subdomain () const = 0;
-    virtual std::vector< types::boundary_id >     get_boundary_ids () const = 0;
+    virtual void     executeCoarseningAndRefinement () = 0;
+    virtual unsigned int     nLocallOwnedActiveCells () const = 0 ;
+    virtual size_type     nGlobalActiveCells () const = 0 ;
+    virtual size_type     locallyOwnedSubdomain () const = 0;
+    virtual std::vector< size_type >     getBoundaryIds () const = 0;
 
-    virtual  TriaCellBase  &   begin_active () const = 0;
+    virtual  TriaCellBase  &   beginActive () const = 0;
     
-    virtual TriaCellBase &     end_active () const = 0;
+    virtual TriaCellBase &     endActive () const = 0;
     
     
     virtual  unsigned int getDim() const = 0 ;
