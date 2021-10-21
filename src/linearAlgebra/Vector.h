@@ -12,10 +12,10 @@ namespace dftefe
     class Vector
     {
       typedef NumberType        value_type;
-      typedef NumberType *      pointer;
-      typedef NumberType &      reference;
+      typedef NumberType       *pointer;
+      typedef NumberType       &reference;
       typedef const NumberType &const_reference;
-      typedef NumberType *      iterator;
+      typedef NumberType       *iterator;
       typedef const NumberType *const_iterator;
 
     public:
@@ -37,7 +37,7 @@ namespace dftefe
        * @brief Copy constructor for a Vector
        * @param[in] u Vector object to copy from
        */
-      Vector(const Vector<NumberType, memorySpace> &u);
+      Vector(const Vector &u);
 
       /**
        * @brief Return iterator pointing to the beginning of point
@@ -78,12 +78,12 @@ namespace dftefe
 
       /**
        * @brief Operator overload for assignment v=u
-       * @param[in] u the rhs Vector from which to copy
+       * @param[in] rhs the rhs Vector from which to copy
        *
        * @returns reference to the lhs Vector
        */
       Vector &
-      operator=(const Vector<NumberType, memorySpace> &u);
+      operator=(const Vector &rhs);
 
       /**
        * @brief Operator to get a reference to a element of the Vector
@@ -113,37 +113,53 @@ namespace dftefe
       resize(size_type size, NumberType initVal = 0);
 
       /**
+       * @brief Compound addition for elementwise addition lhs += rhs
+       * @param[in] rhs the vector to add
+       * @return the original vector
+       */
+      Vector &
+      operator+=(const Vector &rhs);
+
+      // todo move semantic
+      //      Vector<NumberType, memorySpace> operator=()
+
+
+      /**
        * @brief Returns the dimension of the Vector
        * @returns size of the Vector
        */
       size_type
       size() const;
 
+      /**
+       * @brief Return the raw pointer to the Vector
+       * @return pointer to data
+       */
+      NumberType *
+      data() noexcept;
+
+      /**
+       * @brief Return the raw pointer to the Vector without modifying the values
+       * @return pointer to const data
+       */
+      const NumberType *
+      data() const noexcept;
+
     private:
       NumberType *d_data = nullptr;
       size_type   d_size = 0;
     };
 
-    //
-    // A list of helper functions to operate on Vector
-    //
+    // helper functions
 
 
-    /**
-     * @brief In-place addition of two Vectors \f$v= v + u\f$
-     *
-     * @tparam NumberType
-     * @tparam memorySpace
-     * @param[in] v the first Vector (will be modified)
-     * @param[in] u the second Vector
-     *
-     * @returns Reference to updated Vector \p v.
-     * @throws exception if the two Vectors have different dimensions
-     */
     template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    Vector<NumberType, memorySpace> &
-    operator+(Vector<NumberType, memorySpace> &      v,
-              const Vector<NumberType, memorySpace> &u);
+    void
+    add(NumberType                             a,
+        const Vector<NumberType, memorySpace> &u,
+        NumberType                             b,
+        const Vector<NumberType, memorySpace> &v,
+        Vector<NumberType, memorySpace>       &w);
 
   } // namespace linearAlgebra
 } // end of namespace dftefe

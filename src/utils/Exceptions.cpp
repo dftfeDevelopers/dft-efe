@@ -17,10 +17,10 @@ namespace dftefe
         ExceptionWithMsg(std::string const &msg)
           : d_msg(msg)
         {}
-        virtual char const *
-        what() const noexcept
+        char const *
+        what() const noexcept override
         {
-          return msg_.c_str();
+          return d_msg.c_str();
         }
 
       private:

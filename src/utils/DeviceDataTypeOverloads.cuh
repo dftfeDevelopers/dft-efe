@@ -127,6 +127,32 @@ namespace dftefe
     {
       return reinterpret_cast<const cuFloatComplex *>(a);
     }
+
+    inline double
+    makeDataTypeDeviceCompatible(double a)
+    {
+      return a;
+    }
+
+    inline float
+    makeDataTypeDeviceCompatible(float a)
+    {
+      return a;
+    }
+
+    inline cuDoubleComplex
+    makeDataTypeDeviceCompatible(std::complex<double> a)
+    {
+      return make_cuDoubleComplex(a.real(), a.imag());
+    }
+
+    inline cuFloatComplex
+    makeDataTypeDeviceCompatible(std::complex<float> a)
+    {
+      return make_cuFloatComplex(a.real(), a.imag());
+    }
+
+
   } // namespace utils
 
 } // namespace dftefe

@@ -50,6 +50,22 @@ namespace dftefe
     {
       CUDACHECK(cudaSetDevice(count));
     }
+    void
+    deviceMemcpyD2H(void *dst, const void *src, size_t count)
+    {
+      CUDACHECK(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost));
+    }
+
+    void
+    deviceMemcpyD2D(void *dst, const void *src, size_t count)
+    {
+      CUDACHECK(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice));
+    }
+    void
+    deviceMemcpyH2D(void *dst, const void *src, size_t count)
+    {
+      CUDACHECK(cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice));
+    }
   } // namespace utils
 } // namespace dftefe
 #endif

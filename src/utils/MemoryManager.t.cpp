@@ -7,12 +7,11 @@ namespace dftefe
   namespace utils
   {
     template <typename NumType>
-    NumType *
-    MemoryManager<NumType, MemorySpace::HOST>::allocate(const size_type size)
+    void
+    MemoryManager<NumType, MemorySpace::HOST>::allocate(size_type size,
+                                                        NumType  *ptr)
     {
-      NumType *tempPtr = new NumType[size];
-      std::memset(tempPtr, 0, size * sizeof(NumType));
-      return tempPtr;
+      ptr = new NumType[size];
     }
 
     template <typename NumType>
@@ -23,14 +22,21 @@ namespace dftefe
     }
 
     template <typename NumType>
-    NumType *
-    MemoryManager<NumType, MemorySpace::DEVICE>::allocate(const size_type size)
+    void
+    MemoryManager<NumType, MemorySpace::HOST>::set(size_type size,
+                                                   NumType  *ptr,
+                                                   NumType   val)
     {
-      NumType *tempPtr;
-      deviceMalloc((void **)&tempPtr, size * sizeof(NumType));
-      deviceMemset(tempPtr, 0, size * sizeof(NumType));
+      std::memset(ptr, val, size * sizeof(NumType));
+    }
 
-      return tempPtr;
+    template <typename NumType>
+    void
+    MemoryManager<NumType, MemorySpace::DEVICE>::allocate(size_type size,
+                                                          NumType  *ptr)
+    {
+      deviceMalloc((void **)&ptr, size * sizeof(NumType));
+      deviceMemset(ptr, 0, size * sizeof(NumType));
     }
 
     template <typename NumType>
@@ -38,6 +44,15 @@ namespace dftefe
     MemoryManager<NumType, MemorySpace::DEVICE>::deallocate(NumType *ptr)
     {
       deviceFree(ptr);
+    }
+
+    template <typename NumType>
+    void
+    MemoryManager<NumType, MemorySpace::DEVICE>::set(size_type size,
+                                                     NumType  *ptr,
+                                                     NumType   val)
+    {
+      deviceMemset(ptr, val, size * sizeof(NumType));
     }
   } // namespace utils
 
