@@ -2,20 +2,12 @@
 #define dftefeMemoryManager_h
 
 #include "TypeConfig.h"
+#include "MemorySpaceType.h"
 
 namespace dftefe
 {
   namespace utils
   {
-    //
-    // MemorySpace
-    //
-    enum class MemorySpace
-    {
-      HOST,  //
-      DEVICE //
-    };
-
     //
     // MemoryManager
     //
@@ -23,33 +15,42 @@ namespace dftefe
     class MemoryManager
     {
     public:
-      static NumType *
-      allocate(size_type size);
+      static void
+      allocate(size_type size, NumType *ptr);
 
       static void
       deallocate(NumType *ptr);
+
+      static void
+      set(size_type size, NumType *ptr, NumType val);
     };
 
     template <typename NumType>
     class MemoryManager<NumType, MemorySpace::HOST>
     {
     public:
-      static NumType *
-      allocate(size_type size);
+      static void
+      allocate(size_type size, NumType *ptr);
 
       static void
       deallocate(NumType *ptr);
+
+      static void
+      set(size_type size, NumType *ptr, NumType val);
     };
 
     template <typename NumType>
     class MemoryManager<NumType, MemorySpace::DEVICE>
     {
     public:
-      static NumType *
-      allocate(size_type size);
+      static void
+      allocate(size_type size, NumType *ptr);
 
       static void
       deallocate(NumType *ptr);
+
+      static void
+      set(size_type size, NumType *ptr, NumType val);
     };
   } // namespace utils
 
