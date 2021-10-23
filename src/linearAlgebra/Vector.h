@@ -85,6 +85,7 @@ namespace dftefe
       Vector &
       operator=(const Vector &rhs);
 
+      // todo: should prevent this from being used for device memory
       /**
        * @brief Operator to get a reference to a element of the Vector
        * @param[in] i is the index to the element of the Vector
@@ -94,6 +95,7 @@ namespace dftefe
       reference
       operator[](size_type i);
 
+      // todo: should prevent this from being used for device memory
       /**
        * @brief Operator to get a const reference to a element of the Vector
        * @param[in] i is the index to the element of the Vector
