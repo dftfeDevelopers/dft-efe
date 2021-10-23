@@ -33,6 +33,8 @@ main()
     4, 0);
   dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE> b(
     4, 0);
+
+  // these do not world for device memory
   a[0] = 1;
   a[1] = 2;
   a[2] = 3;
