@@ -33,9 +33,9 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename NumType,
-              MemorySpace memorySpaceDst,
-              MemorySpace memorySpaceSrc>
+    template <MemorySpace memorySpaceDst,
+              MemorySpace memorySpaceSrc,
+              typename ValueType>
     class MemoryTransfer
     {
     public:
@@ -46,83 +46,89 @@ namespace dftefe
        * @param src pointer to the source
        */
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::HOST, MemorySpace::HOST>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST, ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::HOST, MemorySpace::HOST_PINNED>
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED, ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::HOST, MemorySpace::DEVICE>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE, ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::HOST_PINNED, MemorySpace::HOST>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST, ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType,
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::HOST_PINNED,
                          MemorySpace::HOST_PINNED,
-                         MemorySpace::HOST_PINNED>
+                         ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::HOST_PINNED, MemorySpace::DEVICE>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::HOST_PINNED,
+                         MemorySpace::DEVICE,
+                         ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::DEVICE, MemorySpace::HOST>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST, ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::DEVICE, MemorySpace::HOST_PINNED>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::DEVICE,
+                         MemorySpace::HOST_PINNED,
+                         ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename NumType>
-    class MemoryTransfer<NumType, MemorySpace::DEVICE, MemorySpace::DEVICE>
+    template <typename ValueType>
+    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE, ValueType>
     {
     public:
       static void
-      copy(size_type size, NumType *dst, const NumType *src);
+      copy(size_type size, ValueType *dst, const ValueType *src);
     };
-  } // namespace utils
+#endif // DFTEFE_WITH_DEVICE
+  }    // namespace utils
 } // namespace dftefe
 
 #include "MemoryTransfer.t.cpp"

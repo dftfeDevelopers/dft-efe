@@ -40,7 +40,11 @@ main()
     4, 0);
   dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE> b(
     4, 0);
+  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE> r(
+    4, 0);
 #endif
+
+
 
   std::vector<double> a_h(4, 0), b_h(4, 0), c_h(4, 0);
   a_h[0] = 1;
@@ -53,28 +57,26 @@ main()
   b_h[2] = 7;
   b_h[3] = 8;
 
+  double alpha = 2.0, beta = 3.0;
+
 
 #ifndef DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<
-    double,
-    dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(4, a.data(), a_h.data());
-  dftefe::utils::MemoryTransfer<
-    double,
-    dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(4, b.data(), b_h.data());
+  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST,
+                                dftefe::utils::MemorySpace::HOST,
+                                double>::copy(4, a.data(), a_h.data());
+  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST,
+                                dftefe::utils::MemorySpace::HOST,
+                                double>::copy(4, b.data(), b_h.data());
 #elif DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<
-    double,
-    dftefe::utils::MemorySpace::DEVICE,
-    dftefe::utils::MemorySpace::HOST>::copy(4, a.data(), a_h.data());
-  dftefe::utils::MemoryTransfer<
-    double,
-    dftefe::utils::MemorySpace::DEVICE,
-    dftefe::utils::MemorySpace::HOST>::copy(4, b.data(), b_h.data());
+  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
+                                dftefe::utils::MemorySpace::HOST_PINNED,
+                                double>::copy(4, a.data(), a_h.data());
+  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
+                                dftefe::utils::MemorySpace::HOST_PINNED,
+                                double>::copy(4, b.data(), b_h.data());
 #endif
 
-  a += b;
+  add(alpha, a, beta, b, r);
 
   for (int i = 0; i < 4; ++i)
     {
@@ -83,15 +85,13 @@ main()
   std::cout << std::endl;
 
 #ifndef DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<
-    double,
-    dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(4, c_h.data(), a.data());
+  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST,
+                                dftefe::utils::MemorySpace::HOST,
+                                double>::copy(4, c_h.data(), a.data());
 #elif DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<
-    double,
-    dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::DEVICE>::copy(4, c_h.data(), a.data());
+  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST_PINNED,
+                                dftefe::utils::MemorySpace::DEVICE,
+                                double>::copy(4, c_h.data(), r.data());
 #endif
   for (int i = 0; i < 4; ++i)
     {

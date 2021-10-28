@@ -1,4 +1,5 @@
 #ifdef DFTEFE_WITH_DEVICE_CUDA
+#  include <DeviceKernelLauncher.h>
 #  include "DeviceDataTypeOverloads.cuh"
 #  include "VectorKernels.h"
 namespace dftefe
@@ -7,43 +8,40 @@ namespace dftefe
   {
     namespace
     {
-      template <typename NumberType>
+      template <typename ValueType>
       __global__ void
-      addCUDAKernel(const NumberType  a,
-                    size_type         size,
-                    const NumberType *u,
-                    NumberType       *v)
+      addCUDAKernel(size_type size, const ValueType *u, ValueType *v)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
         for (unsigned int i = globalThreadId; i < size;
              i += blockDim.x * gridDim.x)
           {
-            v[i] = dftefe::utils::add(dftefe::utils::mult(a, u[i]), v[i]);
+            v[i] = dftefe::utils::add(v[i], u[i]);
           }
       }
 
-      template <typename NumberType>
+      template <typename ValueType>
       __global__ void
-      addCUDAKernel(size_type size, const NumberType *u, NumberType *v)
+      subCUDAKernel(size_type size, const ValueType *u, ValueType *v)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
         for (unsigned int i = globalThreadId; i < size;
              i += blockDim.x * gridDim.x)
           {
-            v[i] = dftefe::utils::add(u[i], v[i]);
+            v[i] = dftefe::utils::sub(v[i], u[i]);
           }
       }
 
-      template <typename NumberType>
+      template <typename ValueType>
       __global__ void
-      addCUDAKernel(size_type         size,
-                    const NumberType  a,
-                    const NumberType *u,
-                    const NumberType  b,
-                    const NumberType *v,
-                    NumberType       *w)
+      addCUDAKernel(size_type        size,
+                    const ValueType  a,
+                    const ValueType *u,
+                    const ValueType  b,
+                    const ValueType *v,
+                    ValueType       *w)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -57,31 +55,47 @@ namespace dftefe
 
     } // namespace
 
-    template <typename NumberType>
+    template <typename ValueType>
     void
-    VectorKernels<NumberType, dftefe::utils::MemorySpace::DEVICE>::add(
-      const size_type   size,
-      const NumberType *u,
-      NumberType       *v)
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::add(
+      const size_type  size,
+      const ValueType *u,
+      ValueType       *v)
     {
-      addCUDAKernel<<<size / 256 + 1, 256>>>(
+      addCUDAKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                      dftefe::utils::BLOCK_SIZE>>>(
+        size,
+        dftefe::utils::makeDataTypeDeviceCompatible(u),
+        dftefe::utils::makeDataTypeDeviceCompatible(v));
+    }
+
+    template <typename ValueType>
+    void
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::sub(
+      const size_type  size,
+      const ValueType *u,
+      ValueType       *v)
+    {
+      subCUDAKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                      dftefe::utils::BLOCK_SIZE>>>(
         size,
         dftefe::utils::makeDataTypeDeviceCompatible(u),
         dftefe::utils::makeDataTypeDeviceCompatible(v));
     }
 
 
-    template <typename NumberType>
+    template <typename ValueType>
     void
-    VectorKernels<NumberType, dftefe::utils::MemorySpace::DEVICE>::add(
-      size_type         size,
-      NumberType        a,
-      const NumberType *u,
-      NumberType        b,
-      const NumberType *v,
-      NumberType       *w)
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::add(
+      size_type        size,
+      ValueType        a,
+      const ValueType *u,
+      ValueType        b,
+      const ValueType *v,
+      ValueType       *w)
     {
-      addCUDAKernel<<<size / 256 + 1, 256>>>(
+      addCUDAKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                      dftefe::utils::BLOCK_SIZE>>>(
         size,
         dftefe::utils::makeDataTypeDeviceCompatible(a),
         dftefe::utils::makeDataTypeDeviceCompatible(u),
@@ -90,6 +104,8 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(w));
     }
 
+    template class VectorKernels<size_type, dftefe::utils::MemorySpace::DEVICE>;
+    template class VectorKernels<int, dftefe::utils::MemorySpace::DEVICE>;
     template class VectorKernels<double, dftefe::utils::MemorySpace::DEVICE>;
     template class VectorKernels<float, dftefe::utils::MemorySpace::DEVICE>;
     template class VectorKernels<std::complex<double>,

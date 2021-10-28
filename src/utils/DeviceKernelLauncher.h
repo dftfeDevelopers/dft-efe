@@ -22,24 +22,13 @@
 /*
  * @author Ian C. Lin., Sambit Das
  */
+#ifdef DFTEFE_WITH_DEVICE
+#  ifndef dftefeDeviceKernelLauncher_h
+#    define dftefeDeviceKernelLauncher_h
 
-#ifndef dftefeMemorySpaceType_h
-#define dftefeMemorySpaceType_h
+#    ifdef DFTEFE_WITH_DEVICE_CUDA
+#      include "DeviceKernelLauncherCUDA.cuh"
+#    endif
 
-namespace dftefe
-{
-  namespace utils
-  {
-    //
-    // MemorySpace
-    //
-    enum class MemorySpace
-    {
-      HOST,
-      HOST_PINNED,
-      DEVICE
-    };
-  } // namespace utils
-} // namespace dftefe
-
-#endif // dftefeMemorySpaceType_h
+#  endif // dftefeDeviceKernelLauncher_h
+#endif   // DFTEFE_WITH_DEVICE
