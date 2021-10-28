@@ -23,23 +23,16 @@
  * @author Ian C. Lin., Sambit Das
  */
 
-#ifndef dftefeMemorySpaceType_h
-#define dftefeMemorySpaceType_h
+#ifndef dftefeDeviceKernelLauncherCUDA_h
+#define dftefeDeviceKernelLauncherCUDA_h
+
 
 namespace dftefe
 {
   namespace utils
   {
-    //
-    // MemorySpace
-    //
-    enum class MemorySpace
-    {
-      HOST,
-      HOST_PINNED,
-      DEVICE
-    };
-  } // namespace utils
+    static const unsigned int BLOCK_SIZE = 256;
+  }
 } // namespace dftefe
 
-#endif // dftefeMemorySpaceType_h
+#endif // dftefeDeviceKernelLauncherCUDA_h

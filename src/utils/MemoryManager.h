@@ -11,47 +11,64 @@ namespace dftefe
     //
     // MemoryManager
     //
-    template <typename NumType, MemorySpace memorySpace>
+    template <typename ValueType, MemorySpace memorySpace>
     class MemoryManager
     {
     public:
       static void
-      allocate(size_type size, NumType **ptr);
+      allocate(size_type size, ValueType **ptr);
 
       static void
-      deallocate(NumType *ptr);
+      deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, NumType *ptr, NumType val);
+      set(size_type size, ValueType *ptr, ValueType val);
     };
 
-    template <typename NumType>
-    class MemoryManager<NumType, MemorySpace::HOST>
+    template <typename ValueType>
+    class MemoryManager<ValueType, MemorySpace::HOST>
     {
     public:
       static void
-      allocate(size_type size, NumType **ptr);
+      allocate(size_type size, ValueType **ptr);
 
       static void
-      deallocate(NumType *ptr);
+      deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, NumType *ptr, NumType val);
+      set(size_type size, ValueType *ptr, ValueType val);
     };
 
-    template <typename NumType>
-    class MemoryManager<NumType, MemorySpace::DEVICE>
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueType>
+    class MemoryManager<ValueType, MemorySpace::HOST_PINNED>
     {
     public:
       static void
-      allocate(size_type size, NumType **ptr);
+      allocate(size_type size, ValueType **ptr);
 
       static void
-      deallocate(NumType *ptr);
+      deallocate(ValueType *ptr);
 
       static void
-      set(size_type size, NumType *ptr, NumType val);
+      set(size_type size, ValueType *ptr, ValueType val);
     };
+
+
+    template <typename ValueType>
+    class MemoryManager<ValueType, MemorySpace::DEVICE>
+    {
+    public:
+      static void
+      allocate(size_type size, ValueType **ptr);
+
+      static void
+      deallocate(ValueType *ptr);
+
+      static void
+      set(size_type size, ValueType *ptr, ValueType val);
+    };
+#endif // DFTEFE_WITH_DEVICE
   } // namespace utils
 
 } // namespace dftefe

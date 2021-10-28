@@ -7,19 +7,29 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class VectorKernels
     {
     public:
       /**
        * @brief Function template for architecture adaptable compound addition to perform v += u element-wisely
-       * @tparam NumberType the type of the number
+       * @tparam ValueType the type of the number
        * @tparam memorySpace dftefe::utils::MemorySpace::HOST of dftefe::utils::MemorySpace::DEVICE
        * @param u
        * @param v
        */
       static void
-      add(size_type size, const NumberType *u, NumberType *v);
+      add(size_type size, const ValueType *u, ValueType *v);
+
+      /**
+       * @brief Function template for architecture adaptable compound subtraction to perform v -= u element-wisely
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace dftefe::utils::MemorySpace::HOST of dftefe::utils::MemorySpace::DEVICE
+       * @param u
+       * @param v
+       */
+      static void
+      sub(size_type size, const ValueType *u, ValueType *v);
 
       /**
        * @brief Template for performing \f$ w = au + bv \f$
@@ -31,25 +41,33 @@ namespace dftefe
        * @param[out] w array of the result
        */
       static void
-      add(size_type         size,
-          NumberType        a,
-          const NumberType *u,
-          NumberType        b,
-          const NumberType *v,
-          NumberType       *w);
+      add(size_type        size,
+          ValueType        a,
+          const ValueType *u,
+          ValueType        b,
+          const ValueType *v,
+          ValueType       *w);
     };
 
-    template <typename NumberType>
-    class VectorKernels<NumberType, dftefe::utils::MemorySpace::HOST>
+    template <typename ValueType>
+    class VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>
     {
     public:
       /**
-       * @tparam NumberType
+       * @tparam ValueType
        * @param u
        * @param v
        */
       static void
-      add(size_type size, const NumberType *u, NumberType *v);
+      add(size_type size, const ValueType *u, ValueType *v);
+
+      /**
+       * @tparam ValueType
+       * @param u
+       * @param v
+       */
+      static void
+      sub(size_type size, const ValueType *u, ValueType *v);
 
       /**
        * @brief Performing \f$ w = au + bv \f$ for the host
@@ -61,26 +79,34 @@ namespace dftefe
        * @param[out] w array of the result
        */
       static void
-      add(size_type         size,
-          NumberType        a,
-          const NumberType *u,
-          NumberType        b,
-          const NumberType *v,
-          NumberType       *w);
+      add(size_type        size,
+          ValueType        a,
+          const ValueType *u,
+          ValueType        b,
+          const ValueType *v,
+          ValueType       *w);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
-    template <typename NumberType>
-    class VectorKernels<NumberType, dftefe::utils::MemorySpace::DEVICE>
+    template <typename ValueType>
+    class VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>
     {
     public:
       /**
-       * @tparam NumberType
+       * @tparam ValueType
        * @param u
        * @param v
        */
       static void
-      add(size_type size, const NumberType *u, NumberType *v);
+      add(size_type size, const ValueType *u, ValueType *v);
+
+      /**
+       * @tparam ValueType
+       * @param u
+       * @param v
+       */
+      static void
+      sub(size_type size, const ValueType *u, ValueType *v);
 
       /**
        * @brief Performing \f$ w = au + bv \f$ for the device
@@ -92,12 +118,12 @@ namespace dftefe
        * @param[out] w array of the result
        */
       static void
-      add(size_type         size,
-          NumberType        a,
-          const NumberType *u,
-          NumberType        b,
-          const NumberType *v,
-          NumberType       *w);
+      add(size_type        size,
+          ValueType        a,
+          const ValueType *u,
+          ValueType        b,
+          const ValueType *v,
+          ValueType       *w);
     };
 #endif
 

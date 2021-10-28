@@ -24,7 +24,6 @@
  */
 
 #include "DeviceAPICalls.h"
-#include <cstring>
 #include <algorithm>
 
 
@@ -32,59 +31,83 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename NumType>
+    template <typename ValueType>
     void
-    MemoryManager<NumType, MemorySpace::HOST>::allocate(size_type size,
-                                                        NumType **ptr)
+    MemoryManager<ValueType, MemorySpace::HOST>::allocate(size_type   size,
+                                                          ValueType **ptr)
     {
-      *ptr = new NumType[size];
+      *ptr = new ValueType[size];
     }
 
-    template <typename NumType>
+    template <typename ValueType>
     void
-    MemoryManager<NumType, MemorySpace::HOST>::deallocate(NumType *ptr)
+    MemoryManager<ValueType, MemorySpace::HOST>::deallocate(ValueType *ptr)
     {
       delete[] ptr;
     }
 
-    // todo
-    template <typename NumType>
+    template <typename ValueType>
     void
-    MemoryManager<NumType, MemorySpace::HOST>::set(size_type size,
-                                                   NumType  *ptr,
-                                                   NumType   val)
+    MemoryManager<ValueType, MemorySpace::HOST>::set(size_type  size,
+                                                     ValueType *ptr,
+                                                     ValueType  val)
     {
-      for (int i = 0; i < size; ++i)
-        {
-          ptr[i] = val;
-        }
+      std::fill(ptr, ptr + size, val);
     }
 
-    template <typename NumType>
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueType>
     void
-    MemoryManager<NumType, MemorySpace::DEVICE>::allocate(size_type size,
-                                                          NumType **ptr)
+    MemoryManager<ValueType, MemorySpace::HOST_PINNED>::allocate(
+      size_type   size,
+      ValueType **ptr)
     {
-      deviceMalloc((void **)ptr, size * sizeof(NumType));
-      deviceMemset(*ptr, size * sizeof(NumType));
+      hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
     }
 
-    template <typename NumType>
+    template <typename ValueType>
     void
-    MemoryManager<NumType, MemorySpace::DEVICE>::deallocate(NumType *ptr)
+    MemoryManager<ValueType, MemorySpace::HOST_PINNED>::deallocate(
+      ValueType *ptr)
+    {
+      hostPinnedFree(ptr);
+    }
+
+    template <typename ValueType>
+    void
+    MemoryManager<ValueType, MemorySpace::HOST_PINNED>::set(size_type  size,
+                                                            ValueType *ptr,
+                                                            ValueType  val)
+    {
+      std::fill(ptr, ptr + size, val);
+    }
+
+
+    template <typename ValueType>
+    void
+    MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(size_type   size,
+                                                            ValueType **ptr)
+    {
+      deviceMalloc((void **)ptr, size * sizeof(ValueType));
+    }
+
+    template <typename ValueType>
+    void
+    MemoryManager<ValueType, MemorySpace::DEVICE>::deallocate(ValueType *ptr)
     {
       deviceFree(ptr);
     }
 
-    template <typename NumType>
+    template <typename ValueType>
     void
-    MemoryManager<NumType, MemorySpace::DEVICE>::set(size_type size,
-                                                     NumType  *ptr,
-                                                     NumType   val)
+    MemoryManager<ValueType, MemorySpace::DEVICE>::set(size_type  size,
+                                                       ValueType *ptr,
+                                                       ValueType  val)
     {
-      // todo
-      deviceMemset(ptr, size * sizeof(NumType));
+      deviceSetValue(ptr, val, size);
     }
-  } // namespace utils
+
+#endif // DFTEFE_WITH_DEVICE
+  }    // namespace utils
 
 } // namespace dftefe

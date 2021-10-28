@@ -1,10 +1,12 @@
 #include <complex>
 #include "MemoryManager.h"
-#include "Vector.h"
+//#include "Vector.h"
 #include "VectorKernels.h"
 #include "Exceptions.h"
 #include "MemoryTransfer.h"
 #include <iostream>
+#include <stdexcept>
+//#include <assert.h>
 
 namespace dftefe
 {
@@ -13,94 +15,94 @@ namespace dftefe
     //
     // Constructor
     //
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    Vector<NumberType, memorySpace>::Vector(const size_type  size,
-                                            const NumberType initVal)
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace>::Vector(const size_type size,
+                                           const ValueType initVal)
       : d_size(size)
     {
-      dftefe::utils::MemoryManager<NumberType, memorySpace>::allocate(size,
-                                                                      &d_data);
-      dftefe::utils::MemoryManager<NumberType, memorySpace>::set(size,
-                                                                 d_data,
-                                                                 initVal);
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(size,
+                                                                     &d_data);
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::set(size,
+                                                                d_data,
+                                                                initVal);
     }
 
     // todo
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    Vector<NumberType, memorySpace>::resize(const size_type  size,
-                                            const NumberType initVal)
+    Vector<ValueType, memorySpace>::resize(const size_type size,
+                                           const ValueType initVal)
     {
-      dftefe::utils::MemoryManager<NumberType, memorySpace>::deallocate(d_data);
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
       d_size = size;
       if (size > 0)
         {
           d_data =
-            dftefe::utils::MemoryManager<NumberType, memorySpace>::allocate(
+            dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(
               size, nullptr);
-          dftefe::utils::MemoryManager<NumberType, memorySpace>::set(size,
-                                                                     d_data,
-                                                                     initVal);
+          dftefe::utils::MemoryManager<ValueType, memorySpace>::set(size,
+                                                                    d_data,
+                                                                    initVal);
         }
     }
 
     //
     // Destructor
     //
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    Vector<NumberType, memorySpace>::~Vector()
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace>::~Vector()
     {
-      dftefe::utils::MemoryManager<NumberType, memorySpace>::deallocate(d_data);
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    Vector<NumberType, memorySpace>::Vector(
-      const Vector<NumberType, memorySpace> &u)
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace>::Vector(
+      const Vector<ValueType, memorySpace> &u)
       : d_size(u.d_size)
     {
-      utils::MemoryTransfer<NumberType, memorySpace, memorySpace>::copy(
+      utils::MemoryTransfer<memorySpace, memorySpace, ValueType>::copy(
         d_size, this->d_data, u.d_data);
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
-    Vector<NumberType, memorySpace>::size() const
+    Vector<ValueType, memorySpace>::size() const
     {
       return d_size;
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<NumberType, memorySpace>::iterator
-    Vector<NumberType, memorySpace>::begin()
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::iterator
+    Vector<ValueType, memorySpace>::begin()
     {
       return d_data;
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<NumberType, memorySpace>::const_iterator
-    Vector<NumberType, memorySpace>::begin() const
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::const_iterator
+    Vector<ValueType, memorySpace>::begin() const
     {
       return d_data;
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<NumberType, memorySpace>::iterator
-    Vector<NumberType, memorySpace>::end()
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::iterator
+    Vector<ValueType, memorySpace>::end()
     {
       return (d_data + d_size);
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<NumberType, memorySpace>::const_iterator
-    Vector<NumberType, memorySpace>::end() const
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::const_iterator
+    Vector<ValueType, memorySpace>::end() const
     {
       return (d_data + d_size);
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    Vector<NumberType, memorySpace> &
-    Vector<NumberType, memorySpace>::operator=(
-      const Vector<NumberType, memorySpace> &rhs)
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace> &
+    Vector<ValueType, memorySpace>::operator=(
+      const Vector<ValueType, memorySpace> &rhs)
     {
       if (&rhs != this)
         {
@@ -108,58 +110,90 @@ namespace dftefe
             {
               this->resize(rhs.d_size);
             }
-          utils::MemoryTransfer<NumberType, memorySpace, memorySpace>::copy(
+          utils::MemoryTransfer<memorySpace, memorySpace, ValueType>::copy(
             rhs.d_size, this->d_data, rhs.d_data);
         }
       return (*this);
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<NumberType, memorySpace>::reference
-    Vector<NumberType, memorySpace>::operator[](const size_type i)
-    {
-      return d_data[i];
-    }
+    //    // This part does not work for GPU version, will work on this until
+    //    // having cleaner solution.
+    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    //    typename Vector<ValueType, memorySpace>::reference
+    //    Vector<ValueType, memorySpace>::operator[](const size_type i)
+    //    {
+    //
+    //      return d_data[i];
+    //    }
+    //
+    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    //    typename Vector<ValueType, memorySpace>::const_reference
+    //    Vector<ValueType, memorySpace>::operator[](const size_type i) const
+    //    {
+    //      return d_data[i];
+    //    }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<NumberType, memorySpace>::const_reference
-    Vector<NumberType, memorySpace>::operator[](const size_type i) const
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace> &
+    Vector<ValueType, memorySpace>::operator+=(const Vector &rhs)
     {
-      return d_data[i];
-    }
-
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    Vector<NumberType, memorySpace> &
-    Vector<NumberType, memorySpace>::operator+=(const Vector &rhs)
-    {
-      // todo add assertion to check size of the two vectors
-      VectorKernels<NumberType, memorySpace>::add(d_size, rhs.d_data, d_data);
+      // todo
+      //      AssertWithMsg(rhs.d_size == d_size,
+      //                    "Size of two vectors should be the same.");
+      VectorKernels<ValueType, memorySpace>::add(d_size, rhs.d_data, d_data);
       return *this;
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    NumberType *
-    Vector<NumberType, memorySpace>::data() noexcept
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace> &
+    Vector<ValueType, memorySpace>::operator-=(const Vector &rhs)
+    {
+      // todo
+      //       AssertWithMsg(rhs.d_size == d_size,
+      //                     "Size of two vectors should be the same.");
+      VectorKernels<ValueType, memorySpace>::sub(d_size, rhs.d_data, d_data);
+      return *this;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    ValueType *
+    Vector<ValueType, memorySpace>::data() noexcept
     {
       return d_data;
     }
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
-    const NumberType *
-    Vector<NumberType, memorySpace>::data() const noexcept
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const ValueType *
+    Vector<ValueType, memorySpace>::data() const noexcept
     {
       return d_data;
     }
 
-    template <typename NumberType, dftefe::utils::MemorySpace memorySpace>
+    // todo
+    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    //    Vector<ValueType, memorySpace>::Vector(Vector &&u)
+    //    {
+    //
+    //    }
+    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    //    Vector<ValueType, memorySpace> &
+    //    Vector<ValueType, memorySpace>::operator=(Vector &&u)
+    //    {
+    //      return <#initializer #>;
+    //    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    add(NumberType                             a,
-        const Vector<NumberType, memorySpace> &u,
-        NumberType                             b,
-        const Vector<NumberType, memorySpace> &v,
-        Vector<NumberType, memorySpace>       &w)
+    add(ValueType                             a,
+        const Vector<ValueType, memorySpace> &u,
+        ValueType                             b,
+        const Vector<ValueType, memorySpace> &v,
+        Vector<ValueType, memorySpace>       &w)
     {
-      // todo add assertion to check sizes of the three vectors are consistent
-      VectorKernels<NumberType, memorySpace>::add(
+      //      dftefe::utils::Assert(false);
+      //      dftefe::utils::AssertWithMsg(((u.size() == v.size()) && (v.size()
+      //      == w.size())),
+      //                    "Size of two vectors should be the same.");
+      VectorKernels<ValueType, memorySpace>::add(
         u.size(), a, u.data(), b, v.data(), w.data());
     }
 
