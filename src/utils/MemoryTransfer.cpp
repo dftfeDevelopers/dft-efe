@@ -23,6 +23,7 @@
  * @author Ian C. Lin.
  */
 
+#include "MemoryTransfer.h"
 
 namespace dftefe
 {}

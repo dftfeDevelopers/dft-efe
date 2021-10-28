@@ -30,10 +30,17 @@
 int
 main()
 {
+#ifndef DFTEFE_WITH_DEVICE
+  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::HOST> a(4,
+                                                                            0);
+  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::HOST> b(4,
+                                                                            0);
+#elif DFTEFE_WITH_DEVICE
   dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE> a(
     4, 0);
   dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE> b(
     4, 0);
+#endif
 
   std::vector<double> a_h(4, 0), b_h(4, 0), c_h(4, 0);
   a_h[0] = 1;
@@ -46,6 +53,17 @@ main()
   b_h[2] = 7;
   b_h[3] = 8;
 
+
+#ifndef DFTEFE_WITH_DEVICE
+  dftefe::utils::MemoryTransfer<
+    double,
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::HOST>::copy(4, a.data(), a_h.data());
+  dftefe::utils::MemoryTransfer<
+    double,
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::HOST>::copy(4, b.data(), b_h.data());
+#elif DFTEFE_WITH_DEVICE
   dftefe::utils::MemoryTransfer<
     double,
     dftefe::utils::MemorySpace::DEVICE,
@@ -54,6 +72,8 @@ main()
     double,
     dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(4, b.data(), b_h.data());
+#endif
+
   a += b;
 
   for (int i = 0; i < 4; ++i)
@@ -62,10 +82,17 @@ main()
     }
   std::cout << std::endl;
 
+#ifndef DFTEFE_WITH_DEVICE
+  dftefe::utils::MemoryTransfer<
+    double,
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::HOST>::copy(4, c_h.data(), a.data());
+#elif DFTEFE_WITH_DEVICE
   dftefe::utils::MemoryTransfer<
     double,
     dftefe::utils::MemorySpace::HOST,
     dftefe::utils::MemorySpace::DEVICE>::copy(4, c_h.data(), a.data());
+#endif
   for (int i = 0; i < 4; ++i)
     {
       std::cout << c_h[i] << ", ";
