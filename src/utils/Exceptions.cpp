@@ -18,9 +18,9 @@ namespace dftefe
           : d_msg(msg)
         {}
         virtual char const *
-        what() const noexcept
+        what() const noexcept override
         {
-          return msg_.c_str();
+          return d_msg.c_str();
         }
 
       private:
