@@ -3,7 +3,8 @@ set(DFT-EFE-UTILS-SOURCES
         DeviceAPICalls.cu
         DeviceUtils.cpp
         MemoryManager.cpp
-        Exceptions.cpp MemoryTransfer.cpp MemoryTransfer.h)
+        Exceptions.cpp
+        MemoryTransfer.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

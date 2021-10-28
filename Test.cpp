@@ -26,6 +26,7 @@
 #include <iostream>
 #include "Vector.h"
 
+
 int
 main()
 {
@@ -34,21 +35,40 @@ main()
   dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE> b(
     4, 0);
 
-  // these do not world for device memory
-  a[0] = 1;
-  a[1] = 2;
-  a[2] = 3;
-  a[3] = 4;
+  std::vector<double> a_h(4, 0), b_h(4, 0), c_h(4, 0);
+  a_h[0] = 1;
+  a_h[1] = 2;
+  a_h[2] = 3;
+  a_h[3] = 4;
 
-  b[0] = 5;
-  b[1] = 6;
-  b[2] = 7;
-  b[3] = 8;
+  b_h[0] = 5;
+  b_h[1] = 6;
+  b_h[2] = 7;
+  b_h[3] = 8;
 
+  dftefe::utils::MemoryTransfer<
+    double,
+    dftefe::utils::MemorySpace::DEVICE,
+    dftefe::utils::MemorySpace::HOST>::copy(4, a.data(), a_h.data());
+  dftefe::utils::MemoryTransfer<
+    double,
+    dftefe::utils::MemorySpace::DEVICE,
+    dftefe::utils::MemorySpace::HOST>::copy(4, b.data(), b_h.data());
   a += b;
 
-  //  for (int i = 0; i < 4; ++i) {
-  //      std::cout << a[i] << ", ";
-  //    }
-  //  std::cout << std::endl;
+  for (int i = 0; i < 4; ++i)
+    {
+      std::cout << c_h[i] << ", ";
+    }
+  std::cout << std::endl;
+
+  dftefe::utils::MemoryTransfer<
+    double,
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE>::copy(4, c_h.data(), a.data());
+  for (int i = 0; i < 4; ++i)
+    {
+      std::cout << c_h[i] << ", ";
+    }
+  std::cout << std::endl;
 }
