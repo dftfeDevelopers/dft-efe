@@ -17,7 +17,7 @@ namespace dftefe
         ExceptionWithMsg(std::string const &msg)
           : d_msg(msg)
         {}
-        char const *
+        virtual char const *
         what() const noexcept override
         {
           return d_msg.c_str();
