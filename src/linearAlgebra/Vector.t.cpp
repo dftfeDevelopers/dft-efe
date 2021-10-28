@@ -157,6 +157,7 @@ namespace dftefe
     const ValueType *
     Vector<ValueType, memorySpace>::data() const noexcept
     {
+      std::cout << "hi";
       return d_data;
     }
 
