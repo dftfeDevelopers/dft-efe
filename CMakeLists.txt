@@ -19,7 +19,6 @@ if(ENABLE_CUDA)
     enable_language(CUDA)
 endif()
 
-
 find_package(deal.II 9.3.0 REQUIRED)
 include_directories(${DEAL_II_INCLUDE_DIRS})
 

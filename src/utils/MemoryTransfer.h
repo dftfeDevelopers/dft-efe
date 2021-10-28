@@ -125,6 +125,6 @@ namespace dftefe
   } // namespace utils
 } // namespace dftefe
 
-
+#include "MemoryTransfer.t.cpp"
 
 #endif // dftefeMemoryTransfer_h
