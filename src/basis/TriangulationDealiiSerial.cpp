@@ -1,4 +1,5 @@
 #include <utils/Exceptions.h>
+#include <utils/DealiiConversions.h>
 #include "TriangulationDealiiSerial.h"
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
@@ -8,37 +9,7 @@ namespace dftefe
 {
   namespace basis
   {
-    namespace
-    {
-      template <unsigned int dim>
-      dealii::Point<dim, double> &
-      convertToDealiiPoint(const utils::Point &point)
-      {
-        utils::Assert(
-          dim == point.size(),
-          "Mismatch of dimension for dealii and the dimension of the point");
-        dealii::Point<dim, double> dealiiPoint();
-        for (unsigned int i = 0; i < dim; ++i)
-          dealiiPoint[i] = point[i];
-
-        return dealiiPoint;
-      }
-
-      template <unsigned int dim>
-      dealii::Point<dim, double> &
-      convertToDealiiPoint(const std::vector<double> &v)
-      {
-        utils::Assert(
-          dim == v.size(),
-          "Mismatch of dimension for dealii and the dimension of the vector");
-        dealii::Point<dim, double> dealiiPoint();
-        for (unsigned int i = 0; i < dim; ++i)
-          dealiiPoint[i] = v[i];
-
-        return dealiiPoint;
-      }
-
-    } // namespace
+    
     <template unsigned int dim>
       TriangulationDealiiSerial<dim>::TriangulationDealiiSerial():
 	  isInitialized(false),
@@ -103,7 +74,7 @@ namespace dftefe
 	dealii::Point<dim, double> * points = new dealii::Point<dim, double>[dim];
 	for(unsigned int i = 0; i < dim; ++i)
 	{
-        points[i] = convertToDealiiPoint(domainVectors[i]);
+         utils::convertToDealiiPoint<dim>(domainVectors[i], points[i]);
 	}
 
 	dealii::GridGenerator::subdivided_parallelepiped<dim>(d_triangulationDealii,
@@ -121,7 +92,8 @@ namespace dftefe
         "Cannot shift triangulation without calling initializeTriangulationConstruction");
       utils::Assert(dim == origin.size(),
                     "Mismatch of dimension for dealii and the origin");
-      dealii::Point<dim, double> dealiiOrigin = convertToDealiiPoint(origin);
+      dealii::Point<dim, double> dealiiOrigin ;
+      utils::convertToDealiiPoint<dim>(origin, dealiiOrigin);
       dealii::GridTools::shift(dealiiOrigin, d_triangulationDealii);
     }
 
