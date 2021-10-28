@@ -115,5 +115,5 @@ namespace dftefe
       deviceMemcpyD2D(dst, src, size * sizeof(ValueType));
     }
 #endif // DFTEFE_WITH_DEVICE
-  } // namespace utils
+  }    // namespace utils
 } // namespace dftefe

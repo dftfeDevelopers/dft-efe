@@ -1,6 +1,6 @@
 #ifdef DFTEFE_WITH_DEVICE
 #  ifndef dftefeDeviceUtils_h
-#define dftefeDeviceUtils_h
+#    define dftefeDeviceUtils_h
 
 namespace dftefe
 {

@@ -69,7 +69,7 @@ namespace dftefe
       set(size_type size, ValueType *ptr, ValueType val);
     };
 #endif // DFTEFE_WITH_DEVICE
-  } // namespace utils
+  }    // namespace utils
 
 } // namespace dftefe
 
