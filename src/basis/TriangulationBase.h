@@ -6,6 +6,7 @@
 #include "TriaCellBase.h"
 namespace dftefe
 {
+<<<<<<< HEAD
   namespace basis
   {
     /**
