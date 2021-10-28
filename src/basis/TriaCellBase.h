@@ -10,10 +10,9 @@ namespace dftefe
 {
   namespace basis
   {
-
     /**
-     * @brief An abstract class for an geometric cell. 
-     * This is done to prevent the template (as required by deal.ii objects) 
+     * @brief An abstract class for an geometric cell.
+     * This is done to prevent the template (as required by deal.ii objects)
      * to propagate all across the code,
      *
      **/
@@ -70,11 +69,11 @@ namespace dftefe
 
       virtual std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const CellMappingBase &        cellMapping) const = 0;
+                         const CellMappingBase &      cellMapping) const = 0;
 
       virtual std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const CellMappingBase &        cellMapping) const = 0;
+                   const CellMappingBase &      cellMapping) const = 0;
 
     }; // end of class TriaCellBase
   }    // end of namespace basis

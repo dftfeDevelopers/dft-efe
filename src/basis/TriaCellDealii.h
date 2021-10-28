@@ -12,13 +12,14 @@ namespace dftefe
   namespace basis
   {
     /**
-     * @brief An interface to deal.ii geometric cell 
+     * @brief An interface to deal.ii geometric cell
      **/
-    template <unsigned int DIM>
+    template <unsigned int dim>
     class TriaCellDealii : public TriaBase
     {
     public:
-      TriaCellDealii();
+      TriaCellDealii(
+        dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
       ~TriaCellDealii();
 
       std::vector<std::shared_ptr<Point>>
@@ -68,11 +69,14 @@ namespace dftefe
 
       std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const CellMappingBase &        cellMapping) const override;
+                         const CellMappingBase &cellMapping) const override;
 
       std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const CellMappingBase &        cellMapping) const override;
+                   const CellMappingBase &      cellMapping) const override;
+
+    private:
+      dealii::Triangulation<dim>::active_cell_iterator d_cellItr;
 
     }; // end of class TriaCellDealii
   }    // end of namespace basis

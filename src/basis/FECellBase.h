@@ -74,17 +74,17 @@ namespace dftefe
 
       virtual std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const CellMappingBase &        cellMapping) const override = 0;
+                         const CellMappingBase &cellMapping) const override = 0;
 
       virtual std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const CellMappingBase &        cellMapping) const override = 0;
+                   const CellMappingBase &      cellMapping) const override = 0;
 
       virtual global_size_type
-	getLocalToGlobalDoFId(size_type i) const override = 0;
+      getLocalToGlobalDoFId(size_type i) const override = 0;
 
       virtual size_type
-	getFEOrder() const override = 0;
+      getFEOrder() const override = 0;
 
 
     }; // end of class FECellBase

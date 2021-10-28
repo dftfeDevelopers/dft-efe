@@ -5,7 +5,6 @@ namespace dftefe
 {
   namespace utils
   {
-
     template <typename T>
     inline PointImpl<T>::PointImpl(const std::vector<T> &x)
       : d_size(x.size())
@@ -128,8 +127,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    typename PointImpl<T>::reference
+    inline typename PointImpl<T>::reference
     PointImpl<T>::operator[](size_type i)
     {
       Assert(i < d_size);
@@ -137,8 +135,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    typename PointImpl<T>::const_reference
+    inline typename PointImpl<T>::const_reference
     PointImpl<T>::operator[](size_type i) const
     {
       Assert(i < d_size);
@@ -146,8 +143,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T> &
+    inline PointImpl<T> &
     operator*=(PointImpl<T> &p, T a)
     {
       std::transform(p.begin(),
@@ -158,8 +154,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T>
+    inline PointImpl<T>
     operator*(const PointImpl<T> &p, T a)
     {
       PointImpl<T> q(p);
@@ -168,8 +163,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T>
+    inline PointImpl<T>
     operator*(T a, const PointImpl<T> &p)
     {
       PointImpl<T> q(p);
@@ -178,8 +172,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T> &
+    inline PointImpl<T> &
     operator+=(PointImpl<T> &p, const PointImpl<T> &q)
     {
       Assert(p.size() == q.size());
@@ -189,8 +182,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T>
+    inline PointImpl<T>
     operator+(const PointImpl<T> &p, const PointImpl<T> &q)
     {
       PointImpl<T> r(p);
@@ -199,8 +191,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T> &
+    inline PointImpl<T> &
     operator-=(PointImpl<T> &p, const PointImpl<T> &q)
     {
       Assert(p.size() == q.size());
@@ -210,8 +201,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    PointImpl<T>
+    inline PointImpl<T>
     operator-(const PointImpl<T> &p, const PointImpl<T> &q)
     {
       PointImpl<T> r(p);
@@ -221,8 +211,7 @@ namespace dftefe
     }
 
     template <typename T>
-    inline 
-    std::ostream &
+    inline std::ostream &
     operator<<(std::ostream &outputStream, const PointImpl<T> &p)
     {
       const size_type pSize = p.size();
