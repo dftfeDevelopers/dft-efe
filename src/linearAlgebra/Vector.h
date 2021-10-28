@@ -12,10 +12,10 @@ namespace dftefe
     class Vector
     {
       typedef ValueType        value_type;
-      typedef ValueType       *pointer;
-      typedef ValueType       &reference;
+      typedef ValueType *      pointer;
+      typedef ValueType &      reference;
       typedef const ValueType &const_reference;
-      typedef ValueType       *iterator;
+      typedef ValueType *      iterator;
       typedef const ValueType *const_iterator;
 
     public:
@@ -173,7 +173,7 @@ namespace dftefe
         const Vector<ValueType, memorySpace> &u,
         ValueType                             b,
         const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace>       &w);
+        Vector<ValueType, memorySpace> &      w);
 
   } // namespace linearAlgebra
 } // end of namespace dftefe

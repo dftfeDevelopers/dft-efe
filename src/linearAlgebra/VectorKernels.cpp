@@ -10,7 +10,7 @@ namespace dftefe
     VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::add(
       const size_type  size,
       const ValueType *u,
-      ValueType       *v)
+      ValueType *      v)
     {
       for (size_type i = 0; i < size; ++i)
         {
@@ -23,7 +23,7 @@ namespace dftefe
     VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::sub(
       const size_type  size,
       const ValueType *u,
-      ValueType       *v)
+      ValueType *      v)
     {
       for (size_type i = 0; i < size; ++i)
         {
@@ -39,7 +39,7 @@ namespace dftefe
       const ValueType *u,
       ValueType        b,
       const ValueType *v,
-      ValueType       *w)
+      ValueType *      w)
     {
       for (int i = 0; i < size; ++i)
         {

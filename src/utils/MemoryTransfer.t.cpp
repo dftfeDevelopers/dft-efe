@@ -35,7 +35,7 @@ namespace dftefe
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST, ValueType>::copy(
       size_type        size,
-      ValueType       *dst,
+      ValueType *      dst,
       const ValueType *src)
     {
       std::copy(src, src + size, dst);
@@ -54,7 +54,7 @@ namespace dftefe
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE, ValueType>::copy(
       size_type        size,
-      ValueType       *dst,
+      ValueType *      dst,
       const ValueType *src)
     {
       deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
@@ -73,7 +73,7 @@ namespace dftefe
     MemoryTransfer<MemorySpace::HOST_PINNED,
                    MemorySpace::HOST_PINNED,
                    ValueType>::copy(size_type        size,
-                                    ValueType       *dst,
+                                    ValueType *      dst,
                                     const ValueType *src)
     {
       std::copy(src, src + size, dst);
@@ -91,7 +91,7 @@ namespace dftefe
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST, ValueType>::copy(
       size_type        size,
-      ValueType       *dst,
+      ValueType *      dst,
       const ValueType *src)
     {
       deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
@@ -109,7 +109,7 @@ namespace dftefe
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE, ValueType>::copy(
       size_type        size,
-      ValueType       *dst,
+      ValueType *      dst,
       const ValueType *src)
     {
       deviceMemcpyD2D(dst, src, size * sizeof(ValueType));

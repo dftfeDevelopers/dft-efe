@@ -46,7 +46,7 @@ namespace dftefe
           const ValueType *u,
           ValueType        b,
           const ValueType *v,
-          ValueType       *w);
+          ValueType *      w);
     };
 
     template <typename ValueType>
@@ -84,7 +84,7 @@ namespace dftefe
           const ValueType *u,
           ValueType        b,
           const ValueType *v,
-          ValueType       *w);
+          ValueType *      w);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -123,7 +123,7 @@ namespace dftefe
           const ValueType *u,
           ValueType        b,
           const ValueType *v,
-          ValueType       *w);
+          ValueType *      w);
     };
 #endif
 

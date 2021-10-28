@@ -41,7 +41,7 @@ namespace dftefe
                     const ValueType *u,
                     const ValueType  b,
                     const ValueType *v,
-                    ValueType       *w)
+                    ValueType *      w)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -60,7 +60,7 @@ namespace dftefe
     VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::add(
       const size_type  size,
       const ValueType *u,
-      ValueType       *v)
+      ValueType *      v)
     {
       addCUDAKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                       dftefe::utils::BLOCK_SIZE>>>(
@@ -74,7 +74,7 @@ namespace dftefe
     VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::sub(
       const size_type  size,
       const ValueType *u,
-      ValueType       *v)
+      ValueType *      v)
     {
       subCUDAKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                       dftefe::utils::BLOCK_SIZE>>>(
@@ -92,7 +92,7 @@ namespace dftefe
       const ValueType *u,
       ValueType        b,
       const ValueType *v,
-      ValueType       *w)
+      ValueType *      w)
     {
       addCUDAKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                       dftefe::utils::BLOCK_SIZE>>>(

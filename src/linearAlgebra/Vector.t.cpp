@@ -179,7 +179,7 @@ namespace dftefe
         const Vector<ValueType, memorySpace> &u,
         ValueType                             b,
         const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace>       &w)
+        Vector<ValueType, memorySpace> &      w)
     {
       DFTEFE_AssertWithMsg(((u.size() == v.size()) && (v.size() == w.size())),
                            "Size of two vectors should be the same.");
