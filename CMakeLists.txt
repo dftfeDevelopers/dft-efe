@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
-#add_executable(dft-efe src/main.cpp)
-
-add_executable(dft-efe Test2.cpp)
+add_executable(dft-efe src/main.cpp)
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 

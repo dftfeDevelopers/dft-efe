@@ -1,12 +1,7 @@
-#include <complex>
 #include "MemoryManager.h"
-//#include "Vector.h"
 #include "VectorKernels.h"
 #include "Exceptions.h"
 #include "MemoryTransfer.h"
-#include <iostream>
-#include <stdexcept>
-//#include <assert.h>
 
 namespace dftefe
 {
@@ -27,7 +22,6 @@ namespace dftefe
                                                                 initVal);
     }
 
-    // todo
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     Vector<ValueType, memorySpace>::resize(const size_type size,
@@ -137,9 +131,8 @@ namespace dftefe
     Vector<ValueType, memorySpace> &
     Vector<ValueType, memorySpace>::operator+=(const Vector &rhs)
     {
-      // todo
-      //      AssertWithMsg(rhs.d_size == d_size,
-      //                    "Size of two vectors should be the same.");
+      DFTEFE_AssertWithMsg(rhs.d_size == d_size,
+                           "Size of two vectors should be the same.");
       VectorKernels<ValueType, memorySpace>::add(d_size, rhs.d_data, d_data);
       return *this;
     }
@@ -148,9 +141,8 @@ namespace dftefe
     Vector<ValueType, memorySpace> &
     Vector<ValueType, memorySpace>::operator-=(const Vector &rhs)
     {
-      // todo
-      //       AssertWithMsg(rhs.d_size == d_size,
-      //                     "Size of two vectors should be the same.");
+      AssertWithMsg(rhs.d_size == d_size,
+                    "Size of two vectors should be the same.");
       VectorKernels<ValueType, memorySpace>::sub(d_size, rhs.d_data, d_data);
       return *this;
     }
@@ -189,10 +181,8 @@ namespace dftefe
         const Vector<ValueType, memorySpace> &v,
         Vector<ValueType, memorySpace>       &w)
     {
-      //      dftefe::utils::Assert(false);
-      //      dftefe::utils::AssertWithMsg(((u.size() == v.size()) && (v.size()
-      //      == w.size())),
-      //                    "Size of two vectors should be the same.");
+      DFTEFE_AssertWithMsg(((u.size() == v.size()) && (v.size() == w.size())),
+                           "Size of two vectors should be the same.");
       VectorKernels<ValueType, memorySpace>::add(
         u.size(), a, u.data(), b, v.data(), w.data());
     }
