@@ -1,4 +1,3 @@
-#include "PointImpl.h"
 #include "Exceptions.h"
 #include <algorithm>
 namespace dftefe
@@ -10,7 +9,7 @@ namespace dftefe
       : d_size(x.size())
       , d_data(new T[x.size()])
     {
-      AssertWithMsg(x.size() <= 3, "Max. dimension of a point can be 3.");
+      DFTEFE_AssertWithMsg(x.size() <= 3, "Max. dimension of a point can be 3.");
       std::copy(x.begin(), x.end(), &(d_data[0]));
     }
 
@@ -19,7 +18,7 @@ namespace dftefe
       : d_size(N)
       , d_data(new T[N])
     {
-      AssertWithMsg(x.size() <= 3, "Max. dimension of a point can be 3.");
+      DFTEFE_AssertWithMsg(x.size() <= 3, "Max. dimension of a point can be 3.");
       std::copy(x, x + N, &(d_data[0]));
     }
 
@@ -28,7 +27,7 @@ namespace dftefe
       : d_size(N)
       , d_data(new T[N])
     {
-      AssertWithMsg(N <= 3, "Max. dimension of a point can be 3.");
+      DFTEFE_AssertWithMsg(N <= 3, "Max. dimension of a point can be 3.");
     }
 
     template <typename T>
@@ -36,7 +35,7 @@ namespace dftefe
       : d_size(N)
       , d_data(new T[N])
     {
-      AssertWithMsg(N <= 3, "Max. dimension of a point can be 3.");
+      DFTEFE_AssertWithMsg(N <= 3, "Max. dimension of a point can be 3.");
       std::fill(&(d_data[0]), &(d_data[N]), init);
     }
 
@@ -130,7 +129,7 @@ namespace dftefe
     inline typename PointImpl<T>::reference
     PointImpl<T>::operator[](size_type i)
     {
-      Assert(i < d_size);
+      DFTEFE_Assert(i < d_size);
       return d_data[i];
     }
 
@@ -138,7 +137,7 @@ namespace dftefe
     inline typename PointImpl<T>::const_reference
     PointImpl<T>::operator[](size_type i) const
     {
-      Assert(i < d_size);
+      DFTEFE_Assert(i < d_size);
       return d_data[i];
     }
 
@@ -175,7 +174,7 @@ namespace dftefe
     inline PointImpl<T> &
     operator+=(PointImpl<T> &p, const PointImpl<T> &q)
     {
-      Assert(p.size() == q.size());
+      DFTEFE_Assert(p.size() == q.size());
       std::transform(p.begin(), p.end(), q.begin(), p.begin(), std::plus<T>());
 
       return p;
@@ -194,7 +193,7 @@ namespace dftefe
     inline PointImpl<T> &
     operator-=(PointImpl<T> &p, const PointImpl<T> &q)
     {
-      Assert(p.size() == q.size());
+      DFTEFE_Assert(p.size() == q.size());
       std::transform(p.begin(), p.end(), q.begin(), p.begin(), std::minus<T>());
 
       return p;
