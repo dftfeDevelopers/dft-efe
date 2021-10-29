@@ -1,12 +1,11 @@
 #ifndef dftefeTriangulationBase_h
-#define dftefeTriangulationBase_h
+#  define dftefeTriangulationBase_h
 
-#include <utils/TypeConfig.h>
-#include <utils/Point.h>
-#include "TriaCellBase.h"
+#  include <utils/TypeConfig.h>
+#  include <utils/Point.h>
+#  include "TriaCellBase.h"
 namespace dftefe
 {
-<<<<<<< HEAD
   namespace basis
   {
     /**
@@ -53,4 +52,4 @@ namespace dftefe
     }; // end of class TriangulationBase
   }    // end of namespace basis
 } // end of namespace dftefe
-#endif
+#  endif

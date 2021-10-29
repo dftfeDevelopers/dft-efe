@@ -1,8 +1,8 @@
 #ifndef dftefeTriangulationCellBase_h
 #define dftefeTriangulationCellBase_h
 
-#include <utils/Point.h>
 #include <utils/TypeConfig.h>
+#include <utils/Point.h>
 #include "CellMappingBase.h"
 
 #include <memory>
@@ -19,14 +19,14 @@ namespace dftefe
     class TriangulationCellBase
     {
     public:
-        TriangulationCellBase();
+      TriangulationCellBase();
       virtual ~TriangulationCellBase();
 
       virtual void
-      getVertices( std::vector<utils::Point> & outputDftefePoints  ) const = 0;
+      getVertices(std::vector<utils::Point> &points) const = 0;
 
       virtual void
-      getVertex(size_type i, utils::Point &outputDftefePoint) const = 0;
+      getVertex(size_type i, utils::Point &point) const = 0;
 
       virtual size_type
       getId() const = 0;
@@ -43,17 +43,17 @@ namespace dftefe
       virtual unsigned int
       getDim() const = 0;
 
-        
-        
-      virtual void
-      getParametricPoint(const Point &realPoint,
-                         const CellMappingBase &      cellMapping,
-                         Point  &parametricPoint ) const = 0;
+
 
       virtual void
-      getRealPoint(const Point  &parametricPoint,
-                   const CellMappingBase &      cellMapping,
-                   Point  &realPoint) const = 0;
+      getParametricPoint(const Point &          realPoint,
+                         const CellMappingBase &cellMapping,
+                         Point &                parametricPoint) const = 0;
+
+      virtual void
+      getRealPoint(const Point &          parametricPoint,
+                   const CellMappingBase &cellMapping,
+                   Point &                realPoint) const = 0;
 
     }; // end of class TriaCellBase
   }    // end of namespace basis

@@ -9,8 +9,8 @@ namespace dftefe
 {
   namespace basis
   {
-    <template unsigned int dim> class TriangulationDealiiSerial
-      : public TriangulationBase
+    template <unsigned int dim> 
+      class TriangulationDealiiSerial: public TriangulationBase
     {
     public:
       TriangulationDealiiSerial();

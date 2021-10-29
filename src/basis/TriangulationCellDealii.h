@@ -20,16 +20,16 @@ namespace dftefe
     class TrianfulationCellDealii : public TriangulationCellBase
     {
     public:
-        TrianfulationCellDealii(
+      TrianfulationCellDealii(
         dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
       ~TrianfulationCellDealii();
 
-        void
-        getVertices( std::vector<utils::Point> & outputDftefePoints  ) const override;
+      void
+      getVertices(std::vector<utils::Point> &points) const override;
 
-        void
-        getVertex(size_type i, utils::Point &outputDftefePoint) const override;
-        
+      void
+      getVertex(size_type i, utils::Point &point) const override;
+
       size_type
       getId() const override;
 
@@ -45,25 +45,25 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
-        /*
-         * \todo
-         * TODO : Should implement the cellMapping before implementation
-         */
-        
-         void
-        getParametricPoint(const Point &realPoint,
-                           const CellMappingBase &      cellMapping,
-                           Point  &parametricPoint ) const override;
+      /*
+       * \todo
+       * TODO : Should implement the cellMapping before implementation
+       */
 
-        /*
-         * \todo
-         * TODO : Should implement the cellMapping before implementation
-         */
-         void
-        getRealPoint(const Point  &parametricPoint,
-                     const CellMappingBase &      cellMapping,
-                     Point  &realPoint) const override ;
-          
+      void
+      getParametricPoint(const Point &          realPoint,
+                         const CellMappingBase &cellMapping,
+                         Point &                parametricPoint) const override;
+
+      /*
+       * \todo
+       * TODO : Should implement the cellMapping before implementation
+       */
+      void
+      getRealPoint(const Point &          parametricPoint,
+                   const CellMappingBase &cellMapping,
+                   Point &                realPoint) const override;
+
 
     private:
       dealii::Triangulation<dim>::active_cell_iterator d_cellItr;
