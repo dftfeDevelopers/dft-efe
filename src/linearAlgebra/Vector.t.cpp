@@ -1,3 +1,28 @@
+/******************************************************************************
+ * Copyright (c) 2021.                                                        *
+ * The Regents of the University of Michigan and DFT-EFE developers.          *
+ *                                                                            *
+ * This file is part of the DFT-EFE code.                                     *
+ *                                                                            *
+ * DFT-EFE is free software: you can redistribute it and/or modify            *
+ *   it under the terms of the Lesser GNU General Public License as           *
+ *   published by the Free Software Foundation, either version 3 of           *
+ *   the License, or (at your option) any later version.                      *
+ *                                                                            *
+ * DFT-EFE is distributed in the hope that it will be useful, but             *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty                  *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
+ *   See the Lesser GNU General Public License for more details.              *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public           *
+ *   License at the top level of DFT-EFE distribution.  If not, see           *
+ *   <https://www.gnu.org/licenses/>.                                         *
+ ******************************************************************************/
+
+/*
+ * @author Ian C. Lin, Sambit Das.
+ */
+
 #include "MemoryManager.h"
 #include "VectorKernels.h"
 #include "Exceptions.h"
@@ -54,8 +79,19 @@ namespace dftefe
       const Vector<ValueType, memorySpace> &u)
       : d_size(u.d_size)
     {
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(d_size,
+                                                                     &d_data);
       utils::MemoryTransfer<memorySpace, memorySpace, ValueType>::copy(
-        d_size, this->d_data, u.d_data);
+        d_size, d_data, u.d_data);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace>::Vector(
+      Vector<ValueType, memorySpace> &&u) noexcept
+      : d_size(u.d_size)
+      , d_data(nullptr)
+    {
+      *this = std::move(u);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -110,6 +146,22 @@ namespace dftefe
       return (*this);
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace> &
+    Vector<ValueType, memorySpace>::operator=(
+      Vector<ValueType, memorySpace> &&rhs) noexcept
+    {
+      if (&rhs != this)
+        {
+          delete[] d_data;
+          d_data     = rhs.d_data;
+          d_size     = rhs.d_size;
+          rhs.d_size = 0;
+          rhs.d_data = nullptr;
+        }
+      return (*this);
+    }
+
     //    // This part does not work for GPU version, will work on this until
     //    // having cleaner solution.
     //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -141,8 +193,8 @@ namespace dftefe
     Vector<ValueType, memorySpace> &
     Vector<ValueType, memorySpace>::operator-=(const Vector &rhs)
     {
-      AssertWithMsg(rhs.d_size == d_size,
-                    "Size of two vectors should be the same.");
+      DFTEFE_AssertWithMsg(rhs.d_size == d_size,
+                           "Size of two vectors should be the same.");
       VectorKernels<ValueType, memorySpace>::sub(d_size, rhs.d_data, d_data);
       return *this;
     }
@@ -159,19 +211,6 @@ namespace dftefe
     {
       return d_data;
     }
-
-    // todo
-    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    Vector<ValueType, memorySpace>::Vector(Vector &&u)
-    //    {
-    //
-    //    }
-    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    Vector<ValueType, memorySpace> &
-    //    Vector<ValueType, memorySpace>::operator=(Vector &&u)
-    //    {
-    //      return <#initializer #>;
-    //    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void

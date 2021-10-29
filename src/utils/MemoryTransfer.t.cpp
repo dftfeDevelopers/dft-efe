@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin.
+ * @author Ian C. Lin, Sambit Das.
  */
 
 #include <algorithm>
