@@ -64,7 +64,7 @@ namespace dftefe
       const std::vector<utils::Point> &domainVectors,
       const std::vector<bool> &        isPeriodicFlags)
     {
-  utils::throwException(isInitialized && !isFinalized, "Cannot create triangulation without calling
+    utils::throwException(isInitialized && !isFinalized, "Cannot create triangulation without calling
 	    initializeTriangulationConstruction");
 	DFTEFE_Assert(dim == domainVectors.size(),
 	    "Mismatch of dimension for dealii and the domain vectors");
@@ -111,7 +111,7 @@ namespace dftefe
       DFTEFE_Assert(dim == domainVectors.size(),
                     "Mismatch of dimension for dealii and the domainVectors");
 
-  DFTEFE_Assert(d_triangulationDealii.n_global_levels == 1,
+      DFTEFE_Assert(d_triangulationDealii.n_global_levels == 1,
 	    "Cannot mark periodic faces after refinement. This has to be done
 	    at the coarsest level");
 
@@ -119,8 +119,9 @@ namespace dftefe
 	{
         if (isPeriodicFlags[i] == true)
           {
-      utils::throwException<utils::InvalidArgument>(false, "The markPeriodicFaces has not
-		yet been implemented for periodic problems. Please ask Vishal to implement it.");
+            utils::throwException<utils::InvalidArgument>(false,
+		"The markPeriodicFaces has not yet been implemented for periodic
+		problems. Please ask Vishal to implement it.");
           }
 	}
     }
@@ -129,8 +130,9 @@ namespace dftefe
     void
     TriangulationDealiiSerial<dim>::refineGlobal(const unsigned int times = 1)
     {
-  utils::throwException<utils::LogicError>(isInitialized && !isFinalized, "Cannot refine triangulation without calling
-	    initializeTriangulationConstruction");
+        utils::throwException<utils::LogicError>(isInitialized && !isFinalized,
+	  "Cannot refine triangulation without calling
+	  initializeTriangulationConstruction");
 	d_triangulationDealii.refine_global(times);
     }
 
@@ -138,7 +140,8 @@ namespace dftefe
     void
     TriangulationDealiiSerial<dim>::coarsenGlobal(const unsigned int times = 1)
     {
-  utils::throwException<utils::LogicError>(isInitialized && !isFinalized, "Cannot coarsen triangulation without calling
+        utils::throwException<utils::LogicError>(isInitialized && !isFinalized,
+	  "Cannot coarsen triangulation without calling
 	    initializeTriangulationConstruction");
 	d_triangulationDealii.coarsen_global(times);
     }
@@ -147,7 +150,8 @@ namespace dftefe
     void
     TriangulationDealiiSerial<dim>::clearUserFlags()
     {
-  utils::throwException<utils::LogicError>(isInitialized && !isFinalized, "Cannot clear user flags triangulation without calling
+        utils::throwException<utils::LogicError>(isInitialized && !isFinalized,
+	  "Cannot clear user flags triangulation without calling
 	    initializeTriangulationConstruction");
 	d_triangulationDealii.clear_user_flags();
     }
@@ -156,7 +160,8 @@ namespace dftefe
     void
     TriangulationDealiiSerial<dim>::executeCoarseningAndRefinement()
     {
-  utils::throwException<utils::LogicError>(isInitialized && !isFinalized, "Cannot execute coarsening or refinement of triangulation without calling
+        utils::throwException<utils::LogicError>(isInitialized && !isFinalized,
+	    "Cannot execute coarsening or refinement of triangulation without calling
 	    initializeTriangulationConstruction");
 	d_triangulationDealii.execute_coarsening_and_refinement();
     }
@@ -179,7 +184,8 @@ namespace dftefe
     std::vector<size_type>
     TriangulationDealiiSerial<dim>::getBoundaryIds() const
     {
-  utils::throwException<utils::LogicError>(isInitialized && !isFinalized, "Cannot execute coarsening or refinement of triangulation without calling
+        utils::throwException<utils::LogicError>(isInitialized && !isFinalized,
+	    "Cannot execute coarsening or refinement of triangulation without calling
 	    initializeTriangulationConstruction");
 	utils::throwException("The getBoundaryIds() in TriangulationDealiiSerial has not
 	    yet been implemented. Please ask Vishal to implement it.");
