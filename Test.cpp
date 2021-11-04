@@ -24,6 +24,7 @@
  */
 
 #include <iostream>
+#include <tclTomMathDecls.h>
 #include "Vector.h"
 
 
@@ -61,22 +62,22 @@ main()
 
 
 #ifndef DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST,
-                                dftefe::utils::MemorySpace::HOST,
-                                double>::copy(4, a.data(), a_h.data());
-  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST,
-                                dftefe::utils::MemorySpace::HOST,
-                                double>::copy(4, b.data(), b_h.data());
+  dftefe::utils::MemoryTransfer<
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::HOST>::copy(4, a.data(), a_h.data());
+  dftefe::utils::MemoryTransfer<
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::HOST>::copy(4, b.data(), b_h.data());
 #elif DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
-                                dftefe::utils::MemorySpace::HOST_PINNED,
-                                double>::copy(4, a.data(), a_h.data());
-  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
-                                dftefe::utils::MemorySpace::HOST_PINNED,
-                                double>::copy(4, b.data(), b_h.data());
+  dftefe::utils::MemoryTransfer<
+    dftefe::utils::MemorySpace::DEVICE,
+    dftefe::utils::MemorySpace::HOST_PINNED>::copy(4, a.data(), a_h.data());
+  dftefe::utils::MemoryTransfer<
+    dftefe::utils::MemorySpace::DEVICE,
+    dftefe::utils::MemorySpace::HOST_PINNED>::copy(4, b.data(), b_h.data());
 #endif
 
-  add(alpha, a, beta, b, r);
+  a += b;
 
   for (int i = 0; i < 4; ++i)
     {
@@ -85,13 +86,13 @@ main()
   std::cout << std::endl;
 
 #ifndef DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST,
-                                dftefe::utils::MemorySpace::HOST,
-                                double>::copy(4, c_h.data(), a.data());
+  dftefe::utils::MemoryTransfer<
+    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::HOST>::copy(4, c_h.data(), a.data());
 #elif DFTEFE_WITH_DEVICE
-  dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::HOST_PINNED,
-                                dftefe::utils::MemorySpace::DEVICE,
-                                double>::copy(4, c_h.data(), r.data());
+  dftefe::utils::MemoryTransfer<
+    dftefe::utils::MemorySpace::HOST_PINNED,
+    dftefe::utils::MemorySpace::DEVICE>::copy(4, c_h.data(), r.data());
 #endif
   for (int i = 0; i < 4; ++i)
     {

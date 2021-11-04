@@ -33,7 +33,7 @@ namespace dftefe
   {
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST, ValueType>::copy(
+    MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST>::copy(
       size_type        size,
       ValueType *      dst,
       const ValueType *src)
@@ -44,15 +44,17 @@ namespace dftefe
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED, ValueType>::
-      copy(size_type size, ValueType *dst, const ValueType *src)
+    MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED>::copy(
+      size_type        size,
+      ValueType *      dst,
+      const ValueType *src)
     {
       std::copy(src, src + size, dst);
     }
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE, ValueType>::copy(
+    MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE>::copy(
       size_type        size,
       ValueType *      dst,
       const ValueType *src)
@@ -62,34 +64,37 @@ namespace dftefe
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST, ValueType>::
-      copy(size_type size, ValueType *dst, const ValueType *src)
+    MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST>::copy(
+      size_type        size,
+      ValueType *      dst,
+      const ValueType *src)
     {
       std::copy(src, src + size, dst);
     }
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::HOST_PINNED,
-                   MemorySpace::HOST_PINNED,
-                   ValueType>::copy(size_type        size,
-                                    ValueType *      dst,
-                                    const ValueType *src)
+    MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST_PINNED>::copy(
+      size_type        size,
+      ValueType *      dst,
+      const ValueType *src)
     {
       std::copy(src, src + size, dst);
     }
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::DEVICE, ValueType>::
-      copy(size_type size, ValueType *dst, const ValueType *src)
+    MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::DEVICE>::copy(
+      size_type        size,
+      ValueType *      dst,
+      const ValueType *src)
     {
       deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
     }
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST, ValueType>::copy(
+    MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
       size_type        size,
       ValueType *      dst,
       const ValueType *src)
@@ -99,15 +104,17 @@ namespace dftefe
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST_PINNED, ValueType>::
-      copy(size_type size, ValueType *dst, const ValueType *src)
+    MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST_PINNED>::copy(
+      size_type        size,
+      ValueType *      dst,
+      const ValueType *src)
     {
       deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
     }
 
     template <typename ValueType>
     void
-    MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE, ValueType>::copy(
+    MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE>::copy(
       size_type        size,
       ValueType *      dst,
       const ValueType *src)

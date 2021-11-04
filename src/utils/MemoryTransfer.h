@@ -33,9 +33,7 @@ namespace dftefe
 {
   namespace utils
   {
-    template <MemorySpace memorySpaceDst,
-              MemorySpace memorySpaceSrc,
-              typename ValueType>
+    template <MemorySpace memorySpaceDst, MemorySpace memorySpaceSrc>
     class MemoryTransfer
     {
     public:
@@ -45,85 +43,89 @@ namespace dftefe
        * @param dst pointer to the destination
        * @param src pointer to the source
        */
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST, ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED, ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE, ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST, ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::HOST_PINNED,
-                         MemorySpace::HOST_PINNED,
-                         ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST_PINNED>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::HOST_PINNED,
-                         MemorySpace::DEVICE,
-                         ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::DEVICE>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST, ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::DEVICE,
-                         MemorySpace::HOST_PINNED,
-                         ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST_PINNED>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };
 
-    template <typename ValueType>
-    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE, ValueType>
+    template <>
+    class MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE>
     {
     public:
+      template <typename ValueType>
       static void
       copy(size_type size, ValueType *dst, const ValueType *src);
     };

@@ -81,8 +81,9 @@ namespace dftefe
     {
       dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(d_size,
                                                                      &d_data);
-      utils::MemoryTransfer<memorySpace, memorySpace, ValueType>::copy(
-        d_size, d_data, u.d_data);
+      utils::MemoryTransfer<memorySpace, memorySpace>::copy(d_size,
+                                                            d_data,
+                                                            u.d_data);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -140,8 +141,9 @@ namespace dftefe
             {
               this->resize(rhs.d_size);
             }
-          utils::MemoryTransfer<memorySpace, memorySpace, ValueType>::copy(
-            rhs.d_size, this->d_data, rhs.d_data);
+          utils::MemoryTransfer<memorySpace, memorySpace>::copy(rhs.d_size,
+                                                                this->d_data,
+                                                                rhs.d_data);
         }
       return (*this);
     }
