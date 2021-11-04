@@ -26,8 +26,8 @@
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
-#include "MemoryManager.h"
-#include "TypeConfig.h"
+#include "utils/MemoryManager.h"
+#include <utils/TypeConfig.h>
 #include <vector>
 namespace dftefe
 {

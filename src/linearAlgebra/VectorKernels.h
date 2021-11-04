@@ -1,7 +1,7 @@
 #ifndef dftefeVectorKernels_h
 #define dftefeVectorKernels_h
 
-#include "MemoryManager.h"
+#include <utils/MemoryManager.h>
 
 namespace dftefe
 {

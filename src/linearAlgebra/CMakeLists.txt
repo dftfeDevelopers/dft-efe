@@ -1,7 +1,7 @@
 if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif() 
+endif()
 
 message (" DFTEFE_BLAS_LIBRARIES = ${DFTEFE_BLAS_LIBRARIES}")
 message (" DFTEFE_SCALAPACK_LIBRARIES = ${DFTEFE_SCALAPACK_LIBRARIES}")
@@ -20,7 +20,7 @@ if(ENABLE_CUDA)
     enable_language(CUDA)
 if(NOT DEFINED DDFTEFE_WITH_DEVICE)
     ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)
 endif()
 endif()
 
@@ -28,7 +28,7 @@ if (NOT MPI_FOUND)
   find_package(MPI REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
   set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
-endif() 
+endif()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
@@ -36,8 +36,11 @@ set(DFT-EFE-LINALG-SOURCES
         Vector.cpp
         VectorKernels.cpp)
 
-add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES} )
-target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
+
+#FIXME: can we use target_include_directories instead of include_directories
+#target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(../)
 
 if(ENABLE_CUDA)
    set_target_properties(dft-efe-linalg PROPERTIES
@@ -52,6 +55,6 @@ if(NOT TARGET dft-efe-utils)
   add_subdirectory(${CMAKE_SOURCE_DIR}/src/utils ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
- 
+
 
 target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})

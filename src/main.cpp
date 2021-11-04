@@ -11,10 +11,10 @@
 #include <mpi.h>
 #include <stdio.h>
 
-#include <Vector.h>
+#include <linearAlgebra/Vector.h>
 
 #ifdef DFTEFE_WITH_DEVICE
-#  include <DeviceUtils.h>
+#  include <utils/DeviceUtils.h>
 #endif
 
 int

@@ -1,7 +1,7 @@
 #ifdef DFTEFE_WITH_DEVICE_CUDA
-#  include <DeviceKernelLauncher.h>
-#  include "DeviceDataTypeOverloads.cuh"
-#  include "VectorKernels.h"
+#  include <utils/DeviceKernelLauncher.h>
+#  include <utils/DeviceDataTypeOverloads.cuh>
+#  include <linearAlgebra/VectorKernels.h>
 namespace dftefe
 {
   namespace linearAlgebra

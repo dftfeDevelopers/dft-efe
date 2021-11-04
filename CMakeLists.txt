@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
-add_executable(dft-efe Test.cpp)
+add_executable(dft-efe src/main.cpp)
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -33,6 +33,7 @@ target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 add_subdirectory(src/utils)
 add_subdirectory(src/linearAlgebra)
 target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
+include_directories(src)
 
 # Build documentation
 option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)

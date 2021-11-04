@@ -23,10 +23,10 @@
  * @author Ian C. Lin, Sambit Das.
  */
 
-#include "MemoryManager.h"
-#include "VectorKernels.h"
-#include "Exceptions.h"
-#include "MemoryTransfer.h"
+#include <utils/MemoryManager.h>
+#include <linearAlgebra/VectorKernels.h>
+#include <utils/Exceptions.h>
+#include <utils/MemoryTransfer.h>
 
 namespace dftefe
 {
