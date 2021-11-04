@@ -28,7 +28,7 @@ namespace dftefe
 
       virtual void
       getParametricPoint(const utils::Point &realPoint,
-                         const TrialCellBase &        triaCellBase,
+                         const TriaCellBase &        triaCellBase,
                          utils::Point &parametricPoint) const = 0;
 
       virtual void

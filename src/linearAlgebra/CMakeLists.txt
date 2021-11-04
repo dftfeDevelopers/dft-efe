@@ -52,7 +52,7 @@ endif()
 
 
 if(NOT TARGET dft-efe-utils)
-  add_subdirectory(${CMAKE_SOURCE_DIR}/src/utils ${CMAKE_CURRENT_SOURCE_DIR})
+  add_subdirectory(${CMAKE_SOURCE_DIR}/../utils ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 

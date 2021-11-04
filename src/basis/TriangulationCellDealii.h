@@ -7,6 +7,8 @@
 #include "TriangulationCellBase.h"
 
 #include <deal.II/grid/tria.h>
+#include <deal.II/grid/tria_accessor.h>
+#include <deal.II/grid/tria_iterator.h>
 
 #include <memory>
 namespace dftefe
@@ -20,7 +22,7 @@ namespace dftefe
     class TriangulationCellDealii : public TriangulationCellBase
     {
     public:
-      TriangulationCellDealii( dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
+      TriangulationCellDealii( typename dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
       ~TriangulationCellDealii();
 
       void
