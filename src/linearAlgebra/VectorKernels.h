@@ -125,6 +125,44 @@ namespace dftefe
           const ValueType *v,
           ValueType *      w);
     };
+
+    template <typename ValueType>
+    class VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>
+    {
+    public:
+      /**
+       * @tparam ValueType
+       * @param u
+       * @param v
+       */
+      static void
+      add(size_type size, const ValueType *u, ValueType *v);
+
+      /**
+       * @tparam ValueType
+       * @param u
+       * @param v
+       */
+      static void
+      sub(size_type size, const ValueType *u, ValueType *v);
+
+      /**
+       * @brief Performing \f$ w = au + bv \f$ for the device
+       * @param[in] size size of the array
+       * @param[in] a scalar
+       * @param[in] u array
+       * @param[in] b scalar
+       * @param[in] v array
+       * @param[out] w array of the result
+       */
+      static void
+      add(size_type        size,
+          ValueType        a,
+          const ValueType *u,
+          ValueType        b,
+          const ValueType *v,
+          ValueType *      w);
+    };
 #endif
 
   } // namespace linearAlgebra

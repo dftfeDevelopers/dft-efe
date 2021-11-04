@@ -104,6 +104,48 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(w));
     }
 
+    template <typename ValueType>
+    void
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>::add(
+      const size_type  size,
+      const ValueType *u,
+      ValueType *      v)
+    {
+      for (size_type i = 0; i < size; ++i)
+        {
+          v[i] += u[i];
+        }
+    }
+
+    template <typename ValueType>
+    void
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>::sub(
+      const size_type  size,
+      const ValueType *u,
+      ValueType *      v)
+    {
+      for (size_type i = 0; i < size; ++i)
+        {
+          v[i] -= u[i];
+        }
+    }
+
+    template <typename ValueType>
+    void
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>::add(
+      size_type        size,
+      ValueType        a,
+      const ValueType *u,
+      ValueType        b,
+      const ValueType *v,
+      ValueType *      w)
+    {
+      for (int i = 0; i < size; ++i)
+        {
+          w[i] = a * u[i] + b * v[i];
+        }
+    }
+
     template class VectorKernels<size_type, dftefe::utils::MemorySpace::DEVICE>;
     template class VectorKernels<int, dftefe::utils::MemorySpace::DEVICE>;
     template class VectorKernels<double, dftefe::utils::MemorySpace::DEVICE>;
@@ -112,6 +154,18 @@ namespace dftefe
                                  dftefe::utils::MemorySpace::DEVICE>;
     template class VectorKernels<std::complex<float>,
                                  dftefe::utils::MemorySpace::DEVICE>;
+
+    template class VectorKernels<size_type,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<int, dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<double,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<float,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
   } // namespace linearAlgebra
 } // namespace dftefe
 #endif
