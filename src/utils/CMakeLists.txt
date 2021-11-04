@@ -1,19 +1,26 @@
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
+if(ENABLE_CUDA)
+    enable_language(CUDA)
+if(NOT DEFINED DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)
+
+endif()
+endif()
 
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
-    MemoryManager.cpp
-    CUDAUtils.cpp)
+        DeviceAPICalls.cu
+        DeviceUtils.cpp
+        MemoryManager.cpp
+        Exceptions.cpp
+        MemoryTransfer.cpp)
 
-IF (ENABLE_CUDA)
-    set_source_files_properties(${DFT-EFE-UTILS-SOURCES} PROPERTIES LANGUAGE CUDA)
-ENDIF()
+add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
-add_library(dft-efe-utils SHARED  ${DFT-EFE-UTILS-SOURCES} )
-target_include_directories(dft-efe-utils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(dft-efe-utils PRIVATE ${DFTEFE_MPI_LIBRARIES})
-
-IF (ENABLE_CUDA)
-  find_package(CUDAToolkit REQUIRED)
-  target_link_libraries(dft-efe-utils PRIVATE CUDA::cudart)
-ENDIF()
+#target_include_directories(dft-efe-utils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(../)

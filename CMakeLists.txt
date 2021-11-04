@@ -11,14 +11,10 @@ find_package(MPI REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_PATH})
 set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 
-
 if(ENABLE_CUDA)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_CUDA)
-    message ("CUDA Enabled")
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
     enable_language(CUDA)
-    set_target_properties(dft-efe PROPERTIES
-                          CUDA_STANDARD 14
-                          CUDA_STANDARD_REQUIRED ON)
 endif()
 
 find_package(deal.II 9.3.0 REQUIRED)
@@ -34,8 +30,10 @@ ENDIF()
 
 target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})		
 
-add_subdirectory(src)
+add_subdirectory(src/utils)
+add_subdirectory(src/linearAlgebra)
 target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
+include_directories(src)
 
 # Build documentation
 option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)
@@ -48,3 +46,4 @@ if(BUILD_DOCS)
     message(WARNING "Doxygen and/or Sphinx not found -- unable to build documentation.")
   endif()
 endif()
+

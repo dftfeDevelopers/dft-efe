@@ -20,5 +20,19 @@
  ******************************************************************************/
 
 /*
- * @author Author1, Author2
+ * @author Ian C. Lin., Sambit Das
  */
+
+#ifndef dftefeDeviceKernelLauncherCUDA_h
+#define dftefeDeviceKernelLauncherCUDA_h
+
+
+namespace dftefe
+{
+  namespace utils
+  {
+    static const unsigned int BLOCK_SIZE = 256;
+  }
+} // namespace dftefe
+
+#endif // dftefeDeviceKernelLauncherCUDA_h

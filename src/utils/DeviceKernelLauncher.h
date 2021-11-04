@@ -20,5 +20,15 @@
  ******************************************************************************/
 
 /*
- * @author Author1, Author2
+ * @author Ian C. Lin., Sambit Das
  */
+#ifdef DFTEFE_WITH_DEVICE
+#  ifndef dftefeDeviceKernelLauncher_h
+#    define dftefeDeviceKernelLauncher_h
+
+#    ifdef DFTEFE_WITH_DEVICE_CUDA
+#      include "DeviceKernelLauncherCUDA.cuh"
+#    endif
+
+#  endif // dftefeDeviceKernelLauncher_h
+#endif   // DFTEFE_WITH_DEVICE

@@ -20,5 +20,26 @@
  ******************************************************************************/
 
 /*
- * @author Author1, Author2
+ * @author Ian C. Lin., Sambit Das
  */
+
+#ifndef dftefeMemorySpaceType_h
+#define dftefeMemorySpaceType_h
+
+namespace dftefe
+{
+  namespace utils
+  {
+    //
+    // MemorySpace
+    //
+    enum class MemorySpace
+    {
+      HOST,
+      HOST_PINNED,
+      DEVICE
+    };
+  } // namespace utils
+} // namespace dftefe
+
+#endif // dftefeMemorySpaceType_h

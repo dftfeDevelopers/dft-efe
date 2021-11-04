@@ -20,5 +20,10 @@
  ******************************************************************************/
 
 /*
- * @author Author1, Author2
+ * @author Ian C. Lin.
  */
+
+#include "MemoryTransfer.h"
+
+namespace dftefe
+{}
