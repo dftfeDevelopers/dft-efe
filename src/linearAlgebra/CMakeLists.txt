@@ -1,4 +1,4 @@
-if(NOT DEFINED CMAKE_CXX_STANDARD)
+if(${CMAKE_CXX_STANDARD})
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
@@ -52,7 +52,7 @@ endif()
 
 
 if(NOT TARGET dft-efe-utils)
-  add_subdirectory(${CMAKE_SOURCE_DIR}/src/utils ${CMAKE_CURRENT_SOURCE_DIR})
+  add_subdirectory(../utils ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 
