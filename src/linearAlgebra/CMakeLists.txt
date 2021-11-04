@@ -1,3 +1,8 @@
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif() 
+
 message (" DFTEFE_BLAS_LIBRARIES = ${DFTEFE_BLAS_LIBRARIES}")
 message (" DFTEFE_SCALAPACK_LIBRARIES = ${DFTEFE_SCALAPACK_LIBRARIES}")
 
@@ -11,6 +16,20 @@ if ("${DFTEFE_SCALAPACK_LIBRARIES}" STREQUAL "")
 	message (FATAL_ERROR  "DFTEFE_SCALAPACK libraries not specified. Please specify -DDFTEFE_SCALAPACK_LIBRARIES in command line")
 endif ()
 
+if(ENABLE_CUDA)
+    enable_language(CUDA)
+if(NOT DEFINED DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
+endif()
+endif()
+
+if (NOT MPI_FOUND)
+  find_package(MPI REQUIRED)
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+  set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+endif() 
+
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
         VectorKernels.cu
@@ -21,11 +40,18 @@ add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES} )
 target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ENABLE_CUDA)
-    set_target_properties(dft-efe-linalg PROPERTIES
+   set_target_properties(dft-efe-linalg PROPERTIES
                           CUDA_STANDARD 14
                           CUDA_STANDARD_REQUIRED ON)
    find_package(CUDAToolkit REQUIRED)
    target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
 endif()
+
+
+if(NOT TARGET dft-efe-utils)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/src/utils ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
+ 
 
 target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})

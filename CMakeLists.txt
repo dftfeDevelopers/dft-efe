@@ -30,7 +30,8 @@ ENDIF()
 
 target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})		
 
-add_subdirectory(src)
+add_subdirectory(src/utils)
+add_subdirectory(src/linearAlgebra)
 target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
 
 # Build documentation
