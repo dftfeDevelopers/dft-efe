@@ -66,7 +66,7 @@ namespace dftefe
     {
     utils::throwException(isInitialized && !isFinalized, "Cannot create triangulation without calling
 	    initializeTriangulationConstruction");
-	DFTEFE_Assert(dim == domainVectors.size(),
+	DFTEFE_AssertWithMsg(dim == domainVectors.size(),
 	    "Mismatch of dimension for dealii and the domain vectors");
 	dealii::Point<dim, double> * dealiiPoints = new dealii::Point<dim, double>[dim];
 	for(unsigned int i = 0; i < dim; ++i)
@@ -88,7 +88,7 @@ namespace dftefe
       utils::throwException<utils::LogicError>(
         isInitialized && !isFinalized,
         "Cannot shift triangulation without calling initializeTriangulationConstruction");
-      DFTEFE_Assert(dim == origin.size(),
+      DFTEFE_AssertWithMsg(dim == origin.size(),
                     "Mismatch of dimension for dealii and the origin");
       dealii::Point<dim, double> dealiiOrigin;
       utils::convertToDealiiPoint<dim>(origin, dealiiOrigin);
@@ -105,13 +105,13 @@ namespace dftefe
         isInitialized && !isFinalized,
         "Cannot mark periodic faces in triangulation without calling initializeTriangulationConstruction");
 
-      DFTEFE_Assert(dim == isPeriodicFlags.size(),
+      DFTEFE_AssertWithMsg(dim == isPeriodicFlags.size(),
                     "Mismatch of dimension for dealii and the isPeriodicFlags");
 
-      DFTEFE_Assert(dim == domainVectors.size(),
+      DFTEFE_AssertWithMsg(dim == domainVectors.size(),
                     "Mismatch of dimension for dealii and the domainVectors");
 
-      DFTEFE_Assert(d_triangulationDealii.n_global_levels == 1,
+      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels == 1,
 	    "Cannot mark periodic faces after refinement. This has to be done
 	    at the coarsest level");
 

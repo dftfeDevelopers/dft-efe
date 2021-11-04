@@ -26,13 +26,15 @@ namespace dftefe
       CellMappingBase();
       virtual ~CellMappingBase();
 
-      virtual std::shared_ptr<Point>
-      getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const TrialCellBase &        triaCellBase) const = 0;
+      virtual void
+      getParametricPoint(const utils::Point &realPoint,
+                         const TrialCellBase &        triaCellBase,
+                         utils::Point &parametricPoint) const = 0;
 
-      virtual std::shared_ptr<Point>
-      getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const TriaCellBase &         triaCellBase) const = 0;
+      virtual void
+      getRealPoint(const utils::Point &parametricPoint,
+                   const TriaCellBase &         triaCellBase,
+                   utils::Point &realPoint) const = 0;
 
     }; // end of class CellMappingBase
 

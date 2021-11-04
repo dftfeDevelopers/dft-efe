@@ -17,12 +17,11 @@ namespace dftefe
      * @brief An interface to deal.ii geometric cell
      **/
     template <unsigned int dim>
-    class TrianfulationCellDealii : public TriangulationCellBase
+    class TriangulationCellDealii : public TriangulationCellBase
     {
     public:
-      TrianfulationCellDealii(
-        dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
-      ~TrianfulationCellDealii();
+      TriangulationCellDealii( dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
+      ~TriangulationCellDealii();
 
       void
       getVertices(std::vector<utils::Point> &points) const override;
@@ -51,18 +50,18 @@ namespace dftefe
        */
 
       void
-      getParametricPoint(const Point &          realPoint,
+      getParametricPoint(const utils::Point &          realPoint,
                          const CellMappingBase &cellMapping,
-                         Point &                parametricPoint) const override;
+                         utils::Point &                parametricPoint) const override;
 
       /*
        * \todo
        * TODO : Should implement the cellMapping before implementation
        */
       void
-      getRealPoint(const Point &          parametricPoint,
+      getRealPoint(const utils::Point &          parametricPoint,
                    const CellMappingBase &cellMapping,
-                   Point &                realPoint) const override;
+                   utils::Point &                realPoint) const override;
 
 
     private:

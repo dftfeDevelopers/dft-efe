@@ -19,7 +19,7 @@ namespace dftefe
       : d_size(N)
       , d_data(new T[N])
     {
-      DFTEFE_AssertWithMsg(x.size() <= 3,
+      DFTEFE_AssertWithMsg(x->size() <= 3,
                            "Max. dimension of a point can be 3.");
       std::copy(x, x + N, &(d_data[0]));
     }

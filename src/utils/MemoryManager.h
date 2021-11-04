@@ -1,7 +1,7 @@
 #ifndef dftefeMemoryManager_h
 #define dftefeMemoryManager_h
 
-#include "typeConfig.h"
+#include "TypeConfig.h"
 
 namespace dftefe
 {

@@ -10,7 +10,7 @@ namespace dftefe
     convertToDealiiPoint(const utils::Point &        point,
                          dealii::Point<dim, double> &outputDealiiPoint)
     {
-      DFTEFE_Assert(
+      DFTEFE_AssertWithMsg(
         dim == point.size(),
         "Mismatch of dimension for dealii and the dimension of the point");
       for (unsigned int i = 0; i < dim; ++i)
@@ -22,7 +22,7 @@ namespace dftefe
     convertToDealiiPoint(const std::vector<double> & v,
                          dealii::Point<dim, double> &outputDealiiPoint)
     {
-      DFTEFE_Assert(
+      DFTEFE_AssertWithMsg(
         dim == v.size(),
         "Mismatch of dimension for dealii and the dimension of the vector");
       for (unsigned int i = 0; i < dim; ++i)
@@ -34,7 +34,7 @@ namespace dftefe
     convertToDftefePoint(const dealii::Point<dim, double> &dealiiPoint,
                          Point &                           outputDftefePoint)
     {
-      outputDftefePoint.resize(dim);
+      outputDftefePoint = Point(dim);
       for (unsigned int i = 0; i < dim; ++i)
         outputDftefePoint[i] = dealiiPoint[i];
     }

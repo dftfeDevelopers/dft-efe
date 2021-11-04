@@ -1,8 +1,8 @@
 #ifndef dftefeTriangulationBase_h
 #define dftefeTriangulationBase_h
 
-#include <utils/TypeConfig.h>
-#include <utils/Point.h>
+#include "TypeConfig.h"
+#include "Point.h"
 #include "TriaCellBase.h"
 namespace dftefe
 {
