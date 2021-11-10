@@ -18,8 +18,8 @@ endif()
 
 # Add source files here
 set(DFT-EFE-BASIS-SOURCES
-        TriangulationCellDealii.cpp
-        TriangulationDealiiSerial.cpp)
+	TriangulationCellDealii.cpp
+	TriangulationDealiiSerial.cpp)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 

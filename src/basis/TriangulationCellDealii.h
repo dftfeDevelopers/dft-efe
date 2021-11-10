@@ -21,8 +21,15 @@ namespace dftefe
     template <unsigned int dim>
     class TriangulationCellDealii : public TriangulationCellBase
     {
+      /*
+       * typedefs
+       */
     public:
-      TriangulationCellDealii( typename dealii::Triangulation<dim>::active_cell_iterator dealiiCellIter);
+      using DealiiCellIter =
+        typename dealii::Triangulation<dim>::active_cell_iterator;
+
+    public:
+      TriangulationCellDealii(DealiiCellIter dealiiCellIter);
       ~TriangulationCellDealii();
 
       void
@@ -52,25 +59,26 @@ namespace dftefe
        */
 
       void
-      getParametricPoint(const utils::Point &          realPoint,
+      getParametricPoint(const utils::Point &   realPoint,
                          const CellMappingBase &cellMapping,
-                         utils::Point &                parametricPoint) const override;
+                         utils::Point &         parametricPoint) const override;
 
       /*
        * \todo
        * TODO : Should implement the cellMapping before implementation
        */
       void
-      getRealPoint(const utils::Point &          parametricPoint,
+      getRealPoint(const utils::Point &   parametricPoint,
                    const CellMappingBase &cellMapping,
-                   utils::Point &                realPoint) const override;
+                   utils::Point &         realPoint) const override;
 
 
     private:
-      dealii::Triangulation<dim>::active_cell_iterator d_cellItr;
+      DealiiCellIter d_cellItr;
 
     }; // end of class TriaCellDealii
   }    // end of namespace basis
 
 } // end of namespace dftefe
+#include "TriangulationCellDealii.t.cpp"
 #endif // dftefeTriaCellDealii_h

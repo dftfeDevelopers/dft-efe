@@ -3,7 +3,7 @@
 
 #include "TriangulationBase.h"
 #include <utils/TypeConfig.h>
-#include "TriaCellBase.h"
+#include "TriangulationCellDealii.h"
 #include <deal.II/grid/tria.h>
 namespace dftefe
 {
@@ -22,9 +22,9 @@ namespace dftefe
       finalizeTriangulationConstruction() override;
       void
       createUniformParallelepiped(
-        const std::vector<unsigned int> &                    subdivisions,
-        const std::vector<utils::Point> &domainVectors const std::vector<bool>
-          &isPeriodicFlags) override;
+        const std::vector<unsigned int> &subdivisions,
+        const std::vector<utils::Point> &domainVectors,
+        const std::vector<bool> &        isPeriodicFlags) override;
       void
       shiftTriangulation(const utils::Point &origin) override;
       void
@@ -64,19 +64,20 @@ namespace dftefe
        *  be fetched from the d_triangulationDealii)
        */
       void
-      markPeriodicFaces(
-        const std::<bool> &              isPeriodicFlags,
-        const std::vector<utils::Point> &domainVectors) override;
+      markPeriodicFaces(const std::vector<bool> &        isPeriodicFlags,
+                        const std::vector<utils::Point> &domainVectors);
 
     private:
-      bool                                              isInitialized;
-      bool                                              isFinalized;
-      dealii::Triangulation<dim>                        d_triangulationDealii;
-      std::vector<std::shared_ptr<TriaCellDealii<dim>>> d_triaVectorCell;
+      bool                       isInitialized;
+      bool                       isFinalized;
+      dealii::Triangulation<dim> d_triangulationDealii;
+      std::vector<std::shared_ptr<TriangulationCellDealii<dim>>>
+        d_triaVectorCell;
 
     }; // end of class TriangulationDealiiSerial
 
   } // end of namespace basis
 
 } // end of namespace dftefe
+#include "TriangulationDealiiSerial.t.cpp"
 #endif

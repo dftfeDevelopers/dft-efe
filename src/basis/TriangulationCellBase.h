@@ -46,14 +46,14 @@ namespace dftefe
 
 
       virtual void
-      getParametricPoint(const utils::Point &          realPoint,
+      getParametricPoint(const utils::Point &   realPoint,
                          const CellMappingBase &cellMapping,
-                         utils::Point &                parametricPoint) const = 0;
+                         utils::Point &         parametricPoint) const = 0;
 
       virtual void
-      getRealPoint(const utils::Point &          parametricPoint,
+      getRealPoint(const utils::Point &   parametricPoint,
                    const CellMappingBase &cellMapping,
-                   utils::Point &                realPoint) const = 0;
+                   utils::Point &         realPoint) const = 0;
 
     }; // end of class TriaCellBase
   }    // end of namespace basis

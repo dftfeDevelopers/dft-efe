@@ -28,13 +28,13 @@ namespace dftefe
 
       virtual void
       getParametricPoint(const utils::Point &realPoint,
-                         const TriaCellBase &        triaCellBase,
-                         utils::Point &parametricPoint) const = 0;
+                         const TriaCellBase &triaCellBase,
+                         utils::Point &      parametricPoint) const = 0;
 
       virtual void
       getRealPoint(const utils::Point &parametricPoint,
-                   const TriaCellBase &         triaCellBase,
-                   utils::Point &realPoint) const = 0;
+                   const TriaCellBase &triaCellBase,
+                   utils::Point &      realPoint) const = 0;
 
     }; // end of class CellMappingBase
 
