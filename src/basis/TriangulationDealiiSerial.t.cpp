@@ -16,7 +16,9 @@ namespace dftefe
 
     template <unsigned int dim>
     TriangulationDealiiSerial<dim>::~TriangulationDealiiSerial()
-    {}
+    {
+      d_triangulationDealii.clear();
+    }
 
     template <unsigned int dim>
     void
@@ -26,8 +28,11 @@ namespace dftefe
       isFinalized   = false;
       for (unsigned int iCell = 0; iCell < nLocalCells(); iCell++)
         {
-          delete d_triaVectorCell[iCell];
+          // delete
+          d_triaVectorCell[iCell].reset();
         }
+
+      d_triaVectorCell.resize(0);
       d_triangulationDealii.clear();
     }
 
@@ -44,10 +49,11 @@ namespace dftefe
            iLevel < d_triangulationDealii.n_global_levels();
            iLevel++)
         {
-          for (auto cellPtr : d_triangulationDealii.begin_active(iLevel))
+          for (auto &cellPtr :
+               d_triangulationDealii.active_cell_iterators_on_level(iLevel))
             {
               d_triaVectorCell[iCell] =
-                std::make_shared<TriangulationCellDealii>(cellPtr);
+                std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
               iCell++;
             }
         }
@@ -72,15 +78,19 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         dim == domainVectors.size(),
         "Mismatch of dimension for dealii and the domain vectors");
-      dealii::Point<dim, double> *dealiiPoints =
-        new dealii::Point<dim, double>[dim];
+      dealii::Point<dim, double> dealiiPoints[dim];
+
       for (unsigned int i = 0; i < dim; ++i)
         {
           utils::convertToDealiiPoint<dim>(domainVectors[i], dealiiPoints[i]);
         }
 
+      unsigned int dealiiSubdivisions[dim];
+      std::copy(subdivisions.begin(), subdivisions.end(), dealiiSubdivisions);
+
+
       dealii::GridGenerator::subdivided_parallelepiped<dim>(
-        d_triangulationDealii, &subdivisions[0], dealiiPoints);
+        d_triangulationDealii, dealiiSubdivisions, dealiiPoints);
       markPeriodicFaces(isPeriodicFlags, domainVectors);
     }
 
@@ -119,7 +129,7 @@ namespace dftefe
         dim == domainVectors.size(),
         "Mismatch of dimension for dealii and the domainVectors");
 
-      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels == 1,
+      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels() == 1,
                            "Cannot mark periodic faces after refinement."
                            "This has to be done at the coarsest level");
 
@@ -209,6 +219,34 @@ namespace dftefe
         "yet been implemented. Please ask Vishal to implement it.");
 
       return std::vector<size_type>(0);
+    }
+
+    template <unsigned int dim>
+    TriangulationBase::cellIterator
+    TriangulationDealiiSerial<dim>::beginLocal()
+    {
+      return d_triaVectorCell.begin();
+    }
+
+    template <unsigned int dim>
+    TriangulationBase::cellIterator
+    TriangulationDealiiSerial<dim>::endLocal()
+    {
+      return d_triaVectorCell.end();
+    }
+
+    template <unsigned int dim>
+    TriangulationBase::const_cellIterator
+    TriangulationDealiiSerial<dim>::beginLocal() const
+    {
+      return d_triaVectorCell.begin();
+    }
+
+    template <unsigned int dim>
+    TriangulationBase::const_cellIterator
+    TriangulationDealiiSerial<dim>::endLocal() const
+    {
+      return d_triaVectorCell.end();
     }
 
     template <unsigned int dim>

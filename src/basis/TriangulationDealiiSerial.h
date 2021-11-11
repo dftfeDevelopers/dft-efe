@@ -47,9 +47,13 @@ namespace dftefe
        */
       std::vector<size_type>
       getBoundaryIds() const override;
-      TriaCellBase &
+      TriangulationBase::cellIterator
+      beginLocal() override;
+      TriangulationBase::cellIterator
+      endLocal() override;
+      TriangulationBase::const_cellIterator
       beginLocal() const override;
-      TriaCellBase &
+      TriangulationBase::const_cellIterator
       endLocal() const override;
       unsigned int
       getDim() const override;
@@ -68,11 +72,10 @@ namespace dftefe
                         const std::vector<utils::Point> &domainVectors);
 
     private:
-      bool                       isInitialized;
-      bool                       isFinalized;
-      dealii::Triangulation<dim> d_triangulationDealii;
-      std::vector<std::shared_ptr<TriangulationCellDealii<dim>>>
-        d_triaVectorCell;
+      bool                                                isInitialized;
+      bool                                                isFinalized;
+      dealii::Triangulation<dim>                          d_triangulationDealii;
+      std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorCell;
 
     }; // end of class TriangulationDealiiSerial
 

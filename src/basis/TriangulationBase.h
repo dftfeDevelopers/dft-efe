@@ -4,6 +4,8 @@
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
 #include "TriangulationCellBase.h"
+#include <vector>
+#include <memory>
 namespace dftefe
 {
   namespace basis
@@ -14,9 +16,10 @@ namespace dftefe
     class TriangulationBase
     {
     public:
-      TriangulationBase();
-      virtual ~TriangulationBase();
-
+      typedef std::vector<std::shared_ptr<TriangulationCellBase>>::iterator
+        cellIterator;
+      typedef std::vector<std::shared_ptr<TriangulationCellBase>>::
+        const_iterator const_cellIterator;
       virtual void
       initializeTriangulationConstruction() = 0;
       virtual void
@@ -39,12 +42,16 @@ namespace dftefe
       virtual unsigned int
       nLocalCells() const = 0;
       virtual size_type
-      nGlobaCells() const = 0;
+      nGlobalCells() const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
-      virtual TriaCellBase &
+      virtual cellIterator
+      beginLocal() = 0;
+      virtual cellIterator
+      endLocal() = 0;
+      virtual const_cellIterator
       beginLocal() const = 0;
-      virtual TriaCellBase &
+      virtual const_cellIterator
       endLocal() const = 0;
       virtual unsigned int
       getDim() const = 0;

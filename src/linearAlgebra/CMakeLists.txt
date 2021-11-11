@@ -51,9 +51,9 @@ if(ENABLE_CUDA)
 endif()
 
 
-if(NOT TARGET dft-efe-utils)
-  add_subdirectory(${CMAKE_SOURCE_DIR}/../utils ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
+#if(NOT TARGET dft-efe-utils)
+	#add_subdirectory(${CMAKE_SOURCE_DIR}/../utils ${CMAKE_CURRENT_SOURCE_DIR})
+  #endif()
 
 
 
