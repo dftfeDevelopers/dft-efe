@@ -41,7 +41,7 @@ namespace dftefe {
       protected:
 	QuadratureRule();
 
-	unsigned int dim;
+	unsigned int d_dim;
 	unsigned int d_numPoints;
 	unsigned int d_num1DPoints;
 	std::vector<Point> d_points;
