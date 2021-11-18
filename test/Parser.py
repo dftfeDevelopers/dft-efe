@@ -82,6 +82,8 @@ class Parser():
             values.append(match.group(0))
         if(dtype=='complex'):
             valuesComplex = []
+            if len(values) % 2 != 0:
+                raise RuntimeError("Detected unpaired value while parsing complex numbers.")
             for x,y in zip(values[::2],values[1::2]):
                 connectingSign = ""
                 if y[0] =='+':
