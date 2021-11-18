@@ -23,32 +23,70 @@ namespace dftefe {
         
         for (unsigned int iQuad = 0 ; iQuad < order1D ; iQuad++)
         {
-            d_weights[iQuad] = qgauss1D.weight(iQuad);
+            d_1DWeights[iQuad] = qgauss1D.weight(iQuad);
             d_1DPoints[iQuad][0] = qgauss1D.point(iQuad)[0];
         }
-        
-        unsigned int quadIndex = 0;
-        for (unsigned int kQuad = 0 ; kQuad < order1D ; kQuad++)
+        if  ( d_dim == 1 )
         {
+            unsigned int quadIndex = 0;
+            for (unsigned int iQuad = 0 ; iQuad < order1D ; iQuad++)
+            {
+                d_points[quadIndex][0] = d_1DPoints[iQuad][0];
+                        
+                d_weights[quadIndex] = d_1DWeights[iQuad];
+                        
+                quadIndex++;
+                        
+            }
+            
+        }
+        else if ( d_dim ==2 )
+        {
+            unsigned int quadIndex = 0;
             for (unsigned int jQuad = 0 ; jQuad < order1D ; jQuad++)
             {
                 for (unsigned int iQuad = 0 ; iQuad < order1D ; iQuad++)
                 {
                     d_points[quadIndex][0] = d_1DPoints[iQuad][0];
                     d_points[quadIndex][1] = d_1DPoints[jQuad][0];
-                    d_points[quadIndex][2] = d_1DPoints[kQuad][0];
-                    
-                    d_weights[quadIndex] = d_weights[iQuad]*d_weights[jQuad]*
-                                           d_weights[kQuad];
-                    
+                        
+                    d_weights[quadIndex] = d_1DWeights[iQuad]*d_1DWeights[jQuad];
+                        
                     quadIndex++;
-                    
+                        
                 }
             }
         }
-        
-
-
+        else if ( d_dim == 3 )
+        {
+            unsigned int quadIndex = 0;
+            for (unsigned int kQuad = 0 ; kQuad < order1D ; kQuad++)
+            {
+                for (unsigned int jQuad = 0 ; jQuad < order1D ; jQuad++)
+                {
+                    for (unsigned int iQuad = 0 ; iQuad < order1D ; iQuad++)
+                    {
+                        d_points[quadIndex][0] = d_1DPoints[iQuad][0];
+                        d_points[quadIndex][1] = d_1DPoints[jQuad][0];
+                        d_points[quadIndex][2] = d_1DPoints[kQuad][0];
+                        
+                        d_weights[quadIndex] = d_1DWeights[iQuad]*d_1DWeights[jQuad]*
+                        d_1DWeights[kQuad];
+                        
+                        quadIndex++;
+                        
+                    }
+                }
+            }
+        }
+        else
+        {
+            utils::throwException(d_dim > 3,
+                "dim passed to quadrature class is not valid");
+            
+            utils::throwException(d_dim < 1,
+                "dim passed to quadrature class is not valid");
+        }
 	}
 
   } // end of namespace quadrature
