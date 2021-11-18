@@ -32,8 +32,8 @@ ENDIF()
 
 target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 
-add_subdirectory(src/utils)
-add_subdirectory(src/linearAlgebra)
+add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
 target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
 include_directories(src)
 
