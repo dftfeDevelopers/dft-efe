@@ -50,10 +50,8 @@ if(ENABLE_CUDA)
    target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
 endif()
 
-if (${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-  if((NOT TARGET ${CMAKE_CURRENT_BINARY_DIR}/buildUtils/dft-efe-utils))
-    add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
-  endif()
+if((NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/buildUtils") AND (NOT EXISTS "${CMAKE_BINARY_DIR}/buildUtils"))
+  add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
 
 
