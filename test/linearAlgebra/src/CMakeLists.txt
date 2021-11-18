@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(reframe_linear_algebra_test)
 set(CMAKE_CXX_STANDARD 14)
-
+include(ExternalProject)
 # setting environment variables
 #set (DFT_EFE_LINKER $ENV{DFT_EFE_LINKER})
 
@@ -12,9 +12,11 @@ set(ENABLE_CUDA OFF)
 
 set(MAIN_PROJECT_DIR /home/iancclin/project/DFT-EFE-hackathon/dft-efe)
 
-add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra  ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
-#add_subdirectory(${MAIN_PROJECT_DIR}/src/utils  ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+message("${CMAKE_CURRENT_BINARY_DIR}")
+message("${CMAKE_BINARY_DIR}")
+
+add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
 include_directories(${MAIN_PROJECT_DIR}/src)
 
 add_executable(OperationHost OperationHost.cpp)
-target_link_libraries(OperationHost PUBLIC dft-efe-linalg dft-efe-utils )
+target_link_libraries(OperationHost PUBLIC dft-efe-linalg)
