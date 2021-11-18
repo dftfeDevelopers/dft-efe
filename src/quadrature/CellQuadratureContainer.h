@@ -2,9 +2,11 @@
 #define dftefeCellQuadratureContainer_h
 
 #include "QuadratureRule.h"
+#include <utils/TypeConfig.h>
 #include <utils/Point.h>
+#include <basis/TriangulationBase.h>
 #include <basis/CellMappingBase.h>
-#include "Memory.h"
+#include <memory>
 
 namespace dftefe {
 
@@ -13,11 +15,11 @@ namespace dftefe {
     class CellQuadratureContainer {
 
      CellQuadratureContainer(std::shared_ptr<const QuadratureRule> quadratureRule,
-	 std::shared_ptr<const TriangulationBase> triangulation,
+	 std::shared_ptr<const basis::TriangulationBase> triangulation,
 	  const basis::CellMappingBase & cellMapping);
      
      CellQuadratureContainer(std::vector<std::shared_ptr<const QuadratureRule> > quadratureRule,
-	 std::shared_ptr<const TriangulationBase> triangulation,
+	 std::shared_ptr<const basis::TriangulationBase> triangulation,
 	  const basis::CellMappingBase & cellMapping);
 
       const std::vector<Point> &
@@ -44,6 +46,7 @@ namespace dftefe {
 
       private:
       std::vector<std::shared_ptr<QuadratureRule> > d_quadratureRuleVec;
+      std::vector<size_type> nCellQuadPoints;
       std::vector<Points> d_realPoints;
       std::vector<double> d_JxW;
     };
