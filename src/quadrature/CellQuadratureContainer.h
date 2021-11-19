@@ -22,13 +22,13 @@ namespace dftefe {
 	 std::shared_ptr<const basis::TriangulationBase> triangulation,
 	  const basis::CellMappingBase & cellMapping);
 
-      const std::vector<Point> &
+      const std::vector<dftefe::utils::Point> &
 	getRealPoints() const;
 
-      const std::vector<Point> &
+      const std::vector<dftefe::utils::Point> &
 	getRealPoints(const unsigned int cellId) const;
       
-      const std::vector<Point> &
+      const std::vector<dftefe::utils::Point> &
 	getParametricPoints(const unsigned int cellId) const;
 
       const std::vector<double> &
@@ -47,9 +47,11 @@ namespace dftefe {
       private:
       std::vector<std::shared_ptr<QuadratureRule> > d_quadratureRuleVec;
       std::vector<size_type> nCellQuadPoints;
-      std::vector<Points> d_realPoints;
+      std::vector<dftefe::utils::Point> d_realPoints;
       std::vector<double> d_JxW;
     };
   } // end of namespace quadrature
 
 } // end of namespace dftefe
+
+#endif

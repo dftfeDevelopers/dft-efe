@@ -14,23 +14,28 @@ namespace dftefe {
 
       public:
 	QuadratureRule(const unsigned int dim,
-	    const std::vector<Point> & points,
+	    const std::vector<dftefe::utils::Point> & points,
 	    const std::vector<double> & weights);
 
-	const std::vector<Point> &
-	  virtual getPoints() const;
+  virtual
+    const std::vector<dftefe::utils::Point> &
+	   getPoints() const;
 
-	const std::vector<Point> &
-	  virtual get1DPoints() const;
+  virtual
+    const std::vector<dftefe::utils::Point> &
+	   get1DPoints() const;
 
-	const std::vector<double> &
-	  virtual getWeights() const ;
+  virtual
+    const std::vector<double> &
+	   getWeights() const ;
 
-	const std::vector<double> &
-	  virtual get1DWeights() const;
+  virtual
+    const std::vector<double> &
+	   get1DWeights() const;
 
-	bool 
-	  virtual isTensorStructured() const;
+  virtual
+    bool
+	   isTensorStructured() const;
 
 	size_type
 	  nPoints() const;
@@ -44,8 +49,8 @@ namespace dftefe {
 	unsigned int d_dim;
 	unsigned int d_numPoints;
 	unsigned int d_num1DPoints;
-	std::vector<Point> d_points;
-	std::vector<Point> d_1DPoints;
+	std::vector<dftefe::utils::Point> d_points;
+	std::vector<dftefe::utils::Point> d_1DPoints;
 	std::vector<double> d_weights;
 	std::vector<double> d_1DWeights;
 	bool d_isTensorStructured;

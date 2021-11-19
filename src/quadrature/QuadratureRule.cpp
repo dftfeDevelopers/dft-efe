@@ -12,7 +12,7 @@ namespace dftefe {
 	}
 
 	QuadratureRule:: QuadratureRule(const unsigned int dim,
-	  const std::vector<Point> & points,
+	  const std::vector<dftefe::utils::Point> & points,
 	  const std::vector<double> & weights):
 	  d_dim(dim),
 	  d_isTensorStructured(false),
@@ -25,18 +25,18 @@ namespace dftefe {
 		  "Empty points passed to create a quadratureRule");
 	  utils::throwException(d_points.size() == d_weights.size(),
 		  "The number of points and the associated weights are of different sizes");
-	  utils::throwException(d_dim == d_points[0].getDim(),
+	  utils::throwException(d_dim == d_points[0].size(),
 		  "The dimension of the quadrature rule and the quadrature points do not match");
 
 	}
 
-    const std::vector<Point> &
+    const std::vector<dftefe::utils::Point> &
 	QuadratureRule::getPoints() const
 	{
 	  return d_points;
 	}
 
-      const std::vector<Point> &
+      const std::vector<dftefe::utils::Point> &
 	QuadratureRule::get1DPoints() const
 	{
 	  utils::throwException(d_isTensorStructured,
