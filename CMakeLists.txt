@@ -33,6 +33,7 @@ target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/utils)
 add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/linearAlgebra)
 add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/basis)
+add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/quadrature)
 target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis)
 include_directories(src)
 

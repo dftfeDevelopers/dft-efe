@@ -72,6 +72,8 @@ namespace dftefe
                    const CellMappingBase &cellMapping,
                    utils::Point &         realPoint) const override;
 
+      DealiiCellIter &
+      getCellIterator() const;
 
     private:
       DealiiCellIter d_cellItr;

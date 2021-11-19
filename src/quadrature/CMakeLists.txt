@@ -16,22 +16,17 @@ if (NOT MPI_FOUND)
 endif()
 
 # Add source files here
-set(DFT-EFE-BASIS-SOURCES
-	TriangulationCellDealii.cpp
-	TriangulationDealiiSerial.cpp
-    LinearCellMappingDealii.cpp)
+set(DFT-EFE-QUADRATURE-SOURCES
+	QuadratureRule.cpp
+	CellQuadratureContainer.cpp
+        QuadratureRuleGauss.cpp)
 
-add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
+add_library(dft-efe-quadrature SHARED ${DFT-EFE-QUADRATURE-SOURCES})
 
 #FIXME: can we use target_include_directories instead of include_directories
 #target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(../)
 
 
-#if(NOT TARGET ${CMAKE_CURRENT_BINARY_DIR}/../utils/dft-efe-utils)
-	#add_subdirectory(${CMAKE_SOURCE_DIR}/../utils ${CMAKE_CURRENT_SOURCE_DIR})
-	#	add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/../utils/)
-	#endif()
 
-target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
-#target_link_libraries(test PUBLIC dft-efe-basis dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
+target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils dft-efe-basis ${DFTEFE_MPI_LIBRARIES})

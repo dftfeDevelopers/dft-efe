@@ -50,7 +50,7 @@ namespace dftefe
           d_numQuadPoints += numCellQuadPoints;
         }
 
-      d_realPoints.resize(d_numQuadPoints, utils::Point(d_dim, 0.0));
+      d_realPoints.resize(d_numQuadPoints, dftefe::utils::Point(d_dim, 0.0));
       d_JxW.resize(d_numQuadPoints, 0.0);
       basis::TriangulationBase::const_cellIterator cellIter =
         triangulationBase->beginLocal();
@@ -58,10 +58,10 @@ namespace dftefe
       for (; cellIter != triangulationBase->endLocal(); ++celIter)
         {
           const size_type numCellQuadPoints = d_numCellQuadPoints[iCell];
-          const std::vector<utils::Point> &parametricPoints =
+          const std::vector<dftefe::utils::Point> &parametricPoints =
             d_quadratureRuleVec[iCell]->getPoints();
-          std::vector<utils::Point> cellRealPoints(numCellQuadPoints,
-                                                   utils::Point(d_dim, 0.0));
+          std::vector<dftefe::utils::Point> cellRealPoints(numCellQuadPoints,
+                                                   dftefe::utils::Point(d_dim, 0.0));
           cellMapping.getRealPoints(parametericPoints,
                                      *(*cellIter),
                                      cellRealPoints);
@@ -79,21 +79,21 @@ namespace dftefe
           iCell++;
         }
     }
-    const std::vector<utils::Point> &
+    const std::vector<dftefe::utils::Point> &
     CellQuadratureContainer::getRealPoints() const
     {
       return d_realPoints;
     }
 
-    std::vector<utils::Point>
+    std::vector<dftefe::utils::Point>
     CellQuadratureContainer::getCellRealPoints(const unsigned int cellId) const
     {
       const size_type numCellQuadPoints = d_numCellQuadPoints[cellId];
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
       const size_type cellQuadEndId     = cellQuadStartId + numCellQuadPoints;
 
-      std::vector<utils::Point> cellRealPoints(numCellQuadPoints,
-                                               utils::Point(d_dim, 0.0));
+      std::vector<dftefe::utils::Point> cellRealPoints(numCellQuadPoints,
+                                               dftefe::utils::Point(d_dim, 0.0));
 
       std::copy(d_realPoints.begin() + cellQuadStartId,
                 d_realPoints.begin() + cellQuadEndId,
@@ -102,7 +102,7 @@ namespace dftefe
       return cellRealPoints;
     }
 
-    const std::vector<utils::Point> &
+    const std::vector<dftefe::utils::Point> &
     CellQuadratureContainer::getCellParametricPoints(
       const unsigned int cellId) const
     {

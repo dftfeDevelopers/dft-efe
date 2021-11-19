@@ -1,6 +1,8 @@
 #ifndef dftefeCellMappingBase_h
 #define dftefeCellMappingBase_h
 
+#include <vector>
+#include <utils/Point.h>
 namespace dftefe
 {
   namespace basis
@@ -27,27 +29,26 @@ namespace dftefe
       virtual ~CellMappingBase();
 
       virtual void
-      getParametricPoint(const utils::Point &realPoint,
-                         const TriaCellBase &triaCellBase,
-                         utils::Point &      parametricPoint) const = 0;
+      getParametricPoint(const dftefe::utils::Point &realPoint,
+                         const TriaCellBase &        triaCellBase,
+                         dftefe::utils::Point &      parametricPoint) const = 0;
 
       virtual void
       getParametricPoints(
-        const std::vector<utils::Point> &realPoints,
-        const TriaCellBase &             triaCellBase,
-        std::vector<utils::Point> &      parametricPoints) const = 0;
+        const std::vector<dftefe::utils::Point> &realPoints,
+        const TriaCellBase &                     triaCellBase,
+        std::vector<dftefe::utils::Point> &      parametricPoints) const = 0;
 
       virtual void
-      getRealPoint(const utils::Point &parametricPoint,
-                   const TriaCellBase &triaCellBase,
-                   utils::Point &      realPoint) const = 0;
+      getRealPoint(const dftefe::utils::Point &parametricPoint,
+                   const TriaCellBase &        triaCellBase,
+                   dftefe::utils::Point &      realPoint) const = 0;
 
 
       virtual void
-      getRealPoints(const std::vector<utils::Point> &parametricPoints,
-                    const TriaCellBase &             triaCellBase,
-                    std::vector<utils::Point> &      realPoints) const = 0;
-
+      getRealPoints(const std::vector<dftefe::utils::Point> &parametricPoints,
+                    const TriaCellBase &                     triaCellBase,
+                    std::vector<dftefe::utils::Point> &realPoints) const = 0;
 
     }; // end of class CellMappingBase
 
