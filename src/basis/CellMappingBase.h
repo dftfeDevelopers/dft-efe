@@ -10,7 +10,7 @@ namespace dftefe
     //
     // forward declarations
     //
-    class TriaCellBase;
+    class TriangulationCellBase;
 
     enum class CellMappingType
     {
@@ -25,29 +25,34 @@ namespace dftefe
      */
     class CellMappingBase
     {
-      CellMappingBase();
-      virtual ~CellMappingBase();
+    public:
+      virtual void
+      getJxW(const TriangulationCellBase &            triaCellBase,
+             const std::vector<dftefe::utils::Point> &paramPoints,
+             const std::vector<double> &              weights,
+             std::vector<double> &                    valuesJxW) const = 0;
 
       virtual void
-      getParametricPoint(const dftefe::utils::Point &realPoint,
-                         const TriaCellBase &        triaCellBase,
-                         dftefe::utils::Point &      parametricPoint) const = 0;
+      getParametricPoint(const dftefe::utils::Point & realPoint,
+                         const TriangulationCellBase &triaCellBase,
+                         dftefe::utils::Point &       parametricPoint,
+                         bool &                       isPointInside) const = 0;
 
       virtual void
-      getParametricPoints(
-        const std::vector<dftefe::utils::Point> &realPoints,
-        const TriaCellBase &                     triaCellBase,
-        std::vector<dftefe::utils::Point> &      parametricPoints) const = 0;
+      getParametricPoints(const std::vector<dftefe::utils::Point> &realPoints,
+                          const TriangulationCellBase &            triaCellBase,
+                          std::vector<utils::Point> &parametricPoints,
+                          std::vector<bool> &        arePointsInside) const = 0;
 
       virtual void
-      getRealPoint(const dftefe::utils::Point &parametricPoint,
-                   const TriaCellBase &        triaCellBase,
-                   dftefe::utils::Point &      realPoint) const = 0;
+      getRealPoint(const dftefe::utils::Point & parametricPoint,
+                   const TriangulationCellBase &triaCellBase,
+                   dftefe::utils::Point &       realPoint) const = 0;
 
 
       virtual void
       getRealPoints(const std::vector<dftefe::utils::Point> &parametricPoints,
-                    const TriaCellBase &                     triaCellBase,
+                    const TriangulationCellBase &            triaCellBase,
                     std::vector<dftefe::utils::Point> &realPoints) const = 0;
 
     }; // end of class CellMappingBase

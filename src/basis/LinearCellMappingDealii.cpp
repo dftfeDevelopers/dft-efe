@@ -15,13 +15,20 @@ namespace dftefe
     LinearCellMappingDealii<dim>::LinearCellMappingDealii()
       : mapping()
     {}
+
+
+    template <unsigned int dim>
+    LinearCellMappingDealii<dim>::~LinearCellMappingDealii()
+    {}
+
+
     template <unsigned int dim>
     void
     LinearCellMappingDealii<dim>::getParametricPoint(
       const utils::Point &         realPoint,
       const TriangulationCellBase &triaCellBase,
       utils::Point &               parametricPoint,
-      bool                         isPointInside) const
+      bool &                       isPointInside) const
     {
       TriangulationCellDealii<dim> triaCellDealii =
         dynamic_cast<TriangulationCellDealii<dim>>(triaCellBase);
@@ -37,10 +44,10 @@ namespace dftefe
     template <unsigned int dim>
     void
     LinearCellMappingDealii<dim>::getJxW(
-      const TriangulationCellBase &    triaCellBase,
-      const std::vector<utils::Point> &paramPoints,
-      const std::vector<double> &      weights,
-      std::vector<double> &            valuesJxW)
+      const TriangulationCellBase &            triaCellBase,
+      const std::vector<dftefe::utils::Point> &paramPoints,
+      const std::vector<double> &              weights,
+      std::vector<double> &                    valuesJxW) const
     {
       TriangulationCellDealii<dim> triaCellDealii =
         dynamic_cast<TriangulationCellDealii<dim>>(triaCellBase);

@@ -16,15 +16,20 @@ namespace dftefe
                      const std::vector<utils::Point> &points,
                      const std::vector<double> &      weights);
 
-      const std::vector<utils::Point> &virtual getPoints() const;
+      virtual const std::vector<utils::Point> &
+      getPoints() const;
 
-      const std::vector<utils::Point> &virtual get1DPoints() const;
+      virtual const std::vector<utils::Point> &
+      get1DPoints() const;
 
-      const std::vector<double> &virtual getWeights() const;
+      virtual const std::vector<double> &
+      getWeights() const;
 
-      const std::vector<double> &virtual get1DWeights() const;
+      virtual const std::vector<double> &
+      get1DWeights() const;
 
-      bool virtual isTensorStructured() const;
+      virtual bool
+      isTensorStructured() const;
 
       size_type
       nPoints() const;

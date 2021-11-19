@@ -12,7 +12,7 @@ namespace dftefe
       : d_dim(triangulation->getDim())
     {
       utils::throwException(
-        d_dim == quadratureRule[0]->getDim(),
+        d_dim == quadratureRule->getDim(),
         "Mismatch of dimension of the quadrature points and the triangulation.");
       size_type numCells = triangulation->nLocalCells();
       std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec(
@@ -53,22 +53,22 @@ namespace dftefe
       d_realPoints.resize(d_numQuadPoints, dftefe::utils::Point(d_dim, 0.0));
       d_JxW.resize(d_numQuadPoints, 0.0);
       basis::TriangulationBase::const_cellIterator cellIter =
-        triangulationBase->beginLocal();
+        triangulation->beginLocal();
       unsigned int iCell = 0;
-      for (; cellIter != triangulationBase->endLocal(); ++celIter)
+      for (; cellIter != triangulation->endLocal(); ++cellIter)
         {
           const size_type numCellQuadPoints = d_numCellQuadPoints[iCell];
           const std::vector<dftefe::utils::Point> &parametricPoints =
             d_quadratureRuleVec[iCell]->getPoints();
-          std::vector<dftefe::utils::Point> cellRealPoints(numCellQuadPoints,
-                                                   dftefe::utils::Point(d_dim, 0.0));
-          cellMapping.getRealPoints(parametericPoints,
-                                     *(*cellIter),
-                                     cellRealPoints);
+          std::vector<dftefe::utils::Point> cellRealPoints(
+            numCellQuadPoints, dftefe::utils::Point(d_dim, 0.0));
+          cellMapping.getRealPoints(parametricPoints,
+                                    *(*cellIter),
+                                    cellRealPoints);
           const std::vector<double> &weights =
             d_quadratureRuleVec[iCell]->getWeights();
           std::vector<double> cellJxW(numCellQuadPoints, 0.0);
-          cellMapping.getJxW(*(*celIter), parametricPoints, weights, cellJxW);
+          cellMapping.getJxW(*(*cellIter), parametricPoints, weights, cellJxW);
           const size_type cellQuadStartId = d_cellQuadStartIds[iCell];
           std::copy(cellRealPoints.begin(),
                     cellRealPoints.end(),
@@ -92,8 +92,8 @@ namespace dftefe
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
       const size_type cellQuadEndId     = cellQuadStartId + numCellQuadPoints;
 
-      std::vector<dftefe::utils::Point> cellRealPoints(numCellQuadPoints,
-                                               dftefe::utils::Point(d_dim, 0.0));
+      std::vector<dftefe::utils::Point> cellRealPoints(
+        numCellQuadPoints, dftefe::utils::Point(d_dim, 0.0));
 
       std::copy(d_realPoints.begin() + cellQuadStartId,
                 d_realPoints.begin() + cellQuadEndId,
@@ -130,7 +130,7 @@ namespace dftefe
       const size_type cellQuadEndId     = cellQuadStartId + numCellQuadPoints;
 
       std::vector<double> cellJxW(numCellQuadPoints, 0.0);
-      std::copy(d_JxW.begin() + cellQuadStartid,
+      std::copy(d_JxW.begin() + cellQuadStartId,
                 d_JxW.begin() + cellQuadEndId,
                 cellJxW.begin());
       return cellJxW;

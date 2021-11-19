@@ -28,23 +28,23 @@ namespace dftefe
       const std::vector<dftefe::utils::Point> &
       getRealPoints() const;
 
-      const std::vector<dftefe::utils::Point> &
-      getRealPoints(const unsigned int cellId) const;
+      std::vector<dftefe::utils::Point>
+      getCellRealPoints(const unsigned int cellId) const;
 
       const std::vector<dftefe::utils::Point> &
-      getParametricPoints(const unsigned int cellId) const;
+      getCellParametricPoints(const unsigned int cellId) const;
 
       const std::vector<double> &
-      getQuadratureWeights(const unsigned int cellId) const;
+      getCellQuadratureWeights(const unsigned int cellId) const;
 
       const std::vector<double> &
       getJxW() const;
 
-      const std::vector<double> &
-      getJxW(const unsigned int cellId) const;
+      std::vector<double>
+      getCellJxW(const unsigned int cellId) const;
 
       const QuadratureRule &
-      getQuadratureRule() const;
+      getQuadratureRule(const unsigned int cellId) const;
 
       size_type
       nQuadraturePoints() const;
@@ -54,20 +54,16 @@ namespace dftefe
 
 
     private:
-      std::vector<std::shared_ptr<QuadratureRule>> d_quadratureRuleVec;
-      std::vector<size_type>                       d_numCellQuadPoints;
-      std::vector<size_type>                       d_cellQuadStartIds;
-      std::vector<Points>                          d_realPoints;
-      std::vector<double>                          d_JxW;
-      unsigned int                                 d_dim;
-      size_type                                    d_numQuadPoints;
+      std::vector<std::shared_ptr<const QuadratureRule>> d_quadratureRuleVec;
+      std::vector<size_type>                             d_numCellQuadPoints;
+      std::vector<size_type>                             d_cellQuadStartIds;
+      std::vector<dftefe::utils::Point>                  d_realPoints;
+      std::vector<double>                                d_JxW;
+      unsigned int                                       d_dim;
+      size_type                                          d_numQuadPoints;
     };
   } // end of namespace quadrature
 
 } // end of namespace dftefe
 
-<<<<<<< HEAD
 #endif // dftefeCellQuadratureContainer_h
-=======
-#endif
->>>>>>> 1a66efa0fc2fb6cfa27fae97023f05df24b062be
