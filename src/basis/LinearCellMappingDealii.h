@@ -7,46 +7,45 @@
 #include <utils/Point.h>
 #include <deal.II/fe/mapping.h>
 #include <deal.II/fe/mapping_q1.h>
-namespace dftefe {
+namespace dftefe
+{
   namespace basis
   {
-
     template <unsigned int dim>
     class LinearCellMappingDealii : public CellMappingBase
     {
-
-
       LinearCellMappingDealii();
 
       ~LinearCellMappingDealii();
 
-      void getJxW(const TriangulationCellBase &triaCellBase, const std::vector<utils::Point> &paramPoints,
-             const       std::vector<double> &weights,
-             std::vector<double> & valuesJxW);
       void
-      getParametricPoint(const utils::Point &realPoint,
+      getJxW(const TriangulationCellBase &    triaCellBase,
+             const std::vector<utils::Point> &paramPoints,
+             const std::vector<double> &      weights,
+             std::vector<double> &            valuesJxW);
+      void
+      getParametricPoint(const utils::Point &         realPoint,
                          const TriangulationCellBase &triaCellBase,
-                         utils::Point &      parametricPoint,
-                         bool isPointInside) const;
+                         utils::Point &               parametricPoint,
+                         bool                         isPointInside) const;
 
       void
-      getParametricPoints(const std::vector<utils::Point> & realPoints,
-                          const TriangulationCellBase &triaCellBase,
-                          std::vector<utils::Point> &      parametricPoints) const;
+      getParametricPoints(const std::vector<utils::Point> &realPoints,
+                          const TriangulationCellBase &    triaCellBase,
+                          std::vector<utils::Point> &parametricPoints) const;
 
       void
-      getRealPoint(const utils::Point &parametricPoint,
+      getRealPoint(const utils::Point &         parametricPoint,
                    const TriangulationCellBase &triaCellBase,
-                   utils::Point &      realPoint) const;
+                   utils::Point &               realPoint) const;
 
 
       void
       getRealPoints(const std::vector<utils::Point> &parametricPoints,
-                    const TriangulationCellBase &triaCellBase,
+                    const TriangulationCellBase &    triaCellBase,
                     std::vector<utils::Point> &      realPoints) const;
 
-    private :
-
+    private:
       dealii::MappingQ1<dim> mapping;
 
 

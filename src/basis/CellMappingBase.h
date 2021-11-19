@@ -30,25 +30,26 @@ namespace dftefe
 
       virtual void
       getParametricPoint(const dftefe::utils::Point &realPoint,
-                         const TriaCellBase &triaCellBase,
+                         const TriaCellBase &        triaCellBase,
                          dftefe::utils::Point &      parametricPoint) const = 0;
-      
+
       virtual void
-      getParametricPoints(const std::vector<dftefe::utils::Point> & realPoints,
-                         const TriaCellBase &triaCellBase,
-                         std::vector<dftefe::utils::Point> &      parametricPoints) const = 0;
+      getParametricPoints(
+        const std::vector<dftefe::utils::Point> &realPoints,
+        const TriaCellBase &                     triaCellBase,
+        std::vector<dftefe::utils::Point> &      parametricPoints) const = 0;
 
       virtual void
       getRealPoint(const dftefe::utils::Point &parametricPoint,
-                   const TriaCellBase &triaCellBase,
+                   const TriaCellBase &        triaCellBase,
                    dftefe::utils::Point &      realPoint) const = 0;
-      
+
 
       virtual void
       getRealPoints(const std::vector<dftefe::utils::Point> &parametricPoints,
-                   const TriaCellBase &triaCellBase,
-                   std::vector<dftefe::utils::Point> &      realPoints) const = 0;
-      
+                    const TriaCellBase &                     triaCellBase,
+                    std::vector<dftefe::utils::Point> &realPoints) const = 0;
+
 
     }; // end of class CellMappingBase
 

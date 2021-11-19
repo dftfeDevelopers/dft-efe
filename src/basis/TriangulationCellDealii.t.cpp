@@ -107,7 +107,7 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    typename dealii::Triangulation<dim>::active_cell_iterator&
+    typename dealii::Triangulation<dim>::active_cell_iterator &
     TriangulationCellDealii<dim>::getCellIterator() const
     {
       return d_cellItr;

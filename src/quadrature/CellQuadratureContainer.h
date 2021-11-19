@@ -8,47 +8,49 @@
 #include <basis/CellMappingBase.h>
 #include <memory>
 
-namespace dftefe {
+namespace dftefe
+{
+  namespace quadrature
+  {
+    class CellQuadratureContainer
+    {
+      CellQuadratureContainer(
+        std::shared_ptr<const QuadratureRule>           quadratureRule,
+        std::shared_ptr<const basis::TriangulationBase> triangulation,
+        const basis::CellMappingBase &                  cellMapping);
 
-  namespace quadrature {
-
-    class CellQuadratureContainer {
-
-     CellQuadratureContainer(std::shared_ptr<const QuadratureRule> quadratureRule,
-	 std::shared_ptr<const basis::TriangulationBase> triangulation,
-	  const basis::CellMappingBase & cellMapping);
-     
-     CellQuadratureContainer(std::vector<std::shared_ptr<const QuadratureRule> > quadratureRule,
-	 std::shared_ptr<const basis::TriangulationBase> triangulation,
-	  const basis::CellMappingBase & cellMapping);
+      CellQuadratureContainer(
+        std::vector<std::shared_ptr<const QuadratureRule>> quadratureRule,
+        std::shared_ptr<const basis::TriangulationBase>    triangulation,
+        const basis::CellMappingBase &                     cellMapping);
 
       const std::vector<dftefe::utils::Point> &
-	getRealPoints() const;
+      getRealPoints() const;
 
       const std::vector<dftefe::utils::Point> &
-	getRealPoints(const unsigned int cellId) const;
-      
+      getRealPoints(const unsigned int cellId) const;
+
       const std::vector<dftefe::utils::Point> &
-	getParametricPoints(const unsigned int cellId) const;
+      getParametricPoints(const unsigned int cellId) const;
 
       const std::vector<double> &
-	getQuadratureWeights(const unsigned int cellId) const;
-      
+      getQuadratureWeights(const unsigned int cellId) const;
+
       const std::vector<double> &
-	getJxW() const;
-      
+      getJxW() const;
+
       const std::vector<double> &
-	getJxW(const unsigned int cellId) const;
+      getJxW(const unsigned int cellId) const;
 
       const QuadratureRule &
-	getQuadratureRule() const ;
+      getQuadratureRule() const;
 
 
-      private:
-      std::vector<std::shared_ptr<QuadratureRule> > d_quadratureRuleVec;
-      std::vector<size_type> nCellQuadPoints;
-      std::vector<dftefe::utils::Point> d_realPoints;
-      std::vector<double> d_JxW;
+    private:
+      std::vector<std::shared_ptr<QuadratureRule>> d_quadratureRuleVec;
+      std::vector<size_type>                       nCellQuadPoints;
+      std::vector<dftefe::utils::Point>            d_realPoints;
+      std::vector<double>                          d_JxW;
     };
   } // end of namespace quadrature
 
