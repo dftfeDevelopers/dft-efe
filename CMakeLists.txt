@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
-add_executable(dft-efe src/main.cpp)
+#add_executable(dft-efe src/main.cpp)
+
+add_executable(dft-efe test/linearAlgebra/src/OperationHost.cpp)
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -28,7 +30,7 @@ ENDIF()
 
 
 
-target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})		
+target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 
 add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
