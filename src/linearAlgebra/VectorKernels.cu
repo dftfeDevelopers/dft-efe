@@ -126,7 +126,7 @@ namespace dftefe
       ValueType temp = 0.0;
       utils::MemoryTransfer<
         dftefe::utils::MemorySpace::HOST,
-        dftefe::utils::MemorySpace::DEVICE>::copy(1, &temp, u + maxIndex);
+        dftefe::utils::MemorySpace::DEVICE>::copy(1, &temp, u + maxIndex - 1);
 
       return dftefe::utils::abs_(temp);
     }
