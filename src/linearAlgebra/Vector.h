@@ -173,6 +173,20 @@ namespace dftefe
 
 
       /**
+       * @brief Returns \f$ l_2 \f$ norm of the Vector
+       * @return \f$ l_2 \f$  norm of the vector as double type
+       */
+      double
+      l2Norm() const;
+
+      /**
+       * @brief Returns \f$ l_{\inf} \f$ norm of the Vector
+       * @return \f$ l_{\inf} \f$  norm of the vector as double type
+       */
+      double
+      lInfNorm() const;
+
+      /**
        * @brief Returns the dimension of the Vector
        * @returns size of the Vector
        */
@@ -200,7 +214,14 @@ namespace dftefe
 
     // helper functions
 
-
+    /**
+     * @brief Perform \f$ w = au + bv \f$
+     * @param[in] a scalar
+     * @param[in] u array
+     * @param[in] b scalar
+     * @param[in] v array
+     * @param[out] w array of the result
+     */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     add(ValueType                             a,

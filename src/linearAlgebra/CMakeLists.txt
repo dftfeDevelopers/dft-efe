@@ -32,9 +32,12 @@ endif()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
+        DeviceBlasLapackTemplates.cu
+        DeviceLAContextsSingleton.cu
         VectorKernels.cu
         Vector.cpp
-        VectorKernels.cpp)
+        VectorKernels.cpp
+        DeviceLAContextsSingleton.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

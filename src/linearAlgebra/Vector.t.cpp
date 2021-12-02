@@ -201,6 +201,22 @@ namespace dftefe
       return *this;
     }
 
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    double
+    Vector<ValueType, memorySpace>::l2Norm() const
+    {
+      return VectorKernels<ValueType, memorySpace>::l2Norm(d_size, d_data);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    double
+    Vector<ValueType, memorySpace>::lInfNorm() const
+    {
+      return VectorKernels<ValueType, memorySpace>::lInfNorm(d_size, d_data);
+    }
+
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     ValueType *
     Vector<ValueType, memorySpace>::data() noexcept
