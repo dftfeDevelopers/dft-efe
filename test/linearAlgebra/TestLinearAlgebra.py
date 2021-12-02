@@ -32,22 +32,22 @@ cmflags = rfm.utility.import_module_from_file("../CMakeFlagsParser.py")
 
 
 @rfm.simple_test
-class StdOutTest(rfm.RegressionTest):
-    descr = 'Regression Test using CMake and stdout'
+class MultipleExeTest(rfm.RegressionTest):
+    descr = 'Dummy Test for showing how to check multiple executables in one test'
     valid_systems = ['greatlakes:login']
     valid_prog_environs = ['builtin']
     build_system = 'CMake'
-    make_opts = ['OperationHost']
+    make_opts = ['TestVectorAggregate1', 'TestVectorAggregate2']
     cmflags.getConfig()
     config_opts = cmflags.getConfig('greatlakes_cpu')
-    executable = './OperationHost'
-    builddir = './build'
+    executable = 'date'
+    builddir = './TestVectorAggregate'
     sourcesdir = './src'
-    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
-        'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
+    tagsDict = {'compileOrRun': 'Run', 'unitOrAggregate':
+        'Aggregate', 'slowOrFast': 'fast', 'arch': 'gpu',
                 'serialOrParallel': 'serial'}
-    tags = {x for x in tagsDict.values()}
 
+    tags = {x for x in tagsDict.values()}
 
     @run_before('compile')
     def set_compiler_flags(self):
@@ -55,29 +55,46 @@ class StdOutTest(rfm.RegressionTest):
         self.build_system.make_opts = self.make_opts
         self.build_system.config_opts = self.config_opts
 
-    @run_before('run')
-    def set_launcher_and_resources(self):
-        if "serial" in self.tags:
-            self.job.launcher = getlauncher('local')()
+    # @run_before('run')
+    # def set_launcher_and_resources(self):
+    #     if "serial" in self.tags:
+    #         self.job.launcher = getlauncher('local')()
+    #
+    #     if "parallel" in self.tags:
+    #         self.job.launcher.options = ['']
+    #     self.extra_resources = ss.setResources(self.tagsDict['arch'])
 
-        if "parallel" in self.tags:
-            self.job.launcher.options = ['']
-        self.extra_resources = ss.setResources(self.tagsDict['arch'])
+    @run_before('run')
+    def pre_launch(self):
+        exe_names = ['./TestVectorAggregate1', './TestVectorAggregate2']
+        cmd = self.job.launcher.run_command(self.job)
+        self.prerun_cmds = [
+            # f'{cmd} -n {1} {exe}'
+            f'{exe}'
+            for exe in exe_names
+        ]
 
     @sanity_function
     def validate_test(self):
         hasTestPassed = True
         msg = 'Passed'
-        bmfilename = "OutTestOperationHost.txt"
-        bmParser = parser.Parser.fromFilename(bmfilename)
-        outParser = parser.Parser.fromFilename(evaluate(self.stdout))
-        testSet = ["double add", r"double \+=", "double -=", "complex<double> add", "complex<double> \+=",
-                   "complex<double> -="]
-        for testString in testSet:
-            bmVal = bmParser.extractKeyValues(testString)
-            outVal = outParser.extractKeyValues(testString)
-            hasTestPassed, norm, msg = cu.Compare().cmp(bmVal, outVal, 1.0e-16, 'absolute', 'point')
-            if not hasTestPassed:
-                msg = "Failed in {}".format(testString)
-                return sn.assert_true(hasTestPassed, msg=msg)
+        bmfilename = ['TestVectorAggregate1', 'TestVectorAggregate2']
+        for filename in bmfilename:
+            bmParser = parser.Parser.fromFilename(filename+'.benchmark')
+            outParser = parser.Parser.fromFilename(filename+'.out')
+            testSet = ["double add", r"double \+=", "double -=", "complex<double> add", "complex<double> \+=",
+                       "complex<double> -="]
+            for testString in testSet:
+                bmVal = bmParser.extractKeyValues(testString)
+                outVal = outParser.extractKeyValues(testString)
+                hasTestPassed, norm, msg = cu.Compare().cmp(bmVal, outVal, 1.0e-16, 'absolute', 'point')
+                if not hasTestPassed:
+                    print(filename)
+                    print(testString)
+                    print('benchmark')
+                    print(bmVal)
+                    print('output')
+                    print(outVal)
+                    msg = "Failed in {}".format(testString)
+                    return sn.assert_true(hasTestPassed, msg=msg)
         return sn.assert_true(hasTestPassed, msg=msg)

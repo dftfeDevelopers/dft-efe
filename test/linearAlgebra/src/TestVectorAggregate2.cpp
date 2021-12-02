@@ -1,10 +1,13 @@
 #include <complex>
-#include <iostream>
+#include <fstream>
 #include "linearAlgebra/Vector.h"
 
 int
 main()
 {
+  std::string filename = "TestVectorAggregate2.out";
+  std::ofstream fout(filename);
+  
   unsigned int vSize = 10;
   // test double
   // Refs
@@ -51,17 +54,17 @@ main()
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dPrintCache.data(),
                                             dVecC.data());
-  std::cout << "double add ";
+  fout << "double add ";
   for (auto i : dPrintCache)
     {
-      std::cout << i << ", ";
+      fout << i << ", ";
     }
-  std::cout << std::endl;
+  fout << std::endl;
 //  for (auto i : dAddRef)
 //    {
-//      std::cout << i << ", ";
+//      fout << i << ", ";
 //    }
-//  std::cout << std::endl << std::endl;
+//  fout << std::endl << std::endl;
 
 
   // test +=
@@ -83,17 +86,17 @@ main()
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dPrintCache.data(),
                                             dVecA.data());
-  std::cout << "double += ";
+  fout << "double += ";
   for (auto i : dPrintCache)
     {
-      std::cout << i << ", ";
+      fout << i << ", ";
     }
-  std::cout << std::endl;
+  fout << std::endl;
 //  for (auto i : dAddEqRef)
 //    {
-//      std::cout << i << ", ";
+//      fout << i << ", ";
 //    }
-//  std::cout << std::endl << std::endl;
+//  fout << std::endl << std::endl;
 
   // test -=
   dftefe::utils::MemoryTransfer<
@@ -114,17 +117,17 @@ main()
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dPrintCache.data(),
                                             dVecA.data());
-  std::cout << "double -= ";
+  fout << "double -= ";
   for (auto i : dPrintCache)
     {
-      std::cout << i << ", ";
+      fout << i << ", ";
     }
-  std::cout << std::endl;
+  fout << std::endl;
 //  for (auto i : dMinusEqRef)
 //    {
-//      std::cout << i << ", ";
+//      fout << i << ", ";
 //    }
-//  std::cout << std::endl << std::endl;
+//  fout << std::endl << std::endl;
 
 
   // test complex
@@ -215,17 +218,17 @@ main()
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zPrintCache.data(),
                                             zVecC.data());
-  std::cout << "complex<double> add ";
+  fout << "complex<double> add ";
   for (auto i : zPrintCache)
     {
-      std::cout << i << ", ";
+      fout << i << ", ";
     }
-  std::cout << std::endl;
+  fout << std::endl;
 //  for (auto i : zAddRef)
 //    {
-//      std::cout << i << ", ";
+//      fout << i << ", ";
 //    }
-//  std::cout << std::endl << std::endl;
+//  fout << std::endl << std::endl;
 
 
   // test +=
@@ -247,17 +250,17 @@ main()
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zPrintCache.data(),
                                             zVecA.data());
-  std::cout << "complex<double> += ";
+  fout << "complex<double> += ";
   for (auto i : zPrintCache)
     {
-      std::cout << i << ", ";
+      fout << i << ", ";
     }
-  std::cout << std::endl;
+  fout << std::endl;
 //  for (auto i : zAddEqRef)
 //    {
-//      std::cout << i << ", ";
+//      fout << i << ", ";
 //    }
-//  std::cout << std::endl << std::endl;
+//  fout << std::endl << std::endl;
 
   // test -=
   dftefe::utils::MemoryTransfer<
@@ -278,17 +281,17 @@ main()
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zPrintCache.data(),
                                             zVecA.data());
-  std::cout << "complex<double> -= ";
+  fout << "complex<double> -= ";
   for (auto i : zPrintCache)
     {
-      std::cout << i << ", ";
+      fout << i << ", ";
     }
-  std::cout << std::endl;
+  fout << std::endl;
 //  for (auto i : zMinusEqRef)
 //    {
-//      std::cout << i << ", ";
+//      fout << i << ", ";
 //    }
-//  std::cout << std::endl << std::endl;
+//  fout << std::endl << std::endl;
 
   return 0;
 }

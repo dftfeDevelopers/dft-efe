@@ -8,5 +8,14 @@ message(${MAIN_PROJECT_DIR})
 add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
 include_directories(${MAIN_PROJECT_DIR}/src)
 
-add_executable(OperationHost OperationHost.cpp)
-target_link_libraries(OperationHost PUBLIC dft-efe-linalg)
+# CPU: testing +=, -=, add, copy constructor
+add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
+target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)
+
+# CPU: testing +=, -=, add, copy constructor, a dummy test to show how to run multiple executables in one tests
+add_executable(TestVectorAggregate2 TestVectorAggregate2.cpp)
+target_link_libraries(TestVectorAggregate2 PUBLIC dft-efe-linalg)
+
+# GPU: testing +=, -=, add, copy constructor
+add_executable(TestVectorAggregate3 TestVectorAggregate3.cpp)
+target_link_libraries(TestVectorAggregate3 PUBLIC dft-efe-linalg)
