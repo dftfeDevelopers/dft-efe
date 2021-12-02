@@ -20,7 +20,7 @@ namespace dftefe
         std::vector<utils::Point> &         adaptiveQuadPoints,
         std::vector<double> &               adaptiveQuadWeights)
       {
-        const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoint();
+        const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
         const unsigned int dim                  = baseQuadratureRule.getDim();
         const std::vector<utils::Point> &baseQuadratureRuleParametricPoints =
           baseQuadratureRule.getPoints();
@@ -31,7 +31,7 @@ namespace dftefe
                                                  utils::Point(dim, 0.0));
         cellMapping.getRealPoints(baseQuadratureRuleParametricPoints,
                                   currentCell,
-                                  &realQuadPoints);
+                                  realQuadPoints);
 
         std::vector<utils::Point> parametricQuadPointsGlobalCell(
           numberBaseQuadPoints, utils::Point(dim, 0.0));
@@ -106,7 +106,7 @@ namespace dftefe
                 const double diff = fabs(sumChildIntegrals - parentIntegral);
                 if (diff > tolerances[iFunction])
                   {
-                    hasConverged = false;
+                    returnValue = false;
                     break;
                   }
               }
@@ -117,14 +117,14 @@ namespace dftefe
 
       inline void
       recursiveIntegrate(
-        basis::TriangulationCellBase &parentCell,
-        const std::vector<double> &   parentCellIntegralValues,
-        const std::vector<double> &   parenCelltIntegralThresholds,
-        const double                  parentVolume,
-        const std::vector<double> &   tolerances,
-        const double                  smallestCellVolume,
-        int &                         recursionLevel,
-        const int                     maxRecursion,
+        const basis::TriangulationCellBase &parentCell,
+        const std::vector<double> &         parentCellIntegralValues,
+        const std::vector<double> &         parenCellIntegralThresholds,
+        const double                        parentVolume,
+        const std::vector<double> &         tolerances,
+        const double                        smallestCellVolume,
+        int &                               recursionLevel,
+        const int                           maxRecursion,
         std::vector<std::shared_ptr<const ScalarFunction>> functions,
         const basis::TriangulatioCellBase &                globalCell,
         const QuadratureRule &                             baseQuadratureRule,
@@ -135,7 +135,7 @@ namespace dftefe
 
       {
         //
-        const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoint();
+        const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
         const size_type    numberFunctions      = functions.size();
         const unsigned int dim                  = baseQuadratureRule.getDim();
         const std::vector<utils::Point> &baseQuadratureRuleParametricPoints =
@@ -165,9 +165,8 @@ namespace dftefe
               numberChildren, std::vector<double>(numberBaseQuadPoints, 0.0));
 
             std::vector<double> childCellsVolume(numberChildren, 0.0);
-            std::vector<double> sumChildCellIntegralVals(numberFunctions, 0.0);
 
-            std::vector<std::shared_ptr<basis::TriangulationCellBase>>
+            std::vector<std::shared_ptr<const basis::TriangulationCellBase>>
               childCells(numberChildren);
 
             createChildCells(parentCell, childCells);
@@ -181,7 +180,7 @@ namespace dftefe
                                                                       0.0));
                 cellMapping.getRealPoints(baseQuadratureRuleParametricPoints,
                                           childCell,
-                                          &realQuadPoints);
+                                          realQuadPoints);
 
                 std::vector<double> &childCellJxW = childCellsJxW[iChild];
                 cellMapping.getJxW(childCell,
@@ -243,7 +242,7 @@ namespace dftefe
                                        globalCell,
                                        baseQuadratureRule,
                                        cellMapping,
-                                       parentCellJxW,
+                                       childCellsJxW[iChild],
                                        adaptiveQuadPoints,
                                        adaptiveQuadWeights)
 
@@ -262,6 +261,7 @@ namespace dftefe
       const basis::CellMappingBase &                     cellMapping,
       std::vector<std::shared_ptr<const ScalarFunction>> functions,
       const std::vector<double> &                        tolerances,
+      const std::vector<double> &                        integralThresholds,
       const double       smallestCellVolume /*= 1e-12*/,
       const unsigned int maxRecursion /*= 100*/)
     {
@@ -270,7 +270,7 @@ namespace dftefe
       d_points.resize(0, utils::Point(d_dim, 0.0));
       d_weights.resize(0);
 
-      const size_type numberBaseQuadPoints = baseQuadratureRule.nPoint();
+      const size_type numberBaseQuadPoints = baseQuadratureRule.nPoints();
       const size_type numberFunctions      = functions.size();
 
       const std::vector<utils::Point> &baseQuadratureRuleParametricPoints =
@@ -289,7 +289,7 @@ namespace dftefe
                                                utils::Point(d_dim, 0.0));
       cellMapping.getRealPoints(baseQuadratureRuleParametricPoints,
                                 cell,
-                                &realQuadPoints);
+                                realQuadPoints);
 
       const double cellVolume =
         std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
@@ -308,7 +308,7 @@ namespace dftefe
       int recursionLevel = 0;
       recursiveIntegrate(cell,
                          integralValues,
-                         celltIntegralThresholds,
+                         integralThresholds,
                          cellVolume,
                          tolerances,
                          smallestCellVolume,

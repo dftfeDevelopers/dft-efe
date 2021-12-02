@@ -22,6 +22,7 @@ namespace dftefe
         const basis::CellMappingBase &                     cellMapping,
         std::vector<std::shared_ptr<const ScalarFunction>> functions,
         const std::vector<double> &                        tolerances,
+        const std::vector<double> &                        integralThresholds,
         const double       smallestCellVolume = 1e-12,
         const unsigned int maxRecursion       = 100);
 

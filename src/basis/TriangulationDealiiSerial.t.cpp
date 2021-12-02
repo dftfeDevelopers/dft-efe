@@ -96,6 +96,28 @@ namespace dftefe
 
     template <unsigned int dim>
     void
+    TriangulationDealiiSerial<dim>::createSingleCellTriangulation(
+      const std::vector<utils::Point> &vertices)
+    {
+      utils::throwException(isInitialized && !isFinalized,
+                            "Cannot create triangulation without calling"
+                            "initializeTriangulationConstruction");
+      DFTEFE_AssertWithMsg(dim == vertices[0].size(),
+                           "Mismatch of dimension for dealii and the vertices");
+      const unsigned int                      numPoints = vertices.size();
+      std::vector<dealii::Point<dim, double>> dealiiVertices(numPoints);
+      for (unsigned int i = 0; i < numPoints; ++i)
+        {
+          utils::convertToDealiiPoint<dim>(vertices[i], dealiiVertices[i]);
+        }
+
+      dealii::GridGenerator::general_cell(d_triangulationDealii,
+                                          dealiiVertices);
+    }
+
+
+    template <unsigned int dim>
+    void
     TriangulationDealiiSerial<dim>::shiftTriangulation(
       const utils::Point &origin)
     {
