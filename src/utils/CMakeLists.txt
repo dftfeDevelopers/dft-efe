@@ -18,7 +18,9 @@ set(DFT-EFE-UTILS-SOURCES
         DeviceUtils.cpp
         MemoryManager.cpp
         Exceptions.cpp
-        MemoryTransfer.cpp)
+        MemoryTransfer.cpp
+        BaseFunction.cpp
+        ScalarFunction.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

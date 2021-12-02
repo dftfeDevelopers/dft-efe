@@ -10,8 +10,9 @@ namespace dftefe
   namespace quadrature
   {
     /*
-     *Class that stores the quadrature information. This class provides the location
-     * of the quadrature points in parametric coordinates and its corresponding weights
+     *Class that stores the quadrature information. This class provides the
+     *location of the quadrature points in parametric coordinates and its
+     *corresponding weights
      */
     class QuadratureRule
     {
@@ -19,7 +20,8 @@ namespace dftefe
       /**
        * @brief Constructor to create a tensor structured quadrature with arbitrary  1D points and weights.
        * @param[in] dim the dimension of the cell.
-       * @param[in] points The parametric points on which the 1D quad points are located.
+       * @param[in] points The parametric points on which the 1D quad points are
+       * located.
        * @param[in] weights  the weight of the quad points
        */
       QuadratureRule(const unsigned int               dim,
@@ -36,7 +38,8 @@ namespace dftefe
 
       /**
        * @brief A function to return the 1D quad points in the parametric space.
-       * This function throws an error if this quadrature Rule is not tensor structured
+       * This function throws an error if this quadrature Rule is not tensor
+       * structured
        *
        * @returns  returns the vector of dftefe::utils::Point  containing the 1D quad points
        */
@@ -52,7 +55,8 @@ namespace dftefe
       getWeights() const;
       /**
        * @brief A function to return the 1D quad points in the parametric space.
-       * This function throws an error if this quadrature Rule is not tensor structured
+       * This function throws an error if this quadrature Rule is not tensor
+       * structured
        *
        * @returns  returns the vector of dftefe::utils::Point  containing the 1D quad points
        */
