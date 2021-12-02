@@ -12,23 +12,23 @@ namespace dftefe
 {
   namespace quadrature
   {
-
     /**
-     * This class stores the quadrature points and corresponding JxW in each cell.
-     * This supports adaptive quadrature i.e each cell can have different quadrature rules.
-     * Further each cell can have arbitrary quadrature rule.
+     * This class stores the quadrature points and corresponding JxW in each
+     * cell. This supports adaptive quadrature i.e each cell can have different
+     * quadrature rules. Further each cell can have arbitrary quadrature rule.
      */
     class CellQuadratureContainer
     {
     public:
-
       /**
        * @brief Constructor for assigning each cell with a common quadrature rule.
-       * @param[in] quadratureRule The quadrature rule specifying the quad points in the parametric coordinates
-       * with its corresponding weights.
-       * @param[in] triangulation The triangulation that has information on the cell and its vertices
-       * @param[in] cellMapping cellMapping provides the the information on how the cell in real space is mapped to
-       * its parametric coordinates.  This is required to calculate the JxW values at each quad point
+       * @param[in] quadratureRule The quadrature rule specifying the quad
+       * points in the parametric coordinates with its corresponding weights.
+       * @param[in] triangulation The triangulation that has information on the
+       * cell and its vertices
+       * @param[in] cellMapping cellMapping provides the the information on how
+       * the cell in real space is mapped to its parametric coordinates.  This
+       * is required to calculate the JxW values at each quad point
        */
       CellQuadratureContainer(
         std::shared_ptr<const QuadratureRule>           quadratureRule,
@@ -37,11 +37,13 @@ namespace dftefe
 
       /**
        * @brief Constructor for assigning each cell with a common quadrature rule.
-       * @param[in] quadratureRule The quadrature rule specifying the quad points in the parametric coordinates
-       * with its corresponding weights.
-       * @param[in] triangulation The triangulation that has information on the cell and its vertices
-       * @param[in] cellMapping cellMapping provides the the information on how the cell in real space is mapped to
-       * its parametric coordinates.  This is required to calculate the JxW values at each quad point
+       * @param[in] quadratureRule The quadrature rule specifying the quad
+       * points in the parametric coordinates with its corresponding weights.
+       * @param[in] triangulation The triangulation that has information on the
+       * cell and its vertices
+       * @param[in] cellMapping cellMapping provides the the information on how
+       * the cell in real space is mapped to its parametric coordinates.  This
+       * is required to calculate the JxW values at each quad point
        */
       CellQuadratureContainer(
         std::vector<std::shared_ptr<const QuadratureRule>> quadratureRule,
