@@ -6,6 +6,7 @@
 #include <basis/QuadratureRule.h>
 #include <basis/CellMappingBase.h>
 #include <basis/TriangulationCellBase.h>
+#include <basis/ParentToChildCellsManagerBase.h>
 #include <vector>
 #include <memory>
 
@@ -17,9 +18,10 @@ namespace dftefe
     {
     public:
       QuadratureRuleAdaptive(
-        const basis::TriangulationCellBase &               cell,
-        const QuadratureRule &                             baseQuadratureRule,
-        const basis::CellMappingBase &                     cellMapping,
+        const basis::TriangulationCellBase &  cell,
+        const QuadratureRule &                baseQuadratureRule,
+        const basis::CellMappingBase &        cellMapping,
+        basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
         std::vector<std::shared_ptr<const ScalarFunction>> functions,
         const std::vector<double> &                        tolerances,
         const std::vector<double> &                        integralThresholds,

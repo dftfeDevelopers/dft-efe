@@ -1,5 +1,5 @@
-#ifndef dftefeParentToChildCellsBase_h
-#define dftefeParentToChildCellsBase_h
+#ifndef dftefeParentToChildCellsManagerBase_h
+#define dftefeParentToChildCellsManagerBase_h
 
 #include <utils/TypeConfig.h>
 #include "TriangulationCellBase.h"
@@ -9,17 +9,17 @@ namespace dftefe
 {
   namespace basis
   {
-    class ParentToChildCellsBase
+    class ParentToChildCellsManagerBase
     {
     public:
       virtual std::vector<std::shared_ptr<const TriangulationCellBase>>
-      getChildCells(const TriangulationCellBase &parentCell) = 0;
+      createChildCells(const TriangulationCellBase &parentCell) = 0;
 
       virtual void
-      cleanup() = 0;
+      popLast() = 0;
     };
 
   } // end of namespace basis
 
 } // end of namespace dftefe
-#endif // dftefeParentToChildCellsBase_h
+#endif // dftefeParentToChildCellsManagerBase_h

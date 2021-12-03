@@ -10,6 +10,26 @@ namespace dftefe
   {
     namespace
     {
+      //
+      // Returns power of integer raised to a positive integer
+      // C++ standard library deals only with floats and doubles
+      size_type
+      intPowPositiveInt(int base, unsigned int exp)
+      {
+        size_type result = 1;
+        for (;;)
+          {
+            if (exp & 1)
+              result *= base;
+            exp >>= 1;
+            if (!exp)
+              break;
+            base *= base;
+          }
+
+        return result;
+      }
+
       void
       updateAdaptiveQuadratureRule(
         const basis::TriangulationCellBase &currentCell,
@@ -123,18 +143,18 @@ namespace dftefe
         const double                        parentVolume,
         const std::vector<double> &         tolerances,
         const double                        smallestCellVolume,
-        int &                               recursionLevel,
-        const int                           maxRecursion,
+        const unsigned int                  recursionLevel,
+        const unsigned int                  maxRecursion,
         std::vector<std::shared_ptr<const ScalarFunction>> functions,
         const basis::TriangulatioCellBase &                globalCell,
         const QuadratureRule &                             baseQuadratureRule,
         const basis::CellMappingBase &                     cellMapping,
-        const std::vector<double> &                        parentCellJxW,
-        std::vector<utils::Point> &                        adaptiveQuadPoints,
-        std::vector<double> &                              adaptiveQuadWeights)
+        basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
+        const std::vector<double> &           parentCellJxW,
+        std::vector<utils::Point> &           adaptiveQuadPoints,
+        std::vector<double> &                 adaptiveQuadWeights)
 
       {
-        //
         const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
         const size_type    numberFunctions      = functions.size();
         const unsigned int dim                  = baseQuadratureRule.getDim();
@@ -157,7 +177,7 @@ namespace dftefe
 
         else
           {
-            const int                        numberChildren = 8;
+            const size_type numberChildren = intPowPositiveInt(2, dim);
             std::vector<std::vector<double>> childCellsIntegralValues(
               numberChildren, std::vector<double>(numberFunctions, 0.0));
 
@@ -167,9 +187,13 @@ namespace dftefe
             std::vector<double> childCellsVolume(numberChildren, 0.0);
 
             std::vector<std::shared_ptr<const basis::TriangulationCellBase>>
-              childCells(numberChildren);
+              childCells =
+                parentToChildCellsManager.createChildCells(parentCell);
 
-            createChildCells(parentCell, childCells);
+            utils::throwException(
+              numberChildren == childCells.size(),
+              "The number of child cells created by ParentToChildCellsManager"
+              "should be 2^dim");
 
             for (unsigned int iChild = 0; iChild < numberChildren; iChild++)
               {
@@ -212,6 +236,7 @@ namespace dftefe
                                      parentCellIntegralThresholds,
                                      chilCellsIntegralValues,
                                      tolerances);
+
             if (convergenceFlag)
               {
                 updateAdaptiveQuadratureRule(parentCell,
@@ -221,22 +246,20 @@ namespace dftefe
                                              parentCellJxW,
                                              adaptiveQuadPoints,
                                              adaptiveQuadWeights);
-
-                destroyChildCells(childCells);
               }
 
             else
               {
                 for (unsigned int iChild = 0; iChild < numberChildren; ++iChild)
                   {
-                    recursionLevel = recursionLevel + 1;
-                    recursiveIntegrate(childCells[iChild],
+                    const unsigned int recursionLevelNext = recursionLevel + 1;
+                    recursiveIntegrate(*(childCells[iChild]),
                                        childCellsIntegralValues[iChild],
                                        parentCellIntegralThresholds,
                                        childCellsVolume[iChild],
                                        tolerances,
                                        smallestCellVolume,
-                                       recursionLevel,
+                                       recursionLevelNext,
                                        maxRecursion,
                                        functions,
                                        globalCell,
@@ -245,10 +268,11 @@ namespace dftefe
                                        childCellsJxW[iChild],
                                        adaptiveQuadPoints,
                                        adaptiveQuadWeights)
-
-                      destroyChildCell(childCells[iChild]);
                   }
               }
+
+            // delete the last set of child cells created
+            parentToChildCellsManager.popLast();
           }
       }
 
@@ -256,9 +280,10 @@ namespace dftefe
     } // namespace
 
     QuadratureRuleAdaptive::QuadratureRuleAdaptive(
-      const basis::TriangulationCellBase &               cell,
-      const QuadratureRule &                             baseQuadratureRule,
-      const basis::CellMappingBase &                     cellMapping,
+      const basis::TriangulationCellBase &  cell,
+      const QuadratureRule &                baseQuadratureRule,
+      const basis::CellMappingBase &        cellMapping,
+      basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
       std::vector<std::shared_ptr<const ScalarFunction>> functions,
       const std::vector<double> &                        tolerances,
       const std::vector<double> &                        integralThresholds,
@@ -318,6 +343,7 @@ namespace dftefe
                          cell,
                          baseQuadratureRule,
                          cellMapping,
+                         parentToChildCellsManager,
                          cellJxW,
                          d_points,
                          d_weights);
