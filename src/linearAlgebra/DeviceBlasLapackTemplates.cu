@@ -39,7 +39,7 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<double>::gemm(deviceBlasHandleType    handle,
+    DeviceBlasLapack<double>::gemm(deviceBlasHandleType &  handle,
                                    deviceBlasOperationType transa,
                                    deviceBlasOperationType transb,
                                    int                     m,
@@ -61,7 +61,7 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<float>::gemm(deviceBlasHandleType    handle,
+    DeviceBlasLapack<float>::gemm(deviceBlasHandleType &  handle,
                                   deviceBlasOperationType transa,
                                   deviceBlasOperationType transb,
                                   int                     m,
@@ -84,7 +84,7 @@ namespace dftefe
     template <>
     void
     DeviceBlasLapack<std::complex<double>>::gemm(
-      deviceBlasHandleType        handle,
+      deviceBlasHandleType &      handle,
       deviceBlasOperationType     transa,
       deviceBlasOperationType     transb,
       int                         m,
@@ -119,7 +119,7 @@ namespace dftefe
     template <>
     void
     DeviceBlasLapack<std::complex<float>>::gemm(
-      deviceBlasHandleType       handle,
+      deviceBlasHandleType &     handle,
       deviceBlasOperationType    transa,
       deviceBlasOperationType    transb,
       int                        m,
@@ -153,7 +153,7 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<int>::gemm(deviceBlasHandleType    handle,
+    DeviceBlasLapack<int>::gemm(deviceBlasHandleType &  handle,
                                 deviceBlasOperationType transa,
                                 deviceBlasOperationType transb,
                                 int                     m,
@@ -174,7 +174,7 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<size_type>::gemm(deviceBlasHandleType    handle,
+    DeviceBlasLapack<size_type>::gemm(deviceBlasHandleType &  handle,
                                       deviceBlasOperationType transa,
                                       deviceBlasOperationType transb,
                                       int                     m,
@@ -198,11 +198,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<double>::nrm2(deviceBlasHandleType handle,
-                                   int                  n,
-                                   const double *       x,
-                                   int                  incx,
-                                   double *             result)
+    DeviceBlasLapack<double>::nrm2(deviceBlasHandleType &handle,
+                                   int                   n,
+                                   const double *        x,
+                                   int                   incx,
+                                   double *              result)
     {
       double resultTemp;
       cublasDnrm2(handle, n, x, incx, &resultTemp);
@@ -212,11 +212,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<float>::nrm2(deviceBlasHandleType handle,
-                                  int                  n,
-                                  const float *        x,
-                                  int                  incx,
-                                  double *             result)
+    DeviceBlasLapack<float>::nrm2(deviceBlasHandleType &handle,
+                                  int                   n,
+                                  const float *         x,
+                                  int                   incx,
+                                  double *              result)
     {
       float resultTemp;
       cublasSnrm2(handle, n, x, incx, &resultTemp);
@@ -225,8 +225,8 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<std::complex<double>>::nrm2(deviceBlasHandleType handle,
-                                                 int                  n,
+    DeviceBlasLapack<std::complex<double>>::nrm2(deviceBlasHandleType &handle,
+                                                 int                   n,
                                                  const std::complex<double> *x,
                                                  int     incx,
                                                  double *result)
@@ -243,8 +243,8 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<std::complex<float>>::nrm2(deviceBlasHandleType handle,
-                                                int                  n,
+    DeviceBlasLapack<std::complex<float>>::nrm2(deviceBlasHandleType &handle,
+                                                int                   n,
                                                 const std::complex<float> *x,
                                                 int                        incx,
                                                 double *result)
@@ -260,11 +260,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<int>::nrm2(deviceBlasHandleType handle,
-                                int                  n,
-                                const int *          x,
-                                int                  incx,
-                                double *             result)
+    DeviceBlasLapack<int>::nrm2(deviceBlasHandleType &handle,
+                                int                   n,
+                                const int *           x,
+                                int                   incx,
+                                double *              result)
     {
       DFTEFE_AssertWithMsg(false, "Not implemented.");
     }
@@ -272,11 +272,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<size_type>::nrm2(deviceBlasHandleType handle,
-                                      int                  n,
-                                      const size_type *    x,
-                                      int                  incx,
-                                      double *             result)
+    DeviceBlasLapack<size_type>::nrm2(deviceBlasHandleType &handle,
+                                      int                   n,
+                                      const size_type *     x,
+                                      int                   incx,
+                                      double *              result)
     {
       DFTEFE_AssertWithMsg(false, "Not implemented.");
     }
@@ -287,11 +287,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<double>::iamax(deviceBlasHandleType handle,
-                                    int                  n,
-                                    const double *       x,
-                                    int                  incx,
-                                    int *                maxid)
+    DeviceBlasLapack<double>::iamax(deviceBlasHandleType &handle,
+                                    int                   n,
+                                    const double *        x,
+                                    int                   incx,
+                                    int *                 maxid)
     {
       cublasIdamax(handle, n, x, incx, maxid);
     }
@@ -299,19 +299,19 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<float>::iamax(deviceBlasHandleType handle,
-                                   int                  n,
-                                   const float *        x,
-                                   int                  incx,
-                                   int *                maxid)
+    DeviceBlasLapack<float>::iamax(deviceBlasHandleType &handle,
+                                   int                   n,
+                                   const float *         x,
+                                   int                   incx,
+                                   int *                 maxid)
     {
       cublasIsamax(handle, n, x, incx, maxid);
     }
 
     template <>
     void
-    DeviceBlasLapack<std::complex<double>>::iamax(deviceBlasHandleType handle,
-                                                  int                  n,
+    DeviceBlasLapack<std::complex<double>>::iamax(deviceBlasHandleType &handle,
+                                                  int                   n,
                                                   const std::complex<double> *x,
                                                   int  incx,
                                                   int *maxid)
@@ -323,8 +323,8 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<std::complex<float>>::iamax(deviceBlasHandleType handle,
-                                                 int                  n,
+    DeviceBlasLapack<std::complex<float>>::iamax(deviceBlasHandleType &handle,
+                                                 int                   n,
                                                  const std::complex<float> *x,
                                                  int  incx,
                                                  int *maxid)
@@ -335,11 +335,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<int>::iamax(deviceBlasHandleType handle,
-                                 int                  n,
-                                 const int *          x,
-                                 int                  incx,
-                                 int *                maxid)
+    DeviceBlasLapack<int>::iamax(deviceBlasHandleType &handle,
+                                 int                   n,
+                                 const int *           x,
+                                 int                   incx,
+                                 int *                 maxid)
     {
       DFTEFE_AssertWithMsg(false, "Not implemented.");
     }
@@ -347,11 +347,11 @@ namespace dftefe
 
     template <>
     void
-    DeviceBlasLapack<size_type>::iamax(deviceBlasHandleType handle,
-                                       int                  n,
-                                       const size_type *    x,
-                                       int                  incx,
-                                       int *                maxid)
+    DeviceBlasLapack<size_type>::iamax(deviceBlasHandleType &handle,
+                                       int                   n,
+                                       const size_type *     x,
+                                       int                   incx,
+                                       int *                 maxid)
     {
       DFTEFE_AssertWithMsg(false, "Not implemented.");
     }

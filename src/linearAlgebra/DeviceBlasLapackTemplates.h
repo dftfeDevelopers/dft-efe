@@ -38,7 +38,7 @@ namespace dftefe
     {
     public:
       static void
-      gemm(deviceBlasHandleType    handle,
+      gemm(deviceBlasHandleType &  handle,
            deviceBlasOperationType transa,
            deviceBlasOperationType transb,
            int                     m,
@@ -54,18 +54,18 @@ namespace dftefe
            int                     ldc);
 
       static void
-      nrm2(deviceBlasHandleType handle,
-           int                  n,
-           const ValueType *    x,
-           int                  incx,
-           double *             result);
+      nrm2(deviceBlasHandleType &handle,
+           int                   n,
+           const ValueType *     x,
+           int                   incx,
+           double *              result);
 
       static void
-      iamax(deviceBlasHandleType handle,
-            int                  n,
-            const ValueType *    x,
-            int                  incx,
-            int *                maxid);
+      iamax(deviceBlasHandleType &handle,
+            int                   n,
+            const ValueType *     x,
+            int                   incx,
+            int *                 maxid);
     };
   } // namespace linearAlgebra
 } // namespace dftefe
