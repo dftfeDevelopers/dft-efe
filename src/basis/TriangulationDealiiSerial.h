@@ -26,6 +26,9 @@ namespace dftefe
         const std::vector<utils::Point> &domainVectors,
         const std::vector<bool> &        isPeriodicFlags) override;
       void
+      createSingleCellTriangulation(
+        const std::vector<utils::Point> &vertices) override;
+      void
       shiftTriangulation(const utils::Point &origin) override;
       void
       refineGlobal(const unsigned int times = 1) override;

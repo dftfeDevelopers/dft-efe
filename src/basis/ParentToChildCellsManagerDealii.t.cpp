@@ -6,36 +6,36 @@ namespace dftefe
   namespace basis
   {
     template <unsigned int dim>
-    ParentToChildCellsManagerDealii::ParentToChildCellsManagerDealii()
+    ParentToChildCellsManagerDealii<dim>::ParentToChildCellsManagerDealii()
       : d_triangulationDealiiSerialVector(0)
     {}
 
     template <unsigned int dim>
-    ParentToChildCellsManagerDealii::~ParentToChildCellsManagerDealii()
+    ParentToChildCellsManagerDealii<dim>::~ParentToChildCellsManagerDealii()
     {}
 
     template <unsigned int dim>
     std::vector<std::shared_ptr<const TriangulationCellBase>>
-    ParentToChildCellsManagerDealii::createChildCells(
+    ParentToChildCellsManagerDealii<dim>::createChildCells(
       const TriangulationCellBase &parentCell)
     {
-      std::vector<utils::Point> vertices(0, Point(dim, 0.0));
+      std::vector<utils::Point> vertices(0, utils::Point(dim, 0.0));
       parentCell.getVertices(vertices);
       auto triangulationDealiiSerial =
         std::make_shared<TriangulationDealiiSerial<dim>>();
       d_triangulationDealiiSerialVector.push_back(triangulationDealiiSerial);
-      triangulationDealiiSerial.initializeTriangulationConstruction();
-      triangulationDealiiSerial.createSingleCellTriangulation(vertices);
-      triangulationDealiiSerial.refineGlobal(1);
-      triangulationDealiiSerial.finalizeTriangulationConstruction();
-      const size_type numberCells = triangulationDealiiSerial.nLocalCells();
+      triangulationDealiiSerial->initializeTriangulationConstruction();
+      triangulationDealiiSerial->createSingleCellTriangulation(vertices);
+      triangulationDealiiSerial->refineGlobal(1);
+      triangulationDealiiSerial->finalizeTriangulationConstruction();
+      const size_type numberCells = triangulationDealiiSerial->nLocalCells();
       std::vector<std::shared_ptr<const TriangulationCellBase>> returnValue(
         numberCells);
 
-      TriangulationCellBase::const_cellIterator cellIter =
-        triangulationDealiiSerial.beginLocal();
+      TriangulationBase::const_cellIterator cellIter =
+        triangulationDealiiSerial->beginLocal();
       unsigned int iCell = 0;
-      for (; cellIter != triangulationDealiiSerial.endLocal(); ++cellIter)
+      for (; cellIter != triangulationDealiiSerial->endLocal(); ++cellIter)
         {
           returnValue[iCell] = *cellIter;
           iCell++;
@@ -46,7 +46,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    ParentToChildCellsManagerDealii::popLast()
+    ParentToChildCellsManagerDealii<dim>::popLast()
     {
       d_triangulationDealiiSerialVector.pop_back();
     }

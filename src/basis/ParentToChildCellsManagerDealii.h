@@ -25,8 +25,8 @@ namespace dftefe
       popLast() override;
 
     private:
-      std::vector < std::shared_ptr<TriangulationDealiiSerial<dim>>
-                      d_triangulationDealiiSerialVector;
+      std::vector<std::shared_ptr<TriangulationDealiiSerial<dim>>>
+        d_triangulationDealiiSerialVector;
     };
 
   } // end of namespace basis

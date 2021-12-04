@@ -19,7 +19,8 @@ endif()
 set(DFT-EFE-BASIS-SOURCES
 	TriangulationCellDealii.cpp
 	TriangulationDealiiSerial.cpp
-    LinearCellMappingDealii.cpp)
+	LinearCellMappingDealii.cpp
+	ParentToChildCellsManagerDealii.cpp)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
@@ -29,9 +30,9 @@ include_directories(../)
 
 
 #if(NOT TARGET ${CMAKE_CURRENT_BINARY_DIR}/../utils/dft-efe-utils)
-	#add_subdirectory(${CMAKE_SOURCE_DIR}/../utils ${CMAKE_CURRENT_SOURCE_DIR})
-	#	add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/../utils/)
-	#endif()
+#add_subdirectory(${CMAKE_SOURCE_DIR}/../utils ${CMAKE_CURRENT_SOURCE_DIR})
+#	add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/../utils/)
+#endif()
 
 target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
 #target_link_libraries(test PUBLIC dft-efe-basis dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
