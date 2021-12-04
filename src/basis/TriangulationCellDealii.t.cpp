@@ -86,13 +86,14 @@ namespace dftefe
     template <unsigned int dim>
     void
     TriangulationCellDealii<dim>::getParametricPoint(
-      const utils::Point &   realPoint,
+      const dftefe::utils::Point &   realPoint,
       const CellMappingBase &cellMapping,
-      utils::Point &         parametricPoint) const
+      dftefe::utils::Point &         parametricPoint) const
     {
-      utils::throwException(
-        false,
-        "getParametricPoint() in TriangulationCellDeaii not yet implemented.");
+
+      bool  isPointInside ;
+      cellMapping.getParametricPoint( realPoint, *this, parametricPoint, isPointInside);
+
     }
 
     template <unsigned int dim>
@@ -106,12 +107,20 @@ namespace dftefe
         false, "getRealPoint() in TriangulationCellDeaii not yet implemented.");
     }
 
+     // TODO removed const qualifier
     template <unsigned int dim>
     typename dealii::Triangulation<dim>::active_cell_iterator &
-    TriangulationCellDealii<dim>::getCellIterator() const
+    TriangulationCellDealii<dim>::getCellIterator()
     {
       return d_cellItr;
     }
+
+//    template <unsigned int dim>
+//    const typename dealii::Triangulation<dim>::active_cell_iterator &
+//    TriangulationCellDealii<dim>::getCellIterator() const
+//    {
+//      return d_cellItr;
+//    }
 
   } // namespace basis
 } // namespace dftefe

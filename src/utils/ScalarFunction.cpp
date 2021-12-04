@@ -7,7 +7,7 @@ namespace dftefe
   {
     void
     ScalarFunction::getValue(const dftefe::utils::Point &realPoint,
-                             double                      outputVal)
+                             double                     & outputVal)
     {
       outputVal = 1.0;
     }
@@ -28,7 +28,7 @@ namespace dftefe
 
     void
     ScalarFunction::getValue(const dftefe::utils::Point &realPoint,
-                             std::complex<double>        outputVal)
+                             std::complex<double>       & outputVal)
     {
       outputVal = 1.0;
     }

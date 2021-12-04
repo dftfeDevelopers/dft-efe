@@ -16,6 +16,11 @@ namespace dftefe
 
     template <unsigned int dim>
     void
+    convertToDealiiPoint(const std::vector<utils::Point> &        vecPoint,
+                         std::vector<dealii::Point<dim>> & vecOutputDealiiPoint);
+
+    template <unsigned int dim>
+    void
     convertToDealiiPoint(const std::vector<double> & v,
                          dealii::Point<dim, double> &outputDealiiPoint);
 
