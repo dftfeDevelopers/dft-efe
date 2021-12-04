@@ -26,7 +26,7 @@ namespace dftefe
       void
       getParametricPoint(const dftefe::utils::Point & realPoint,
                          const TriangulationCellBase &triaCellBase,
-                         utils::Point &               parametricPoint,
+                         dftefe::utils::Point &               parametricPoint,
                          bool &isPointInside) const override;
 
       void
@@ -55,4 +55,5 @@ namespace dftefe
   } // end of namespace basis
 } // end of namespace dftefe
 
+#include  "LinearCellMappingDealii.t.cpp"
 #endif /* dftefeLinearCellMappingDealii_h */
