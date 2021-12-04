@@ -30,6 +30,9 @@ namespace dftefe
         const std::vector<utils::Point> &domainVectors,
         const std::vector<bool> &        isPeriodicFlags) = 0;
       virtual void
+      createSingleCellTriangulation(
+        const std::vector<utils::Point> &vertices) = 0;
+      virtual void
       shiftTriangulation(const utils::Point &origin) = 0;
       virtual void
       refineGlobal(const unsigned int times = 1) = 0;
