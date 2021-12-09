@@ -19,3 +19,7 @@ target_link_libraries(TestVectorAggregate2 PUBLIC dft-efe-linalg)
 # GPU: testing +=, -=, add, copy constructor
 add_executable(TestVectorAggregate3 TestVectorAggregate3.cpp)
 target_link_libraries(TestVectorAggregate3 PUBLIC dft-efe-linalg)
+
+# CPU: testing l2Norm, lInfNorm
+add_executable(TestVectorNorms TestVectorNorms.cpp)
+target_link_libraries(TestVectorNorms PUBLIC dft-efe-linalg)

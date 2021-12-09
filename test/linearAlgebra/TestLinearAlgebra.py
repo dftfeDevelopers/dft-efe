@@ -37,7 +37,7 @@ class MultipleExeTest(rfm.RegressionTest):
     valid_systems = ['greatlakes:login']
     valid_prog_environs = ['builtin']
     build_system = 'CMake'
-    make_opts = ['TestVectorAggregate1', 'TestVectorAggregate2']
+    make_opts = ['TestVectorAggregate1', 'TestVectorAggregate2', 'TestVectorNorms']
     cmflags.getConfig()
     config_opts = cmflags.getConfig('greatlakes_cpu')
     executable = 'date'
@@ -66,7 +66,7 @@ class MultipleExeTest(rfm.RegressionTest):
 
     @run_before('run')
     def pre_launch(self):
-        exe_names = ['./TestVectorAggregate1', './TestVectorAggregate2']
+        exe_names = ['./TestVectorAggregate1', './TestVectorAggregate2', './TestVectorNorms']
         cmd = self.job.launcher.run_command(self.job)
         self.prerun_cmds = [
             # f'{cmd} -n {1} {exe}'
@@ -97,4 +97,24 @@ class MultipleExeTest(rfm.RegressionTest):
                     print(outVal)
                     msg = "Failed in {}".format(testString)
                     return sn.assert_true(hasTestPassed, msg=msg)
+
+        bmfilename = ['TestVectorNorms']
+        for filename in bmfilename:
+            bmParser = parser.Parser.fromFilename(filename+'.benchmark')
+            outParser = parser.Parser.fromFilename(filename+'.out')
+            testSet = ["double vec norms", "complex double vec norms"]
+            for testString in testSet:
+                bmVal = bmParser.extractKeyValues(testString)
+                outVal = outParser.extractKeyValues(testString)
+                hasTestPassed, norm, msg = cu.Compare().cmp(bmVal, outVal, 1.0e-16, 'absolute', 'point')
+                if not hasTestPassed:
+                    print(filename)
+                    print(testString)
+                    print('benchmark')
+                    print(bmVal)
+                    print('output')
+                    print(outVal)
+                    msg = "Failed in {}".format(testString)
+                    return sn.assert_true(hasTestPassed, msg=msg)
+
         return sn.assert_true(hasTestPassed, msg=msg)
