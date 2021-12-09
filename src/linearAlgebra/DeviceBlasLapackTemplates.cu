@@ -28,6 +28,7 @@
 #  include <utils/DeviceDataTypeOverloads.cuh>
 #  include <utils/TypeConfig.h>
 #  include <utils/Exceptions.h>
+#  include <linearAlgebra/DeviceBlasLapackExceptions.cuh>
 
 namespace dftefe
 {
@@ -54,8 +55,8 @@ namespace dftefe
                                    double *                C,
                                    int                     ldc)
     {
-      cublasDgemm(
-        handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+      CUBLAS_CHECK(cublasDgemm(
+        handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc));
     }
 
 
@@ -76,8 +77,8 @@ namespace dftefe
                                   float *                 C,
                                   int                     ldc)
     {
-      cublasSgemm(
-        handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+      CUBLAS_CHECK(cublasSgemm(
+        handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc));
     }
 
 
@@ -99,20 +100,21 @@ namespace dftefe
       std::complex<double> *      C,
       int                         ldc)
     {
-      cublasZgemm(handle,
-                  transa,
-                  transb,
-                  m,
-                  n,
-                  k,
-                  dftefe::utils::makeDataTypeDeviceCompatible(alpha),
-                  dftefe::utils::makeDataTypeDeviceCompatible(A),
-                  lda,
-                  dftefe::utils::makeDataTypeDeviceCompatible(B),
-                  ldb,
-                  dftefe::utils::makeDataTypeDeviceCompatible(beta),
-                  dftefe::utils::makeDataTypeDeviceCompatible(C),
-                  ldc);
+      CUBLAS_CHECK(
+        cublasZgemm(handle,
+                    transa,
+                    transb,
+                    m,
+                    n,
+                    k,
+                    dftefe::utils::makeDataTypeDeviceCompatible(alpha),
+                    dftefe::utils::makeDataTypeDeviceCompatible(A),
+                    lda,
+                    dftefe::utils::makeDataTypeDeviceCompatible(B),
+                    ldb,
+                    dftefe::utils::makeDataTypeDeviceCompatible(beta),
+                    dftefe::utils::makeDataTypeDeviceCompatible(C),
+                    ldc));
     }
 
 
@@ -134,20 +136,21 @@ namespace dftefe
       std::complex<float> *      C,
       int                        ldc)
     {
-      cublasCgemm(handle,
-                  transa,
-                  transb,
-                  m,
-                  n,
-                  k,
-                  dftefe::utils::makeDataTypeDeviceCompatible(alpha),
-                  dftefe::utils::makeDataTypeDeviceCompatible(A),
-                  lda,
-                  dftefe::utils::makeDataTypeDeviceCompatible(B),
-                  ldb,
-                  dftefe::utils::makeDataTypeDeviceCompatible(beta),
-                  dftefe::utils::makeDataTypeDeviceCompatible(C),
-                  ldc);
+      CUBLAS_CHECK(
+        cublasCgemm(handle,
+                    transa,
+                    transb,
+                    m,
+                    n,
+                    k,
+                    dftefe::utils::makeDataTypeDeviceCompatible(alpha),
+                    dftefe::utils::makeDataTypeDeviceCompatible(A),
+                    lda,
+                    dftefe::utils::makeDataTypeDeviceCompatible(B),
+                    ldb,
+                    dftefe::utils::makeDataTypeDeviceCompatible(beta),
+                    dftefe::utils::makeDataTypeDeviceCompatible(C),
+                    ldc));
     }
 
 
@@ -205,7 +208,7 @@ namespace dftefe
                                    double *              result)
     {
       double resultTemp;
-      cublasDnrm2(handle, n, x, incx, &resultTemp);
+      CUBLAS_CHECK(cublasDnrm2(handle, n, x, incx, &resultTemp));
       *result = resultTemp;
     }
 
@@ -219,7 +222,7 @@ namespace dftefe
                                   double *              result)
     {
       float resultTemp;
-      cublasSnrm2(handle, n, x, incx, &resultTemp);
+      CUBLAS_CHECK(cublasSnrm2(handle, n, x, incx, &resultTemp));
       *result = resultTemp;
     }
 
@@ -232,11 +235,11 @@ namespace dftefe
                                                  double *result)
     {
       double resultTemp;
-      cublasDznrm2(handle,
-                   n,
-                   dftefe::utils::makeDataTypeDeviceCompatible(x),
-                   incx,
-                   &resultTemp);
+      CUBLAS_CHECK(cublasDznrm2(handle,
+                                n,
+                                dftefe::utils::makeDataTypeDeviceCompatible(x),
+                                incx,
+                                &resultTemp));
       *result = resultTemp;
     }
 
@@ -250,11 +253,11 @@ namespace dftefe
                                                 double *result)
     {
       float resultTemp;
-      cublasScnrm2(handle,
-                   n,
-                   dftefe::utils::makeDataTypeDeviceCompatible(x),
-                   incx,
-                   &resultTemp);
+      CUBLAS_CHECK(cublasScnrm2(handle,
+                                n,
+                                dftefe::utils::makeDataTypeDeviceCompatible(x),
+                                incx,
+                                &resultTemp));
       *result = resultTemp;
     }
 
@@ -293,7 +296,7 @@ namespace dftefe
                                     int                   incx,
                                     int *                 maxid)
     {
-      cublasIdamax(handle, n, x, incx, maxid);
+      CUBLAS_CHECK(cublasIdamax(handle, n, x, incx, maxid));
     }
 
 
@@ -305,7 +308,7 @@ namespace dftefe
                                    int                   incx,
                                    int *                 maxid)
     {
-      cublasIsamax(handle, n, x, incx, maxid);
+      CUBLAS_CHECK(cublasIsamax(handle, n, x, incx, maxid));
     }
 
     template <>
@@ -316,8 +319,11 @@ namespace dftefe
                                                   int  incx,
                                                   int *maxid)
     {
-      cublasIzamax(
-        handle, n, dftefe::utils::makeDataTypeDeviceCompatible(x), incx, maxid);
+      CUBLAS_CHECK(cublasIzamax(handle,
+                                n,
+                                dftefe::utils::makeDataTypeDeviceCompatible(x),
+                                incx,
+                                maxid));
     }
 
 
@@ -329,8 +335,11 @@ namespace dftefe
                                                  int  incx,
                                                  int *maxid)
     {
-      cublasIcamax(
-        handle, n, dftefe::utils::makeDataTypeDeviceCompatible(x), incx, maxid);
+      CUBLAS_CHECK(cublasIcamax(handle,
+                                n,
+                                dftefe::utils::makeDataTypeDeviceCompatible(x),
+                                incx,
+                                maxid));
     }
 
     template <>
@@ -353,7 +362,7 @@ namespace dftefe
                                        int                   incx,
                                        int *                 maxid)
     {
-      DFTEFE_AssertWithMsg(false, "Not implemented.");
+      dftefe::utils::throwException(false, "Not implemented.");
     }
   } // namespace linearAlgebra
 } // namespace dftefe

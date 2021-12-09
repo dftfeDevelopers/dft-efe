@@ -1,28 +1,14 @@
 #ifdef DFTEFE_WITH_DEVICE_CUDA
-#  include "DeviceAPICalls.h"
+#  include <utils/DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include "DeviceDataTypeOverloads.cuh"
-#  include "DeviceKernelLauncher.h"
+#  include <utils/DeviceDataTypeOverloads.cuh>
+#  include <utils/DeviceKernelLauncher.h>
+#  include <utils/Exceptions.h>
 namespace dftefe
 {
   namespace utils
   {
-#  define CUDACHECK(cmd)                              \
-    do                                                \
-      {                                               \
-        cudaError_t e = cmd;                          \
-        if (e != cudaSuccess)                         \
-          {                                           \
-            printf("Failed: Cuda error %s:%d '%s'\n", \
-                   __FILE__,                          \
-                   __LINE__,                          \
-                   cudaGetErrorString(e));            \
-            exit(EXIT_FAILURE);                       \
-          }                                           \
-      }                                               \
-    while (0)
-
     namespace
     {
       template <typename ValueType>
@@ -42,25 +28,25 @@ namespace dftefe
     void
     deviceGetDeviceCount(int *count)
     {
-      CUDACHECK(cudaGetDeviceCount(count));
+      CUDA_API_CHECK(cudaGetDeviceCount(count));
     }
 
     void
     deviceSetDevice(int count)
     {
-      CUDACHECK(cudaSetDevice(count));
+      CUDA_API_CHECK(cudaSetDevice(count));
     }
 
     void
     deviceMalloc(void **devPtr, size_type size)
     {
-      CUDACHECK(cudaMalloc(devPtr, size));
+      CUDA_API_CHECK(cudaMalloc(devPtr, size));
     }
 
     void
     deviceMemset(void *devPtr, size_type count)
     {
-      CUDACHECK(cudaMemset(devPtr, 0, count));
+      CUDA_API_CHECK(cudaMemset(devPtr, 0, count));
     }
 
     template <typename ValueType>
@@ -99,36 +85,36 @@ namespace dftefe
     void
     deviceFree(void *devPtr)
     {
-      CUDACHECK(cudaFree(devPtr));
+      CUDA_API_CHECK(cudaFree(devPtr));
     }
 
     void
     hostPinnedMalloc(void **hostPtr, size_type size)
     {
-      CUDACHECK(cudaMallocHost(hostPtr, size));
+      CUDA_API_CHECK(cudaMallocHost(hostPtr, size));
     }
 
     void
     hostPinnedFree(void *hostPtr)
     {
-      CUDACHECK(cudaFreeHost(hostPtr));
+      CUDA_API_CHECK(cudaFreeHost(hostPtr));
     }
 
     void
     deviceMemcpyD2H(void *dst, const void *src, size_type count)
     {
-      CUDACHECK(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost));
+      CUDA_API_CHECK(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost));
     }
 
     void
     deviceMemcpyD2D(void *dst, const void *src, size_type count)
     {
-      CUDACHECK(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice));
+      CUDA_API_CHECK(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice));
     }
     void
     deviceMemcpyH2D(void *dst, const void *src, size_type count)
     {
-      CUDACHECK(cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice));
+      CUDA_API_CHECK(cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice));
     }
   } // namespace utils
 } // namespace dftefe
