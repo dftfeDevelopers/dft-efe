@@ -32,8 +32,7 @@ namespace dftefe
     {
     public:
       void
-      getValue(const dftefe::utils::Point &realPoint,
-               double                     & outputVal) ;
+      getValue(const dftefe::utils::Point &realPoint, double &outputVal);
 
       void
       getValue(const std::vector<dftefe::utils::Point> &realPoint,
@@ -41,7 +40,7 @@ namespace dftefe
 
       void
       getValue(const dftefe::utils::Point &realPoint,
-               std::complex<double>       & outputVal) ;
+               std::complex<double> &      outputVal);
 
       void
       getValue(const std::vector<dftefe::utils::Point> &realPoint,

@@ -4,8 +4,10 @@
 #include "QuadratureRule.h"
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
+#include <utils/ScalarSpatialFunction.h>
 #include <basis/TriangulationBase.h>
 #include <basis/CellMappingBase.h>
+#include <basis/ParentToChildCellsManagerBase.h>
 #include <memory>
 
 namespace dftefe
@@ -36,9 +38,9 @@ namespace dftefe
         const basis::CellMappingBase &                  cellMapping);
 
       /**
-       * @brief Constructor for assigning each cell with a common quadrature rule.
-       * @param[in] quadratureRule The quadrature rule specifying the quad
-       * points in the parametric coordinates with its corresponding weights.
+       * @brief Constructor for assigning each cell with different quadrature rule for each cell.
+       * @param[in] quadratureRulevec vector of quadratureRule pointers
+       * specifying the quadrature rule for each cell
        * @param[in] triangulation The triangulation that has information on the
        * cell and its vertices
        * @param[in] cellMapping cellMapping provides the the information on how
@@ -46,9 +48,33 @@ namespace dftefe
        * is required to calculate the JxW values at each quad point
        */
       CellQuadratureContainer(
-        std::vector<std::shared_ptr<const QuadratureRule>> quadratureRule,
+        std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
         std::shared_ptr<const basis::TriangulationBase>    triangulation,
         const basis::CellMappingBase &                     cellMapping);
+
+      /**
+       * @brief Constructor for creating an adaptive quadrature rule in each cell based
+       * user-defined functions
+       * @param[in] baseQuadratureRule The base quadrature rule to be used in
+       * constructing the adaptive quadrature rule
+       * @param[in] triangulation The triangulation that has information on the
+       * cell and its vertices
+       * @param[in] cellMapping cellMapping object that provides the the
+       * information on how the cell in real space is mapped to its parametric
+       * coordinates. This is required to calculate the JxW values at each quad
+       * point
+       */
+      CellQuadratureContainer(
+        std::shared_ptr<const QuadratureRule>           baseQuadratureRule,
+        std::shared_ptr<const basis::TriangulationBase> triangulation,
+        const basis::CellMappingBase &                  cellMapping,
+        basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                   functions,
+        const std::vector<double> &tolerances,
+        const std::vector<double> &integralThresholds,
+        const double               smallestCellVolume = 1e-12,
+        const unsigned int         maxRecursion       = 100);
 
       /**
        * @brief Function that returns a vector containing the real coordinates of the quad points in all cells

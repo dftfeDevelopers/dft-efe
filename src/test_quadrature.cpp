@@ -20,7 +20,7 @@ main()
   dftefe::basis::TriangulationBase *triangulationBase =
     new dftefe::basis::TriangulationDealiiSerial<3>();
 
-  std::vector<unsigned int>         subdivisions = {1,1,1};
+  std::vector<unsigned int>         subdivisions = {1, 1, 1};
   std::vector<bool>                 isPeriodicFlags(3, false);
   std::vector<dftefe::utils::Point> domainVectors(3,
                                                   dftefe::utils::Point(3, 0.0));
@@ -33,7 +33,8 @@ main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
   std::cout << triangulationBase->nLocalCells() << std::endl;
-dftefe::basis::CellMappingBase *mapping = new dftefe::basis::LinearCellMappingDealii<3> ();
+  dftefe::basis::CellMappingBase *mapping =
+    new dftefe::basis::LinearCellMappingDealii<3>();
 
 
   dftefe::basis::TriangulationBase::cellIterator it =
@@ -43,16 +44,16 @@ dftefe::basis::CellMappingBase *mapping = new dftefe::basis::LinearCellMappingDe
       std::vector<dftefe::utils::Point> points(0, dftefe::utils::Point(3, 0.0));
       (*it)->getVertices(points);
       printVertices(points);
-      std::vector<dftefe::utils::Point> paramPoint(0, dftefe::utils::Point(3, 0.0));
-      bool pointInside;
-      for ( unsigned int  i = 0 ; i < points.size(); i++)
+      std::vector<dftefe::utils::Point> paramPoint(0,
+                                                   dftefe::utils::Point(3,
+                                                                        0.0));
+      bool                              pointInside;
+      for (unsigned int i = 0; i < points.size(); i++)
         {
-          (*it)->getParametricPoint(points[i] ,*mapping , paramPoint[i]);
-//          mapping->getParametricPoint(points[i], it ,paramPoint[i], pointInside );
+          (*it)->getParametricPoint(points[i], *mapping, paramPoint[i]);
+          //          mapping->getParametricPoint(points[i], it ,paramPoint[i],
+          //          pointInside );
         }
       printVertices(paramPoint);
-
     }
-
-
 }

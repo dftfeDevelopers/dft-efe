@@ -13,7 +13,7 @@ namespace dftefe
   {
     template <unsigned int dim>
     LinearCellMappingDealii<dim>::LinearCellMappingDealii()
-      : mapping()
+      : d_mappingDealii()
     {}
 
 
@@ -21,26 +21,6 @@ namespace dftefe
     LinearCellMappingDealii<dim>::~LinearCellMappingDealii()
     {}
 
-
-    template <unsigned int dim>
-    void
-    LinearCellMappingDealii<dim>::getParametricPoint(
-      const dftefe::utils::Point &         realPoint,
-      const TriangulationCellBase &triaCellBase,
-      dftefe::utils::Point &               parametricPoint,
-      bool &                       isPointInside) const
-    {
-      TriangulationCellDealii<dim> triaCellDealii =
-        dynamic_cast<const TriangulationCellDealii<dim>&>(triaCellBase);
-
-      typename dealii::Triangulation<dim>::active_cell_iterator cellDealii =
-        triaCellDealii.getCellIterator();
-
-      dealii::Point<dim,double> P_ref, dealiiRealPoint;
-      dftefe::utils::convertToDealiiPoint<dim>(realPoint, dealiiRealPoint);
-      P_ref = mapping.transform_real_to_unit_cell(cellDealii, dealiiRealPoint);
-      isPointInside = dealii::GeometryInfo<dim>::is_inside_unit_cell(P_ref);
-    }
 
     template <unsigned int dim>
     void
@@ -52,8 +32,8 @@ namespace dftefe
     {
       TriangulationCellDealii<dim> triaCellDealii =
         dynamic_cast<const TriangulationCellDealii<dim> &>(triaCellBase);
-      dealii::FE_Q<dim>               fe(1);
-      std::vector<dealii::Point<dim,double>> quadPointsDealii;
+      dealii::FE_Q<dim>                       fe(1);
+      std::vector<dealii::Point<dim, double>> quadPointsDealii;
       quadPointsDealii.resize(paramPoints.size());
       utils::convertToDealiiPoint<dim>(paramPoints, quadPointsDealii);
       dealii::Quadrature<dim> quadRuleDealii(quadPointsDealii, weights);
@@ -68,30 +48,88 @@ namespace dftefe
         }
     }
 
+    template <unsigned int dim>
+    void
+    LinearCellMappingDealii<dim>::getParametricPoint(
+      const dftefe::utils::Point & realPoint,
+      const TriangulationCellBase &triaCellBase,
+      dftefe::utils::Point &       parametricPoint,
+      bool &                       isPointInside) const
+    {
+      TriangulationCellDealii<dim> triaCellDealii =
+        dynamic_cast<const TriangulationCellDealii<dim> &>(triaCellBase);
+      typename dealii::Triangulation<dim>::active_cell_iterator cellDealii =
+        triaCellDealii.getCellIterator();
+
+      dealii::Point<dim, double> dealiiParametricPoint, dealiiRealPoint;
+      utils::convertToDealiiPoint<dim>(realPoint, dealiiRealPoint);
+      isPointInside = true;
+      try
+        {
+          dealiiParametricPoint =
+            d_mappingDealii.transform_real_to_unit_cell(cellDealii,
+                                                        dealiiRealPoint);
+        }
+      catch (typename dealii::Mapping<dim>::ExcTransformationFailed)
+        {
+          isPointInside = dealii::GeometryInfo<dim>::is_inside_unit_cell(
+            dealiiParametricPoint);
+        }
+      utils::convertToDftefePoint<dim>(dealiiParametricPoint, parametricPoint);
+    }
+
 
     template <unsigned int dim>
     void
-    LinearCellMappingDealii<dim>::getParametricPoints(const std::vector<dftefe::utils::Point> &realPoints,
-                        const TriangulationCellBase &            triaCellBase,
-                        std::vector<utils::Point> &parametricPoints,
-                        std::vector<bool> &arePointsInside) const
+    LinearCellMappingDealii<dim>::getParametricPoints(
+      const std::vector<dftefe::utils::Point> &realPoints,
+      const TriangulationCellBase &            triaCellBase,
+      std::vector<utils::Point> &              parametricPoints,
+      std::vector<bool> &                      arePointsInside) const
     {
-      DFTEFE_AssertWithMsg(
-        false,
-        "getParametricPoints() not implemented in LinearCellMappingDealii ");
+      TriangulationCellDealii<dim> triaCellDealii =
+        dynamic_cast<const TriangulationCellDealii<dim> &>(triaCellBase);
+      typename dealii::Triangulation<dim>::active_cell_iterator cellDealii =
+        triaCellDealii.getCellIterator();
 
+      const size_type numPoints = realPoints.size();
+      parametricPoints.resize(numPoints, utils::Point(dim));
+      std::vector<dealii::Point<dim, double>> dealiiParametricPoints(numPoints);
+      std::vector<dealii::Point<dim, double>> dealiiRealPoints(numPoints);
+      utils::convertToDealiiPoint<dim>(realPoints, dealiiRealPoints);
+      d_mappingDealii.transform_points_real_to_unit_cell(
+        cellDealii, dealiiRealPoints, dealiiParametricPoints);
+      arePointsInside = std::vector<bool>(numPoints, true);
+      for (unsigned int i = 0; i < numPoints; ++i)
+        {
+          if (dealiiParametricPoints[i][0] ==
+              std::numeric_limits<double>::infinity())
+            {
+              arePointsInside[i] = false;
+            }
+        }
+      utils::convertToDftefePoint<dim>(dealiiParametricPoints,
+                                       parametricPoints);
     }
 
     template <unsigned int dim>
     void
-    LinearCellMappingDealii<dim>::getRealPoint(const dftefe::utils::Point & parametricPoint,
-                 const TriangulationCellBase &triaCellBase,
-                 dftefe::utils::Point &       realPoint) const
+    LinearCellMappingDealii<dim>::getRealPoint(
+      const dftefe::utils::Point & parametricPoint,
+      const TriangulationCellBase &triaCellBase,
+      dftefe::utils::Point &       realPoint) const
     {
-      DFTEFE_AssertWithMsg(
-        false,
-        "getRealPoint() not implemented in LinearCellMappingDealii ");
+      TriangulationCellDealii<dim> triaCellDealii =
+        dynamic_cast<const TriangulationCellDealii<dim> &>(triaCellBase);
+      typename dealii::Triangulation<dim>::active_cell_iterator cellDealii =
+        triaCellDealii.getCellIterator();
 
+      dealii::Point<dim, double> dealiiParametricPoint, dealiiRealPoint;
+      utils::convertToDealiiPoint<dim>(parametricPoint, dealiiParametricPoint);
+      dealiiRealPoint =
+        d_mappingDealii.transform_unit_to_real_cell(cellDealii,
+                                                    dealiiParametricPoint);
+      utils::convertToDftefePoint<dim>(dealiiRealPoint, realPoint);
     }
 
     template <unsigned int dim>
@@ -101,10 +139,23 @@ namespace dftefe
       const TriangulationCellBase &            triaCellBase,
       std::vector<dftefe::utils::Point> &      realPoints) const
     {
-      DFTEFE_AssertWithMsg(
-        false,
-        "getRealPoints() not implemented in LinearCellMappingDealii ");
+      TriangulationCellDealii<dim> triaCellDealii =
+        dynamic_cast<const TriangulationCellDealii<dim> &>(triaCellBase);
+      typename dealii::Triangulation<dim>::active_cell_iterator cellDealii =
+        triaCellDealii.getCellIterator();
 
+      const size_type numPoints = parametricPoints.size();
+      realPoints.resize(numPoints, utils::Point(dim));
+      std::vector<dealii::Point<dim, double>> dealiiParametricPoints(numPoints);
+      std::vector<dealii::Point<dim, double>> dealiiRealPoints(numPoints);
+      utils::convertToDealiiPoint<dim>(parametricPoints,
+                                       dealiiParametricPoints);
+      for (unsigned int i = 0; i < numPoints; ++i)
+        {
+          dealiiRealPoints[i] = d_mappingDealii.transform_unit_to_real_cell(
+            cellDealii, dealiiParametricPoints[i]);
+        }
+      utils::convertToDftefePoint<dim>(dealiiRealPoints, realPoints);
     }
 
 

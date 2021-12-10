@@ -139,20 +139,22 @@ namespace dftefe
       recursiveIntegrate(
         const basis::TriangulationCellBase &parentCell,
         const std::vector<double> &         parentCellIntegralValues,
-        const std::vector<double> &         parenCellIntegralThresholds,
+        const std::vector<double> &         parentCellIntegralThresholds,
         const double                        parentVolume,
         const std::vector<double> &         tolerances,
         const double                        smallestCellVolume,
         const unsigned int                  recursionLevel,
         const unsigned int                  maxRecursion,
-        std::vector<std::shared_ptr<const ScalarFunction>> functions,
-        const basis::TriangulatioCellBase &                globalCell,
-        const QuadratureRule &                             baseQuadratureRule,
-        const basis::CellMappingBase &                     cellMapping,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                              functions,
+        const basis::TriangulationCellBase &  globalCell,
+        const QuadratureRule &                baseQuadratureRule,
+        const basis::CellMappingBase &        cellMapping,
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
         const std::vector<double> &           parentCellJxW,
         std::vector<utils::Point> &           adaptiveQuadPoints,
-        std::vector<double> &                 adaptiveQuadWeights)
+        std::vector<double> &                 adaptiveQuadWeights,
+        std::vector<double> &                 integrals)
 
       {
         const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
@@ -173,6 +175,10 @@ namespace dftefe
                                          parentCellJxW,
                                          adaptiveQuadPoints,
                                          adaptiveQuadWeights);
+
+            for (unsigned int iFunction = 0; iFunction < numberFunctions;
+                 ++iFunction)
+              integrals[iFunction] += parentCellIntegralValues[iFunction];
           }
 
         else
@@ -197,7 +203,8 @@ namespace dftefe
 
             for (unsigned int iChild = 0; iChild < numberChildren; iChild++)
               {
-                basis::TriangulationCellBase &childCell = *(childCells[iChild]);
+                const basis::TriangulationCellBase &childCell =
+                  *(childCells[iChild]);
 
                 std::vector<utils::Point> realQuadPoints(numberBaseQuadPoints,
                                                          utils::Point(dim,
@@ -212,17 +219,17 @@ namespace dftefe
                                    baseQuadratureRuleWeights,
                                    childCellJxW);
 
-                childCellsVolume[iChild] =
-                  std::accumulate(childJxW.begin(), childJxW.end(), 0.0);
+                childCellsVolume[iChild] = std::accumulate(childCellJxW.begin(),
+                                                           childCellJxW.end(),
+                                                           0.0);
 
                 for (unsigned int iFunction = 0; iFunction < numberFunctions;
                      ++iFunction)
                   {
-                    std::shared_ptr<const ScalarFunction> function =
-                      functions[iFunction];
-                    std::vector<double> functionValues(numberBaseQuadPoints,
-                                                       0.0);
-                    function->getValue(realQuadPoints, functionValues);
+                    std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+                                        function = functions[iFunction];
+                    std::vector<double> functionValues =
+                      (*function)(realQuadPoints);
                     childCellsIntegralValues[iChild][iFunction] =
                       std::inner_product(functionValues.begin(),
                                          functionValues.end(),
@@ -234,7 +241,7 @@ namespace dftefe
             bool convergenceFlag =
               haveIntegralsConverged(parentCellIntegralValues,
                                      parentCellIntegralThresholds,
-                                     chilCellsIntegralValues,
+                                     childCellsIntegralValues,
                                      tolerances);
 
             if (convergenceFlag)
@@ -246,6 +253,10 @@ namespace dftefe
                                              parentCellJxW,
                                              adaptiveQuadPoints,
                                              adaptiveQuadWeights);
+
+                for (unsigned int iFunction = 0; iFunction < numberFunctions;
+                     ++iFunction)
+                  integrals[iFunction] += parentCellIntegralValues[iFunction];
               }
 
             else
@@ -265,9 +276,11 @@ namespace dftefe
                                        globalCell,
                                        baseQuadratureRule,
                                        cellMapping,
+                                       parentToChildCellsManager,
                                        childCellsJxW[iChild],
                                        adaptiveQuadPoints,
-                                       adaptiveQuadWeights)
+                                       adaptiveQuadWeights,
+                                       integrals);
                   }
               }
 
@@ -284,14 +297,18 @@ namespace dftefe
       const QuadratureRule &                baseQuadratureRule,
       const basis::CellMappingBase &        cellMapping,
       basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
-      std::vector<std::shared_ptr<const ScalarFunction>> functions,
-      const std::vector<double> &                        tolerances,
-      const std::vector<double> &                        integralThresholds,
-      const double       smallestCellVolume /*= 1e-12*/,
-      const unsigned int maxRecursion /*= 100*/)
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                 functions,
+      const std::vector<double> &tolerances,
+      const std::vector<double> &integralThresholds,
+      const double               smallestCellVolume /*= 1e-12*/,
+      const unsigned int         maxRecursion /*= 100*/)
     {
       d_dim                = baseQuadratureRule.getDim();
       d_isTensorStructured = false;
+      d_num1DPoints        = 0;
+      d_1DPoints.resize(0, utils::Point(0));
+      d_1DWeights.resize(0);
       d_points.resize(0, utils::Point(d_dim, 0.0));
       d_weights.resize(0);
 
@@ -319,20 +336,20 @@ namespace dftefe
       const double cellVolume =
         std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
 
-      std::vector<double> integralValues(numberFunctions, 0.0);
+      std::vector<double> classicalIntegralValues(numberFunctions, 0.0);
       for (unsigned int iFunction = 0; iFunction < numberFunctions; ++iFunction)
         {
-          std::vector<double> functionValues(numberBaseQuadPoints, 0.0);
-          function->getValue(realQuadPoints, functionValues);
-          integralValues[iFunction] = std::inner_product(functionValues.begin(),
-                                                         functionValues.end(),
-                                                         cellJxW.begin(),
-                                                         0.0);
+          std::shared_ptr<const utils::ScalarSpatialFunctionReal> function =
+            functions[iFunction];
+          std::vector<double> functionValues = (*function)(realQuadPoints);
+          classicalIntegralValues[iFunction] = std::inner_product(
+            functionValues.begin(), functionValues.end(), cellJxW.begin(), 0.0);
         }
 
-      int recursionLevel = 0;
+      int                 recursionLevel = 0;
+      std::vector<double> adaptiveIntegralValues(numberFunctions, 0.0);
       recursiveIntegrate(cell,
-                         integralValues,
+                         classicalIntegralValues,
                          integralThresholds,
                          cellVolume,
                          tolerances,
@@ -346,9 +363,17 @@ namespace dftefe
                          parentToChildCellsManager,
                          cellJxW,
                          d_points,
-                         d_weights);
+                         d_weights,
+                         adaptiveIntegralValues);
 
       d_numPoints = d_weights.size();
+      for (unsigned int iFunction = 0; iFunction < numberFunctions; ++iFunction)
+        {
+          std::cout << "iFunction: " << iFunction << " Classical Integral: "
+                    << classicalIntegralValues[iFunction]
+                    << " Adaptive Integral: "
+                    << adaptiveIntegralValues[iFunction] << std::endl;
+        }
     }
 
 

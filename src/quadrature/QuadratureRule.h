@@ -66,13 +66,13 @@ namespace dftefe
       virtual bool
       isTensorStructured() const;
 
-      size_type
+      virtual size_type
       nPoints() const;
 
-      size_type
+      virtual size_type
       n1DPoints() const;
 
-      unsigned int
+      virtual unsigned int
       getDim() const;
 
     protected:

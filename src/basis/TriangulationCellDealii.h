@@ -59,9 +59,9 @@ namespace dftefe
        */
 
       void
-      getParametricPoint(const dftefe::utils::Point &   realPoint,
-                         const CellMappingBase &cellMapping,
-                         dftefe::utils::Point &         parametricPoint) const override;
+      getParametricPoint(const dftefe::utils::Point &realPoint,
+                         const CellMappingBase &     cellMapping,
+                         dftefe::utils::Point &parametricPoint) const override;
 
       /*
        * \todo
@@ -73,9 +73,9 @@ namespace dftefe
                    utils::Point &         realPoint) const override;
 
       DealiiCellIter &
-      getCellIterator() ;
-//      const DealiiCellIter &
-//      getCellIterator() const;
+      getCellIterator();
+      //      const DealiiCellIter &
+      //      getCellIterator() const;
 
     private:
       DealiiCellIter d_cellItr;

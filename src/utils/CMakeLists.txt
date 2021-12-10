@@ -19,8 +19,7 @@ set(DFT-EFE-UTILS-SOURCES
         MemoryManager.cpp
         Exceptions.cpp
         MemoryTransfer.cpp
-        BaseFunction.cpp
-        ScalarFunction.cpp)
+	LogModX.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

@@ -9,6 +9,7 @@ namespace dftefe
   {
     class QuadratureRuleGauss : public QuadratureRule
     {
+    public:
       QuadratureRuleGauss(const unsigned int dim, const unsigned int order1D);
     };
   } // end of namespace quadrature
