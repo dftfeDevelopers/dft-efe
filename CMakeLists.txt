@@ -28,12 +28,12 @@ ENDIF()
 
 
 
-target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})		
+target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 
-add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/utils)
-add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/linearAlgebra)
-add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/basis)
-add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/quadrature)
+add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
+add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
+add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
 target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature)
 include_directories(src)
 

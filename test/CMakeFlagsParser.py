@@ -36,4 +36,3 @@ def getConfig(arch_type='cpu'):
         opts='-D' + key + '=' + value.strip() 
         cmake_config_opts.append(opts)
    
-    return cmake_config_opts

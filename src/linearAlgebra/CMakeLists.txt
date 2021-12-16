@@ -1,4 +1,4 @@
-if(NOT DEFINED CMAKE_CXX_STANDARD)
+if(${CMAKE_CXX_STANDARD})
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
@@ -32,9 +32,12 @@ endif()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
+        DeviceBlasLapackTemplates.cu
+        DeviceLAContextsSingleton.cu
         VectorKernels.cu
         Vector.cpp
-        VectorKernels.cpp)
+        VectorKernels.cpp
+        DeviceLAContextsSingleton.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
@@ -48,11 +51,9 @@ if(ENABLE_CUDA)
    target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
 endif()
 
-
 if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
-
 
 
 target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})

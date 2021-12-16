@@ -12,24 +12,50 @@ namespace dftefe
     {
     public:
       /**
-       * @brief Function template for architecture adaptable compound addition to perform v += u element-wisely
+       * @brief Function template for architecture adaptable compound addition to perform v += u element-wise
        * @tparam ValueType the type of the number
-       * @tparam memorySpace dftefe::utils::MemorySpace::HOST of dftefe::utils::MemorySpace::DEVICE
-       * @param u
-       * @param v
+       * @tparam memorySpace
+       * @param[in] size size of array
+       * @param[in] u array
+       * @param[out] v array
        */
       static void
       add(size_type size, const ValueType *u, ValueType *v);
 
       /**
-       * @brief Function template for architecture adaptable compound subtraction to perform v -= u element-wisely
+       * @brief Function template for architecture adaptable compound subtraction to perform v -= u element-wise
        * @tparam ValueType the type of the number
-       * @tparam memorySpace dftefe::utils::MemorySpace::HOST of dftefe::utils::MemorySpace::DEVICE
-       * @param u
-       * @param v
+       * @tparam memorySpace
+       * @param[in] size size of array
+       * @param[in] u array
+       * @param[out] v array
        */
       static void
       sub(size_type size, const ValueType *u, ValueType *v);
+
+
+      /**
+       * @brief compute \f$ l_2 \f$ norm of vector
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] size size of array
+       * @param[in] u array
+       * @return \f$ l_2 \f$ norm of u as double type
+       */
+      static double
+      l2Norm(size_type size, const ValueType *u);
+
+      /**
+       * @brief compute  \f$ l_{\inf} \f$ norm norm of vector
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] size size of array
+       * @param[in] u array
+       * @return  \f$ l_{\inf} \f$ norm of u as double type
+       */
+      static double
+      lInfNorm(size_type size, const ValueType *u);
+
 
       /**
        * @brief Template for performing \f$ w = au + bv \f$
@@ -68,6 +94,12 @@ namespace dftefe
        */
       static void
       sub(size_type size, const ValueType *u, ValueType *v);
+
+      static double
+      l2Norm(size_type size, const ValueType *u);
+
+      static double
+      lInfNorm(size_type size, const ValueType *u);
 
       /**
        * @brief Performing \f$ w = au + bv \f$ for the host
@@ -108,6 +140,12 @@ namespace dftefe
       static void
       sub(size_type size, const ValueType *u, ValueType *v);
 
+      static double
+      l2Norm(size_type size, const ValueType *u);
+
+      static double
+      lInfNorm(size_type size, const ValueType *u);
+
       /**
        * @brief Performing \f$ w = au + bv \f$ for the device
        * @param[in] size size of the array
@@ -145,6 +183,12 @@ namespace dftefe
        */
       static void
       sub(size_type size, const ValueType *u, ValueType *v);
+
+      static double
+      l2Norm(size_type size, const ValueType *u);
+
+      static double
+      lInfNorm(size_type size, const ValueType *u);
 
       /**
        * @brief Performing \f$ w = au + bv \f$ for the device

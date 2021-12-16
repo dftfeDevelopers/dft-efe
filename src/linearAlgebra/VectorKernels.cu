@@ -1,7 +1,13 @@
 #ifdef DFTEFE_WITH_DEVICE_CUDA
 #  include <utils/DeviceKernelLauncher.h>
 #  include <utils/DeviceDataTypeOverloads.cuh>
+#  include <utils/DataTypeOverloads.h>
+#  include <utils/MemoryTransfer.h>
 #  include <linearAlgebra/VectorKernels.h>
+#  include <linearAlgebra/DeviceBlasLapackTemplates.h>
+#  include <linearAlgebra/DeviceLAContextsSingleton.h>
+#  include <complex>
+#  include <algorithm>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -83,6 +89,48 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(v));
     }
 
+    template <typename ValueType>
+    double
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::l2Norm(
+      const size_type  size,
+      const ValueType *u)
+    {
+      double l2norm = 0;
+      dftefe::linearAlgebra::DeviceBlasLapack<ValueType>::nrm2(
+        dftefe::linearAlgebra::DeviceLAContextsSingleton::getInstance()
+          ->getDeviceBlasHandle(),
+        size,
+        u,
+        1,
+        &l2norm);
+      return l2norm;
+    }
+
+
+    template <typename ValueType>
+    double
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::lInfNorm(
+      const size_type  size,
+      const ValueType *u)
+    {
+      int maxIndex = 0;
+      dftefe::linearAlgebra::DeviceBlasLapack<ValueType>::iamax(
+        dftefe::linearAlgebra::DeviceLAContextsSingleton::getInstance()
+          ->getDeviceBlasHandle(),
+        size,
+        u,
+        1,
+        &maxIndex);
+
+
+      ValueType temp = 0.0;
+      utils::MemoryTransfer<
+        dftefe::utils::MemorySpace::HOST,
+        dftefe::utils::MemorySpace::DEVICE>::copy(1, &temp, u + maxIndex - 1);
+
+      return dftefe::utils::abs_(temp);
+    }
+
 
     template <typename ValueType>
     void
@@ -129,6 +177,32 @@ namespace dftefe
           v[i] -= u[i];
         }
     }
+
+    template <typename ValueType>
+    double
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>::l2Norm(
+      const size_type  size,
+      const ValueType *u)
+    {
+      double temp = 0.0;
+      for (size_type i = 0; i < size; ++i)
+        {
+          temp += dftefe::utils::absSq(u[i]);
+        }
+      return std::sqrt(temp);
+    }
+
+
+    template <typename ValueType>
+    double
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>::lInfNorm(
+      const size_type  size,
+      const ValueType *u)
+    {
+      return dftefe::utils::abs_(
+        *std::max_element(u, u + size, dftefe::utils::absCompare<ValueType>));
+    }
+
 
     template <typename ValueType>
     void

@@ -7,6 +7,14 @@
 # Generic fallback configuration
 #
 
+# cmake_flags = ["-DMPI_C_COMPILER=mpicc",
+#                "-DMPI_CXX_COMPILER=mpic++",
+#                '''-DDFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"''',
+#                '''-DDFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl"''',
+#                "-DBUILD_DOCS=OFF",
+#                '''-DCMAKE_PREFIX_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal"''',
+#                "-DENABLE_CUDA=OFF"]
+
 site_configuration = {
     'systems': [
         {
@@ -108,7 +116,7 @@ site_configuration = {
                 {
                     'type': 'file',
                     'level': 'debug',
-                    'format': '[%(asctime)s] %(levelname)s: %(check_info)s: %(message)s',   # noqa: E501
+                    'format': '[%(asctime)s] %(levelname)s: %(check_info)s: %(message)s',  # noqa: E501
                     'append': False
                 }
             ],

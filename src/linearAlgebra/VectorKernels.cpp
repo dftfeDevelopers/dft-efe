@@ -1,5 +1,7 @@
-#include "VectorKernels.h"
+#include <linearAlgebra/VectorKernels.h>
+#include <utils/DataTypeOverloads.h>
 #include <complex>
+#include <algorithm>
 
 namespace dftefe
 {
@@ -30,6 +32,33 @@ namespace dftefe
           v[i] -= u[i];
         }
     }
+
+
+    template <typename ValueType>
+    double
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::l2Norm(
+      const size_type  size,
+      const ValueType *u)
+    {
+      double temp = 0.0;
+      for (size_type i = 0; i < size; ++i)
+        {
+          temp += dftefe::utils::absSq(u[i]);
+        }
+      return std::sqrt(temp);
+    }
+
+
+    template <typename ValueType>
+    double
+    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::lInfNorm(
+      const size_type  size,
+      const ValueType *u)
+    {
+      return dftefe::utils::abs_(
+        *std::max_element(u, u + size, dftefe::utils::absCompare<ValueType>));
+    }
+
 
     template <typename ValueType>
     void
