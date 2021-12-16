@@ -24,10 +24,13 @@ set(DFT-EFE-QUADRATURE-SOURCES
 
 add_library(dft-efe-quadrature SHARED ${DFT-EFE-QUADRATURE-SOURCES})
 
-#FIXME: can we use target_include_directories instead of include_directories
-#target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+if (NOT TARGET dft-efe-utils)
+  add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+endif()
+
+if (NOT TARGET dft-efe-basis)
+  add_subdirectory(../basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
+endif()
+
 include_directories(../)
-
-
-
 target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils dft-efe-basis ${DFTEFE_MPI_LIBRARIES})

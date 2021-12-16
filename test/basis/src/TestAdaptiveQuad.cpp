@@ -51,7 +51,7 @@ main()
     new dftefe::basis::LinearCellMappingDealii<3>();
 
   std::shared_ptr<dftefe::quadrature::QuadratureRule> quadratureRuleGauss =
-    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(3, 5);
+    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(3, 6);
   const std::vector<dftefe::utils::Point> &parametricPoints =
     quadratureRuleGauss->getPoints();
   const std::vector<double> &weights = quadratureRuleGauss->getWeights();
@@ -83,7 +83,7 @@ main()
   std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>>
     functions(1, std::make_shared<dftefe::utils::LogModX>(0));
 
-  std::vector<double> tolerances(1, 1e-6);
+  std::vector<double> tolerances(1, 1e-5);
   std::vector<double> integralThresholds(1, 1e-11);
   const double        smallestCellVolume = 1e-14;
   const unsigned int  maxRecursion       = 100;
