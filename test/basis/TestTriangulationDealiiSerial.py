@@ -5,10 +5,11 @@ from reframe.core.backends import getlauncher
 import os
 DFTEFE_PATH=''
 if not 'DFTEFE_PATH' in os.environ:
-    raise Exception('''DFTEFE_PATH is not set. Please use 'export
+    raise Exception('''DFTEFE_PATH is not set. Please use export
                  DFTEFE_PATH=/path/to/dft-efe/parent/folder''')
 else:
     DFTEFE_PATH = os.environ['DFTEFE_PATH']
+
 parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
 cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
