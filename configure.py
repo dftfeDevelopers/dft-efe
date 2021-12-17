@@ -72,7 +72,6 @@ if __name__ == "__main__":
         for key in cmake_dict:
             value = cmake_dict[key]
             print("{0:<{1}}\t{2}".format(key,max_key_length,value[1]))
-            #print(key+"\t\t\t\t"+value[1])
             print("\t"+' '*(max_key_length-2)+'e.g.,'+value[2]+"\n")
     
     else:
