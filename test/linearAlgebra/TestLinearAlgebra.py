@@ -23,12 +23,17 @@ import reframe as rfm
 import reframe.utility.sanity as sn
 from reframe.utility.sanity import evaluate
 from reframe.core.backends import getlauncher
-
-# import CompareUtil as cu
-parser = rfm.utility.import_module_from_file("../Parser.py")
-cu = rfm.utility.import_module_from_file("../CompareUtil.py")
-ss = rfm.utility.import_module_from_file("../SetupSystems.py")
-cmflags = rfm.utility.import_module_from_file("../CMakeFlagsParser.py")
+import os
+DFTEFE_PATH=''
+if not 'DFTEFE_PATH' in os.environ:
+    raise Exception('''DFTEFE_PATH is not set. Please use 'export
+                 DFTEFE_PATH=/path/to/dft-efe/parent/folder''')
+else:
+    DFTEFE_PATH = os.environ['DFTEFE_PATH']
+parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
+cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
+ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
+cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 
 @rfm.simple_test
@@ -38,8 +43,6 @@ class MultipleExeTest(rfm.RegressionTest):
     valid_prog_environs = ['builtin']
     build_system = 'CMake'
     make_opts = ['TestVectorAggregate1', 'TestVectorAggregate2', 'TestVectorNorms']
-    cmflags.getConfig()
-    config_opts = cmflags.getConfig('greatlakes_cpu')
     executable = 'date'
     builddir = './TestVectorAggregate'
     sourcesdir = './src'
@@ -48,6 +51,7 @@ class MultipleExeTest(rfm.RegressionTest):
                 'serialOrParallel': 'serial'}
 
     tags = {x for x in tagsDict.values()}
+    config_opts = cmflags.getConfig(tagsDict['arch'])
 
     @run_before('compile')
     def set_compiler_flags(self):

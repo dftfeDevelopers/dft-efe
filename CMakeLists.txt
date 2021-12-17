@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
-add_executable(dft-efe src/test.cpp)
+add_executable(dft-efe src/main.cpp)
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -16,17 +16,6 @@ if(ENABLE_CUDA)
     ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
     enable_language(CUDA)
 endif()
-
-find_package(deal.II 9.3.0 REQUIRED)
-include_directories(${DEAL_II_INCLUDE_DIRS})
-
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
-ELSE()
-  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
-ENDIF()
-
-
 
 target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 

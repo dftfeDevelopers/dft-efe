@@ -15,7 +15,7 @@ add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
 include_directories(../)
 
-find_package(deal.II 9.3.0 REQUIRED)
+find_package(deal.II 9.3.0 REQUIRED HINTS ${DEALII_PATH})
 target_include_directories(dft-efe-basis PUBLIC ${DEAL_II_INCLUDE_DIRS})
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 	target_link_libraries (dft-efe-basis PUBLIC ${DEAL_II_LIBRARIES_RELEASE})

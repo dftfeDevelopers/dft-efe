@@ -20,6 +20,7 @@ def getConfig(arch_type='cpu'):
     if len(lines) == 0:
         raise Exception('''Empty CMakeConfigOptions.txt found. Please run
                         ./configure.py with the correct options''' ) 
+    
     cmake_config_opts = []
     cmake_dict = {}
     for line in lines:
@@ -35,4 +36,5 @@ def getConfig(arch_type='cpu'):
         value = cmake_dict[key]
         opts='-D' + key + '=' + value.strip() 
         cmake_config_opts.append(opts)
-   
+  
+    return cmake_config_opts
