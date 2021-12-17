@@ -16,6 +16,7 @@ namespace dftefe
     class TriangulationBase
     {
     public:
+      virtual ~TriangulationBase() = default;
       typedef std::vector<std::shared_ptr<TriangulationCellBase>>::iterator
         cellIterator;
       typedef std::vector<std::shared_ptr<TriangulationCellBase>>::

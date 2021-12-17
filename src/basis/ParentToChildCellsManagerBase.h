@@ -12,6 +12,7 @@ namespace dftefe
     class ParentToChildCellsManagerBase
     {
     public:
+      virtual ~ParentToChildCellsManagerBase() = default;
       virtual std::vector<std::shared_ptr<const TriangulationCellBase>>
       createChildCells(const TriangulationCellBase &parentCell) = 0;
 

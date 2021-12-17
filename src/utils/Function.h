@@ -9,6 +9,7 @@ namespace dftefe
     class Function
     {
     public:
+      virtual ~Function() = default;
       virtual Q
       operator()(const T &t) const = 0;
       virtual std::vector<Q>

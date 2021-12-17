@@ -26,6 +26,7 @@ namespace dftefe
     class CellMappingBase
     {
     public:
+      virtual ~CellMappingBase() = default;
       virtual void
       getJxW(const TriangulationCellBase &            triaCellBase,
              const std::vector<dftefe::utils::Point> &paramPoints,

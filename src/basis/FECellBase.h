@@ -22,7 +22,7 @@ namespace dftefe
     {
     public:
       FECellBase();
-      ~FECellBase();
+      virtual ~FECellBase() = default;
 
       virtual std::vector<std::shared_ptr<Point>>
       getVertices() const override = 0;

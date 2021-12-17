@@ -17,6 +17,8 @@ namespace dftefe
     class QuadratureRule
     {
     public:
+      virtual ~QuadratureRule() = default;
+
       /**
        * @brief Constructor to create a tensor structured quadrature with arbitrary  1D points and weights.
        * @param[in] dim the dimension of the cell.

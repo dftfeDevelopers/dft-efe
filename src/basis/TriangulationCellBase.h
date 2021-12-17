@@ -19,6 +19,7 @@ namespace dftefe
     class TriangulationCellBase
     {
     public:
+      virtual ~TriangulationCellBase() = default;
       virtual void
       getVertices(std::vector<utils::Point> &points) const = 0;
 

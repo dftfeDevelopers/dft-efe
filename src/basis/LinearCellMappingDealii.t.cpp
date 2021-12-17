@@ -1,6 +1,6 @@
 
 #include "TriangulationCellDealii.h"
-#include <utils/DealiiConversions.h>
+#include "DealiiConversions.h"
 #include <deal.II/base/geometry_info.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/fe/fe_q.h>
@@ -35,7 +35,7 @@ namespace dftefe
       dealii::FE_Q<dim>                       fe(1);
       std::vector<dealii::Point<dim, double>> quadPointsDealii;
       quadPointsDealii.resize(paramPoints.size());
-      utils::convertToDealiiPoint<dim>(paramPoints, quadPointsDealii);
+      convertToDealiiPoint<dim>(paramPoints, quadPointsDealii);
       dealii::Quadrature<dim> quadRuleDealii(quadPointsDealii, weights);
       dealii::FEValues<dim>   fe_values(
         fe, quadRuleDealii, dealii::update_values | dealii::update_JxW_values);
@@ -62,7 +62,7 @@ namespace dftefe
         triaCellDealii.getCellIterator();
 
       dealii::Point<dim, double> dealiiParametricPoint, dealiiRealPoint;
-      utils::convertToDealiiPoint<dim>(realPoint, dealiiRealPoint);
+      convertToDealiiPoint<dim>(realPoint, dealiiRealPoint);
       isPointInside = true;
       try
         {
@@ -75,7 +75,7 @@ namespace dftefe
           isPointInside = dealii::GeometryInfo<dim>::is_inside_unit_cell(
             dealiiParametricPoint);
         }
-      utils::convertToDftefePoint<dim>(dealiiParametricPoint, parametricPoint);
+      convertToDftefePoint<dim>(dealiiParametricPoint, parametricPoint);
     }
 
 
@@ -96,7 +96,7 @@ namespace dftefe
       parametricPoints.resize(numPoints, utils::Point(dim));
       std::vector<dealii::Point<dim, double>> dealiiParametricPoints(numPoints);
       std::vector<dealii::Point<dim, double>> dealiiRealPoints(numPoints);
-      utils::convertToDealiiPoint<dim>(realPoints, dealiiRealPoints);
+      convertToDealiiPoint<dim>(realPoints, dealiiRealPoints);
       d_mappingDealii.transform_points_real_to_unit_cell(
         cellDealii, dealiiRealPoints, dealiiParametricPoints);
       arePointsInside = std::vector<bool>(numPoints, true);
@@ -108,8 +108,7 @@ namespace dftefe
               arePointsInside[i] = false;
             }
         }
-      utils::convertToDftefePoint<dim>(dealiiParametricPoints,
-                                       parametricPoints);
+      convertToDftefePoint<dim>(dealiiParametricPoints, parametricPoints);
     }
 
     template <unsigned int dim>
@@ -125,11 +124,11 @@ namespace dftefe
         triaCellDealii.getCellIterator();
 
       dealii::Point<dim, double> dealiiParametricPoint, dealiiRealPoint;
-      utils::convertToDealiiPoint<dim>(parametricPoint, dealiiParametricPoint);
+      convertToDealiiPoint<dim>(parametricPoint, dealiiParametricPoint);
       dealiiRealPoint =
         d_mappingDealii.transform_unit_to_real_cell(cellDealii,
                                                     dealiiParametricPoint);
-      utils::convertToDftefePoint<dim>(dealiiRealPoint, realPoint);
+      convertToDftefePoint<dim>(dealiiRealPoint, realPoint);
     }
 
     template <unsigned int dim>
@@ -148,14 +147,13 @@ namespace dftefe
       realPoints.resize(numPoints, utils::Point(dim));
       std::vector<dealii::Point<dim, double>> dealiiParametricPoints(numPoints);
       std::vector<dealii::Point<dim, double>> dealiiRealPoints(numPoints);
-      utils::convertToDealiiPoint<dim>(parametricPoints,
-                                       dealiiParametricPoints);
+      convertToDealiiPoint<dim>(parametricPoints, dealiiParametricPoints);
       for (unsigned int i = 0; i < numPoints; ++i)
         {
           dealiiRealPoints[i] = d_mappingDealii.transform_unit_to_real_cell(
             cellDealii, dealiiParametricPoints[i]);
         }
-      utils::convertToDftefePoint<dim>(dealiiRealPoints, realPoints);
+      convertToDftefePoint<dim>(dealiiRealPoints, realPoints);
     }
 
 

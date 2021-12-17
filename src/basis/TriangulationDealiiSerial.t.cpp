@@ -1,5 +1,5 @@
 #include <utils/Exceptions.h>
-#include <utils/DealiiConversions.h>
+#include "DealiiConversions.h"
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/base/point.h>
@@ -82,7 +82,7 @@ namespace dftefe
 
       for (unsigned int i = 0; i < dim; ++i)
         {
-          utils::convertToDealiiPoint<dim>(domainVectors[i], dealiiPoints[i]);
+          convertToDealiiPoint<dim>(domainVectors[i], dealiiPoints[i]);
         }
 
       unsigned int dealiiSubdivisions[dim];
@@ -108,7 +108,7 @@ namespace dftefe
       std::vector<dealii::Point<dim, double>> dealiiVertices(numPoints);
       for (unsigned int i = 0; i < numPoints; ++i)
         {
-          utils::convertToDealiiPoint<dim>(vertices[i], dealiiVertices[i]);
+          convertToDealiiPoint<dim>(vertices[i], dealiiVertices[i]);
         }
 
       dealii::GridGenerator::general_cell(d_triangulationDealii,
@@ -128,7 +128,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(dim == origin.size(),
                            "Mismatch of dimension for dealii and the origin");
       dealii::Point<dim, double> dealiiOrigin;
-      utils::convertToDealiiPoint<dim>(origin, dealiiOrigin);
+      convertToDealiiPoint<dim>(origin, dealiiOrigin);
       dealii::GridTools::shift(dealiiOrigin, d_triangulationDealii);
     }
 

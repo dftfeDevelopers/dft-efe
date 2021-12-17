@@ -1,5 +1,5 @@
 #include <utils/Exceptions.h>
-#include <utils/DealiiConversions.h>
+#include "DealiiConversions.h"
 #include <deal.II/base/geometry_info.h>
 
 
@@ -30,8 +30,8 @@ namespace dftefe
       for (unsigned int iVertex = 0; iVertex < nVertices; iVertex++)
         {
           pointsDealii[iVertex] = d_cellItr->vertex(iVertex);
-          utils::convertToDftefePoint<dim>(d_cellItr->vertex(iVertex),
-                                           points[iVertex]);
+          convertToDftefePoint<dim>(d_cellItr->vertex(iVertex),
+                                    points[iVertex]);
         }
     }
 
@@ -40,7 +40,7 @@ namespace dftefe
     TriangulationCellDealii<dim>::getVertex(size_type     i,
                                             utils::Point &point) const
     {
-      utils::convertToDftefePoint<dim>(d_cellItr->vertex(i), point);
+      convertToDftefePoint<dim>(d_cellItr->vertex(i), point);
     }
 
     template <unsigned int dim>
@@ -57,7 +57,7 @@ namespace dftefe
     TriangulationCellDealii<dim>::isPointInside(const utils::Point &point) const
     {
       dealii::Point<dim, double> dealiiPoint;
-      utils::convertToDealiiPoint<dim>(point, dealiiPoint);
+      convertToDealiiPoint<dim>(point, dealiiPoint);
       return d_cellItr->point_inside(dealiiPoint);
     }
 
