@@ -77,6 +77,13 @@ namespace dftefe
         const unsigned int         maxRecursion       = 100);
 
       /**
+       * @brief Returns the number of cells in the quadrature container
+       * @returns  number of cells in the quadrature container
+       */
+      size_type
+      nCells() const;
+
+      /**
        * @brief Function that returns a vector containing the real coordinates of the quad points in all cells
        *
        * @returns  a vector of dftefe::utils::Point
@@ -88,7 +95,7 @@ namespace dftefe
        * @brief Function that returns a vector containing the real coordinates of the
        * quad points in cell corresponding to the cellId
        *
-       * @param[n] cellId the id to the cell
+       * @param[in] cellId the id to the cell
        * @returns  a vector of dftefe::utils::Point
        */
       std::vector<dftefe::utils::Point>
@@ -98,7 +105,7 @@ namespace dftefe
        * @brief Function that returns a vector containing the real coordinates of the
        * quad points in cell corresponding to the cellId
        *
-       * @param[n] cellId the id to the cell
+       * @param[in] cellId the id to the cell
        * @returns  a vector of dftefe::utils::Point
        */
       const std::vector<dftefe::utils::Point> &
@@ -108,27 +115,27 @@ namespace dftefe
        * @brief Function that returns a vector containing the weight of the
        * quad points in cell corresponding to the cellId
        *
-       * @param[n] cellId the id to the cell
+       * @param[in] cellId the id to the cell
        * @returns  a vector of weights double
        */
       const std::vector<double> &
       getCellQuadratureWeights(const unsigned int cellId) const;
 
       /**
-       * @brief Function that returns a vector containing the real coordinates of the
-       * quad points in cell corresponding to the cellId
+       * @brief Function that returns a vector containing the Jacobian times quadrature weight
+       * for all the quad points across all the cells in the triangulation
        *
-       * @returns  a vector of dftefe::utils::Point
+       * @returns vectors of Jacobian times quadrature weight
        */
       const std::vector<double> &
       getJxW() const;
 
       /**
-       * @brief Function that returns a vector containing the JxW of the
+       * @brief Function that returns a vector containing the Jacobian times weight of the
        * quad points in cell corresponding to the cellId
        *
-       * @param[n] cellId the id to the cell
-       * @returns  a vector of JxW (double)
+       * @param[in] cellId the id to the cell
+       * @returns  a vector (double) of Jacobian times weight
        */
       std::vector<double>
       getCellJxW(const unsigned int cellId) const;
@@ -137,8 +144,8 @@ namespace dftefe
        * @brief Function that returns the handle to quadrature rule corresponding to the
        * the cell Id
        *
-       * @param[n] cellId the id to the cell
-       * @returns  QuadratureRule
+       * @param[in] cellId the id to the cell
+       * @returns  Const reference to QuadratureRule
        */
       const QuadratureRule &
       getQuadratureRule(const unsigned int cellId) const;
@@ -155,11 +162,12 @@ namespace dftefe
        * @brief A function to returns the number of quadrature points in cell corresponding to the
        * the cell Id
        *
-       * @param[n] cellId the id to the cell
+       * @param[in] cellId the id to the cell
        * @returns  number of quadrature points
        */
       size_type
       nCellQuadraturePoints(const unsigned int cellId) const;
+
 
 
     private:
@@ -170,6 +178,7 @@ namespace dftefe
       std::vector<double>                                d_JxW;
       unsigned int                                       d_dim;
       size_type                                          d_numQuadPoints;
+      size_type                                          d_numCells;
     };
   } // end of namespace quadrature
 

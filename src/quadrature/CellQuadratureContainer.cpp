@@ -83,9 +83,9 @@ namespace dftefe
       utils::throwException(
         d_dim == quadratureRule->getDim(),
         "Mismatch of dimension of the quadrature points and the triangulation.");
-      const size_type numCells = triangulation->nLocalCells();
+      d_numCells = triangulation->nLocalCells();
       d_quadratureRuleVec =
-        std::vector<std::shared_ptr<const QuadratureRule>>(numCells,
+        std::vector<std::shared_ptr<const QuadratureRule>>(d_numCells,
                                                            quadratureRule);
       initialize(d_quadratureRuleVec,
                  triangulation,
@@ -109,12 +109,12 @@ namespace dftefe
       , d_JxW(0)
       , d_numQuadPoints(0)
     {
-      const size_type numCells = triangulation->nLocalCells();
+      d_numCells = triangulation->nLocalCells();
       utils::throwException(
-        numCells == d_quadratureRuleVec.size(),
+        d_numCells == d_quadratureRuleVec.size(),
         "Mismatch of number of cells in the quadratureRuleVec and the"
         "number of cells in the triangulation.");
-      for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+      for (unsigned int iCell = 0; iCell < d_numCells; ++iCell)
         {
           utils::throwException(
             d_dim == d_quadratureRuleVec[iCell]->getDim(),
@@ -149,10 +149,10 @@ namespace dftefe
         d_dim == baseQuadratureRule->getDim(),
         "Mismatch of dimension of the quadrature points and the triangulation.");
 
-      size_type numCells = triangulation->nLocalCells();
-      d_quadratureRuleVec.resize(numCells);
-      d_numCellQuadPoints.resize(numCells, 0);
-      d_cellQuadStartIds.resize(numCells, 0);
+      d_numCells = triangulation->nLocalCells();
+      d_quadratureRuleVec.resize(d_numCells);
+      d_numCellQuadPoints.resize(d_numCells, 0);
+      d_cellQuadStartIds.resize(d_numCells, 0);
       d_numQuadPoints                                    = 0;
       unsigned int                                 iCell = 0;
       basis::TriangulationBase::const_cellIterator cellIter =
@@ -182,8 +182,7 @@ namespace dftefe
 
       d_realPoints.resize(d_numQuadPoints, dftefe::utils::Point(d_dim, 0.0));
       d_JxW.resize(d_numQuadPoints, 0.0);
-      iCell    = 0;
-      cellIter = triangulation->beginLocal();
+      iCell = 0;
       for (auto cellIter = triangulation->beginLocal();
            cellIter != triangulation->endLocal();
            ++cellIter)
@@ -207,8 +206,24 @@ namespace dftefe
           std::copy(cellJxW.begin(),
                     cellJxW.end(),
                     d_JxW.begin() + cellQuadStartId);
+          // double cellVolume  = 0.0;
+          // std::cout << "\niCell JxW: " << iCell << std::endl;
+          // for(unsigned int i = 0; i < numCellQuadPoints; ++i)
+          //{
+          //  std::cout << cellJxW[i] << std::endl;
+          //  cellVolume += cellJxW[i];
+          //}
+
+          // std::cout << "iCell volume: " << cellVolume << std::endl;
           iCell++;
         }
+    }
+
+
+    size_type
+    CellQuadratureContainer::nCells() const
+    {
+      return d_numCells;
     }
 
     const std::vector<dftefe::utils::Point> &

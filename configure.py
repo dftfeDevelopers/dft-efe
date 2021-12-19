@@ -1,6 +1,7 @@
 import sys
 import os
-
+import textwrap
+import traceback
 
 cmake_dict = {'DFTEFE_BLAS_LIBRARIES':['', 'Path to blas libraries',
                                        '''--DFTEFE_BLAS_LIBRARIES=
@@ -37,13 +38,14 @@ cmake_dict = {'DFTEFE_BLAS_LIBRARIES':['', 'Path to blas libraries',
 
 def sanityCheck(string):
     if '=' not in string:
-        raise Exception('''Invalid command line option ''' + string +
-                        '''passed''')
+        raise Exception('''Invalid command line option ''' + string + 
+                        ''' passed. Maybe you forgot to use "=" to assign'''\
+                        '''the option?''')
 
 def splitString(string):
     if string[:2] != "--":
-        raise Exception('''Invalid command line option ''' + string +
-                        '''passed. Maybe you forgot to prefix with "--"''')
+        raise Exception('''Invalid command line option ''' + string + 
+                        ''' passed. Maybe you forgot to prefix with "--"?''')
     pos = string.find('=')
     return string[2:pos], string[pos+1:]
 
@@ -56,12 +58,10 @@ if __name__ == "__main__":
     
     numArgs = len(sys.argv)
     if numArgs < 2:
-        raise Exception('''No options passed to configure. Use python configure.py
-                        --help to see the options''')
-    
-    
+        raise ValueError('''No options passed to configure. Use python ''' \
+                             '''configure.py --help to see the options''')
+
     if sys.argv[1] == '--help' or sys.argv[1] == '-h':
-        
         print('Options')
         print('--------')
         max_key_length = 0
@@ -71,13 +71,13 @@ if __name__ == "__main__":
 
         for key in cmake_dict:
             value = cmake_dict[key]
-            print("{0:<{1}}\t{2}".format(key,max_key_length,value[1]))
+            print("--{0:<{1}}\t{2}".format(key,max_key_length,value[1]))
             print("\t"+' '*(max_key_length-2)+'e.g.,'+value[2]+"\n")
     
     else:
         if not 'DFTEFE_PATH' in os.environ:
-            raise Exception('''DFTEFE_PATH is not set. Please use 'export
-                 DFTEFE_PATH=/path/to/dft-efe/parent/folder''')
+            raise KeyError('''DFTEFE_PATH is not set. Please use export'''\
+                 '''DFTEFE_PATH=/path/to/dft-efe/parent/folder''')
         else:
             DFTEFE_PATH = os.environ['DFTEFE_PATH']
 

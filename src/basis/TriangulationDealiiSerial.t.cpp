@@ -3,6 +3,7 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/base/point.h>
+#include <fstream>
 
 namespace dftefe
 {

@@ -3,6 +3,7 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <iomanip>
 
 namespace dftefe
 {
@@ -84,7 +85,7 @@ namespace dftefe
                            globalCellJacobian);
 
         std::vector<double> weightsGlobalCell(numberBaseQuadPoints, 0.0);
-        for (unsigned int iPoint; iPoint < numberBaseQuadPoints; ++iPoint)
+        for (unsigned int iPoint = 0; iPoint < numberBaseQuadPoints; ++iPoint)
           {
             weightsGlobalCell[iPoint] =
               currentCellJxW[iPoint] / globalCellJacobian[iPoint];
@@ -367,13 +368,6 @@ namespace dftefe
                          adaptiveIntegralValues);
 
       d_numPoints = d_weights.size();
-      for (unsigned int iFunction = 0; iFunction < numberFunctions; ++iFunction)
-        {
-          std::cout << "iFunction: " << iFunction << " Classical Integral: "
-                    << classicalIntegralValues[iFunction]
-                    << " Adaptive Integral: "
-                    << adaptiveIntegralValues[iFunction] << std::endl;
-        }
     }
 
 
