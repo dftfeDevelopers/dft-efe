@@ -41,8 +41,6 @@ set(DFT-EFE-LINALG-SOURCES
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
-#FIXME: can we use target_include_directories instead of include_directories
-#target_include_directories(dft-efe-linalg INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(../)
 
 if(ENABLE_CUDA)

@@ -86,10 +86,9 @@ site_configuration = {
             'cc': 'gcc',
             'cxx': 'g++',
             'ftn': 'gfortran',
-            'modules': ['gcc', 'mkl'],
-            'target_systems': ['greatlakes'],
-            'variables': [['DFT_EFE_LINKER',
-                           '"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"']]
+            'modules': [],
+            'target_systems': ['greatlakes']
+            #'variables': [['DFT_EFE_LINKER','"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"']]
         },
         {
             'name': 'builtin',

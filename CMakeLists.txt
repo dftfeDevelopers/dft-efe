@@ -17,22 +17,13 @@ if(ENABLE_CUDA)
     enable_language(CUDA)
 endif()
 
-find_package(deal.II 9.3.0 REQUIRED)
-include_directories(${DEAL_II_INCLUDE_DIRS})
-
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
-ELSE()
-  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
-ENDIF()
-
-
-
 target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 
 add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
-target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
+add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
+add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
+target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature)
 include_directories(src)
 
 # Build documentation
