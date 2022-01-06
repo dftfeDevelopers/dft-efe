@@ -1,24 +1,37 @@
 if(${CMAKE_CXX_STANDARD})
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 if(ENABLE_CUDA)
-    enable_language(CUDA)
-if(NOT DEFINED DDFTEFE_WITH_DEVICE)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)
+	enable_language(CUDA)
+	if(NOT DEFINED DDFTEFE_WITH_DEVICE)
+		ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
+		ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)
 
-endif()
+	endif()
 endif()
 
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
-        DeviceAPICalls.cu
-        DeviceUtils.cpp
-        MemoryManager.cpp
-        Exceptions.cpp
-        MemoryTransfer.cpp
+	alglib/alglibinternal
+	alglib/ap
+	alglib/integration
+	alglib/interpolation
+	alglib/solvers
+	alglib/dataanalysis
+	alglib/diffequations
+	alglib/fasttransforms
+	alglib/statistics
+	alglib/specialfunctions
+	alglib/alglibmisc
+	alglib/linalg
+	alglib/optimization
+	DeviceAPICalls.cu
+	DeviceUtils.cpp
+	MemoryManager.cpp
+	Exceptions.cpp
+	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp)
 

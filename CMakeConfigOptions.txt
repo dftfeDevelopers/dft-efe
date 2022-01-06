@@ -3,9 +3,9 @@ DFTEFE_BLAS_LIBRARIES="-L/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_
 DFTEFE_SCALAPACK_LIBRARIES="-L/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl"
 DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal"
 CMAKE_C_COMPILER=gcc
-CMAKE_C_FLAGS=""
+CMAKE_C_FLAGS="-O3"
 CMAKE_CXX_COMPILER=g++
-CMAKE_CXX_FLAGS="-march=native"
+CMAKE_CXX_FLAGS="-march=native -O3"
 MPI_C_COMPILER=mpicc
 MPI_CXX_COMPILER=mpic++
 ENABLE_CUDA=OFF
