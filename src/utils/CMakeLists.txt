@@ -14,19 +14,6 @@ endif()
 
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
-	alglib/alglibinternal
-	alglib/ap
-	alglib/integration
-	alglib/interpolation
-	alglib/solvers
-	alglib/dataanalysis
-	alglib/diffequations
-	alglib/fasttransforms
-	alglib/statistics
-	alglib/specialfunctions
-	alglib/alglibmisc
-	alglib/linalg
-	alglib/optimization
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
 	MemoryManager.cpp
