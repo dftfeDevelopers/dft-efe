@@ -11,31 +11,20 @@ find_package(MPI REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_PATH})
 set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 
-
 if(ENABLE_CUDA)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_CUDA)
-    message ("CUDA Enabled")
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
+    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
     enable_language(CUDA)
-    set_target_properties(dft-efe PROPERTIES
-                          CUDA_STANDARD 14
-                          CUDA_STANDARD_REQUIRED ON)
 endif()
 
-find_package(deal.II 9.3.0 REQUIRED)
-include_directories(${DEAL_II_INCLUDE_DIRS})
+target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
-ELSE()
-  target_link_libraries (dft-efe PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
-ENDIF()
-
-
-
-target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})		
-
-add_subdirectory(src)
-target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg)
+add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
+add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
+add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
+target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature)
+include_directories(src)
 
 # Build documentation
 option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)
@@ -48,3 +37,4 @@ if(BUILD_DOCS)
     message(WARNING "Doxygen and/or Sphinx not found -- unable to build documentation.")
   endif()
 endif()
+

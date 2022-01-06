@@ -12,19 +12,21 @@ class Compare():
         normTypeLower = normType.lower()
         isValidNormType = normTypeLower in ["l1", "l2", "inf", "point"]
         if len(val1) != len(val2):
-            msg='''The two values to be compared are of different sizes. The
-            sizes of first and second list are: {} {}'''. format(len(val1),
-                                                                 len(val2))
+            msg = '''The two values to be compared are of different sizes.'''\
+                  '''The sizes of first and second list are: '''\
+                    '''{} {}'''.format(len(val1),len(val2))
             raise ValueError(msg)
 
         if not isValidCmpType:
-            msg='''Invalid value in cmpType. The valid values are: 'absolute'
-            and 'relative'. The value provided is {}'''. format(cmpType)
+            msg = '''Invalid value in cmpType. The valid values are: '''\
+                  '''absolute' and 'relative'. The value provided is'''\
+                  '''{}'''.format(cmpType)
             raise ValueError(msg)
 
         if not isValidNormType:
-            msg='''Invalid value in normType. The valid values are: "L2",
-            "L1", "inf", and "point". The value provided is {}'''. format(normType)
+            msg = '''Invalid value in normType. The valid values are: "L2",'''\
+                  ''' "L1", "inf", and "point". The value provided is'''\
+                  '''{}'''.format(normType)
             raise ValueError(msg)
 
         if normTypeLower=='l1':
@@ -61,12 +63,12 @@ class Compare():
 
         if not areComparable:
             if normTypeLower in ["l1", "l2", "inf"]:
-                msg = "The two values passed are not comparable. Norm of \
-                    difference={diff_norm} and tolerance={tol}".format(diff_norm=norm,
+                msg = "The two values passed are not comparable. Norm of "\
+                    "difference={diff_norm} and tolerance={tol}".format(diff_norm=norm,
                                                                        tol=tol)
             else:
-                msg = "The two values passed are not comparable. Max. of \
-                    elementwise difference={norm} and \
-                    tolerance={tol}".format(norm=norm,tol=tol)
+                msg = "The two values passed are not comparable. Max. of "\
+                    "elementwise difference={norm} and "\
+                    "tolerance={tol}".format(norm=norm,tol=tol)
 
         return areComparable, norm, msg
