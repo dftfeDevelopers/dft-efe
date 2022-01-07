@@ -20,7 +20,8 @@ set(DFT-EFE-UTILS-SOURCES
 	Exceptions.cpp
 	MemoryTransfer.cpp
 	ExpModX.cpp
-	LogModX.cpp)
+	LogModX.cpp
+	OptimizedIndexSet.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
