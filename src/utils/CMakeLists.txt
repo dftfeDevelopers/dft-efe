@@ -23,4 +23,13 @@ set(DFT-EFE-UTILS-SOURCES
 	LogModX.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
+
+if (NOT MPI_FOUND)
+  find_package(MPI REQUIRED)
+  target_include_directories(dft-efe-utils PUBLIC ${MPI_CXX_INCLUDE_PATH})
+  set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+endif()
+
 include_directories(../)
+
+target_link_libraries(dft-efe-utils PUBLIC ${DFTEFE_MPI_LIBRARIES})
