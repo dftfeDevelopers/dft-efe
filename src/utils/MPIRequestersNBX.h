@@ -33,7 +33,7 @@ namespace dftefe
 {
   namespace utils
   {
-    class MPIRequestersNBX
+    class MPIRequestersNBX : public MPIRequestersBase
     {
       /*
        * @brief Implements the Non-blocking Consensus (NBX) algorithm as
@@ -182,24 +182,25 @@ namespace dftefe
        */
       std::vector<MPI_Request> d_sendRequests;
 
-      /**
-       * Buffers for receiving answers to requests.
-       */
-      std::vector<int> d_recvBuffers;
-
-      /**
-       * Requests for receiving answers to requests.
-       */
-      std::vector<MPI_Request> d_recvRequests;
-
+      //
       // request for barrier
+      //
       MPI_Request barrier_request;
+
+      //
+      // MPI communicator
+      //
+      const MPI_Comm &d_comm;
+
 #endif
 
       /**
        * List of processes who have made a request to this process.
        */
       std::set<unsigned int> d_requestingProcesses;
+
+      size_type d_numProcessors;
+      size_type d_myRank;
 
       /**
        * Check whether all of message sent from the current processor
