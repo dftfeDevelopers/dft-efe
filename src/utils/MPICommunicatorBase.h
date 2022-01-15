@@ -37,46 +37,53 @@ namespace dftefe
     class MPICommunicatorBase
     {
     public:
- 
-       virtual ~MPICommunicatorBase() = default;
+      virtual ~MPICommunicatorBase() = default;
 
 
-       virtual MPICommunicatorBase(const  std::vector<dftefe::global_size_type> & locallyOwnedIndices,
-                                   const  std::vector<dftefe::global_size_type> & ghostIndices,
-                                   MPI_Comm & d_mpiComm)=0;
-
-
-      template <typename ValueType, MemorySpace memorySpace>
-      void
-      scatterToGhost(dftefe::utils::DistributedVectorStorage<ValueType,memorySpace> & distributedVectorStorage) =0;
-
-      template <typename ValueType, MemorySpace memorySpace>
-      void
-      gatherFromGhost(dftefe::utils::DistributedVectorStorag<ValueType,memorySpace> & distributedVectorStorage) =0;      
+      virtual MPICommunicatorBase(
+        const std::vector<dftefe::global_size_type> &locallyOwnedIndices,
+        const std::vector<dftefe::global_size_type> &ghostIndices,
+        MPI_Comm &                                   d_mpiComm) = 0;
 
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      scatterToGhostBegin(dftefe::utils::DistributedVectorStorage<ValueType,memorySpace> & distributedVectorStorage) =0;
+      scatterToGhost(
+        dftefe::utils::DistributedVectorStorage<ValueType, memorySpace>
+          &distributedVectorStorage) = 0;
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      scatterToGhostEnd(dftefe::utils::DistributedVectorStorage<ValueType,memorySpace> & distributedVectorStorage) =0;
+      gatherFromGhost(
+        dftefe::utils::DistributedVectorStorag<ValueType, memorySpace>
+          &distributedVectorStorage) = 0;
+
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      gatherFromGhostBegin(dftefe::utils::DistributedVectorStorag<ValueType,memorySpace> & distributedVectorStorage) =0;
+      scatterToGhostBegin(
+        dftefe::utils::DistributedVectorStorage<ValueType, memorySpace>
+          &distributedVectorStorage) = 0;
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      gatherFromGhostEnd(dftefe::utils::DistributedVectorStorag<ValueType,memorySpace> & distributedVectorStorage) =0
-      ;
+      scatterToGhostEnd(
+        dftefe::utils::DistributedVectorStorage<ValueType, memorySpace>
+          &distributedVectorStorage) = 0;
 
-       
+      template <typename ValueType, MemorySpace memorySpace>
+      void
+      gatherFromGhostBegin(
+        dftefe::utils::DistributedVectorStorag<ValueType, memorySpace>
+          &distributedVectorStorage) = 0;
 
-
+      template <typename ValueType, MemorySpace memorySpace>
+      void
+      gatherFromGhostEnd(
+        dftefe::utils::DistributedVectorStorag<ValueType, memorySpace>
+          &distributedVectorStorage) = 0;
     };
-  }    // namespace utils
+  } // namespace utils
 } // namespace dftefe
 
 #endif // dftefeMPICommunicatorBase_h

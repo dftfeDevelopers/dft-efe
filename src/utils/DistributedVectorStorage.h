@@ -60,9 +60,11 @@ namespace dftefe
       /**
        * @brief Constructor for Vector with size and initial value arguments
        * @param[in] local_size size of the Vector in local MPI task
-       * @param[in] initVal initial value of elements of the Vector in local MPI task 
+       * @param[in] initVal initial value of elements of the Vector in local MPI
+       * task
        */
-      explicit DistributedVectorStorage(size_type localSize, ValueType initVal = 0);
+      explicit DistributedVectorStorage(size_type localSize,
+                                        ValueType initVal = 0);
 
       /**
        * @brief Destructor
@@ -142,7 +144,7 @@ namespace dftefe
       size() const;
 
       /**
-       * @brief Returns the locally owned size of the vector 
+       * @brief Returns the locally owned size of the vector
        * @returns size
        */
       size_type
@@ -163,10 +165,10 @@ namespace dftefe
       data() const noexcept;
 
     private:
-      VectorStorage<ValueType,memorySpace> d_data;
-      global_size_type  d_globalSize = 0;
-      size_type         d_locallyOwnedSize=0;
-      size_type         d_ghostSize=0;      
+      VectorStorage<ValueType, memorySpace> d_data;
+      global_size_type                      d_globalSize       = 0;
+      size_type                             d_locallyOwnedSize = 0;
+      size_type                             d_ghostSize        = 0;
     };
 
   } // namespace utils

@@ -35,43 +35,53 @@ namespace dftefe
     class MPICommunicatorP2P : public MPICommunicatorBase
     {
     public:
- 
-       MPICommunicatorP2P(const  std::vector<dftefe::global_size_type> & locallyOwnedIndices,
-                                   const  std::vector<dftefe::global_size_type> & ghostIndices,
-                                   MPI_Comm & d_mpiComm);
+      MPICommunicatorP2P(
+        const std::vector<dftefe::global_size_type> &locallyOwnedIndices,
+        const std::vector<dftefe::global_size_type> &ghostIndices,
+        MPI_Comm &                                   d_mpiComm);
 
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      scatterToGhost(dftefe::utils::DistributedVectorStorage<ValueType,memorySpace> & distributedVectorStorage) override;
+      scatterToGhost(
+        dftefe::utils::DistributedVectorStorage<ValueType, memorySpace>
+          &distributedVectorStorage) override;
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      gatherFromGhost(dftefe::utils::DistributedVectorStorag<ValueType,memorySpace> & distributedVectorStorage) override;      
+      gatherFromGhost(
+        dftefe::utils::DistributedVectorStorag<ValueType, memorySpace>
+          &distributedVectorStorage) override;
 
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      scatterToGhostBegin(dftefe::utils::DistributedVectorStorage<ValueType,memorySpace> & distributedVectorStorage) override;
+      scatterToGhostBegin(
+        dftefe::utils::DistributedVectorStorage<ValueType, memorySpace>
+          &distributedVectorStorage) override;
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      scatterToGhostEnd(dftefe::utils::DistributedVectorStorage<ValueType,memorySpace> & distributedVectorStorage) override;
+      scatterToGhostEnd(
+        dftefe::utils::DistributedVectorStorage<ValueType, memorySpace>
+          &distributedVectorStorage) override;
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      gatherFromGhostBegin(dftefe::utils::DistributedVectorStorag<ValueType,memorySpace> & distributedVectorStorage) override;
+      gatherFromGhostBegin(
+        dftefe::utils::DistributedVectorStorag<ValueType, memorySpace>
+          &distributedVectorStorage) override;
 
       template <typename ValueType, MemorySpace memorySpace>
       void
-      gatherFromGhostEnd(dftefe::utils::DistributedVectorStorag<ValueType,memorySpace> & distributedVectorStorage) override;    
+      gatherFromGhostEnd(
+        dftefe::utils::DistributedVectorStorag<ValueType, memorySpace>
+          &distributedVectorStorage) override;
 
-     private:
-       
-
+    private:
     };
 
-  }    // namespace utils
+  } // namespace utils
 } // namespace dftefe
 
 #include "MPICommunicatorBaseP2P.t.cpp"

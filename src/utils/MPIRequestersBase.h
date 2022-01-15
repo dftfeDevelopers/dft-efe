@@ -24,9 +24,9 @@
  */
 
 #ifndef dftefeMPIRequestersBase_h
-#  define dftefeMPIRequestersBase_h
-#  include <utils/TypeConfig.h>
-#  include <vector>
+#define dftefeMPIRequestersBase_h
+#include <utils/TypeConfig.h>
+#include <vector>
 namespace dftefe
 {
   namespace utils
@@ -65,3 +65,4 @@ namespace dftefe
 
   } // end of namespace utils
 } // end of namespace dftefe
+#endif // dftefeMPIRequestersBase_h

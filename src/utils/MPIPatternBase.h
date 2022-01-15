@@ -28,22 +28,21 @@
 
 #include <utils/TypeConfig.h>
 
-namespace dftefe {
-
-  namespace utils {
-
-    class MPIPatternBase 
+namespace dftefe
+{
+  namespace utils
+  {
+    class MPIPatternBase
     {
-
-      public:
-    
-       virtual ~MPIPatternBase() = default;
-      virtual size_type nmpiProcesses() const = 0;
-      virtual size_type thisProcessId() const = 0;
-       
+    public:
+      virtual ~MPIPatternBase() = default;
+      virtual size_type
+      nmpiProcesses() const = 0;
+      virtual size_type
+      thisProcessId() const = 0;
     };
 
-} // end of namespace utils
+  } // end of namespace utils
 
 } // end of namespace dftefe
 

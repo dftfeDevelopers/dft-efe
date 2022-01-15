@@ -23,10 +23,12 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPIRequestersBase_h
-#  define dftefeMPIRequestersBase_h
-#  include <utils/TypeConfig.h>
-#  include <vector>
+#ifndef dftefeMPIRequestersNBX_h
+#define dftefeMPIRequestersNBX_h
+
+#include <mpi.h>
+#include <utils/TypeConfig.h>
+#include <vector>
 namespace dftefe
 {
   namespace utils
@@ -148,8 +150,100 @@ namespace dftefe
        *     the processors have been received and that there are no more
        *     incoming messages in any processor to be received. Thus, we
        *     can now safely terminate the nonblocking probe on all processors.
+       *
+       *
+       *
+       * @note: Since we are only interested in knowing the requesting
+       * processors for the current processor, we only need to token
+       * MPI sends and receives (e.g., just an integer across) instead
+       * of large chunks of data. To that end, we harcode all the send
+       * and receive buffers to be of integer type
        */
+
+    public:
+      MPIRequestersNBX(const std::vector<size_type> &targetIDs);
+      std::vector<size_type>
+      getRequestingRankIds() override;
+
+    private:
+#ifdef DFTEFE_WITH_MPI
+      /**
+       * List of processes this processor wants to send requests to.
+       */
+      std::vector<size_type> d_targetIDs;
+
+      /**
+       * Buffers for sending requests.
+       */
+      std::vector<int> d_sendBuffers;
+
+      /**
+       * Requests for sending requests.
+       */
+      std::vector<MPI_Request> d_sendRequests;
+
+      /**
+       * Buffers for receiving answers to requests.
+       */
+      std::vector<int> d_recvBuffers;
+
+      /**
+       * Requests for receiving answers to requests.
+       */
+      std::vector<MPI_Request> d_recvRequests;
+
+      // request for barrier
+      MPI_Request barrier_request;
+#endif
+
+      /**
+       * List of processes who have made a request to this process.
+       */
+      std::set<unsigned int> d_requestingProcesses;
+
+      /**
+       * Check whether all of message sent from the current processor
+       * to other processors have been received or not
+       */
+      bool
+      haveAllLocalSendReceived();
+
+      /**
+       * Signal to all other processors that for this processor
+       * all its message sent to other processors have been received.
+       * This is done nonblocking barrier (i.e., MPI_IBarrier).
+       */
+      void
+      signalLocalSendCompletion();
+
+      /**
+       * Check whether all of the incoming messages from other processors to
+       * the current processor have been received.
+       */
+      bool
+      haveAllIncomingMsgsReceived();
+
+      /**
+       * Probe for an incoming message and if there is one receive it
+       */
+      void
+      probeAndReceiveIncomingMsg();
+
+      /**
+       * Start to sending message to all the target processors
+       */
+      void
+      startLocalSend();
+
+      /**
+       * After all processors have received all the incoming messages,
+       * the MPI data structures can be freed and the received messages
+       * can be processed.
+       */
+      void
+      finish();
     };
 
   } // end of namespace utils
 } // end of namespace dftefe
+#endif // dftefeMPIRequestersNBX_h
