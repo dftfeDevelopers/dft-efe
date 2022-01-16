@@ -29,14 +29,15 @@
 #include <mpi.h>
 #include <utils/TypeConfig.h>
 #include <vector>
+#include <cstdint>
 namespace dftefe
 {
   namespace utils
   {
     enum class MPITags : std::uint16_t
     {
-      DUMMY = 100,
-      MPI_REQUESTERS_NBX,
+      DUMMY_MPI_TAG = 100,
+      MPI_REQUESTERS_NBX_TAG
     };
   } // end of namespace utils
 } // end of namespace dftefe

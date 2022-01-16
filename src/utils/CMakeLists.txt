@@ -3,6 +3,17 @@ if(${CMAKE_CXX_STANDARD})
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
+if(ENABLE_MPI)
+	if(NOT DEFINED DDFTEFE_WITH_DEVICE)
+		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
+	endif()
+	if (NOT MPI_FOUND)
+		find_package(MPI REQUIRED)
+		target_include_directories(dft-efe-utils PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+	endif()
+endif()
+
 if(ENABLE_CUDA)
 	enable_language(CUDA)
 	if(NOT DEFINED DDFTEFE_WITH_DEVICE)
@@ -21,15 +32,11 @@ set(DFT-EFE-UTILS-SOURCES
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
-	OptimizedIndexSet.cpp)
+	OptimizedIndexSet.cpp
+	MPIRequestersNBX.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
-if (NOT MPI_FOUND)
-  find_package(MPI REQUIRED)
-  target_include_directories(dft-efe-utils PUBLIC ${MPI_CXX_INCLUDE_PATH})
-  set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
-endif()
 
 include_directories(../)
 

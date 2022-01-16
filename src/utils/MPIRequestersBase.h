@@ -58,9 +58,9 @@ namespace dftefe
        */
 
     public:
-      ~virtual MPIRequestersBase() = default;
+      virtual ~MPIRequestersBase() = default;
       virtual std::vector<size_type>
-      getRequestingRankIds();
+      getRequestingRankIds() = 0;
     };
 
   } // end of namespace utils

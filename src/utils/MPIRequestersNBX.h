@@ -28,7 +28,9 @@
 
 #include <mpi.h>
 #include <utils/TypeConfig.h>
+#include <utils/MPIRequestersBase.h>
 #include <vector>
+#include <set>
 namespace dftefe
 {
   namespace utils
@@ -161,7 +163,8 @@ namespace dftefe
        */
 
     public:
-      MPIRequestersNBX(const std::vector<size_type> &targetIDs);
+      MPIRequestersNBX(const std::vector<size_type> &targetIDs,
+                       const MPI_Comm &              comm);
       std::vector<size_type>
       getRequestingRankIds() override;
 
@@ -182,10 +185,21 @@ namespace dftefe
        */
       std::vector<MPI_Request> d_sendRequests;
 
+      /**
+       * Buffers for receiving requests.
+       *
+       */
+      std::vector<int> d_recvBuffers;
+
+      /**
+       * Requests for receiving requests.
+       */
+      std::vector<MPI_Request> d_recvRequests;
+
       //
       // request for barrier
       //
-      MPI_Request barrier_request;
+      MPI_Request d_barrierRequest;
 
       //
       // MPI communicator
@@ -197,10 +211,10 @@ namespace dftefe
       /**
        * List of processes who have made a request to this process.
        */
-      std::set<unsigned int> d_requestingProcesses;
+      std::set<size_type> d_requestingProcesses;
 
-      size_type d_numProcessors;
-      size_type d_myRank;
+      int d_numProcessors;
+      int d_myRank;
 
       /**
        * Check whether all of message sent from the current processor
