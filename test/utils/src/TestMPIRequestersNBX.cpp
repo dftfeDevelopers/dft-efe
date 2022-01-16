@@ -186,20 +186,21 @@ int main()
   // and then compare element wise
   std::sort(requestingIDs.begin(), requestingIDs.end());
   std::sort(requestingIDsFromNBX.begin(), requestingIDsFromNBX.end());
-  bool match = (requestingIDs==requestingIDsFromNBX);
-  if(match==false)
+  std::string s1="";
+  std::string s2="";
+  for(unsigned int i = 0; i < numRequestingIDs; ++i)
   {
-    std::string s1="";
-    std::string s2="";
-    for(unsigned int i = 0; i < numRequestingIDs; ++i)
-    {
-      s1 += std::to_string(requestingIDs[i]) + " ";
-      s2 += std::to_string(requestingIDsFromNBX[i]) + " ";
-      errMsg = "Mismatch of requesting IDs in rank " + std::to_string(rank) + 
-	". \n Expected Requesting IDs: " + s1 + "\n NBX Requesting IDs: " +  s2;
-      dftefe::utils::throwException(false, errMsg);
-    }
+    s1 += std::to_string(requestingIDs[i]) + " ";
+    s2 += std::to_string(requestingIDsFromNBX[i]) + " ";
   }
+  std::cout << "Requesting IDs expected for rank " +  std::to_string(rank) + ": " 
+    + s1 << std::endl;
+  std::cout << "Requesting IDs from NBX for rank " +  std::to_string(rank) + ": " 
+    + s2 << std::endl;
+  bool match = (requestingIDs==requestingIDsFromNBX);
+  errMsg = "Mismatch of requesting IDs in rank " + std::to_string(rank) + 
+    ". \n Expected Requesting IDs: " + s1 + "\n NBX Requesting IDs: " +  s2;
+  dftefe::utils::throwException(match, errMsg);
 
   // Finalize the MPI environment 
   MPI_Finalize();
