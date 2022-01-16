@@ -26,7 +26,10 @@
 #ifndef dftefeMPIRequestersNBX_h
 #define dftefeMPIRequestersNBX_h
 
+#ifdef DFTEFE_WITH_MPI
 #include <mpi.h>
+#endif
+
 #include <utils/TypeConfig.h>
 #include <utils/MPIRequestersBase.h>
 #include <vector>
