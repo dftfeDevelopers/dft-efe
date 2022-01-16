@@ -87,7 +87,6 @@ int main()
 {
 #ifdef DFTEFE_WITH_MPI
   
-  std::cout << "Running with MPI" << std::endl;
   // initialize the MPI environment
   MPI_Init(NULL, NULL);
 
@@ -202,6 +201,7 @@ int main()
     }
   }
 
+  // Finalize the MPI environment 
   MPI_Finalize();
 #endif
 }

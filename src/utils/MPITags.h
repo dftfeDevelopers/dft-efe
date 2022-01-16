@@ -26,10 +26,14 @@
 #ifndef dftefeMPITags_h
 #define dftefeMPITags_h
 
-#include <mpi.h>
 #include <utils/TypeConfig.h>
 #include <vector>
 #include <cstdint>
+
+#ifdef DFTEFE_WITH_MPI
+#  include <mpi.h>
+#endif
+
 namespace dftefe
 {
   namespace utils

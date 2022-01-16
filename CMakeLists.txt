@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 if(ENABLE_MPI)
-        message("Building with MPI")
 	ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
 	find_package(MPI REQUIRED)
 	include_directories(${MPI_CXX_INCLUDE_PATH})

@@ -26,7 +26,10 @@
 #ifndef dftefeMPIPatternHost_h
 #define dftefeMPIPatternHost_h
 
-#include <mpi.h>
+#ifdef DFTEFE_WITH_MPI
+#  include <mpi.h>
+#endif
+
 #include <utils/MPIPatternBase.h>
 #include <set>
 namespace dftefe
@@ -116,7 +119,6 @@ namespace dftefe
       size_type        d_nprocs;
       size_type        thisProcId;
       global_size_type d_globalSize;
-      std::vector <
     };
 
   } // end of namespace utils

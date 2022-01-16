@@ -9,10 +9,15 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
 endif()
 
 
-if (NOT MPI_FOUND)
-    find_package(MPI REQUIRED)
-    include_directories(${MPI_CXX_INCLUDE_PATH})
-    set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+if(ENABLE_MPI)
+	if(NOT DEFINED DDFTEFE_WITH_MPI)
+		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
+	endif()
+	if (NOT MPI_FOUND)
+		find_package(MPI REQUIRED)
+		target_include_directories(dft-efe-quadrature PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+	endif()
 endif()
 
 # Add source files here

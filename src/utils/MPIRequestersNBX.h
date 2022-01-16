@@ -27,7 +27,7 @@
 #define dftefeMPIRequestersNBX_h
 
 #ifdef DFTEFE_WITH_MPI
-#include <mpi.h>
+#  include <mpi.h>
 #endif
 
 #include <utils/TypeConfig.h>
@@ -166,8 +166,16 @@ namespace dftefe
        */
 
     public:
+#ifdef DFTEFE_WITH_MPI
       MPIRequestersNBX(const std::vector<size_type> &targetIDs,
                        const MPI_Comm &              comm);
+#else
+      //
+      // default Constructor for serial (without MPI) compilation
+      //
+      MPIRequestersNBX() = default;
+#endif
+
       std::vector<size_type>
       getRequestingRankIds() override;
 

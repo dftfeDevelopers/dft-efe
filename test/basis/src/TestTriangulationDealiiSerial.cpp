@@ -1,4 +1,4 @@
-#include <mpi.h>
+//#include <mpi.h>
 #include <basis/TriangulationBase.h>
 #include <basis/TriangulationDealiiSerial.h>
 #include <basis/CellMappingBase.h>

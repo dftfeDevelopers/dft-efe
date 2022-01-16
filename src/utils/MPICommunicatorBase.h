@@ -26,7 +26,10 @@
 #ifndef dftefeMPICommunicatorBase_h
 #define dftefeMPICommunicatorBase_h
 
-#include <mpi.h>
+#ifdef DFTEFE_WITH_MPI
+#  include <mpi.h>
+#endif
+
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpace.h>
 
