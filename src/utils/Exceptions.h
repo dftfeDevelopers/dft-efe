@@ -80,6 +80,10 @@ template parameter instead. Available typedefs LogicError - std::logic_error
 
 #endif
 
+#ifdef DFTEFE_WITH_DEVICE_CUDA
+#  include <utils/DeviceExceptions.cuh>
+#endif
+
 namespace dftefe
 {
   namespace utils
