@@ -19,6 +19,8 @@ cmake_dict = {'DFTEFE_BLAS_LIBRARIES':['', 'Path to blas libraries',
                                             -lgomp -lpthread -lm -ldl"'''],
               'DEALII_PATH':['','Path to the deal.ii installation',
                                    '--DEALII_PATH=/path/to/deal.ii/installation'],
+              'CMAKE_BUILD_TYPE':['', 'Build type Debug/Release',
+                                  '--CMAKE_BUILD_TYPE=Debug'],                     
               'CMAKE_C_COMPILER':['', 'C compiler to use',
                                   '--CMAKE_C_COMPILER=gcc'],
               'CMAKE_C_FLAGS':['','C compiler flags',
@@ -97,7 +99,7 @@ if __name__ == "__main__":
 
         for key in cmake_dict:
             value = cmake_dict[key][0]
-            if key not in ['ENABLE_MPI', 'ENABLE_CUDA', 'CMAKE_C_COMPILER',
+            if key not in ['ENABLE_MPI', 'ENABLE_CUDA', 'CMAKE_BUILD_TYPE', 'CMAKE_C_COMPILER',
                            'CMAKE_CXX_COMPILER', 'MPI_C_COMPILER',
                            'MPI_CXX_COMPILER']:
                 value = wrapInDoubleQuotes(value)
