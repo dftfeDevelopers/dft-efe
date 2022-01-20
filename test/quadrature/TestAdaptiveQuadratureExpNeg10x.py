@@ -108,7 +108,11 @@ class TestAdaptiveQuadratureExpNeg10x(rfm.RegressionTest):
 
         if "parallel" in self.tags:
             self.job.launcher.options = ['']
-            self.extra_resources = ss.setResources(self.tagsDict['arch'])
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 1, 
+                                                   num_tasks_per_node = 10, 
+                                                   mem_per_cpu = '2gb')
 
     @sanity_function
     def validate_test(self):

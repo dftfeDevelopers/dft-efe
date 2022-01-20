@@ -32,7 +32,7 @@ parallel: Parallel tests that requires mpi or openmp
 
 @rfm.simple_test
 class TestMPIRequestersNBXBuildOnly(rfm.CompileOnlyRegressionTest):
-    descr = 'Compike test  for TestMPIRequestersNBX using CMake'
+    descr = 'Compile only test for TestMPIRequestersNBX using CMake'
     build_system = 'CMake'
     make_opts = ['TestMPIRequestersNBX']
     sourcesdir = './src'
@@ -91,12 +91,12 @@ class TestMPIRequestersNBXBuildOnly(rfm.CompileOnlyRegressionTest):
         hasError = True
         msgWarning = "Found warning(s) while compiling."
         msgError = "Found error(s) while compiling."
-        matches = evaluate(sn.findall(r'warning/i', evaluate(self.stdout)))
+        matches = evaluate(sn.findall(r'(?i)warning(?-i)', evaluate(self.stdout)))
         if len(matches) == 0:
             hasWarning = False
 
-        matchesOut = evaluate(sn.findall(r'error/i', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'error/i', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         
@@ -111,3 +111,85 @@ class TestMPIRequestersNBXBuildOnly(rfm.CompileOnlyRegressionTest):
         else:
             msg = ""
             return sn.assert_true(hasTestPassed, msg=msg)
+
+@rfm.simple_test
+class TestMPIRequestersNBXNode1Tasks10BuildAndRun(rfm.RegressionTest):
+    descr = '''Compile and run test for NBX algorithm for determining'''\
+            ''' communication pattern using 1 node and 10 tasks'''
+    build_system = 'CMake'
+    make_opts = ['TestMPIRequestersNBX']
+    executable = './TestMPIRequestersNBX'
+    sourcesdir = './src'
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+                'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'parallel'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    keep_files = []
+    config_opts = cmflags.getConfig(tagsDict['arch'])
+
+    @run_before('compile')
+    def set_compiler_flags(self):
+        self.build_system.make_opts = self.make_opts
+        self.build_system.config_opts = self.config_opts
+    
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 10']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 1, 
+                                                   num_tasks_per_node = 10,
+                                                   mem_per_cpu = '2gb')
+
+    @sanity_function
+    def validate_test(self):
+        '''
+        A user-defined function which decides whether the test passed or not as
+        well as define an error message to display if the test fails.
+        '''
+        # This test does not generate any output. It throws an exception
+        # if the logic of NBX algorithm for finding the communication pattern
+        # fails 
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = "Found error(s) in TestMPIRequestersNBX."
+        msgThrownException = "Found exceptions in TestMPIRequestersNBX."
+        msgAssertFail = "Found assert fail(s) in TestMPIRequestersNBX."
+        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert(?-i)', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert(?-i)', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw(?-i)', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw(?-i)', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)
