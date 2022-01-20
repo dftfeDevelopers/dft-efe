@@ -1,18 +1,20 @@
 
 module list
 
-ouput should be 
+ouput should have the following modules
 
   1) gcc/8.2.0      3) openmpi/4.0.6   5) cuda/11.4.0
-  2) mkl/2021.3.0   4) cmake/3.17.3
+  2) mkl/2021.3.0   4) cmake/3.17.3    6) python3.6-anaconda/5.2.0 
 
-install sphinx, sphinx-rtd-theme and breathe using pip
+install sphinx, sphinx-rtd-theme and breathe using pip (optional)
 
 mkdir build 
 
 For greatlakes:
 
-cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DMPI_C_COMPILER=mpicc -DMPI_CXX_COMPILER=mpic++  -DDFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  -DDFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" -DBUILD_DOCS=OFF -DDEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" -DENABLE_CUDA=ON -DCMAKE_CUDA_FLAGS="-arch=sm_70"
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --CMAKE_C_FLAGS="-march=native" --CMAKE_CXX_FLAGS="-march=native"  --DFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  --DFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-arch=sm_70"
+
+python install.py
 
 For cori gpu:
 
@@ -20,8 +22,4 @@ cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g
 
 make
 
-see generated sphinx doc at "build/docs/sphinx/index.html" 
-
-mpirun --oversubscribe -n 4 dft-efe
-
-
+see generated sphinx doc at "build/docs/sphinx/index.html"  (optional)
