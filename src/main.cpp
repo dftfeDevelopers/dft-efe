@@ -8,10 +8,13 @@
 //
 //
 #include <iostream>
-#include <mpi.h>
 #include <stdio.h>
 
 #include <linearAlgebra/Vector.h>
+
+#ifdef DFTEFE_WITH_MPI
+#  include <mpi.h>
+#endif
 
 #ifdef DFTEFE_WITH_DEVICE
 #  include <utils/DeviceUtils.h>
