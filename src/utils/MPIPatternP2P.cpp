@@ -165,23 +165,47 @@ namespace dftefe
       d_numGhostProcs = ghostProcIdToLocalGhostIndices.size();
       d_ghostProcIds.resize(numGhostProcs);
       d_numGhostIndicesInGhostProcs(numGhostProcs);
-      auto it = ghostProcIdToLocalGhostIndices.begin();
+
+      std::vector<size_type> ghostProcIdsTmp(numGhostProcs);
+      std::vector<size_type> numGhostIndicesTmp(numGhostProcs);
+      std::vector<size_type> flattenedLocalGhostIndicesTmp(0);
+      auto                   it = ghostProcIdToLocalGhostIndices.begin();
       for (unsigned int iGhostProc = 0; iGhostProc < d_numGhostProcs;
            ++iGhostProc)
         {
-          d_ghostProcIds[iGhostProc] = it->first;
+          ghostProcIdsTmp[iGhostProc] = it->first;
           const std::vector<size_type> localGhostIndicesInGhostProc =
             it->second;
-          d_numGhostIndicesInGhostProcs[iGhostProc] =
+          numGhostIndicesInGhostProcsTmp[iGhostProc] =
             localGhostIndicesInGhostProc.size();
 
           //
-          // Append localGhostIndicesInGhostProc to d_flattenedLocalGhostIndices
+          // Append localGhostIndicesInGhostProc to
+          // flattenedLocalGhostIndicesTmp
           //
           std::copy(localGhostIndicesInGhostProc.begin(),
                     localGhostIndicesInGhostProc.end(),
-                    back_inserter(d_flattenedLocalGhostIndices));
+                    back_inserter(flattenedLocalGhostIndicesTmp));
         }
+
+      std::string msg = "In rank " + std::to_string(d_myRank) +
+                        " mismatch of"
+                        " the sizes of ghost indices";
+      DFTEFE_AssertWithMsg(flattenedLocalGhostIndicesTmp.size() ==
+                             ghostIndices.size(),
+                           msg);
+
+      memoryTransfer.copy(d_numGhostProcs,
+                          d_ghostProcIds.begin(),
+                          ghostProcIdsTmp.begin());
+
+      memoryTransfer.copy(d_numGhostProcs,
+                          d_numGhostIndices.begin(),
+                          numGhostIndicesTmp.begin());
+
+      memoryTransfer.copy(ghostIndices.size(),
+                          d_flattenedLocalGhostIndices.begin(),
+                          flattenedLocalGhostIndicesTmp.begin());
     }
 #endif
 

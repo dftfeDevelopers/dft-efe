@@ -36,25 +36,25 @@ namespace dftefe
   namespace utils
   {
     /** @brief A class template to store the communication pattern
-     * (i.e., which entries/nodes to receive from which processor and 
-     * which entries/nodes to send to which processor). 
+     * (i.e., which entries/nodes to receive from which processor and
+     * which entries/nodes to send to which processor).
      *
-     * The template parameter memorySpace defines the MemorySpace (i.e., HOST or DEVICE)
-     * in which the various data members of this object must reside.
+     * The template parameter memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the various data members of this object must reside.
      *
      * + <b>Assumptions</b>
-     *    1. It assumes that a a sparse communication pattern. That is, 
-     *       a given processor only communicates with a few processors. 
+     *    1. It assumes that a a sparse communication pattern. That is,
+     *       a given processor only communicates with a few processors.
      *       This object should be avoided if the communication pattern
      *       is dense (e.g., all-to-all communication)
-     *    2. It assumes that the each processor owns a set of \em continuous 
-     *       integers (indices). Further, the ownership is exclusive (i.e., 
+     *    2. It assumes that the each processor owns a set of \em continuous
+     *       integers (indices). Further, the ownership is exclusive (i.e.,
      *       no index is owned by more than one processor). In other words,
-     *       the different sets of owning indices across all the processors 
-     *       are disjoint. 
+     *       the different sets of owning indices across all the processors
+     *       are disjoint.
      */
     template <dftefe::utils::MemorySpace memorySpace>
-    class MPIPatternP2P 
+    class MPIPatternP2P
     {
       //
       // typedefs
@@ -74,13 +74,13 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       MPIPatternP2P(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<dftefe::global_size_type> &          ghostIndices,
+        const std::vector<dftefe::global_size_type> &       ghostIndices,
         MPI_Comm &                                          mpiComm);
 
       void
       reinit(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<dftefe::global_size_type> &          ghostIndices,
+        const std::vector<dftefe::global_size_type> &       ghostIndices,
         MPI_Comm &                                          mpiComm);
 #else
       MPIPatternP2P() = default;
@@ -158,28 +158,30 @@ namespace dftefe
       //  A flattened vector of size number of ghosts containing the ghost
       //  indices ordered as per the list of ghost processor Ids in
       //  d_ghostProcIds In other words it stores a concatentaion of the lists
-      //  L_i = {g_{k_i,1},, g_{k_i,2}, ..., g_{k_i,N_i}}, where g's are the
-      //  ghost indices, k_i is the rank of the i-th ghost processor (i.e.,
-      //  d_ghostProcIds[i]) and N_i is the number of ghost indices owned by the
-      //  i-th ghost processor (i.e., d_numGhostIndicesInGhostProcs[i]).
+      //  \f$L_i = \{g_{k_i,1},, g_{k_i,2}, ..., g_{k_i,N_i}\}\f$, where
+      //  \f$g\f$'s are the ghost indices, \f$k_i\f$ is the rank of the
+      //  \f$i\f$-th ghost processor (i.e., d_ghostProcIds[i]) and \f$N_i\f$
+      //  is the number of ghost indices owned by the \f$i\f$-th
+      //  ghost processor (i.e., d_numGhostIndicesInGhostProcs[i]).
       //
-      //  NOTE: L_i has to be an increasing set.
+      //  @note \f$L_i\f$ has to be an increasing set.
       //
-      //  NOTE: We store only the ghost index local to this processor, i.e.,
+      //  @note We store only the ghost index local to this processor, i.e.,
       //  position of the ghost index in d_ghostIndicesSet or d_ghostIndices.
       //  This is done to use size_type which is unsigned int instead of
       //  global_size_type which is long unsigned it. This helps in reducing the
       //  volume of data transfered during MPI calls.
       //
-      //  NOTE: In the case that the locally owned ranges across all the
+      //  @note In the case that the locally owned ranges across all the
       //  processors are ordered as per the processor Id, this vector is
       //  redundant and one can only work with d_ghostIndices and
       //  d_numGhostIndicesInGhostProcs. By locally owned range being ordered as
-      //  per the processor Id, means that the ranges for processor 0, 1, ....,
-      //  P-1 are [N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P) where
-      //  N_0, N_1, ..., N_P are non-decreasing. But a more general case,
-      //  the locally owned ranges are not ordered as per the processor Id, this
-      //  following array is useful
+      //  per the processor Id, means that the ranges for processor
+      //  \f$0, 1,\ldots,P-1\f$ are
+      //  \f$[N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P)\f$ where
+      //  \f$N_0, N_1,\ldots, N_P\f$ are non-decreasing. But a more general
+      //  case, the locally owned ranges are not ordered as per the processor
+      //  Id, this following array is useful
       ///
       SizeTypeVector<memorySpace> d_flattenedLocalGhostIndices;
 
@@ -196,23 +198,25 @@ namespace dftefe
       //  processors.
       SizeTypeVector<memorySpace> d_numOwnedIndicesToSendToProcs;
 
-      /// Vector of size \sum_i d_numOwnedForToSendProcs[i] to store all the
-      /// locally owned indices
+      /// Vector of size \f$\sum_i\f$ d_numOwnedForToSendProcs[i]
+      //  to store all thelocally owned indices
       //  which other processors need (i.e., which are ghost indices in other
-      //  processors). It is stored as a concatentation of lists where the i-th
-      //  list indices L_i = {o_{k_i,1}, o_{k_i,2}, ..., o_{k_i,N_i}}, where o's
-      //  are indices to-send to other processors, k_i is the rank of the i-th
-      //  to-send processor (i.e., d_toSendProcIds[i]) and N_i is the number of
+      //  processors). It is stored as a concatentation of lists where the
+      //  \f$i\f$-th list indices
+      //  \f$L_i = \{o_{k_i,1}, o_{k_i,2}, ..., o_{k_i,N_i}\}\f$,
+      //  where \f$o\f$'s are indices to-send to other processors,
+      //  \f$k_i\f$ is the rank of the \f$i\f$-th to-send processor
+      //  (i.e., d_toSendProcIds[i]) and N_i is the number of
       //  indices to be sent to i-th to-send processor (i.e.,
       //  d_numOwnedIndicesToSendProcs[i])
       //
-      //  NOTE: We store only the indices local to this processor, i.e.,
+      //  @note We store only the indices local to this processor, i.e.,
       //  the relative position of the index in the locally owned range of this
       //  processor This is done to use size_type which is unsigned int instead
       //  of global_size_type which is long unsigned it. This helps in reducing
       //  the volume of data transfered during MPI calls.
       //
-      //  NOTE: The list L_i must be ordered.
+      //  @note The list \f$L_i\f$ must be ordered.
       SizeTypeVector<memorySpace> d_flattenedLocalToSendIndices;
 
       MPI_Comm  d_mpiComm;
