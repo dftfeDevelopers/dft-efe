@@ -36,6 +36,7 @@
 
 #CMAKE files
 CMakeCache.txt
+CMakeConfigOptions.txt
 CMakeFiles/
 Makefile
 main
