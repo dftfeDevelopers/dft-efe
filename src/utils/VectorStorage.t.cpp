@@ -195,6 +195,20 @@ namespace dftefe
     {
       return d_data;
     }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceDst>
+    void
+    VectorStorage::transfer(VectorStorage<ValueType, memorySpaceDst> & 
+	dstVectorStorage) const
+    {
+      throwExceptio<DomainError>(d_size==dstVectorStorage.size(),
+	  "The source and destination VectorStorage are of different sizes");
+        MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+	memoryTransfer.copy(d_size, d_data, dstVectorStorage.begin()); 
+    }
+
+      
 
   } // namespace utils
 } // namespace dftefe

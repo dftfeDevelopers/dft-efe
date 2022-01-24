@@ -36,6 +36,18 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class VectorStorage
     {
+
+      /**
+       * @brief A class template to provide an interface that can act similar to 
+       * STL vectors but with different MemorySpace---
+       * HOST (cpu) , DEVICE (gpu), etc,.
+       * 
+       * @tparam ValueType The underlying value type for the VectorStorage 
+       *  (e.g., int, double, complex<double>, etc.)
+       * @tparam memorySpace The memory space in which the VectorStorage needs
+       *  to reside
+       *
+       */ 
       typedef ValueType        value_type;
       typedef ValueType *      pointer;
       typedef ValueType &      reference;
@@ -47,8 +59,8 @@ namespace dftefe
       VectorStorage() = default;
 
       /**
-       * @brief Copy constructor for a Vector
-       * @param[in] u Vector object to copy from
+       * @brief Copy constructor for a VectorStorage
+       * @param[in] u VectorStorage object to copy from
        */
       VectorStorage(const VectorStorage &u);
 
@@ -175,6 +187,23 @@ namespace dftefe
        */
       const ValueType *
       data() const noexcept;
+
+      /**
+       * @brief Copies the data to a VectorStorage object in a different memory space.
+       * This provides a seamless interface to copy back and forth between memory spaces
+       * , including between the same memory spaces.
+       *
+       * @note The destination VectorStorage must be pre-allocated appropriately
+       *
+       * @tparam memorySpaceDst memory space of the destination VectorStorage
+       * @param[in] dstVectorStorage reference to the destination 
+       *  VectorStorage. It must be pre-allocated appropriately
+       * @param[out] dstVectorStorage reference to the destination 
+       *  VectorStorage with the data copied into it
+       */
+      template<dftefe::utils::MemorySpace memorySpaceDst>
+      void
+	transfer(VectorStorage<ValueType, memorySpaceDst> & dstVectorStorage) const;
 
     private:
       ValueType *d_data = nullptr;

@@ -207,7 +207,54 @@ namespace dftefe
                           d_flattenedLocalGhostIndices.begin(),
                           flattenedLocalGhostIndicesTmp.begin());
     }
+
 #endif
+    template <dftefe::utils::MemorySpace memorySpace>
+    const GlobalSizeTypeVector<memorySpace> &
+    MPIPatternP2P::getGhostIndices() const
+    {
+      return d_ghostIndices;
+    }
+      
+    template <dftefe::utils::MemorySpace memorySpace>
+      const SizeTypeVector<memorySpace> &
+      MPIPatternP2P::getGhostProcIds() const
+      {
+	return d_ghostProcIds;
+      }
+      
+    template <dftefe::utils::MemorySpace memorySpace>
+      const SizeTypeVector<memorySpace> &
+      MPIPatternP2P::getGhostIndices(const size_type procId)
+      {
+
+	size_type cumulativeIndices = 0;
+	size_type numGhostIndicesInProc = 0;
+	auto itProcIds  = d_ghostProcIds.begin();
+	auto itNumGhostIndices = d_numGhostIndices.begin();
+	for(; itProcIds != d_ghostProcIds.end(); ++itProcIds)
+	{
+	  if(procId == *itProcIds)
+	  {
+	    numGhostIndicesInProc = *itNumGhostIndices;
+	    break;
+	  }
+
+	  cumulativeIndices += numGhostIndices;
+	  ++itNumGhostIndices;
+	}
+
+	std::string msg = "The processor Id " + std::to_string(procId) + 
+	  " does not contain any ghost indices for the current processor"  
+	  " (i.e., processor Id " + std::to_string(d_myRank) + ")";
+	throwException<InvalidArgument>(itProcIds != d_ghostProcIds.end(), msg);
+	
+	SizeTypeVector returnValue(numGhostIndicesInProc);
+        MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+	memoryTransfer.copy(numGhostIndicesInProc,
+			returnValue.begin(),
+			d_flattenedLocalGhostIndices.begin() + cumulativeIndices);
+      }
 
   } // end of namespace utils
 

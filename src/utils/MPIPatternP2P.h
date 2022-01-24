@@ -111,8 +111,14 @@ namespace dftefe
       localToGlobal(const size_type) const;
 
 
-      const std::vector<global_size_type> &
-      getGhostIndicesVec() const;
+      const GlobalSizeTypeVector &
+      getGhostIndices() const;
+      
+      const SizeTypeVector &
+      getGhostProcIds() const;
+      
+      const SizereTypeVector &
+      getLocalGhostIndices(const size_type procId) const;
 
       const std::vector<global_size_type> &
       getImportIndicesVec() const;
@@ -130,97 +136,115 @@ namespace dftefe
       thisProcessId() const override;
 
     private:
+     
+      /**
+       * A pair \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor. 
+       *
+       * @note It is an open interval where \f$a\f$ is included, 
+       * but \f$b\f$ is not included.
+       */
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
 
-
-      /// Vector to store an ordered set of ghost indices
-      /// (ordered in increasing order and non-repeating)
+      /**
+       * Vector to store an ordered set of ghost indices
+       * (ordered in increasing order and non-repeating)
+       */
       GlobalSizeTypeVector<memorySpace> d_ghostIndices;
 
-      ///
-      // Number of ghost processors for the current processor. A ghost processor
-      // is one which owns at least of the ghost indices of this processor
-      ///
+      /**
+       * Number of ghost processors for the current processor. A ghost processor
+       * is one which owns at least one of the ghost indices of this processor.
+       */
       size_type d_numGhostProcs;
 
-      ///
-      // Vector to store the ghost processor Ids. A ghost processor is
-      // one which owns at least of the ghost indices of this processor.
-      ///
+      /**
+       * Vector to store the ghost processor Ids. A ghost processor is
+       * one which owns at least one of the ghost indices of this processor.
+       */
       SizeTypeVector<memorySpace> d_ghostProcIds;
 
-      /// Vector of size number of ghost processors to store how many ghost
-      /// indices
-      //  of this current processor are owned by a ghost processor.
+      /** Vector of size number of ghost processors to store how many ghost
+       * indices
+       *  of this current processor are owned by a ghost processor.
+       */
       SizeTypeVector<memorySpace> d_numGhostIndicesInGhostProcs;
 
-      ///
-      //  A flattened vector of size number of ghosts containing the ghost
-      //  indices ordered as per the list of ghost processor Ids in
-      //  d_ghostProcIds In other words it stores a concatentaion of the lists
-      //  \f$L_i = \{g_{k_i,1},, g_{k_i,2}, ..., g_{k_i,N_i}\}\f$, where
-      //  \f$g\f$'s are the ghost indices, \f$k_i\f$ is the rank of the
-      //  \f$i\f$-th ghost processor (i.e., d_ghostProcIds[i]) and \f$N_i\f$
-      //  is the number of ghost indices owned by the \f$i\f$-th
-      //  ghost processor (i.e., d_numGhostIndicesInGhostProcs[i]).
-      //
-      //  @note \f$L_i\f$ has to be an increasing set.
-      //
-      //  @note We store only the ghost index local to this processor, i.e.,
-      //  position of the ghost index in d_ghostIndicesSet or d_ghostIndices.
-      //  This is done to use size_type which is unsigned int instead of
-      //  global_size_type which is long unsigned it. This helps in reducing the
-      //  volume of data transfered during MPI calls.
-      //
-      //  @note In the case that the locally owned ranges across all the
-      //  processors are ordered as per the processor Id, this vector is
-      //  redundant and one can only work with d_ghostIndices and
-      //  d_numGhostIndicesInGhostProcs. By locally owned range being ordered as
-      //  per the processor Id, means that the ranges for processor
-      //  \f$0, 1,\ldots,P-1\f$ are
-      //  \f$[N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P)\f$ where
-      //  \f$N_0, N_1,\ldots, N_P\f$ are non-decreasing. But a more general
-      //  case, the locally owned ranges are not ordered as per the processor
-      //  Id, this following array is useful
-      ///
+      /**
+       * A flattened vector of size number of ghosts containing the ghost
+       * indices ordered as per the list of ghost processor Ids in
+       * d_ghostProcIds In other words it stores a concatentaion of the lists
+       * \f$L_i = \{g^{(k_i)}_1,g^{(k_i)}_2,\ldots,g^{(k_i)}_{N_i}\}\f$, where
+       * \f$g\f$'s are the ghost indices, \f$k_i\f$ is the rank of the
+       * \f$i\f$-th ghost processor (i.e., d_ghostProcIds[i]) and \f$N_i\f$
+       * is the number of ghost indices owned by the \f$i\f$-th
+       * ghost processor (i.e., d_numGhostIndicesInGhostProcs[i]).
+
+       * @note \f$L_i\f$ has to be an increasing set.
+
+       * @note We store only the ghost index local to this processor, i.e.,
+       * position of the ghost index in d_ghostIndicesSet or d_ghostIndices.
+       * This is done to use size_type which is unsigned int instead of
+       * global_size_type which is long unsigned it. This helps in reducing the
+       * volume of data transfered during MPI calls.
+
+       * @note In the case that the locally owned ranges across all the
+       * processors are ordered as per the processor Id, this vector is
+       * redundant and one can only work with d_ghostIndices and
+       * d_numGhostIndicesInGhostProcs. By locally owned range being ordered as
+       * per the processor Id, means that the ranges for processor
+       * \f$0, 1,\ldots,P-1\f$ are
+       * \f$[N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P)\f$ where
+       * \f$N_0, N_1,\ldots, N_P\f$ are non-decreasing. But a more general
+       * case, the locally owned ranges are not ordered as per the processor
+       * Id, this following array is useful.
+       */
       SizeTypeVector<memorySpace> d_flattenedLocalGhostIndices;
 
-      ///
-      // Vector to store the to-send processor Ids. A to-send processor is
-      // one which owns at least of one of the locally owned indices of this
-      // processor as its ghost index
-      ///
+      /**
+       * Vector to store the to-send processor Ids. A to-send processor is
+       * one which owns at least one of the locally owned indices of this
+       * processor as its ghost index.
+       */
       SizeTypeVector<memorySpace> d_toSendProcIds;
 
-      /// Vector of size number of to-send processors to store how many locally
-      /// owned indices
-      //  of this current processor are need ghost in each of the to-send
-      //  processors.
+      /**
+       * Vector of size number of to-send processors to store how many locally
+       * owned indices
+       * of this current processor are need ghost in each of the to-send
+       *  processors.
+       */
       SizeTypeVector<memorySpace> d_numOwnedIndicesToSendToProcs;
 
-      /// Vector of size \f$\sum_i\f$ d_numOwnedForToSendProcs[i]
-      //  to store all thelocally owned indices
-      //  which other processors need (i.e., which are ghost indices in other
-      //  processors). It is stored as a concatentation of lists where the
-      //  \f$i\f$-th list indices
-      //  \f$L_i = \{o_{k_i,1}, o_{k_i,2}, ..., o_{k_i,N_i}\}\f$,
-      //  where \f$o\f$'s are indices to-send to other processors,
-      //  \f$k_i\f$ is the rank of the \f$i\f$-th to-send processor
-      //  (i.e., d_toSendProcIds[i]) and N_i is the number of
-      //  indices to be sent to i-th to-send processor (i.e.,
-      //  d_numOwnedIndicesToSendProcs[i])
-      //
-      //  @note We store only the indices local to this processor, i.e.,
-      //  the relative position of the index in the locally owned range of this
-      //  processor This is done to use size_type which is unsigned int instead
-      //  of global_size_type which is long unsigned it. This helps in reducing
-      //  the volume of data transfered during MPI calls.
-      //
-      //  @note The list \f$L_i\f$ must be ordered.
+      /** Vector of size \f$\sum_i\f$ d_numOwnedForToSendProcs[i]
+       * to store all thelocally owned indices
+       * which other processors need (i.e., which are ghost indices in other
+       * processors). It is stored as a concatentation of lists where the
+       * \f$i\f$-th list indices
+       * \f$L_i = \{o^{(k_i)}_1,o^{(k_i)}_2,\ldots,o^{(k_i)}_{N_i}\}\f$, where
+       * where \f$o\f$'s are indices to-send to other processors,
+       * \f$k_i\f$ is the rank of the \f$i\f$-th to-send processor
+       * (i.e., d_toSendProcIds[i]) and N_i is the number of
+       * indices to be sent to i-th to-send processor (i.e.,
+       * d_numOwnedIndicesToSendProcs[i]).
+       *
+       * @note We store only the indices local to this processor, i.e.,
+       * the relative position of the index in the locally owned range of this
+       * processor This is done to use size_type which is unsigned int instead
+       * of global_size_type which is long unsigned it. This helps in reducing
+       * the volume of data transfered during MPI calls.
+       *
+       *  @note The list \f$L_i\f$ must be ordered.
+       */
       SizeTypeVector<memorySpace> d_flattenedLocalToSendIndices;
 
-      MPI_Comm  d_mpiComm;
+      /// MPI Communicator object.
+      MPI_Comm d_mpiComm;
+
+      /// Number of processors in the MPI Communicator.
       size_type d_nprocs;
+
+      /// Rank of the current processor.
       size_type d_myRank;
     };
 
