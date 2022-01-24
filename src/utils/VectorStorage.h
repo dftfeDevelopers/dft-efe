@@ -204,6 +204,36 @@ namespace dftefe
       void
       transfer(
         VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage) const;
+      
+      /**
+       * @brief Copies the data to a VectorStorage object in a different memory space.
+       * This provides a seamless interface to copy back and forth between
+       * memory spaces , including between the same memory spaces. This is a more
+       * granular version of the above transfer function as it provides transfer
+       * from a specific portion of the source VectorStorage to a specific
+       * portion of the destination VectorStorage.
+       *
+       * @note The destination VectorStorage must be pre-allocated appropriately
+       *
+       * @tparam memorySpaceDst memory space of the destination VectorStorage
+       * @param[in] dstVectorStorage reference to the destination
+       *  VectorStorage. It must be pre-allocated appropriately
+       * @param[in] N number of entries of the source VectorStorage 
+       *  that needs to be copied to the destination VectorStorage
+       * @param[in] srcOffset offset relative to the start of the source 
+       *  VectorStorage from which we need to copy data
+       * @param[in] dstOffset offset relative to the start of the destination 
+       *  VectorStorage to which we need to copy data
+       * @param[out] dstVectorStorage reference to the destination
+       *  VectorStorage with the data copied into it
+       */
+      template <dftefe::utils::MemorySpace memorySpaceDst>
+      void
+      transfer(
+        VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage,
+	const size_type N,
+	const size_type srcOffset,
+	const size_type dstOffset) const;
 
     private:
       ValueType *d_data = nullptr;

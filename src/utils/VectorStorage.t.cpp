@@ -208,6 +208,31 @@ namespace dftefe
       MemoryTransfer<memorySpaceDst, memorySpace> memoryTransfer;
       memoryTransfer.copy(d_size, dstVectorStorage.begin(), d_data);
     }
+      
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceDst>
+      void
+      VectorStorage<ValueType, memorySpace>::transfer(
+        VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage,
+	const size_type N,
+	const size_type srcOffset,
+	const size_type dstOffset) const
+      {
+
+	throwException<DomainError>(srcOffset + N <= d_size, 
+	    "The offset and copy size specified for the source VectorStorage"
+	    " is out of range for it.");
+
+	throwException<DomainError>(
+	    dstOffset + N <= dstVectorStorage.size(), 
+	    "The offset and size specified for the destination VectorStorage"
+	    " is out of range for it.");
+      
+	MemoryTransfer<memorySpaceDst, memorySpace> memoryTransfer;
+        memoryTransfer.copy(N, dstVectorStorage.begin() + dstOffset, 
+	  this->begin()+srcOffset);
+
+      }
 
 
 
