@@ -205,8 +205,8 @@ namespace dftefe
       throwException<DomainError>(
         d_size == dstVectorStorage.size(),
         "The source and destination VectorStorage are of different sizes");
-      MemoryTransfer<memorySpaceDst, memorySpace> memoryTransfer;
-      memoryTransfer.copy(d_size, dstVectorStorage.begin(), this->begin());
+      MemoryTransfer<memorySpaceDst, memorySpace>::copy(
+        d_size, dstVectorStorage.begin(), this->begin());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -228,10 +228,8 @@ namespace dftefe
         "The offset and size specified for the destination VectorStorage"
         " is out of range for it.");
 
-      MemoryTransfer<memorySpaceDst, memorySpace> memoryTransfer;
-      memoryTransfer.copy(N,
-                          dstVectorStorage.begin() + dstOffset,
-                          this->begin() + srcOffset);
+      MemoryTransfer<memorySpaceDst, memorySpace>::copy(
+        N, dstVectorStorage.begin() + dstOffset, this->begin() + srcOffset);
     }
 
 
@@ -244,8 +242,8 @@ namespace dftefe
       throwException<DomainError>(
         d_size == srcVectorStorage.size(),
         "The source and destination VectorStorage are of different sizes");
-      MemoryTransfer<memorySpace, memorySpaceSrc> memoryTransfer;
-      memoryTransfer.copy(d_size, this->begin(), srcVectorStorage.begin());
+      MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
+        d_size, this->begin(), srcVectorStorage.begin());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -267,10 +265,8 @@ namespace dftefe
         "The offset and size specified for the destination VectorStorage"
         " is out of range for it.");
 
-      MemoryTransfer<memorySpace, memorySpaceSrc> memoryTransfer;
-      memoryTransfer.copy(N,
-                          this->begin() + dstOffset,
-                          srcVectorStorage.begin() + srcOffset);
+      MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
+        N, this->begin() + dstOffset, srcVectorStorage.begin() + srcOffset);
     }
 
   } // namespace utils
