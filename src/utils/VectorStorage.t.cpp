@@ -255,7 +255,7 @@ namespace dftefe
       VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage,
       const size_type                           N,
       const size_type                           srcOffset,
-      const size_type                           dstOffset) 
+      const size_type                           dstOffset)
     {
       throwException<DomainError>(
         srcOffset + N <= srcVectorStorage.size(),
