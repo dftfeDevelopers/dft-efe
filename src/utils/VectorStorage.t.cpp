@@ -56,13 +56,14 @@ namespace dftefe
       d_size = size;
       if (size > 0)
         {
-          d_data =
-            dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(
-              size, nullptr);
+          dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(
+              size, &d_data);
           dftefe::utils::MemoryManager<ValueType, memorySpace>::set(size,
                                                                     d_data,
                                                                     initVal);
         }
+      else
+	d_data = nullptr;
     }
 
     //

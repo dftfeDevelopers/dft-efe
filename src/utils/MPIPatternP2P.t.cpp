@@ -156,7 +156,7 @@ namespace dftefe
       d_ghostIndices.resize(ghostIndices.size());
       memoryTransfer.copy(d_ghostIndices.size(),
 	  d_ghostIndices.begin(),
-	  ghostIndices.begin());
+	  &ghostIndices[0]);
 
       std::map<size_type, std::vector<size_type>>
 	ghostProcIdToLocalGhostIndices;
@@ -168,7 +168,7 @@ namespace dftefe
 
       d_numGhostProcs = ghostProcIdToLocalGhostIndices.size();
       d_ghostProcIds.resize(d_numGhostProcs);
-      d_numGhostIndicesInGhostProcs(d_numGhostProcs);
+      d_numGhostIndicesInGhostProcs.resize(d_numGhostProcs);
 
       std::vector<size_type> ghostProcIdsTmp(d_numGhostProcs);
       std::vector<size_type> numGhostIndicesInGhostProcsTmp(d_numGhostProcs);
@@ -201,15 +201,15 @@ namespace dftefe
 
       memoryTransfer.copy(d_numGhostProcs,
 	  d_ghostProcIds.begin(),
-	  ghostProcIdsTmp.begin());
+	  &ghostProcIdsTmp[0]);
 
       memoryTransfer.copy(d_numGhostProcs,
 	  d_numGhostIndicesInGhostProcs.begin(),
-	  numGhostIndicesInGhostProcsTmp.begin());
+	  &numGhostIndicesInGhostProcsTmp[0]);
 
       memoryTransfer.copy(ghostIndices.size(),
 	  d_flattenedLocalGhostIndices.begin(),
-	  flattenedLocalGhostIndicesTmp.begin());
+	  &flattenedLocalGhostIndicesTmp[0]);
     }
 
 #endif

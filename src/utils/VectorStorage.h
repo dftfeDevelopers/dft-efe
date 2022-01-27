@@ -164,7 +164,7 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the Vector
        */
       void
-      resize(size_type size, ValueType initVal = 0);
+      resize(size_type size, ValueType initVal = ValueType());
 
       /**
        * @brief Returns the dimension of the Vector

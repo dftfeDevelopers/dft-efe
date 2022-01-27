@@ -229,10 +229,10 @@ namespace dftefe
       MPI_Comm d_mpiComm;
 
       /// Number of processors in the MPI Communicator.
-      size_type d_nprocs;
+      int d_nprocs;
 
       /// Rank of the current processor.
-      size_type d_myRank;
+      int d_myRank;
     };
 
   } // end of namespace utils
