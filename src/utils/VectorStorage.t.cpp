@@ -195,20 +195,79 @@ namespace dftefe
     {
       return d_data;
     }
-    
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpaceDst>
     void
-    VectorStorage::transfer(VectorStorage<ValueType, memorySpaceDst> & 
-	dstVectorStorage) const
+    VectorStorage<ValueType, memorySpace>::copyTo(
+      VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage) const
     {
-      throwExceptio<DomainError>(d_size==dstVectorStorage.size(),
-	  "The source and destination VectorStorage are of different sizes");
-        MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
-	memoryTransfer.copy(d_size, d_data, dstVectorStorage.begin()); 
+      throwException<DomainError>(
+        d_size == dstVectorStorage.size(),
+        "The source and destination VectorStorage are of different sizes");
+      MemoryTransfer<memorySpaceDst, memorySpace>::copy(
+        d_size, dstVectorStorage.begin(), this->begin());
     }
 
-      
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceDst>
+    void
+    VectorStorage<ValueType, memorySpace>::copyTo(
+      VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage,
+      const size_type                           N,
+      const size_type                           srcOffset,
+      const size_type                           dstOffset) const
+    {
+      throwException<DomainError>(
+        srcOffset + N <= d_size,
+        "The offset and copy size specified for the source VectorStorage"
+        " is out of range for it.");
+
+      throwException<DomainError>(
+        dstOffset + N <= dstVectorStorage.size(),
+        "The offset and size specified for the destination VectorStorage"
+        " is out of range for it.");
+
+      MemoryTransfer<memorySpaceDst, memorySpace>::copy(
+        N, dstVectorStorage.begin() + dstOffset, this->begin() + srcOffset);
+    }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceSrc>
+    void
+    VectorStorage<ValueType, memorySpace>::copyFrom(
+      const VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage)
+    {
+      throwException<DomainError>(
+        d_size == srcVectorStorage.size(),
+        "The source and destination VectorStorage are of different sizes");
+      MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
+        d_size, this->begin(), srcVectorStorage.begin());
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceSrc>
+    void
+    VectorStorage<ValueType, memorySpace>::copyFrom(
+      VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage,
+      const size_type                           N,
+      const size_type                           srcOffset,
+      const size_type                           dstOffset)
+    {
+      throwException<DomainError>(
+        srcOffset + N <= srcVectorStorage.size(),
+        "The offset and copy size specified for the source VectorStorage"
+        " is out of range for it.");
+
+      throwException<DomainError>(
+        dstOffset + N <= d_size,
+        "The offset and size specified for the destination VectorStorage"
+        " is out of range for it.");
+
+      MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
+        N, this->begin() + dstOffset, srcVectorStorage.begin() + srcOffset);
+    }
 
   } // namespace utils
 } // namespace dftefe
