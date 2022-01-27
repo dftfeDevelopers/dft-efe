@@ -113,10 +113,10 @@ namespace dftefe
 
       const GlobalSizeTypeVector &
       getGhostIndices() const;
-      
+
       const SizeTypeVector &
       getGhostProcIds() const;
-      
+
       const SizereTypeVector &
       getLocalGhostIndices(const size_type procId) const;
 
@@ -136,12 +136,11 @@ namespace dftefe
       thisProcessId() const override;
 
     private:
-     
       /**
        * A pair \f$(a,b)\f$ which defines a range of indices (continuous)
-       * that are owned by the current processor. 
+       * that are owned by the current processor.
        *
-       * @note It is an open interval where \f$a\f$ is included, 
+       * @note It is an open interval where \f$a\f$ is included,
        * but \f$b\f$ is not included.
        */
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
