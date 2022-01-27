@@ -30,6 +30,8 @@
 #  include <mpi.h>
 #endif
 
+#include <utils/MemorySpaceType.h>
+#include <utils/VectorStorage.h>
 #include <vector>
 namespace dftefe
 {
@@ -60,14 +62,10 @@ namespace dftefe
       // typedefs
       //
     public:
-      template <dftefe::utils::MemorySpace memorySpace>
       using SizeTypeVector =
-        utils::VectorStorage<size_type, dftefe::utils::MemorySpace memorySpace>;
-
-      template <dftefe::utils::MemorySpace memorySpace>
+        utils::VectorStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
-        utils::VectorStorage<global_size_type,
-                             dftefe::utils::MemorySpace memorySpace>;
+        utils::VectorStorage<global_size_type, memorySpace>;
 
     public:
       virtual ~MPIPatternP2P() = default;
@@ -75,18 +73,18 @@ namespace dftefe
       MPIPatternP2P(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
-        MPI_Comm &                                          mpiComm);
+        const MPI_Comm &                                          mpiComm);
 
-      void
-      reinit(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<dftefe::global_size_type> &       ghostIndices,
-        MPI_Comm &                                          mpiComm);
+      //void
+      //reinit(
+      //  const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+      //  const std::vector<dftefe::global_size_type> &       ghostIndices,
+      //  MPI_Comm &                                          mpiComm);
 #else
       MPIPatternP2P() = default;
 
-      void
-      reinit(){};
+      //void
+      //reinit(){};
 #endif
 
       size_type
@@ -117,23 +115,13 @@ namespace dftefe
       const SizeTypeVector &
       getGhostProcIds() const;
 
-      const SizereTypeVector &
+      const SizeTypeVector &
       getLocalGhostIndices(const size_type procId) const;
 
-      const std::vector<global_size_type> &
-      getImportIndicesVec() const;
-
-
-      const std::vector<size_type> &
-      getGhostProcIdToNumGhostMap() const;
-
-      const std::vector<size_type> &
-      getImportProcIdToNumLocallyOwnedMap() const;
-
       size_type
-      nmpiProcesses() const override;
+      nmpiProcesses() const;
       size_type
-      thisProcessId() const override;
+      thisProcessId() const;
 
     private:
       /**
@@ -149,7 +137,7 @@ namespace dftefe
        * Vector to store an ordered set of ghost indices
        * (ordered in increasing order and non-repeating)
        */
-      GlobalSizeTypeVector<memorySpace> d_ghostIndices;
+      GlobalSizeTypeVector d_ghostIndices;
 
       /**
        * Number of ghost processors for the current processor. A ghost processor
@@ -161,13 +149,13 @@ namespace dftefe
        * Vector to store the ghost processor Ids. A ghost processor is
        * one which owns at least one of the ghost indices of this processor.
        */
-      SizeTypeVector<memorySpace> d_ghostProcIds;
+      SizeTypeVector d_ghostProcIds;
 
       /** Vector of size number of ghost processors to store how many ghost
        * indices
        *  of this current processor are owned by a ghost processor.
        */
-      SizeTypeVector<memorySpace> d_numGhostIndicesInGhostProcs;
+      SizeTypeVector d_numGhostIndicesInGhostProcs;
 
       /**
        * A flattened vector of size number of ghosts containing the ghost
@@ -198,14 +186,14 @@ namespace dftefe
        * case, the locally owned ranges are not ordered as per the processor
        * Id, this following array is useful.
        */
-      SizeTypeVector<memorySpace> d_flattenedLocalGhostIndices;
+      SizeTypeVector d_flattenedLocalGhostIndices;
 
       /**
        * Vector to store the to-send processor Ids. A to-send processor is
        * one which owns at least one of the locally owned indices of this
        * processor as its ghost index.
        */
-      SizeTypeVector<memorySpace> d_toSendProcIds;
+      SizeTypeVector d_toSendProcIds;
 
       /**
        * Vector of size number of to-send processors to store how many locally
@@ -213,7 +201,7 @@ namespace dftefe
        * of this current processor are need ghost in each of the to-send
        *  processors.
        */
-      SizeTypeVector<memorySpace> d_numOwnedIndicesToSendToProcs;
+      SizeTypeVector d_numOwnedIndicesToSendToProcs;
 
       /** Vector of size \f$\sum_i\f$ d_numOwnedForToSendProcs[i]
        * to store all thelocally owned indices
@@ -235,7 +223,7 @@ namespace dftefe
        *
        *  @note The list \f$L_i\f$ must be ordered.
        */
-      SizeTypeVector<memorySpace> d_flattenedLocalToSendIndices;
+      SizeTypeVector d_flattenedLocalToSendIndices;
 
       /// MPI Communicator object.
       MPI_Comm d_mpiComm;
@@ -251,4 +239,5 @@ namespace dftefe
 
 } // end of namespace dftefe
 
+#include <utils/MPIPatternP2P.t.cpp>
 #endif // dftefeMPIPatternP2P_h
