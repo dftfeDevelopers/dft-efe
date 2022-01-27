@@ -1,3 +1,4 @@
+if (NOT TARGET dft-efe-linalg)
 if(${CMAKE_CXX_STANDARD})
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,35 +17,32 @@ if ("${DFTEFE_SCALAPACK_LIBRARIES}" STREQUAL "")
 	message (FATAL_ERROR  "DFTEFE_SCALAPACK libraries not specified. Please specify -DDFTEFE_SCALAPACK_LIBRARIES in command line")
 endif ()
 
-if(ENABLE_CUDA)
-    enable_language(CUDA)
-if(NOT DEFINED DDFTEFE_WITH_DEVICE)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
-    ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)
-endif()
-endif()
-
-if(ENABLE_MPI)
-	if(NOT DEFINED DDFTEFE_WITH_MPI)
-		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
-	endif()
-	if (NOT MPI_FOUND)
-		find_package(MPI REQUIRED)
-		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH})
-		set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
-	endif()
-endif()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-        DeviceBlasLapackTemplates.cu
-        DeviceLAContextsSingleton.cu
-        VectorKernels.cu
-        Vector.cpp
-        VectorKernels.cpp
-        DeviceLAContextsSingleton.cpp)
+		DeviceBlasLapackTemplates.cu
+		DeviceLAContextsSingleton.cu
+		VectorKernels.cu
+		Vector.cpp
+		VectorKernels.cpp
+		DeviceLAContextsSingleton.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
+
+if(ENABLE_CUDA)
+    enable_language(CUDA)
+	add_compile_definitions(DFTEFE_WITH_DEVICE)
+	add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+endif()
+
+if(ENABLE_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
+	if (NOT MPI_FOUND)
+		find_package(MPI REQUIRED)
+		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		set(DFTEFE_LINEARALGEBRA_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+	endif()
+endif()
 
 include_directories(../)
 
@@ -61,4 +59,5 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 
-target_link_libraries(dft-efe-linalg PRIVATE dft-efe-utils ${DFTEFE_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
+target_link_libraries(dft-efe-linalg PUBLIC dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
+endif()

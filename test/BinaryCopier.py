@@ -33,21 +33,10 @@ the beginning of the file
 def BinCpy(dir):
     [dir_path, dir_name] = os.path.split(dir)
     exe_path = dir_path+"/"+dir_name+"/executable"
-    lib_path = exe_path+"/build"+dir_name[0].upper()+dir_name[1:]
-    # print("exe_path: "+exe_path)
-    # print("lib_path: "+lib_path)
-    if os.path.isdir(exe_path):
-        print("removing executable folder for a clean test...")
-        shutil.rmtree(exe_path)
-    os.mkdir(exe_path)
-    os.mkdir(lib_path)
+    if not os.path.isdir(exe_path):
+        os.mkdir(exe_path)
 
     exe_files = glob.iglob(os.path.join(os.getcwd(), "*.x"))
     for file in exe_files:
         if os.path.isfile(file):
             shutil.copy2(file, exe_path)
-
-    lib_files = glob.iglob(os.path.join(os.getcwd()+"/build"+dir_name[0].upper()+dir_name[1:], "*.so"))
-    for file in lib_files:
-        if os.path.isfile(file):
-            shutil.copy2(file, lib_path)

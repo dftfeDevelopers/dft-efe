@@ -1,4 +1,4 @@
-message( "cmake include path = ${CMAKE_INCLUDE_PATH}")
+if (NOT TARGET dft-efe-basis)
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,9 +25,7 @@ ENDIF()
 
 
 if(ENABLE_MPI)
-	if(NOT DEFINED DDFTEFE_WITH_MPI)
-		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
-	endif()
+	add_compile_definitions(DFTEFE_WITH_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
 		target_include_directories(dft-efe-basis PUBLIC ${MPI_CXX_INCLUDE_PATH})
@@ -40,3 +38,4 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
+endif()

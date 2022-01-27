@@ -13,9 +13,7 @@ target_link_libraries(TestCubicSplineTK PUBLIC dft-efe-utils)
 
 ###### Add all the MPI dependent tests below #######
 if(ENABLE_MPI)
-	if(NOT DEFINED DDFTEFE_WITH_MPI)
-		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
-	endif()
+	add_compile_definitions(DFTEFE_WITH_MPI)
 	add_executable(TestMPIRequestersNBX TestMPIRequestersNBX.cpp)
 	target_link_libraries(TestMPIRequestersNBX PUBLIC dft-efe-utils)
 endif()
