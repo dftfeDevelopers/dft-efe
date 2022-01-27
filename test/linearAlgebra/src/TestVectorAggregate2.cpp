@@ -1,3 +1,24 @@
+/******************************************************************************
+ * Copyright (c) 2021.                                                        *
+ * The Regents of the University of Michigan and DFT-EFE developers.          *
+ *                                                                            *
+ * This file is part of the DFT-EFE code.                                     *
+ *                                                                            *
+ * DFT-EFE is free software: you can redistribute it and/or modify            *
+ *   it under the terms of the Lesser GNU General Public License as           *
+ *   published by the Free Software Foundation, either version 3 of           *
+ *   the License, or (at your option) any later version.                      *
+ *                                                                            *
+ * DFT-EFE is distributed in the hope that it will be useful, but             *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty                  *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
+ *   See the Lesser GNU General Public License for more details.              *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public           *
+ *   License at the top level of DFT-EFE distribution.  If not, see           *
+ *   <https://www.gnu.org/licenses/>.                                         *
+ ******************************************************************************/
+
 #include <complex>
 #include <fstream>
 #include "linearAlgebra/Vector.h"
@@ -7,7 +28,7 @@ main()
 {
   std::string filename = "TestVectorAggregate2.out";
   std::ofstream fout(filename);
-  
+
   unsigned int vSize = 10;
   // test double
   // Refs
@@ -25,25 +46,24 @@ main()
     2.3, 9.1, 1.5, 8.3, 5.4, 10.0, 0.8, 4.4, 1.1, 9.6};
 
 
-  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::HOST> dVecA(
-    vSize, 0),
-    dVecC(vSize, 0), dTemp(vSize, 0);
+  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE>
+    dVecA(vSize, 0), dVecC(vSize, 0), dTemp(vSize, 0);
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dVecA.data(),
                                             dVecStdA.data());
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dTemp.data(),
                                             dVecStdB.data());
 
   // test copy constructor
-  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::HOST> dVecB(
-    dTemp);
+  dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::DEVICE>
+    dVecB(dTemp);
 
   std::vector<double> dPrintCache(vSize, 0.0);
   // test add function
@@ -51,31 +71,26 @@ main()
   dftefe::linearAlgebra::add(dAlpha, dVecA, dBeta, dVecB, dVecC);
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(vSize,
-                                            dPrintCache.data(),
-                                            dVecC.data());
+    dftefe::utils::MemorySpace::DEVICE>::copy(vSize,
+                                              dPrintCache.data(),
+                                              dVecC.data());
   fout << "double add ";
   for (auto i : dPrintCache)
     {
       fout << i << ", ";
     }
   fout << std::endl;
-//  for (auto i : dAddRef)
-//    {
-//      fout << i << ", ";
-//    }
-//  fout << std::endl << std::endl;
 
 
   // test +=
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dVecA.data(),
                                             dVecStdA.data());
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dVecB.data(),
                                             dVecStdB.data());
@@ -83,7 +98,7 @@ main()
   dVecA += dVecB;
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(vSize,
+    dftefe::utils::MemorySpace::DEVICE>::copy(vSize,
                                             dPrintCache.data(),
                                             dVecA.data());
   fout << "double += ";
@@ -92,21 +107,21 @@ main()
       fout << i << ", ";
     }
   fout << std::endl;
-//  for (auto i : dAddEqRef)
-//    {
-//      fout << i << ", ";
-//    }
-//  fout << std::endl << std::endl;
+  //  for (auto i : dAddEqRef)
+  //    {
+  //      fout << i << ", ";
+  //    }
+  //  fout << std::endl << std::endl;
 
   // test -=
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dVecA.data(),
                                             dVecStdA.data());
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             dVecB.data(),
                                             dVecStdB.data());
@@ -114,7 +129,7 @@ main()
   dVecA -= dVecB;
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(vSize,
+    dftefe::utils::MemorySpace::DEVICE>::copy(vSize,
                                             dPrintCache.data(),
                                             dVecA.data());
   fout << "double -= ";
@@ -123,11 +138,11 @@ main()
       fout << i << ", ";
     }
   fout << std::endl;
-//  for (auto i : dMinusEqRef)
-//    {
-//      fout << i << ", ";
-//    }
-//  fout << std::endl << std::endl;
+  //  for (auto i : dMinusEqRef)
+  //    {
+  //      fout << i << ", ";
+  //    }
+  //  fout << std::endl << std::endl;
 
 
   // test complex
@@ -188,24 +203,24 @@ main()
                                                 9.1 - 6.2i};
 
   dftefe::linearAlgebra::Vector<std::complex<double>,
-                                dftefe::utils::MemorySpace::HOST>
+                                dftefe::utils::MemorySpace::DEVICE>
     zVecA(vSize, 0), zTemp(vSize, 0), zVecC(vSize, 0);
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zVecA.data(),
                                             zVecStdA.data());
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zTemp.data(),
                                             zVecStdB.data());
 
   // test copy constructor
   dftefe::linearAlgebra::Vector<std::complex<double>,
-                                dftefe::utils::MemorySpace::HOST>
+                                dftefe::utils::MemorySpace::DEVICE>
     zVecB(zTemp);
 
   // test add function
@@ -215,7 +230,7 @@ main()
   std::vector<std::complex<double>> zPrintCache(vSize, 0.0);
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(vSize,
+    dftefe::utils::MemorySpace::DEVICE>::copy(vSize,
                                             zPrintCache.data(),
                                             zVecC.data());
   fout << "complex<double> add ";
@@ -224,22 +239,22 @@ main()
       fout << i << ", ";
     }
   fout << std::endl;
-//  for (auto i : zAddRef)
-//    {
-//      fout << i << ", ";
-//    }
-//  fout << std::endl << std::endl;
+  //  for (auto i : zAddRef)
+  //    {
+  //      fout << i << ", ";
+  //    }
+  //  fout << std::endl << std::endl;
 
 
   // test +=
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zVecA.data(),
                                             zVecStdA.data());
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zVecB.data(),
                                             zVecStdB.data());
@@ -247,7 +262,7 @@ main()
   zVecA += zVecB;
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(vSize,
+    dftefe::utils::MemorySpace::DEVICE>::copy(vSize,
                                             zPrintCache.data(),
                                             zVecA.data());
   fout << "complex<double> += ";
@@ -256,21 +271,21 @@ main()
       fout << i << ", ";
     }
   fout << std::endl;
-//  for (auto i : zAddEqRef)
-//    {
-//      fout << i << ", ";
-//    }
-//  fout << std::endl << std::endl;
+  //  for (auto i : zAddEqRef)
+  //    {
+  //      fout << i << ", ";
+  //    }
+  //  fout << std::endl << std::endl;
 
   // test -=
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zVecA.data(),
                                             zVecStdA.data());
 
   dftefe::utils::MemoryTransfer<
-    dftefe::utils::MemorySpace::HOST,
+    dftefe::utils::MemorySpace::DEVICE,
     dftefe::utils::MemorySpace::HOST>::copy(vSize,
                                             zVecB.data(),
                                             zVecStdB.data());
@@ -278,7 +293,7 @@ main()
   zVecA -= zVecB;
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
-    dftefe::utils::MemorySpace::HOST>::copy(vSize,
+    dftefe::utils::MemorySpace::DEVICE>::copy(vSize,
                                             zPrintCache.data(),
                                             zVecA.data());
   fout << "complex<double> -= ";
@@ -287,11 +302,11 @@ main()
       fout << i << ", ";
     }
   fout << std::endl;
-//  for (auto i : zMinusEqRef)
-//    {
-//      fout << i << ", ";
-//    }
-//  fout << std::endl << std::endl;
+  //  for (auto i : zMinusEqRef)
+  //    {
+  //      fout << i << ", ";
+  //    }
+  //  fout << std::endl << std::endl;
 
   return 0;
 }

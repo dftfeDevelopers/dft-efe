@@ -41,6 +41,7 @@ CMakeFiles/
 Makefile
 main
 *#main*
+CMakeConfigOptions.txt
 
 #build files
 /*build/

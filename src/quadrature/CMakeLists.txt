@@ -1,5 +1,4 @@
-message( "cmake include path = ${CMAKE_INCLUDE_PATH}")
-
+if (NOT TARGET dft-efe-quadrature)
 find_package(deal.II 9.3.0 REQUIRED)
 include_directories(${DEAL_II_INCLUDE_DIRS})
 
@@ -10,9 +9,7 @@ endif()
 
 
 if(ENABLE_MPI)
-	if(NOT DEFINED DDFTEFE_WITH_MPI)
-		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
-	endif()
+	add_compile_definitions(DFTEFE_WITH_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
 		target_include_directories(dft-efe-quadrature PUBLIC ${MPI_CXX_INCLUDE_PATH})
@@ -40,3 +37,4 @@ endif()
 
 include_directories(../)
 target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils dft-efe-basis ${DFTEFE_MPI_LIBRARIES})
+endif()

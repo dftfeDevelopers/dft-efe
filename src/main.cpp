@@ -52,5 +52,6 @@ main(int argc, char **argv)
     {
       dftefe::utils::DeviceUtils::initialize(world_rank);
     }
+  printf("This is gpu code");
 #endif
 }
