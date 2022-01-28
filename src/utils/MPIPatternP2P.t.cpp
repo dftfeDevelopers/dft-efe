@@ -28,6 +28,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <iostream>
 
 namespace dftefe
 {
@@ -108,7 +109,7 @@ namespace dftefe
 		ghostIndex);
 	    std::string      msg = "Ghost index " + std::to_string(ghostIndex) +
 	      " not found in any of the processors";
-	    DFTEFE_AssertWithMsg(up != locallyOwnedRangesEnd.end(), msg.c_str());
+	    throwException(up != locallyOwnedRangesEnd.end(), msg);
 	    size_type upPos  = std::distance(locallyOwnedRangesEnd.begin(), up);
 	    size_type procId = locallyOwnedRangesEndProcIds[upPos];
 	    ghostProcIdToLocalGhostIndices[procId].push_back(iGhost);
@@ -127,6 +128,7 @@ namespace dftefe
       : d_locallyOwnedRange(locallyOwnedRange)
 	, d_mpiComm(mpiComm)
 	       , d_ghostIndices(0)
+	       , d_numGhostIndices(0)
 	       , d_numGhostProcs(0)
 	       , d_ghostProcIds(0)
 	       , d_numGhostIndicesInGhostProcs(0)
@@ -151,10 +153,11 @@ namespace dftefe
 
       std::set<global_size_type> ghostIndicesSet(ghostIndices.begin(),
 	  ghostIndices.end());
+     
+      d_numGhostIndices = ghostIndices.size();
       MemoryTransfer<memorySpace, MemorySpace::HOST> memoryTransfer;
-
-      d_ghostIndices.resize(ghostIndices.size());
-      memoryTransfer.copy(d_ghostIndices.size(),
+      d_ghostIndices.resize(d_numGhostIndices);
+      memoryTransfer.copy(d_numGhostIndices,
 	  d_ghostIndices.begin(),
 	  &ghostIndices[0]);
 
@@ -174,9 +177,10 @@ namespace dftefe
       std::vector<size_type> numGhostIndicesInGhostProcsTmp(d_numGhostProcs);
       std::vector<size_type> flattenedLocalGhostIndicesTmp(0);
       auto                   it = ghostProcIdToLocalGhostIndices.begin();
-      for (unsigned int iGhostProc = 0; iGhostProc < d_numGhostProcs;
-	  ++iGhostProc)
+      unsigned int iGhostProc = 0;
+      for (; it != ghostProcIdToLocalGhostIndices.end(); ++it)
       {
+
 	ghostProcIdsTmp[iGhostProc] = it->first;
 	const std::vector<size_type> localGhostIndicesInGhostProc =
 	  it->second;
@@ -190,15 +194,18 @@ namespace dftefe
 	std::copy(localGhostIndicesInGhostProc.begin(),
 	    localGhostIndicesInGhostProc.end(),
 	    back_inserter(flattenedLocalGhostIndicesTmp));
+
+	++iGhostProc;
       }
 
       std::string msg = "In rank " + std::to_string(d_myRank) +
 	" mismatch of"
-	" the sizes of ghost indices";
-      DFTEFE_AssertWithMsg(flattenedLocalGhostIndicesTmp.size() ==
-	  ghostIndices.size(),
-	  msg.c_str());
-
+	" the sizes of ghost indices. Expected size: " + 
+	std::to_string(d_numGhostIndices) + " Received size: " +
+	std::to_string(flattenedLocalGhostIndicesTmp.size());
+      throwException<DomainError>(flattenedLocalGhostIndicesTmp.size() ==
+	  d_numGhostIndices,
+	  msg);
       memoryTransfer.copy(d_numGhostProcs,
 	  d_ghostProcIds.begin(),
 	  &ghostProcIdsTmp[0]);
@@ -207,7 +214,8 @@ namespace dftefe
 	  d_numGhostIndicesInGhostProcs.begin(),
 	  &numGhostIndicesInGhostProcsTmp[0]);
 
-      memoryTransfer.copy(ghostIndices.size(),
+      d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
+      memoryTransfer.copy(d_numGhostIndices,
 	  d_flattenedLocalGhostIndices.begin(),
 	  &flattenedLocalGhostIndicesTmp[0]);
     }
@@ -228,7 +236,7 @@ namespace dftefe
       }
 
     template <dftefe::utils::MemorySpace memorySpace>
-      const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+      typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector 
       MPIPatternP2P<memorySpace>::getLocalGhostIndices(const size_type procId) const
       {
 	size_type cumulativeIndices     = 0;
@@ -237,12 +245,10 @@ namespace dftefe
 	auto      itNumGhostIndices     = d_numGhostIndicesInGhostProcs.begin();
 	for (; itProcIds != d_ghostProcIds.end(); ++itProcIds)
 	{
+	  numGhostIndicesInProc = *itNumGhostIndices;
 	  if (procId == *itProcIds)
-	  {
-	    numGhostIndicesInProc = *itNumGhostIndices;
 	    break;
-	  }
-
+	  
 	  cumulativeIndices += numGhostIndicesInProc;
 	  ++itNumGhostIndices;
 	}
@@ -259,6 +265,8 @@ namespace dftefe
 	    numGhostIndicesInProc,
 	    returnValue.begin(),
 	    d_flattenedLocalGhostIndices.begin() + cumulativeIndices);
+
+	return returnValue;
       }
 
     template <dftefe::utils::MemorySpace memorySpace>

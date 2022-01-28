@@ -115,7 +115,7 @@ namespace dftefe
       const SizeTypeVector &
       getGhostProcIds() const;
 
-      const SizeTypeVector &
+      SizeTypeVector 
       getLocalGhostIndices(const size_type procId) const;
 
       size_type
@@ -132,6 +132,12 @@ namespace dftefe
        * but \f$b\f$ is not included.
        */
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
+
+      /**
+       * Number of ghost indices in the current processor
+       *
+       */
+      size_type d_numGhostIndices;
 
       /**
        * Vector to store an ordered set of ghost indices
