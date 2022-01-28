@@ -9,11 +9,7 @@ def splitString(string):
     return string[:pos], string[pos+1:]
 
 
-def getConfig(arch_type='cpu'):
-    if arch_type.lower() not in ['cpu', 'gpu', 'both']:
-        raise Exception('''Invalid architecture type''' + arch_type + 
-            '''passed. Valid types as 'cpu', 'gpu', or 'both' ''')
-    
+def getConfig():
     DFTEFE_PATH = os.environ['DFTEFE_PATH']
     f = open(DFTEFE_PATH+'/CMakeConfigOptions.txt', 'r')
     lines = f.readlines()
@@ -27,10 +23,6 @@ def getConfig(arch_type='cpu'):
         sanityCheck(line)
         key,value = splitString(line)
         cmake_dict[key]=value
-    
-    if arch_type == 'cpu':
-        cmake_dict['ENABLE_CUDA'] = 'OFF'
-        cmake_dict['CMAKE_CUDA_FLAGS']=''
 
     for key in cmake_dict:
         value = cmake_dict[key]

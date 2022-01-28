@@ -1,21 +1,5 @@
-#  Copyright (c) 2022-2022.
+#  Copyright (c) 2021-2022.
 #  The Regents of the University of Michigan and DFT-EFE developers.
-#
-#  This file is part of the DFT-EFE code.
-#
-#  DFT-EFE is free software: you can redistribute it and/or modify
-#    it under the terms of the Lesser GNU General Public License as
-#    published by the Free Software Foundation, either version 3 of
-#    the License, or (at your option) any later version.
-#
-#  DFT-EFE is distributed in the hope that it will be useful, but
-#    WITHOUT ANY WARRANTY; without even the implied warranty
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#    See the Lesser GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU Lesser General Public
-#    License at the top level of DFT-EFE distribution.  If not, see
-#    <https://www.gnu.org/licenses/>.
 #
 #  This file is part of the DFT-EFE code.
 #
@@ -51,6 +35,17 @@ cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
+'''
+TestLinearAlgebraVectorAggregate1
+This test runs and checks add, +=, -= functions for dftefe::linearAlgebra::Vector with double and complex ValueTypes on 
+CPU. 
+
+command to run run-only test (must run TestLinearAlgebraBuild.py to compile the executables)
+reframe -C ../config/mysettings.py -c TestLinearAlgebraVectorAggregate1.py -n 'RunOnlyTest_*' -r
+
+command to run build-and-run test (the compilation is done internally with the ReFrame's stage director)
+reframe -C ../config/mysettings.py -c TestLinearAlgebraVectorAggregate1.py -n 'BuildAndRunTest_*' -r
+'''
 @rfm.simple_test
 class RunOnlyTest_TestVectorAggregate1(rfm.RunOnlyRegressionTest):
     target_name = 'TestVectorAggregate1'
@@ -63,10 +58,10 @@ class RunOnlyTest_TestVectorAggregate1(rfm.RunOnlyRegressionTest):
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
 
-    valid_systems = ['greatlakes:login']
-    valid_prog_environs = ['builtin']
+    valid_systems = ['*']
+    valid_prog_environs = ['*']
 
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('run')
     def set_launcher_and_resources(self):
@@ -119,10 +114,10 @@ class BuildAndRunTest_TestVectorAggregate1(rfm.RegressionTest):
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
 
-    valid_systems = ['greatlakes:login']
-    valid_prog_environs = ['builtin']
+    valid_systems = ['*']
+    valid_prog_environs = ['*']
 
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('compile')
     def set_compiler_flags(self):
