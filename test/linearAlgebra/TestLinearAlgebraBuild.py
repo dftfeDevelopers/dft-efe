@@ -44,8 +44,8 @@ any RunOnlyTests. The BuildOnly test takes CMake options from CMakeConfigOptions
 directory to ensure the CMake configuration is consistent for main executable and the tests. The process of building and
 running a test is as follows
 
-1. run configure.py in the main directory of DFT-EFE to generate CMakeConfigOptions.txt
-2. export DFTEFE_PATH as an environmental variable by "export DFTEFE_PATH="/path/to/dft-efe/"
+1. export DFTEFE_PATH as an environmental variable by "export DFTEFE_PATH="/path/to/dft-efe/"
+2. run configure.py in the main directory of DFT-EFE to generate CMakeConfigOptions.txt
 3. in the test/linearAlgebra directory, run "reframe -C ../config/mysettings.py -c TestLinearAlgebraBuild.py -r" to 
    compile the tests.
 4. to run all cpu tests, use the command
@@ -62,8 +62,8 @@ class BuildOnly_TestLinearAlgebra(rfm.CompileOnlyRegressionTest):
     tagsDict = {'compileOrRun': 'compile'}
     tags = {x.lower() for x in tagsDict.values()}
 
-    valid_systems = ['greatlakes:login']
-    valid_prog_environs = ['builtin']
+    valid_systems = ['*']
+    valid_prog_environs = ['*']
     config_opts = cmflags.getConfig()
 
     @run_before('compile')
@@ -77,12 +77,12 @@ class BuildOnly_TestLinearAlgebra(rfm.CompileOnlyRegressionTest):
         hasError = True
         msgWarning = "Found warning(s) while compiling."
         msgError = "Found error(s) while compiling."
-        matches = evaluate(sn.findall(r'warning/i', evaluate(self.stdout)))
+        matches = evaluate(sn.findall(r'(?i)warning(?-i)', evaluate(self.stdout)))
         if len(matches) == 0:
             hasWarning = False
 
-        matchesOut = evaluate(sn.findall(r'error/i', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'error/i', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         

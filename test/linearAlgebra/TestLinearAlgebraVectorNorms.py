@@ -63,8 +63,8 @@ class RunOnlyTest_TestVectorNorms(rfm.RunOnlyRegressionTest):
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
 
-    valid_systems = ['greatlakes:login']
-    valid_prog_environs = ['builtin']
+    valid_systems = ['*']
+    valid_prog_environs = ['*']
 
     config_opts = cmflags.getConfig()
 
@@ -118,8 +118,8 @@ class BuildAndRunTest_TestVectorNorms(rfm.RegressionTest):
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
 
-    valid_systems = ['greatlakes:login']
-    valid_prog_environs = ['builtin']
+    valid_systems = ['*']
+    valid_prog_environs = ['*']
 
     config_opts = cmflags.getConfig()
 
