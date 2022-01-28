@@ -2,22 +2,21 @@ cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
 add_executable(dft-efe src/main.cpp)
 
-LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
 if(ENABLE_MPI)
-	ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
 	find_package(MPI REQUIRED)
 	include_directories(${MPI_CXX_INCLUDE_PATH})
 	set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 endif()
 
 if(ENABLE_CUDA)
-	ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE)
-	ADD_DEFINITIONS(-DDFTEFE_WITH_DEVICE_CUDA)    
+	add_compile_definitions(DFTEFE_WITH_DEVICE)
+	add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
 	enable_language(CUDA)
 endif()
 
