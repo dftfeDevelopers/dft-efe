@@ -1,4 +1,4 @@
-#  Copyright (c) 2022-2022.
+#  Copyright (c) 2021-2022.
 #  The Regents of the University of Michigan and DFT-EFE developers.
 #
 #  This file is part of the DFT-EFE code.
@@ -66,7 +66,7 @@ class RunOnlyTest_TestVectorNorms(rfm.RunOnlyRegressionTest):
     valid_systems = ['greatlakes:login']
     valid_prog_environs = ['builtin']
 
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('run')
     def set_launcher_and_resources(self):
@@ -121,7 +121,7 @@ class BuildAndRunTest_TestVectorNorms(rfm.RegressionTest):
     valid_systems = ['greatlakes:login']
     valid_prog_environs = ['builtin']
 
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('compile')
     def set_compiler_flags(self):
