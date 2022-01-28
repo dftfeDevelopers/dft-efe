@@ -62,8 +62,7 @@ namespace dftefe
       // typedefs
       //
     public:
-      using SizeTypeVector =
-        utils::VectorStorage<size_type, memorySpace>;
+      using SizeTypeVector = utils::VectorStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
         utils::VectorStorage<global_size_type, memorySpace>;
 
@@ -73,18 +72,18 @@ namespace dftefe
       MPIPatternP2P(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
-        const MPI_Comm &                                          mpiComm);
+        const MPI_Comm &                                    mpiComm);
 
-      //void
-      //reinit(
+      // void
+      // reinit(
       //  const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       //  const std::vector<dftefe::global_size_type> &       ghostIndices,
       //  MPI_Comm &                                          mpiComm);
 #else
       MPIPatternP2P() = default;
 
-      //void
-      //reinit(){};
+      // void
+      // reinit(){};
 #endif
 
       size_type
@@ -115,8 +114,14 @@ namespace dftefe
       const SizeTypeVector &
       getGhostProcIds() const;
 
-      SizeTypeVector 
-      getLocalGhostIndices(const size_type procId) const;
+      SizeTypeVector
+      getGhostLocalIndices(const size_type procId) const;
+
+      const SizeTypeVector &
+      getTargetProcIds() const;
+
+      SizeTypeVector
+      getOwnedLocalIndices(const size_type procId) const;
 
       size_type
       nmpiProcesses() const;
@@ -132,6 +137,17 @@ namespace dftefe
        * but \f$b\f$ is not included.
        */
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
+
+      /**
+       * A vector of size 2 times number of processors to store the
+       * locallyOwnedRange of each processor. That is it store the list
+       * \f$[a_0,b_0,a_1,b_1,\ldots,a_{P-1},b_{P-1}]\f$, where the pair
+       * \f$(a_i,b_i)\f$ defines a range of indices (continuous) that are owned
+       * by the \f$i-\f$th processor.
+       *
+       * @note \f$a\f$ is included but \f$b\f$ is not included.
+       */
+      GlobalSizeTypeVector d_allOwnedRanges;
 
       /**
        * Number of ghost indices in the current processor
@@ -187,39 +203,47 @@ namespace dftefe
        * d_numGhostIndicesInGhostProcs. By locally owned range being ordered as
        * per the processor Id, means that the ranges for processor
        * \f$0, 1,\ldots,P-1\f$ are
-       * \f$[N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P)\f$ where
-       * \f$N_0, N_1,\ldots, N_P\f$ are non-decreasing. But a more general
-       * case, the locally owned ranges are not ordered as per the processor
+       * \f$[N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P)\f$ with
+       * \f$N_0, N_1,\ldots, N_P\f$ beign non-decreasing. But in a more general
+       * case, where the locally owned ranges are not ordered as per the
+       processor
        * Id, this following array is useful.
        */
       SizeTypeVector d_flattenedLocalGhostIndices;
 
       /**
-       * Vector to store the to-send processor Ids. A to-send processor is
+       * Number of target processors for the current processor. A
+       * target processor is one which owns at least one of the locally owned
+       * indices of this processor as its ghost index.
+       */
+      size_type d_numTargetProcs;
+
+      /**
+       * Vector to store the target processor Ids. A target processor is
        * one which owns at least one of the locally owned indices of this
        * processor as its ghost index.
        */
-      SizeTypeVector d_toSendProcIds;
+      SizeTypeVector d_targetProcIds;
 
       /**
-       * Vector of size number of to-send processors to store how many locally
+       * Vector of size number of target processors to store how many locally
        * owned indices
-       * of this current processor are need ghost in each of the to-send
+       * of this current processor are need ghost in each of the target
        *  processors.
        */
-      SizeTypeVector d_numOwnedIndicesToSendToProcs;
+      SizeTypeVector d_numOwnedIndicesForTargetProcs;
 
-      /** Vector of size \f$\sum_i\f$ d_numOwnedForToSendProcs[i]
+      /** Vector of size \f$\sum_i\f$ d_numOwnedIndicesForTargetProcs[i]
        * to store all thelocally owned indices
        * which other processors need (i.e., which are ghost indices in other
        * processors). It is stored as a concatentation of lists where the
        * \f$i\f$-th list indices
        * \f$L_i = \{o^{(k_i)}_1,o^{(k_i)}_2,\ldots,o^{(k_i)}_{N_i}\}\f$, where
-       * where \f$o\f$'s are indices to-send to other processors,
-       * \f$k_i\f$ is the rank of the \f$i\f$-th to-send processor
-       * (i.e., d_toSendProcIds[i]) and N_i is the number of
-       * indices to be sent to i-th to-send processor (i.e.,
-       * d_numOwnedIndicesToSendProcs[i]).
+       * where \f$o\f$'s are indices target to other processors,
+       * \f$k_i\f$ is the rank of the \f$i\f$-th target processor
+       * (i.e., d_targetProcIds[i]) and N_i is the number of
+       * indices to be sent to i-th target processor (i.e.,
+       * d_numOwnedIndicesForTargetProcs[i]).
        *
        * @note We store only the indices local to this processor, i.e.,
        * the relative position of the index in the locally owned range of this
@@ -229,7 +253,7 @@ namespace dftefe
        *
        *  @note The list \f$L_i\f$ must be ordered.
        */
-      SizeTypeVector d_flattenedLocalToSendIndices;
+      SizeTypeVector d_flattenedLocalTargetIndices;
 
       /// MPI Communicator object.
       MPI_Comm d_mpiComm;

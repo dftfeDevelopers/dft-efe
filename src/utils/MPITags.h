@@ -41,7 +41,8 @@ namespace dftefe
     enum class MPITags : std::uint16_t
     {
       DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG
+      MPI_REQUESTERS_NBX_TAG,
+      MPI_P2P_PATTERN_TAG
     };
   } // end of namespace utils
 } // end of namespace dftefe

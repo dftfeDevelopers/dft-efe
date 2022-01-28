@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
@@ -32,6 +33,8 @@
 #include <utils/MPIPatternP2P.h>
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -100,87 +103,112 @@ int main()
   std::copy(ghostIndicesSet.begin(), ghostIndicesSet.end(), 
       ghostIndices.begin());
 
+  std::string filename = "GlobalIndices" + std::to_string(rank);
+  std::ofstream outfile(filename.c_str());
+  for(unsigned int i = 0; i < numOwnedIndices; ++i)
+    outfile << ownedIndexStart + i << " ";
   for(unsigned int i = 0; i < numGhostIndices; ++i)
-  {
-    const size_type ghostIndex = ghostIndices[i];
-    const size_type owningRank = (ghostIndex/numOwnedIndices);
-    procIdToLocalGhostIndices[owningRank].push_back(i);
-  }
-
+    outfile << ghostIndices[i] << " ";
   
-  std::string ghostIndicesStr = "";
-  for(unsigned int iGhost = 0; iGhost < numGhostIndices; ++iGhost)
-    ghostIndicesStr += std::to_string(ghostIndices[iGhost]) + " ";
+  outfile.close();
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  std::map<size_type, std::vector<size_type>> procIdToOwnedLocalIndices;
+  for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
+  {
+    if(iProc != rank)
+    {
+      std::string readfilename = "GlobalIndices" + std::to_string(iProc);
+      std::ifstream readfile;
+      std::string line;
+      readfile.open(readfilename.c_str());
+      dftefe::utils::throwException(readfile.is_open(), "The file " + readfilename + 
+	  " does not exist");
+      std::vector<global_size_type> globalIndices(0);
+      while(std::getline(readfile,line))
+      {
+	dftefe::utils::throwException(!line.empty(),
+	    "Empty or invalid line in file " + readfilename + " Line: " + line);
+	std::istringstream lineString(line);
+	std::string word;
+	while(lineString >> word)
+	  globalIndices.push_back(std::stoi(word));
+      }
+
+      for(unsigned int i = 0; i < globalIndices.size(); ++i)
+      {
+	global_size_type globalIndex = globalIndices[i];
+	if(globalIndex >= ownedIndexStart && globalIndex < ownedIndexEnd)
+	  procIdToOwnedLocalIndices[iProc].push_back(globalIndex-ownedIndexStart);
+      }
+
+      readfile.close();
+    }
+  }
 
   dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::HOST> 
     mpiPatternP2P(locallyOwnedRange,
 	ghostIndices,
 	MPI_COMM_WORLD);
 
-
+  auto targetProcIds = mpiPatternP2P.getTargetProcIds();
   for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
   {
-    int numGhostInProc = procIdToLocalGhostIndices[iProc].size();
-    if(numGhostInProc > 0)
+    const std::vector<size_type> procOwnedLocalIndices = 
+      procIdToOwnedLocalIndices[iProc];
+    const size_type numOwnedIndices = procOwnedLocalIndices.size();
+    if(numOwnedIndices > 0)
     {
-      auto ghostLocalIndicesFromMPIPatternP2P = 
-        mpiPatternP2P.getGhostLocalIndices(iProc);
-      size_type numGhostIndicesFromMPIPatternP2P = 
-        ghostLocalIndicesFromMPIPatternP2P.size();
-      std::vector<size_type> expectedGhostLocalIndices = 
-        procIdToLocalGhostIndices[iProc];
+      auto ownedLocalIndicesFromMPIPatternP2P = 
+	mpiPatternP2P.getOwnedLocalIndices(iProc);
+      size_type numOwnedIndicesFromMPIPatternP2P = 
+	ownedLocalIndicesFromMPIPatternP2P.size();
       std::string msg = "In rank " + std::to_string(rank) + 
-        " mismatch in size of ghostLocalIndices corresponding to rank " + 
-        std::to_string(iProc) + " The expected size is " + 
-        std::to_string(numGhostInProc) + " and the size returned is " +
-        std::to_string(numGhostIndicesFromMPIPatternP2P);
+	" mismatch in size of ownedLocalIndices corresponding to rank " + 
+	std::to_string(iProc) + " The expected size is " + 
+	std::to_string(numOwnedIndices) + " and the size returned is " +
+	std::to_string(numOwnedIndicesFromMPIPatternP2P);
       dftefe::utils::throwException(
-          numGhostInProc==numGhostIndicesFromMPIPatternP2P, 
-          msg);
+	  numOwnedIndices==numOwnedIndicesFromMPIPatternP2P, 
+	  msg);
 
-      std::vector<size_type> ghostLocalIndicesFromMPIPatternP2PSTL(
-          numGhostInProc);
-      auto itGhostLocalIndicesFromMPIPatternP2P = 
-        ghostLocalIndicesFromMPIPatternP2P.begin();
+      std::vector<size_type> ownedLocalIndicesFromMPIPatternP2PSTL(
+	  numOwnedIndices);
+      auto it = ownedLocalIndicesFromMPIPatternP2P.begin();
       size_type count = 0;
-      for(; itGhostLocalIndicesFromMPIPatternP2P != 
-          ghostLocalIndicesFromMPIPatternP2P.end(); 
-          ++itGhostLocalIndicesFromMPIPatternP2P)
+      for(; it != ownedLocalIndicesFromMPIPatternP2P.end(); ++it)
       {
-        ghostLocalIndicesFromMPIPatternP2PSTL[count] = 
-          *itGhostLocalIndicesFromMPIPatternP2P;
-        ++count;
+	ownedLocalIndicesFromMPIPatternP2PSTL[count] = *it;
+	++count;
       }
 
-      std::sort(ghostLocalIndicesFromMPIPatternP2PSTL.begin(), 
-          ghostLocalIndicesFromMPIPatternP2PSTL.end());
-      std::sort(expectedGhostLocalIndices.begin(),
-          expectedGhostLocalIndices.end());
+      std::sort(ownedLocalIndicesFromMPIPatternP2PSTL.begin(), 
+	  ownedLocalIndicesFromMPIPatternP2PSTL.end());
+      std::vector<size_type> expectedOwnedLocalIndices = 
+	procOwnedLocalIndices;
+      std::sort(expectedOwnedLocalIndices.begin(),
+	  expectedOwnedLocalIndices.end());
       std::string msg1 = "";
       std::string msg2 = "";
-      for(unsigned int iGhost = 0; iGhost < numGhostInProc;
-          ++iGhost)
+      for(unsigned int iOwned = 0; iOwned < numOwnedIndices;
+	  ++iOwned)
       {
-        msg1 += std::to_string(ghostLocalIndicesFromMPIPatternP2PSTL[iGhost]) +
-          " ";
-        msg2 += std::to_string(expectedGhostLocalIndices[iGhost]) + " ";
+	msg1 += std::to_string(ownedLocalIndicesFromMPIPatternP2PSTL[iOwned]) +
+	  " ";
+	msg2 += std::to_string(expectedOwnedLocalIndices[iOwned]) + " ";
       }
 
-      msg = "In rank " + std::to_string(rank) + " mismatch of local ghost indices"
-          " corresponding to rank " + std::to_string(iProc) + ".\n" 
-          " Expected local ghost indices: " + msg2 + "\n"
-          " Received local ghost indices: " + msg1;
-       
-      dftefe::utils::throwException(ghostLocalIndicesFromMPIPatternP2PSTL ==
-      	  expectedGhostLocalIndices, msg);
-      
-      //std::string msg0 = "Rank: " + std::to_string(rank) + " ghost rank: " 
-      //  + std::to_string(iProc) + "\nExpected local ghost indices: " + msg2 +
-      //  "\nReceived local ghost indices: " + msg1;
-      //std::cout << msg0 << std::endl;
-    }
-  }
+      msg = "In rank " + std::to_string(rank) + " mismatch of local owned indices"
+	" corresponding to rank " + std::to_string(iProc) + ".\n" 
+	" Expected local owned indices: " + msg2 + "\n"
+	" Received local owned indices: " + msg1;
 
+      dftefe::utils::throwException(ownedLocalIndicesFromMPIPatternP2PSTL ==
+	  expectedOwnedLocalIndices, msg);
+
+    }
+
+  }
   MPI_Finalize();
-#endif 
 }
+#endif

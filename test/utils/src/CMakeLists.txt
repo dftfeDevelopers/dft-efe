@@ -16,8 +16,13 @@ if(ENABLE_MPI)
 	if(NOT DEFINED DDFTEFE_WITH_MPI)
 		ADD_DEFINITIONS(-DDFTEFE_WITH_MPI)
 	endif()
+	
 	add_executable(TestMPIRequestersNBX TestMPIRequestersNBX.cpp)
 	target_link_libraries(TestMPIRequestersNBX PUBLIC dft-efe-utils)
+	
 	add_executable(TestMPIPatternP2PGhostIndices TestMPIPatternP2PGhostIndices.cpp)
 	target_link_libraries(TestMPIPatternP2PGhostIndices PUBLIC dft-efe-utils)
+	
+	add_executable(TestMPIPatternP2PTargetData TestMPIPatternP2PTargetData.cpp)
+	target_link_libraries(TestMPIPatternP2PTargetData PUBLIC dft-efe-utils)
 endif()
