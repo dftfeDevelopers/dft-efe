@@ -62,8 +62,10 @@ class BuildOnly_TestLinearAlgebra(rfm.CompileOnlyRegressionTest):
     tagsDict = {'compileOrRun': 'compile'}
     tags = {x.lower() for x in tagsDict.values()}
 
-    valid_systems = ['*']
-    valid_prog_environs = ['*']
+    valid_systems = ['greatlakes:login']
+    valid_prog_environs = ['builtin']
+    # valid_systems = ['*']
+    # valid_prog_environs = ['*']
     config_opts = cmflags.getConfig()
 
     @run_before('compile')
@@ -77,12 +79,12 @@ class BuildOnly_TestLinearAlgebra(rfm.CompileOnlyRegressionTest):
         hasError = True
         msgWarning = "Found warning(s) while compiling."
         msgError = "Found error(s) while compiling."
-        matches = evaluate(sn.findall(r'(?i)warning', evaluate(self.stdout)))
+        matches = evaluate(sn.findall(r'(?i)warning(?-i)', evaluate(self.stdout)))
         if len(matches) == 0:
             hasWarning = False
 
-        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         

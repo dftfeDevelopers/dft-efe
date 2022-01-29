@@ -15,18 +15,18 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 include_directories(${MAIN_PROJECT_DIR}/src)
 
 # CPU: testing +=, -=, add, copy constructor
-add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
-target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)
-set_target_properties(TestVectorAggregate1 PROPERTIES OUTPUT_NAME "TestVectorAggregate1" SUFFIX ".x")
+add_executable(TestVectorAggregate1.x TestVectorAggregate1.cpp)
+target_link_libraries(TestVectorAggregate1.x PUBLIC dft-efe-linalg)
+#set_target_properties(TestVectorAggregate1 PROPERTIES OUTPUT_NAME "TestVectorAggregate1" SUFFIX ".x")
 
 # CPU: testing l2Norm, lInfNorm
-add_executable(TestVectorNorms TestVectorNorms.cpp)
-target_link_libraries(TestVectorNorms PUBLIC dft-efe-linalg)
-set_target_properties(TestVectorNorms PROPERTIES OUTPUT_NAME "TestVectorNorms" SUFFIX ".x")
+add_executable(TestVectorNorms.x TestVectorNorms.cpp)
+target_link_libraries(TestVectorNorms.x PUBLIC dft-efe-linalg)
+#set_target_properties(TestVectorNorms PROPERTIES OUTPUT_NAME "TestVectorNorms" SUFFIX ".x")
 
 # GPU: testing +=, -=, add, copy constructor
 if (ENABLE_CUDA)
-    add_executable(TestVectorAggregate2 TestVectorAggregate2.cpp)
-    target_link_libraries(TestVectorAggregate2 PUBLIC dft-efe-linalg)
-    set_target_properties(TestVectorAggregate2 PROPERTIES OUTPUT_NAME "TestVectorAggregate2" SUFFIX ".x")
+    add_executable(TestVectorAggregate2.x TestVectorAggregate2.cpp)
+    target_link_libraries(TestVectorAggregate2.x PUBLIC dft-efe-linalg)
+#    set_target_properties(TestVectorAggregate2 PROPERTIES OUTPUT_NAME "TestVectorAggregate2" SUFFIX ".x")
 endif()
