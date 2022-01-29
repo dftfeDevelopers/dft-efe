@@ -31,7 +31,7 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class TestCubicSplineTK(rfm.CompileOnlyRegressionTest):
+class BuildOnlyTestCubicSplineTK(rfm.CompileOnlyRegressionTest):
     descr = '''Compile only test for cubic spline using TK'''
     build_system = 'CMake'
     make_opts = ['TestCubicSplineTK']
@@ -43,7 +43,7 @@ class TestCubicSplineTK(rfm.CompileOnlyRegressionTest):
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
     keep_files = []
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('compile')
     def set_compiler_flags(self):
@@ -56,12 +56,12 @@ class TestCubicSplineTK(rfm.CompileOnlyRegressionTest):
         hasError = True
         msgWarning = "Found warning(s) while compiling."
         msgError = "Found error(s) while compiling."
-        matches = evaluate(sn.findall(r'(?i)warning(?-i)', evaluate(self.stdout)))
+        matches = evaluate(sn.findall(r'(?i)warning', evaluate(self.stdout)))
         if len(matches) == 0:
             hasWarning = False
 
-        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         

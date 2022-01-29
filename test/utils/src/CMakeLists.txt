@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})
 
-add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/utils/lib/buildUtils)
 include_directories(${MAIN_PROJECT_DIR}/src)
 
 add_executable(TestCubicSplineTK TestCubicSplineTK.cpp)

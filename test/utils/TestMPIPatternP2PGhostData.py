@@ -82,166 +82,14 @@ class BuildOnlyTestMPIPatternP2PGhostData(rfm.CompileOnlyRegressionTest):
             msg = ""
             return sn.assert_true(hasTestPassed, msg=msg)
 
-@rfm.simple_test
-class RunOnlyTestMPIPatternP2PGhostData1Node10Procs(rfm.RunOnlyRegressionTest):
-    target_name = 'TestMPIPatternP2PGhostData'
-    descr = '''A run only test to verify the ghost data in MPIPatternP2P on 1
-    node with 10 processors'''
-    build_system = 'CMake'
-    make_opts = [target_name]
-    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
-    tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
-        'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'parallel'}
-    tags = {x.lower() for x in tagsDict.values()}
-    valid_systems = ss.getValidSystems(tagsDict['arch']) 
-    valid_prog_environs = ['*']
-    config_opts = cmflags.getConfig()
 
-    
-    @run_before('run')
-    def set_launcher_and_resources(self):
-        if "serial" in self.tags:
-            self.job.launcher = getlauncher('local')()
-
-        if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 10']
-            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
-                                                   time_limit = "00:05:00", 
-                                                   num_nodes = 1, 
-                                                   num_tasks_per_node = 10,
-                                                   ntasks = 10,
-                                                   mem_per_cpu = '2gb')
-
-
-    @sanity_function
-    def validate_test(self):
-        # This test does not generate any output. It throws an exception
-        # if the logic of MPIPatternP2P fails to find the ghost data
-        hasAssertFail = True
-        hasThrownException = True
-        hasError = True
-        msgError = '''Found error(s) in
-        RunOnlyTestMPIPatternP2PGhostData1Node10Procs.'''
-        msgThrownException = '''Found exceptions in
-        RunOnlyTestMPIPatternP2PGhostData1Node10Procs'''
-        msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestMPIPatternP2PGhostData1Node10Procs'''
-        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
-        if len(matchesOut) == 0 and len(matchesErr) == 0:
-            hasError = False
-
-        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
-        if len(matchesOut) == 0 and len(matchesErr) == 0:
-            hasAssertFail = False
-        
-        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
-        if len(matchesOut) == 0 and len(matchesErr) == 0:
-            hasThrownException = False
-        
-        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
-        
-        msg = ""
-        if hasError:
-            msg = msgError
-
-        elif hasAssertFail:
-            msg = msgAssertFail
-
-        elif hasThrownException:
-            msg = msgThrownException
-
-        else:
-            msg=""
-
-        return sn.assert_true(hasTestPassed, msg=msg)
 
 
 @rfm.simple_test
-class RunOnlyTestMPIPatternP2PGhostData2Node10Procs(rfm.RunOnlyRegressionTest):
+class BuildAndRunTestMPIPatternP2PGhostData1Node4Procs(rfm.RegressionTest):
     target_name = 'TestMPIPatternP2PGhostData'
     descr = '''A run only test to verify the ghost data in MPIPatternP2P on 1
-    node with 10 processors each'''
-    build_system = 'CMake'
-    make_opts = [target_name]
-    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
-    tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
-        'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'parallel'}
-    tags = {x.lower() for x in tagsDict.values()}
-    valid_systems = ss.getValidSystems(tagsDict['arch']) 
-    valid_prog_environs = ['*']
-    config_opts = cmflags.getConfig()
-
-    
-    @run_before('run')
-    def set_launcher_and_resources(self):
-        if "serial" in self.tags:
-            self.job.launcher = getlauncher('local')()
-
-        if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 20']
-            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
-                                                   time_limit = "00:05:00", 
-                                                   num_nodes = 2, 
-                                                   num_tasks_per_node = 10,
-                                                   ntasks = 20,
-                                                   mem_per_cpu = '2gb')
-
-
-    @sanity_function
-    def validate_test(self):
-        # This test does not generate any output. It throws an exception
-        # if the logic of MPIPatternP2P fails to find the ghost data
-        hasAssertFail = True
-        hasThrownException = True
-        hasError = True
-        msgError = '''Found error(s) in
-        RunOnlyTestMPIPatternP2PGhostData2Node10Procs.'''
-        msgThrownException = '''Found exceptions in
-        RunOnlyTestMPIPatternP2PGhostData2Node10Procs'''
-        msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestMPIPatternP2PGhostData2Node10Procs'''
-        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
-        if len(matchesOut) == 0 and len(matchesErr) == 0:
-            hasError = False
-
-        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
-        if len(matchesOut) == 0 and len(matchesErr) == 0:
-            hasAssertFail = False
-        
-        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
-        if len(matchesOut) == 0 and len(matchesErr) == 0:
-            hasThrownException = False
-        
-        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
-        
-        msg = ""
-        if hasError:
-            msg = msgError
-
-        elif hasAssertFail:
-            msg = msgAssertFail
-
-        elif hasThrownException:
-            msg = msgThrownException
-
-        else:
-            msg=""
-
-        return sn.assert_true(hasTestPassed, msg=msg)
-
-@rfm.simple_test
-class BuildAndRunTestMPIPatternP2PGhostData1Node10Procs(rfm.RegressionTest):
-    target_name = 'TestMPIPatternP2PGhostData'
-    descr = '''A run only test to verify the ghost data in MPIPatternP2P on 1
-    node with 10 processors each'''
+    node with 4 processors'''
     build_system = 'CMake'
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
@@ -268,12 +116,12 @@ class BuildAndRunTestMPIPatternP2PGhostData1Node10Procs(rfm.RegressionTest):
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 10']
+            self.job.launcher.options = ['-n 4']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
                                                    time_limit = "00:05:00", 
                                                    num_nodes = 1, 
-                                                   num_tasks_per_node = 10,
-                                                   ntasks = 10,
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 4,
                                                    mem_per_cpu = '2gb')
 
 
@@ -285,11 +133,11 @@ class BuildAndRunTestMPIPatternP2PGhostData1Node10Procs(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestMPIPatternP2PGhostData1Node10Procs.'''
+        BuildAndRunTestMPIPatternP2PGhostData1Node4Procs.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestMPIPatternP2PGhostData1Node10Procs.'''
+        BuildAndRunTestMPIPatternP2PGhostData1Node4Procs.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestMPIPatternP2PGhostData1Node10Procs.'''
+        BuildAndRunTestMPIPatternP2PGhostData1Node4Procs.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -324,10 +172,88 @@ class BuildAndRunTestMPIPatternP2PGhostData1Node10Procs(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestMPIPatternP2PGhostData2Node20Procs(rfm.RegressionTest):
+class RunOnlyTestMPIPatternP2PGhostData1Node4Procs(rfm.RunOnlyRegressionTest):
     target_name = 'TestMPIPatternP2PGhostData'
     descr = '''A run only test to verify the ghost data in MPIPatternP2P on 1
-    node with 10 processors each'''
+    node with 4 processors'''
+    build_system = 'CMake'
+    make_opts = [target_name]
+    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
+    tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
+        'unit','slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'parallel'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    config_opts = cmflags.getConfig()
+
+    
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 4']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 1, 
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 4,
+                                                   mem_per_cpu = '2gb')
+
+
+    @sanity_function
+    def validate_test(self):
+        # This test does not generate any output. It throws an exception
+        # if the logic of MPIPatternP2P fails to find the ghost data
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = '''Found error(s) in
+        RunOnlyTestMPIPatternP2PGhostData1Node4Procs.'''
+        msgThrownException = '''Found exceptions in
+        RunOnlyTestMPIPatternP2PGhostData1Node4Procs'''
+        msgAssertFail = '''Found assert fail(s) in
+        RunOnlyTestMPIPatternP2PGhostData1Node4Procs'''
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)
+
+
+@rfm.simple_test
+class BuildAndRunTestMPIPatternP2PGhostData2Node4Procs(rfm.RegressionTest):
+    target_name = 'TestMPIPatternP2PGhostData'
+    descr = '''A run only test to verify the ghost data in MPIPatternP2P on 1
+    node with 4 processors each'''
     build_system = 'CMake'
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
@@ -354,12 +280,12 @@ class BuildAndRunTestMPIPatternP2PGhostData2Node20Procs(rfm.RegressionTest):
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 20']
+            self.job.launcher.options = ['-n 8']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
                                                    time_limit = "00:05:00", 
                                                    num_nodes = 2, 
-                                                   num_tasks_per_node = 10,
-                                                   ntasks = 20,
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 8,
                                                    mem_per_cpu = '2gb')
 
 
@@ -371,11 +297,89 @@ class BuildAndRunTestMPIPatternP2PGhostData2Node20Procs(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestMPIPatternP2PGhostData2Node10Procs.'''
+        BuildAndRunTestMPIPatternP2PGhostData2Node4Procs.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestMPIPatternP2PGhostData2Node10Procs.'''
+        BuildAndRunTestMPIPatternP2PGhostData2Node4Procs.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestMPIPatternP2PGhostData2Node10Procs.'''
+        BuildAndRunTestMPIPatternP2PGhostData2Node4Procs.'''
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)
+
+
+@rfm.simple_test
+class RunOnlyTestMPIPatternP2PGhostData2Node4Procs(rfm.RunOnlyRegressionTest):
+    target_name = 'TestMPIPatternP2PGhostData'
+    descr = '''A run only test to verify the ghost data in MPIPatternP2P on 2
+    nodes with 4 processors each'''
+    build_system = 'CMake'
+    make_opts = [target_name]
+    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
+    tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
+        'unit','slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'parallel'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    config_opts = cmflags.getConfig()
+
+    
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 8']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 2, 
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 8,
+                                                   mem_per_cpu = '2gb')
+
+
+    @sanity_function
+    def validate_test(self):
+        # This test does not generate any output. It throws an exception
+        # if the logic of MPIPatternP2P fails to find the ghost data
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = '''Found error(s) in
+        RunOnlyTestMPIPatternP2PGhostData2Node4Procs.'''
+        msgThrownException = '''Found exceptions in
+        RunOnlyTestMPIPatternP2PGhostData2Node4Procs'''
+        msgAssertFail = '''Found assert fail(s) in
+        RunOnlyTestMPIPatternP2PGhostData2Node4Procs'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
