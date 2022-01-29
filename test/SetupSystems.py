@@ -33,7 +33,8 @@ def getValidSystems(key):
 
         return returnVal
 
-def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_tasks_per_node = 1, mem_per_cpu =
+def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1,
+                 num_tasks_per_node = 1, ntasks = 1, mem_per_cpu =
                  '2gb', gpus_per_node = 1):
     if archTag.lower() not in ["cpu", "gpu", "both"]:
         msg = '''The tag passed should be one of: 'cpu', 'gpu', or
@@ -46,6 +47,7 @@ def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_t
             'time_limit': time_limit,
             'num_nodes': num_nodes,
             'num_tasks_per_node': num_tasks_per_node,
+            'ntasks' : ntasks,
             'mem_per_cpu': mem_per_cpu
         }
 
@@ -54,6 +56,7 @@ def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_t
             'time_limit': time_limit,
             'num_nodes': num_nodes,
             'num_tasks_per_node': num_tasks_per_node,
+            'ntasks' : ntasks,
             'mem_per_cpu': mem_per_cpu,
             'gpus_per_node': gpus_per_node
         }
@@ -63,6 +66,7 @@ def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_t
             'time_limit': time_limit,
             'num_nodes': num_nodes,
             'num_tasks_per_node': num_tasks_per_node,
+            'ntasks' : ntasks,
             'mem_per_cpu': mem_per_cpu
         }
         returnVal['gpu'] = {
@@ -70,6 +74,7 @@ def setResources(archTag = 'both', time_limit = "00:02:00", num_nodes = 1, num_t
             'num_nodes': num_nodes,
             'num_tasks_per_node': num_tasks_per_node,
             'mem_per_cpu': mem_per_cpu,
+            'ntasks' : ntasks,
             'gpus_per_node': gpus_per_node
         }
 

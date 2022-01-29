@@ -91,12 +91,12 @@ class TestMPIRequestersNBXBuildOnly(rfm.CompileOnlyRegressionTest):
         hasError = True
         msgWarning = "Found warning(s) while compiling."
         msgError = "Found error(s) while compiling."
-        matches = evaluate(sn.findall(r'(?i)warning(?-i)', evaluate(self.stdout)))
+        matches = evaluate(sn.findall(r'(?i)warning', evaluate(self.stdout)))
         if len(matches) == 0:
             hasWarning = False
 
-        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         
@@ -162,18 +162,18 @@ class TestMPIRequestersNBXNode1Tasks10BuildAndRun(rfm.RegressionTest):
         msgError = "Found error(s) in TestMPIRequestersNBX."
         msgThrownException = "Found exceptions in TestMPIRequestersNBX."
         msgAssertFail = "Found assert fail(s) in TestMPIRequestersNBX."
-        matchesOut = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)error(?-i)', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
 
-        matchesOut = evaluate(sn.findall(r'(?i)assert(?-i)', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)assert(?-i)', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasAssertFail = False
         
-        matchesOut = evaluate(sn.findall(r'(?i)throw(?-i)', evaluate(self.stdout)))
-        matchesErr = evaluate(sn.findall(r'(?i)throw(?-i)', evaluate(self.stderr)))
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasThrownException = False
         
