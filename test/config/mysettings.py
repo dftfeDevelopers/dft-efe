@@ -42,6 +42,7 @@ site_configuration = {
                                         '--time={time_limit}',
                                         '--nodes={num_nodes}',
                                         '--ntasks-per-node={num_tasks_per_node}',
+                                        '--ntasks={ntasks}',
                                         '--mem-per-cpu={mem_per_cpu}']
                         }
                     ]
@@ -60,6 +61,7 @@ site_configuration = {
                                         '--nodes={num_nodes}',
                                         '--gpus-per-node={gpus_per_node}'
                                         '--ntasks-per-node={num_tasks_per_node}',
+                                        '--ntasks={ntasks}',
                                         '--mem-per-cpu={mem_per_cpu}']
                         }
                     ]
