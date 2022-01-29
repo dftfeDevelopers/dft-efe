@@ -10,16 +10,20 @@ include_directories(${MAIN_PROJECT_DIR}/src)
 
 add_executable(TestCubicSplineTK TestCubicSplineTK.cpp)
 target_link_libraries(TestCubicSplineTK PUBLIC dft-efe-utils)
+set_target_properties(TestCubicSplineTK PROPERTIES OUTPUT_NAME "TestCubicSplineTK" SUFFIX ".x")
 
 ###### Add all the MPI dependent tests below #######
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 	add_executable(TestMPIRequestersNBX TestMPIRequestersNBX.cpp)
 	target_link_libraries(TestMPIRequestersNBX PUBLIC dft-efe-utils)
+	set_target_properties(TestMPIRequestersNBX PROPERTIES OUTPUT_NAME "TestMPIRequestersNBX" SUFFIX ".x")
 	
-	add_executable(TestMPIPatternP2PGhostIndices TestMPIPatternP2PGhostIndices.cpp)
-	target_link_libraries(TestMPIPatternP2PGhostIndices PUBLIC dft-efe-utils)
+	add_executable(TestMPIPatternP2PGhostData TestMPIPatternP2PGhostData.cpp)
+	target_link_libraries(TestMPIPatternP2PGhostData PUBLIC dft-efe-utils)
+	set_target_properties(TestMPIPatternP2PGhostData PROPERTIES OUTPUT_NAME "TestMPIPatternP2PGhostData" SUFFIX ".x")
 	
 	add_executable(TestMPIPatternP2PTargetData TestMPIPatternP2PTargetData.cpp)
 	target_link_libraries(TestMPIPatternP2PTargetData PUBLIC dft-efe-utils)
+	set_target_properties(TestMPIPatternP2PTargetData PROPERTIES OUTPUT_NAME "TestMPIPatternP2PTargetData" SUFFIX ".x")
 endif()
