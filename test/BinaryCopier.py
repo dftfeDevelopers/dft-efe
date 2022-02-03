@@ -36,7 +36,14 @@ def BinCpy(dir):
     if not os.path.isdir(exe_path):
         os.mkdir(exe_path)
 
-    exe_files = glob.iglob(os.path.join(os.getcwd(), "*.x"))
-    for file in exe_files:
-        if os.path.isfile(file):
-            shutil.copy2(file, exe_path)
+    for filename in os.listdir(os.getcwd()):
+        f = os.path.join(os.getcwd(), filename)
+        # checking if it is a file
+        if os.path.isfile(f):
+            if(os.access(f, os.X_OK)):
+                shutil.copy2(f, exe_path)
+
+    #exe_files = glob.iglob(os.path.join(os.getcwd(), "*.x"))
+    #for file in exe_files:
+    #    if os.path.isfile(file):
+    #        shutil.copy2(file, exe_path)
