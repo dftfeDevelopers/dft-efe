@@ -35,7 +35,7 @@ namespace dftefe
     // Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    VectorStorage<ValueType, memorySpace>::VectorStorage(
+    MemoryStorage<ValueType, memorySpace>::MemoryStorage(
       const size_type size,
       const ValueType initVal)
       : d_size(size)
@@ -49,7 +49,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    VectorStorage<ValueType, memorySpace>::resize(const size_type size,
+    MemoryStorage<ValueType, memorySpace>::resize(const size_type size,
                                                   const ValueType initVal)
     {
       dftefe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
@@ -70,14 +70,14 @@ namespace dftefe
     // Destructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    VectorStorage<ValueType, memorySpace>::~VectorStorage()
+    MemoryStorage<ValueType, memorySpace>::~MemoryStorage()
     {
       dftefe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    VectorStorage<ValueType, memorySpace>::VectorStorage(
-      const VectorStorage<ValueType, memorySpace> &u)
+    MemoryStorage<ValueType, memorySpace>::MemoryStorage(
+      const MemoryStorage<ValueType, memorySpace> &u)
       : d_size(u.d_size)
     {
       dftefe::utils::MemoryManager<ValueType, memorySpace>::allocate(d_size,
@@ -88,8 +88,8 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    VectorStorage<ValueType, memorySpace>::VectorStorage(
-      VectorStorage<ValueType, memorySpace> &&u) noexcept
+    MemoryStorage<ValueType, memorySpace>::MemoryStorage(
+      MemoryStorage<ValueType, memorySpace> &&u) noexcept
       : d_size(u.d_size)
       , d_data(nullptr)
     {
@@ -98,43 +98,43 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
-    VectorStorage<ValueType, memorySpace>::size() const
+    MemoryStorage<ValueType, memorySpace>::size() const
     {
       return d_size;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename VectorStorage<ValueType, memorySpace>::iterator
-    VectorStorage<ValueType, memorySpace>::begin()
+    typename MemoryStorage<ValueType, memorySpace>::iterator
+    MemoryStorage<ValueType, memorySpace>::begin()
     {
       return d_data;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename VectorStorage<ValueType, memorySpace>::const_iterator
-    VectorStorage<ValueType, memorySpace>::begin() const
+    typename MemoryStorage<ValueType, memorySpace>::const_iterator
+    MemoryStorage<ValueType, memorySpace>::begin() const
     {
       return d_data;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename VectorStorage<ValueType, memorySpace>::iterator
-    VectorStorage<ValueType, memorySpace>::end()
+    typename MemoryStorage<ValueType, memorySpace>::iterator
+    MemoryStorage<ValueType, memorySpace>::end()
     {
       return (d_data + d_size);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename VectorStorage<ValueType, memorySpace>::const_iterator
-    VectorStorage<ValueType, memorySpace>::end() const
+    typename MemoryStorage<ValueType, memorySpace>::const_iterator
+    MemoryStorage<ValueType, memorySpace>::end() const
     {
       return (d_data + d_size);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    VectorStorage<ValueType, memorySpace> &
-    VectorStorage<ValueType, memorySpace>::operator=(
-      const VectorStorage<ValueType, memorySpace> &rhs)
+    MemoryStorage<ValueType, memorySpace> &
+    MemoryStorage<ValueType, memorySpace>::operator=(
+      const MemoryStorage<ValueType, memorySpace> &rhs)
     {
       if (&rhs != this)
         {
@@ -150,9 +150,9 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    VectorStorage<ValueType, memorySpace> &
-    VectorStorage<ValueType, memorySpace>::operator=(
-      VectorStorage<ValueType, memorySpace> &&rhs) noexcept
+    MemoryStorage<ValueType, memorySpace> &
+    MemoryStorage<ValueType, memorySpace>::operator=(
+      MemoryStorage<ValueType, memorySpace> &&rhs) noexcept
     {
       if (&rhs != this)
         {
@@ -168,16 +168,16 @@ namespace dftefe
     //    // This part does not work for GPU version, will work on this until
     //    // having cleaner solution.
     //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    typename VectorStorage<ValueType, memorySpace>::reference
-    //    VectorStorage<ValueType, memorySpace>::operator[](const size_type i)
+    //    typename MemoryStorage<ValueType, memorySpace>::reference
+    //    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
     //    {
     //
     //      return d_data[i];
     //    }
     //
     //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    typename VectorStorage<ValueType, memorySpace>::const_reference
-    //    VectorStorage<ValueType, memorySpace>::operator[](const size_type i)
+    //    typename MemoryStorage<ValueType, memorySpace>::const_reference
+    //    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
     //    const
     //    {
     //      return d_data[i];
@@ -186,13 +186,13 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     ValueType *
-    VectorStorage<ValueType, memorySpace>::data()
+    MemoryStorage<ValueType, memorySpace>::data() noexcept
     {
       return d_data;
     }
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const ValueType *
-    VectorStorage<ValueType, memorySpace>::data() const
+    MemoryStorage<ValueType, memorySpace>::data() const noexcept
     {
       return d_data;
     }
@@ -200,74 +200,74 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpaceDst>
     void
-    VectorStorage<ValueType, memorySpace>::copyTo(
-      VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage) const
+    MemoryStorage<ValueType, memorySpace>::copyTo(
+      MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage) const
     {
       throwException<DomainError>(
-        d_size == dstVectorStorage.size(),
-        "The source and destination VectorStorage are of different sizes");
+        d_size == dstMemoryStorage.size(),
+        "The source and destination MemoryStorage are of different sizes");
       MemoryTransfer<memorySpaceDst, memorySpace>::copy(
-        d_size, dstVectorStorage.begin(), this->begin());
+        d_size, dstMemoryStorage.begin(), this->begin());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpaceDst>
     void
-    VectorStorage<ValueType, memorySpace>::copyTo(
-      VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage,
+    MemoryStorage<ValueType, memorySpace>::copyTo(
+      MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage,
       const size_type                           N,
       const size_type                           srcOffset,
       const size_type                           dstOffset) const
     {
       throwException<DomainError>(
         srcOffset + N <= d_size,
-        "The offset and copy size specified for the source VectorStorage"
+        "The offset and copy size specified for the source MemoryStorage"
         " is out of range for it.");
 
       throwException<DomainError>(
-        dstOffset + N <= dstVectorStorage.size(),
-        "The offset and size specified for the destination VectorStorage"
+        dstOffset + N <= dstMemoryStorage.size(),
+        "The offset and size specified for the destination MemoryStorage"
         " is out of range for it.");
 
       MemoryTransfer<memorySpaceDst, memorySpace>::copy(
-        N, dstVectorStorage.begin() + dstOffset, this->begin() + srcOffset);
+        N, dstMemoryStorage.begin() + dstOffset, this->begin() + srcOffset);
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpaceSrc>
     void
-    VectorStorage<ValueType, memorySpace>::copyFrom(
-      const VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage)
+    MemoryStorage<ValueType, memorySpace>::copyFrom(
+      const MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage)
     {
       throwException<DomainError>(
-        d_size == srcVectorStorage.size(),
-        "The source and destination VectorStorage are of different sizes");
+        d_size == srcMemoryStorage.size(),
+        "The source and destination MemoryStorage are of different sizes");
       MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
-        d_size, this->begin(), srcVectorStorage.begin());
+        d_size, this->begin(), srcMemoryStorage.begin());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpaceSrc>
     void
-    VectorStorage<ValueType, memorySpace>::copyFrom(
-      VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage,
+    MemoryStorage<ValueType, memorySpace>::copyFrom(
+      MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
       const size_type                           N,
       const size_type                           srcOffset,
       const size_type                           dstOffset)
     {
       throwException<DomainError>(
-        srcOffset + N <= srcVectorStorage.size(),
-        "The offset and copy size specified for the source VectorStorage"
+        srcOffset + N <= srcMemoryStorage.size(),
+        "The offset and copy size specified for the source MemoryStorage"
         " is out of range for it.");
 
       throwException<DomainError>(
         dstOffset + N <= d_size,
-        "The offset and size specified for the destination VectorStorage"
+        "The offset and size specified for the destination MemoryStorage"
         " is out of range for it.");
 
       MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
-        N, this->begin() + dstOffset, srcVectorStorage.begin() + srcOffset);
+        N, this->begin() + dstOffset, srcMemoryStorage.begin() + srcOffset);
     }
 
   } // namespace utils

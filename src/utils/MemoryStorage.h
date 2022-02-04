@@ -23,8 +23,8 @@
  * @author Ian C. Lin, Sambit Das.
  */
 
-#ifndef dftefeVectorStorage_h
-#define dftefeVectorStorage_h
+#ifndef dftefeMemoryStorage_h
+#define dftefeMemoryStorage_h
 
 #include <utils/MemoryManager.h>
 #include <utils/TypeConfig.h>
@@ -34,16 +34,16 @@ namespace dftefe
   namespace utils
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class VectorStorage
+    class MemoryStorage
     {
       /**
        * @brief A class template to provide an interface that can act similar to
        * STL vectors but with different MemorySpace---
        * HOST (cpu) , DEVICE (gpu), etc,.
        *
-       * @tparam ValueType The underlying value type for the VectorStorage
+       * @tparam ValueType The underlying value type for the MemoryStorage
        *  (e.g., int, double, complex<double>, etc.)
-       * @tparam memorySpace The memory space in which the VectorStorage needs
+       * @tparam memorySpace The memory space in which the MemoryStorage needs
        *  to reside
        *
        */
@@ -55,65 +55,65 @@ namespace dftefe
       typedef const ValueType *const_iterator;
 
     public:
-      VectorStorage() = default;
+      MemoryStorage() = default;
 
       /**
-       * @brief Copy constructor for a VectorStorage
-       * @param[in] u VectorStorage object to copy from
+       * @brief Copy constructor for a MemoryStorage
+       * @param[in] u MemoryStorage object to copy from
        */
-      VectorStorage(const VectorStorage &u);
+      MemoryStorage(const MemoryStorage &u);
 
       /**
-       * @brief Move constructor for a VectorStorage
-       * @param[in] u VectorStorage object to move from
+       * @brief Move constructor for a Vector
+       * @param[in] u Vector object to move from
        */
-      VectorStorage(VectorStorage &&u) noexcept;
+      MemoryStorage(MemoryStorage &&u) noexcept;
 
       /**
-       * @brief Constructor for VectorStorage with size and initial value arguments
-       * @param[in] size size of the VectorStorage
-       * @param[in] initVal initial value of elements of the VectorStorage
+       * @brief Constructor for Vector with size and initial value arguments
+       * @param[in] size size of the Vector
+       * @param[in] initVal initial value of elements of the Vector
        */
-      explicit VectorStorage(size_type size, ValueType initVal = 0);
+      explicit MemoryStorage(size_type size, ValueType initVal = 0);
 
       /**
        * @brief Destructor
        */
-      ~VectorStorage();
+      ~MemoryStorage();
 
 
       /**
-       * @brief Return iterator pointing to the beginning of VectorStorage
+       * @brief Return iterator pointing to the beginning of point
        * data.
        *
-       * @returns Iterator pointing to the beginning of VectorStorage.
+       * @returns Iterator pointing to the beginning of Vector.
        */
       iterator
       begin();
 
       /**
-       * @brief Return iterator pointing to the beginning of VectorStorage
+       * @brief Return iterator pointing to the beginning of Vector
        * data.
        *
        * @returns Constant iterator pointing to the beginning of
-       * VectorStorage.
+       * Vector.
        */
       const_iterator
       begin() const;
 
       /**
-       * @brief Return iterator pointing to the end of VectorStorage data.
+       * @brief Return iterator pointing to the end of Vector data.
        *
-       * @returns Iterator pointing to the end of VectorStorage.
+       * @returns Iterator pointing to the end of Vector.
        */
       iterator
       end();
 
       /**
-       * @brief Return iterator pointing to the end of VectorStorage data.
+       * @brief Return iterator pointing to the end of Vector data.
        *
        * @returns Constant iterator pointing to the end of
-       * VectorStorage.
+       * Vector.
        */
       const_iterator
       end() const;
@@ -121,20 +121,20 @@ namespace dftefe
 
       /**
        * @brief Copy assignment operator
-       * @param[in] rhs the rhs VectorStorage from which to copy
-       * @returns reference to the lhs VectorStorage
+       * @param[in] rhs the rhs Vector from which to copy
+       * @returns reference to the lhs Vector
        */
-      VectorStorage &
-      operator=(const VectorStorage &rhs);
+      MemoryStorage &
+      operator=(const MemoryStorage &rhs);
 
 
       /**
        * @brief Move assignment constructor
-       * @param[in] rhs the rhs VectorStorage from which to move
-       * @returns reference to the lhs VectorStorage
+       * @param[in] rhs the rhs Vector from which to move
+       * @returns reference to the lhs Vector
        */
-      VectorStorage &
-      operator=(VectorStorage &&rhs) noexcept;
+      MemoryStorage &
+      operator=(MemoryStorage &&rhs) noexcept;
 
       //      // This part does not work for GPU version, will work on this
       //      until
@@ -158,122 +158,122 @@ namespace dftefe
       //      operator[](size_type i) const;
 
       /**
-       * @brief Deallocates and then resizes VectorStorage with new size
+       * @brief Deallocates and then resizes Vector with new size
        * and initial value arguments
-       * @param[in] size size of the VectorStorage
-       * @param[in] initVal initial value of elements of the VectorStorage
+       * @param[in] size size of the Vector
+       * @param[in] initVal initial value of elements of the Vector
        */
       void
       resize(size_type size, ValueType initVal = ValueType());
 
       /**
-       * @brief Returns the dimension of the VectorStorage
-       * @returns size of the VectorStorage
+       * @brief Returns the dimension of the Vector
+       * @returns size of the Vector
        */
       size_type
       size() const;
 
       /**
-       * @brief Return the raw pointer to the VectorStorage
+       * @brief Return the raw pointer to the Vector
        * @return pointer to data
        */
       ValueType *
-      data();
+      data() noexcept;
 
       /**
-       * @brief Return the raw pointer to the VectorStorage without modifying the values
+       * @brief Return the raw pointer to the Vector without modifying the values
        * @return pointer to const data
        */
       const ValueType *
-      data() const;
+      data() const noexcept;
 
       /**
-       * @brief Copies the data to a VectorStorage object in a different memory space.
+       * @brief Copies the data to a MemoryStorage object in a different memory space.
        * This provides a seamless interface to copy back and forth between
        * memory spaces , including between the same memory spaces.
        *
-       * @note The destination VectorStorage must be pre-allocated appropriately
+       * @note The destination MemoryStorage must be pre-allocated appropriately
        *
-       * @tparam memorySpaceDst memory space of the destination VectorStorage
-       * @param[in] dstVectorStorage reference to the destination
-       *  VectorStorage. It must be pre-allocated appropriately
-       * @param[out] dstVectorStorage reference to the destination
-       *  VectorStorage with the data copied into it
+       * @tparam memorySpaceDst memory space of the destination MemoryStorage
+       * @param[in] dstMemoryStorage reference to the destination
+       *  MemoryStorage. It must be pre-allocated appropriately
+       * @param[out] dstMemoryStorage reference to the destination
+       *  MemoryStorage with the data copied into it
        */
       template <dftefe::utils::MemorySpace memorySpaceDst>
       void
-      copyTo(VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage) const;
+      copyTo(MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage) const;
 
       /**
-       * @brief Copies the data to a VectorStorage object in a different memory space.
+       * @brief Copies the data to a MemoryStorage object in a different memory space.
        * This provides a seamless interface to copy back and forth between
        * memory spaces , including between the same memory spaces. This is a
        * more granular version of the above copyTo function as it provides
-       * transfer from a specific portion of the source VectorStorage to a
-       * specific portion of the destination VectorStorage.
+       * transfer from a specific portion of the source MemoryStorage to a
+       * specific portion of the destination MemoryStorage.
        *
-       * @note The destination VectorStorage must be pre-allocated appropriately
+       * @note The destination MemoryStorage must be pre-allocated appropriately
        *
-       * @tparam memorySpaceDst memory space of the destination VectorStorage
-       * @param[in] dstVectorStorage reference to the destination
-       *  VectorStorage. It must be pre-allocated appropriately
-       * @param[in] N number of entries of the source VectorStorage
-       *  that needs to be copied to the destination VectorStorage
+       * @tparam memorySpaceDst memory space of the destination MemoryStorage
+       * @param[in] dstMemoryStorage reference to the destination
+       *  MemoryStorage. It must be pre-allocated appropriately
+       * @param[in] N number of entries of the source MemoryStorage
+       *  that needs to be copied to the destination MemoryStorage
        * @param[in] srcOffset offset relative to the start of the source
-       *  VectorStorage from which we need to copy data
+       *  MemoryStorage from which we need to copy data
        * @param[in] dstOffset offset relative to the start of the destination
-       *  VectorStorage to which we need to copy data
-       * @param[out] dstVectorStorage reference to the destination
-       *  VectorStorage with the data copied into it
+       *  MemoryStorage to which we need to copy data
+       * @param[out] dstMemoryStorage reference to the destination
+       *  MemoryStorage with the data copied into it
        */
       template <dftefe::utils::MemorySpace memorySpaceDst>
       void
-      copyTo(VectorStorage<ValueType, memorySpaceDst> &dstVectorStorage,
+      copyTo(MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage,
              const size_type                           N,
              const size_type                           srcOffset,
              const size_type                           dstOffset) const;
 
       /**
-       * @brief Copies data from a VectorStorage object in a different memory space.
+       * @brief Copies data from a MemoryStorage object in a different memory space.
        * This provides a seamless interface to copy back and forth between
        * memory spaces, including between the same memory spaces.
        *
-       * @note The VectorStorage must be pre-allocated appropriately
+       * @note The MemoryStorage must be pre-allocated appropriately
        *
-       * @tparam memorySpaceSrc memory space of the source VectorStorage
+       * @tparam memorySpaceSrc memory space of the source MemoryStorage
        *  from which to copy
-       * @param[in] srcVectorStorage reference to the source
-       *  VectorStorage
+       * @param[in] srcMemoryStorage reference to the source
+       *  MemoryStorage
        */
       template <dftefe::utils::MemorySpace memorySpaceSrc>
       void
       copyFrom(
-        const VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage);
+        const MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage);
 
       /**
-       * @brief Copies data from a VectorStorage object in a different memory space.
+       * @brief Copies data from a MemoryStorage object in a different memory space.
        * This provides a seamless interface to copy back and forth between
        * memory spaces, including between the same memory spaces.
        * This is a more granular version of the above copyFrom function as it
-       * provides transfer from a specific portion of the source VectorStorage
-       * to a specific portion of the destination VectorStorage.
+       * provides transfer from a specific portion of the source MemoryStorage
+       * to a specific portion of the destination MemoryStorage.
        *
-       * @note The VectorStorage must be pre-allocated appropriately
+       * @note The MemoryStorage must be pre-allocated appropriately
        *
-       * @tparam memorySpaceSrc memory space of the source VectorStorage
+       * @tparam memorySpaceSrc memory space of the source MemoryStorage
        *  from which to copy
-       * @param[in] srcVectorStorage reference to the source
-       *  VectorStorage
-       * @param[in] N number of entries of the source VectorStorage
-       *  that needs to be copied to the destination VectorStorage
+       * @param[in] srcMemoryStorage reference to the source
+       *  MemoryStorage
+       * @param[in] N number of entries of the source MemoryStorage
+       *  that needs to be copied to the destination MemoryStorage
        * @param[in] srcOffset offset relative to the start of the source
-       *  VectorStorage from which we need to copy data
+       *  MemoryStorage from which we need to copy data
        * @param[in] dstOffset offset relative to the start of the destination
-       *  VectorStorage to which we need to copy data
+       *  MemoryStorage to which we need to copy data
        */
       template <dftefe::utils::MemorySpace memorySpaceSrc>
       void
-      copyFrom(VectorStorage<ValueType, memorySpaceSrc> &srcVectorStorage,
+      copyFrom(MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage,
                const size_type                           N,
                const size_type                           srcOffset,
                const size_type                           dstOffset);
@@ -286,6 +286,6 @@ namespace dftefe
   } // namespace utils
 } // end of namespace dftefe
 
-#include "VectorStorage.t.cpp"
+#include "MemoryStorage.t.cpp"
 
 #endif
