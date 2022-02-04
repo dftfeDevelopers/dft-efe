@@ -26,15 +26,27 @@
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
-#include <utils/VectorStorage.h>
+#include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class Vector : public dftefe::utils::VectorStorage<ValueType, memorySpace>
+    class Vector
     {
+    public:
+      //
+      // typedefs
+      //
+      using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace> > ;
+      using value_type      = Storage::value_type;
+      using pointer         = Storage::pointer;
+      using reference       = Storage::reference;
+      using const_reference = Storage::const_reference;
+      using iterator        = Storage::iterator;
+      using const_iterator  = Storage::const_iterator;
+
     public:
       Vector() = default;
 
@@ -57,6 +69,61 @@ namespace dftefe
        */
       explicit Vector(size_type size, ValueType initVal = 0);
 
+      /**
+       * @brief Return iterator pointing to the beginning of Vector data.
+       *
+       * @returns Iterator pointing to the beginning of Vector.
+       */
+      iterator
+      begin();
+
+      /**
+       * @brief Return iterator pointing to the beginning of Vector
+       * data.
+       *
+       * @returns Constant iterator pointing to the beginning of
+       * Vector.
+       */
+      const_iterator
+      begin() const;
+
+      /**
+       * @brief Return iterator pointing to the end of Vector data.
+       *
+       * @returns Iterator pointing to the end of Vector.
+       */
+      iterator
+      end();
+
+      /**
+       * @brief Return iterator pointing to the end of Vector data.
+       *
+       * @returns Constant iterator pointing to the end of
+       * Vector.
+       */
+      const_iterator
+      end() const;
+
+      /**
+       * @brief Returns the size of the Vector
+       * @returns size of the Vector
+       */
+      size_type
+      size() const;
+
+      /**
+       * @brief Return the raw pointer to the Vector data
+       * @return pointer to data
+       */
+      ValueType *
+      data();
+
+      /**
+       * @brief Return the constant raw pointer to the Vector data
+       * @return pointer to const data
+       */
+      const ValueType *
+      data() const;
 
       /**
        * @brief Compound addition for elementwise addition lhs += rhs
@@ -88,6 +155,18 @@ namespace dftefe
        */
       double
       lInfNorm() const;
+
+      /**
+       * @brief Returns a const reference to the underlying storage
+       * of the Vector.
+       *
+       * @return const reference to the underlying MemoryStorage.
+       */
+      const Storage &
+      getStorage() const;
+
+    private:
+      Storage d_storage;
     };
 
     // helper functions

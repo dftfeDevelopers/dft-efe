@@ -186,13 +186,13 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     ValueType *
-    VectorStorage<ValueType, memorySpace>::data() noexcept
+    VectorStorage<ValueType, memorySpace>::data()
     {
       return d_data;
     }
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const ValueType *
-    VectorStorage<ValueType, memorySpace>::data() const noexcept
+    VectorStorage<ValueType, memorySpace>::data() const
     {
       return d_data;
     }

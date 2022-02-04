@@ -38,21 +38,19 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(const size_type size,
                                            const ValueType initVal)
-      : dftefe::utils::VectorStorage<ValueType, memorySpace>(size, initVal)
+      : d_storage(size, initVal)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       const Vector<ValueType, memorySpace> &u)
-      : dftefe::utils::VectorStorage<ValueType, memorySpace>(
-          (dftefe::utils::VectorStorage<ValueType, memorySpace> &)u)
+      : d_storage(u.d_storage)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       Vector<ValueType, memorySpace> &&u) noexcept
-      : dftefe::utils::VectorStorage<ValueType, memorySpace>(
-          (dftefe::utils::VectorStorage<ValueType, memorySpace> &&) u)
+      : d_storage(std::move(u.d_storage))
     {}
 
 
@@ -60,9 +58,15 @@ namespace dftefe
     Vector<ValueType, memorySpace> &
     Vector<ValueType, memorySpace>::operator+=(const Vector &rhs)
     {
-      DFTEFE_AssertWithMsg(rhs.size() == this->size(),
-                           "Size of two vectors should be the same.");
-      VectorKernels<ValueType, memorySpace>::add(this->size(),
+      utils::throwException<utils::LengthError>(
+        rhs.size() == this->size(),
+        "Mismatch of sizes of the two vectors that are being added.");
+      const size_type rhsStorageSize = (rhs.d_storage).size();
+      utils::throwException<utils::LengthError>(
+        d_storage.size() == rhsStorageSize,
+        "Mismatch of sizes of the underlying"
+        "storage of the two vectors that are being added.");
+      VectorKernels<ValueType, memorySpace>::add(d_storage.size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -72,9 +76,15 @@ namespace dftefe
     Vector<ValueType, memorySpace> &
     Vector<ValueType, memorySpace>::operator-=(const Vector &rhs)
     {
-      DFTEFE_AssertWithMsg(rhs.size() == this->size(),
-                           "Size of two vectors should be the same.");
-      VectorKernels<ValueType, memorySpace>::sub(this->size(),
+      utils::throwException<utils::LengthError>(
+        rhs.size() == this->size(),
+        "Mismatch of sizes of the two vectors that are being subtracted.");
+      const size_type rhsStorageSize = (rhs.d_storage).size();
+      utils::throwException<utils::LengthError>(
+        (d_storage.size() == rhsStorageSize),
+        "Mismatch of sizes of the underlying"
+        "storage of the two vectors that are being subtracted.");
+      VectorKernels<ValueType, memorySpace>::sub(d_storage.size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -85,18 +95,81 @@ namespace dftefe
     double
     Vector<ValueType, memorySpace>::l2Norm() const
     {
-      return VectorKernels<ValueType, memorySpace>::l2Norm(this->size(),
-                                                           this->data());
+      return VectorKernels<ValueType, memorySpace>::l2Norm(
+        d_vectorStoage.size(), this->data());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     Vector<ValueType, memorySpace>::lInfNorm() const
     {
-      return VectorKernels<ValueType, memorySpace>::lInfNorm(this->size(),
+      return VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage.size(),
                                                              this->data());
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const Storage &
+    Vector<ValueType, memorySpace>::getStorage() const
+    {
+      return d_storage;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    iterator
+    Vector<ValueType, memorySpace>::begin()
+    {
+      return d_storage.begin();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const_iterator
+    Vector<ValueType, memorySpace>::begin() const
+    {
+      return d_storage.begin();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    iterator
+    Vector<ValueType, memorySpace>::end()
+    {
+      return d_storage.end();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const_iterator
+    Vector<ValueType, memorySpace>::end() const
+    {
+      return d_storage.end();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    Vector<ValueType, memorySpace>::resize(size_type size,
+                                           ValueType initVal /*= ValueType()*/)
+    {
+      d_storage.resize(size, initVal);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type
+    Vector<ValueType, memorySpace>::size() const
+    {
+      return d_storage.size();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    ValueType *
+    Vector<ValueType, memorySpace>::data()
+    {
+      return d_storage.data();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const ValueType *
+    Vector<ValueType, memorySpace>::data() const
+    {
+      return d_storage.data();
+    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
@@ -106,10 +179,23 @@ namespace dftefe
         const Vector<ValueType, memorySpace> &v,
         Vector<ValueType, memorySpace> &      w)
     {
-      DFTEFE_AssertWithMsg(((u.size() == v.size()) && (v.size() == w.size())),
-                           "Size of two vectors should be the same.");
+      utils::throwException<utils::LengthError>(
+        ((u.size() == v.size()) && (v.size() == w.size())),
+        "Mismatch of sizes of the vectors that are added.");
+      const size_type uStorageSize = (u.d_storage).size();
+      const size_type vStorageSize = (v.d_storage).size();
+      const size_type wStorageSize = (w.d_storage).size();
+      utils::throwException<utils::LengthError>(
+	  ((uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
+                           "Mismatch of sizes of the underlying storages"
+			   "of the vectors that are added.");
       VectorKernels<ValueType, memorySpace>::add(
-        u.size(), a, u.data(), b, v.data(), w.data());
+        uStorageSize,
+	a,
+	u.data(),
+	b,
+	v.data(),
+	w.data());
     }
 
   } // namespace linearAlgebra

@@ -64,15 +64,15 @@ namespace dftefe
       VectorStorage(const VectorStorage &u);
 
       /**
-       * @brief Move constructor for a Vector
-       * @param[in] u Vector object to move from
+       * @brief Move constructor for a VectorStorage
+       * @param[in] u VectorStorage object to move from
        */
       VectorStorage(VectorStorage &&u) noexcept;
 
       /**
-       * @brief Constructor for Vector with size and initial value arguments
-       * @param[in] size size of the Vector
-       * @param[in] initVal initial value of elements of the Vector
+       * @brief Constructor for VectorStorage with size and initial value arguments
+       * @param[in] size size of the VectorStorage
+       * @param[in] initVal initial value of elements of the VectorStorage
        */
       explicit VectorStorage(size_type size, ValueType initVal = 0);
 
@@ -83,37 +83,37 @@ namespace dftefe
 
 
       /**
-       * @brief Return iterator pointing to the beginning of point
+       * @brief Return iterator pointing to the beginning of VectorStorage
        * data.
        *
-       * @returns Iterator pointing to the beginning of Vector.
+       * @returns Iterator pointing to the beginning of VectorStorage.
        */
       iterator
       begin();
 
       /**
-       * @brief Return iterator pointing to the beginning of Vector
+       * @brief Return iterator pointing to the beginning of VectorStorage
        * data.
        *
        * @returns Constant iterator pointing to the beginning of
-       * Vector.
+       * VectorStorage.
        */
       const_iterator
       begin() const;
 
       /**
-       * @brief Return iterator pointing to the end of Vector data.
+       * @brief Return iterator pointing to the end of VectorStorage data.
        *
-       * @returns Iterator pointing to the end of Vector.
+       * @returns Iterator pointing to the end of VectorStorage.
        */
       iterator
       end();
 
       /**
-       * @brief Return iterator pointing to the end of Vector data.
+       * @brief Return iterator pointing to the end of VectorStorage data.
        *
        * @returns Constant iterator pointing to the end of
-       * Vector.
+       * VectorStorage.
        */
       const_iterator
       end() const;
@@ -121,8 +121,8 @@ namespace dftefe
 
       /**
        * @brief Copy assignment operator
-       * @param[in] rhs the rhs Vector from which to copy
-       * @returns reference to the lhs Vector
+       * @param[in] rhs the rhs VectorStorage from which to copy
+       * @returns reference to the lhs VectorStorage
        */
       VectorStorage &
       operator=(const VectorStorage &rhs);
@@ -130,8 +130,8 @@ namespace dftefe
 
       /**
        * @brief Move assignment constructor
-       * @param[in] rhs the rhs Vector from which to move
-       * @returns reference to the lhs Vector
+       * @param[in] rhs the rhs VectorStorage from which to move
+       * @returns reference to the lhs VectorStorage
        */
       VectorStorage &
       operator=(VectorStorage &&rhs) noexcept;
@@ -158,34 +158,34 @@ namespace dftefe
       //      operator[](size_type i) const;
 
       /**
-       * @brief Deallocates and then resizes Vector with new size
+       * @brief Deallocates and then resizes VectorStorage with new size
        * and initial value arguments
-       * @param[in] size size of the Vector
-       * @param[in] initVal initial value of elements of the Vector
+       * @param[in] size size of the VectorStorage
+       * @param[in] initVal initial value of elements of the VectorStorage
        */
       void
       resize(size_type size, ValueType initVal = ValueType());
 
       /**
-       * @brief Returns the dimension of the Vector
-       * @returns size of the Vector
+       * @brief Returns the dimension of the VectorStorage
+       * @returns size of the VectorStorage
        */
       size_type
       size() const;
 
       /**
-       * @brief Return the raw pointer to the Vector
+       * @brief Return the raw pointer to the VectorStorage
        * @return pointer to data
        */
       ValueType *
-      data() noexcept;
+      data();
 
       /**
-       * @brief Return the raw pointer to the Vector without modifying the values
+       * @brief Return the raw pointer to the VectorStorage without modifying the values
        * @return pointer to const data
        */
       const ValueType *
-      data() const noexcept;
+      data() const;
 
       /**
        * @brief Copies the data to a VectorStorage object in a different memory space.
