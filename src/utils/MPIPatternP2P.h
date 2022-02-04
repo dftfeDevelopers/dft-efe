@@ -124,7 +124,14 @@ namespace dftefe
       getOwnedLocalIndices(const size_type procId) const;
 
       size_type
+      getNumOwnedIndicesForTargetProcs() const;
+
+      const MPI_Comm &
+      mpiCommunicator() const;
+
+      size_type
       nmpiProcesses() const;
+
       size_type
       thisProcessId() const;
 
@@ -220,7 +227,7 @@ namespace dftefe
 
       /**
        * Vector to store the target processor Ids. A target processor is
-       * one which owns at least one of the locally owned indices of this
+       * one which contains at least one of the locally owned indices of this
        * processor as its ghost index.
        */
       SizeTypeVector d_targetProcIds;

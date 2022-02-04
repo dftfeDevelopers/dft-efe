@@ -507,6 +507,23 @@ namespace dftefe
       return returnValue;
     }
 
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MPIPatternP2P<memorySpace>::getNumOwnedIndicesForTargetProcs() const
+    {
+      return d_numOwnedIndicesForTargetProcs;
+    }
+
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    const MPI_Comm &
+    MPIPatternP2P<memorySpace>::mpiCommunicator() const
+    {
+      return d_mpiComm;
+    }
+
+
     template <dftefe::utils::MemorySpace memorySpace>
     size_type
     MPIPatternP2P<memorySpace>::nmpiProcesses() const
