@@ -25,6 +25,7 @@ set(DFT-EFE-LINALG-SOURCES
 		VectorKernels.cu
 		Vector.cpp
 		VectorKernels.cpp
+		DistributedDenseMatrix.cpp
 		DeviceLAContextsSingleton.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
