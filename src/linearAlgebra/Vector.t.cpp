@@ -95,8 +95,8 @@ namespace dftefe
     double
     Vector<ValueType, memorySpace>::l2Norm() const
     {
-      return VectorKernels<ValueType, memorySpace>::l2Norm(
-        d_vectorStoage.size(), this->data());
+      return VectorKernels<ValueType, memorySpace>::l2Norm(d_storage.size(),
+                                                           this->data());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -108,46 +108,41 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    const Storage &
+    const typename dftefe::linearAlgebra::Vector<ValueType,
+                                                 memorySpace>::Storage &
     Vector<ValueType, memorySpace>::getStorage() const
     {
       return d_storage;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    iterator
+    typename dftefe::linearAlgebra::Vector<ValueType, memorySpace>::iterator
     Vector<ValueType, memorySpace>::begin()
     {
       return d_storage.begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    const_iterator
+    typename dftefe::linearAlgebra::Vector<ValueType,
+                                           memorySpace>::const_iterator
     Vector<ValueType, memorySpace>::begin() const
     {
       return d_storage.begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    iterator
+    typename dftefe::linearAlgebra::Vector<ValueType, memorySpace>::iterator
     Vector<ValueType, memorySpace>::end()
     {
       return d_storage.end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    const_iterator
+    typename dftefe::linearAlgebra::Vector<ValueType,
+                                           memorySpace>::const_iterator
     Vector<ValueType, memorySpace>::end() const
     {
       return d_storage.end();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::resize(size_type size,
-                                           ValueType initVal /*= ValueType()*/)
-    {
-      d_storage.resize(size, initVal);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -186,16 +181,11 @@ namespace dftefe
       const size_type vStorageSize = (v.d_storage).size();
       const size_type wStorageSize = (w.d_storage).size();
       utils::throwException<utils::LengthError>(
-	  ((uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
-                           "Mismatch of sizes of the underlying storages"
-			   "of the vectors that are added.");
+        (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
+        "Mismatch of sizes of the underlying storages"
+        "of the vectors that are added.");
       VectorKernels<ValueType, memorySpace>::add(
-        uStorageSize,
-	a,
-	u.data(),
-	b,
-	v.data(),
-	w.data());
+        uStorageSize, a, u.data(), b, v.data(), w.data());
     }
 
   } // namespace linearAlgebra

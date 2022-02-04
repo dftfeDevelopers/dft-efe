@@ -39,13 +39,13 @@ namespace dftefe
       //
       // typedefs
       //
-      using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace> > ;
-      using value_type      = Storage::value_type;
-      using pointer         = Storage::pointer;
-      using reference       = Storage::reference;
-      using const_reference = Storage::const_reference;
-      using iterator        = Storage::iterator;
-      using const_iterator  = Storage::const_iterator;
+      using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      using value_type = typename Storage::value_type;
+      using pointer    = typename Storage::pointer;
+      using reference  = typename Storage::reference;
+      using const_reference = typename Storage::const_reference;
+      using iterator        = typename Storage::iterator;
+      using const_iterator  = typename Storage::const_iterator;
 
     public:
       Vector() = default;
