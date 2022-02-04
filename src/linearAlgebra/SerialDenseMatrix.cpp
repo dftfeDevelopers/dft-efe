@@ -26,4 +26,8 @@
 #include "SerialDenseMatrix.h"
 
 namespace dftefe
-{}
+{
+  namespace linearAlgebra
+  {}
+}
+}

@@ -26,14 +26,15 @@
 #ifndef dftefeSerialDenseMatrix_h
 #define dftefeSerialDenseMatrix_h
 
-
+#include "MatrixBase.h"
 
 namespace dftefe
 {
-
-  class SerialDenseMatrix
-  {};
-
+  namespace linearAlgebra
+  {
+    class SerialDenseMatrix : public MatrixBase
+    {};
+  } // namespace linearAlgebra
 } // namespace dftefe
 
 

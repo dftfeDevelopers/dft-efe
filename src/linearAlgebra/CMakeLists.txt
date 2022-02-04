@@ -25,6 +25,7 @@ set(DFT-EFE-LINALG-SOURCES
 		VectorKernels.cu
 		Vector.cpp
 		VectorKernels.cpp
+		SerialDenseMatrix.cpp
 		DistributedDenseMatrix.cpp
 		DeviceLAContextsSingleton.cpp)
 
