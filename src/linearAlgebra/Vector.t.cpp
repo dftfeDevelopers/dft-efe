@@ -38,21 +38,21 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(const size_type size,
                                            const ValueType initVal)
-      : dftefe::utils::VectorStorage<ValueType, memorySpace>(size, initVal)
+      : dftefe::utils::MemoryStorage<ValueType, memorySpace>(size, initVal)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       const Vector<ValueType, memorySpace> &u)
-      : dftefe::utils::VectorStorage<ValueType, memorySpace>(
-          (dftefe::utils::VectorStorage<ValueType, memorySpace> &)u)
+      : dftefe::utils::MemoryStorage<ValueType, memorySpace>(
+          (dftefe::utils::MemoryStorage<ValueType, memorySpace> &)u)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       Vector<ValueType, memorySpace> &&u) noexcept
-      : dftefe::utils::VectorStorage<ValueType, memorySpace>(
-          (dftefe::utils::VectorStorage<ValueType, memorySpace> &&) u)
+      : dftefe::utils::MemoryStorage<ValueType, memorySpace>(
+          (dftefe::utils::MemoryStorage<ValueType, memorySpace> &&) u)
     {}
 
 
