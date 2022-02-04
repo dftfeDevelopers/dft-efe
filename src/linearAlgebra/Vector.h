@@ -26,14 +26,14 @@
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
-#include <utils/VectorStorage.h>
+#include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class Vector : public dftefe::utils::VectorStorage<ValueType, memorySpace>
+    class Vector : public dftefe::utils::MemoryStorage<ValueType, memorySpace>
     {
     public:
       Vector() = default;
