@@ -51,7 +51,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhost(VectorStorage<ValueType,memorySpace> & dataArray,
+    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhost(MemoryStorage<ValueType,memorySpace> & dataArray,
     const size_type communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI      
@@ -62,7 +62,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray,
+    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray,
     const size_type communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
@@ -85,7 +85,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray,
+    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray,
     const size_type communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
@@ -95,7 +95,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhost(VectorStorage<ValueType,memorySpace> & dataArray,
+    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhost(MemoryStorage<ValueType,memorySpace> & dataArray,
     const size_type communicationChannel)
     {
       gatherFromGhostBegin(dataArray);
@@ -104,7 +104,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray,
+    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray,
     const size_type communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
@@ -114,7 +114,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray,
+    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray,
     const size_type communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI

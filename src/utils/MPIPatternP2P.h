@@ -31,7 +31,7 @@
 #endif
 
 #include <utils/MemorySpaceType.h>
-#include <utils/VectorStorage.h>
+#include <utils/MemoryStorage.h>
 #include <vector>
 namespace dftefe
 {
@@ -62,9 +62,9 @@ namespace dftefe
       // typedefs
       //
     public:
-      using SizeTypeVector = utils::VectorStorage<size_type, memorySpace>;
+      using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
-        utils::VectorStorage<global_size_type, memorySpace>;
+        utils::MemoryStorage<global_size_type, memorySpace>;
 
     public:
       virtual ~MPIPatternP2P() = default;

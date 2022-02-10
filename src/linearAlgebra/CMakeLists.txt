@@ -23,7 +23,7 @@ set(DFT-EFE-LINALG-SOURCES
 		DeviceBlasLapackTemplates.cu
 		DeviceLAContextsSingleton.cu
 		VectorKernels.cu
-		Vector.cpp
+		SerialVector.cpp
 		VectorKernels.cpp
 		DeviceLAContextsSingleton.cpp)
 
