@@ -29,7 +29,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
-#include <utils/VectorStorage.h>
+#include <utils/MemoryStorage.h>
 
 
 namespace dftefe
@@ -44,23 +44,23 @@ namespace dftefe
                               const size_type blockSize);
 
       void
-      scatterToGhost(VectorStorage<ValueType,memorySpace> & dataArray);
+      scatterToGhost(MemoryStorage<ValueType,memorySpace> & dataArray);
 
       void
-      gatherFromGhost(VectorStorage<ValueType,memorySpace> & dataArray);
+      gatherFromGhost(MemoryStorage<ValueType,memorySpace> & dataArray);
 
 
       void
-      scatterToGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray);
+      scatterToGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray);
 
       void
-      scatterToGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray);
+      scatterToGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray);
 
       void
-      gatherFromGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray);
+      gatherFromGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray);
 
       void
-      gatherFromGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray);
+      gatherFromGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray);
 
     private:
 
@@ -68,7 +68,7 @@ namespace dftefe
 
       size_type d_blockSize;
 
-      VectorStorage<ValueType,memorySpace> d_sendRecvBuffer;
+      MemoryStorage<ValueType,memorySpace> d_sendRecvBuffer;
 
       std::vector<MPI_Request> d_sendRequestsScatterToGhost;
 
