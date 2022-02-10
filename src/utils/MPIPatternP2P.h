@@ -126,14 +126,16 @@ namespace dftefe
       size_type
       getNumOwnedIndicesForTargetProcs() const;
 
-      const MPI_Comm &
-      mpiCommunicator() const;
-
       size_type
       nmpiProcesses() const;
 
       size_type
       thisProcessId() const;
+
+#ifdef DFTEFE_WITH_MPI
+      const MPI_Comm &
+      mpiCommunicator() const;
+#endif
 
     private:
       /**
@@ -262,14 +264,16 @@ namespace dftefe
        */
       SizeTypeVector d_flattenedLocalTargetIndices;
 
-      /// MPI Communicator object.
-      MPI_Comm d_mpiComm;
-
       /// Number of processors in the MPI Communicator.
       int d_nprocs;
 
       /// Rank of the current processor.
       int d_myRank;
+
+#ifdef DFTEFE_WITH_MPI
+      /// MPI Communicator object.
+      MPI_Comm d_mpiComm;
+#endif
     };
 
   } // end of namespace utils

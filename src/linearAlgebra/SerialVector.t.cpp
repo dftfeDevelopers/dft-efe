@@ -37,31 +37,33 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(const size_type size,
-                                           const ValueType initVal)
-      : d_storage(size, initVal),
-        d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
+                                                       const ValueType initVal)
+      : d_storage(size, initVal)
+      , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       const SerialVector<ValueType, memorySpace> &u)
-      : d_storage(u.d_storage),
-        d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
+      : d_storage(u.d_storage)
+      , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       SerialVector<ValueType, memorySpace> &&u) noexcept
-      : d_storage(std::move(u.d_storage)),
-        d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
+      : d_storage(std::move(u.d_storage))
+      , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     VectorBase<ValueType, memorySpace> &
-    SerialVector<ValueType, memorySpace>::operator+=(const VectorBase<ValueType, memorySpace> &rhs)
+    SerialVector<ValueType, memorySpace>::operator+=(
+      const VectorBase<ValueType, memorySpace> &rhs)
     {
-      bool areCompatible = d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
-      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial 
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
+      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial
 	  vector and the other a distributed vector.");
       utils::throwException<utils::LengthError>(
         rhs.size() == this->size(),
@@ -79,10 +81,12 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     VectorBase<ValueType, memorySpace> &
-    SerialVector<ValueType, memorySpace>::operator-=(const VectorBase<ValueType, memorySpace> &rhs)
+    SerialVector<ValueType, memorySpace>::operator-=(
+      const VectorBase<ValueType, memorySpace> &rhs)
     {
-      bool areCompatible = d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
-      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial 
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
+      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial
 	  vector and the other a distributed vector.");
       utils::throwException<utils::LengthError>(
         rhs.size() == this->size(),
@@ -117,7 +121,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const typename dftefe::linearAlgebra::VectorBase<ValueType,
-                                                 memorySpace>::Storage &
+                                                     memorySpace>::Storage &
     SerialVector<ValueType, memorySpace>::getStorage() const
     {
       return d_storage;
@@ -132,7 +136,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename dftefe::linearAlgebra::VectorBase<ValueType,
-                                           memorySpace>::const_iterator
+                                               memorySpace>::const_iterator
     SerialVector<ValueType, memorySpace>::begin() const
     {
       return d_storage.begin();
@@ -147,7 +151,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename dftefe::linearAlgebra::VectorBase<ValueType,
-                                           memorySpace>::const_iterator
+                                               memorySpace>::const_iterator
     SerialVector<ValueType, memorySpace>::end() const
     {
       return d_storage.end();

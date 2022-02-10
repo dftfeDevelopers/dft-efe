@@ -34,24 +34,26 @@ namespace dftefe
   {
     class VectorAttributes
     {
-      public:
-	enum class Distribution {
-	  SERIAL,
-	  DISTRIBUTED
-	};
-	
-	VectorAttributes(const Distribution distribution,
-	    const size_type numComponents = 1);
-	~VectorAttributes() = default;
+    public:
+      enum class Distribution
+      {
+        SERIAL,
+        DISTRIBUTED
+      };
 
-	bool
-	  areAttributesCompatible(const VectorAttributes & vecAttributes) const;
+      VectorAttributes(const Distribution distribution,
+                       const size_type    numComponents = 1);
+      ~VectorAttributes() = default;
 
-	bool
-	  areDistributionCompatible(const VectorAttributes & vecAttributes) const;
-      private:
-	Distribution d_distribution;
-	size_type d_numComponents;
+      bool
+      areAttributesCompatible(const VectorAttributes &vecAttributes) const;
+
+      bool
+      areDistributionCompatible(const VectorAttributes &vecAttributes) const;
+
+    private:
+      Distribution d_distribution;
+      size_type    d_numComponents;
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

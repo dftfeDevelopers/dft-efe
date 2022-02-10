@@ -26,26 +26,25 @@
 #include <linearAlgebra/VectorKernels.h>
 namespace dftefe
 {
-
   namespace linearAlgebra
   {
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
+    add(ValueType                                 a,
         const VectorBase<ValueType, memorySpace> &u,
-        ValueType                             b,
+        ValueType                                 b,
         const VectorBase<ValueType, memorySpace> &v,
         VectorBase<ValueType, memorySpace> &      w)
     {
-      const VectorAttributes & uVectorAttributes = u.getVectorAttributes();
-      const VectorAttributes & vVectorAttributes = v.getVectorAttributes();
-      const VectorAttributes & wVectorAttributes = w.getVectorAttributes();
-      bool areCompatible = uVectorAttributes.areDistributionCompatible(vVectorAttributes);
-      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial 
+      const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
+      const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
+      const VectorAttributes &wVectorAttributes = w.getVectorAttributes();
+      bool                    areCompatible =
+        uVectorAttributes.areDistributionCompatible(vVectorAttributes);
+      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial
 	  vector and the other a distributed vector.");
       areCompatible = vVectorAttributes.areDistributionCompatible(wVectorAttributes);
-      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial 
+      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial
 	  vector and the other a distributed vector.");
       utils::throwException<utils::LengthError>(
         ((u.size() == v.size()) && (v.size() == w.size())),

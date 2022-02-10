@@ -24,28 +24,28 @@
  */
 
 #include <linearAlgebra/VectorAttributes.h>
-namespace dftefe 
+namespace dftefe
 {
-  namespace linearAlgebra 
+  namespace linearAlgebra
   {
-    
-    VectorAttributes::VectorAttributes(const VectorAttributes::Distribution distribution,
-	const size_type numComponents /*=1*/)
-      : d_distribution(distribution),
-      d_numComponents(numComponents)
+    VectorAttributes::VectorAttributes(
+      const VectorAttributes::Distribution distribution,
+      const size_type                      numComponents /*=1*/)
+      : d_distribution(distribution)
+      , d_numComponents(numComponents)
     {}
-   
+
     bool
     VectorAttributes::areAttributesCompatible(
-	const VectorAttributes & vecAttributes) const
+      const VectorAttributes &vecAttributes) const
     {
       return (d_distribution == vecAttributes.d_distribution) &&
-	(d_numComponents == vecAttributes.d_numComponents);
+             (d_numComponents == vecAttributes.d_numComponents);
     }
-    
+
     bool
     VectorAttributes::areDistributionCompatible(
-	const VectorAttributes & vecAttributes) const
+      const VectorAttributes &vecAttributes) const
     {
       return (d_distribution == vecAttributes.d_distribution);
     }

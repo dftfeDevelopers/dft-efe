@@ -35,16 +35,15 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class VectorBase
     {
-
       /**
-       * @brief An abstract class template for a vector. 
+       * @brief An abstract class template for a vector.
        * This is a vector in the mathematical
        * sense and not in the sense of an array or STL container.
        *
-       * The actual implemental of the class is provided in the derived 
+       * The actual implemental of the class is provided in the derived
        * class (e.g., SerialVector, DistributedVector).
        *
-       * @tparam template parameter ValueType defines underlying datatype being stored 
+       * @tparam template parameter ValueType defines underlying datatype being stored
        *  in the vector (i.e., int, double, complex<double>, etc.)
        * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
        * DEVICE) in which the vector must reside.
@@ -104,24 +103,21 @@ namespace dftefe
        * @brief Returns the size of the Vector
        * @returns size of the Vector
        */
-      virtual
-      size_type
+      virtual size_type
       size() const = 0;
 
       /**
        * @brief Return the raw pointer to the Vector data
        * @return pointer to data
        */
-      virtual
-      ValueType *
+      virtual ValueType *
       data() = 0;
 
       /**
        * @brief Return the constant raw pointer to the Vector data
        * @return pointer to const data
        */
-      virtual
-      const ValueType *
+      virtual const ValueType *
       data() const = 0;
 
       /**
@@ -129,8 +125,7 @@ namespace dftefe
        * @param[in] rhs the vector to add
        * @return the original vector
        */
-      virtual
-      VectorBase &
+      virtual VectorBase &
       operator+=(const VectorBase &rhs) = 0;
 
       /**
@@ -138,8 +133,7 @@ namespace dftefe
        * @param[in] rhs the vector to subtract
        * @return the original vector
        */
-      virtual
-      VectorBase &
+      virtual VectorBase &
       operator-=(const VectorBase &rhs) = 0;
 
 
@@ -147,16 +141,14 @@ namespace dftefe
        * @brief Returns \f$ l_2 \f$ norm of the Vector
        * @return \f$ l_2 \f$  norm of the vector as double type
        */
-      virtual 
-      double
+      virtual double
       l2Norm() const = 0;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norm of the Vector
        * @return \f$ l_{\inf} \f$  norm of the vector as double type
        */
-      virtual
-      double
+      virtual double
       lInfNorm() const = 0;
 
       /**
@@ -165,8 +157,7 @@ namespace dftefe
        *
        * @return const reference to the underlying MemoryStorage.
        */
-      virtual
-      const Storage &
+      virtual const Storage &
       getStorage() const = 0;
 
       /**
@@ -176,7 +167,7 @@ namespace dftefe
        * @return const reference to the VectorAttributes
        */
       const VectorAttributes &
-	getVectorAttributes() const = 0;
+      getVectorAttributes() const = 0;
     };
 
     // helper functions
@@ -191,9 +182,9 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
+    add(ValueType                                 a,
         const VectorBase<ValueType, memorySpace> &u,
-        ValueType                             b,
+        ValueType                                 b,
         const VectorBase<ValueType, memorySpace> &v,
         VectorBase<ValueType, memorySpace> &      w);
 

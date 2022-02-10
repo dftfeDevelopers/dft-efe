@@ -30,38 +30,41 @@ namespace dftefe
 {
   namespace utils
   {
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::MPICommunicatorP2P(const std::shared_ptr< const MPIPatternP2P > & mpiPatternP2P,
-                                                                   const size_type blockSize):
-    d_mpiPatternP2P(mpiPatternP2P),
-    d_blockSize(blockSize)
+    MPICommunicatorP2P<ValueType, memorySpace>::MPICommunicatorP2P(
+      const std::shared_ptr<const MPIPatternP2P> &mpiPatternP2P,
+      const size_type                             blockSize)
+      : d_mpiPatternP2P(mpiPatternP2P)
+      , d_blockSize(blockSize)
     {
-#ifdef DFTEFE_WITH_MPI        
-      d_mpiCommunicator=d_mpiPatternP2P->mpiCommunicator();
-      d_sendRecvBuffer.resize(d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()*blockSize);
+#ifdef DFTEFE_WITH_MPI
+      d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
+      d_sendRecvBuffer.resize(
+        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs() * blockSize);
       d_recvRequestsScatterToGhost.resize(d_mpiPatternP2P->getGhostProcIds());
-      d_sendRequestsScatterToGhost.resize(d_mpiPatternP2P->getTargetProcIds());   
+      d_sendRequestsScatterToGhost.resize(d_mpiPatternP2P->getTargetProcIds());
       d_recvRequestsGatherFromGhost.resize(d_mpiPatternP2P->getTargetProcIds());
-      d_sendRequestsGatherFromGhost.resize(d_mpiPatternP2P->getGhostProcIds());  
-#endif      
+      d_sendRequestsGatherFromGhost.resize(d_mpiPatternP2P->getGhostProcIds());
+#endif
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhost(MemoryStorage<ValueType,memorySpace> & dataArray)
+    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhost(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
-#ifdef DFTEFE_WITH_MPI      
+#ifdef DFTEFE_WITH_MPI
       scatterToGhostBegin(dataArray);
       scatterToGhostEnd(dataArray);
-#endif      
+#endif
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray)
+    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostBegin(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
       for (unsigned int i = 0; i < n_ghost_targets; ++i)
@@ -76,23 +79,25 @@ namespace dftefe
                       &requests[i]);
           AssertThrowMPI(ierr);
           ghost_array_ptr += ghost_targets_data[i].second;
-        }      
-#endif      
+        }
+#endif
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray)
+    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostEnd(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
-#endif      
+#endif
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhost(MemoryStorage<ValueType,memorySpace> & dataArray)
+    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhost(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
       gatherFromGhostBegin(dataArray);
       gatherFromGhostEnd(dataArray);
@@ -100,20 +105,28 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray)
+    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostBegin(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
-#endif           
+#endif
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray)
+    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostEnd(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
-#endif         
+#endif
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<const MPIPatternP2P>
+    MPICommunicatorP2P<ValueType, memorySpace>::getMPIPatternP2P() const
+    {
+      return d_mpiPatternP2P;
+    }
   } // namespace utils
 } // namespace dftefe
