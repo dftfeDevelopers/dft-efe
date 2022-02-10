@@ -10,7 +10,6 @@
 #include <iostream>
 #include <stdio.h>
 
-#include <linearAlgebra/Vector.h>
 
 #ifdef DFTEFE_WITH_MPI
 #  include <mpi.h>
