@@ -132,6 +132,9 @@ namespace dftefe
       size_type
       thisProcessId() const;
 
+      global_size_type
+      nGlobalIndices() const;
+
 #ifdef DFTEFE_WITH_MPI
       const MPI_Comm &
       mpiCommunicator() const;
@@ -269,6 +272,11 @@ namespace dftefe
 
       /// Rank of the current processor.
       int d_myRank;
+
+      /**
+       * Total number of unique indices across all processors
+       */
+      global_size_type d_nGlobalIndices;
 
 #ifdef DFTEFE_WITH_MPI
       /// MPI Communicator object.

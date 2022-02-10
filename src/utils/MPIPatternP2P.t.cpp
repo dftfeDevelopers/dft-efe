@@ -234,6 +234,8 @@ namespace dftefe
       , d_targetProcIds(0)
       , d_numOwnedIndicesForTargetProcs(0)
       , d_flattenedLocalTargetIndices(0)
+      ,
+      , d_nGlobalIndices(0)
     {
       d_myRank           = 0;
       d_nprocs           = 1;
@@ -274,6 +276,9 @@ namespace dftefe
         overlappingRangIds.size() == 0,
         "Detected overlapping ranges among the locallyOwnedRanges passed "
         "to MPIPatternP2P");
+
+      for (unsigned int i = 0; i < d_nprocs; ++i)
+        d_nGlobalIndices += allOwnedRanges[2 * i + 1] - allOwnedRanges[2 * i];
 
       d_allOwnedRanges.resize(2 * d_nprocs);
       memoryTransfer.copy(2 * d_nprocs,
@@ -622,6 +627,13 @@ namespace dftefe
     MPIPatternP2P<memorySpace>::thisProcessId() const
     {
       return d_myRank;
+    }
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    global_size_type
+    MPIPatternP2P<memorySpace>::nGlobalIndices() const
+    {
+      return d_nGlobalIndices;
     }
 
   } // end of namespace utils

@@ -31,6 +31,7 @@
 #include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MPICommunicatorP2P.h>
+#include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -61,6 +62,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class DistributedVector : public VectorBase<ValueType, memorySpace>
     {
+    public:
       /**
        * @brief Default Destructor
        */
@@ -78,8 +80,7 @@ namespace dftefe
        */
       DistributedVector(
         std::shared_ptr<const MPICommunicatorP2P> mpiCommunicatorP2P,
-        ,
-        const ValueType initVal = ValueType());
+        const ValueType                           initVal = ValueType());
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -227,12 +228,14 @@ namespace dftefe
       typename VectorBase<ValueType, memorySpace>::Storage d_storage;
       VectorAttributes                                     d_vectorAttributes;
       size_type                                            d_localSize;
-      size_type                                            d_locallyOwnedSize;
-      size_type                                            d_ghostSize;
+      size_type                                            d_localOwnedSize;
+      size_type                                            d_localGhostSize;
       size_type                                            d_globalSize;
+      std::shared_ptr<const MPICommunicatorP2P>            d_mpiCommunicatorP2P;
+      std::shared_ptr<const MPIPatternP2P>                 d_mpiPatternP2P;
     };
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
-
+#include <linearAlgebra/DistributedVector.t.cpp>
 #endif // dftefeDistributedVector_h

@@ -75,17 +75,17 @@ namespace dftefe
     private:
       std::shared_ptr<const MPIPatternP2P> d_mpiPatternP2P;
 
-      size_type              d_blockSize;
+      size_type d_blockSize;
 
       MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
 #ifdef DFTEFE_WITH_MPI
-      std::vector<MPI_Request>              d_sendRequestsScatterToGhost;
-      std::vector<MPI_Request>              d_recvRequestsScatterToGhost;
-      std::vector<MPI_Request>              d_sendRequestsGatherFromGhost;
-      std::vector<MPI_Request>              d_recvRequestsGatherFromGhost;
-      MPI_Comm                              d_mpiCommunicator;
-      std::vector<MPI_Request>              d_recvRequestsGatherFromGhost;
+      std::vector<MPI_Request> d_sendRequestsScatterToGhost;
+      std::vector<MPI_Request> d_recvRequestsScatterToGhost;
+      std::vector<MPI_Request> d_sendRequestsGatherFromGhost;
+      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
+      MPI_Comm                 d_mpiCommunicator;
+      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
 
       MPI_Comm d_mpiCommunicator;
 #endif
