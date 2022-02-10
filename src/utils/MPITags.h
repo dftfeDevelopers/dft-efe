@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Sambit Das
  */
 
 #ifndef dftefeMPITags_h
@@ -42,7 +42,16 @@ namespace dftefe
     {
       DUMMY_MPI_TAG = 100,
       MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG
+      MPI_P2P_PATTERN_TAG,
+
+      MPI_P2P_COMMUNICATOR_SCATTER_BEGIN,
+
+      MPI_P2P_COMMUNICATOR_SCATTER_END =
+        MPI_P2P_COMMUNICATOR_SCATTER_BEGIN + 200,
+
+      MPI_P2P_COMMUNICATOR_GATHER_BEGIN,
+
+      MPI_P2P_COMMUNICATOR_GATHER_END = MPI_P2P_COMMUNICATOR_GATHER_BEGIN + 200
     };
   } // end of namespace utils
 } // end of namespace dftefe

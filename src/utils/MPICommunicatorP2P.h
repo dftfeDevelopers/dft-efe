@@ -45,40 +45,50 @@ namespace dftefe
         const size_type                             blockSize);
 
       void
-      scatterToGhost(MemoryStorage<ValueType, memorySpace> &dataArray);
+      scatterToGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
+                     const size_type communicationChannel = 0);
 
       void
-      gatherFromGhost(MemoryStorage<ValueType, memorySpace> &dataArray);
+      gatherFromGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
+                      const size_type communicationChannel = 0);
 
 
       void
-      scatterToGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray);
+      scatterToGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
+                          const size_type communicationChannel = 0);
 
       void
-      scatterToGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
+      scatterToGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
+                        const size_type communicationChannel = 0);
 
       void
-      gatherFromGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray);
+      gatherFromGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
+                           const size_type communicationChannel = 0);
 
       void
-      gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
+      gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
+                         const size_type communicationChannel = 0);
 
       std::shared_ptr<const MPIPatternP2P>
-	getMPIPatternP2P() const;
+      getMPIPatternP2P() const;
+
     private:
       std::shared_ptr<const MPIPatternP2P> d_mpiPatternP2P;
 
-      size_type d_blockSize;
+      size_type              d_blockSize;
+
+      MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
 #ifdef DFTEFE_WITH_MPI
-      MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
-      std::vector<MPI_Request> d_sendRequestsScatterToGhost;
-      std::vector<MPI_Request> d_recvRequestsScatterToGhost;
-      std::vector<MPI_Request> d_sendRequestsGatherFromGhost;
-      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
+      std::vector<MPI_Request>              d_sendRequestsScatterToGhost;
+      std::vector<MPI_Request>              d_recvRequestsScatterToGhost;
+      std::vector<MPI_Request>              d_sendRequestsGatherFromGhost;
+      std::vector<MPI_Request>              d_recvRequestsGatherFromGhost;
+      MPI_Comm                              d_mpiCommunicator;
+      std::vector<MPI_Request>              d_recvRequestsGatherFromGhost;
+
       MPI_Comm d_mpiCommunicator;
 #endif
-
     };
 
   } // namespace utils

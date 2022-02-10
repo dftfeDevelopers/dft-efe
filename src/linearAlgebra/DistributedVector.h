@@ -45,23 +45,22 @@ namespace dftefe
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the vector must reside.
      *
-     * @note Broadly, there are two ways of constructing a DistributedVector. 
-     *  1. [<b>Prefered and efficient approach</b>] The first approach takes a pointer to an
-     *     MPICommunicatorP2P as an input argument. The MPICommunicatorP2P, 
-     *     in turn, contains all the information reagrding the locally
-     *     owned and ghost part of the DistributedVector. 
-     *     This is the most efficient way of constructing a DistributedVector
-     *     as it allows for reusing of an already constructed MPICommunicator.
-     *  2. [<b> Expensive approach</b>] The second approach takes in the locally owned 
-     *     and ghost indices and internally creates an MPIPatternP2P object which, in turn,
-     *     is used to create an MPICommunicatorP2P object.
-     *     Given that the creation of an MPIPatternP2P is expensive, this route of
+     * @note Broadly, there are two ways of constructing a DistributedVector.
+     *  1. [<b>Prefered and efficient approach</b>] The first approach takes a
+     * pointer to an MPICommunicatorP2P as an input argument. The
+     * MPICommunicatorP2P, in turn, contains all the information reagrding the
+     * locally owned and ghost part of the DistributedVector. This is the most
+     * efficient way of constructing a DistributedVector as it allows for
+     * reusing of an already constructed MPICommunicator.
+     *  2. [<b> Expensive approach</b>] The second approach takes in the locally
+     * owned and ghost indices and internally creates an MPIPatternP2P object
+     * which, in turn, is used to create an MPICommunicatorP2P object. Given
+     * that the creation of an MPIPatternP2P is expensive, this route of
      *     constructing a DistributedVector <b>should</b> be avoided.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class DistributedVector : public VectorBase<ValueType, memorySpace>
     {
-
       /**
        * @brief Default Destructor
        */
@@ -69,17 +68,19 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_MPI
       /**
-       * @brief Constructor based on an input mpiCommunicatorP2P. 
-       * 
-       * @param mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P 
+       * @brief Constructor based on an input mpiCommunicatorP2P.
+       *
+       * @param mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
        * based on which the DistributedVector will be created.
        * @param initVal value with which the DistributedVector shoud be
        * initialized
-       * 
+       *
        */
-      DistributedVector(std::shared_ptr<const MPICommunicatorP2P> mpiCommunicatorP2P,,
-	  const ValueType initVal = ValueType());
-      
+      DistributedVector(
+        std::shared_ptr<const MPICommunicatorP2P> mpiCommunicatorP2P,
+        ,
+        const ValueType initVal = ValueType());
+
       /**
        * @brief Constructor based on locally owned and ghost indices.
        * @note This way of construction is expensive. One should use the other
@@ -93,11 +94,12 @@ namespace dftefe
        * @note The locallyOwnedRange should be an open interval where the start index included,
        * but the end index is not included.
        */
-      DistributedVector(const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+      DistributedVector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm);
 #endif
-      
+
       /**
        * @brief Copy constructor
        * @param[in] u DistributedVector object to copy from
@@ -109,12 +111,12 @@ namespace dftefe
        * @param[in] u DistributedVector object to move from
        */
       DistributedVector(DistributedVector &&u) noexcept;
-      
+
       /**
        * @brief Default constructor
        */
       DistributedVector() = default;
-      
+
       /**
        * @brief Compound addition for elementwise addition lhs += rhs
        * @param[in] rhs the vector to add
@@ -224,11 +226,10 @@ namespace dftefe
     private:
       typename VectorBase<ValueType, memorySpace>::Storage d_storage;
       VectorAttributes                                     d_vectorAttributes;
-      size_type d_localSize;
-      size_type d_locallyOwnedSize;
-      size_type d_ghostSize;
-      size_type d_globalSize;
-
+      size_type                                            d_localSize;
+      size_type                                            d_locallyOwnedSize;
+      size_type                                            d_ghostSize;
+      size_type                                            d_globalSize;
     };
 
   } // end of namespace linearAlgebra
