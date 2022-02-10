@@ -44,23 +44,29 @@ namespace dftefe
                               const size_type blockSize);
 
       void
-      scatterToGhost(VectorStorage<ValueType,memorySpace> & dataArray);
+      scatterToGhost(VectorStorage<ValueType,memorySpace> & dataArray,
+                     const size_type communicationChannel=0);
 
       void
-      gatherFromGhost(VectorStorage<ValueType,memorySpace> & dataArray);
+      gatherFromGhost(VectorStorage<ValueType,memorySpace> & dataArray,
+                      const size_type communicationChannel=0);
 
 
       void
-      scatterToGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray);
+      scatterToGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray,
+                      const size_type communicationChannel=0);
 
       void
-      scatterToGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray);
+      scatterToGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray,
+                     const size_type communicationChannel=0);
 
       void
-      gatherFromGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray);
+      gatherFromGhostBegin(VectorStorage<ValueType,memorySpace> & dataArray,
+                     const size_type communicationChannel=0);
 
       void
-      gatherFromGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray);
+      gatherFromGhostEnd(VectorStorage<ValueType,memorySpace> & dataArray,
+                    const size_type communicationChannel=0);
 
     private:
 
@@ -70,6 +76,7 @@ namespace dftefe
 
       VectorStorage<ValueType,memorySpace> d_sendRecvBuffer;
 
+#ifdef DFTEFE_WITH_MPI 
       std::vector<MPI_Request> d_sendRequestsScatterToGhost;
 
       std::vector<MPI_Request> d_recvRequestsScatterToGhost;   
@@ -79,6 +86,7 @@ namespace dftefe
       std::vector<MPI_Request> d_recvRequestsGatherFromGhost;  
 
       MPI_Comm  d_mpiCommunicator;
+#endif      
     };
 
   } // namespace utils
