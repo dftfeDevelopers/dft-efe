@@ -26,6 +26,7 @@
 #ifndef dftefeVectorBase_h
 #define dftefeVectorBase_h
 
+#include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 namespace dftefe

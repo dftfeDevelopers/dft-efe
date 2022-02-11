@@ -290,7 +290,7 @@ namespace dftefe
       std::vector<size_type> overlappingRangeIds =
         getOverlappingRangeIds(allOwnedRanges);
       throwException<LogicError>(
-        overlappingRangIds.size() == 0,
+        overlappingRangeIds.size() == 0,
         "Detected overlapping ranges among the locallyOwnedRanges passed "
         "to MPIPatternP2P");
 
@@ -326,13 +326,12 @@ namespace dftefe
           const std::vector<size_type> localGhostIndicesInGhostProc =
             it->second;
           bool isContiguous = checkContiguity(localGhostIndicesInGhostProc);
-          std::string msg =
-            "In rank " + std::to_string(d_myRank) +
-            ", the local ghost indices that are owned"
-            " by rank " +
-            std::to_string(ghostProcIdsTmp[iGhostProc]) +
-            " does not form a contiguous set." throwException<LogicError>(
-              isContiguous, msg);
+          std::string msg   = "In rank " + std::to_string(d_myRank) +
+                            ", the local ghost indices that are owned"
+                            " by rank " +
+                            std::to_string(ghostProcIdsTmp[iGhostProc]) +
+                            " does not form a contiguous set.";
+          throwException<LogicError>(isContiguous, msg);
           numGhostIndicesInGhostProcsTmp[iGhostProc] =
             localGhostIndicesInGhostProc.size();
 
@@ -647,9 +646,8 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &const
-      SizeTypeVector &
-      MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProcs() const
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProcs() const
     {
       return d_flattenedLocalTargetIndices;
     }

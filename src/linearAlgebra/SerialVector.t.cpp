@@ -63,8 +63,10 @@ namespace dftefe
     {
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
-      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial
-	  vector and the other a distributed vector.");
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to add incompatible vectors. One is a serial vector and the "
+        " other a distributed vector.");
       utils::throwException<utils::LengthError>(
         rhs.size() == this->size(),
         "Mismatch of sizes of the two vectors that are being added.");
@@ -86,8 +88,10 @@ namespace dftefe
     {
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
-      utils::throwException(areCompatible, "Trying to add incompatible vectors. One is a serial
-	  vector and the other a distributed vector.");
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to add incompatible vectors. "
+        "One is a serial vector and the other a distributed vector.");
       utils::throwException<utils::LengthError>(
         rhs.size() == this->size(),
         "Mismatch of sizes of the two vectors that are being subtracted.");
