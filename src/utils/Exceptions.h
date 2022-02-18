@@ -25,13 +25,16 @@ through compiler options).
 For example, if in a file you have
 #define DFTEFE_DISABLE_ASSERT
 #include "Exceptions.h"
-then it would disable all any calls to Assert or AssertWithMsg in that file,
+then it would disable all calls to Assert or AssertWithMsg in that file,
 regardless of whether NDEBUG is defined. Also, it has no bearing on
 std::assert (i.e., any calls to std::assert in that file will still be
-governed by NDEBUG) Similarly, if in a file you have #define
-DFTEFE_ENABLE_ASSERT #include "Exceptions.h" then it would enable all calls
-to Assert or AssertWithMsg regardless in that file, regardless of whether
-NDEBUG is defined. Also, it has no bearning on std::assert (i.e., any calls
+governed by NDEBUG). Similarly, if in a file you have 
+#define
+DFTEFE_ENABLE_ASSERT 
+#include "Exceptions.h" 
+then it would enable all calls to Assert or AssertWithMsg in that file, 
+regardless of whether NDEBUG is defined. 
+Also, it has no bearning on std::assert (i.e., any calls
 to std::assert in that file will still be governed by NDEBUG)
 
 It also provides two wrappers on std::exception and its derived classes
