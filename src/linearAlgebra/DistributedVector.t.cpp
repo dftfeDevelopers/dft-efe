@@ -23,32 +23,31 @@
  * @author Bikash Kanungo
  */
 
-#include <linearAlgebra/VectorAttributes.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    VectorAttributes::VectorAttributes(
-      const VectorAttributes::Distribution distribution,
-      const size_type                      numComponents /*=1*/)
-      : d_distribution(distribution)
-      , d_numComponents(numComponents)
-    {}
-
-    bool
-    VectorAttributes::areAttributesCompatible(
-      const VectorAttributes &vecAttributes) const
+    //
+    // Constructor
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributedVector<ValueType, memorySpace>::DistributedVector(
+      std::shared_ptr<const MPICommunicatorP2P> mpiCommunicatorP2P,
+      const ValueType                           initVal = ValueType())
+      : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
+      , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
+      , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
+      , d_storage(0)
+      , d_localSize(0)
+      , d_localOwnedSize(0)
+      , d_localGhostSize(0)
+      , d_globalSize(0)
     {
-      return (d_distribution == vecAttributes.d_distribution) &&
-             (d_numComponents == vecAttributes.d_numComponents);
+      d_localOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_localGhostSize = d_mpiPatternP2P->localGhostSize();
+      d_localSize      = d_localOwnedSize + d_localGhostSize;
+      d_storage.resize(d_localSize);
+      d_globalSize = d_mpiPatternP2P->nGlobalIndices();
     }
-
-    bool
-    VectorAttributes::areDistributionCompatible(
-      const VectorAttributes &vecAttributes) const
-    {
-      return (d_distribution == vecAttributes.d_distribution);
-    }
-
   } // end of namespace linearAlgebra
-} // end of namespace dftefe
+} // namespace dftefe

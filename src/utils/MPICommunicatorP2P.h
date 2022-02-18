@@ -36,57 +36,59 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>      
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class MPICommunicatorP2P
     {
-
-      void MPICommunicatorP2P(const std::shared_ptr< const MPIPatternP2P > & mpiPatternP2P,
-                              const size_type blockSize);
+      void
+      MPICommunicatorP2P(
+        const std::shared_ptr<const MPIPatternP2P> &mpiPatternP2P,
+        const size_type                             blockSize);
 
       void
-      scatterToGhost(MemoryStorage<ValueType,memorySpace> & dataArray,
-                     const size_type communicationChannel=0);
+      scatterToGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
+                     const size_type communicationChannel = 0);
 
       void
-      gatherFromGhost(MemoryStorage<ValueType,memorySpace> & dataArray,
-                      const size_type communicationChannel=0);
+      gatherFromGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
+                      const size_type communicationChannel = 0);
 
 
       void
-      scatterToGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray,
-                      const size_type communicationChannel=0);
+      scatterToGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
+                          const size_type communicationChannel = 0);
 
       void
-      scatterToGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray,
-                     const size_type communicationChannel=0);
+      scatterToGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
+                        const size_type communicationChannel = 0);
 
       void
-      gatherFromGhostBegin(MemoryStorage<ValueType,memorySpace> & dataArray,
-                     const size_type communicationChannel=0);
+      gatherFromGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
+                           const size_type communicationChannel = 0);
 
       void
-      gatherFromGhostEnd(MemoryStorage<ValueType,memorySpace> & dataArray,
-                    const size_type communicationChannel=0);
+      gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
+                         const size_type communicationChannel = 0);
+
+      std::shared_ptr<const MPIPatternP2P>
+      getMPIPatternP2P() const;
 
     private:
-
-      std::shared_ptr< const MPIPatternP2P > 	d_mpiPatternP2P;
+      std::shared_ptr<const MPIPatternP2P> d_mpiPatternP2P;
 
       size_type d_blockSize;
 
-      MemoryStorage<ValueType,memorySpace> d_sendRecvBuffer;
+      MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
-#ifdef DFTEFE_WITH_MPI 
+#ifdef DFTEFE_WITH_MPI
       std::vector<MPI_Request> d_sendRequestsScatterToGhost;
-
-      std::vector<MPI_Request> d_recvRequestsScatterToGhost;   
-
+      std::vector<MPI_Request> d_recvRequestsScatterToGhost;
       std::vector<MPI_Request> d_sendRequestsGatherFromGhost;
+      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
+      MPI_Comm                 d_mpiCommunicator;
+      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
 
-      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;  
-
-      MPI_Comm  d_mpiCommunicator;
-#endif      
+      MPI_Comm d_mpiCommunicator;
+#endif
     };
 
   } // namespace utils

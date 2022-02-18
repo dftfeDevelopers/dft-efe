@@ -107,33 +107,52 @@ namespace dftefe
       global_size_type
       localToGlobal(const size_type) const;
 
-
       const GlobalSizeTypeVector &
       getGhostIndices() const;
 
       const SizeTypeVector &
       getGhostProcIds() const;
 
+      const SizeTypeVector &
+      getNumGhostIndicesInProcs() const;
+
+      size_type
+      getNumGhostIndicesInProc(const size_type procId) const;
+
       SizeTypeVector
       getGhostLocalIndices(const size_type procId) const;
 
       const SizeTypeVector &
+      getGhostLocalIndicesRanges() const;
+
+      const SizeTypeVector &
       getTargetProcIds() const;
+
+      const SizeTypeVector &
+      getNumOwnedIndicesForTargetProcs() const;
+
+      size_type
+      getNumOwnedIndicesForTargetProc(const size_type procId) const;
+
+      const SizeTypeVector &
+      getOwnedLocalIndicesForTargetProcs() const;
 
       SizeTypeVector
       getOwnedLocalIndices(const size_type procId) const;
-
-      size_type
-      getNumOwnedIndicesForTargetProcs() const;
-
-      const MPI_Comm &
-      mpiCommunicator() const;
 
       size_type
       nmpiProcesses() const;
 
       size_type
       thisProcessId() const;
+
+      global_size_type
+      nGlobalIndices() const;
+
+#ifdef DFTEFE_WITH_MPI
+      const MPI_Comm &
+      mpiCommunicator() const;
+#endif
 
     private:
       /**
@@ -219,6 +238,28 @@ namespace dftefe
       SizeTypeVector d_flattenedLocalGhostIndices;
 
       /**
+       * @brief A vector of size 2 times the number of ghost processors
+       * to store the range of local ghost indices that are owned by the
+       * ghost processors. In other words, it stores the list
+       * \f$L=\{a_1,b_1, a_2, b_2, \ldots, a_G, b_G\}\f$, where
+       * \f$a_i\f$ and \f$b_i\f$is are the start local ghost index
+       * and one-past-the-last local ghost index of the current processor
+       * that is owned by the \f$i\f$-th ghost processor
+       * (i.e., d_ghostProcIds[i]). Put it differently, \f$[a_i,b_i)\f$ form an
+       * open interval, where \f$a_i\f$ is included but \f$b_i\f$ is not
+       * included.
+       *
+       * @note Given the fact that the locally owned indices of each processor
+       * contiguous and the global ghost indices (i.e., d_ghostIndices) is
+       * ordered, it is sufficient to just store the range of local ghost
+       * indicces for each ghost procId. The actual global ghost indices
+       * belonging to the \f$i\f$-th ghost processor can be fetched from
+       * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
+       *  d_ghostIndices[a_i] and d_ghostIndices[b_i].
+       */
+      SizeTypeVector d_LocalGhostIndicesRanges;
+
+      /**
        * Number of target processors for the current processor. A
        * target processor is one which owns at least one of the locally owned
        * indices of this processor as its ghost index.
@@ -262,14 +303,21 @@ namespace dftefe
        */
       SizeTypeVector d_flattenedLocalTargetIndices;
 
-      /// MPI Communicator object.
-      MPI_Comm d_mpiComm;
-
       /// Number of processors in the MPI Communicator.
       int d_nprocs;
 
       /// Rank of the current processor.
       int d_myRank;
+
+      /**
+       * Total number of unique indices across all processors
+       */
+      global_size_type d_nGlobalIndices;
+
+#ifdef DFTEFE_WITH_MPI
+      /// MPI Communicator object.
+      MPI_Comm d_mpiComm;
+#endif
     };
 
   } // end of namespace utils

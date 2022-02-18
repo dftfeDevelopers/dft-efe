@@ -34,48 +34,32 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
+    /**
+     * @brief A derived class of VectorBase for a serial vector
+     * (i.e., a vector that resides entirely within a processor)
+     *
+     * @tparam template parameter ValueType defines underlying datatype being stored
+     *  in the vector (i.e., int, double, complex<double>, etc.)
+     * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class SerialVector: public VectorBase<ValueType, memorySpace>
+    class SerialVector : public VectorBase<ValueType, memorySpace>
     {
-    
-      /**
-       * @brief A derived class of VectorBase for a serial vector 
-       * (i.e., a vector that resides entirely within a processor)
-       *
-       * @tparam template parameter ValueType defines underlying datatype being stored 
-       *  in the vector (i.e., int, double, complex<double>, etc.)
-       * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
-       * DEVICE) in which the vector must reside.
-       */ 
-      
-     public:
-      //
-      // typedefs
-      //
-      //using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
-      //using value_type = typename Storage::value_type;
-      //using pointer    = typename Storage::pointer;
-      //using reference  = typename Storage::reference;
-      //using const_reference = typename Storage::const_reference;
-      //using iterator        = typename Storage::iterator;
-      //using const_iterator  = typename Storage::const_iterator;
-
     public:
-      
-      
       /**
-       * @brief Default constructor 
+       * @brief Default constructor
        */
       SerialVector() = default;
 
       /**
-       * @brief Copy constructor 
+       * @brief Copy constructor
        * @param[in] u SerialVector object to copy from
        */
       SerialVector(const SerialVector &u);
 
       /**
-       * @brief Move constructor 
+       * @brief Move constructor
        * @param[in] u SerialVector object to move from
        */
       SerialVector(SerialVector &&u) noexcept;
@@ -86,14 +70,13 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the SerialVector
        */
       explicit SerialVector(size_type size, ValueType initVal = ValueType());
-      
+
       /**
        * @brief Compound addition for elementwise addition lhs += rhs
        * @param[in] rhs the vector to add
        * @return the original vector
        */
-      virtual
-      VectorBase<ValueType, memorySpace> &
+      virtual VectorBase<ValueType, memorySpace> &
       operator+=(const VectorBase<ValueType, memorySpace> &rhs) = 0;
 
       /**
@@ -101,8 +84,7 @@ namespace dftefe
        * @param[in] rhs the vector to subtract
        * @return the original vector
        */
-      virtual
-      VectorBase<ValueType, memorySpace> &
+      virtual VectorBase<ValueType, memorySpace> &
       operator-=(const VectorBase<ValueType, memorySpace> &rhs) = 0;
 
       /**
@@ -168,14 +150,14 @@ namespace dftefe
        * @return \f$ l_2 \f$  norm of the vector as double type
        */
       double
-	l2Norm() const override;
+      l2Norm() const override;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norm of the SerialVector
        * @return \f$ l_{\inf} \f$  norm of the vector as double type
        */
       double
-	lInfNorm() const override;
+      lInfNorm() const override;
 
       /**
        * @brief Returns a const reference to the underlying storage
@@ -184,7 +166,7 @@ namespace dftefe
        * @return const reference to the underlying MemoryStorage.
        */
       const typename VectorBase<ValueType, memorySpace>::Storage &
-	getStorage() const override;
+      getStorage() const override;
 
       /**
        * @brief Returns a VectorAttributes object that stores various attributes
@@ -193,38 +175,38 @@ namespace dftefe
        * @return const reference to the VectorAttributes
        */
       const VectorAttributes &
-	getVectorAttributes() const = 0;
-    
+      getVectorAttributes() const = 0;
+
     private:
       typename VectorBase<ValueType, memorySpace>::Storage d_storage;
-      VectorAttributes d_vectorAttributes;
+      VectorAttributes                                     d_vectorAttributes;
     };
 
     //
     // helper functions
     //
 
-//    /**
-//     * @brief In-place elementwise addition of two vector (i.e., lhs += rhs)
-//     * @param[in] lhs the vector to add to
-//     * @param[in] rhs the vector to add 
-//     * @return the original vector (i.e., lhs)
-//     */
-//    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-//      SerialVector<ValueType, memorySpace> &
-//      operator+=(SerialVector<ValueType,memorySpace> & lhs,
-//	  const SerialVector<ValueType,memorySpace> &rhs);
-//
-//    /**
-//     * @brief In-place elementwise subtraction (i.e., lhs -= rhs)
-//     * @param[in] lhs the vector to subtract from
-//     * @param[in] rhs the vector to subtract
-//     * @return the original vector (i.e., lhs)
-//     */
-//    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-//      SerialVector<ValueType, memorySpace> &
-//      operator-=(SerialVector<ValueType,memorySpace> &lhs,
-//	  const SerialVector<ValueType,memorySpace> &rhs);
+    //    /**
+    //     * @brief In-place elementwise addition of two vector (i.e., lhs += rhs)
+    //     * @param[in] lhs the vector to add to
+    //     * @param[in] rhs the vector to add
+    //     * @return the original vector (i.e., lhs)
+    //     */
+    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    //      SerialVector<ValueType, memorySpace> &
+    //      operator+=(SerialVector<ValueType,memorySpace> & lhs,
+    //	  const SerialVector<ValueType,memorySpace> &rhs);
+    //
+    //    /**
+    //     * @brief In-place elementwise subtraction (i.e., lhs -= rhs)
+    //     * @param[in] lhs the vector to subtract from
+    //     * @param[in] rhs the vector to subtract
+    //     * @return the original vector (i.e., lhs)
+    //     */
+    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    //      SerialVector<ValueType, memorySpace> &
+    //      operator-=(SerialVector<ValueType,memorySpace> &lhs,
+    //	  const SerialVector<ValueType,memorySpace> &rhs);
 
     ///**
     // * @brief Perform \f$ w = au + bv \f$
@@ -234,9 +216,9 @@ namespace dftefe
     // * @param[in] v array
     // * @param[out] w array of the result
     // */
-    //template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //void
-    //add(ValueType                             a,
+    // template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    // void
+    // add(ValueType                             a,
     //    const SerialVector<ValueType, memorySpace> &u,
     //    ValueType                             b,
     //    const SerialVector<ValueType, memorySpace> &v,
