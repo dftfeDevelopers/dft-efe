@@ -41,10 +41,10 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI        
       d_mpiCommunicator=d_mpiPatternP2P->mpiCommunicator();
       d_sendRecvBuffer.resize(d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()*blockSize);
-      d_recvRequestsScatterToGhost.resize(d_mpiPatternP2P->getGhostProcIds());
-      d_sendRequestsScatterToGhost.resize(d_mpiPatternP2P->getTargetProcIds());   
-      d_recvRequestsGatherFromGhost.resize(d_mpiPatternP2P->getTargetProcIds());
-      d_sendRequestsGatherFromGhost.resize(d_mpiPatternP2P->getGhostProcIds());  
+      d_recvRequestsScatterToGhost.resize((d_mpiPatternP2P->getGhostProcIds()).size());
+      d_sendRequestsScatterToGhost.resize((d_mpiPatternP2P->getTargetProcIds()).size());   
+      d_recvRequestsGatherFromGhost.resize((d_mpiPatternP2P->getTargetProcIds()).size());
+      d_sendRequestsGatherFromGhost.resize((d_mpiPatternP2P->getGhostProcIds()).size());  
 #endif      
     }
 
@@ -66,19 +66,47 @@ namespace dftefe
     const size_type communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
-      for (unsigned int i = 0; i < n_ghost_targets; ++i)
+      ValueType * recvArrayStartPtr=dataArray.begin()+d_mpiPatternP2P->localOwnedSize()*d_blockSize;
+      for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size(); ++i)
         {
-          const int ierr =
-            MPI_Irecv(ghost_array_ptr,
-                      ghost_targets_data[i].second * sizeof(Number),
+          const int err =
+            MPI_Irecv(recvArrayStartPtr,
+                      d_mpiPatternP2P->getGhostLocalIndices[i]*d_blockSize* sizeof(ValueType),
                       MPI_BYTE,
-                      ghost_targets_data[i].first,
+                      d_mpiPatternP2P->getGhostProcIds().[i],
+                      MPI_P2P_COMMUNICATOR_SCATTER_BEGIN+communicationChannel,
+                      d_mpiCommunicator,
+                      &d_recvRequestsScatterToGhost[i]);
+
+          std::string errMsg= "Error occured while using MPI_Irecv. "
+                               "Error code: " +
+                               std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+
+          recvArrayStartPtr += d_mpiPatternP2P->getGhostLocalIndices[i]*d_blockSize;
+        }     
+
+
+      ValueType * sendArrayStartPtr=d_sendRecvBuffer.begin();
+      for (unsigned int i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size(); ++i)
+        {
+          const int err =
+            MPI_Isend(sendArrayStart,
+                      import_targets_data[i].second * sizeof(Number),
+                      MPI_BYTE,
+                      import_targets_data[i].first,
                       mpi_tag,
                       communicator,
-                      &requests[i]);
-          AssertThrowMPI(ierr);
-          ghost_array_ptr += ghost_targets_data[i].second;
-        }      
+                      &requests[n_ghost_targets + i]);
+
+          std::string errMsg= "Error occured while using MPI_Isend. "
+                               "Error code: " +
+                               std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+
+          sendArrayStartPtr += d_mpiPatternP2P->getOwnedLocalIndices[i]*d_blockSize;
+        }
+
 #endif      
     }
 
