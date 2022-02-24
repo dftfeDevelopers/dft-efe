@@ -38,15 +38,14 @@ namespace dftefe
       : d_mpiPatternP2P(mpiPatternP2P)
       , d_blockSize(blockSize)
     {
-#ifdef DFTEFE_WITH_MPI
-      d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
-      d_sendRecvBuffer.resize(
-        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs() * blockSize);
-      d_recvRequestsScatterToGhost.resize(d_mpiPatternP2P->getGhostProcIds());
-      d_sendRequestsScatterToGhost.resize(d_mpiPatternP2P->getTargetProcIds());
-      d_recvRequestsGatherFromGhost.resize(d_mpiPatternP2P->getTargetProcIds());
-      d_sendRequestsGatherFromGhost.resize(d_mpiPatternP2P->getGhostProcIds());
-#endif
+#ifdef DFTEFE_WITH_MPI        
+      d_mpiCommunicator=d_mpiPatternP2P->mpiCommunicator();
+      d_sendRecvBuffer.resize(d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()*blockSize);
+      d_recvRequestsScatterToGhost.resize((d_mpiPatternP2P->getGhostProcIds()).size());
+      d_sendRequestsScatterToGhost.resize((d_mpiPatternP2P->getTargetProcIds()).size());   
+      d_recvRequestsGatherFromGhost.resize((d_mpiPatternP2P->getTargetProcIds()).size());
+      d_sendRequestsGatherFromGhost.resize((d_mpiPatternP2P->getGhostProcIds()).size());  
+#endif      
     }
 
 
@@ -69,20 +68,48 @@ namespace dftefe
       const size_type                        communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
-      for (unsigned int i = 0; i < n_ghost_targets; ++i)
+      ValueType * recvArrayStartPtr=dataArray.begin()+d_mpiPatternP2P->localOwnedSize()*d_blockSize;
+      for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size(); ++i)
         {
-          const int ierr =
-            MPI_Irecv(ghost_array_ptr,
-                      ghost_targets_data[i].second * sizeof(Number),
+          const int err =
+            MPI_Irecv(recvArrayStartPtr,
+                      (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i+1]-d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i])*d_blockSize* sizeof(ValueType),
                       MPI_BYTE,
-                      ghost_targets_data[i].first,
-                      mpi_tag,
-                      communicator,
-                      &requests[i]);
-          AssertThrowMPI(ierr);
-          ghost_array_ptr += ghost_targets_data[i].second;
+                      d_mpiPatternP2P->getGhostProcIds().[i],
+                      MPI_P2P_COMMUNICATOR_SCATTER_TAG+communicationChannel,
+                      d_mpiCommunicator,
+                      &d_recvRequestsScatterToGhost[i]);
+
+          std::string errMsg= "Error occured while using MPI_Irecv. "
+                               "Error code: " +
+                               std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+
+          recvArrayStartPtr +=  (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i+1]-d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i])*d_blockSize;
+        }     
+
+
+      ValueType * sendArrayStartPtr=d_sendRecvBuffer.begin();
+      for (unsigned int i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size(); ++i)
+        {
+          const int err =
+            MPI_Isend(sendArrayStart,
+                      (d_mpiPatternP2P->getNumOwnedIndicesForTargetProc(i)*d_blockSize* sizeof(ValueType),
+                      MPI_BYTE,
+                      d_mpiPatternP2P->getTargetProcIds().[i],
+                      MPI_P2P_COMMUNICATOR_SCATTER_TAG+communicationChannel,
+                      d_mpiCommunicator,
+                      &d_sendRequestsScatterToGhost[i]);
+
+          std::string errMsg= "Error occured while using MPI_Isend. "
+                               "Error code: " +
+                               std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+
+          sendArrayStartPtr += d_mpiPatternP2P->getNumOwnedIndicesForTargetProc(i)*d_blockSize;
         }
-#endif
+
+#endif      
     }
 
 
@@ -93,6 +120,18 @@ namespace dftefe
       const size_type                        communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
+      if (d_sendRequestsScatterToGhost.size() > 0)
+        {
+          const int ierr =
+            MPI_Waitall(d_sendRequestsScatterToGhost.size(), 
+                        d_sendRequestsScatterToGhost.data(),
+                        MPI_STATUSES_IGNORE);
+
+          std::string errMsg= "Error occured while using MPI_Waitall. "
+                               "Error code: " +
+                               std::to_string(err);
+          throwException(err == MPI_SUCCESS, errMsg);
+        }      
 #endif
     }
 
