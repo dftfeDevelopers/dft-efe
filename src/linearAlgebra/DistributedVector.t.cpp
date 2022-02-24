@@ -42,7 +42,7 @@ namespace dftefe
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
       , d_vectorAttributes(VectorAttributes::Distribution::DISTRIBUTED)
-      , d_storage(0)
+      , d_storage(nullptr)
       , d_localSize(0)
       , d_localOwnedSize(0)
       , d_localGhostSize(0)
@@ -51,7 +51,9 @@ namespace dftefe
       d_localOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_localGhostSize = d_mpiPatternP2P->localGhostSize();
       d_localSize      = d_localOwnedSize + d_localGhostSize;
-      d_storage.resize(d_localSize, initVal);
+      d_storage =
+        std::make_shared<typename VectorBase<ValueType, memorySpace>::Storage>(
+          d_localSize, initVal);
       d_globalSize = d_mpiPatternP2P->nGlobalIndices();
     }
 
@@ -67,7 +69,7 @@ namespace dftefe
       const MPI_Comm &                                    mpiComm,
       const ValueType initVal /*= ValueType()*/)
       : d_vectorAttributes(VectorAttributes::Distribution::DISTRIBUTED)
-      , d_storage(0)
+      , d_storage(nullptr)
       , d_localSize(0)
       , d_localOwnedSize(0)
       , d_localGhostSize(0)
@@ -106,7 +108,9 @@ namespace dftefe
       d_localOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_localGhostSize = d_mpiPatternP2P->localGhostSize();
       d_localSize      = d_localOwnedSize + d_localGhostSize;
-      d_storage.resize(d_localSize, initVal);
+      d_storage =
+        std::make_shared<typename VectorBase<ValueType, memorySpace>::Storage>(
+          d_localSize, initVal);
       d_globalSize = d_mpiPatternP2P->nGlobalIndices();
     }
 #endif // DFTEFE_WITH_MPI
@@ -117,7 +121,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
       const DistributedVector &u)
-      : d_storage(u.d_storage)
+      : d_storage(std::make_shared<
+                  typename VectorBase<ValueType, memorySpace>::Storage>(
+          (u.d_storage)->size()))
       , d_vectorAttributes(u.d_vectorAttributes)
       , d_localSize(u.d_localSize)
       , d_localOwnedSize(u.d_localOwnedSize)
@@ -126,6 +132,7 @@ namespace dftefe
       , d_mpiCommunicatorP2P(u.d_mpiCommunicatorP2P)
       , d_mpiPatternP2P(u.d_mpiPatternP2P)
     {
+      *d_storage = *(u.d_storage);
       VectorAttributes vectorAttributesDistributed(
         VectorAttributes::Distribution::DISTRIBUTED);
       bool areCompatible = d_vectorAttributes.areDistributionCompatible(
@@ -177,10 +184,10 @@ namespace dftefe
         "Mismatch of sizes of the two vectors that are being added.");
       const size_type rhsStorageSize = (rhs.getStorage()).size();
       utils::throwException<utils::LengthError>(
-        d_storage.size() == rhsStorageSize,
+        d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two vectors that are being added.");
-      VectorKernels<ValueType, memorySpace>::add(d_storage.size(),
+      VectorKernels<ValueType, memorySpace>::add(d_storage->size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -202,10 +209,10 @@ namespace dftefe
         "Mismatch of sizes of the two vectors that are being subtracted.");
       const size_type rhsStorageSize = (rhs.getStorage()).size();
       utils::throwException<utils::LengthError>(
-        (d_storage.size() == rhsStorageSize),
+        (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two vectors that are being subtracted.");
-      VectorKernels<ValueType, memorySpace>::sub(d_storage.size(),
+      VectorKernels<ValueType, memorySpace>::sub(d_storage->size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -240,7 +247,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::lInfNorm() const
     {
       const double lInfNormLocallyOwned =
-        VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage.size(),
+        VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage->size(),
                                                         this->data());
       double returnValue = lInfNormLocallyOwned;
 #ifdef DFTEFE_WITH_MPI
@@ -259,14 +266,14 @@ namespace dftefe
                                                      memorySpace>::Storage &
     DistributedVector<ValueType, memorySpace>::getStorage() const
     {
-      return d_storage;
+      return *d_storage;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename dftefe::linearAlgebra::VectorBase<ValueType, memorySpace>::iterator
     DistributedVector<ValueType, memorySpace>::begin()
     {
-      return d_storage.begin();
+      return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -274,14 +281,14 @@ namespace dftefe
                                                memorySpace>::const_iterator
     DistributedVector<ValueType, memorySpace>::begin() const
     {
-      return d_storage.begin();
+      return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename dftefe::linearAlgebra::VectorBase<ValueType, memorySpace>::iterator
     DistributedVector<ValueType, memorySpace>::end()
     {
-      return d_storage.end();
+      return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -289,28 +296,28 @@ namespace dftefe
                                                memorySpace>::const_iterator
     DistributedVector<ValueType, memorySpace>::end() const
     {
-      return d_storage.end();
+      return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
     DistributedVector<ValueType, memorySpace>::size() const
     {
-      return d_storage.size();
+      return d_storage->size();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     ValueType *
     DistributedVector<ValueType, memorySpace>::data()
     {
-      return d_storage.data();
+      return d_storage->data();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const ValueType *
     DistributedVector<ValueType, memorySpace>::data() const
     {
-      return d_storage.data();
+      return d_storage->data();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

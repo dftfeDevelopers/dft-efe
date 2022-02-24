@@ -37,8 +37,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class MPICommunicatorP2PKernels
     {
-      public:
-
+    public:
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
 
       /**
@@ -52,29 +51,30 @@ namespace dftefe
        * @param[out] sendBuffer
        */
       static void
-      gatherLocallyOwnedEntriesToSendBuffer(const MemoryStorage<ValueType, memorySpace> &dataArray,
-                                            const SizeTypeVector & ownedLocalIndicesForTargetProcs,
-                                            const SizeTypeVector & numOwnedIndicesForTargetProcs,
-                                            const size_type blockSize,
-                                            MemoryStorage<ValueType, memorySpace> &sendBuffer);
+      gatherLocallyOwnedEntriesToSendBuffer(
+        const MemoryStorage<ValueType, memorySpace> &dataArray,
+        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector &                 numOwnedIndicesForTargetProcs,
+        const size_type                        blockSize,
+        MemoryStorage<ValueType, memorySpace> &sendBuffer);
 
       /**
        * @brief Function template for architecture adaptable accumlate kernel from recv buffer
        * @tparam ValueType the type of the number
        * @tparam memorySpace
-       * @param[in] recvBuffer 
+       * @param[in] recvBuffer
        * @param[in] ownedLocalIndicesForTargetProcs
        * @param[in] numOwnedIndicesForTargetProcs
-       * @param[in] blockSize 
+       * @param[in] blockSize
        * @param[out] dataArray
        */
       static void
-      accumulateAddRecvBufferToLocallyOwnedEntries(const MemoryStorage<ValueType, memorySpace> &recvBuffer,
-                                            const SizeTypeVector & ownedLocalIndicesForTargetProcs,
-                                            const SizeTypeVector & numOwnedIndicesForTargetProcs,
-                                            const size_type blockSize,
-                                            MemoryStorage<ValueType, memorySpace> &dataArray);
-
+      accumulateAddRecvBufferToLocallyOwnedEntries(
+        const MemoryStorage<ValueType, memorySpace> &recvBuffer,
+        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector &                 numOwnedIndicesForTargetProcs,
+        const size_type                        blockSize,
+        MemoryStorage<ValueType, memorySpace> &dataArray);
     };
 
   } // namespace utils

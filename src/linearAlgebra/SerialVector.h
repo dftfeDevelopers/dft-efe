@@ -30,6 +30,7 @@
 #include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
+#include <memory>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -196,8 +197,9 @@ namespace dftefe
       gatherFromGhostEnd(const size_type communicationChannel = 0) override;
 
     private:
-      typename VectorBase<ValueType, memorySpace>::Storage d_storage;
-      VectorAttributes                                     d_vectorAttributes;
+      std::shared_ptr<typename VectorBase<ValueType, memorySpace>::Storage>
+                       d_storage;
+      VectorAttributes d_vectorAttributes;
     };
 
     //

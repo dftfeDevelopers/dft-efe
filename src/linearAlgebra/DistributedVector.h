@@ -33,6 +33,7 @@
 #include <utils/MPICommunicatorP2P.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
+#include <memory>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -243,12 +244,13 @@ namespace dftefe
       gatherFromGhostEnd(const size_type communicationChannel = 0) override;
 
     private:
-      typename VectorBase<ValueType, memorySpace>::Storage d_storage;
-      VectorAttributes                                     d_vectorAttributes;
-      size_type                                            d_localSize;
-      size_type                                            d_localOwnedSize;
-      size_type                                            d_localGhostSize;
-      size_type                                            d_globalSize;
+      std::shared_ptr<typename VectorBase<ValueType, memorySpace>::Storage>
+                       d_storage;
+      VectorAttributes d_vectorAttributes;
+      size_type        d_localSize;
+      size_type        d_localOwnedSize;
+      size_type        d_localGhostSize;
+      size_type        d_globalSize;
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
       std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
