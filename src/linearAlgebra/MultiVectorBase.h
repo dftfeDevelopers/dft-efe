@@ -23,10 +23,11 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeMultiComponentVectorBase_h
-#define dftefeMultiComponentVectorBase_h
+#ifndef dftefeMultiVectorBase_h
+#define dftefeMultiVectorBase_h
 
 #include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/VectorBase.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 
@@ -35,7 +36,7 @@ namespace dftefe
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MultiComponentVectorBase {
+    class MultiVectorBase {
       
       /**
        * @brief An abstract class template for a multi component vector.
@@ -43,7 +44,7 @@ namespace dftefe
        * sense and not in the sense of an array or STL container.
        *
        * The actual implemental of the class is provided in the derived
-       * class (e.g., SerialMultiComponentVector, DistributedMultiComponentVector).
+       * class (e.g., SerialMultiVector, DistributedMultiVector).
        *
        * @tparam template parameter ValueType defines underlying datatype being stored
        *  in the vector (i.e., int, double, complex<double>, etc.)
@@ -65,59 +66,59 @@ namespace dftefe
 
 
     public:
-      virtual ~MultiComponentVectorBase() = default;
+      virtual ~MultiVectorBase() = default;
 
       /**
-       * @brief Return iterator pointing to the beginning of MultiComponentVector data.
+       * @brief Return iterator pointing to the beginning of MultiVector data.
        *
-       * @returns Iterator pointing to the beginning of MultiComponentVector.
+       * @returns Iterator pointing to the beginning of MultiVector.
        */
       virtual iterator
       begin() = 0;
 
       /**
-       * @brief Return iterator pointing to the beginning of MultiComponentVector
+       * @brief Return iterator pointing to the beginning of MultiVector
        * data.
        *
        * @returns Constant iterator pointing to the beginning of
-       * MultiComponentVector.
+       * MultiVector.
        */
       virtual const_iterator
       begin() const = 0;
 
       /**
-       * @brief Return iterator pointing to the end of MultiComponentVector data.
+       * @brief Return iterator pointing to the end of MultiVector data.
        *
-       * @returns Iterator pointing to the end of MultiComponentVector.
+       * @returns Iterator pointing to the end of MultiVector.
        */
       virtual iterator
       end() = 0;
 
       /**
-       * @brief Return iterator pointing to the end of MultiComponentVector data.
+       * @brief Return iterator pointing to the end of MultiVector data.
        *
        * @returns Constant iterator pointing to the end of
-       * MultiComponentVector.
+       * MultiVector.
        */
       virtual const_iterator
       end() const = 0;
 
       /**
-       * @brief Returns the size of the MultiComponentVector
-       * @returns size of the MultiComponentVector
+       * @brief Returns the size of the MultiVector
+       * @returns size of the MultiVector
        */
       virtual size_type
       size() const = 0;
 
       /**
-       * @brief Return the raw pointer to the MultiComponentVector data
+       * @brief Return the raw pointer to the MultiVector data
        * @return pointer to data
        */
       virtual ValueType *
       data() = 0;
 
       /**
-       * @brief Return the constant raw pointer to the MultiComponentVector data
+       * @brief Return the constant raw pointer to the MultiVector data
        * @return pointer to const data
        */
       virtual const ValueType *
@@ -128,36 +129,54 @@ namespace dftefe
        * @param[in] rhs the vector to add
        * @return the original vector
        */
-      virtual MultiComponentVectorBase &
-      operator+=(const MultiComponentVectorBase &rhs) = 0;
+      virtual MultiVectorBase &
+      operator+=(const MultiVectorBase &rhs) = 0;
 
       /**
        * @brief Compound subtraction for elementwise addition lhs -= rhs
        * @param[in] rhs the vector to subtract
        * @return the original vector
        */
-      virtual MultiComponentVectorBase &
-      operator-=(const MultiComponentVectorBase &rhs) = 0;
+      virtual MultiVectorBase &
+      operator-=(const MultiVectorBase &rhs) = 0;
 
       /**
-       * @brief Returns \f$ l_2 \f$ norm of the MultiComponentVector
-       * @return \f$ l_2 \f$  norm of the vector as double type
+       * @brief Returns \f$ l_2 \f$ norm of the MultiVector
+       * @return \f$ l_2 \f$  norm of all the vectors in MultiVector
        */
       virtual 
       std::vector<double>
       l2Norm() const = 0;
 
       /**
-       * @brief Returns \f$ l_{\inf} \f$ norm of the MultiComponentVector
-       * @return \f$ l_{\inf} \f$  norm of the vector as double type
+       * @brief Returns \f$ l_{\inf} \f$ norm of the MultiVector
+       * @return \f$ l_{\inf} \f$  norm of all the vectors in MultiVector
        */
       virtual 
       std::vector<double>
       lInfNorm() const = 0;
+      
+      /**
+       * @brief Returns \f$ l_2 \f$ norm of the a given vector in the MultiVector
+       * @param[in] vecIndex index of the vector in MultiVector
+       * @return \f$ l_2 \f$  norm of the given vector in the MultiVector 
+       */
+      virtual 
+      double
+      l2Norm(const size_type vecIndex) const = 0;
+
+      /**
+       * @brief Returns \f$ l_{\inf} \f$ norm of the MultiVector
+       * @param[in] vecIndex index of the vector in MultiVector
+       * @return \f$ l_{\inf} \f$ norm of the given vector in the MultiVector
+       */
+      virtual 
+      double
+      lInfNorm(const size_type vecIndex) const = 0;
 
       /**
        * @brief Returns a const reference to the underlying storage
-       * of the MultiComponentVector.
+       * of the MultiVector.
        *
        * @return const reference to the underlying MemoryStorage.
        */
@@ -172,8 +191,18 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
+      
+      /**
+       * @brief Extracts a VectorBase (i.e., single vector) from the MultiVector 
+       * @param vecIndex index of the vector to extract from the MultiVector
+       * @param vecBase reference to VectorBase (i..e, single vector) which will store 
+       * the extracted vector
+       */
+      const VectorAttributes &
+      getVector(const size_type vecIndex,
+	  VectorBase & vecBase) const = 0;
     };
 
   }
 }
-#endif // dftefeMultiComponentMultiComponentVectorBase_h
+#endif // dftefeMultiMultiVectorBase_h

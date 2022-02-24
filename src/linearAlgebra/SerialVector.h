@@ -176,6 +176,24 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
+      
+      void
+      scatterToGhost(const size_type communicationChannel = 0) override;
+
+      void
+      gatherFromGhost(const size_type communicationChannel = 0) override;
+
+      void
+      scatterToGhostBegin(const size_type communicationChannel = 0) override;
+
+      void
+      scatterToGhostEnd(const size_type communicationChannel = 0) override;
+
+      void
+      gatherFromGhostBegin(const size_type communicationChannel = 0) override;
+
+      void
+      gatherFromGhostEnd(const size_type communicationChannel = 0) override;
 
     private:
       typename VectorBase<ValueType, memorySpace>::Storage d_storage;

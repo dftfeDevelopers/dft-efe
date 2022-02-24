@@ -51,6 +51,9 @@ namespace dftefe
       bool
       areDistributionCompatible(const VectorAttributes &vecAttributes) const;
 
+      Distribution 
+	getDistribution() const;
+
     private:
       Distribution d_distribution;
       size_type    d_numComponents;

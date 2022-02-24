@@ -46,15 +46,34 @@ namespace dftefe
     SerialVector<ValueType, memorySpace>::SerialVector(
       const SerialVector<ValueType, memorySpace> &u)
       : d_storage(u.d_storage)
-      , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
-    {}
+      , d_vectorAttributes(u.d_vectorAttributes)
+    {
+      VectorAttributes vectorAttributesSerial(
+	  VectorAttributes::Distribution::SERIAL);
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to copy from an incompatible vector. One is a serial vector and the "
+        " other a distributed vector.");
+    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       SerialVector<ValueType, memorySpace> &&u) noexcept
       : d_storage(std::move(u.d_storage))
-      , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
-    {}
+      , d_vectorAttributes(std::move(u.d_vectorAttributes))
+    {
+      VectorAttributes vectorAttributesSerial(
+	  VectorAttributes::Distribution::SERIAL);
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to move from an incompatible vector. One is a serial vector and the "
+        " other a distributed vector.");
+    
+    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     VectorBase<ValueType, memorySpace> &
@@ -181,6 +200,36 @@ namespace dftefe
     {
       return d_storage.data();
     }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+     SerialVector<ValueType, memorySpace>::scatterToGhost(
+	 const size_type communicationChannel /*= 0*/) {}
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+     SerialVector<ValueType, memorySpace>::gatherFromGhost(
+	 const size_type communicationChannel /*= 0*/) {}
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+     SerialVector<ValueType, memorySpace>::scatterToGhostBegin(
+	 const size_type communicationChannel /*= 0*/) {}
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+     SerialVector<ValueType, memorySpace>::scatterToGhostEnd(
+	 const size_type communicationChannel /*= 0*/) {}
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+     SerialVector<ValueType, memorySpace>::gatherFromGhostBegin(
+	 const size_type communicationChannel /*= 0*/) {}
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+     SerialVector<ValueType, memorySpace>::gatherFromGhostEnd(
+	 const size_type communicationChannel /*= 0*/) {}
 
   } // namespace linearAlgebra
 } // namespace dftefe

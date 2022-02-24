@@ -169,6 +169,24 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
+     
+      virtual void
+      scatterToGhost(const size_type communicationChannel = 0);
+
+      virtual void
+      gatherFromGhost(const size_type communicationChannel = 0);
+
+      virtual void
+      scatterToGhostBegin(const size_type communicationChannel = 0);
+
+      virtual void
+      scatterToGhostEnd(const size_type communicationChannel = 0);
+
+      virtual void
+      gatherFromGhostBegin(const size_type communicationChannel = 0);
+
+      virtual void
+      gatherFromGhostEnd(const size_type communicationChannel = 0);
     };
 
     // helper functions
