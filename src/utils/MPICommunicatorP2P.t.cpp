@@ -95,6 +95,7 @@ namespace dftefe
       MPICommunicatorP2PKernels::gatherLocallyOwnedEntriesToSendBuffer(dataArray,
                                                                        d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
                                                                        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs(),
+                                                                       d_blockSize,
                                                                        d_sendRecvBuffer);
 
       // initiate non-blocking sends to target processors
@@ -127,6 +128,7 @@ namespace dftefe
     MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostEnd()
     {
 #ifdef DFTEFE_WITH_MPI
+      // wait for all send and recv requests to be completed      
       if (d_requestsScatterToGhost.size() > 0)
         {
           const int err =
@@ -162,47 +164,48 @@ namespace dftefe
     {
 #ifdef DFTEFE_WITH_MPI
       // initiate non-blocking receives from target processors 
-      ValueType * recvArrayStartPtr=dataArray.begin()+d_mpiPatternP2P->localOwnedSize()*d_blockSize;
-      for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size(); ++i)
+      ValueType * recvArrayStartPtr=d_sendRecvBuffer.begin();
+      for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size(); ++i)
         {
           const int err =
             MPI_Irecv(recvArrayStartPtr,
-                      (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i+1]-d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i])*d_blockSize* sizeof(ValueType),
+                      (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i]*d_blockSize* sizeof(ValueType),
                       MPI_BYTE,
-                      d_mpiPatternP2P->getGhostProcIds().[i],
-                      MPI_P2P_COMMUNICATOR_SCATTER_TAG+communicationChannel,
+                      d_mpiPatternP2P->getTargetProcIds().[i],
+                      MPI_P2P_COMMUNICATOR_GATHER_TAG+communicationChannel,
                       d_mpiCommunicator,
-                      &d_recvRequestsScatterToGhost[i]);
+                      &d_requestsGatherFromGhost[i]);
 
           std::string errMsg= "Error occured while using MPI_Irecv. "
                                "Error code: " +
                                std::to_string(err);
           throwException(err == MPI_SUCCESS, errMsg);
 
-          recvArrayStartPtr +=  (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i+1]-d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i])*d_blockSize;
+          recvArrayStartPtr +=d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i]*d_blockSize;
         }     
 
 
 
       // initiate non-blocking sends to ghost processors
-      ValueType * sendArrayStartPtr=d_sendRecvBuffer.begin();
+      ValueType * sendArrayStartPtr=dataArray.begin()+d_mpiPatternP2P->localOwnedSize()*d_blockSize;
       for (unsigned int i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size(); ++i)
         {
           const int err =
             MPI_Isend(sendArrayStart,
-                      (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i]*d_blockSize* sizeof(ValueType),
+                      (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i+1]-d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i])*d_blockSize* sizeof(ValueType),
                       MPI_BYTE,
-                      d_mpiPatternP2P->getTargetProcIds().[i],
-                      MPI_P2P_COMMUNICATOR_SCATTER_TAG+communicationChannel,
+                      d_mpiPatternP2P->getGhostProcIds().[i],
+                      MPI_P2P_COMMUNICATOR_GATHER_TAG+communicationChannel,
                       d_mpiCommunicator,
-                      &d_sendRequestsScatterToGhost[i]);
+                      &d_requestsGatherFromGhost[i]);
 
           std::string errMsg= "Error occured while using MPI_Isend. "
                                "Error code: " +
                                std::to_string(err);
           throwException(err == MPI_SUCCESS, errMsg);
 
-          sendArrayStartPtr += d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i]*d_blockSize;
+          sendArrayStartPtr += (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i+1]-d_mpiPatternP2P->getGhostLocalIndicesRanges()[2*i])*d_blockSize;
+
         }
 
       
@@ -217,6 +220,7 @@ namespace dftefe
     {
 #ifdef DFTEFE_WITH_MPI
 
+      // wait for all send and recv requests to be completed
       if (d_requestsGatherFromGhost.size()>0)
         {
           const int err =
@@ -231,10 +235,11 @@ namespace dftefe
         }
 
       // accumulate add into locally owned entries from recv buffer
-      MPICommunicatorP2PKernels::gatherLocallyOwnedEntriesToSendBuffer(d_sendRecvBuffer,
+      MPICommunicatorP2PKernels::accumulateAddRecvBufferToLocallyOwnedEntries(d_sendRecvBuffer,
                                                                        d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
                                                                        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs(),
-                                                                       d_sendRecvBuffer);  
+                                                                       d_blockSize,
+                                                                       d_dataArray);  
 
 #endif
     }
