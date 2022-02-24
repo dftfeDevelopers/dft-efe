@@ -51,34 +51,43 @@ namespace dftefe
       }
     }
 
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2PKernels<ValueType, memorySpace>::accumulateAddRecvBufferToLocallyOwnedEntries(const MemoryStorage<ValueType, memorySpace> &recvBuffer,
-                                          const SizeTypeVector & ownedLocalIndicesForTargetProcs,
-                                          const SizeTypeVector & numOwnedIndicesForTargetProcs,
-                                          const size_type blockSize,
-                                          MemoryStorage<ValueType, memorySpace> &dataArray)
-    {
+    MPICommunicatorP2PKernels<ValueType, memorySpace>::
+      accumulateAddRecvBufferToLocallyOwnedEntries(
+        const MemoryStorage<ValueType, memorySpace> &recvBuffer,
+        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector &                 numOwnedIndicesForTargetProcs,
+        const size_type                        blockSize,
+        MemoryStorage<ValueType, memorySpace> &dataArray)
+    {}
 
-    }
 
-
-    template class MPICommunicatorP2PKernels<double, dftefe::utils::MemorySpace::HOST>;
-    template class MPICommunicatorP2PKernels<float, dftefe::utils::MemorySpace::HOST>;
+    template class MPICommunicatorP2PKernels<double,
+                                             dftefe::utils::MemorySpace::HOST>;
+    template class MPICommunicatorP2PKernels<float,
+                                             dftefe::utils::MemorySpace::HOST>;
     template class MPICommunicatorP2PKernels<std::complex<double>,
-                                 dftefe::utils::MemorySpace::HOST>;
+                                             dftefe::utils::MemorySpace::HOST>;
     template class MPICommunicatorP2PKernels<std::complex<float>,
-                                 dftefe::utils::MemorySpace::HOST>;
+                                             dftefe::utils::MemorySpace::HOST>;
 
 #ifdef DFTEFE_WITH_DEVICE
-    template class MPICommunicatorP2PKernels<double, dftefe::utils::MemorySpace::HOST_PINNED>;
-    template class MPICommunicatorP2PKernels<float, dftefe::utils::MemorySpace::HOST_PINNED>;
-    template class MPICommunicatorP2PKernels<std::complex<double>,
-                                 dftefe::utils::MemorySpace::HOST_PINNED>;
-    template class MPICommunicatorP2PKernels<std::complex<float>,
-                                 dftefe::utils::MemorySpace::HOST_PINNED>; 
+    template class MPICommunicatorP2PKernels<
+      double,
+      dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MPICommunicatorP2PKernels<
+      float,
+      dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MPICommunicatorP2PKernels<
+      std::complex<double>,
+      dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MPICommunicatorP2PKernels<
+      std::complex<float>,
+      dftefe::utils::MemorySpace::HOST_PINNED>;
 #endif
-                                 
 
-  }// namespace utils
+
+  } // namespace utils
 } // namespace dftefe

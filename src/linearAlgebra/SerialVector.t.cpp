@@ -36,16 +36,22 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(const size_type size,
                                                        const ValueType initVal)
-      : d_storage(size, initVal)
+      : d_storage(
+          std::make_shared<
+            typename VectorBase<ValueType, memorySpace>::Storage>(size,
+                                                                  initVal))
       , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       const SerialVector<ValueType, memorySpace> &u)
-      : d_storage(u.d_storage)
+      : d_storage(std::make_shared<
+                  typename VectorBase<ValueType, memorySpace>::Storage>(
+          (u.d_storage)->size()))
       , d_vectorAttributes(u.d_vectorAttributes)
     {
+      *d_storage = *(u.d_storage);
       VectorAttributes vectorAttributesSerial(
         VectorAttributes::Distribution::SERIAL);
       bool areCompatible =
@@ -88,10 +94,10 @@ namespace dftefe
         "Mismatch of sizes of the two vectors that are being added.");
       const size_type rhsStorageSize = (rhs.getStorage()).size();
       utils::throwException<utils::LengthError>(
-        d_storage.size() == rhsStorageSize,
+        d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two vectors that are being added.");
-      VectorKernels<ValueType, memorySpace>::add(d_storage.size(),
+      VectorKernels<ValueType, memorySpace>::add(d_storage->size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -113,10 +119,10 @@ namespace dftefe
         "Mismatch of sizes of the two vectors that are being subtracted.");
       const size_type rhsStorageSize = (rhs.getStorage()).size();
       utils::throwException<utils::LengthError>(
-        (d_storage.size() == rhsStorageSize),
+        (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two vectors that are being subtracted.");
-      VectorKernels<ValueType, memorySpace>::sub(d_storage.size(),
+      VectorKernels<ValueType, memorySpace>::sub(d_storage->size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -127,7 +133,7 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::l2Norm() const
     {
-      return VectorKernels<ValueType, memorySpace>::l2Norm(d_storage.size(),
+      return VectorKernels<ValueType, memorySpace>::l2Norm(d_storage->size(),
                                                            this->data());
     }
 
@@ -135,7 +141,7 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::lInfNorm() const
     {
-      return VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage.size(),
+      return VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage->size(),
                                                              this->data());
     }
 
@@ -144,14 +150,14 @@ namespace dftefe
                                                      memorySpace>::Storage &
     SerialVector<ValueType, memorySpace>::getStorage() const
     {
-      return d_storage;
+      return *d_storage;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename dftefe::linearAlgebra::VectorBase<ValueType, memorySpace>::iterator
     SerialVector<ValueType, memorySpace>::begin()
     {
-      return d_storage.begin();
+      return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -159,14 +165,14 @@ namespace dftefe
                                                memorySpace>::const_iterator
     SerialVector<ValueType, memorySpace>::begin() const
     {
-      return d_storage.begin();
+      return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename dftefe::linearAlgebra::VectorBase<ValueType, memorySpace>::iterator
     SerialVector<ValueType, memorySpace>::end()
     {
-      return d_storage.end();
+      return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -174,28 +180,28 @@ namespace dftefe
                                                memorySpace>::const_iterator
     SerialVector<ValueType, memorySpace>::end() const
     {
-      return d_storage.end();
+      return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
     SerialVector<ValueType, memorySpace>::size() const
     {
-      return d_storage.size();
+      return d_storage->size();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     ValueType *
     SerialVector<ValueType, memorySpace>::data()
     {
-      return d_storage.data();
+      return d_storage->data();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const ValueType *
     SerialVector<ValueType, memorySpace>::data() const
     {
-      return d_storage.data();
+      return d_storage->data();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
