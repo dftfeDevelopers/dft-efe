@@ -30,13 +30,25 @@ the beginning of the file
 , and the following line has to be added to the test python file.
     bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
 '''
+
+'''
+Returns true if a file is an executable.
+It excludes shell scripts (i.e., those ending with .sh).
+'''
+def isFileExecutable(fpath):
+    return (os.access(fpath, os.X_OK))  and (fpath[-3:] != '.sh')
+
+
 def BinCpy(dir):
     [dir_path, dir_name] = os.path.split(dir)
     exe_path = dir_path+"/"+dir_name+"/executable"
     if not os.path.isdir(exe_path):
         os.mkdir(exe_path)
 
-    exe_files = glob.iglob(os.path.join(os.getcwd(), "*.x"))
-    for file in exe_files:
-        if os.path.isfile(file):
-            shutil.copy2(file, exe_path)
+    for filename in os.listdir(os.getcwd()):
+        f = os.path.join(os.getcwd(), filename)
+        # checking if it is a file
+        if os.path.isfile(f):
+            # checking it is an executable 
+            if isFileExecutable(f):
+                shutil.copy2(f, exe_path)
