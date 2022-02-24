@@ -49,6 +49,12 @@ namespace dftefe
     {
       return (d_distribution == vecAttributes.d_distribution);
     }
+    
+    VectorAttributes::Distribution
+    VectorAttributes::getDistribution() const
+    {
+      return d_distribution;
+    }
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

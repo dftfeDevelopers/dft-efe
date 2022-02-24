@@ -99,7 +99,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm);
-#endif
+#endif // DFTEFE_WITH_MPI
 
       /**
        * @brief Copy constructor
@@ -190,18 +190,16 @@ namespace dftefe
       const ValueType *
       data() const override;
 
-
-
       /**
        * @brief Returns \f$ l_2 \f$ norm of the DistributedVector
-       * @return \f$ l_2 \f$  norm of the vector as double type
+       * @return \f$ l_2 \f$  norm of the vector 
        */
       double
       l2Norm() const override;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norm of the DistributedVector
-       * @return \f$ l_{\inf} \f$  norm of the vector as double type
+       * @return \f$ l_{\inf} \f$  norm of the vector
        */
       double
       lInfNorm() const override;
@@ -223,6 +221,24 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
+      
+      void
+      scatterToGhost(const size_type communicationChannel = 0) override;
+
+      void
+      gatherFromGhost(const size_type communicationChannel = 0) override;
+
+      void
+      scatterToGhostBegin(const size_type communicationChannel = 0) override;
+
+      void
+      scatterToGhostEnd(const size_type communicationChannel = 0) override;
+
+      void
+      gatherFromGhostBegin(const size_type communicationChannel = 0) override;
+
+      void
+      gatherFromGhostEnd(const size_type communicationChannel = 0) override;
 
     private:
       typename VectorBase<ValueType, memorySpace>::Storage d_storage;
