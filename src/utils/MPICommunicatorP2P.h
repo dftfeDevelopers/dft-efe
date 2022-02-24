@@ -57,16 +57,14 @@ namespace dftefe
                           const size_type communicationChannel = 0);
 
       void
-      scatterToGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
-                        const size_type communicationChannel = 0);
+      scatterToGhostEnd();
 
       void
       gatherFromGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
                            const size_type communicationChannel = 0);
 
       void
-      gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
-                         const size_type communicationChannel = 0);
+      gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
 
       std::shared_ptr<const MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
@@ -79,10 +77,8 @@ namespace dftefe
       MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
 #ifdef DFTEFE_WITH_MPI
-      std::vector<MPI_Request> d_sendRequestsScatterToGhost;
-      std::vector<MPI_Request> d_recvRequestsScatterToGhost;
-      std::vector<MPI_Request> d_sendRequestsGatherFromGhost;
-      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
+      std::vector<MPI_Request> d_requestsScatterToGhost;
+      std::vector<MPI_Request> d_requestsGatherFromGhost;
       MPI_Comm                 d_mpiCommunicator;
 #endif
     };
@@ -92,4 +88,4 @@ namespace dftefe
 
 #include "MPICommunicatorP2P.t.cpp"
 
-#endif // dftefeMPICommunicatorBase_h
+#endif 
