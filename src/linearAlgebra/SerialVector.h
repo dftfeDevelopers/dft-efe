@@ -176,7 +176,7 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
-      
+
       void
       scatterToGhost(const size_type communicationChannel = 0) override;
 

@@ -49,7 +49,7 @@ namespace dftefe
     {
       return (d_distribution == vecAttributes.d_distribution);
     }
-    
+
     VectorAttributes::Distribution
     VectorAttributes::getDistribution() const
     {

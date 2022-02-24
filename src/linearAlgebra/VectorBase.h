@@ -169,7 +169,7 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
-     
+
       virtual void
       scatterToGhost(const size_type communicationChannel = 0);
 

@@ -46,7 +46,7 @@ namespace dftefe
 
       MPI_P2P_COMMUNICATOR_SCATTER_TAG,
 
-      MPI_P2P_COMMUNICATOR_GATHER_TAG=MPI_P2P_COMMUNICATOR_SCATTER_TAG+200
+      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
     };
   } // end of namespace utils
 } // end of namespace dftefe

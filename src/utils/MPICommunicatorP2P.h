@@ -39,10 +39,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class MPICommunicatorP2P
     {
-      void
       MPICommunicatorP2P(
-        const std::shared_ptr<const MPIPatternP2P> &mpiPatternP2P,
-        const size_type                             blockSize);
+        std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        const size_type                                   blockSize);
 
       void
       scatterToGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
@@ -69,11 +68,11 @@ namespace dftefe
       gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray,
                          const size_type communicationChannel = 0);
 
-      std::shared_ptr<const MPIPatternP2P>
+      std::shared_ptr<const MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
 
     private:
-      std::shared_ptr<const MPIPatternP2P> d_mpiPatternP2P;
+      std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
       size_type d_blockSize;
 
@@ -85,9 +84,6 @@ namespace dftefe
       std::vector<MPI_Request> d_sendRequestsGatherFromGhost;
       std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
       MPI_Comm                 d_mpiCommunicator;
-      std::vector<MPI_Request> d_recvRequestsGatherFromGhost;
-
-      MPI_Comm d_mpiCommunicator;
 #endif
     };
 

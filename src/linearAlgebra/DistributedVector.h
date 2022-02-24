@@ -79,8 +79,9 @@ namespace dftefe
        *
        */
       DistributedVector(
-        std::shared_ptr<const MPICommunicatorP2P> mpiCommunicatorP2P,
-        const ValueType                           initVal = ValueType());
+        std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
+                        mpiCommunicatorP2P,
+        const ValueType initVal = ValueType());
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -98,7 +99,8 @@ namespace dftefe
       DistributedVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
-        const MPI_Comm &                                    mpiComm);
+        const MPI_Comm &                                    mpiComm,
+        const ValueType initVal = ValueType());
 #endif // DFTEFE_WITH_MPI
 
       /**
@@ -192,7 +194,7 @@ namespace dftefe
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the DistributedVector
-       * @return \f$ l_2 \f$  norm of the vector 
+       * @return \f$ l_2 \f$  norm of the vector
        */
       double
       l2Norm() const override;
@@ -221,7 +223,7 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
-      
+
       void
       scatterToGhost(const size_type communicationChannel = 0) override;
 
@@ -247,8 +249,9 @@ namespace dftefe
       size_type                                            d_localOwnedSize;
       size_type                                            d_localGhostSize;
       size_type                                            d_globalSize;
-      std::shared_ptr<const MPICommunicatorP2P>            d_mpiCommunicatorP2P;
-      std::shared_ptr<const MPIPatternP2P>                 d_mpiPatternP2P;
+      std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
+        d_mpiCommunicatorP2P;
+      std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
     };
 
   } // end of namespace linearAlgebra

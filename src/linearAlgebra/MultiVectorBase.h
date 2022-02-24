@@ -36,8 +36,8 @@ namespace dftefe
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MultiVectorBase {
-      
+    class MultiVectorBase
+    {
       /**
        * @brief An abstract class template for a multi component vector.
        * Each component is a vector in the mathematical
@@ -144,25 +144,22 @@ namespace dftefe
        * @brief Returns \f$ l_2 \f$ norm of the MultiVector
        * @return \f$ l_2 \f$  norm of all the vectors in MultiVector
        */
-      virtual 
-      std::vector<double>
+      virtual std::vector<double>
       l2Norm() const = 0;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norm of the MultiVector
        * @return \f$ l_{\inf} \f$  norm of all the vectors in MultiVector
        */
-      virtual 
-      std::vector<double>
+      virtual std::vector<double>
       lInfNorm() const = 0;
-      
+
       /**
        * @brief Returns \f$ l_2 \f$ norm of the a given vector in the MultiVector
        * @param[in] vecIndex index of the vector in MultiVector
-       * @return \f$ l_2 \f$  norm of the given vector in the MultiVector 
+       * @return \f$ l_2 \f$  norm of the given vector in the MultiVector
        */
-      virtual 
-      double
+      virtual double
       l2Norm(const size_type vecIndex) const = 0;
 
       /**
@@ -170,8 +167,7 @@ namespace dftefe
        * @param[in] vecIndex index of the vector in MultiVector
        * @return \f$ l_{\inf} \f$ norm of the given vector in the MultiVector
        */
-      virtual 
-      double
+      virtual double
       lInfNorm(const size_type vecIndex) const = 0;
 
       /**
@@ -191,18 +187,17 @@ namespace dftefe
        */
       const VectorAttributes &
       getVectorAttributes() const = 0;
-      
+
       /**
-       * @brief Extracts a VectorBase (i.e., single vector) from the MultiVector 
+       * @brief Extracts a VectorBase (i.e., single vector) from the MultiVector
        * @param vecIndex index of the vector to extract from the MultiVector
-       * @param vecBase reference to VectorBase (i..e, single vector) which will store 
+       * @param vecBase reference to VectorBase (i..e, single vector) which will store
        * the extracted vector
        */
       const VectorAttributes &
-      getVector(const size_type vecIndex,
-	  VectorBase & vecBase) const = 0;
+      getVector(const size_type vecIndex, VectorBase &vecBase) const = 0;
     };
 
-  }
-}
+  } // namespace linearAlgebra
+} // namespace dftefe
 #endif // dftefeMultiMultiVectorBase_h
