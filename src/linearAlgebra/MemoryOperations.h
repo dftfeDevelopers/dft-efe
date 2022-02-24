@@ -66,7 +66,7 @@ namespace dftefe
        * @return  u.v as double type
        */
       static double
-      dotProduct(size_type size, const ValueType *v , const ValueType *u);
+      dotProduct(size_type size, const ValueType *v, const ValueType *u);
 
 
       /**
@@ -115,7 +115,7 @@ namespace dftefe
       lInfNorm(size_type size, const ValueType *u);
 
       static double
-      dotProduct(size_type size, const ValueType *v , const ValueType *u);
+      dotProduct(size_type size, const ValueType *v, const ValueType *u);
 
       /**
        * @brief Performing \f$ w = au + bv \f$ for the device

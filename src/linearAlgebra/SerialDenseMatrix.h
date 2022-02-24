@@ -37,8 +37,6 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class SerialDenseMatrix : public MatrixBase
     {
@@ -62,8 +60,7 @@ namespace dftefe
       typedef ValueType *      iterator;
       typedef const ValueType *const_iterator;
 
-    public :
-
+    public:
       SerialDenseMatrix() = default;
 
       /**
@@ -73,25 +70,27 @@ namespace dftefe
       SerialDenseMatrix(const SerialDenseMatrix &u);
 
       // TODO Check if this is required and implement if neccessary
-//      /**
-//       * @brief Move constructor for a matrix
-//       * @param[in] u Vector object to move from
-//       */
-//      SerialDenseMatrix(SerialDenseMatrix &&u) noexcept;
+      //      /**
+      //       * @brief Move constructor for a matrix
+      //       * @param[in] u Vector object to move from
+      //       */
+      //      SerialDenseMatrix(SerialDenseMatrix &&u) noexcept;
 
       /**
        * @brief Constructor for Matrix  with (rows,cols)
        * and initial value arguments
        * @param[in] rows Number of rows of the matrix
        * @param[in] cols Number of cols of the matrix
-       * @param[in] blasQueueInput Queue handle. For Matrix objects stored in HOST
-       * this is same as int. For matrix object stored in Device this is
+       * @param[in] blasQueueInput Queue handle. For Matrix objects stored in
+       * HOST this is same as int. For matrix object stored in Device this is
        * blas::Queue
        * @param[in] initVal initial value of elements of the Vector
        */
-      explicit SerialDenseMatrix(size_type rows, size_type cols,
-                                 blasWrapper::blasQueueType<memorySapce> &blasQueueInput,
-                                 ValueType initVal = 0);
+      explicit SerialDenseMatrix(
+        size_type                                rows,
+        size_type                                cols,
+        blasWrapper::blasQueueType<memorySapce> &blasQueueInput,
+        ValueType                                initVal = 0);
 
       /**
        * @brief Destructor
@@ -134,13 +133,13 @@ namespace dftefe
       const_iterator
       end() const;
 
-//      /**
-//       * @brief Copy assignment operator
-//       * @param[in] rhs the rhs Matrix from which to copy
-//       * @returns reference to the lhs Matrix
-//       */
-//      SerialDenseMatrix &
-//      operator=(const SerialDenseMatrix &rhs);
+      //      /**
+      //       * @brief Copy assignment operator
+      //       * @param[in] rhs the rhs Matrix from which to copy
+      //       * @returns reference to the lhs Matrix
+      //       */
+      //      SerialDenseMatrix &
+      //      operator=(const SerialDenseMatrix &rhs);
 
       /**
        * @brief Return the raw pointer to the Matrix
@@ -187,31 +186,31 @@ namespace dftefe
        */
       template <dftefe::utils::MemorySpace memorySpaceSrc>
       void
-      copyFrom(
-        const MatrixBase<ValueType, memorySpaceSrc> &srcMatrix);
-
-     /**
-     * @brief Returns the Local number of rows of the Matrix
-      * For A serial matrix this is same as the global number of rows
-      * These functions are present to ensure compatibility with the
-      * base class
-     * @returns Local number of rows of the Matrix
-     */
-     size_type
-     getLocalRows( ) const;
+      copyFrom(const MatrixBase<ValueType, memorySpaceSrc> &srcMatrix);
 
       /**
-      * @brief Returns the Local number of cols of the Matrix
+       * @brief Returns the Local number of rows of the Matrix
+       * For A serial matrix this is same as the global number of rows
+       * These functions are present to ensure compatibility with the
+       * base class
+       * @returns Local number of rows of the Matrix
+       */
+      size_type
+      getLocalRows() const;
+
+      /**
+       * @brief Returns the Local number of cols of the Matrix
        * For A serial matrix this is same as the global number of cols
        * These functions are present to ensure compatibility with the
        * base class
-      * @returns Local number of cols of the Matrix
-      */
-      size_type getLocalCols( ) const;
+       * @returns Local number of cols of the Matrix
+       */
+      size_type
+      getLocalCols() const;
 
 
       /**
-      * @brief Returns the Local number of (rows,cols) of the Matrix
+       * @brief Returns the Local number of (rows,cols) of the Matrix
        * For A serial matrix this is same as the global number of (rows,cols)
        * These functions are present to ensure compatibility with the
        * base class
@@ -219,51 +218,53 @@ namespace dftefe
        * @param[out] cols Local number of cols of the Matrix.
        *
        */
-      void getLocalSize(size_type &rows,size_type &cols ) const;
+      void
+      getLocalSize(size_type &rows, size_type &cols) const;
 
       /**
-      * @brief Returns the Global number of (rows,cols) of the Matrix
+       * @brief Returns the Global number of (rows,cols) of the Matrix
        * @param[out] rows Global number of rows of the Matrix.
        * @param[out] cols Global number of cols of the Matrix.
        *
        */
-      void getGlobalSize(size_type &rows,size_type &cols ) const;
+      void
+      getGlobalSize(size_type &rows, size_type &cols) const;
 
 
       /**
-    * @brief Returns the Global number of rows of the Matrix
-    * @returns Global number of rows of the Matrix
-    */
+       * @brief Returns the Global number of rows of the Matrix
+       * @returns Global number of rows of the Matrix
+       */
       size_type
-      getGlobalRows( ) const;
+      getGlobalRows() const;
 
       /**
-      * @brief Returns the Global number of cols of the Matrix
-      * @returns Global number of cols of the Matrix
-      */
-      size_type getGlobalCols( ) const;
+       * @brief Returns the Global number of cols of the Matrix
+       * @returns Global number of cols of the Matrix
+       */
+      size_type
+      getGlobalCols() const;
 
 
       /**
-      * @brief Returns the underlying MemoryStorage object. For Matrix object
+       * @brief Returns the underlying MemoryStorage object. For Matrix object
        * stored on Host, it is same as int. For Matrix object stored on Device
        * this is same as blas::Queue
-      * @returns blasWrapper::blasQueueType<memorySapce> of this class
-      */
+       * @returns blasWrapper::blasQueueType<memorySapce> of this class
+       */
       blasWrapper::blasQueueType<memorySapce> &
-        getQueue();
+      getQueue();
 
 
 
+    private:
+      size_type d_nGlobalRows = 0, d_nGlobalCols = 0;
+      size_type d_nLocalRows = 0, d_nLocalCols = 0;
 
-    private :
-      size_type d_nGlobalRows = 0 , d_nGlobalCols = 0;
-      size_type d_nLocalRows = 0 , d_nLocalCols = 0;
+      blasWrapper::blasQueueType<memorySapce> d_blasQueue;
 
-      blasWrapper::blasQueueType<memorySapce> d_blasQueue ;
-
-      dftefe::utils::MemoryManager<ValueType, memorySpace>::MemoryStorage d_data;
-
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::MemoryStorage
+        d_data;
     };
   } // namespace linearAlgebra
 } // namespace dftefe

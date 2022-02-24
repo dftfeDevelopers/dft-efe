@@ -37,8 +37,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class Vector : public dftefe::utils::MemoryStorage<ValueType, memorySpace>
     {
-    private :
-      blasWrapper::blasQueueType<memorySapce> d_blasQueue ;
+    private:
+      blasWrapper::blasQueueType<memorySapce> d_blasQueue;
+
     public:
       Vector() = default;
 
@@ -57,14 +58,14 @@ namespace dftefe
       /**
        * @brief Constructor for Vector with size and initial value arguments
        * @param[in] size size of the Vector
-       * @param[in] blasQueueInput Queue handle. For Vector objects stored in HOST
-       * this is same as int. For Vector object stored in Device this is
+       * @param[in] blasQueueInput Queue handle. For Vector objects stored in
+       * HOST this is same as int. For Vector object stored in Device this is
        * blas::Queue
        * @param[in] initVal initial value of elements of the Vector
        */
-      explicit Vector(size_type size,
+      explicit Vector(size_type                                size,
                       blasWrapper::blasQueueType<memorySapce> &blasQueueInput,
-                      ValueType initVal = 0);
+                      ValueType                                initVal = 0);
 
 
       /**
@@ -106,10 +107,10 @@ namespace dftefe
       dotProduct(const Vector<ValueType, memorySpace> &u) const;
 
       /**
-      * @brief Returns the underlying MemoryStorage object. For Matrix object
+       * @brief Returns the underlying MemoryStorage object. For Matrix object
        * stored on Host, it is same as int. For Matrix object stored on Device
        * this is same as blas::Queue
-      * @returns blasWrapper::blasQueueType<memorySapce> of this class
+       * @returns blasWrapper::blasQueueType<memorySapce> of this class
        */
       blasWrapper::blasQueueType<memorySapce> &
       getQueue();

@@ -34,8 +34,7 @@ namespace dftefe
   {
     class MatrixBase
     {
-    public :
-
+    public:
       MatrixBase() = default;
 
       /**
@@ -44,7 +43,8 @@ namespace dftefe
        *
        * @returns Iterator pointing to the beginning of Matrix.
        */
-      virtual iterator begin() = 0;
+      virtual iterator
+      begin() = 0;
 
       /**
        * @brief Return iterator pointing to the beginning of Matrix
@@ -53,14 +53,16 @@ namespace dftefe
        * @returns Constant iterator pointing to the beginning of
        * Matrix.
        */
-      virtual const_iterator begin() const = 0;
+      virtual const_iterator
+      begin() const = 0;
 
       /**
        * @brief Return iterator pointing to the end of Matrix data.
        *
        * @returns Iterator pointing to the end of Matrix.
        */
-      virtual iterator end() = 0;
+      virtual iterator
+      end() = 0;
 
       /**
        * @brief Return iterator pointing to the end of MAtrix data.
@@ -68,20 +70,23 @@ namespace dftefe
        * @returns Constant iterator pointing to the end of
        * Matrix.
        */
-      virtual const_iterator end() const = 0;
+      virtual const_iterator
+      end() const = 0;
 
       /**
        * @brief Return the raw pointer to the Matrix
        * @return pointer to data
        */
-      virtual ValueType * data() noexcept = 0;
+      virtual ValueType *
+      data() noexcept = 0;
 
       /**
        * @brief Return the raw pointer to the Matrix without modifying
        * the values
        * @return pointer to const data
        */
-      virtual const ValueType * data() const noexcept = 0;
+      virtual const ValueType *
+      data() const noexcept = 0;
 
       /**
        * @brief Copies the data to a Matrix object in a different memory space.
@@ -96,7 +101,8 @@ namespace dftefe
        *  appropriately.
        */
       template <dftefe::utils::MemorySpace memorySpaceDst>
-      virtual void copyTo(MatrixBase<ValueType, memorySpaceDst> &dstMatrix) const = 0;
+      virtual void
+      copyTo(MatrixBase<ValueType, memorySpaceDst> &dstMatrix) const = 0;
 
       /**
        * @brief Copies data from a MemoryStorage object in a different memory space.
@@ -112,30 +118,31 @@ namespace dftefe
        */
       template <dftefe::utils::MemorySpace memorySpaceSrc>
       virtual void
-      copyFrom(
-        const MatrixBase<ValueType, memorySpaceSrc> &srcMatrix) = 0;
+      copyFrom(const MatrixBase<ValueType, memorySpaceSrc> &srcMatrix) = 0;
 
       /**
-      * @brief Returns the Local number of rows of the Matrix
+       * @brief Returns the Local number of rows of the Matrix
        * For A serial matrix this is same as the global number of rows
        * These functions are present to ensure compatibility with the
        * base class
-      * @returns Local number of rows of the Matrix
-      */
-      virtual size_type getLocalRows( ) const = 0;
+       * @returns Local number of rows of the Matrix
+       */
+      virtual size_type
+      getLocalRows() const = 0;
 
       /**
-      * @brief Returns the Local number of cols of the Matrix
+       * @brief Returns the Local number of cols of the Matrix
        * For A serial matrix this is same as the global number of cols
        * These functions are present to ensure compatibility with the
        * base class
-      * @returns Local number of cols of the Matrix
-      */
-      virtual size_type getLocalCols( ) const = 0;
+       * @returns Local number of cols of the Matrix
+       */
+      virtual size_type
+      getLocalCols() const = 0;
 
 
       /**
-      * @brief Returns the Local number of (rows,cols) of the Matrix
+       * @brief Returns the Local number of (rows,cols) of the Matrix
        * For A serial matrix this is same as the global number of (rows,cols)
        * These functions are present to ensure compatibility with the
        * base class
@@ -143,42 +150,47 @@ namespace dftefe
        * @param[out] cols Local number of cols of the Matrix.
        *
        */
-      virtual void getLocalSize(size_type &rows,size_type &cols ) const = 0;
+      virtual void
+      getLocalSize(size_type &rows, size_type &cols) const = 0;
 
       /**
-      * @brief Returns the Global number of (rows,cols) of the Matrix
+       * @brief Returns the Global number of (rows,cols) of the Matrix
        * @param[out] rows Global number of rows of the Matrix.
        * @param[out] cols Global number of cols of the Matrix.
        *
        */
-      virtual void getGlobalSize(size_type &rows,size_type &cols ) const = 0;
+      virtual void
+      getGlobalSize(size_type &rows, size_type &cols) const = 0;
 
 
       /**
-    * @brief Returns the Global number of rows of the Matrix
-    * @returns Global number of rows of the Matrix
-    */
-      virtual size_type getGlobalRows( ) const = 0;
+       * @brief Returns the Global number of rows of the Matrix
+       * @returns Global number of rows of the Matrix
+       */
+      virtual size_type
+      getGlobalRows() const = 0;
 
       /**
-      * @brief Returns the Global number of cols of the Matrix
-      * @returns Global number of cols of the Matrix
-      */
-      virtual size_type getGlobalCols( ) const = 0;
+       * @brief Returns the Global number of cols of the Matrix
+       * @returns Global number of cols of the Matrix
+       */
+      virtual size_type
+      getGlobalCols() const = 0;
 
       /**
-     * @brief Returns the underlying MemoryStorage object
-     * @returns MemoryStorage object of this class
-     */
-      virtual dftefe::utils::MemoryManager<ValueType, memorySpace>::MemoryStorage &
+       * @brief Returns the underlying MemoryStorage object
+       * @returns MemoryStorage object of this class
+       */
+      virtual dftefe::utils::MemoryManager<ValueType,
+                                           memorySpace>::MemoryStorage &
       getDataVec() = 0;
 
       /**
-      * @brief Returns the Queue associated with this Matrix object
-      * @returns MemoryStorage object of this class
+       * @brief Returns the Queue associated with this Matrix object
+       * @returns MemoryStorage object of this class
        */
-      virtual blasWrapper::blasQueueType<memorySapce> & getQueue() = 0;
-
+      virtual blasWrapper::blasQueueType<memorySapce> &
+      getQueue() = 0;
     };
   } // namespace linearAlgebra
 } // namespace dftefe

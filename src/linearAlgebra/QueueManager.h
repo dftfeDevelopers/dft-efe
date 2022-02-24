@@ -33,21 +33,21 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    class QueueManager 
+    class QueueManager
     {
-      public:
-     
-        blasWrapper::Queue & getBlasQueue();
+    public:
+      blasWrapper::Queue &
+      getBlasQueue();
 
-        void createBlasQueue();
+      void
+      createBlasQueue();
 
-      private : 
+    private:
+      int cpuQueue;
 
-        int cpuQueue; 
-
-        // FIXME Should this is be inside DFTEFE_WITH_GPU ????
-        static blasWrapper::Queue blasGpuQueue;
-     };
+      // FIXME Should this is be inside DFTEFE_WITH_GPU ????
+      static blasWrapper::Queue blasGpuQueue;
+    };
 
   } // namespace linearAlgebra
 

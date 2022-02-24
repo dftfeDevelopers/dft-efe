@@ -131,11 +131,14 @@ namespace dftefe
 
     template <typename ValueType>
     double
-    MemoryOperations<ValueType, dftefe::utils::MemorySpace::DEVICE>::dotProduct
-      (size_type size, const ValueType *v , const ValueType *u)
+    MemoryOperations<ValueType, dftefe::utils::MemorySpace::DEVICE>::dotProduct(
+      size_type        size,
+      const ValueType *v,
+      const ValueType *u)
     {
-      return blasWrapper::dot<ValueType,ValueType,dftefe::utils::MemorySpace::DEVICE >
-        (size, v, 1, u, 1);
+      return blasWrapper::
+        dot<ValueType, ValueType, dftefe::utils::MemorySpace::DEVICE>(
+          size, v, 1, u, 1);
     }
 
 

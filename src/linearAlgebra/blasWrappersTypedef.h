@@ -35,39 +35,45 @@ namespace dftefe
   {
     namespace blasWrapper
     {
-      typedef blas::Side    Side;
-     typedef blas::Op      Op;
-     typedef blas::Diag    Diag;
-     typedef blas::Uplo    Uplo;
-     typedef blas::Layout  Layout; 
-     typedef blas::Queue   Queue;
-     typedef blas::real_type real_type;
-     typedef blas::scalar_type scalar_type;
+      typedef blas::Side        Side;
+      typedef blas::Op          Op;
+      typedef blas::Diag        Diag;
+      typedef blas::Uplo        Uplo;
+      typedef blas::Layout      Layout;
+      typedef blas::Queue       Queue;
+      typedef blas::real_type   real_type;
+      typedef blas::scalar_type scalar_type;
 
-     template<dftefe::utils::MemorySpace memorySpace >
-     struct blasQueueTypedef
-     {
-       typedef void TYPE;  //  default
-     };
+      template <dftefe::utils::MemorySpace memorySpace>
+      struct blasQueueTypedef
+      {
+        typedef void TYPE; //  default
+      };
 
-     //template specified mapping
-     template<>
-     struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST>
-      {  typedef int TYPE;   };
+      // template specified mapping
+      template <>
+      struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST>
+      {
+        typedef int TYPE;
+      };
 
-      template<>
+      template <>
       struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST_PINED>
-      {  typedef int TYPE;   };
+      {
+        typedef int TYPE;
+      };
 
-     template<>
-     struct blasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
-     {   typedef blas::Queue  TYPE;  };
+      template <>
+      struct blasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
+      {
+        typedef blas::Queue TYPE;
+      };
 
-     template<dftefe::utils::MemorySpace memorySpace >
-     using blasQueueType = typename blasQueueTypedef<memorySpace>::TYPE;
+      template <dftefe::utils::MemorySpace memorySpace>
+      using blasQueueType = typename blasQueueTypedef<memorySpace>::TYPE;
 
 
-    }// namespace blasWrapper
+    } // namespace blasWrapper
 
   } // namespace linearAlgebra
 
