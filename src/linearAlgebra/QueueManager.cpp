@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
+ * Copyright (c) 2022.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,54 +20,36 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das.
+ * @author Vishal Subramanian
  */
 
-#ifdef DFTEFE_WITH_DEVICE
-#  ifndef dftefeDeviceBlasLapackTemplates_h
-#    define dftefeDeviceBlasLapackTemplates_h
-
-#    include <linearAlgebra/DeviceLAContextsSingleton.h>
+#include "QueueManager.h"
+#include "utils/Exceptions.h"
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType>
-    class DeviceBlasLapack
-    {
-    public:
-      static void
-      gemm(deviceBlasHandleType &  handle,
-           deviceBlasOperationType transa,
-           deviceBlasOperationType transb,
-           int                     m,
-           int                     n,
-           int                     k,
-           const ValueType *       alpha,
-           const ValueType *       A,
-           int                     lda,
-           const ValueType *       B,
-           int                     ldb,
-           const ValueType *       beta,
-           ValueType *             C,
-           int                     ldc);
 
-      static void
-      nrm2(deviceBlasHandleType &handle,
-           int                   n,
-           const ValueType *     x,
-           int                   incx,
-           double *              result);
+      blasWrapper::Queue & QueueManager::getBlasQueue()
+      {
 
-      static void
-      iamax(deviceBlasHandleType &handle,
-            int                   n,
-            const ValueType *     x,
-            int                   incx,
-            int *                 maxid);
-    };
-  } // namespace linearAlgebra
-} // namespace dftefe
-#  endif
-#endif // DFTEFE_WITH_DEVICE
+        return blasGpuQueue;
+
+      }
+
+      void QueueManager::createBlasQueue()
+      {
+
+        DFTEFE_AssertWithMsg(
+        0,
+        "createBlasQueue() not implemented yet.... ");
+
+      }
+ 
+    
+
+    
+
+  }
+}

@@ -4,6 +4,9 @@ if(${CMAKE_CXX_STANDARD})
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
+include_directories("/home/vikramg/DFT-FE-softwares/blaspp/blaspp/install/include")
+target_link_directories("/home/vikramg/DFT-FE-softwares/blaspp/blaspp/build")
+
 message (" DFTEFE_BLAS_LIBRARIES = ${DFTEFE_BLAS_LIBRARIES}")
 message (" DFTEFE_SCALAPACK_LIBRARIES = ${DFTEFE_SCALAPACK_LIBRARIES}")
 
@@ -20,14 +23,14 @@ endif ()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-		DeviceBlasLapackTemplates.cu
-		DeviceLAContextsSingleton.cu
-		VectorKernels.cu
+		MemoryOperations.cu
+		MemoryOperations.cpp
+		QueueManager.cpp
 		Vector.cpp
-		VectorKernels.cpp
 		SerialDenseMatrix.cpp
 		DistributedDenseMatrix.cpp
-		DeviceLAContextsSingleton.cpp)
+		BlasWrappers.cpp
+		MatrixOperations.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

@@ -20,11 +20,11 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das.
+ * @author Ian C. Lin, Sambit Das , Vishal Subramanian
  */
 
 #include <utils/MemoryManager.h>
-#include <linearAlgebra/VectorKernels.h>
+#include <linearAlgebra/MemoryOperations.h>
 #include <utils/Exceptions.h>
 #include <utils/MemoryTransfer.h>
 
@@ -46,14 +46,18 @@ namespace dftefe
       const Vector<ValueType, memorySpace> &u)
       : dftefe::utils::MemoryStorage<ValueType, memorySpace>(
           (dftefe::utils::MemoryStorage<ValueType, memorySpace> &)u)
-    {}
+    {
+       this->d_blasQueue = u.getQueue();
+    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       Vector<ValueType, memorySpace> &&u) noexcept
       : dftefe::utils::MemoryStorage<ValueType, memorySpace>(
           (dftefe::utils::MemoryStorage<ValueType, memorySpace> &&) u)
-    {}
+    {
+      this->d_blasQueue = u.getQueue();
+    }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -62,7 +66,7 @@ namespace dftefe
     {
       DFTEFE_AssertWithMsg(rhs.size() == this->size(),
                            "Size of two vectors should be the same.");
-      VectorKernels<ValueType, memorySpace>::add(this->size(),
+      MemoryOperations<ValueType, memorySpace>::add(this->size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -74,7 +78,7 @@ namespace dftefe
     {
       DFTEFE_AssertWithMsg(rhs.size() == this->size(),
                            "Size of two vectors should be the same.");
-      VectorKernels<ValueType, memorySpace>::sub(this->size(),
+      MemoryOperations<ValueType, memorySpace>::sub(this->size(),
                                                  rhs.data(),
                                                  this->data());
       return *this;
@@ -85,7 +89,7 @@ namespace dftefe
     double
     Vector<ValueType, memorySpace>::l2Norm() const
     {
-      return VectorKernels<ValueType, memorySpace>::l2Norm(this->size(),
+      return MemoryOperations<ValueType, memorySpace>::l2Norm(this->size(),
                                                            this->data());
     }
 
@@ -93,9 +97,28 @@ namespace dftefe
     double
     Vector<ValueType, memorySpace>::lInfNorm() const
     {
-      return VectorKernels<ValueType, memorySpace>::lInfNorm(this->size(),
+      return MemoryOperations<ValueType, memorySpace>::lInfNorm(this->size(),
                                                              this->data());
     }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    double
+    Vector<ValueType, memorySpace>::dotProduct() const
+    {
+      DFTEFE_AssertWithMsg(rhs.size() == this->size(),
+                           "Size of two vectors should be the same.");
+      return MemoryOperations<ValueType, memorySpace>::dotProduct(this->size(),
+                                                                this->data(),
+                                                                u->data());
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    blasWrapper::blasQueueType<memorySapce> &
+    Vector<ValueType, memorySpace>::getQueue()
+    {
+      return d_blasQueue;
+    }
+
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -108,7 +131,7 @@ namespace dftefe
     {
       DFTEFE_AssertWithMsg(((u.size() == v.size()) && (v.size() == w.size())),
                            "Size of two vectors should be the same.");
-      VectorKernels<ValueType, memorySpace>::add(
+      MemoryOperations<ValueType, memorySpace>::add(
         u.size(), a, u.data(), b, v.data(), w.data());
     }
 

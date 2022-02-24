@@ -26,38 +26,57 @@
 #ifndef dftefeBlasWrappers_h
 #define dftefeBlasWrappers_h
 
-#include <blas.h>
+#include <blas.hh>
+#include "blasWrappersTypedef.h"
+#include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    typedef blas::Layout    blasLayoutType;
-    typedef blas::Op blasOperationType;
-    typedef blass::Queue blasQueueType;
 
-    template<typename ValueType>
-      gemm( blasLayoutType layout,
-      blasOperationType transA,
-    blasOperationType transB,
-    size_type m, size_type n, size_type k,
-           ValueType alpha,
-           ValueType const *dA, size_type ldda,
-           ValueType const *dB, size_type lddb,
-           ValueType beta,
-           ValueType       *dC, size_type lddc);
+    template<typename ValueType >
+    blasWrapper::real_type< ValueType >
+      asum (size_type n, ValueType const *x, size_type incx);
 
-      template<typename ValueType>
-      gemm(blasLayoutType layout,
-           blasOperationType transA,
-           blasOperationType transB,
-           size_type m, size_type n, size_type k,
-           ValueType alpha,
-           ValueType const *dA, size_type ldda,
-           ValueType const *dB, size_type lddb,
-           ValueType beta,
-           ValueType       *dC, size_type lddc,
-           blasQueueType &queue);
+
+    template<typename ValueType1, typename ValueType2 >
+    void axpy 	(
+      size_type  	n,
+      blasWrapper::scalar_type< ValueType1, ValueType2 >  	alpha,
+         ValueType1 const *  	x,
+         size_type  	incx,
+         ValueType2 *  	y,
+         size_type  	incy );
+
+
+    template<typename ValueType1 , typename ValueType1 >
+    blasWrapper::scalar_type<ValueType1, ValueType2> dot
+      ( 	size_type  	n,
+        ValueType1 const *  	x,
+        size_type  	incx,
+        ValueType2 const *  	y,
+        size_type  	incy
+              );
+
+
+    template<typename ValueType >
+    blasWrapper::real_type<ValueType> nrm2 	( 	size_type  	n,
+         ValueType const *  	x,
+         size_type  	incx
+               ) 	;
+
+      template<typename ValueType, typename dftefe::utils::MemorySpace memorySpace>
+      void gemm(blasWrapper::Layout layout,
+                blasWrapper::Op transA,
+                blasWrapper::Op transB,
+                size_type m, size_type n, size_type k,
+                ValueType alpha,
+                ValueType const *dA, size_type ldda,
+                ValueType const *dB, size_type lddb,
+                ValueType beta,
+                ValueType       *dC, size_type lddc,
+                blasWrapper::blasQueueType<memorySapce> &blasQueue);
   }
 }
 
-#endif // dftefeBlassWrappers_h
+#endif // dftefeBlasWrappers_h

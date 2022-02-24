@@ -20,48 +20,37 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das.
+ * @author Vishal Subramanian
  */
 
-#ifdef DFTEFE_WITH_DEVICE
-#  ifndef dftefeDeviceLAContextsSingleton_h
-#    define dftefeDeviceLAContextsSingleton_h
+#ifndef dftefeQueueManager_h
+#define dftefeQueueManager_h
 
-#    ifdef DFTEFE_WITH_DEVICE_CUDA
-#      include <linearAlgebra/DeviceLATypeConfig.cuh>
-#    endif
+#include <blas.hh>
+#include <blasWrappersTypedef.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    class DeviceLAContextsSingleton
+    class QueueManager 
     {
-    protected:
-      static DeviceLAContextsSingleton *d_instPtr;
+      public:
+     
+        blasWrapper::Queue & getBlasQueue();
 
-    public:
-      static DeviceLAContextsSingleton *
-      getInstance();
+        void createBlasQueue();
 
-      void
-      createDeviceBlasHandle();
+      private : 
 
-      void
-      destroyDeviceBlasHandle();
+        int cpuQueue; 
 
-      deviceBlasHandleType &
-      getDeviceBlasHandle();
+        // FIXME Should this is be inside DFTEFE_WITH_GPU ????
+        static blasWrapper::Queue blasGpuQueue;
+     };
 
-    private:
-      DeviceLAContextsSingleton()
-      {}
-
-      deviceBlasHandleType d_blasHandle;
-    };
   } // namespace linearAlgebra
 
 } // namespace dftefe
 
-#  endif
-#endif // DFTEFE_WITH_DEVICE
+#endif // define queueManager_h
