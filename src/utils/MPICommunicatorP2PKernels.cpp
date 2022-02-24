@@ -41,7 +41,14 @@ namespace dftefe
                                           const size_type blockSize,
                                           MemoryStorage<ValueType, memorySpace> &sendBuffer)
     {
+      size_type procStartIndex=0;
+      for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
+      {
+             for (size_type j = 0; j < blockSize; ++j)
+               sendBuffer.data()[procStartIndex+j]=dataArray.data()[ownedLocalIndicesForTargetProcs.data()[i]*blockSize+j];
 
+         procStartIndex+=numOwnedIndicesForTargetProcs.data()[i]*blockSize;
+      }
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
