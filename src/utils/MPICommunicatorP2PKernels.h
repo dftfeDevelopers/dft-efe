@@ -79,27 +79,34 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
-    class MPICommunicatorP2PKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>
+    class MPICommunicatorP2PKernels<ValueType,
+                                    dftefe::utils::MemorySpace::DEVICE>
     {
-      public:
-
-      using SizeTypeVector = utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>;
-
-      static void
-      gatherLocallyOwnedEntriesToSendBuffer(const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE> &dataArray,
-                                            const SizeTypeVector & ownedLocalIndicesForTargetProcs,
-                                            const SizeTypeVector & numOwnedIndicesForTargetProcs,
-                                            const size_type blockSize,
-                                            MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE> &sendBuffer);
+    public:
+      using SizeTypeVector =
+        utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>;
 
       static void
-      accumulateAddRecvBufferToLocallyOwnedEntries(const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE> &recvBuffer,
-                                            const SizeTypeVector & ownedLocalIndicesForTargetProcs,
-                                            const SizeTypeVector & numOwnedIndicesForTargetProcs,
-                                            const size_type blockSize,
-                                            MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE> &dataArray);      
+      gatherLocallyOwnedEntriesToSendBuffer(
+        const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &                   dataArray,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector &numOwnedIndicesForTargetProcs,
+        const size_type       blockSize,
+        MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &sendBuffer);
+
+      static void
+      accumulateAddRecvBufferToLocallyOwnedEntries(
+        const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &                   recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector &numOwnedIndicesForTargetProcs,
+        const size_type       blockSize,
+        MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &dataArray);
     };
-#endif    
+#endif
   } // namespace utils
 } // namespace dftefe
 
