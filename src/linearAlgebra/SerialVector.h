@@ -66,6 +66,22 @@ namespace dftefe
       SerialVector(SerialVector &&u) noexcept;
 
       /**
+       * @brief Copy assignment operator
+       * @param[in] u const reference to SerialVector object to copy from
+       * @return reference to this object after copying data from u
+       */
+      SerialVector &
+      operator=(const SerialVector &u);
+
+      /**
+       * @brief Move assignment operator
+       * @param[in] u const reference to SerialVector object to move from
+       * @return reference to this object after moving data from u
+       */
+      SerialVector &
+      operator=(SerialVector &&u);
+
+      /**
        * @brief Constructor for SerialVector with size and initial value arguments
        * @param[in] size size of the SerialVector
        * @param[in] initVal initial value of elements of the SerialVector

@@ -43,6 +43,9 @@ namespace dftefe
       , d_vectorAttributes(VectorAttributes::Distribution::SERIAL)
     {}
 
+    //
+    // Copy Constructor
+    //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       const SerialVector<ValueType, memorySpace> &u)
@@ -62,6 +65,9 @@ namespace dftefe
         " other a distributed vector.");
     }
 
+    //
+    // Move Constructor
+    //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       SerialVector<ValueType, memorySpace> &&u) noexcept
@@ -76,6 +82,51 @@ namespace dftefe
         areCompatible,
         "Trying to move from an incompatible vector. One is a serial vector and the "
         " other a distributed vector.");
+    }
+
+    //
+    // Copy assignment
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialVector<ValueType, memorySpace> &
+    SerialVector<ValueType, memorySpace>::operator=(
+      const SerialVector<ValueType, memorySpace> &u)
+    {
+      d_storage =
+        std::make_shared<typename VectorBase<ValueType, memorySpace>::Storage>(
+          (u.d_storage)->size());
+      *d_storage         = *(u.d_storage);
+      d_vectorAttributes = u.d_vectorAttributes;
+      VectorAttributes vectorAttributesSerial(
+        VectorAttributes::Distribution::SERIAL);
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to do copy assignment from an incompatible vector. One is a serial vector and the "
+        " other a distributed vector.");
+      return *this;
+    }
+
+    //
+    // Move assignment
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialVector<ValueType, memorySpace> &
+    SerialVector<ValueType, memorySpace>::operator=(
+      SerialVector<ValueType, memorySpace> &&u)
+    {
+      d_storage          = std::move(u.d_storage);
+      d_vectorAttributes = std::move(u.d_vectorAttributes);
+      VectorAttributes vectorAttributesSerial(
+        VectorAttributes::Distribution::SERIAL);
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to do move assignment from an incompatible vector. One is a serial vector and the "
+        " other a distributed vector.");
+      return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

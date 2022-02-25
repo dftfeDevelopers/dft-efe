@@ -168,6 +168,61 @@ namespace dftefe
         " other a distributed vector.");
     }
 
+    //
+    // Copy Assignment
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributedVector<ValueType, memorySpace> &
+    DistributedVector<ValueType, memorySpace>::operator=(
+      const DistributedVector &u)
+    {
+      d_storage =
+        std::make_shared<typename VectorBase<ValueType, memorySpace>::Storage>(
+          (u.d_storage)->size());
+      *d_storage           = *(u.d_storage);
+      d_vectorAttributes   = u.d_vectorAttributes;
+      d_localSize          = u.d_localSize;
+      d_localOwnedSize     = u.d_localOwnedSize;
+      d_localGhostSize     = u.d_localGhostSize;
+      d_globalSize         = u.d_globalSize;
+      d_mpiCommunicatorP2P = u.d_mpiCommunicatorP2P;
+      d_mpiPatternP2P      = u.d_mpiPatternP2P;
+      VectorAttributes vectorAttributesDistributed(
+        VectorAttributes::Distribution::DISTRIBUTED);
+      bool areCompatible = d_vectorAttributes.areDistributionCompatible(
+        vectorAttributesDistributed);
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to copy from an incompatible vector. One is a serial vector and the "
+        " other a distributed vector.");
+      return *this;
+    }
+
+    //
+    // Move Assignment
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributedVector<ValueType, memorySpace> &
+    DistributedVector<ValueType, memorySpace>::operator=(DistributedVector &&u)
+    {
+      d_storage            = std::move(u.d_storage);
+      d_vectorAttributes   = std::move(u.d_vectorAttributes);
+      d_localSize          = std::move(u.d_localSize);
+      d_localOwnedSize     = std::move(u.d_localOwnedSize);
+      d_localGhostSize     = std::move(u.d_localGhostSize);
+      d_globalSize         = std::move(u.d_globalSize);
+      d_mpiCommunicatorP2P = std::move(u.d_mpiCommunicatorP2P);
+      d_mpiPatternP2P      = std::move(u.d_mpiPatternP2P);
+      VectorAttributes vectorAttributesDistributed(
+        VectorAttributes::Distribution::DISTRIBUTED);
+      bool areCompatible = d_vectorAttributes.areDistributionCompatible(
+        vectorAttributesDistributed);
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to move from an incompatible vector. One is a serial vector and the "
+        " other a distributed vector.");
+    }
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     VectorBase<ValueType, memorySpace> &
     DistributedVector<ValueType, memorySpace>::operator+=(
@@ -192,6 +247,7 @@ namespace dftefe
                                                  this->data());
       return *this;
     }
+
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     VectorBase<ValueType, memorySpace> &

@@ -117,6 +117,22 @@ namespace dftefe
       DistributedVector(DistributedVector &&u) noexcept;
 
       /**
+       * @brief Copy assignment operator
+       * @param[in] u const reference to DistributedVector object to copy from
+       * @return reference to this object after copying data from u
+       */
+      DistributedVector &
+      operator=(const DistributedVector &u);
+
+      /**
+       * @brief Move assignment operator
+       * @param[in] u const reference to DistributedVector object to move from
+       * @return reference to this object after moving data from u
+       */
+      DistributedVector &
+      operator=(DistributedVector &&u);
+
+      /**
        * @brief Default constructor
        */
       DistributedVector() = default;
