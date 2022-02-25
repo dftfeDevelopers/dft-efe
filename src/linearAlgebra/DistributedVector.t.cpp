@@ -381,7 +381,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::scatterToGhost(
       const size_type communicationChannel /*= 0*/)
     {
-      // d_mpiCommunicatorP2P->scatterToGhost(d_storage, communicationChannel);
+      d_mpiCommunicatorP2P->scatterToGhost(*d_storage, communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -389,7 +389,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::gatherFromGhost(
       const size_type communicationChannel /*= 0*/)
     {
-      // d_mpiCommunicatorP2P->gatherFromGhost(d_storage, communicationChannel);
+      d_mpiCommunicatorP2P->gatherFromGhost(*d_storage, communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -397,17 +397,15 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::scatterToGhostBegin(
       const size_type communicationChannel /*= 0*/)
     {
-      // d_mpiCommunicatorP2P->scatterToGhostBegin(d_storage,
-      // communicationChannel);
+      d_mpiCommunicatorP2P->scatterToGhostBegin(*d_storage,
+                                                communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::scatterToGhostEnd(
-      const size_type communicationChannel /*= 0*/)
+    DistributedVector<ValueType, memorySpace>::scatterToGhostEnd()
     {
-      // d_mpiCommunicatorP2P->scatterToGhostEnd(d_storage,
-      // communicationChannel);
+      d_mpiCommunicatorP2P->scatterToGhostEnd();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -415,17 +413,15 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::gatherFromGhostBegin(
       const size_type communicationChannel /*= 0*/)
     {
-      // d_mpiCommunicatorP2P->gatherFromGhostBegin(d_storage,
-      // communicationChannel);
+      d_mpiCommunicatorP2P->gatherFromGhostBegin(*d_storage,
+                                                 communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::gatherFromGhostEnd(
-      const size_type communicationChannel /*= 0*/)
+    DistributedVector<ValueType, memorySpace>::gatherFromGhostEnd()
     {
-      // d_mpiCommunicatorP2P->gatherFromGhostEnd(d_storage,
-      // communicationChannel);
+      d_mpiCommunicatorP2P->gatherFromGhostEnd(*d_storage);
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

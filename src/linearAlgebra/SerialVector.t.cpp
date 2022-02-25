@@ -275,8 +275,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::scatterToGhostEnd(
-      const size_type communicationChannel /*= 0*/)
+    SerialVector<ValueType, memorySpace>::scatterToGhostEnd()
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -287,8 +286,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::gatherFromGhostEnd(
-      const size_type communicationChannel /*= 0*/)
+    SerialVector<ValueType, memorySpace>::gatherFromGhostEnd()
     {}
 
   } // namespace linearAlgebra

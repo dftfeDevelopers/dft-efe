@@ -180,13 +180,13 @@ namespace dftefe
       scatterToGhostBegin(const size_type communicationChannel = 0);
 
       virtual void
-      scatterToGhostEnd(const size_type communicationChannel = 0);
+      scatterToGhostEnd();
 
       virtual void
       gatherFromGhostBegin(const size_type communicationChannel = 0);
 
       virtual void
-      gatherFromGhostEnd(const size_type communicationChannel = 0);
+      gatherFromGhostEnd();
     };
 
     // helper functions

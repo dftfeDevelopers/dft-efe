@@ -204,13 +204,13 @@ namespace dftefe
       scatterToGhostBegin(const size_type communicationChannel = 0) override;
 
       void
-      scatterToGhostEnd(const size_type communicationChannel = 0) override;
+      scatterToGhostEnd() override;
 
       void
       gatherFromGhostBegin(const size_type communicationChannel = 0) override;
 
       void
-      gatherFromGhostEnd(const size_type communicationChannel = 0) override;
+      gatherFromGhostEnd() override;
 
     private:
       std::shared_ptr<typename VectorBase<ValueType, memorySpace>::Storage>
