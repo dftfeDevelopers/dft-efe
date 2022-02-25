@@ -112,7 +112,7 @@ namespace dftefe
 
       // initiate non-blocking sends to target processors
       ValueType *sendArrayStartPtr = d_sendRecvBuffer.begin();
-      for (unsigned int i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
+      for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
            ++i)
         {
           const int err =
@@ -120,10 +120,11 @@ namespace dftefe
                       d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i] *
                         d_blockSize * sizeof(ValueType),
                       MPI_BYTE,
-                      d_mpiPatternP2P->getTargetProcIds()[i],
+                      (d_mpiPatternP2P->getTargetProcIds())[i],
                       static_cast<size_type>(
                         MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
                         communicationChannel,
+
                       d_mpiCommunicator,
                       &d_requestsScatterToGhost
                         [d_mpiPatternP2P->getGhostProcIds().size() + i]);
@@ -212,7 +213,7 @@ namespace dftefe
       // initiate non-blocking sends to ghost processors
       ValueType *sendArrayStartPtr =
         dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
-      for (unsigned int i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
+      for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
            ++i)
         {
           const int err = MPI_Isend(
@@ -221,7 +222,7 @@ namespace dftefe
              d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i]) *
               d_blockSize * sizeof(ValueType),
             MPI_BYTE,
-            d_mpiPatternP2P->getGhostProcIds()[i],
+            (d_mpiPatternP2P->getGhostProcIds())[i],
             static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
               communicationChannel,
             d_mpiCommunicator,
