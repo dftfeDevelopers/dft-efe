@@ -89,80 +89,6 @@ namespace dftefe
       explicit SerialVector(size_type size, ValueType initVal = ValueType());
 
       /**
-       * @brief Compound addition for elementwise addition lhs += rhs
-       * @param[in] rhs the vector to add
-       * @return the original vector
-       */
-      virtual VectorBase<ValueType, memorySpace> &
-      operator+=(const VectorBase<ValueType, memorySpace> &rhs) = 0;
-
-      /**
-       * @brief Compound subtraction for elementwise addition lhs -= rhs
-       * @param[in] rhs the vector to subtract
-       * @return the original vector
-       */
-      virtual VectorBase<ValueType, memorySpace> &
-      operator-=(const VectorBase<ValueType, memorySpace> &rhs) = 0;
-
-      /**
-       * @brief Return iterator pointing to the beginning of SerialVector data.
-       *
-       * @returns Iterator pointing to the beginning of SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::iterator
-      begin() override;
-
-      /**
-       * @brief Return iterator pointing to the beginning of SerialVector
-       * data.
-       *
-       * @returns Constant iterator pointing to the beginning of
-       * SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::const_iterator
-      begin() const override;
-
-      /**
-       * @brief Return iterator pointing to the end of SerialVector data.
-       *
-       * @returns Iterator pointing to the end of SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::iterator
-      end() override;
-
-      /**
-       * @brief Return iterator pointing to the end of SerialVector data.
-       *
-       * @returns Constant iterator pointing to the end of
-       * SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::const_iterator
-      end() const override;
-
-      /**
-       * @brief Returns the size of the SerialVector
-       * @returns size of the SerialVector
-       */
-      size_type
-      size() const override;
-
-      /**
-       * @brief Return the raw pointer to the SerialVector data
-       * @return pointer to data
-       */
-      ValueType *
-      data() override;
-
-      /**
-       * @brief Return the constant raw pointer to the SerialVector data
-       * @return pointer to const data
-       */
-      const ValueType *
-      data() const override;
-
-
-
-      /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector
        * @return \f$ l_2 \f$  norm of the vector as double type
        */
@@ -175,24 +101,6 @@ namespace dftefe
        */
       double
       lInfNorm() const override;
-
-      /**
-       * @brief Returns a const reference to the underlying storage
-       * of the SerialVector.
-       *
-       * @return const reference to the underlying MemoryStorage.
-       */
-      const typename VectorBase<ValueType, memorySpace>::Storage &
-      getStorage() const override;
-
-      /**
-       * @brief Returns a VectorAttributes object that stores various attributes
-       * (e.g., Serial or Distributed, number of components, etc)
-       *
-       * @return const reference to the VectorAttributes
-       */
-      const VectorAttributes &
-      getVectorAttributes() const = 0;
 
       void
       scatterToGhost(const size_type communicationChannel = 0) override;
@@ -211,11 +119,6 @@ namespace dftefe
 
       void
       gatherFromGhostEnd() override;
-
-    private:
-      std::shared_ptr<typename VectorBase<ValueType, memorySpace>::Storage>
-                       d_storage;
-      VectorAttributes d_vectorAttributes;
     };
 
     //

@@ -225,12 +225,35 @@ namespace dftefe
 
       /**
        * @brief Returns a const reference to the underlying storage
-       * of the DistributedVector.
+       * of the SerialVector.
        *
        * @return const reference to the underlying MemoryStorage.
        */
       const typename VectorBase<ValueType, memorySpace>::Storage &
-      getStorage() const override;
+      getValues() const override;
+
+      /**
+       * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
+       * of the Vector.
+       *
+       * @return reference to the underlying MemoryStorage.
+       */
+      typename VectorBase<ValueType, memorySpace>::Storage &
+      getValues() override;
+
+      /**
+       * @brief Set values in the Vector using a user provided VectorBase::Storage object (i.e., MemoryStorage object).
+       * The MemoryStorage may lie in a different memoryspace (say memSpace2)
+       * than the Vector's memory space (memSpace). The function internally does
+       * a data transfer from memSpace2 to memSpace.
+       *
+       * @param[in] storage const reference to MemoryStorage object from which
+       * to set values into the Vector.
+       */
+      template <dftefe::utils::MemorySpace memorySpace2>
+      void
+      setValues(const typename VectorBase<ValueType, memorySpace2>::Storage
+                  &storage) override;
 
       /**
        * @brief Returns a VectorAttributes object that stores various attributes
