@@ -29,6 +29,7 @@
 #include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
+#include <memory>
 namespace dftefe
 {
   namespace linearAlgebra

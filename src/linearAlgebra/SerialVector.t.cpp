@@ -38,7 +38,7 @@ namespace dftefe
                                                        const ValueType initVal)
     {
       d_storage =
-        std::make_shared<typename Vectore<ValueType, memorySpace>::Storage>(
+        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           size, initVal);
       d_vectorAttributes = VectorAttributes::Distribution::SERIAL;
       d_globalSize       = size;
@@ -55,7 +55,7 @@ namespace dftefe
       const SerialVector<ValueType, memorySpace> &u)
     {
       d_storage =
-        std::make_shared<typename VectorBase<ValueType, memorySpace>::Storage>(
+        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
       d_vectorAttributes = u.d_vectorAttributes;
@@ -105,7 +105,7 @@ namespace dftefe
       const SerialVector<ValueType, memorySpace> &u)
     {
       d_storage =
-        std::make_shared<typename VectorBase<ValueType, memorySpace>::Storage>(
+        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
       d_vectorAttributes = u.d_vectorAttributes;

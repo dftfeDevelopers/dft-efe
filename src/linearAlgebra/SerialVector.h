@@ -26,7 +26,7 @@
 #ifndef dftefeSerialVector_h
 #define dftefeSerialVector_h
 
-#include <linearAlgebra/VectorBase.h>
+#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
@@ -36,7 +36,7 @@ namespace dftefe
   namespace linearAlgebra
   {
     /**
-     * @brief A derived class of VectorBase for a serial vector
+     * @brief A derived class of Vector for a serial vector
      * (i.e., a vector that resides entirely within a processor)
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
@@ -45,8 +45,25 @@ namespace dftefe
      * DEVICE) in which the vector must reside.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class SerialVector : public VectorBase<ValueType, memorySpace>
+    class SerialVector : public Vector<ValueType, memorySpace>
     {
+    public:
+      //
+      // Pulling base class (Vector) protected names here so to avoid full name
+      // scoping inside the source file. The other work around is to use
+      // this->d_m (where d_m is a protected data member of base class). This is
+      // something which is peculiar to inheritance using class templates. The
+      // reason why this is so is the fact that C++ does not consider base class
+      // templates for name resolution (i.e., they are dependent names and
+      // dependent names are not considered)
+      //
+      using Vector<ValueType, memorySpace>::d_storage;
+      using Vector<ValueType, memorySpace>::d_vectorAttributes;
+      using Vector<ValueType, memorySpace>::d_globalSize;
+      using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
+      using Vector<ValueType, memorySpace>::d_ghostSize;
+      using Vector<ValueType, memorySpace>::d_localSize;
+
     public:
       /**
        * @brief Default constructor

@@ -41,7 +41,7 @@ namespace dftefe
       const size_type          locallyOwnedSize,
       const size_type          ghostSize)
       : d_storage(storage)
-      , d_vectorAttributes(attributes)
+      , d_vectorAttributes(vectorAttributes)
       , d_globalSize(globalSize)
       , d_locallyOwnedSize(locallyOwnedSize)
       , d_ghostSize(ghostSize)
@@ -191,7 +191,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename Vector<ValueType, memorySpace>::Storage &
-    SerialVector<ValueType, memorySpace>::getValues()
+    Vector<ValueType, memorySpace>::getValues()
     {
       return *d_storage;
     }
@@ -199,7 +199,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpace2>
     void
-    Vector::setValues(
+    Vector<ValueType, memorySpace>::setValues(
       const typename Vector<ValueType, memorySpace2>::Storage &storage)
     {
       *d_storage->copyFrom(storage);
@@ -207,7 +207,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    Vector::setStorage(
+    Vector<ValueType, memorySpace>::setStorage(
       std::shared_ptr<typename Vector<ValueType, memorySpace>::Storage> storage)
     {
       d_storage = storage;
@@ -215,7 +215,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const VectorAttributes &
-    Vector::getVectorAttributes() const
+    Vector<ValueType, memorySpace>::getVectorAttributes() const
     {
       return d_vectorAttributes;
     }
