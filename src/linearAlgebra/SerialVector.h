@@ -26,7 +26,7 @@
 #ifndef dftefeSerialVector_h
 #define dftefeSerialVector_h
 
-#include <linearAlgebra/VectorBase.h>
+#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
@@ -36,7 +36,7 @@ namespace dftefe
   namespace linearAlgebra
   {
     /**
-     * @brief A derived class of VectorBase for a serial vector
+     * @brief A derived class of Vector for a serial vector
      * (i.e., a vector that resides entirely within a processor)
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
@@ -45,8 +45,25 @@ namespace dftefe
      * DEVICE) in which the vector must reside.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class SerialVector : public VectorBase<ValueType, memorySpace>
+    class SerialVector : public Vector<ValueType, memorySpace>
     {
+    public:
+      //
+      // Pulling base class (Vector) protected names here so to avoid full name
+      // scoping inside the source file. The other work around is to use
+      // this->d_m (where d_m is a protected data member of base class). This is
+      // something which is peculiar to inheritance using class templates. The
+      // reason why this is so is the fact that C++ does not consider base class
+      // templates for name resolution (i.e., they are dependent names and
+      // dependent names are not considered)
+      //
+      using Vector<ValueType, memorySpace>::d_storage;
+      using Vector<ValueType, memorySpace>::d_vectorAttributes;
+      using Vector<ValueType, memorySpace>::d_globalSize;
+      using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
+      using Vector<ValueType, memorySpace>::d_ghostSize;
+      using Vector<ValueType, memorySpace>::d_localSize;
+
     public:
       /**
        * @brief Default constructor
@@ -66,85 +83,27 @@ namespace dftefe
       SerialVector(SerialVector &&u) noexcept;
 
       /**
+       * @brief Copy assignment operator
+       * @param[in] u const reference to SerialVector object to copy from
+       * @return reference to this object after copying data from u
+       */
+      SerialVector &
+      operator=(const SerialVector &u);
+
+      /**
+       * @brief Move assignment operator
+       * @param[in] u const reference to SerialVector object to move from
+       * @return reference to this object after moving data from u
+       */
+      SerialVector &
+      operator=(SerialVector &&u);
+
+      /**
        * @brief Constructor for SerialVector with size and initial value arguments
        * @param[in] size size of the SerialVector
        * @param[in] initVal initial value of elements of the SerialVector
        */
       explicit SerialVector(size_type size, ValueType initVal = ValueType());
-
-      /**
-       * @brief Compound addition for elementwise addition lhs += rhs
-       * @param[in] rhs the vector to add
-       * @return the original vector
-       */
-      virtual VectorBase<ValueType, memorySpace> &
-      operator+=(const VectorBase<ValueType, memorySpace> &rhs) = 0;
-
-      /**
-       * @brief Compound subtraction for elementwise addition lhs -= rhs
-       * @param[in] rhs the vector to subtract
-       * @return the original vector
-       */
-      virtual VectorBase<ValueType, memorySpace> &
-      operator-=(const VectorBase<ValueType, memorySpace> &rhs) = 0;
-
-      /**
-       * @brief Return iterator pointing to the beginning of SerialVector data.
-       *
-       * @returns Iterator pointing to the beginning of SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::iterator
-      begin() override;
-
-      /**
-       * @brief Return iterator pointing to the beginning of SerialVector
-       * data.
-       *
-       * @returns Constant iterator pointing to the beginning of
-       * SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::const_iterator
-      begin() const override;
-
-      /**
-       * @brief Return iterator pointing to the end of SerialVector data.
-       *
-       * @returns Iterator pointing to the end of SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::iterator
-      end() override;
-
-      /**
-       * @brief Return iterator pointing to the end of SerialVector data.
-       *
-       * @returns Constant iterator pointing to the end of
-       * SerialVector.
-       */
-      typename VectorBase<ValueType, memorySpace>::const_iterator
-      end() const override;
-
-      /**
-       * @brief Returns the size of the SerialVector
-       * @returns size of the SerialVector
-       */
-      size_type
-      size() const override;
-
-      /**
-       * @brief Return the raw pointer to the SerialVector data
-       * @return pointer to data
-       */
-      ValueType *
-      data() override;
-
-      /**
-       * @brief Return the constant raw pointer to the SerialVector data
-       * @return pointer to const data
-       */
-      const ValueType *
-      data() const override;
-
-
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector
@@ -160,24 +119,6 @@ namespace dftefe
       double
       lInfNorm() const override;
 
-      /**
-       * @brief Returns a const reference to the underlying storage
-       * of the SerialVector.
-       *
-       * @return const reference to the underlying MemoryStorage.
-       */
-      const typename VectorBase<ValueType, memorySpace>::Storage &
-      getStorage() const override;
-
-      /**
-       * @brief Returns a VectorAttributes object that stores various attributes
-       * (e.g., Serial or Distributed, number of components, etc)
-       *
-       * @return const reference to the VectorAttributes
-       */
-      const VectorAttributes &
-      getVectorAttributes() const = 0;
-
       void
       scatterToGhost(const size_type communicationChannel = 0) override;
 
@@ -188,18 +129,13 @@ namespace dftefe
       scatterToGhostBegin(const size_type communicationChannel = 0) override;
 
       void
-      scatterToGhostEnd(const size_type communicationChannel = 0) override;
+      scatterToGhostEnd() override;
 
       void
       gatherFromGhostBegin(const size_type communicationChannel = 0) override;
 
       void
-      gatherFromGhostEnd(const size_type communicationChannel = 0) override;
-
-    private:
-      std::shared_ptr<typename VectorBase<ValueType, memorySpace>::Storage>
-                       d_storage;
-      VectorAttributes d_vectorAttributes;
+      gatherFromGhostEnd() override;
     };
 
     //

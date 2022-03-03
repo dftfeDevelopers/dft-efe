@@ -43,6 +43,7 @@ namespace dftefe
 
       VectorAttributes(const Distribution distribution,
                        const size_type    numComponents = 1);
+      VectorAttributes()  = default;
       ~VectorAttributes() = default;
 
       bool
