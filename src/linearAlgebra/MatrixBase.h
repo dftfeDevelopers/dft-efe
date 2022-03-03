@@ -26,7 +26,7 @@
 #ifndef dftefeMatrixBase_h
 #define dftefeMatrixBase_h
 
-
+#include <utils/TypeConfig.h>
 
 namespace dftefe
 {
@@ -35,6 +35,14 @@ namespace dftefe
     class MatrixBase
     {
     public:
+      typedef ValueType        value_type;
+      typedef ValueType *      pointer;
+      typedef ValueType &      reference;
+      typedef const ValueType &const_reference;
+      typedef ValueType *      iterator;
+      typedef const ValueType *const_iterator;
+
+
       MatrixBase() = default;
 
       /**

@@ -20,30 +20,41 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das
+ * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPIPatternBase_h
-#define dftefeMPIPatternBase_h
-
-#include <utils/TypeConfig.h>
-
+#include <linearAlgebra/VectorAttributes.h>
 namespace dftefe
 {
-  namespace utils
+  namespace linearAlgebra
   {
-    class MPIPatternBase
+    VectorAttributes::VectorAttributes(
+      const VectorAttributes::Distribution distribution,
+      const size_type                      numComponents /*=1*/)
+      : d_distribution(distribution)
+      , d_numComponents(numComponents)
+    {}
+
+    bool
+    VectorAttributes::areAttributesCompatible(
+      const VectorAttributes &vecAttributes) const
     {
-    public:
-      virtual ~MPIPatternBase() = default;
-      virtual size_type
-      nmpiProcesses() const = 0;
-      virtual size_type
-      thisProcessId() const = 0;
-    };
+      return (d_distribution == vecAttributes.d_distribution) &&
+             (d_numComponents == vecAttributes.d_numComponents);
+    }
 
-  } // end of namespace utils
+    bool
+    VectorAttributes::areDistributionCompatible(
+      const VectorAttributes &vecAttributes) const
+    {
+      return (d_distribution == vecAttributes.d_distribution);
+    }
 
+    VectorAttributes::Distribution
+    VectorAttributes::getDistribution() const
+    {
+      return d_distribution;
+    }
+
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
-
-#endif // dftefeMPIPatternBase_h

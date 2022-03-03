@@ -4,33 +4,20 @@ if(${CMAKE_CXX_STANDARD})
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-include_directories("/home/vikramg/DFT-FE-softwares/blaspp/blaspp/install/include")
-target_link_directories("/home/vikramg/DFT-FE-softwares/blaspp/blaspp/build")
-
-message (" DFTEFE_BLAS_LIBRARIES = ${DFTEFE_BLAS_LIBRARIES}")
-message (" DFTEFE_SCALAPACK_LIBRARIES = ${DFTEFE_SCALAPACK_LIBRARIES}")
-
-
-if ("${DFTEFE_BLAS_LIBRARIES}" STREQUAL "")
-	message (FATAL_ERROR  "DFTEFE_BLAS libraries not specified. Please specify -DDFTEFE_BLAS_LIBRARIES in command line")
-endif ()
-
-
-if ("${DFTEFE_SCALAPACK_LIBRARIES}" STREQUAL "")
-	message (FATAL_ERROR  "DFTEFE_SCALAPACK libraries not specified. Please specify -DDFTEFE_SCALAPACK_LIBRARIES in command line")
-endif ()
 
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-		MemoryOperations.cu
-		MemoryOperations.cpp
-		QueueManager.cpp
-		Vector.cpp
-		SerialDenseMatrix.cpp
-		DistributedDenseMatrix.cpp
 		BlasWrappers.cpp
-		MatrixOperations.cpp)
+		DistributedDenseMatrix.cpp
+		DistributedVector.cpp
+		MatrixOperations.cpp
+		MemoryOperations.cpp
+		MemoryOperations.cu
+		QueueManager.cpp
+		SerialDenseMatrix.cpp
+		SerialVector.cpp
+		VectorAttributes.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
@@ -38,16 +25,21 @@ if(ENABLE_CUDA)
     enable_language(CUDA)
 	add_compile_definitions(DFTEFE_WITH_DEVICE)
 	add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+	set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/gpu/gcc8.2.0_openmpi4.0.6_nvcc11.4.0")
+else()
+	set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/cpu/gcc8.2.0_openmpi4.0.6")
 endif()
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
-		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH} ${SLATE_DIR}/include )
 		set(DFTEFE_LINEARALGEBRA_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 	endif()
 endif()
+
+target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
 include_directories(../)
 
@@ -56,7 +48,9 @@ if(ENABLE_CUDA)
                           CUDA_STANDARD 14
                           CUDA_STANDARD_REQUIRED ON)
    find_package(CUDAToolkit REQUIRED)
-   target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
+   target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas blaspp)
+	else()
+	target_link_libraries(dft-efe-linalg PRIVATE blaspp)
 endif()
 
 if (NOT TARGET dft-efe-utils)

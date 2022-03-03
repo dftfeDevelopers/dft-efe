@@ -31,7 +31,7 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class TestCubicSplineTK(rfm.CompileOnlyRegressionTest):
+class BuildOnlyTestCubicSplineTK(rfm.CompileOnlyRegressionTest):
     descr = '''Compile only test for cubic spline using TK'''
     build_system = 'CMake'
     make_opts = ['TestCubicSplineTK']
@@ -43,7 +43,7 @@ class TestCubicSplineTK(rfm.CompileOnlyRegressionTest):
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
     keep_files = []
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('compile')
     def set_compiler_flags(self):

@@ -20,34 +20,6 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Sambit Das
+ * @author Bikash Kanungo
  */
-
-#ifndef dftefeMPITags_h
-#define dftefeMPITags_h
-
-#include <utils/TypeConfig.h>
-#include <vector>
-#include <cstdint>
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif
-
-namespace dftefe
-{
-  namespace utils
-  {
-    enum class MPITags : std::uint16_t
-    {
-      DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG,
-
-      MPI_P2P_COMMUNICATOR_SCATTER_TAG,
-
-      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
-    };
-  } // end of namespace utils
-} // end of namespace dftefe
-#endif // dftefeMPITags_h
+#include <utils/MPIPatternP2P.h>

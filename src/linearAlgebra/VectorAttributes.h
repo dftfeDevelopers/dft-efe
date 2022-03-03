@@ -20,34 +20,44 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Sambit Das
+ * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPITags_h
-#define dftefeMPITags_h
+#ifndef dftefeVectorAttributes_h
+#define dftefeVectorAttributes_h
 
 #include <utils/TypeConfig.h>
-#include <vector>
-#include <cstdint>
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif
 
 namespace dftefe
 {
-  namespace utils
+  namespace linearAlgebra
   {
-    enum class MPITags : std::uint16_t
+    class VectorAttributes
     {
-      DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG,
+    public:
+      enum class Distribution
+      {
+        SERIAL,
+        DISTRIBUTED
+      };
 
-      MPI_P2P_COMMUNICATOR_SCATTER_TAG,
+      VectorAttributes(const Distribution distribution,
+                       const size_type    numComponents = 1);
+      ~VectorAttributes() = default;
 
-      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
+      bool
+      areAttributesCompatible(const VectorAttributes &vecAttributes) const;
+
+      bool
+      areDistributionCompatible(const VectorAttributes &vecAttributes) const;
+
+      Distribution
+      getDistribution() const;
+
+    private:
+      Distribution d_distribution;
+      size_type    d_numComponents;
     };
-  } // end of namespace utils
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeMPITags_h
+#endif
