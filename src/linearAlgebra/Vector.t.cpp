@@ -138,7 +138,7 @@ namespace dftefe
       const Vector<ValueType, memorySpace> &rhs)
     {
       bool areCompatible =
-        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
       utils::throwException<utils::LogicError>(
         areCompatible,
         "Trying to add incompatible Vectors. One is a serial Vector and the "
@@ -163,7 +163,7 @@ namespace dftefe
       const Vector<ValueType, memorySpace> &rhs)
     {
       bool areCompatible =
-        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes);
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
       utils::throwException<utils::LogicError>(
         areCompatible,
         "Trying to add incompatible Vectors. "
@@ -202,7 +202,7 @@ namespace dftefe
     Vector<ValueType, memorySpace>::setValues(
       const typename Vector<ValueType, memorySpace2>::Storage &storage)
     {
-      *d_storage->copyFrom(storage);
+      d_storage->copyFrom(storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

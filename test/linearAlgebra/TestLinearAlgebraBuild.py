@@ -54,7 +54,7 @@ running a test is as follows
    reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest_*' -t gpu -r
 '''
 @rfm.simple_test
-class BuildOnly_TestLinearAlgebra(rfm.CompileOnlyRegressionTest):
+class BuildOnlyTestLinearAlgebra(rfm.CompileOnlyRegressionTest):
     descr = 'A build only test using CMake'
     build_system = 'CMake'
     make_opts = []

@@ -270,5 +270,60 @@ namespace dftefe
         N, this->begin() + dstOffset, srcMemoryStorage.begin() + srcOffset);
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceDst>
+    void
+    MemoryStorage<ValueType, memorySpace>::copyTo(ValueType *dst) const
+    {
+      MemoryTransfer<memorySpaceDst, memorySpace>::copy(d_size,
+                                                        dst,
+                                                        this->begin());
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceDst>
+    void
+    MemoryStorage<ValueType, memorySpace>::copyTo(
+      ValueType *     dst,
+      const size_type N,
+      const size_type srcOffset,
+      const size_type dstOffset) const
+    {
+      throwException<DomainError>(
+        srcOffset + N <= d_size,
+        "The offset and copy size specified for the source MemoryStorage"
+        " is out of range for it.");
+      MemoryTransfer<memorySpaceDst, memorySpace>::copy(
+        N, dst + dstOffset, this->begin() + srcOffset);
+    }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceSrc>
+    void
+    MemoryStorage<ValueType, memorySpace>::copyFrom(const ValueType *src)
+    {
+      MemoryTransfer<memorySpace, memorySpaceSrc>::copy(d_size,
+                                                        this->begin(),
+                                                        src);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpaceSrc>
+    void
+    MemoryStorage<ValueType, memorySpace>::copyFrom(const ValueType *src,
+                                                    const size_type  N,
+                                                    const size_type  srcOffset,
+                                                    const size_type  dstOffset)
+    {
+      throwException<DomainError>(
+        dstOffset + N <= d_size,
+        "The offset and size specified for the destination MemoryStorage"
+        " is out of range for it.");
+
+      MemoryTransfer<memorySpace, memorySpaceSrc>::copy(
+        N, this->begin() + dstOffset, src + srcOffset);
+    }
+
   } // namespace utils
 } // namespace dftefe

@@ -40,7 +40,8 @@ namespace dftefe
       d_storage =
         std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           size, initVal);
-      d_vectorAttributes = VectorAttributes::Distribution::SERIAL;
+      d_vectorAttributes =
+        VectorAttributes(VectorAttributes::Distribution::SERIAL);
       d_globalSize       = size;
       d_locallyOwnedSize = size;
       d_ghostSize        = 0;
