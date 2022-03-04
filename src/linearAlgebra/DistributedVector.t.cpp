@@ -257,15 +257,15 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::scatterToGhost(
+    DistributedVector<ValueType, memorySpace>::updateGhostValues(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->scatterToGhost(*d_storage, communicationChannel);
+      d_mpiCommunicatorP2P->updateGhostValues(*d_storage, communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::gatherFromGhost(
+    DistributedVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {
       d_mpiCommunicatorP2P->gatherFromGhost(*d_storage, communicationChannel);
@@ -273,7 +273,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::scatterToGhostBegin(
+    DistributedVector<ValueType, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {
       d_mpiCommunicatorP2P->scatterToGhostBegin(*d_storage,
@@ -282,14 +282,14 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::scatterToGhostEnd()
+    DistributedVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {
       d_mpiCommunicatorP2P->scatterToGhostEnd();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::gatherFromGhostBegin(
+    DistributedVector<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
       const size_type communicationChannel /*= 0*/)
     {
       d_mpiCommunicatorP2P->gatherFromGhostBegin(*d_storage,
@@ -298,7 +298,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DistributedVector<ValueType, memorySpace>::gatherFromGhostEnd()
+    DistributedVector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
     {
       d_mpiCommunicatorP2P->gatherFromGhostEnd(*d_storage);
     }

@@ -168,36 +168,36 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::scatterToGhost(
+    SerialVector<ValueType, memorySpace>::updateGhostValues(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::gatherFromGhost(
+    SerialVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::scatterToGhostBegin(
+    SerialVector<ValueType, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::scatterToGhostEnd()
+    SerialVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::gatherFromGhostBegin(
+    SerialVector<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::gatherFromGhostEnd()
+    SerialVector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
     {}
 
   } // namespace linearAlgebra

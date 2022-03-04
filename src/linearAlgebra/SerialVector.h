@@ -120,22 +120,24 @@ namespace dftefe
       lInfNorm() const override;
 
       void
-      scatterToGhost(const size_type communicationChannel = 0) override;
+      updateGhostValues(const size_type communicationChannel = 0) override;
 
       void
-      gatherFromGhost(const size_type communicationChannel = 0) override;
+      accumulateAddLocallyOwned(
+        const size_type communicationChannel = 0) override;
 
       void
-      scatterToGhostBegin(const size_type communicationChannel = 0) override;
+      updateGhostValuesBegin(const size_type communicationChannel = 0) override;
 
       void
-      scatterToGhostEnd() override;
+      updateGhostValuesEnd() override;
 
       void
-      gatherFromGhostBegin(const size_type communicationChannel = 0) override;
+      accumulateAddLocallyOwnedBegin(
+        const size_type communicationChannel = 0) override;
 
       void
-      gatherFromGhostEnd() override;
+      accumulateAddLocallyOwnedEnd() override;
     };
 
     //
