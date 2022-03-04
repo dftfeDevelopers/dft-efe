@@ -246,7 +246,7 @@ namespace dftefe
       , d_numGhostProcs(0)
       , d_ghostProcIds(0)
       , d_numGhostIndicesInGhostProcs(0)
-      , d_LocalGhostIndicesRanges(0)
+      , d_localGhostIndicesRanges(0)
       , d_numTargetProcs(0)
       , d_flattenedLocalGhostIndices(0)
       , d_targetProcIds(0)
@@ -312,7 +312,7 @@ namespace dftefe
       d_numGhostProcs = ghostProcIdToLocalGhostIndices.size();
       d_ghostProcIds.resize(d_numGhostProcs);
       d_numGhostIndicesInGhostProcs.resize(d_numGhostProcs);
-      d_LocalGhostIndicesRanges.resize(2 * d_numGhostProcs);
+      d_localGhostIndicesRanges.resize(2 * d_numGhostProcs);
 
       std::vector<size_type> ghostProcIdsTmp(d_numGhostProcs);
       std::vector<size_type> numGhostIndicesInGhostProcsTmp(d_numGhostProcs);
@@ -366,8 +366,8 @@ namespace dftefe
                           &numGhostIndicesInGhostProcsTmp[0]);
 
       memoryTransfer.copy(2 * d_numGhostProcs,
-                          d_LocalGhostIndicesRanges.begin() &
-                            localGhostIndicesRangesTmp[0]);
+                          d_localGhostIndicesRanges.begin(),
+                          &localGhostIndicesRangesTmp[0]);
 
       d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
       memoryTransfer.copy(d_numGhostIndices,
@@ -566,7 +566,7 @@ namespace dftefe
     const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
     MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
     {
-      return d_LocalGhostIndicesRanges;
+      return d_localGhostIndicesRanges;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>

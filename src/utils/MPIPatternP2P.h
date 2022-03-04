@@ -257,7 +257,7 @@ namespace dftefe
        * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
        *  d_ghostIndices[a_i] and d_ghostIndices[b_i].
        */
-      SizeTypeVector d_LocalGhostIndicesRanges;
+      SizeTypeVector d_localGhostIndicesRanges;
 
       /**
        * Number of target processors for the current processor. A

@@ -96,8 +96,8 @@ namespace dftefe
           throwException(err == MPI_SUCCESS, errMsg);
 
           recvArrayStartPtr +=
-            (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i + 1] -
-             d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i]) *
+            (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+             d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
             d_blockSize;
         }
 
@@ -116,10 +116,10 @@ namespace dftefe
         {
           const int err =
             MPI_Isend(sendArrayStartPtr,
-                      d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i] *
+                      d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
                         d_blockSize * sizeof(ValueType),
                       MPI_BYTE,
-                      (d_mpiPatternP2P->getTargetProcIds())[i],
+                      d_mpiPatternP2P->getTargetProcIds().data()[i],
                       static_cast<size_type>(
                         MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
                         communicationChannel,
@@ -134,7 +134,7 @@ namespace dftefe
           throwException(err == MPI_SUCCESS, errMsg);
 
           sendArrayStartPtr +=
-            d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i] *
+            d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
             d_blockSize;
         }
 
@@ -187,10 +187,10 @@ namespace dftefe
         {
           const int err =
             MPI_Irecv(recvArrayStartPtr,
-                      d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i] *
+                      d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
                         d_blockSize * sizeof(ValueType),
                       MPI_BYTE,
-                      d_mpiPatternP2P->getTargetProcIds()[i],
+                      d_mpiPatternP2P->getTargetProcIds().data()[i],
                       static_cast<size_type>(
                         MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
                         communicationChannel,
@@ -203,7 +203,7 @@ namespace dftefe
           throwException(err == MPI_SUCCESS, errMsg);
 
           recvArrayStartPtr +=
-            d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()[i] *
+            d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
             d_blockSize;
         }
 
@@ -217,8 +217,8 @@ namespace dftefe
         {
           const int err = MPI_Isend(
             sendArrayStartPtr,
-            (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i + 1] -
-             d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i]) *
+            (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+             d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
               d_blockSize * sizeof(ValueType),
             MPI_BYTE,
             (d_mpiPatternP2P->getGhostProcIds())[i],
@@ -233,8 +233,8 @@ namespace dftefe
           throwException(err == MPI_SUCCESS, errMsg);
 
           sendArrayStartPtr +=
-            (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i + 1] -
-             d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i]) *
+            (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+             d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
             d_blockSize;
         }
 

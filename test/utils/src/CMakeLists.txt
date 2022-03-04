@@ -26,4 +26,8 @@ if(ENABLE_MPI)
 	add_executable(TestMPIPatternP2PTargetData TestMPIPatternP2PTargetData.cpp)
 	target_link_libraries(TestMPIPatternP2PTargetData PUBLIC dft-efe-utils)
 	set_target_properties(TestMPIPatternP2PTargetData PROPERTIES OUTPUT_NAME "TestMPIPatternP2PTargetData" SUFFIX ".x")
+
+	add_executable(TestMPICommunicatorP2PUpdateGhosts TestMPICommunicatorP2PUpdateGhosts.cpp)
+	target_link_libraries(TestMPICommunicatorP2PUpdateGhosts PUBLIC dft-efe-utils)
+	set_target_properties(TestMPICommunicatorP2PUpdateGhosts PROPERTIES OUTPUT_NAME "TestMPICommunicatorP2PUpdateGhosts" SUFFIX ".x")
 endif()
