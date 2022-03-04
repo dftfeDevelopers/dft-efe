@@ -114,19 +114,18 @@ namespace dftefe
       for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
            ++i)
         {
-          const int err =
-            MPI_Isend(sendArrayStartPtr,
-                      d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
-                        d_blockSize * sizeof(ValueType),
-                      MPI_BYTE,
-                      d_mpiPatternP2P->getTargetProcIds().data()[i],
-                      static_cast<size_type>(
-                        MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
-                        communicationChannel,
+          const int err = MPI_Isend(
+            sendArrayStartPtr,
+            d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
+              d_blockSize * sizeof(ValueType),
+            MPI_BYTE,
+            d_mpiPatternP2P->getTargetProcIds().data()[i],
+            static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
+              communicationChannel,
 
-                      d_mpiCommunicator,
-                      &d_requestsUpdateGhostValues
-                        [d_mpiPatternP2P->getGhostProcIds().size() + i]);
+            d_mpiCommunicator,
+            &d_requestsUpdateGhostValues
+              [d_mpiPatternP2P->getGhostProcIds().size() + i]);
 
           std::string errMsg = "Error occured while using MPI_Isend. "
                                "Error code: " +
@@ -185,17 +184,16 @@ namespace dftefe
       for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
            ++i)
         {
-          const int err =
-            MPI_Irecv(recvArrayStartPtr,
-                      d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
-                        d_blockSize * sizeof(ValueType),
-                      MPI_BYTE,
-                      d_mpiPatternP2P->getTargetProcIds().data()[i],
-                      static_cast<size_type>(
-                        MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
-                        communicationChannel,
-                      d_mpiCommunicator,
-                      &d_requestsAccumulateAddLocallyOwned[i]);
+          const int err = MPI_Irecv(
+            recvArrayStartPtr,
+            d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
+              d_blockSize * sizeof(ValueType),
+            MPI_BYTE,
+            d_mpiPatternP2P->getTargetProcIds().data()[i],
+            static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
+              communicationChannel,
+            d_mpiCommunicator,
+            &d_requestsAccumulateAddLocallyOwned[i]);
 
           std::string errMsg = "Error occured while using MPI_Irecv. "
                                "Error code: " +
