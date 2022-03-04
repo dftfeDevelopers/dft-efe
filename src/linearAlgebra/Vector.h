@@ -271,22 +271,23 @@ namespace dftefe
       lInfNorm() const = 0;
 
       virtual void
-      scatterToGhost(const size_type communicationChannel = 0) = 0;
+      updateGhostValues(const size_type communicationChannel = 0) = 0;
 
       virtual void
-      gatherFromGhost(const size_type communicationChannel = 0) = 0;
+      accumulateAddLocallyOwned(const size_type communicationChannel = 0) = 0;
 
       virtual void
-      scatterToGhostBegin(const size_type communicationChannel = 0) = 0;
+      updateGhostValuesBegin(const size_type communicationChannel = 0) = 0;
 
       virtual void
-      scatterToGhostEnd() = 0;
+      updateGhostValuesEnd() = 0;
 
       virtual void
-      gatherFromGhostBegin(const size_type communicationChannel = 0) = 0;
+      accumulateAddLocallyOwnedBegin(
+        const size_type communicationChannel = 0) = 0;
 
       virtual void
-      gatherFromGhostEnd() = 0;
+      accumulateAddLocallyOwnedEnd() = 0;
 
     protected:
       /**

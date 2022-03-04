@@ -43,10 +43,10 @@ namespace dftefe
       d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
       d_sendRecvBuffer.resize(
         d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs() * blockSize);
-      d_requestsScatterToGhost.resize(
+      d_requestsUpdateGhostValues.resize(
         d_mpiPatternP2P->getGhostProcIds().size() +
         d_mpiPatternP2P->getTargetProcIds().size());
-      d_requestsGatherFromGhost.resize(
+      d_requestsAccumulateAddLocallyOwned.resize(
         d_mpiPatternP2P->getGhostProcIds().size() +
         d_mpiPatternP2P->getTargetProcIds().size());
 #endif
@@ -55,19 +55,19 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhost(
+    MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValues(
       MemoryStorage<ValueType, memorySpace> &dataArray,
       const size_type                        communicationChannel)
     {
 #ifdef DFTEFE_WITH_MPI
-      scatterToGhostBegin(dataArray, communicationChannel);
-      scatterToGhostEnd();
+      updateGhostValuesBegin(dataArray, communicationChannel);
+      updateGhostValuesEnd();
 #endif
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostBegin(
+    MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValuesBegin(
       MemoryStorage<ValueType, memorySpace> &dataArray,
       const size_type                        communicationChannel)
     {
@@ -80,15 +80,15 @@ namespace dftefe
         {
           const int err = MPI_Irecv(
             recvArrayStartPtr,
-            (d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i + 1] -
-             d_mpiPatternP2P->getGhostLocalIndicesRanges()[2 * i]) *
+            (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+             d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
               d_blockSize * sizeof(ValueType),
             MPI_BYTE,
-            d_mpiPatternP2P->getGhostProcIds()[i],
+            d_mpiPatternP2P->getGhostProcIds().data()[i],
             static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
               communicationChannel,
             d_mpiCommunicator,
-            &d_requestsScatterToGhost[i]);
+            &d_requestsUpdateGhostValues[i]);
 
           std::string errMsg = "Error occured while using MPI_Irecv. "
                                "Error code: " +
@@ -106,7 +106,6 @@ namespace dftefe
         gatherLocallyOwnedEntriesToSendBuffer(
           dataArray,
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-          d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs(),
           d_blockSize,
           d_sendRecvBuffer);
 
@@ -126,7 +125,7 @@ namespace dftefe
                         communicationChannel,
 
                       d_mpiCommunicator,
-                      &d_requestsScatterToGhost
+                      &d_requestsUpdateGhostValues
                         [d_mpiPatternP2P->getGhostProcIds().size() + i]);
 
           std::string errMsg = "Error occured while using MPI_Isend. "
@@ -145,14 +144,14 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::scatterToGhostEnd()
+    MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValuesEnd()
     {
 #ifdef DFTEFE_WITH_MPI
       // wait for all send and recv requests to be completed
-      if (d_requestsScatterToGhost.size() > 0)
+      if (d_requestsUpdateGhostValues.size() > 0)
         {
-          const int err = MPI_Waitall(d_requestsScatterToGhost.size(),
-                                      d_requestsScatterToGhost.data(),
+          const int err = MPI_Waitall(d_requestsUpdateGhostValues.size(),
+                                      d_requestsUpdateGhostValues.data(),
                                       MPI_STATUSES_IGNORE);
 
           std::string errMsg = "Error occured while using MPI_Waitall. "
@@ -166,17 +165,17 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhost(
+    MPICommunicatorP2P<ValueType, memorySpace>::accumulateAddLocallyOwned(
       MemoryStorage<ValueType, memorySpace> &dataArray,
       const size_type                        communicationChannel)
     {
-      gatherFromGhostBegin(dataArray, communicationChannel);
-      gatherFromGhostEnd(dataArray);
+      accumulateAddLocallyOwnedBegin(dataArray, communicationChannel);
+      accumulateAddLocallyOwnedEnd(dataArray);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostBegin(
+    MPICommunicatorP2P<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
       MemoryStorage<ValueType, memorySpace> &dataArray,
       const size_type                        communicationChannel)
     {
@@ -196,7 +195,7 @@ namespace dftefe
                         MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
                         communicationChannel,
                       d_mpiCommunicator,
-                      &d_requestsGatherFromGhost[i]);
+                      &d_requestsAccumulateAddLocallyOwned[i]);
 
           std::string errMsg = "Error occured while using MPI_Irecv. "
                                "Error code: " +
@@ -226,7 +225,7 @@ namespace dftefe
             static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
               communicationChannel,
             d_mpiCommunicator,
-            &d_requestsGatherFromGhost[i]);
+            &d_requestsAccumulateAddLocallyOwned[i]);
 
           std::string errMsg = "Error occured while using MPI_Isend. "
                                "Error code: " +
@@ -246,17 +245,18 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::gatherFromGhostEnd(
+    MPICommunicatorP2P<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd(
       MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
 
       // wait for all send and recv requests to be completed
-      if (d_requestsGatherFromGhost.size() > 0)
+      if (d_requestsAccumulateAddLocallyOwned.size() > 0)
         {
-          const int err = MPI_Waitall(d_requestsGatherFromGhost.size(),
-                                      d_requestsGatherFromGhost.data(),
-                                      MPI_STATUSES_IGNORE);
+          const int err =
+            MPI_Waitall(d_requestsAccumulateAddLocallyOwned.size(),
+                        d_requestsAccumulateAddLocallyOwned.data(),
+                        MPI_STATUSES_IGNORE);
 
           std::string errMsg = "Error occured while using MPI_Waitall. "
                                "Error code: " +
@@ -266,10 +266,9 @@ namespace dftefe
 
       // accumulate add into locally owned entries from recv buffer
       MPICommunicatorP2PKernels<ValueType, memorySpace>::
-        accumulateAddRecvBufferToLocallyOwnedEntries(
+        accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
           d_sendRecvBuffer,
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-          d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs(),
           d_blockSize,
           dataArray);
 #endif

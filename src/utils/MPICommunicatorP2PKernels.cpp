@@ -36,37 +36,36 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     MPICommunicatorP2PKernels<ValueType, memorySpace>::
-      gatherLocallyOwnedEntriesToSendBuffer(
+      gatherLocallyOwnedEntriesSendBufferToTargetProcs(
         const MemoryStorage<ValueType, memorySpace> &dataArray,
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
-        const SizeTypeVector &                 numOwnedIndicesForTargetProcs,
         const size_type                        blockSize,
         MemoryStorage<ValueType, memorySpace> &sendBuffer)
     {
-      size_type procStartIndex = 0;
       for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
-        {
-          for (size_type j = 0; j < blockSize; ++j)
-            sendBuffer.data()[procStartIndex + j] =
-              dataArray
-                .data()[ownedLocalIndicesForTargetProcs.data()[i] * blockSize +
-                        j];
-
-          procStartIndex += numOwnedIndicesForTargetProcs.data()[i] * blockSize;
-        }
+        for (size_type j = 0; j < blockSize; ++j)
+          sendBuffer.data()[i * blockSize + j] =
+            dataArray
+              .data()[ownedLocalIndicesForTargetProcs.data()[i] * blockSize +
+                      j];
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     MPICommunicatorP2PKernels<ValueType, memorySpace>::
-      accumulateAddRecvBufferToLocallyOwnedEntries(
+      accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<ValueType, memorySpace> &recvBuffer,
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
-        const SizeTypeVector &                 numOwnedIndicesForTargetProcs,
         const size_type                        blockSize,
         MemoryStorage<ValueType, memorySpace> &dataArray)
-    {}
+    {
+      for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
+        for (size_type j = 0; j < blockSize; ++j)
+          dataArray
+            .data()[ownedLocalIndicesForTargetProcs.data()[i] * blockSize +
+                    j] += recvBuffer.data()[i * blockSize + j];
+    }
 
 
     template class MPICommunicatorP2PKernels<double,

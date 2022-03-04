@@ -44,27 +44,30 @@ namespace dftefe
         const size_type                                   blockSize);
 
       void
-      scatterToGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
-                     const size_type communicationChannel = 0);
+      updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
+                        const size_type communicationChannel = 0);
 
       void
-      gatherFromGhost(MemoryStorage<ValueType, memorySpace> &dataArray,
-                      const size_type communicationChannel = 0);
+      accumulateAddLocallyOwned(
+        MemoryStorage<ValueType, memorySpace> &dataArray,
+        const size_type                        communicationChannel = 0);
 
 
       void
-      scatterToGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
-                          const size_type communicationChannel = 0);
+      updateGhostValuesBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
+                             const size_type communicationChannel = 0);
 
       void
-      scatterToGhostEnd();
+      updateGhostValuesEnd();
 
       void
-      gatherFromGhostBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
-                           const size_type communicationChannel = 0);
+      accumulateAddLocallyOwnedBegin(
+        MemoryStorage<ValueType, memorySpace> &dataArray,
+        const size_type                        communicationChannel = 0);
 
       void
-      gatherFromGhostEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
+      accumulateAddLocallyOwnedEnd(
+        MemoryStorage<ValueType, memorySpace> &dataArray);
 
       std::shared_ptr<const MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
@@ -77,8 +80,8 @@ namespace dftefe
       MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
 #ifdef DFTEFE_WITH_MPI
-      std::vector<MPI_Request> d_requestsScatterToGhost;
-      std::vector<MPI_Request> d_requestsGatherFromGhost;
+      std::vector<MPI_Request> d_requestsUpdateGhostValues;
+      std::vector<MPI_Request> d_requestsAccumulateAddLocallyOwned;
       MPI_Comm                 d_mpiCommunicator;
 #endif
     };
