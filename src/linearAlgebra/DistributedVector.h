@@ -100,42 +100,48 @@ namespace dftefe
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
         const ValueType initVal = ValueType());
-      
+
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
-       * This allows the DistributedVector to take ownership of input Vector::Storage (i.e., utils::MemoryStorage) 
-       * This is useful when one does not want to allocate new memory and instead use memory allocated in the Vector::Storage (i.e., MemoryStorage).
+       * This allows the DistributedVector to take ownership of input
+       * Vector::Storage (i.e., utils::MemoryStorage) This is useful when one
+       * does not want to allocate new memory and instead use memory allocated
+       * in the Vector::Storage (i.e., MemoryStorage).
        *
        * @param[in] storage unique_ptr to Vector::Storage whose ownership
        * is to be transfered to the DistributedVector
        * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
        * based on which the DistributedVector will be created.
-       * 
-       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector. 
-       * Thus, after the function call \p storage will point to NULL and any access through \p storage will lead to <b>undefined behavior</b>.
        *
-       */
-      DistributedVector(std::unique_ptr<typename Vector<ValueType,memorySpace>::Storage> storage,
-	  const utils::MPICommunicatorP2P<ValueType, memorySpace>> mpiCommunicatorP2P)
-
-      /**
-       * @brief Constructor based on locally owned and ghost indices.
-       * @note This way of construction is expensive. One should use the other
-       * constructor based on an input MPICommunicatorP2P as far as possible.
+       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector.
+       * Thus, after the function call \p storage will point to NULL and any
+       * access through \p storage will lead to <b>undefined behavior</b>.
        *
-       * @param locallyOwnedRange a pair \f$(a,b)\f$ which defines a range of indices (continuous)
-       * that are owned by the current processor.
-       * @param ghostIndices vector containing an ordered set of ghost indices
-       * (ordered in increasing order and non-repeating)
-       *
-       * @note The locallyOwnedRange should be an open interval where the start index included,
-       * but the end index is not included.
        */
       DistributedVector(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<dftefe::global_size_type> &       ghostIndices,
-        const MPI_Comm &                                    mpiComm,
-        const ValueType initVal = ValueType());
+        std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+          storage,
+        const utils::MPICommunicatorP2P<ValueType, memorySpace> >
+          mpiCommunicatorP2P)
+
+        /**
+         * @brief Constructor based on locally owned and ghost indices.
+         * @note This way of construction is expensive. One should use the other
+         * constructor based on an input MPICommunicatorP2P as far as possible.
+         *
+         * @param locallyOwnedRange a pair \f$(a,b)\f$ which defines a range of indices (continuous)
+         * that are owned by the current processor.
+         * @param ghostIndices vector containing an ordered set of ghost indices
+         * (ordered in increasing order and non-repeating)
+         *
+         * @note The locallyOwnedRange should be an open interval where the start index included,
+         * but the end index is not included.
+         */
+        DistributedVector(
+          const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+          const std::vector<dftefe::global_size_type> &       ghostIndices,
+          const MPI_Comm &                                    mpiComm,
+          const ValueType initVal = ValueType());
 #endif // DFTEFE_WITH_MPI
 
       /**

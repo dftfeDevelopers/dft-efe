@@ -229,20 +229,20 @@ namespace dftefe
 
       /**
        * @brief Transfer ownership of a user provided Vector::Storage object (i.e., MemoryStorage object)
-       * to the Vector. This is useful when a MemoryStorage has been already 
-       * been allocated and we need the the Vector to claim its ownership. This avoids reallocation 
-       * of memory.
-       * 
+       * to the Vector. This is useful when a MemoryStorage has been already
+       * been allocated and we need the the Vector to claim its ownership. This
+       * avoids reallocation of memory.
+       *
        * @param[in] storage unique_ptr to MemoryStorage object whose ownership
        * is to be passed to the Vector
        *
-       * @note Since we are passing the ownership of the input storage to the Vector, the 
-       * storage will point to NULL after a call to this function. Accessing the input storage 
-       * pointer will lead to undefined behavior.
+       * @note Since we are passing the ownership of the input storage to the Vector, the
+       * storage will point to NULL after a call to this function. Accessing the
+       * input storage pointer will lead to undefined behavior.
        *
        */
       void
-      setStorage(std::unique_ptr<Storage> & storage);
+      setStorage(std::unique_ptr<Storage> &storage);
 
       /**
        * @brief Returns a VectorAttributes object that stores various attributes
@@ -294,8 +294,8 @@ namespace dftefe
       /**
        * @brief Constructor
        *
-       * @param[in] storage reference to unique_ptr to Vector::Storage (i.e., MemoryStorage)
-       * from which the Vector to transfer ownership. 
+       * @param[in] storage reference to unique_ptr to Vector::Storage (i.e.,
+       * MemoryStorage) from which the Vector to transfer ownership.
        * @param[in] vectorAttributes const reference to VectorAttributes object
        * that contains certain properties of the Vector (e.g., serial or
        * distributed, number of components etc.).
@@ -309,9 +309,9 @@ namespace dftefe
        * the other processors but required by the current processor. For a
        * SerialVector, the ghostSize is 0.
        *
-       * @note Since we are passing the ownership of the input storage to the Vector, the 
-       * storage will point to NULL after a call to this Constructor. Accessing the input storage 
-       * pointer will lead to undefined behavior.
+       * @note Since we are passing the ownership of the input storage to the Vector, the
+       * storage will point to NULL after a call to this Constructor. Accessing
+       * the input storage pointer will lead to undefined behavior.
        */
       Vector(std::unique_ptr<Storage> storage,
              const VectorAttributes & vectorAttributes,

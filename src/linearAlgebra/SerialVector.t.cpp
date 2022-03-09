@@ -47,12 +47,14 @@ namespace dftefe
       d_ghostSize        = 0;
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
     }
-    
+
     //
-    // Constructor using user provided Vector::Storage (i.e., utils::MemoryStorage) 
+    // Constructor using user provided Vector::Storage (i.e.,
+    // utils::MemoryStorage)
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace>::SerialVector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage)
+    SerialVector<ValueType, memorySpace>::SerialVector(
+      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage)
     {
       d_storage = std::move(storage);
       d_vectorAttributes =
