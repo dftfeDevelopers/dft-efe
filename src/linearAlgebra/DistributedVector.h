@@ -90,9 +90,9 @@ namespace dftefe
       /**
        * @brief Constructor based on an input mpiCommunicatorP2P.
        *
-       * @param mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
+       * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
        * based on which the DistributedVector will be created.
-       * @param initVal value with which the DistributedVector shoud be
+       * @param[in] initVal value with which the DistributedVector shoud be
        * initialized
        *
        */
@@ -100,6 +100,23 @@ namespace dftefe
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
         const ValueType initVal = ValueType());
+      
+      /**
+       * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
+       * This allows the DistributedVector to take ownership of input Vector::Storage (i.e., utils::MemoryStorage) 
+       * This is useful when one does not want to allocate new memory and instead use memory allocated in the Vector::Storage (i.e., MemoryStorage).
+       *
+       * @param[in] storage unique_ptr to Vector::Storage whose ownership
+       * is to be transfered to the DistributedVector
+       * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
+       * based on which the DistributedVector will be created.
+       * 
+       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector. 
+       * Thus, after the function call \p storage will point to NULL and any access through \p storage will lead to <b>undefined behavior</b>.
+       *
+       */
+      DistributedVector(std::unique_ptr<typename Vector<ValueType,memorySpace>::Storage> storage,
+	  const utils::MPICommunicatorP2P<ValueType, memorySpace>> mpiCommunicatorP2P)
 
       /**
        * @brief Constructor based on locally owned and ghost indices.

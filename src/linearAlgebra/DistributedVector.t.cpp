@@ -43,9 +43,27 @@ namespace dftefe
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
-      d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
+      d_vectorAttributes = VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
+      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+    }
+    
+    //
+    // Constructor using user provided Vector::Storage (i.e., utils::MemoryStorage) 
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributesVector<ValueType, memorySpace>::SerialVector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
+      std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
+                      mpiCommunicatorP2P)
+      : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
+      , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
+    {
+      d_storage = std::move(storage);
+      d_vectorAttributes = VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
       d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize        = d_mpiPatternP2P->localGhostSize();
@@ -99,7 +117,7 @@ namespace dftefe
       d_ghostSize        = d_mpiPatternP2P->localGhostSize();
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
     }
 #endif // DFTEFE_WITH_MPI
@@ -112,7 +130,7 @@ namespace dftefe
       const DistributedVector &u)
     {
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage           = *(u.d_storage);
       d_vectorAttributes   = u.d_vectorAttributes;
@@ -166,7 +184,7 @@ namespace dftefe
       const DistributedVector &u)
     {
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage           = *(u.d_storage);
       d_vectorAttributes   = u.d_vectorAttributes;

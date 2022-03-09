@@ -31,19 +31,34 @@ namespace dftefe
   namespace linearAlgebra
   {
     //
-    // Constructor
+    // Constructor using size and init value
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(const size_type size,
                                                        const ValueType initVal)
     {
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           size, initVal);
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::SERIAL);
       d_globalSize       = size;
       d_locallyOwnedSize = size;
+      d_ghostSize        = 0;
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+    }
+    
+    //
+    // Constructor using user provided Vector::Storage (i.e., utils::MemoryStorage) 
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialVector<ValueType, memorySpace>::SerialVector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage)
+    {
+      d_storage = std::move(storage);
+      d_vectorAttributes =
+        VectorAttributes(VectorAttributes::Distribution::SERIAL);
+      d_globalSize       = d_storage.size();
+      d_locallyOwnedSize = d_storage.size();
       d_ghostSize        = 0;
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
     }
@@ -56,7 +71,7 @@ namespace dftefe
       const SerialVector<ValueType, memorySpace> &u)
     {
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
       d_vectorAttributes = u.d_vectorAttributes;
@@ -106,7 +121,7 @@ namespace dftefe
       const SerialVector<ValueType, memorySpace> &u)
     {
       d_storage =
-        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
       d_vectorAttributes = u.d_vectorAttributes;

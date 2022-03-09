@@ -104,6 +104,21 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the SerialVector
        */
       explicit SerialVector(size_type size, ValueType initVal = ValueType());
+      
+      /**
+       * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage).
+       * This allows the SerialVector to take ownership of input Vector::Storage (i.e., utils::MemoryStorage) 
+       * This is useful when one does not want to allocate new memory and instead use memory allocated in the Vector::Storage (i.e., MemoryStorage).
+       * The \e locallyOwnedSize, \e ghostSize, etc., are automatically set using the size of the \p storage. 
+       *
+       * @param[in] storage unique_ptr to Vector::Storage whose ownership
+       * is to be transfered to the SerialVector
+       * 
+       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the SerialVector. 
+       * Thus, after the function call \p storage will point to NULL and any access through \p storage will lead to <b>undefined behavior</b>.
+       *
+       */
+      SerialVector(std::unique_ptr<typename Vector<ValueType,memorySpace>::Storage> storage);
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector

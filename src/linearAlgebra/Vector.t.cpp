@@ -35,7 +35,7 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      std::shared_ptr<Storage> storage,
+      std::unique_ptr<Storage> & storage,
       const VectorAttributes & vectorAttributes,
       const global_size_type   globalSize,
       const size_type          locallyOwnedSize,
@@ -208,9 +208,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     Vector<ValueType, memorySpace>::setStorage(
-      std::shared_ptr<typename Vector<ValueType, memorySpace>::Storage> storage)
+      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> & storage)
     {
-      d_storage = storage;
+      d_storage = std::move(storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

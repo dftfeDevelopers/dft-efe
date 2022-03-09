@@ -228,20 +228,21 @@ namespace dftefe
         const typename Vector<ValueType, memorySpace2>::Storage &storage);
 
       /**
-       * @brief Point the underlying data of the Vector to a given Vector::Storage object (i.e., MemoryStorage object).
-       * This allows the Vector to share ownership of user defined
-       * Vector::Storage (i.e., MemoryStorage) data. This is useful when one
-       * does not want to copy data into the Vector's underlying MemoryStorage.
+       * @brief Transfer ownership of a user provided Vector::Storage object (i.e., MemoryStorage object)
+       * to the Vector. This is useful when a MemoryStorage has been already 
+       * been allocated and we need the the Vector to claim its ownership. This avoids reallocation 
+       * of memory.
+       * 
+       * @param[in] storage unique_ptr to MemoryStorage object whose ownership
+       * is to be passed to the Vector
        *
-       * @note Since it allows the Vector to share ownership of a user provided MemoryStorage, any change to the data
-       * either through the user provided MemoryStorage or the Vector will
-       * reflect in both.
+       * @note Since we are passing the ownership of the input storage to the Vector, the 
+       * storage will point to NULL after a call to this function. Accessing the input storage 
+       * pointer will lead to undefined behavior.
        *
-       * @param[in] storage shared_ptr to MemoryStorage object whose ownership
-       * is to be shared by the Vector
        */
       void
-      setStorage(std::shared_ptr<Storage> storage);
+      setStorage(std::unique_ptr<Storage> & storage);
 
       /**
        * @brief Returns a VectorAttributes object that stores various attributes
@@ -293,9 +294,8 @@ namespace dftefe
       /**
        * @brief Constructor
        *
-       * @param[in] storage shared_ptr to Vector::Storage (i.e., MemoryStorage).
-       * The underlying Vector::Storage of the Vector will share ownership of
-       * storage.
+       * @param[in] storage reference to unique_ptr to Vector::Storage (i.e., MemoryStorage)
+       * from which the Vector to transfer ownership. 
        * @param[in] vectorAttributes const reference to VectorAttributes object
        * that contains certain properties of the Vector (e.g., serial or
        * distributed, number of components etc.).
@@ -308,8 +308,12 @@ namespace dftefe
        * @param[in] ghostSize size of the part of the vector that is owned by
        * the other processors but required by the current processor. For a
        * SerialVector, the ghostSize is 0.
+       *
+       * @note Since we are passing the ownership of the input storage to the Vector, the 
+       * storage will point to NULL after a call to this Constructor. Accessing the input storage 
+       * pointer will lead to undefined behavior.
        */
-      Vector(std::shared_ptr<Storage> storage,
+      Vector(std::unique_ptr<Storage> storage,
              const VectorAttributes & vectorAttributes,
              const global_size_type   globalSize,
              const size_type          locallyOwnedSize,
@@ -321,7 +325,7 @@ namespace dftefe
       Vector();
 
     protected:
-      std::shared_ptr<Storage> d_storage;
+      std::unique_ptr<Storage> d_storage;
       VectorAttributes         d_vectorAttributes;
       size_type                d_localSize;
       global_size_type         d_globalSize;
