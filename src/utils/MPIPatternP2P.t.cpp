@@ -751,7 +751,7 @@ namespace dftefe
     size_type
     MPIPatternP2P<memorySpace>::localOwnedSize() const
     {
-      return (d_locallyOwnedRange.second-d_locallyOwnedRange.first);
+      return (d_locallyOwnedRange.second - d_locallyOwnedRange.first);
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
