@@ -58,8 +58,9 @@ namespace dftefe
     // utils::MemoryStorage)
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    DistributesVector<ValueType, memorySpace>::SerialVector(
-      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
+    DistributedVector<ValueType, memorySpace>::DistributedVector(
+      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+        &storage,
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
         mpiCommunicatorP2P)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)

@@ -313,11 +313,11 @@ namespace dftefe
        * storage will point to NULL after a call to this Constructor. Accessing
        * the input storage pointer will lead to undefined behavior.
        */
-      Vector(std::unique_ptr<Storage> storage,
-             const VectorAttributes & vectorAttributes,
-             const global_size_type   globalSize,
-             const size_type          locallyOwnedSize,
-             const size_type          ghostSize);
+      Vector(std::unique_ptr<Storage> &storage,
+             const VectorAttributes &  vectorAttributes,
+             const global_size_type    globalSize,
+             const size_type           locallyOwnedSize,
+             const size_type           ghostSize);
 
       /**
        * @brief Default Constructor
