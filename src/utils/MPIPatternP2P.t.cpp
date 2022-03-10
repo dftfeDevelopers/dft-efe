@@ -747,5 +747,18 @@ namespace dftefe
       return d_nGlobalIndices;
     }
 
+    template <dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MPIPatternP2P<memorySpace>::localOwnedSize() const
+    {
+      return (d_locallyOwnedRange.second-d_locallyOwnedRange.first);
+    }
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MPIPatternP2P<memorySpace>::localGhostSize() const
+    {
+      return d_numGhostIndices;
+    }
   } // end of namespace utils
 } // end of namespace dftefe
