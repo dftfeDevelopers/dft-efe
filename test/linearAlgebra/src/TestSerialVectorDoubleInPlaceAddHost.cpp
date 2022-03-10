@@ -58,15 +58,15 @@ main()
   for(unsigned int i = 0; i < vSize; ++i)
     dVecStd3[i] = dVecStd1[i] + dVecStd2[i];
 
-  std::shared_ptr<MemoryStorageDoubleHost> memStorage1 
-    = std::make_shared<MemoryStorageDoubleHost>(vSize);
+  std::unique_ptr<MemoryStorageDoubleHost> memStorage1 
+    = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage1->copyFrom<Host>(dVecStd1.data());
   std::shared_ptr<VectorDoubleHost> dVec1
     = std::make_shared<SerialVectorDoubleHost>(vSize, 0);
   dVec1->setStorage(memStorage1);
 
-  std::shared_ptr<MemoryStorageDoubleHost> memStorage2 
-     = std::make_shared<MemoryStorageDoubleHost>(vSize);
+  std::unique_ptr<MemoryStorageDoubleHost> memStorage2 
+     = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage2->copyFrom<Host>(dVecStd2.data());
   std::shared_ptr<VectorDoubleHost> dVec2
     = std::make_shared<SerialVectorDoubleHost>(vSize, 0);

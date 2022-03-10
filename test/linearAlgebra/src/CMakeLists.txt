@@ -31,10 +31,6 @@ add_executable(TestSerialVectorDoubleHostSetStorage TestSerialVectorDoubleHostSe
 target_link_libraries(TestSerialVectorDoubleHostSetStorage PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialVectorDoubleHostSetStorage PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleHostSetStorage" SUFFIX ".x")
 
-add_executable(TestSerialVectorDoubleHostSetStorage2 TestSerialVectorDoubleHostSetStorage2.cpp)
-target_link_libraries(TestSerialVectorDoubleHostSetStorage2 PUBLIC dft-efe-linalg)
-set_target_properties(TestSerialVectorDoubleHostSetStorage2 PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleHostSetStorage2" SUFFIX ".x")
-
 add_executable(TestSerialVectorDoubleNormHost TestSerialVectorDoubleNormHost.cpp)
 target_link_libraries(TestSerialVectorDoubleNormHost PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialVectorDoubleNormHost PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleNormHost" SUFFIX ".x")

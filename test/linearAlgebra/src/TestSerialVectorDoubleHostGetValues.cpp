@@ -50,8 +50,8 @@ main()
   for(auto & it : dVecStd)
     it = lo + (hi-lo)*std::rand()/RAND_MAX;
 
-  std::shared_ptr<MemoryStorageDoubleHost> memStorage
-    = std::make_shared<MemoryStorageDoubleHost>(vSize);
+  std::unique_ptr<MemoryStorageDoubleHost> memStorage
+    = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage->copyFrom<Host>(dVecStd.data());
   std::shared_ptr<VectorDoubleHost> dVec
     = std::make_shared<SerialVectorDoubleHost>(vSize, 0);
