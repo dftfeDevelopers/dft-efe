@@ -61,35 +61,38 @@ namespace dftefe
 
       ////// FE specific  member functions /////
       void
-      reinit(const TriangulationBase &triangulation, const size_type feOrder);
+      reinit(const TriangulationBase &triangulation,
+             const size_type          feOrder) override;
       size_type
-      nLocalCells() const;
+      nLocalCells() const override;
       size_type
-      nGlobalCells() const;
+      nGlobalCells() const override;
       size_type
-      getFEOrder(size_type cellId) const;
+      getFEOrder(size_type cellId) const override;
       size_type
-      nCellDofs(size_type cellId) const;
+      nCellDofs(size_type cellId) const override;
       size_type
-      nLocalNodes() const;
+      nLocalNodes() const override;
       global_size_type
-      nGlobalNodes() const;
+      nGlobalNodes() const override;
       std::vector<size_type>
-      getLocalNodeIds(size_type cellId);
+      getLocalNodeIds(size_type cellId) const override;
       std::vector<size_type>
-      getGlobalNodeIds();
+      getGlobalNodeIds() const override;
+      virtual std::vector<size_type>
+      getCellDofsLocalIds(size_type cellId) const override;
       std::vector<size_type>
-      getBoundaryIds() const;
+      getBoundaryIds() const override;
       cellIterator
-      beginLocal();
+      beginLocal() override;
       cellIterator
-      endLocal();
+      endLocal() override;
       const_cellIterator
-      beginLocal() const;
+      beginLocal() const override;
       const_cellIterator
-      endLocal() const;
+      endLocal() const override;
       unsigned int
-      getDim() const;
+      getDim() const override;
 
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;

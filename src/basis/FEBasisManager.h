@@ -78,9 +78,11 @@ namespace dftefe
       virtual global_size_type
       nGlobalNodes() const = 0;
       virtual std::vector<size_type>
-      getLocalNodeIds(size_type cellId) = 0;
+      getLocalNodeIds(size_type cellId) const = 0;
       virtual std::vector<size_type>
-      getGlobalNodeIds() = 0;
+      getGlobalNodeIds() const = 0;
+      virtual std::vector<size_type>
+      getCellDofsLocalIds(size_type cellId) const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual cellIterator
