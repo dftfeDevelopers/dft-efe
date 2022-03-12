@@ -39,6 +39,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class MPICommunicatorP2P
     {
+    public:
       MPICommunicatorP2P(
         std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
         const size_type                                   blockSize);

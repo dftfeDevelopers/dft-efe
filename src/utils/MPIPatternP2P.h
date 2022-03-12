@@ -92,9 +92,6 @@ namespace dftefe
       size_type
       localGhostSize() const;
 
-      size_type
-      localSize() const;
-
       bool
       inLocallyOwnedRange(const global_size_type) const;
 

@@ -210,5 +210,5 @@ int main()
 
   }
   MPI_Finalize();
+#endif  
 }
-#endif

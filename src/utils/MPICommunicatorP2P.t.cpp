@@ -42,7 +42,7 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
       d_sendRecvBuffer.resize(
-        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs() * blockSize);
+        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().size() * blockSize);
       d_requestsUpdateGhostValues.resize(
         d_mpiPatternP2P->getGhostProcIds().size() +
         d_mpiPatternP2P->getTargetProcIds().size());
@@ -103,7 +103,7 @@ namespace dftefe
 
       // gather locally owned entries into a contiguous send buffer
       MPICommunicatorP2PKernels<ValueType, memorySpace>::
-        gatherLocallyOwnedEntriesToSendBuffer(
+        gatherLocallyOwnedEntriesSendBufferToTargetProcs(
           dataArray,
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
           d_blockSize,
