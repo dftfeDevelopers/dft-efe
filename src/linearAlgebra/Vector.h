@@ -184,6 +184,14 @@ namespace dftefe
       operator+=(const Vector &rhs);
 
       /**
+       * @brief addition of elements owned locally in the processor
+       * @param[in] rhs the Vector to add
+       * @throws exception if the sizes and type (SerialVector or
+       * DistributedVector) are incompatible
+       */
+      void addLocal (const Vector &rhs);
+
+      /**
        * @brief Compound subtraction for elementwise addition lhs -= rhs
        * @param[in] rhs the vector to subtract
        * @return the original vector
@@ -192,6 +200,14 @@ namespace dftefe
        */
       Vector &
       operator-=(const Vector &rhs);
+
+      /**
+       * @brief subtraction of elements owned locally in the processor
+       * @param[in] rhs the Vector to subtract
+       * @throws exception if the sizes and type (SerialVector or
+       * DistributedVector) are incompatible
+       */
+      void subLocal (const Vector &rhs);
 
       /**
        * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
