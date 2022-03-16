@@ -9,11 +9,9 @@ endif()
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
 		BlasWrappers.cpp
-		DistributedDenseMatrix.cpp
 		DistributedVector.cpp
+        Matrix.cpp
 		MatrixOperations.cpp
-		MemoryOperations.cpp
-		MemoryOperations.cu
 		QueueManager.cpp
 		SerialDenseMatrix.cpp
 		SerialVector.cpp
@@ -34,11 +32,12 @@ if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
-		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH} ${SLATE_DIR}/include )
+		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH} )
 		set(DFTEFE_LINEARALGEBRA_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 	endif()
 endif()
 
+target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include )
 target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
 include_directories(../)

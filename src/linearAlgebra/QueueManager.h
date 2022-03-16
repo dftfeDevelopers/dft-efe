@@ -27,7 +27,7 @@
 #define dftefeQueueManager_h
 
 #include <blas.hh>
-#include <blasWrappersTypedef.h>
+#include "BlasWrappersTypedef.h"
 
 namespace dftefe
 {
@@ -36,11 +36,11 @@ namespace dftefe
     class QueueManager
     {
     public:
-      blasWrapper::Queue &
-      getBlasQueue();
-
-      void
-      createBlasQueue();
+//      blasWrapper::Queue &
+//      getBlasQueue();
+//
+//      void
+//      createBlasQueue();
 
     private:
       int cpuQueue;
@@ -53,4 +53,5 @@ namespace dftefe
 
 } // namespace dftefe
 
+#include "QueueManager.t.cpp"
 #endif // define queueManager_h

@@ -20,24 +20,57 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin.
+ * @author Ian C. Lin, Vishal Subramanian
  */
-
-#ifndef dftefeDistributedDenseMatrix_h
-#define dftefeDistributedDenseMatrix_h
-
-#include "Matrix.h"
-
 namespace dftefe
 {
   namespace linearAlgebra
   {
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class DistributedDenseMatrix : protected Matrix<ValueType,memorySpace>
-    {};
+    SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
+      const SerialDenseMatrix<ValueType, memorySpace> &u)
+    {
+      this->d_nGlobalRows = u.d_nGlobalRows;
+      this->d_nGlobalCols = u.d_nGlobalCols;
+      this->d_nLocalRows  = u.d_nLocalRows;
+      this->d_nLocalCols  = u.d_nLocalCols;
+      this->d_blasQueue   = u.d_blasQueue;
+      this->d_data =
+        std::make_shared<typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
+          this->d_nGlobalRows * this->d_nGlobalCols);
+      this->copyFrom<memorySpace>(u);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
+      size_type rows,
+      size_type cols,
+      blasWrapper::blasQueueType<memorySpace> &blasQueueInput,
+      ValueType initVal)
+    {
+      this->d_nGlobalRows = rows;
+      this->d_nGlobalCols = cols;
+      this->d_nLocalRows  = rows;
+      this->d_nLocalCols  = cols;
+      this->d_blasQueue = blasQueueInput;
+      d_data =
+        std::make_shared<typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
+          this->d_nGlobalRows * this->d_nGlobalCols, initVal);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialDenseMatrix<ValueType, memorySpace>::~SerialDenseMatrix()
+    {}
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    double SerialDenseMatrix<ValueType, memorySpace>::frobeniusNorm () const
+    {
+      double value  = 0 ;
+      value = nrm2(d_nLocalCols*d_nLocalRows, this->data(), 1 );
+
+      return value;
+    }
+
   } // namespace linearAlgebra
 } // namespace dftefe
-
-
-
-#endif // dftefeDistributedDenseMatrix_h

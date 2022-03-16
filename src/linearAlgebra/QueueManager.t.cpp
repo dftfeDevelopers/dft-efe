@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
+ * Copyright (c) 2022.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,46 +20,28 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian.
+ * @author Vishal Subramanian
  */
 
-#ifndef dftefeMatrixOperations_h
-#define dftefeMatrixOperations_h
-
-
-#include <blas.hh>
-#include "BlasWrappers.h"
-#include "BlasWrappersTypedef.h"
-#include <utils/MemorySpaceType.h>
+#include "utils/Exceptions.h"
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MatrixOperations
-    {
+//    blasWrapper::Queue &
+//    QueueManager::getBlasQueue()
+//    {
+//      return blasGpuQueue;
+//    }
+//
+//    void
+//    QueueManager::createBlasQueue()
+//    {
+//      DFTEFE_AssertWithMsg(0, "createBlasQueue() not implemented yet.... ");
+//    }
 
-      void
-      matMulc(blasWrapper::Layout                           layout,
-              blasWrapper::Op                        transA,
-              blasWrapper::Op                        transB,
-              size_type                                m,
-              size_type                                n,
-              size_type                                k,
-              ValueType                                alpha,
-              ValueType const *                        dA,
-              size_type                                ldda,
-              ValueType const *                        dB,
-              size_type                                lddb,
-              ValueType                                beta,
-              ValueType *                              dC,
-              size_type                                lddc,
-              blasWrapper::blasQueueType<memorySpace> &blasQueue);
-    };
+
+
   } // namespace linearAlgebra
-
 } // namespace dftefe
-
-#include "MatrixOperations.t.cpp"
-#endif // dftefeMatrixOperations_h

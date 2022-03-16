@@ -27,7 +27,7 @@
 #define dftefeBlasWrappers_h
 
 #include <blas.hh>
-#include "blasWrappersTypedef.h"
+#include "BlasWrappersTypedef.h"
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -35,10 +35,14 @@ namespace dftefe
   {
     template <typename ValueType>
     blasWrapper::real_type<ValueType>
-    asum(size_type n, ValueType const *x, size_type incx);
+    asum(size_type n, ValueType const *x, size_type incx = 1 );
+
+    template <typename ValueType>
+    blasWrapper::real_type<ValueType>
+    amax(size_type n, ValueType const *x, size_type incx = 1);
 
 
-    template <typename ValueType1, typename ValueType2>
+      template <typename ValueType1, typename ValueType2>
     void
     axpy(size_type                                        n,
          blasWrapper::scalar_type<ValueType1, ValueType2> alpha,
@@ -48,7 +52,7 @@ namespace dftefe
          size_type                                        incy);
 
 
-    template <typename ValueType1, typename ValueType1>
+    template <typename ValueType1, typename ValueType2>
     blasWrapper::scalar_type<ValueType1, ValueType2>
     dot(size_type         n,
         ValueType1 const *x,
@@ -59,7 +63,7 @@ namespace dftefe
 
     template <typename ValueType>
     blasWrapper::real_type<ValueType>
-    nrm2(size_type n, ValueType const *x, size_type incx);
+    nrm2(size_type n, ValueType const *x, size_type incx = 1);
 
     template <typename ValueType,
               typename dftefe::utils::MemorySpace memorySpace>
@@ -78,7 +82,7 @@ namespace dftefe
          ValueType                                beta,
          ValueType *                              dC,
          size_type                                lddc,
-         blasWrapper::blasQueueType<memorySapce> &blasQueue);
+         blasWrapper::blasQueueType<memorySpace> &blasQueue);
   } // namespace linearAlgebra
 } // namespace dftefe
 

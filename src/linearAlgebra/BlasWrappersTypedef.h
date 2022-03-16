@@ -20,46 +20,64 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian.
+ * @author Sambit Das, Vishal Subramanian
  */
 
-#ifndef dftefeMatrixOperations_h
-#define dftefeMatrixOperations_h
-
+#ifndef dftefeBlasWrapperTypedef_h
+#define dftefeBlasWrapperTypedef_h
 
 #include <blas.hh>
-#include "BlasWrappers.h"
-#include "BlasWrappersTypedef.h"
-#include <utils/MemorySpaceType.h>
+#include <utils/MemoryStorage.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MatrixOperations
+    namespace blasWrapper
     {
+       using Side = blas::Side;
+      using Op =   blas::Op;
+      using Diag = blas::Diag;
+      using Uplo = blas::Uplo;
+      using Layout = blas::Layout;
+      using Queue =   blas::Queue;
+      template<typename ValueType> using real_type = blas::real_type<ValueType>;
 
-      void
-      matMulc(blasWrapper::Layout                           layout,
-              blasWrapper::Op                        transA,
-              blasWrapper::Op                        transB,
-              size_type                                m,
-              size_type                                n,
-              size_type                                k,
-              ValueType                                alpha,
-              ValueType const *                        dA,
-              size_type                                ldda,
-              ValueType const *                        dB,
-              size_type                                lddb,
-              ValueType                                beta,
-              ValueType *                              dC,
-              size_type                                lddc,
-              blasWrapper::blasQueueType<memorySpace> &blasQueue);
-    };
+      template <typename ValueType1, typename ValueType2>  using scalar_type
+        = blas::scalar_type< ValueType1, ValueType2>;
+      template <dftefe::utils::MemorySpace memorySpace>
+      struct blasQueueTypedef
+      {
+        typedef void TYPE; //  default
+      };
+
+      // template specified mapping
+      template <>
+      struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST>
+      {
+        typedef int TYPE;
+      };
+
+      template <>
+      struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
+      {
+        typedef int TYPE;
+      };
+
+      template <>
+      struct blasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
+      {
+        typedef blas::Queue TYPE;
+      };
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      using blasQueueType = typename blasQueueTypedef<memorySpace>::TYPE;
+
+
+    } // namespace blasWrapper
+
   } // namespace linearAlgebra
 
 } // namespace dftefe
 
-#include "MatrixOperations.t.cpp"
-#endif // dftefeMatrixOperations_h
+#endif // define blasWrapperTypedef
