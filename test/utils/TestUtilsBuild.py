@@ -38,30 +38,31 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 '''
-TestLinearAlgebraBuild
-This test compiles all tests and copy the executable to /path/to/test/folder/executable. This test should be run before
-any RunOnlyTests. The BuildOnly test takes CMake options from CMakeConfigOptions.txt stored in the DFT-EFE main 
-directory to ensure the CMake configuration is consistent for main executable and the tests. The process of building and
-running a test is as follows
+TestUtilsBuild
+This test compiles all tests in the DFTEFE_PATH/test/utils folder and copies 
+the executable to DFTEFE_PATH/test/utils/executable. 
+This test should be run before any RunOnlyTests. 
+The BuildOnly test takes CMake options from CMakeConfigOptions.txt stored in
+the DFT-EFE main directory to ensure that the CMake configuration is consistent 
+across the main executable and the tests. 
+The process of building and running a test is as follows
 
-1. export DFTEFE_PATH as an environmental variable by "export DFTEFE_PATH="/path/to/dft-efe/"
-2. run configure.py in the main directory of DFT-EFE to generate CMakeConfigOptions.txt
-3. in the test/linearAlgebra directory, run "reframe -C ../config/mysettings.py -c TestLinearAlgebraBuild.py -r" to 
-   compile the tests.
+1. set DFTEFE_PATH to the main directory (i.e., "export DFTEFE_PATH="/path/to/dft-efe/")
+2. python configure.py in the main directory of DFT-EFE to generate CMakeConfigOptions.txt
+3. In the test/utils directory, run "reframe -C ../config/mysettings.py -c TestUtilsBuild.py -r" 
+   to compile the tests.
 4. to run all cpu tests, use the command
-   reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest_*' -t cpu -r
+   reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest*' -t cpu -r
    to run all gpu tests, use the command (GPU options need to be turned on in CMakeConfigOptions.txt)
-   reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest_*' -t gpu -r
+   reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest*' -t gpu -r
 '''
 @rfm.simple_test
-class BuildOnlyTestLinearAlgebra(rfm.CompileOnlyRegressionTest):
+class BuildOnlyTestUtils(rfm.CompileOnlyRegressionTest):
     descr = 'A build only test using CMake'
     build_system = 'CMake'
     make_opts = []
-
     tagsDict = {'compileOrRun': 'compile'}
     tags = {x.lower() for x in tagsDict.values()}
-
     valid_systems = ['*']
     valid_prog_environs = ['*']
     config_opts = cmflags.getConfig()

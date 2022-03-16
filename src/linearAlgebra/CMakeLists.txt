@@ -23,9 +23,12 @@ set(DFT-EFE-LINALG-SOURCES
 		DeviceBlasLapackTemplates.cu
 		DeviceLAContextsSingleton.cu
 		VectorKernels.cu
-		Vector.cpp
 		VectorKernels.cpp
-		DeviceLAContextsSingleton.cpp)
+		DeviceLAContextsSingleton.cpp
+		VectorAttributes.cpp
+		SerialVector.cpp
+		DistributedVector.cpp
+		)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

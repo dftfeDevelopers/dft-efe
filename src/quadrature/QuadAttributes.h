@@ -20,34 +20,30 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Sambit Das
+ * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPITags_h
-#define dftefeMPITags_h
+#ifndef dftefeQuadratureAttributes_h
+#define dftefeQuadratureAttributes_h
 
 #include <utils/TypeConfig.h>
-#include <vector>
-#include <cstdint>
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif
-
 namespace dftefe
 {
-  namespace utils
+  namespace quadrature
   {
-    enum class MPITags : std::uint16_t
+    /**
+     * @brief Class to store the attributes of a quad point, such as
+     * the cell Id it belongs, the quadPointId within the cell it belongs to,
+     * and the quadrature rule (defined by quadratureRuleId) it is part of.
+     */
+    class QuadratureAttributes
     {
-      DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG,
+    public:
+      size_type cellId      = 0;
+      size_type quadRuleId  = 0;
+      size_type quadPointId = 0;
+    }; // end of class QuadratureAttributes
 
-      MPI_P2P_COMMUNICATOR_SCATTER_TAG,
-
-      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
-    };
-  } // end of namespace utils
+  } // end of namespace quadrature
 } // end of namespace dftefe
-#endif // dftefeMPITags_h
+#endif

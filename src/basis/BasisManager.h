@@ -20,34 +20,36 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Sambit Das
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeMPITags_h
-#define dftefeMPITags_h
+#ifndef dftefeBasisManager_h
+#define dftefeBasisManager_h
 
 #include <utils/TypeConfig.h>
-#include <vector>
-#include <cstdint>
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif
-
+#include <utils/Point.h>
 namespace dftefe
 {
-  namespace utils
+  namespace basis
   {
-    enum class MPITags : std::uint16_t
+    /**
+     * An abstract class to handle basis related operations, such as
+     * evaluating the value and gradients of any basis function at a
+     * point.
+     */
+    class BasisManager
     {
-      DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG,
+    public:
+      virtual ~BasisManager() = default;
+      virtual double
+      getBasisFunctionValue(const size_type     basisId,
+                            const utils::Point &point) const = 0;
+      virtual std::vector<double>
+      getBasisFunctionDerivative(const size_type     basisId,
+                                 const utils::Point &point,
+                                 const size_type derivativeOrder = 1) const = 0;
 
-      MPI_P2P_COMMUNICATOR_SCATTER_TAG,
-
-      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
-    };
-  } // end of namespace utils
+    }; // end of BasisManager
+  }    // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeMPITags_h
+#endif // dftefeBasisManager_h

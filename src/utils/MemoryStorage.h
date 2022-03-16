@@ -47,6 +47,11 @@ namespace dftefe
        *  to reside
        *
        */
+
+      //
+      // typedefs
+      //
+    public:
       typedef ValueType        value_type;
       typedef ValueType *      pointer;
       typedef ValueType &      reference;
@@ -277,6 +282,93 @@ namespace dftefe
                const size_type                           N,
                const size_type                           srcOffset,
                const size_type                           dstOffset);
+
+      /**
+       * @brief Copies the data to a memory pointed by a raw pointer
+       * This provides a seamless interface to copy back and forth between
+       * memory spaces, including between the same memory spaces.
+       *
+       * @note The destination pointer must be pre-allocated appropriately
+       *
+       * @tparam memorySpaceDst memory space of the destination pointer
+       * @param[in] dst pointer to the destination. It must be pre-allocated
+       * appropriately
+       * @param[out] dst pointer to the destination with the data copied into it
+       */
+      template <dftefe::utils::MemorySpace memorySpaceDst>
+      void
+      copyTo(ValueType *dst) const;
+
+      /**
+       * @brief Copies the data to a memory pointer by a raw pointer.
+       * This provides a seamless interface to copy back and forth between
+       * memory spaces , including between the same memory spaces. This is a
+       * more granular version of the above copyTo function as it provides
+       * transfer from a specific portion of the source MemoryStorage to a
+       * specific portion of the destination pointer.
+       *
+       * @note The destination pointer must be pre-allocated appropriately
+       *
+       * @tparam memorySpaceDst memory space of the destination pointer
+       * @param[in] dst pointer to the destination. It must be pre-allocated
+       * appropriately
+       * @param[in] N number of entries of the source MemoryStorage
+       *  that needs to be copied to the destination pointer
+       * @param[in] srcOffset offset relative to the start of the source
+       *  MemoryStorage from which we need to copy data
+       * @param[in] dstOffset offset relative to the start of the destination
+       *  pointer to which we need to copy data
+       * @param[out] dst pointer to the destination with the data copied into it
+       */
+      template <dftefe::utils::MemorySpace memorySpaceDst>
+      void
+      copyTo(ValueType *     dst,
+             const size_type N,
+             const size_type srcOffset,
+             const size_type dstOffset) const;
+
+      /**
+       * @brief Copies data from a memory pointed by a raw pointer into
+       * the MemoryStorage object.
+       * This provides a seamless interface to copy back and forth between
+       * memory spaces, including between the same memory spaces.
+       *
+       * @note The MemoryStorage must be pre-allocated appropriately
+       *
+       * @tparam memorySpaceSrc memory space of the source pointer
+       *  from which to copy
+       * @param[in] src pointer to the source memory
+       */
+      template <dftefe::utils::MemorySpace memorySpaceSrc>
+      void
+      copyFrom(const ValueType *src);
+
+      /**
+       * @brief Copies data from a memory pointer by a raw pointer into the MemoryStorage object.
+       * This provides a seamless interface to copy back and forth between
+       * memory spaces, including between the same memory spaces.
+       * This is a more granular version of the above copyFrom function as it
+       * provides transfer from a specific portion of the source memory
+       * to a specific portion of the destination MemoryStorage.
+       *
+       * @note The MemoryStorage must be pre-allocated appropriately
+       *
+       * @tparam memorySpaceSrc memory space of the source pointer
+       *  from which to copy
+       * @param[in] src pointer to the source memory
+       * @param[in] N number of entries of the source pointer
+       *  that needs to be copied to the destination MemoryStorage
+       * @param[in] srcOffset offset relative to the start of the source
+       *  pointer from which we need to copy data
+       * @param[in] dstOffset offset relative to the start of the destination
+       *  MemoryStorage to which we need to copy data
+       */
+      template <dftefe::utils::MemorySpace memorySpaceSrc>
+      void
+      copyFrom(const ValueType *src,
+               const size_type  N,
+               const size_type  srcOffset,
+               const size_type  dstOffset);
 
     private:
       ValueType *d_data = nullptr;

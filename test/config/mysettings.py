@@ -19,22 +19,16 @@ site_configuration = {
     'systems': [
         {
             'name': 'greatlakes',
-            'descr': 'Greatlakes login',
+            'descr': 'Greatlakes UMICH',
             'hostnames': ['.*'],
             'modules_system': 'lmod',
             'partitions': [
-                {
-                    'name': 'login',
-                    'scheduler': 'local',
-                    'launcher': 'local',
-                    'environs': ['builtin', 'gnu']
-                },
                 {
                     'name': 'standard',
                     'scheduler': 'slurm',
                     'launcher': 'srun',
                     'access': ['-A vikramg1'],
-                    'environs': ['builtin', 'gnu'],
+                    'environs': ['gnu'],
                     'resources': [
                         {
                             'name': 'cpu',
@@ -52,7 +46,7 @@ site_configuration = {
                     'scheduler': 'slurm',
                     'launcher': 'srun',
                     'access': ['-A vikramg1'],
-                    'environs': ['builtin', 'gnu'],
+                    'environs': ['gnu'],
                     'resources': [
                         {
                             'name': 'gpu',

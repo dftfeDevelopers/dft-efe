@@ -20,34 +20,43 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Sambit Das
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeMPITags_h
-#define dftefeMPITags_h
+#ifndef dftefeBasisOperationsManager_h
+#define dftefeBasisOperationsManager_h
 
 #include <utils/TypeConfig.h>
-#include <vector>
-#include <cstdint>
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif
-
+#include <utils/MemorySpaceType.h>
+#include <utils/ScalarSpatialFunction.h>
 namespace dftefe
 {
-  namespace utils
+  namespace basis
   {
-    enum class MPITags : std::uint16_t
+    /**
+     * An abstract class to handle interactions between a basis and a
+     * field (e.g., integration of field with basis).
+     */
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    class BasisOperationsManager
     {
-      DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG,
+    public:
+      virtual ~BasisOperationsManager() = default;
+      virtual void
+      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
+                               const CellQuadratureContainer &         q,
+                               Field<ValueType, memorySpace> &         field);
 
-      MPI_P2P_COMMUNICATOR_SCATTER_TAG,
+      virtual void
+      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
+                               Field<ValueType, memorySpace> &field);
 
-      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
-    };
-  } // end of namespace utils
+      virtual void
+      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
+                               const CellQuadratureContainer &      q,
+                               Field<ValueType, memorySpace> &fieldOutput);
+
+    }; // end of BasisOperationsManager
+  }    // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeMPITags_h
+#endif // dftefeBasisOperationsManager_h
