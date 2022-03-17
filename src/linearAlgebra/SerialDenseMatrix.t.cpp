@@ -42,6 +42,87 @@ namespace dftefe
       this->copyFrom<memorySpace>(u);
     }
 
+    //
+    // Move Constructor
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
+      SerialDenseMatrix<ValueType, memorySpace> &&u) noexcept
+    {
+      d_data          = std::move(u.d_data);
+
+      d_nGlobalRows = std::move(u.d_nGlobalRows);
+      d_nGlobalCols = std::move(u.d_nGlobalCols);
+      d_nLocalRows  = std::move(u.d_nLocalRows);
+      d_nLocalCols  = std::move(u.d_nLocalCols);
+      d_blasQueue        = std::move(u.d_blasQueue);
+
+      //TODO check compatibity
+//      bool areCompatible =
+//        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+//      utils::throwException<utils::LogicError>(
+//        areCompatible,
+//        "Trying to move from an incompatible Vector. One is a SerialVector and the "
+//        " other a DistributedVector.");
+    }
+
+    //
+    // Copy assignment
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialDenseMatrix<ValueType, memorySpace> &
+    SerialDenseMatrix<ValueType, memorySpace>::operator=(
+      const SerialDenseMatrix<ValueType, memorySpace> &u)
+    {
+      d_data =
+        std::make_shared<typename Matrix<ValueType, memorySpace>::Storage>(
+          (u.d_data)->size());
+      *d_data         = *(u.d_data);
+
+      d_nGlobalRows = u.d_nGlobalRows;
+      d_nGlobalCols = u.d_nGlobalCols;
+      d_nLocalRows  = u.d_nLocalRows;
+      d_nLocalCols  = u.d_nLocalCols;
+      d_blasQueue   = u.d_blasQueue;
+
+//      VectorAttributes vectorAttributesSerial(
+//        VectorAttributes::Distribution::SERIAL);
+//      bool areCompatible =
+//        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+//      utils::throwException<utils::LogicError>(
+//        areCompatible,
+//        "Trying to copy assign from an incompatible Vector. One is a SerialVector and the "
+//        " other a DistributedVector.");
+      return *this;
+    }
+
+    //
+    // Move assignment
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SerialDenseMatrix<ValueType, memorySpace> &
+    SerialDenseMatrix<ValueType, memorySpace>::operator=(
+      SerialDenseMatrix<ValueType, memorySpace> &&u)
+    {
+      d_data          = std::move(u.d_data);
+
+      d_nGlobalRows = std::move(u.d_nGlobalRows);
+      d_nGlobalCols = std::move(u.d_nGlobalCols);
+      d_nLocalRows  = std::move(u.d_nLocalRows);
+      d_nLocalCols  = std::move(u.d_nLocalCols);
+      d_blasQueue   = std::move(u.d_blasQueue);
+
+//      VectorAttributes vectorAttributesSerial(
+//        VectorAttributes::Distribution::SERIAL);
+//      bool areCompatible =
+//        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+//      utils::throwException<utils::LogicError>(
+//        areCompatible,
+//        "Trying to move assign from an incompatible Vector. One is a SerialVector and the "
+//        " other a DistributedVector.");
+      return *this;
+    }
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
       size_type rows,

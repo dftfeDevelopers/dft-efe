@@ -24,6 +24,9 @@
 */
 
 
+#include "BlasWrappers.h"
+
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -137,12 +140,6 @@ namespace dftefe
       cols = this->d_nGlobalCols;
     }
 
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    dftefe::utils::MemoryStorage<ValueType, memorySpace> &
-    Matrix<ValueType, memorySpace>::getDataVec()
-    {
-      return *(this->d_data);
-    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     blasWrapper::blasQueueType<memorySpace> &
@@ -150,5 +147,101 @@ namespace dftefe
     {
       return d_blasQueue;
     }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Matrix<ValueType, memorySpace> &
+    Matrix<ValueType, memorySpace>::operator+=(
+      const Matrix<ValueType, memorySpace> &rhs)
+    {
+//      bool areCompatible =
+//        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
+//      utils::throwException<utils::LogicError>(
+//        areCompatible,
+//        "Trying to add incompatible Vectors. One is a serial Vector and the "
+//        " other a distributed Vector.");
+      utils::throwException<utils::LengthError>(
+        (rhs.getGlobalRows() == this->getGlobalRows()) &&(rhs.getGlobalCols() == this->getGlobalCols()),
+        "Mismatch of sizes of the two Matrices that are being added.");
+      const size_type rhsStorageSize = (rhs.getValues()).size();
+      utils::throwException<utils::LengthError>(
+        d_data->size() == rhsStorageSize,
+        "Mismatch of sizes of the underlying"
+        "storage of the two Vectors that are being added.");
+      axpy(d_data->size(),
+           1.0,
+           rhs.data(),
+           1,
+           this->data(),
+           1);
+
+      return *this;
+    }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Matrix<ValueType, memorySpace> &
+    Matrix<ValueType, memorySpace>::operator-=(
+      const Matrix<ValueType, memorySpace> &rhs)
+    {
+      // TODO check if the matrices are compatible and set the
+      // appropriate attributes ( hermitian, diagonal, lower triangular, upper triangular)
+      // TODO check if both the matrices are stored in colMajor or rowMajor format
+//      bool areCompatible =
+//        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
+//      utils::throwException<utils::LogicError>(
+//        areCompatible,
+//        "Trying to subtract incompatible Vectors. "
+//        "One is a serial vector and the other a distributed Vector.");
+utils::throwException<utils::LengthError>(
+  (rhs.getGlobalRows() == this->getGlobalRows()) &&(rhs.getGlobalCols() == this->getGlobalCols()),
+  "Mismatch of sizes of the two Matrices that are being added.");
+const size_type rhsStorageSize = (rhs.getValues()).size();
+utils::throwException<utils::LengthError>(
+  d_data->size() == rhsStorageSize,
+  "Mismatch of sizes of the underlying"
+  "storage of the two Vectors that are being added.");
+      axpy(d_data->size(),
+           -1.0,
+           rhs.data(),
+           1,
+           this->data(),
+           1);
+      return *this;
+    }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const typename Matrix<ValueType, memorySpace>::Storage &
+    Matrix<ValueType, memorySpace>::getValues() const
+    {
+      return *d_data;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Matrix<ValueType, memorySpace>::Storage &
+    Matrix<ValueType, memorySpace>::getValues()
+    {
+      return *d_data;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <dftefe::utils::MemorySpace memorySpace2>
+    void
+    Matrix<ValueType, memorySpace>::setValues(
+      const typename Matrix<ValueType, memorySpace2>::Storage &storage)
+    {
+      *d_data->copyFrom(storage);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    Matrix<ValueType, memorySpace>::setStorage(
+      std::shared_ptr<typename Matrix<ValueType, memorySpace>::Storage> storage)
+    {
+      d_data = storage;
+    }
+
+
   }
 }

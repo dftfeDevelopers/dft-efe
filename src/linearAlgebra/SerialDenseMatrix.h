@@ -79,12 +79,27 @@ namespace dftefe
        */
       SerialDenseMatrix(const SerialDenseMatrix &u);
 
-      // TODO Check if this is required and implement if neccessary
-      //      /**
-      //       * @brief Move constructor for a matrix
-      //       * @param[in] u Vector object to move from
-      //       */
-      //      SerialDenseMatrix(SerialDenseMatrix &&u) noexcept;
+            /**
+             * @brief Move constructor for a matrix
+             * @param[in] u SerialDensityMatrix object to move from
+             */
+            SerialDenseMatrix(SerialDenseMatrix &&u) noexcept;
+
+       /**
+       * @brief Copy assignment operator
+       * @param[in] u const reference to SerialDenseMatrix object to copy from
+       * @return reference to this object after copying data from u
+       */
+            SerialDenseMatrix &
+            operator=(const SerialDenseMatrix &u);
+
+            /**
+       * @brief Move assignment operator
+       * @param[in] u const reference to SerialDenseMatrix object to move from
+       * @return reference to this object after moving data from u
+             */
+            SerialDenseMatrix &
+            operator=(SerialDenseMatrix &&u);
 
       /**
        * @brief Constructor for Matrix  with (rows,cols)

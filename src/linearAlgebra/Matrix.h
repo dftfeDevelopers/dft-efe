@@ -42,12 +42,13 @@ namespace dftefe
     class Matrix
     {
     public:
-      typedef ValueType        value_type;
-      typedef ValueType *      pointer;
-      typedef ValueType &      reference;
-      typedef const ValueType &const_reference;
-      typedef ValueType *      iterator;
-      typedef const ValueType *const_iterator;
+      using Storage            = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      using value_type = typename Storage::value_type;
+      using pointer    = typename Storage::pointer;
+      using reference  = typename Storage::reference;
+      using const_reference = typename Storage::const_reference;
+      using iterator        = typename Storage::iterator;
+      using const_iterator  = typename Storage::const_iterator;
 
 
       Matrix() = default;
@@ -195,11 +196,76 @@ namespace dftefe
       getGlobalCols() const;
 
       /**
-       * @brief Returns the underlying MemoryStorage object
-       * @returns MemoryStorage object of this class
+       * @brief Compound addition for elementwise addition lhs += rhs
+       * @param[in] rhs the Matrix to add
+       * @return the original Matrix
+       * @throws exception if the sizes and type (SerialDenseMatrix or
+       * DistributedDenseMatrix) are incompatible
        */
-      dftefe::utils::MemoryStorage<ValueType,memorySpace> &
-      getDataVec() ;
+      Matrix &
+      operator+=(const Matrix &rhs);
+
+
+      /**
+       * @brief Compound subtraction for elementwise addition lhs -= rhs
+       * @param[in] rhs the Matrix to subtract
+       * @return the original vector
+       * @throws exception if the sizes and type (SerialDenseMatrix or
+* DistributedDenseMatrix) are incompatible
+       */
+      Matrix &
+      operator-=(const Matrix &rhs);
+
+
+      /**
+       * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
+       * of the Matrix.
+       *
+       * @return reference to the underlying MemoryStorage.
+       */
+      Storage &
+      getValues();
+
+      /**
+       * @brief Returns a const reference to the underlying storage (i.e., MemoryStorage object)
+       * of the Matrix.
+       *
+       * @return const reference to the underlying MemoryStorage.
+       */
+      const Storage &
+      getValues() const;
+
+      /**
+       * @brief Set values in the Matrix using a user provided Matrix::Storage object (i.e., MemoryStorage object).
+       * The MemoryStorage may lie in a different memoryspace (say memSpace2)
+       * than the Matrix's memory space (memSpace). The function internally does
+       * a data transfer from memSpace2 to memSpace.
+       *
+       * @param[in] storage const reference to MemoryStorage object from which
+       * to set values into the Matrix.
+       * @throws exception if the size of the input storage is smaller than the
+       * \e localSize of the Matrix
+       */
+      template <dftefe::utils::MemorySpace memorySpace2>
+      void
+      setValues(
+        const typename Matrix<ValueType, memorySpace2>::Storage &storage);
+
+      /**
+       * @brief Point the underlying data of the Vector to a given Matrix::Storage object (i.e., MemoryStorage object).
+       * This allows the Matrix to share ownership of user defined
+       * Matrix::Storage (i.e., MemoryStorage) data. This is useful when one
+       * does not want to copy data into the Matrix's underlying MemoryStorage.
+       *
+       * @note Since it allows the Matrix to share ownership of a user provided MemoryStorage, any change to the data
+       * either through the user provided MemoryStorage or the Vector will
+       * reflect in both.
+       *
+       * @param[in] storage shared_ptr to MemoryStorage object whose ownership
+       * is to be shared by the Matrix
+       */
+      void
+      setStorage(std::shared_ptr<Storage> storage);
 
       /**
        * @brief Returns the Queue associated with this Matrix object
@@ -222,7 +288,7 @@ namespace dftefe
 
       blasWrapper::blasQueueType<memorySpace> d_blasQueue;
 
-      std::shared_ptr<dftefe::utils::MemoryStorage<ValueType, memorySpace>> d_data;
+      std::shared_ptr<Storage> d_data;
     };
   } // namespace linearAlgebra
 } // namespace dftefe
