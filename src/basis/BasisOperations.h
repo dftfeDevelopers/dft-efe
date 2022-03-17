@@ -20,30 +20,43 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeQuadratureAttributes_h
-#define dftefeQuadratureAttributes_h
+#ifndef dftefeBasisOperations_h
+#define dftefeBasisOperations_h
 
 #include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
+#include <utils/ScalarSpatialFunction.h>
 namespace dftefe
 {
-  namespace quadrature
+  namespace basis
   {
     /**
-     * @brief Class to store the attributes of a quad point, such as
-     * the cell Id it belongs, the quadPointId within the cell it belongs to,
-     * and the quadrature rule (defined by quadratureRuleId) it is part of.
+     * An abstract class to handle interactions between a basis and a
+     * field (e.g., integration of field with basis).
      */
-    class QuadratureAttributes
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    class BasisOperations
     {
     public:
-      size_type cellId      = 0;
-      size_type quadRuleId  = 0;
-      size_type quadPointId = 0;
-    }; // end of class QuadratureAttributes
+      virtual ~BasisOperations() = default;
+      virtual void
+      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
+                               const CellQuadratureContainer &         q,
+                               Field<ValueType, memorySpace> &         field);
 
-  } // end of namespace quadrature
+      virtual void
+      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
+                               Field<ValueType, memorySpace> &field);
+
+      virtual void
+      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
+                               const CellQuadratureContainer &      q,
+                               Field<ValueType, memorySpace> &fieldOutput);
+
+    }; // end of BasisOperations
+  }    // end of namespace basis
 } // end of namespace dftefe
-#endif
+#endif // dftefeBasisOperations_h

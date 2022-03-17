@@ -46,8 +46,7 @@ namespace dftefe
       unsigned int iCell = 0;
       d_triaVectorCell.resize(nLocalCells());
 
-      for (unsigned int iLevel = 0;
-           iLevel < d_triangulationDealii.n_levels();
+      for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_levels();
            iLevel++)
         {
           for (auto &cellPtr :

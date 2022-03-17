@@ -94,6 +94,12 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
+      //
+      // dealii specific functions
+      //
+      std::shared_ptr<const dealii::DoFHandler<dim>>
+      getDoFHandler();
+
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;

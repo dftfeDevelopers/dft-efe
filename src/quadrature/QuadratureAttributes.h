@@ -20,43 +20,78 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
 
-#ifndef dftefeBasisOperationsManager_h
-#define dftefeBasisOperationsManager_h
+#ifndef dftefeQuadratureAttributes_h
+#define dftefeQuadratureAttributes_h
 
 #include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
-#include <utils/ScalarSpatialFunction.h>
 namespace dftefe
 {
-  namespace basis
+  namespace quadrature
   {
+    enum class QuadratureFamily
+    {
+      GAUSS; GLL;
+    };
+
+    enum class QuadratureRuleType
+    {
+
+      // Gauss quadrature rules
+      GAUSS_1,
+      GAUSS_2,
+      GAUSS_3,
+      GAUSS_4,
+      GAUSS_5,
+      GAUSS_6,
+      GAUSS_7,
+      GAUSS_8,
+      GAUSS_9,
+      GAUSS_10,
+      GAUSS_11,
+      GAUSS_12,
+      GAUSS_VARIABLE,
+
+      // Gauss-Legendre-Lobatta quadrature rules
+      GLL_1,
+      GLL_2,
+      GLL_3,
+      GLL_4,
+      GLL_5,
+      GLL_6,
+      GLL_7,
+      GLL_8,
+      GLL_9,
+      GLL_10,
+      GLL_11,
+      GLL_12,
+      GLL_VARIABLE,
+
+      // Adaptive quadrature rule
+      ADAPTIVE
+    };
     /**
-     * An abstract class to handle interactions between a basis and a
-     * field (e.g., integration of field with basis).
+     * @brief Class to store the attributes of a quad point, such as
+     * the cell Id it belongs, the quadPointId within the cell it belongs to,
+     * and the quadrature rule (defined by quadratureRuleId) it is part of.
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class BasisOperationsManager
+    class QuadratureAttributes
     {
     public:
-      virtual ~BasisOperationsManager() = default;
-      virtual void
-      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-                               const CellQuadratureContainer &         q,
-                               Field<ValueType, memorySpace> &         field);
+      size_type          cellId = 0;
+      QuadratureRuleType quadType;
+      size_type          quadPointId = 0;
+    }; // end of class QuadratureAttributes
 
-      virtual void
-      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
-                               Field<ValueType, memorySpace> &field);
-
-      virtual void
-      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
-                               const CellQuadratureContainer &      q,
-                               Field<ValueType, memorySpace> &fieldOutput);
-
-    }; // end of BasisOperationsManager
-  }    // end of namespace basis
+    //
+    // helper functions
+    //
+    size_type
+    get1DQuadNumPoints(const QuadratureRuleType quadRuleType);
+    QuadratureFamily
+    getQuadratureFamily(const QuadratureRuleType quadRuleType);
+  } // end of namespace quadrature
 } // end of namespace dftefe
-#endif // dftefeBasisOperationsManager_h
+#endif

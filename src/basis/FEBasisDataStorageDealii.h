@@ -20,18 +20,22 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeBasisDataStorage_h
-#define dftefeBasisDataStorage_h
+#ifndef dftefeFEBasisDataStorageDealii_h
+#define dftefeFEBasisDataStorageDealii_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <quadrature/CellQuadratureContainer.h>
-#include <quadrature/QuadratureAttributes.h>
-#include <basis/BasisManager.h>
+#include <utils/MemoryStorage.h>
+#include <basis/BasisDataStorage.h>
+#include <basis/FEBasisManagerDealii.h>
+#include <basis/ConstraintsDealii.h>
+#include <deal.II/matrix_free/matrix_free.h>
 #include <memory>
+#include <map>
+#include <vector>
 namespace dftefe
 {
   namespace basis
@@ -41,105 +45,119 @@ namespace dftefe
      * such as the basis function values on a quadrature grid, the overlap
      * matrix of the basis, etc.
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class BasisDataStorage
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    class FEBasisDataStorageDealii
+      : public BasisDataStorage<ValueType, memorySpace>
     {
     public:
-      //
-      // typedefs
-      //
-      using Storage   = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
-      using pointer   = typename Storage::pointer;
-      using reference = typename Storage::reference;
-      using const_reference      = typename Storage::const_reference;
-      using iterator             = typename Storage::iterator;
-      using const_iterator       = typename Storage::const_iterator;
-      using QuadratureAttributes = quadrature::QuadratureAttributes;
-      using QuadratureRuleType   = quadrature::QuadratureRuleType;
+      using QuadratureAttributes =
+        BasisDataStorage<ValueType, memorySpace>::QuadratureAttributes;
+      using QuadratureRuleType =
+        BasisDataStorage<ValueType, memorySpace>::QuadratureRuleType;
+      using Storage = BasisDataStorage<ValueType, memorySpace>::Storage;
 
-    public:
-      virtual ~BasisDataStorage() = default;
-      virtual evaluateBasisData(
+      FEBasisDataStorageDealii(
+        std::shared_ptr<const FEBasisManagerDealii>           feBM,
+        std::vector<std::shared_ptr<const ConstraintsDealii>> constraintsVec,
+        const std::vector<QuadratureRuleType> &               quadRuleTypeVec,
+        const bool                                            storeValues,
+        const bool                                            storeGradient,
+        const bool                                            storeHessian,
+        const bool                                            storeJxW,
+        const bool storeQuadRealPoints);
+      ~FEBasisDataStorageDealii();
+      evaluateBasisData(
         std::shared_ptr<const quadrature::CellQuadratureContainer>
                                  quadratureContainer,
         const QuadratureRuleType quadRuleType,
         const bool               storeGradient,
         const bool               storeHessian,
-        const bool               storeOverlap)                                     = 0;
-      virtual deleteBasisData(const QuadratureRuleType quadRuleType) = 0;
+        const bool               storeOverlap) override;
+      deleteBasisData(const QuadratureRuleType quadRuleType) override;
 
-      virtual std::shared_ptr<const quadrature::CellQuadratureContainer>
+      std::shared_ptr<const quadrature::CellQuadratureContainer>
       getCellQuadratureRuleContainer(
-        const QuadratureRuleType quadRuleType) const = 0;
-
+        const QuadratureRuleType quadRuleType) const override;
 
       // functions to get data for a basis function on a given quad point in a
       // cell
-      virtual ValueType
+      ValueType
       getBasisData(const QuadratureAttributes &attributes,
-                   const size_type             basisId) const = 0;
-      virtual Storage
+                   const size_type             basisId) const override;
+      Storage
       getBasisGradientData(const QuadratureAttributes &attributes,
-                           const size_type             basisId) const = 0;
-      virtual Storage
+                           const size_type             basisId) const override;
+      Storage
       getBasisHessianData(const QuadratureAttributes &attributes,
-                          const size_type             basisId) const = 0;
+                          const size_type             basisId) const override;
 
       // functions to get data for a basis function on all quad points in a cell
-      virtual Storage
+      Storage
       getBasisDataInCell(const QuadratureRuleType quadRuleType,
                          const size_type          cellId,
-                         const size_type          basisId) const = 0;
-      virtual Storage
+                         const size_type          basisId) const override;
+      Storage
       getBasisGradientDataInCell(const QuadratureRuleType quadRuleType,
                                  const size_type          cellId,
-                                 const size_type          basisId) const = 0;
-      virtual Storage
+                                 const size_type basisId) const override;
+      Storage
       getBasisHessianDataInCell(const QuadratureRuleType quadRuleType,
                                 const size_type          cellId,
-                                const size_type          basisId) const = 0;
+                                const size_type basisId) const override;
 
       // functions to get data for all basis functions on all quad points in a
       // cell
-      virtual Storage
+      Storage
       getBasisDataInCell(const QuadratureRuleType quadRuleType,
-                         const size_type          cellId) const = 0;
-      virtual Storage
+                         const size_type          cellId) const override;
+      Storage
       getBasisGradientDataInCell(const QuadratureRuleType quadRuleType,
-                                 const size_type          cellId) const = 0;
-      virtual Storage
+                                 const size_type cellId) const override;
+      Storage
       getBasisHessianDataInCell(const QuadratureRuleType quadRuleType,
-                                const size_type          cellId) const = 0;
+                                const size_type          cellId) const override;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
-      virtual const Storage &
-      getBasisDataInAllCells(const QuadratureRuleType quadRuleType) const = 0;
-      virtual const Storage &
+      const Storage &
+      getBasisDataInAllCells(
+        const QuadratureRuleType quadRuleType) const override;
+      const Storage &
       getBasisGradientDataInAllCells(
-        const QuadratureRuleType quadRuleType) const = 0;
-      virtual const Storage &
+        const QuadratureRuleType quadRuleType) const override;
+      const Storage &
       getBasisHessianDataInAllCells(
-        const QuadratureRuleType quadRuleType) const = 0;
+        const QuadratureRuleType quadRuleType) const override;
 
       // get overlap of two basis functions in a cell
-      virtual ValueType
+      ValueType
       getBasisOverlap(const QuadratureRuleType quadRuleType,
                       const size_type          cellId,
                       const size_type          basisId1,
-                      const size_type          basisId2) const = 0;
+                      const size_type          basisId2) const override;
 
       // get overlap of all the basis functions in a cell
-      virtual Storage
+      Storage
       getBasisOverlapInCell(const QuadratureRuleType quadRuleType,
-                            const size_type          cellId) const = 0;
+                            const size_type          cellId) const override;
 
       // get overlap of all the basis functions in all cells
-      virtual const Storage &
+      const Storage &
       getBasisOverlapInAllCells(
-        const QuadratureRuleType quadRuleType) const = 0;
+        const QuadratureRuleType quadRuleType) const override;
 
-    }; // end of BasisDataStorage
+    private:
+      std::shared_ptr<const FEBasisManagerDealii>            d_feBM;
+      std::map<QuadratureRuleType, std::shared_ptr<Storage>> d_basisQuadStorage;
+      std::map<QuadratureRuleType, std::shared_ptr<Storage>>
+        d_basisGradientQuadStorage;
+      std::map<QuadratureRuleType, std::shared_ptr<Storage>>
+        d_basisHessianQuadStorage;
+      std::map<QuadratureRuleType, std::shared_ptr<Storage>> d_basisOverlap;
+      std::shared_ptr<dealii::MatrixFree<dim, ValueType>>    d_dealiiMatrixFree;
+
+    }; // end of FEBasisDataStorageDealii
   }    // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeBasisDataStorage_h
+#include <basis/FEBasisDataStorageDealii.t.cpp>
+#endif // dftefeFEBasisDataStorageDealii_h
