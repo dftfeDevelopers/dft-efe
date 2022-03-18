@@ -760,5 +760,26 @@ namespace dftefe
     {
       return d_numGhostIndices;
     }
+
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    global_size_type
+    MPIPatternP2P<memorySpace>::localToGlobal(const size_type localId) const
+    {
+      std::string msg =
+        "localId larger than number of locally owned plus ghost ids ";
+      throwException<InvalidArgument>(localId < (d_locallyOwnedRange.second -
+                                                 d_locallyOwnedRange.first) +
+                                                  d_numGhostIndices,
+                                      msg);
+
+      const global_size_type globalId =
+        (localId < (d_locallyOwnedRange.second - d_locallyOwnedRange.first)) ?
+          (d_locallyOwnedRange.first + localId) :
+          d_ghostIndices.data()[localId - (d_locallyOwnedRange.second -
+                                           d_locallyOwnedRange.first)];
+      return globalId;
+    }
+
   } // end of namespace utils
 } // end of namespace dftefe

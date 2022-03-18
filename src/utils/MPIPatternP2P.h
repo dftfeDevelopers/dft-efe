@@ -93,16 +93,16 @@ namespace dftefe
       localGhostSize() const;
 
       bool
-      inLocallyOwnedRange(const global_size_type) const;
+      inLocallyOwnedRange(const global_size_type globalId) const;
 
       bool
-      isGhostEntry(const global_size_type) const;
+      isGhostEntry(const global_size_type globalId) const;
 
       size_type
-      globalToLocal(const global_size_type) const;
+      globalToLocal(const global_size_type globalId) const;
 
       global_size_type
-      localToGlobal(const size_type) const;
+      localToGlobal(const size_type localId) const;
 
       const GlobalSizeTypeVector &
       getGhostIndices() const;

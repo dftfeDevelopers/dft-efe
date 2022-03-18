@@ -88,7 +88,7 @@ class BuildOnlyTestMPICommunicatorP2PUpdateGhosts(rfm.CompileOnlyRegressionTest)
 @rfm.simple_test
 class BuildAndRunTestMPICommunicatorP2PUpdateGhosts1Node4Procs(rfm.RegressionTest):
     target_name = 'TestMPICommunicatorP2PUpdateGhosts'
-    descr = '''A run only test to verify the ghost data in MPICommunicatorP2P on 1
+    descr = '''A build and run test to verify the ghost data in MPICommunicatorP2P on 1
     node with 4 processors'''
     build_system = 'CMake'
     make_opts = [target_name]

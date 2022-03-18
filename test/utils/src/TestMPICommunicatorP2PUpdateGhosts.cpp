@@ -154,12 +154,12 @@ int main()
 	ghostIndices,
 	MPI_COMM_WORLD);
 
-  // test double
+  // test double and block size=1
   const size_type ownedSize=mpiPatternP2PPtr->localOwnedSize(); 
   const size_type ownedPlusGhostSize=mpiPatternP2PPtr->localOwnedSize()+mpiPatternP2PPtr->localGhostSize();
   std::vector<double> dVecStd1(ownedPlusGhostSize,0.0);
   for(size_type i = 0; i < ownedSize; ++i)
-    dVecStd1[i] = 1.0;
+    dVecStd1[i] = mpiPatternP2PPtr->localToGlobal(i);
   
   MemoryStorageDoubleHost memStorage1(ownedPlusGhostSize);
   memStorage1.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd1.data());
@@ -172,11 +172,11 @@ int main()
 
   for(size_type i = ownedSize; i < ownedPlusGhostSize; ++i)
   {
+      const double expectedVal=mpiPatternP2PPtr->localToGlobal(i);
       std::string msg = "In rank " + std::to_string(rank) + " mismatch of ghost value"
-    " Expected ghost value: " + std::to_string(1.0) + "\n"
+    " Expected ghost value: " + std::to_string(expectedVal) + "\n"
     " Received ghost value: " + std::to_string(dVecStd1[i]);
-      dftefe::utils::throwException(std::abs(dVecStd1[i]-1.0) <=1e-10, msg);
-      std::cout<<"i: "<<i<<", value: "<<dVecStd1[i]<<std::endl;
+      dftefe::utils::throwException(std::abs(dVecStd1[i]-expectedVal) <=1e-10, msg);
   }
 
 
