@@ -36,12 +36,12 @@ namespace dftefe
       FEBasisDataStorageDealii(
         std::shared_ptr<const FEBasisManagerDealii>           feBM,
         std::vector<std::shared_ptr<const ConstraintsDealii>> constraintsVec,
-        const std::vector<
-          typename BasisDataStorage<ValueType, memorySpace>::QuadratureRuleType>
-          &quadRuleTypeVec)
+        const std::vector<typename BasisDataStorage<ValueType, memorySpace>::
+                            QuadratureRuleAttributes>
+          &quadratureRuleAttribuesVec)
     {
       const size_type numConstraints  = constraintsVec.size();
-      const size_type numQuadRuleType = quadRuleTypeVec.size();
+      const size_type numQuadRuleType = quadratureRuleAttribuesVec.size();
       std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler =
         feBM->getDoFHandler();
       std::vector<const dealii::DoFHandler<dim> *> dofHandlerVec(
@@ -58,13 +58,13 @@ namespace dftefe
       for (size_type i = 0; i < numQuadRuleType; ++i)
         {
           size_type num1DQuadPoints =
-            quadrature::get1DQuadNumPoints(quadRuleTypeVec[i]);
+            quadratureRuleAttribuesVec[i].getNum1DPoints();
           quadrature::QuadratureFamily quadFamily =
-            quadrature::getQuadratureFamily(quadRuleTypeVec[i]);
-          if (quadFamily == quadrature::QuadFamily : GAUSS)
+            quadratureRuleAttribuesVec[i].getQuadratureFamily();
+          if (quadFamily == quadrature::QuadratureFamily::GAUSS)
             dealiiQuadratureTypeVec.push_back(
               dealii::QGauss<1>(num1DQuadPoints));
-          else if (quadFamily == quadrature::QuadFamily : GLL)
+          else if (quadFamily == quadrature::QuadratureFamily::GLL)
             dealiiQuadratureTypeVec.push_back(
               dealii::QGaussLobatto<1>(num1DQuadPoints));
           else
