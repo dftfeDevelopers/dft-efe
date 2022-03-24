@@ -9,7 +9,7 @@ namespace dftefe
   {
     template <unsigned int dim>
     TriangulationCellDealii<dim>::TriangulationCellDealii(
-      DealiiCellIter dealiiCellIter)
+      DealiiTriangulationCellIterator dealiiCellIter)
       : d_cellItr(dealiiCellIter)
     {}
 
@@ -110,7 +110,7 @@ namespace dftefe
 
     // TODO removed const qualifier
     template <unsigned int dim>
-    typename dealii::Triangulation<dim>::active_cell_iterator &
+    typename TriangulationCellDealii<dim>::DealiiTriangulationCellIterator &
     TriangulationCellDealii<dim>::getCellIterator()
     {
       return d_cellItr;

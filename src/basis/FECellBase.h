@@ -3,8 +3,8 @@
 
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
-#include "TriaCellBase.h"
-#include "CellMappingBase.h"
+#include <basis/TriangulationCellBase.h>
+#include <basis/CellMappingBase.h>
 
 #include <memory>
 
@@ -18,73 +18,71 @@ namespace dftefe
      * avoid the cascading of template parameters.
      **/
 
-    class FECellBase : public TriaCellBase
+    class FECellBase : public TriangulationCellBase
     {
     public:
-      FECellBase();
       virtual ~FECellBase() = default;
-
       virtual std::vector<std::shared_ptr<Point>>
-      getVertices() const override = 0;
+      getVertices() const = 0;
 
       virtual std::shared_ptr<Point>
-      getVertex(size_type i) const override = 0;
+      getVertex(size_type i) const = 0;
 
       virtual std::vector<std::shared_ptr<Point>>
-      getNodalPoints() const override = 0;
+      getNodalPoints() const = 0;
 
       virtual size_type
-      getId() const override = 0;
+      getId() const = 0;
 
       virtual bool
-      isPointInside(std::shared_ptr<const Point> point) const override = 0;
+      isPointInside(std::shared_ptr<const Point> point) const = 0;
 
       virtual bool
-      isAtBoundary(const unsigned int i) const override = 0;
+      isAtBoundary(const unsigned int i) const = 0;
 
       virtual bool
-      isAtBoundary() const override = 0;
+      isAtBoundary() const = 0;
 
       virtual void
-      setRefineFlag() override = 0;
+      setRefineFlag() = 0;
 
       virtual void
-      clearRefineFlag() override = 0;
+      clearRefineFlag() = 0;
 
       virtual void
-      setCoarsenFlag() override = 0;
+      setCoarsenFlag()  = 0;
 
       virtual void
-      clearCoarsenFlag() override = 0;
+      clearCoarsenFlag()  = 0;
 
       virtual bool
-      isActive() const override = 0;
+      isActive() const  = 0;
 
       virtual bool
-      isLocallyOwned() const override = 0;
+      isLocallyOwned() const  = 0;
 
       virtual bool
-      isGhost() const override = 0;
+      isGhost() const  = 0;
 
       virtual bool
-      isArtificial() const override = 0;
+      isArtificial() const  = 0;
 
       virtual int
-      getDim() const override = 0;
+      getDim() const  = 0;
 
       virtual std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const CellMappingBase &cellMapping) const override = 0;
+                         const CellMappingBase &cellMapping) const  = 0;
 
       virtual std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const CellMappingBase &      cellMapping) const override = 0;
+                   const CellMappingBase &      cellMapping) const  = 0;
 
       virtual global_size_type
-      getLocalToGlobalDoFId(size_type i) const override = 0;
+      getLocalToGlobalDoFId(size_type i) const  = 0;
 
       virtual size_type
-      getFEOrder() const override = 0;
+      getFEOrder() const = 0;
 
 
     }; // end of class FECellBase

@@ -244,28 +244,28 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    TriangulationBase::cellIterator
+    TriangulationBase::TriangulationCellIterator
     TriangulationDealiiParallel<dim>::beginLocal()
     {
       return d_triaVectorCell.begin();
     }
 
     template <unsigned int dim>
-    TriangulationBase::cellIterator
+    TriangulationBase::TriangulationCellIterator
     TriangulationDealiiParallel<dim>::endLocal()
     {
       return d_triaVectorCell.end();
     }
 
     template <unsigned int dim>
-    TriangulationBase::const_cellIterator
+    TriangulationBase::const_TriangulationCellIterator
     TriangulationDealiiParallel<dim>::beginLocal() const
     {
       return d_triaVectorCell.begin();
     }
 
     template <unsigned int dim>
-    TriangulationBase::const_cellIterator
+    TriangulationBase::const_TriangulationCellIterator
     TriangulationDealiiParallel<dim>::endLocal() const
     {
       return d_triaVectorCell.end();

@@ -50,10 +50,8 @@ namespace dftefe
       : public BasisDataStorage<ValueType, memorySpace>
     {
     public:
-      using QuadraturePointAttributes =
-        BasisDataStorage<ValueType, memorySpace>::QuadraturePointAttributes;
-      using QuadratureRuleAttributes =
-        BasisDataStorage<ValueType, memorySpace>::QuadratureRuleAttributes;
+      using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
+      using QuadratureRuleAttributes = quadrature::QuadratureRuleAttributes;
       using Storage = BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(

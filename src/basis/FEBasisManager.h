@@ -30,7 +30,7 @@
 #include <utils/Point.h>
 #include <basis/BasisManager.h>
 #include <basis/TriangulationBase.h>
-#include <basis/TriangulationCellBase.h>
+#include <basis/FECellBase.h>
 namespace dftefe
 {
   namespace basis
@@ -48,10 +48,10 @@ namespace dftefe
       // Typedefs
       //
     public:
-      typedef std::vector<std::shared_ptr<TriangulationCellBase>>::iterator
-        cellIterator;
-      typedef std::vector<std::shared_ptr<TriangulationCellBase>>::
-        const_iterator const_cellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::iterator
+        FECellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::
+        const_iterator const_FECellIterator;
 
       virtual ~FEBasisManager() = default;
       virtual double
@@ -66,13 +66,17 @@ namespace dftefe
       virtual void
       reinit(const TriangulationBase &triangulation, const size_type feOrder);
       virtual size_type
-      nLocalCells() const = 0;
+      nLocallyActiveCells() const = 0;
+      virtual size_type
+      nLocallyOwnedCells() const = 0;
       virtual size_type
       nGlobalCells() const = 0;
       virtual size_type
       getFEOrder(size_type cellId) const = 0;
       virtual size_type
       nCellDofs(size_type cellId) const = 0;
+      virtual bool
+      isHPRefined() const = 0;
       virtual size_type
       nLocalNodes() const = 0;
       virtual global_size_type
@@ -85,14 +89,22 @@ namespace dftefe
       getCellDofsLocalIds(size_type cellId) const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
-      virtual cellIterator
-      beginLocal() = 0;
-      virtual cellIterator
-      endLocal() = 0;
-      virtual const_cellIterator
-      beginLocal() const = 0;
-      virtual const_cellIterator
-      endLocal() const = 0;
+      virtual FECellIterator
+      beginLocallyOwnedCells() = 0;
+      virtual FECellIterator
+      endLocallyOwnedCells() = 0;
+      virtual const_FECellIterator
+      beginLocallyOwnedCells() const = 0;
+      virtual const_FECellIterator
+      endLocallyOwnedCells() const = 0;
+      virtual FECellIterator
+      beginLocallyActiveCells() = 0;
+      virtual FECellIterator
+      endLocallyActiveCells() = 0;
+      virtual const_FECellIterator
+      beginLocallyActiveCells() const = 0;
+      virtual const_FECellIterator
+      endLocallyActiveCells() const = 0;
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

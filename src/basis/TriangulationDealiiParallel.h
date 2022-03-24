@@ -75,13 +75,13 @@ namespace dftefe
        */
       std::vector<size_type>
       getBoundaryIds() const override;
-      TriangulationBase::cellIterator
+      TriangulationBase::TriangulationCellIterator
       beginLocal() override;
-      TriangulationBase::cellIterator
+      TriangulationBase::TriangulationCellIterator
       endLocal() override;
-      TriangulationBase::const_cellIterator
+      TriangulationBase::const_TriangulationCellIterator
       beginLocal() const override;
-      TriangulationBase::const_cellIterator
+      TriangulationBase::const_TriangulationCellIterator
       endLocal() const override;
       unsigned int
       getDim() const override;

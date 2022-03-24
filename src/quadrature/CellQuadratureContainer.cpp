@@ -35,7 +35,7 @@ namespace dftefe
 
         realPoints.resize(numQuadPoints, dftefe::utils::Point(dim, 0.0));
         JxW.resize(numQuadPoints, 0.0);
-        basis::TriangulationBase::const_cellIterator cellIter =
+        basis::TriangulationBase::const_TriangulationCellIterator cellIter =
           triangulation->beginLocal();
         unsigned int iCell = 0;
         for (; cellIter != triangulation->endLocal(); ++cellIter)
@@ -155,7 +155,7 @@ namespace dftefe
       d_cellQuadStartIds.resize(d_numCells, 0);
       d_numQuadPoints                                    = 0;
       unsigned int                                 iCell = 0;
-      basis::TriangulationBase::const_cellIterator cellIter =
+      basis::TriangulationBase::const_TriangulationCellIterator cellIter =
         triangulation->beginLocal();
       for (; cellIter != triangulation->endLocal(); ++cellIter)
         {

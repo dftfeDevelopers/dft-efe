@@ -45,8 +45,8 @@ namespace dftefe
     class FEBasisManagerDealii : public FEBasisManager
     {
     public:
-      using cellIterator       = FEBasisManager<dim>::cellIterator;
-      using const_cellIterator = FEBasisManager<dim>::const_cellIterator;
+      using FECellIterator       = FEBasisManager<dim>::FECellIterator;
+      using const_FECellIterator = FEBasisManager<dim>::const_FECellIterator;
 
       FEBasisManagerDealii();
       ~FEBasisManagerDealii();
@@ -64,13 +64,17 @@ namespace dftefe
       reinit(const TriangulationBase &triangulation,
              const size_type          feOrder) override;
       size_type
-      nLocalCells() const override;
+      nLocallyActiveCells() const override;
+      size_type
+      nLocallyOwnedCells() const override;
       size_type
       nGlobalCells() const override;
       size_type
       getFEOrder(size_type cellId) const override;
       size_type
       nCellDofs(size_type cellId) const override;
+      bool
+      isHPRefined() const override;
       size_type
       nLocalNodes() const override;
       global_size_type
@@ -79,18 +83,26 @@ namespace dftefe
       getLocalNodeIds(size_type cellId) const override;
       std::vector<size_type>
       getGlobalNodeIds() const override;
-      virtual std::vector<size_type>
+      std::vector<size_type>
       getCellDofsLocalIds(size_type cellId) const override;
       std::vector<size_type>
       getBoundaryIds() const override;
-      cellIterator
-      beginLocal() override;
-      cellIterator
-      endLocal() override;
-      const_cellIterator
-      beginLocal() const override;
-      const_cellIterator
-      endLocal() const override;
+      virtual FECellIterator
+      beginLocallyOwnedCells() override;
+      virtual FECellIterator
+      endLocallyOwnedCells() override;
+      virtual const_FECellIterator
+      beginLocallyOwnedCells() const override;
+      virtual const_FECellIterator
+      endLocallyOwnedCells() const override;
+      virtual FECellIterator
+      beginLocallyActiveCells() override;
+      virtual FECellIterator
+      endLocallyActiveCells() override;
+      virtual const_FECellIterator
+      beginLocallyActiveCells() const override;
+      virtual const_FECellIterator
+      endLocallyActiveCells() const override;
       unsigned int
       getDim() const override;
 
@@ -103,6 +115,7 @@ namespace dftefe
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
+      bool d_isHPRefined;
 
 
     }; // end of FEBasisManagerDealii
