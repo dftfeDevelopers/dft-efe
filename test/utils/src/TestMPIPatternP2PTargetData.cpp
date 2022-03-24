@@ -77,7 +77,7 @@ int main()
   const global_size_type numGlobalIndices = numProcs*numOwnedIndices; 
   const global_size_type ownedIndexStart = rank*numOwnedIndices;
   const global_size_type ownedIndexEnd = ownedIndexStart + numOwnedIndices;
-  const size_type numGhostIndices = std::rand()%maxNumGhostIndices;
+  const size_type numGhostIndices = (numProcs==1)? 0:std::rand()%maxNumGhostIndices;
   std::set<global_size_type> ghostIndicesSet;
   std::map<size_type, std::vector<size_type>> procIdToLocalGhostIndices; 
   for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
