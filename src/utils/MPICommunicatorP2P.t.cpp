@@ -214,7 +214,7 @@ namespace dftefe
       // initiate non-blocking sends to ghost processors
       ValueType *sendArrayStartPtr =
         dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
-      for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
+      for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
            ++i)
         {
           const int err = MPI_Isend(
@@ -223,11 +223,12 @@ namespace dftefe
              d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
               d_blockSize * sizeof(ValueType),
             MPI_BYTE,
-            (d_mpiPatternP2P->getGhostProcIds())[i],
+            d_mpiPatternP2P->getGhostProcIds().data()[i],
             static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
               communicationChannel,
             d_mpiCommunicator,
-            &d_requestsAccumulateAddLocallyOwned[i]);
+            &d_requestsAccumulateAddLocallyOwned
+              [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
 
           std::string errMsg = "Error occured while using MPI_Isend. "
                                "Error code: " +
