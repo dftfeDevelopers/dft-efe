@@ -179,6 +179,7 @@ namespace dftefe
       unsigned int                                       d_dim;
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
+      bool d_storeJacobianInverse;
     };
   } // end of namespace quadrature
 

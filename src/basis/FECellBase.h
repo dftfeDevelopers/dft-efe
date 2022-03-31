@@ -50,36 +50,36 @@ namespace dftefe
       clearRefineFlag() = 0;
 
       virtual void
-      setCoarsenFlag()  = 0;
+      setCoarsenFlag() = 0;
 
       virtual void
-      clearCoarsenFlag()  = 0;
+      clearCoarsenFlag() = 0;
 
       virtual bool
-      isActive() const  = 0;
+      isActive() const = 0;
 
       virtual bool
-      isLocallyOwned() const  = 0;
+      isLocallyOwned() const = 0;
 
       virtual bool
-      isGhost() const  = 0;
+      isGhost() const = 0;
 
       virtual bool
-      isArtificial() const  = 0;
+      isArtificial() const = 0;
 
       virtual int
-      getDim() const  = 0;
+      getDim() const = 0;
 
       virtual std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const CellMappingBase &cellMapping) const  = 0;
+                         const CellMappingBase &      cellMapping) const = 0;
 
       virtual std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const CellMappingBase &      cellMapping) const  = 0;
+                   const CellMappingBase &      cellMapping) const = 0;
 
       virtual global_size_type
-      getLocalToGlobalDoFId(size_type i) const  = 0;
+      getLocalToGlobalDoFId(size_type i) const = 0;
 
       virtual size_type
       getFEOrder() const = 0;

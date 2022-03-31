@@ -51,7 +51,7 @@ namespace dftefe
     {
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
-      using QuadratureRuleAttributes = quadrature::QuadratureRuleAttributes;
+      using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
       using Storage = BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(

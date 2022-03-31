@@ -115,7 +115,7 @@ namespace dftefe
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
-      bool d_isHPRefined;
+      bool                                     d_isHPRefined;
 
 
     }; // end of FEBasisManagerDealii

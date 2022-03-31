@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian 
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
 #ifndef dftefeFECellDealii_h
@@ -28,92 +28,91 @@
 
 #include <utils/TypeConfig.h>
 #include <deal.II/dofs/dof_accessor.h>
-namespace dftefe 
+namespace dftefe
 {
-  namespace basis 
+  namespace basis
   {
-
     template <size_type dim>
-      class FECellDealii: public FECellBase 
-      {
+    class FECellDealii : public FECellBase
+    {
       using DealiiFECellIterator =
         typename dealii::DoFHandler<dim>::active_cell_iterator;
 
     public:
       FECellDealii(DealiiFECellIterator dealiiFECellIter);
       ~FECellDealii();
-      
+
       std::vector<std::shared_ptr<Point>>
-      getVertices() const override ;
+      getVertices() const override;
 
       std::shared_ptr<Point>
-      getVertex(size_type i) const override ;
+      getVertex(size_type i) const override;
 
       std::vector<std::shared_ptr<Point>>
-      getNodalPoints() const override ;
+      getNodalPoints() const override;
 
       size_type
-      getId() const override ;
+      getId() const override;
 
       bool
-      isPointInside(std::shared_ptr<const Point> point) const override ;
+      isPointInside(std::shared_ptr<const Point> point) const override;
 
       bool
-      isAtBoundary(const unsigned int i) const override ;
+      isAtBoundary(const unsigned int i) const override;
 
       bool
-      isAtBoundary() const override ;
+      isAtBoundary() const override;
 
       void
-      setRefineFlag() override ;
+      setRefineFlag() override;
 
       void
-      clearRefineFlag() override ;
+      clearRefineFlag() override;
 
       void
-      setCoarsenFlag() override ;
+      setCoarsenFlag() override;
 
       void
-      clearCoarsenFlag() override ;
+      clearCoarsenFlag() override;
 
       bool
-      isActive() const override ;
+      isActive() const override;
 
       bool
-      isLocallyOwned() const override ;
+      isLocallyOwned() const override;
 
-       bool
-      isGhost() const override ;
+      bool
+      isGhost() const override;
 
-       bool
-      isArtificial() const override ;
+      bool
+      isArtificial() const override;
 
-       int
-      getDim() const override ;
+      int
+      getDim() const override;
 
-       std::shared_ptr<Point>
+      std::shared_ptr<Point>
       getParametricPoint(std::shared_ptr<const Point> realPoint,
-                         const CellMappingBase &cellMapping) const override ;
+                         const CellMappingBase &cellMapping) const override;
 
-       std::shared_ptr<Point>
+      std::shared_ptr<Point>
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                   const CellMappingBase &      cellMapping) const override ;
-       
+                   const CellMappingBase &      cellMapping) const override;
+
       global_size_type
-      getLocalToGlobalDoFId(size_type i) const override ;
-       size_type
+      getLocalToGlobalDoFId(size_type i) const override;
+      size_type
       getFEOrder() const override;
 
       DealiiFECellIterator &
-	getDealiiFECellIter();
+      getDealiiFECellIter();
 
     private:
-	DealiiFECellIterator d_dealiiFECellIter;
+      DealiiFECellIterator d_dealiiFECellIter;
 
 
-      };// end of class FECellDealii
-  }
+    }; // end of class FECellDealii
+  }    // namespace basis
 
-}
+} // namespace dftefe
 
 #endif // dftefeFECellDealii_h

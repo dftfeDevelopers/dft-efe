@@ -22,39 +22,43 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
-namespace dftefe {
-  namespace utils {
-    namespace mathFunctions 
+namespace dftefe
+{
+  namespace utils
+  {
+    namespace mathFunctions
     {
-      int intPow(int base, unsigned int e)
+      int
+      intPow(int base, unsigned int e)
       {
-	int result = 1;
-	for (;;)
-	{
-	  if (e & 1)
-	    result *= base;
-	  e >>= 1;
-	  if (!e)
-	    break;
-	  base *= base;
-	}
-	return result;
+        int result = 1;
+        for (;;)
+          {
+            if (e & 1)
+              result *= base;
+            e >>= 1;
+            if (!e)
+              break;
+            base *= base;
+          }
+        return result;
       }
 
-      size_type sizeTypePow(size_type base, size_type e)
+      size_type
+      sizeTypePow(size_type base, size_type e)
       {
-	size_type result = 1;
-	for (;;)
-	{
-	  if (e & 1)
-	    result *= base;
-	  e >>= 1;
-	  if (!e)
-	    break;
-	  base *= base;
-	}
-	return result;
+        size_type result = 1;
+        for (;;)
+          {
+            if (e & 1)
+              result *= base;
+            e >>= 1;
+            if (!e)
+              break;
+            base *= base;
+          }
+        return result;
       }
-    }
-  }
-}
+    } // namespace mathFunctions
+  }   // namespace utils
+} // namespace dftefe

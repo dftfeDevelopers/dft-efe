@@ -48,10 +48,9 @@ namespace dftefe
       // Typedefs
       //
     public:
-      typedef std::vector<std::shared_ptr<FECellBase>>::iterator
-        FECellIterator;
-      typedef std::vector<std::shared_ptr<FECellBase>>::
-        const_iterator const_FECellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::iterator FECellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
+        const_FECellIterator;
 
       virtual ~FEBasisManager() = default;
       virtual double
