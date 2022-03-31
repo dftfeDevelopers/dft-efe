@@ -11,9 +11,9 @@ namespace dftefe
     asum(size_type n, ValueType const *x, size_type incx)
     {
       auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
-      utils::throwException(!std::is_same<memorySpace,
-                                          memorySpaceDevice>::value,
-                     "blas::asum() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+      utils::throwException(
+        !std::is_same<memorySpace, memorySpaceDevice>::value,
+        "blas::asum() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       blasWrapper::real_type<ValueType> output;
       output = blas::asum(n, x, incx);
       return output;
@@ -23,16 +23,13 @@ namespace dftefe
     blasWrapper::real_type<ValueType>
     amax(size_type n, ValueType const *x, size_type incx)
     {
-
-      utils::throwException(!std::is_same<memorySpace,
-                                          dftefe::utils::MemorySpace::DEVICE>::value,
-                            "blas::amax() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+      utils::throwException(
+        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        "blas::amax() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
       size_type outputIndex;
       outputIndex = blas::iamax(n, x, incx);
       return *(x + outputIndex);
-
-
     }
 
     template <typename ValueType1,
@@ -46,9 +43,9 @@ namespace dftefe
          ValueType2 *                                     y,
          size_type                                        incy)
     {
-      utils::throwException(!std::is_same<memorySpace,
-                                          dftefe::utils::MemorySpace::DEVICE>::value,
-                            "blas::axpy() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+      utils::throwException(
+        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        "blas::axpy() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       blas::axpy(n, alpha, x, incx, y, incy);
     }
 
@@ -62,9 +59,9 @@ namespace dftefe
         ValueType2 const *y,
         size_type         incy)
     {
-      utils::throwException(!std::is_same<memorySpace,
-                                          dftefe::utils::MemorySpace::DEVICE>::value,
-                            "blas::dot() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+      utils::throwException(
+        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        "blas::dot() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
       blasWrapper::real_type<ValueType> output;
       output = blas::dot(n, x, incx, y, incy);
@@ -75,9 +72,9 @@ namespace dftefe
     blasWrapper::real_type<ValueType>
     nrm2(size_type n, ValueType const *x, size_type incx)
     {
-      utils::throwException(!std::is_same<memorySpace,
-                                          dftefe::utils::MemorySpace::DEVICE>::value,
-                            "blas::nrm2() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+      utils::throwException(
+        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        "blas::nrm2() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       blasWrapper::real_type<ValueType> output;
       output = blas::nrm2(n, x, incx);
       return output;
@@ -88,8 +85,8 @@ namespace dftefe
     void
     gemm(
       blasWrapper::Layout                                           layout,
-      blasWrapper::Op                                             transA,
-      blasWrapper::Op                                             transB,
+      blasWrapper::Op                                               transA,
+      blasWrapper::Op                                               transB,
       size_type                                                     m,
       size_type                                                     n,
       size_type                                                     k,

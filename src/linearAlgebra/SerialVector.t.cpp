@@ -153,7 +153,6 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::l2Norm() const
     {
-
       return nrm2(d_storage->size(), this->data());
     }
 
@@ -161,7 +160,6 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::lInfNorm() const
     {
-
       return amax(d_storage->size(), this->data());
     }
 

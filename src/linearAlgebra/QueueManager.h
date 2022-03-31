@@ -36,11 +36,11 @@ namespace dftefe
     class QueueManager
     {
     public:
-//      blasWrapper::Queue &
-//      getBlasQueue();
-//
-//      void
-//      createBlasQueue();
+      //      blasWrapper::Queue &
+      //      getBlasQueue();
+      //
+      //      void
+      //      createBlasQueue();
 
     private:
       int cpuQueue;

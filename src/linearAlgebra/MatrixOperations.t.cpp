@@ -7,9 +7,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     MatrixOperations<ValueType, memorySpace>::matMulc(
-      blasWrapper::Layout                           layout,
-      blasWrapper::Op                         transA,
-      blasWrapper::Op                        transB,
+      blasWrapper::Layout                      layout,
+      blasWrapper::Op                          transA,
+      blasWrapper::Op                          transB,
       size_type                                m,
       size_type                                n,
       size_type                                k,
@@ -24,20 +24,20 @@ namespace dftefe
       blasWrapper::blasQueueType<memorySpace> &blasQueue)
     {
       dftefe::linearAlgebra::gemm(layout,
-                                 transA,
-                                 transB,
-                                 m,
-                                 n,
-                                 k,
-                                 alpha,
-                                 dA,
-                                 ldda,
-                                 dB,
-                                 lddb,
-                                 beta,
-                                 dC,
-                                 lddc,
-                                 blasQueue);
+                                  transA,
+                                  transB,
+                                  m,
+                                  n,
+                                  k,
+                                  alpha,
+                                  dA,
+                                  ldda,
+                                  dB,
+                                  lddb,
+                                  beta,
+                                  dC,
+                                  lddc,
+                                  blasQueue);
     }
 
   } // namespace linearAlgebra

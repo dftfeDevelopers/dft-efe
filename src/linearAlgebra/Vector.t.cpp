@@ -151,18 +151,14 @@ namespace dftefe
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      axpy(d_storage->size(),
-           1.0,
-           rhs.data(),
-           1,
-           this->data(),
-           1);
+      axpy(d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1);
 
       return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void Vector<ValueType, memorySpace>::addLocal(
+    void
+    Vector<ValueType, memorySpace>::addLocal(
       const Vector<ValueType, memorySpace> &rhs)
     {
       bool areCompatible =
@@ -179,13 +175,7 @@ namespace dftefe
         d_localSize <= rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      axpy(d_localSize,
-           1.0,
-           rhs.data(),
-           1,
-           this->data(),
-           1);
-
+      axpy(d_localSize, 1.0, rhs.data(), 1, this->data(), 1);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -207,12 +197,7 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      axpy(d_storage->size(),
-           -1.0,
-           rhs.data(),
-           1,
-           this->data(),
-           1);
+      axpy(d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1);
       return *this;
     }
 
@@ -235,12 +220,7 @@ namespace dftefe
         (d_localSize <= rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      axpy(d_localSize,
-           -1.0,
-           rhs.data(),
-           1,
-           this->data(),
-           1);
+      axpy(d_localSize, -1.0, rhs.data(), 1, this->data(), 1);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -317,19 +297,9 @@ namespace dftefe
         (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
         "Mismatch of sizes of the underlying storages"
         "of the Vectors that are added.");
-      axpy(uStorageSize,
-           a,
-           u.data(),
-           1,
-           w.data(),
-           1);
+      axpy(uStorageSize, a, u.data(), 1, w.data(), 1);
 
-      axpy(uStorageSize,
-           b,
-           v.data(),
-           1,
-           w.data(),
-           1);
+      axpy(uStorageSize, b, v.data(), 1, w.data(), 1);
     }
   } // namespace linearAlgebra
 } // namespace dftefe

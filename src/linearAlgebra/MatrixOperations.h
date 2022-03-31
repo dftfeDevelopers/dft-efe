@@ -39,11 +39,10 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class MatrixOperations
     {
-
       void
-      matMulc(blasWrapper::Layout                           layout,
-              blasWrapper::Op                        transA,
-              blasWrapper::Op                        transB,
+      matMulc(blasWrapper::Layout                      layout,
+              blasWrapper::Op                          transA,
+              blasWrapper::Op                          transB,
               size_type                                m,
               size_type                                n,
               size_type                                k,

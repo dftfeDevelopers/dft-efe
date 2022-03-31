@@ -29,17 +29,18 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-//    blasWrapper::Queue &
-//    QueueManager::getBlasQueue()
-//    {
-//      return blasGpuQueue;
-//    }
-//
-//    void
-//    QueueManager::createBlasQueue()
-//    {
-//      DFTEFE_AssertWithMsg(0, "createBlasQueue() not implemented yet.... ");
-//    }
+    //    blasWrapper::Queue &
+    //    QueueManager::getBlasQueue()
+    //    {
+    //      return blasGpuQueue;
+    //    }
+    //
+    //    void
+    //    QueueManager::createBlasQueue()
+    //    {
+    //      DFTEFE_AssertWithMsg(0, "createBlasQueue() not implemented yet....
+    //      ");
+    //    }
 
 
 

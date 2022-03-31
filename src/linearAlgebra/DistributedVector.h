@@ -122,7 +122,8 @@ namespace dftefe
 
       /**
        * @brief Constructor based on locally owned indices. This does not contain
-       * any ghost indices. This is to store the locally owned part of a distributed Vector
+       * any ghost indices. This is to store the locally owned part of a
+       * distributed Vector
        * @note This way of construction is expensive. One should use the other
        * constructor based on an input MPICommunicatorP2P as far as possible.
        *
@@ -141,20 +142,20 @@ namespace dftefe
       /**
        * @brief Constructor based on total number of global indices.
        * This does not contain any ghost indices. This is to store the locally
-       * owned part of a distributed Vector. The vector is divided to ensure equitability
-       * as much as possible.
+       * owned part of a distributed Vector. The vector is divided to ensure
+       * equitability as much as possible.
        * @note This way of construction is expensive. One should use the other
-       * constructor based on an input MPICommunicatorP2P as far as possible. Further,
-       *  the decomposotion is not compatible with other ways of distributed vector construction.
+       * constructor based on an input MPICommunicatorP2P as far as possible.
+       * Further, the decomposotion is not compatible with other ways of
+       * distributed vector construction.
        *
        * @param totalGlobalDofs Total number of global indices that is distributed
        * over the processors.
        *
        */
-      DistributedVector(
-        const global_size_type                             totalGlobalDofs,
-        const MPI_Comm &                                    mpiComm,
-        const ValueType initVal /*= ValueType()*/);
+      DistributedVector(const global_size_type totalGlobalDofs,
+                        const MPI_Comm &       mpiComm,
+                        const ValueType        initVal /*= ValueType()*/);
 
 #endif // DFTEFE_WITH_MPI
 
@@ -169,7 +170,7 @@ namespace dftefe
        * @param[in] u DistributedVector object to copy from
        * @param[in] initVal Initial value of the vector
        */
-      DistributedVector( const DistributedVector &u, ValueType initVal);
+      DistributedVector(const DistributedVector &u, ValueType initVal);
 
       /**
        * @brief Move constructor

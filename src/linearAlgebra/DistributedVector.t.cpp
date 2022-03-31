@@ -107,7 +107,8 @@ namespace dftefe
      * @brief Constructor using locally owned range. This vector does not contain any
      * ghost indices
      * @note This way of construction is expensive. One should use the other
-     * constructor based on an input MPICommunicatorP2P or another vector as far as possible.
+     * constructor based on an input MPICommunicatorP2P or another vector as far
+     * as possible.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
@@ -115,7 +116,7 @@ namespace dftefe
       const MPI_Comm &                                    mpiComm,
       const ValueType initVal /*= ValueType()*/)
     {
-      std::vector<dftefe::global_size_type>  ghostIndices;
+      std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
       //
       // TODO Move the warning message to a Logger class
@@ -162,15 +163,16 @@ namespace dftefe
      * up equitably across all processors. This decompositon is not compatible
      * with other constructors.
      * @note This way of construction is expensive. One should use the other
-     * constructor based on an input MPICommunicatorP2P or another vector as far as possible.
+     * constructor based on an input MPICommunicatorP2P or another vector as far
+     * as possible.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
-      const global_size_type                             totalGlobalDofs,
-      const MPI_Comm &                                    mpiComm,
-      const ValueType initVal /*= ValueType()*/)
+      const global_size_type totalGlobalDofs,
+      const MPI_Comm &       mpiComm,
+      const ValueType        initVal /*= ValueType()*/)
     {
-      std::vector<dftefe::global_size_type>      ghostIndices;
+      std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
 
       std::pair<global_size_type, global_size_type> locallyOwnedRange;
@@ -195,24 +197,25 @@ namespace dftefe
 
       int mpiProcess;
 
-      int errProc = MPI_Comm_size(mpiComm, &mpiProcess);
+      int         errProc = MPI_Comm_size(mpiComm, &mpiProcess);
       std::string msgProc = "Error occured while using MPI_Comm_size. "
-                        "Error code: " +
-                        std::to_string(errProc);
+                            "Error code: " +
+                            std::to_string(errProc);
       utils::throwException(errProc == MPI_SUCCESS, msgProc);
 
-      dftefe::global_size_type locallyOwnedSize = totalGlobalDofs/mpiProcess;
-      if ( mpiRank < totalGlobalDofs%mpiProcess )
+      dftefe::global_size_type locallyOwnedSize = totalGlobalDofs / mpiProcess;
+      if (mpiRank < totalGlobalDofs % mpiProcess)
         locallyOwnedSize++;
 
-      dftefe::global_size_type startIndex =  mpiRank*(totalGlobalDofs/mpiProcess) ;
-      if ( mpiRank < totalGlobalDofs%mpiProcess )
-        startIndex +=  mpiRank ;
+      dftefe::global_size_type startIndex =
+        mpiRank * (totalGlobalDofs / mpiProcess);
+      if (mpiRank < totalGlobalDofs % mpiProcess)
+        startIndex += mpiRank;
       else
-        startIndex += totalGlobalDofs%mpiProcess ;
+        startIndex += totalGlobalDofs % mpiProcess;
 
-      locallyOwnedRange.first =  startIndex ;
-      locallyOwnedRange.second = startIndex + locallyOwnedSize ;
+      locallyOwnedRange.first  = startIndex;
+      locallyOwnedRange.second = startIndex + locallyOwnedSize;
 
 
       ////////////
@@ -263,7 +266,8 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
-      const DistributedVector &u, ValueType initVal)
+      const DistributedVector &u,
+      ValueType                initVal)
     {
       d_storage =
         std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
@@ -369,7 +373,8 @@ namespace dftefe
     double
     DistributedVector<ValueType, memorySpace>::lInfNorm() const
     {
-      const double lInfNormLocallyOwned = amax(d_locallyOwnedSize, this->data());
+      const double lInfNormLocallyOwned =
+        amax(d_locallyOwnedSize, this->data());
       double returnValue = lInfNormLocallyOwned;
 #ifdef DFTEFE_WITH_MPI
       MPI_Allreduce(&lInfNormLocallyOwned,

@@ -189,7 +189,8 @@ namespace dftefe
        * @throws exception if the sizes and type (SerialVector or
        * DistributedVector) are incompatible
        */
-      void addLocal (const Vector &rhs);
+      void
+      addLocal(const Vector &rhs);
 
       /**
        * @brief Compound subtraction for elementwise addition lhs -= rhs
@@ -207,7 +208,8 @@ namespace dftefe
        * @throws exception if the sizes and type (SerialVector or
        * DistributedVector) are incompatible
        */
-      void subLocal (const Vector &rhs);
+      void
+      subLocal(const Vector &rhs);
 
       /**
        * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)

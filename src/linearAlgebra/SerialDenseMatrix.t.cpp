@@ -26,19 +26,21 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
       const SerialDenseMatrix<ValueType, memorySpace> &u)
     {
-      this->d_nGlobalRows = u.d_nGlobalRows;
-      this->d_nGlobalCols = u.d_nGlobalCols;
-      this->d_nLocalRows  = u.d_nLocalRows;
-      this->d_nLocalCols  = u.d_nLocalCols;
-      this->d_blasQueue   = u.d_blasQueue;
-      this->d_data =
-        std::make_shared<typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
-          this->d_nGlobalRows * this->d_nGlobalCols);
+      d_nGlobalRows = u.d_nGlobalRows;
+      d_nGlobalCols = u.d_nGlobalCols;
+      d_nLocalRows  = u.d_nLocalRows;
+      d_nLocalCols  = u.d_nLocalCols;
+      d_blasQueue   = u.d_blasQueue;
+      d_property    = u.d_property;
+      d_uplo        = u.d_uplo;
+      d_layout      = u.d_layout;
+      d_data        = std::make_shared<
+        typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
+        d_nGlobalRows * d_nGlobalCols);
       this->copyFrom<memorySpace>(u);
     }
 
@@ -49,21 +51,24 @@ namespace dftefe
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
       SerialDenseMatrix<ValueType, memorySpace> &&u) noexcept
     {
-      d_data          = std::move(u.d_data);
+      d_data = std::move(u.d_data);
 
       d_nGlobalRows = std::move(u.d_nGlobalRows);
       d_nGlobalCols = std::move(u.d_nGlobalCols);
       d_nLocalRows  = std::move(u.d_nLocalRows);
       d_nLocalCols  = std::move(u.d_nLocalCols);
-      d_blasQueue        = std::move(u.d_blasQueue);
+      d_blasQueue   = std::move(u.d_blasQueue);
+      d_property    = std::move(u.d_property);
+      d_uplo        = std::move(u.d_uplo);
+      d_layout      = std::move(u.d_layout);
 
-      //TODO check compatibity
-//      bool areCompatible =
-//        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
-//      utils::throwException<utils::LogicError>(
-//        areCompatible,
-//        "Trying to move from an incompatible Vector. One is a SerialVector and the "
-//        " other a DistributedVector.");
+      // TODO check compatibity
+      //      bool areCompatible =
+      //        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      //      utils::throwException<utils::LogicError>(
+      //        areCompatible,
+      //        "Trying to move from an incompatible Vector. One is a
+      //        SerialVector and the " " other a DistributedVector.");
     }
 
     //
@@ -77,22 +82,25 @@ namespace dftefe
       d_data =
         std::make_shared<typename Matrix<ValueType, memorySpace>::Storage>(
           (u.d_data)->size());
-      *d_data         = *(u.d_data);
+      *d_data = *(u.d_data);
 
       d_nGlobalRows = u.d_nGlobalRows;
       d_nGlobalCols = u.d_nGlobalCols;
       d_nLocalRows  = u.d_nLocalRows;
       d_nLocalCols  = u.d_nLocalCols;
       d_blasQueue   = u.d_blasQueue;
+      d_property    = u.d_property;
+      d_uplo        = u.d_uplo;
+      d_layout      = u.d_layout;
 
-//      VectorAttributes vectorAttributesSerial(
-//        VectorAttributes::Distribution::SERIAL);
-//      bool areCompatible =
-//        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
-//      utils::throwException<utils::LogicError>(
-//        areCompatible,
-//        "Trying to copy assign from an incompatible Vector. One is a SerialVector and the "
-//        " other a DistributedVector.");
+      //      VectorAttributes vectorAttributesSerial(
+      //        VectorAttributes::Distribution::SERIAL);
+      //      bool areCompatible =
+      //        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      //      utils::throwException<utils::LogicError>(
+      //        areCompatible,
+      //        "Trying to copy assign from an incompatible Vector. One is a
+      //        SerialVector and the " " other a DistributedVector.");
       return *this;
     }
 
@@ -102,42 +110,51 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialDenseMatrix<ValueType, memorySpace> &
     SerialDenseMatrix<ValueType, memorySpace>::operator=(
-      SerialDenseMatrix<ValueType, memorySpace> &&u)
+      SerialDenseMatrix<ValueType, memorySpace> &&u) noexcept
     {
-      d_data          = std::move(u.d_data);
+      d_data = std::move(u.d_data);
 
       d_nGlobalRows = std::move(u.d_nGlobalRows);
       d_nGlobalCols = std::move(u.d_nGlobalCols);
       d_nLocalRows  = std::move(u.d_nLocalRows);
       d_nLocalCols  = std::move(u.d_nLocalCols);
       d_blasQueue   = std::move(u.d_blasQueue);
+      d_property    = std::move(u.d_property);
+      d_uplo        = std::move(u.d_uplo);
+      d_layout      = std::move(u.d_layout);
 
-//      VectorAttributes vectorAttributesSerial(
-//        VectorAttributes::Distribution::SERIAL);
-//      bool areCompatible =
-//        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
-//      utils::throwException<utils::LogicError>(
-//        areCompatible,
-//        "Trying to move assign from an incompatible Vector. One is a SerialVector and the "
-//        " other a DistributedVector.");
+      //      VectorAttributes vectorAttributesSerial(
+      //        VectorAttributes::Distribution::SERIAL);
+      //      bool areCompatible =
+      //        d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
+      //      utils::throwException<utils::LogicError>(
+      //        areCompatible,
+      //        "Trying to move assign from an incompatible Vector. One is a
+      //        SerialVector and the " " other a DistributedVector.");
       return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
-      size_type rows,
-      size_type cols,
-      blasWrapper::blasQueueType<memorySpace> &blasQueueInput,
-      ValueType initVal)
+      size_type                                         rows,
+      size_type                                         cols,
+      blasWrapper::blasQueueType<memorySpace> &         blasQueueInput,
+      ValueType                                         initVal,
+      typename Matrix<ValueType, memorySpace>::Property property,
+      typename Matrix<ValueType, memorySpace>::Uplo     uplo,
+      typename Matrix<ValueType, memorySpace>::Layout   layout)
     {
-      this->d_nGlobalRows = rows;
-      this->d_nGlobalCols = cols;
-      this->d_nLocalRows  = rows;
-      this->d_nLocalCols  = cols;
-      this->d_blasQueue = blasQueueInput;
-      d_data =
-        std::make_shared<typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
-          this->d_nGlobalRows * this->d_nGlobalCols, initVal);
+      d_nGlobalRows = rows;
+      d_nGlobalCols = cols;
+      d_nLocalRows  = rows;
+      d_nLocalCols  = cols;
+      d_blasQueue   = blasQueueInput;
+      d_property    = property;
+      d_uplo        = uplo;
+      d_layout      = layout;
+      d_data        = std::make_shared<
+        typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
+        d_nGlobalRows * d_nGlobalCols, initVal);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -145,10 +162,11 @@ namespace dftefe
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    double SerialDenseMatrix<ValueType, memorySpace>::frobeniusNorm () const
+    double
+    SerialDenseMatrix<ValueType, memorySpace>::frobeniusNorm() const
     {
-      double value  = 0 ;
-      value = nrm2(d_nLocalCols*d_nLocalRows, this->data(), 1 );
+      double value = 0;
+      value        = nrm2(d_nLocalCols * d_nLocalRows, this->data(), 1);
 
       return value;
     }

@@ -33,7 +33,7 @@ namespace dftefe
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class DistributedDenseMatrix : protected Matrix<ValueType,memorySpace>
+    class DistributedDenseMatrix : protected Matrix<ValueType, memorySpace>
     {};
   } // namespace linearAlgebra
 } // namespace dftefe

@@ -37,12 +37,33 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class Matrix
     {
     public:
-      using Storage            = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      enum class Property
+      {
+        GENERAL,
+        HERMITIAN,
+        DIAGONAL,
+        UPPER_TRIANGULAR,
+        LOWER_TRIANGULAR,
+      };
+
+      enum class Uplo : char
+      {
+        GENERAL = blas::Uplo::General,
+        UPPER   = blas::Uplo::Upper,
+        LOWER   = blas::Uplo::Lower
+      };
+
+      enum class Layout : char
+      {
+        COLMAJ = blas::Layout::ColMajor,
+        ROWMAJ = blas::Layout::RowMajor,
+      };
+
+      using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
       using value_type = typename Storage::value_type;
       using pointer    = typename Storage::pointer;
       using reference  = typename Storage::reference;
@@ -96,7 +117,7 @@ namespace dftefe
        * @return pointer to data
        */
       ValueType *
-      data() ;
+      data();
 
       /**
        * @brief Return the raw pointer to the Matrix without modifying
@@ -120,7 +141,7 @@ namespace dftefe
        */
       template <dftefe::utils::MemorySpace memorySpaceDst>
       void
-      copyTo(Matrix<ValueType, memorySpaceDst> &dstMatrix) const ;
+      copyTo(Matrix<ValueType, memorySpaceDst> &dstMatrix) const;
 
       /**
        * @brief Copies data from a MemoryStorage object in a different memory space.
@@ -211,7 +232,7 @@ namespace dftefe
        * @param[in] rhs the Matrix to subtract
        * @return the original vector
        * @throws exception if the sizes and type (SerialDenseMatrix or
-* DistributedDenseMatrix) are incompatible
+       * DistributedDenseMatrix) are incompatible
        */
       Matrix &
       operator-=(const Matrix &rhs);
@@ -279,7 +300,8 @@ namespace dftefe
        * @brief Returns the Frobenius norm of the matrix
        * @returns Frobenius norm of the matrix.
        */
-      virtual double frobeniusNorm () const = 0;
+      virtual double
+      frobeniusNorm() const = 0;
 
 
     protected:
@@ -287,6 +309,10 @@ namespace dftefe
       size_type d_nLocalRows = 0, d_nLocalCols = 0;
 
       blasWrapper::blasQueueType<memorySpace> d_blasQueue;
+
+      Property d_property;
+      Uplo     d_uplo;
+      Layout   d_layout;
 
       std::shared_ptr<Storage> d_data;
     };

@@ -38,22 +38,20 @@ namespace dftefe
   namespace linearAlgebra
   {
     /**
-       * @brief A  Matrix class that provides an interface to the underlying
-       * matrix and compatible with different MemorySpace---
-       * HOST (cpu) , DEVICE (gpu), etc,.
-       *
-       * @tparam ValueType The underlying value type for the MemoryStorage
-       *  (e.g., int, double, complex<double>, etc.)
-       * @tparam memorySpace The memory space in which the MemoryStorage needs
-       *  to reside
-       *
+     * @brief A  Matrix class that provides an interface to the underlying
+     * matrix and compatible with different MemorySpace---
+     * HOST (cpu) , DEVICE (gpu), etc,.
+     *
+     * @tparam ValueType The underlying value type for the MemoryStorage
+     *  (e.g., int, double, complex<double>, etc.)
+     * @tparam memorySpace The memory space in which the MemoryStorage needs
+     *  to reside
+     *
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class SerialDenseMatrix : public Matrix<ValueType, memorySpace>
     {
     public:
-
-
       //
       // Pulling base class (Matrix) protected names here so to avoid full name
       // scoping inside the source file. The other work around is to use
@@ -69,7 +67,9 @@ namespace dftefe
       using Matrix<ValueType, memorySpace>::d_nGlobalCols;
       using Matrix<ValueType, memorySpace>::d_nLocalRows;
       using Matrix<ValueType, memorySpace>::d_nLocalCols;
-
+      using Matrix<ValueType, memorySpace>::d_property;
+      using Matrix<ValueType, memorySpace>::d_uplo;
+      using Matrix<ValueType, memorySpace>::d_layout;
 
       SerialDenseMatrix() = default;
 
@@ -79,27 +79,27 @@ namespace dftefe
        */
       SerialDenseMatrix(const SerialDenseMatrix &u);
 
-            /**
-             * @brief Move constructor for a matrix
-             * @param[in] u SerialDensityMatrix object to move from
-             */
-            SerialDenseMatrix(SerialDenseMatrix &&u) noexcept;
+      /**
+       * @brief Move constructor for a matrix
+       * @param[in] u SerialDensityMatrix object to move from
+       */
+      SerialDenseMatrix(SerialDenseMatrix &&u) noexcept;
 
-       /**
+      /**
        * @brief Copy assignment operator
        * @param[in] u const reference to SerialDenseMatrix object to copy from
        * @return reference to this object after copying data from u
        */
-            SerialDenseMatrix &
-            operator=(const SerialDenseMatrix &u);
+      SerialDenseMatrix &
+      operator=(const SerialDenseMatrix &u);
 
-            /**
+      /**
        * @brief Move assignment operator
        * @param[in] u const reference to SerialDenseMatrix object to move from
        * @return reference to this object after moving data from u
-             */
-            SerialDenseMatrix &
-            operator=(SerialDenseMatrix &&u);
+       */
+      SerialDenseMatrix &
+      operator=(SerialDenseMatrix &&u) noexcept;
 
       /**
        * @brief Constructor for Matrix  with (rows,cols)
@@ -112,10 +112,16 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the Vector
        */
       explicit SerialDenseMatrix(
-        size_type                                rows,
-        size_type                                cols,
-        blasWrapper::blasQueueType<memorySpace> &blasQueueInput,
-        ValueType                                initVal = 0);
+        size_type                                         rows,
+        size_type                                         cols,
+        blasWrapper::blasQueueType<memorySpace> &         blasQueueInput,
+        ValueType                                         initVal = 0,
+        typename Matrix<ValueType, memorySpace>::Property property =
+          Matrix<ValueType, memorySpace>::Property::GENERAL,
+        typename Matrix<ValueType, memorySpace>::Uplo uplo =
+          Matrix<ValueType, memorySpace>::Uplo::GENERAL,
+        typename Matrix<ValueType, memorySpace>::Layout layout =
+          Matrix<ValueType, memorySpace>::Layout::COLMAJ);
 
       /**
        * @brief Destructor
@@ -126,7 +132,8 @@ namespace dftefe
        * @brief Returns the Frobenius norm of the matrix
        * @returns Frobenius norm of the matrix.
        */
-      double frobeniusNorm () const;
+      double
+      frobeniusNorm() const;
     };
   } // namespace linearAlgebra
 } // namespace dftefe

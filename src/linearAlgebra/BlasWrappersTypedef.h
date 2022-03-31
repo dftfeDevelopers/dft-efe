@@ -35,16 +35,17 @@ namespace dftefe
   {
     namespace blasWrapper
     {
-       using Side = blas::Side;
-      using Op =   blas::Op;
-      using Diag = blas::Diag;
-      using Uplo = blas::Uplo;
+      using Side   = blas::Side;
+      using Op     = blas::Op;
+      using Diag   = blas::Diag;
+      using Uplo   = blas::Uplo;
       using Layout = blas::Layout;
-      using Queue =   blas::Queue;
-      template<typename ValueType> using real_type = blas::real_type<ValueType>;
+      using Queue  = blas::Queue;
+      template <typename ValueType>
+      using real_type = blas::real_type<ValueType>;
 
-      template <typename ValueType1, typename ValueType2>  using scalar_type
-        = blas::scalar_type< ValueType1, ValueType2>;
+      template <typename ValueType1, typename ValueType2>
+      using scalar_type = blas::scalar_type<ValueType1, ValueType2>;
       template <dftefe::utils::MemorySpace memorySpace>
       struct blasQueueTypedef
       {

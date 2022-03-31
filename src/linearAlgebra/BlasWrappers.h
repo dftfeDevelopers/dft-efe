@@ -35,14 +35,14 @@ namespace dftefe
   {
     template <typename ValueType>
     blasWrapper::real_type<ValueType>
-    asum(size_type n, ValueType const *x, size_type incx = 1 );
+    asum(size_type n, ValueType const *x, size_type incx = 1);
 
     template <typename ValueType>
     blasWrapper::real_type<ValueType>
     amax(size_type n, ValueType const *x, size_type incx = 1);
 
 
-      template <typename ValueType1, typename ValueType2>
+    template <typename ValueType1, typename ValueType2>
     void
     axpy(size_type                                        n,
          blasWrapper::scalar_type<ValueType1, ValueType2> alpha,
