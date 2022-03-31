@@ -48,63 +48,63 @@ namespace dftefe
       using FECellIterator       = FEBasisManager<dim>::FECellIterator;
       using const_FECellIterator = FEBasisManager<dim>::const_FECellIterator;
 
-      FEBasisManagerDealii();
+      FEBasisManagerDealii(TriangulationBase &tria);
       ~FEBasisManagerDealii();
       double
       getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) const override;
+                            const utils::Point &point) const;
       std::vector<double>
       getBasisFunctionDerivative(
         const size_type     basisId,
         const utils::Point &point,
-        const size_type     derivativeOrder = 1) const override;
+        const size_type     derivativeOrder = 1) const;
 
       ////// FE specific  member functions /////
       void
       reinit(const TriangulationBase &triangulation,
-             const size_type          feOrder) override;
+             const size_type          feOrder) ;
       size_type
-      nLocallyActiveCells() const override;
+      nLocallyActiveCells() const ;
       size_type
-      nLocallyOwnedCells() const override;
+      nLocallyOwnedCells() const;
       size_type
-      nGlobalCells() const override;
+      nGlobalCells() const;
       size_type
-      getFEOrder(size_type cellId) const override;
+      getFEOrder(size_type cellId) const;
       size_type
-      nCellDofs(size_type cellId) const override;
+      nCellDofs(size_type cellId) const;
       bool
-      isHPRefined() const override;
+      isHPRefined() const;
       size_type
-      nLocalNodes() const override;
+      nLocalNodes() const ;
       global_size_type
-      nGlobalNodes() const override;
+      nGlobalNodes() const;
       std::vector<size_type>
-      getLocalNodeIds(size_type cellId) const override;
+      getLocalNodeIds(size_type cellId) const ;
       std::vector<size_type>
-      getGlobalNodeIds() const override;
+      getGlobalNodeIds() const;
       std::vector<size_type>
-      getCellDofsLocalIds(size_type cellId) const override;
+      getCellDofsLocalIds(size_type cellId) const;
       std::vector<size_type>
-      getBoundaryIds() const override;
-      virtual FECellIterator
-      beginLocallyOwnedCells() override;
-      virtual FECellIterator
-      endLocallyOwnedCells() override;
-      virtual const_FECellIterator
-      beginLocallyOwnedCells() const override;
-      virtual const_FECellIterator
-      endLocallyOwnedCells() const override;
-      virtual FECellIterator
-      beginLocallyActiveCells() override;
-      virtual FECellIterator
-      endLocallyActiveCells() override;
-      virtual const_FECellIterator
-      beginLocallyActiveCells() const override;
-      virtual const_FECellIterator
-      endLocallyActiveCells() const override;
+      getBoundaryIds() const;
+      FECellIterator
+      beginLocallyOwnedCells();
+      FECellIterator
+      endLocallyOwnedCells();
+      const_FECellIterator
+      beginLocallyOwnedCells() const;
+      const_FECellIterator
+      endLocallyOwnedCells() const;
+      FECellIterator
+      beginLocallyActiveCells();
+      FECellIterator
+      endLocallyActiveCells();
+      const_FECellIterator
+      beginLocallyActiveCells() const;
+      const_FECellIterator
+      endLocallyActiveCells() const;
       unsigned int
-      getDim() const override;
+      getDim() const;
 
       //
       // dealii specific functions
