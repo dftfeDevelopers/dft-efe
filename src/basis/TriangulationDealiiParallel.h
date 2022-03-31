@@ -38,7 +38,7 @@ namespace dftefe
     class TriangulationDealiiParallel : public TriangulationBase
     {
     public:
-      TriangulationDealiiParallel();
+      TriangulationDealiiParallel(const MPI_Comm &mpi_communicator);
       ~TriangulationDealiiParallel();
 
       void

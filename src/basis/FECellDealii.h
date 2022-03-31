@@ -115,5 +115,6 @@ namespace dftefe
   }
 
 }
+#include "FECellDealii.t.cpp"
 
 #endif // dftefeFECellDealii_h

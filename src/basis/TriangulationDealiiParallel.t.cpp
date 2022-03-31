@@ -11,7 +11,8 @@ namespace dftefe
   {
     template <unsigned int dim>
     TriangulationDealiiParallel<dim>::TriangulationDealiiParallel()
-      : isInitialized(false)
+      : d_triangulationDealii(mpi_communicator)
+      , isInitialized(false)
       , isFinalized(false)
     {}
 
@@ -151,7 +152,8 @@ namespace dftefe
         dim == domainVectors.size(),
         "Mismatch of dimension for dealii and the domainVectors");
 
-      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels() == 1,
+      // TODO check if this is correct
+      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels() > 1,
                            "Cannot mark periodic faces after refinement."
                            "This has to be done at the coarsest level");
 
