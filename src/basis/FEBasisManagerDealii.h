@@ -117,7 +117,8 @@ namespace dftefe
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
       bool                                     d_isHPRefined;
-
+      std::vector<std::shared_ptr<FECellBase>> d_locallyActiveCells;
+      std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis
