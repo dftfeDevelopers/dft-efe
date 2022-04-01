@@ -301,5 +301,18 @@ namespace dftefe
     {
       return d_numCellQuadPoints[cellId];
     }
+
+    const std::vector<size_type> &
+    CellQuadratureContainer::getCellQuadStartIds() const
+    {
+      return d_cellQuadStartIds;
+    }
+
+    size_type
+    CellQuadratureContainer::getCellQuadStartId(const size_type cellId) const
+    {
+      return d_cellQuadStartIds[cellId];
+    }
+
   } // end of namespace quadrature
 } // end of namespace dftefe

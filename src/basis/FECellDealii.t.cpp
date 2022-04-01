@@ -1,27 +1,27 @@
 /******************************************************************************
-* Copyright (c) 2021.                                                        *
-* The Regents of the University of Michigan and DFT-EFE developers.          *
-*                                                                            *
-* This file is part of the DFT-EFE code.                                     *
-*                                                                            *
-* DFT-EFE is free software: you can redistribute it and/or modify            *
-*   it under the terms of the Lesser GNU General Public License as           *
-*   published by the Free Software Foundation, either version 3 of           *
-*   the License, or (at your option) any later version.                      *
-*                                                                            *
-* DFT-EFE is distributed in the hope that it will be useful, but             *
-*   WITHOUT ANY WARRANTY; without even the implied warranty                  *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
-*   See the Lesser GNU General Public License for more details.              *
-*                                                                            *
-* You should have received a copy of the GNU Lesser General Public           *
-*   License at the top level of DFT-EFE distribution.  If not, see           *
-*   <https://www.gnu.org/licenses/>.                                         *
-******************************************************************************/
+ * Copyright (c) 2021.                                                        *
+ * The Regents of the University of Michigan and DFT-EFE developers.          *
+ *                                                                            *
+ * This file is part of the DFT-EFE code.                                     *
+ *                                                                            *
+ * DFT-EFE is free software: you can redistribute it and/or modify            *
+ *   it under the terms of the Lesser GNU General Public License as           *
+ *   published by the Free Software Foundation, either version 3 of           *
+ *   the License, or (at your option) any later version.                      *
+ *                                                                            *
+ * DFT-EFE is distributed in the hope that it will be useful, but             *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty                  *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
+ *   See the Lesser GNU General Public License for more details.              *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public           *
+ *   License at the top level of DFT-EFE distribution.  If not, see           *
+ *   <https://www.gnu.org/licenses/>.                                         *
+ ******************************************************************************/
 
 /*
-* @author Bikash Kanungo, Vishal Subramanian
-*/
+ * @author Bikash Kanungo, Vishal Subramanian
+ */
 
 
 #include "DealiiConversions.h"
@@ -32,12 +32,12 @@ namespace dealii
 {
   namespace basis
   {
-
     template <unsigned int dim>
-    FECellDealii<dim>::FECellDealii(dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter)
+    FECellDealii<dim>::FECellDealii(
+      dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter)
     {
       // TODO check if this is correct and wont lead to seg faults
-      d_dealiiFECellIter = dealiiFECellIter ;
+      d_dealiiFECellIter = dealiiFECellIter;
     }
 
     template <unsigned int dim>
@@ -46,8 +46,8 @@ namespace dealii
     {
       const unsigned int nVertices =
         dealii::GeometryInfo<dim>::vertices_per_cell;
-      std::vector<std::shared_ptr<dftefe::utils::Point>>
-        points(nVertices, std::make_shared<dftefe::utils::Point>(dim,0.0));
+      std::vector<std::shared_ptr<dftefe::utils::Point>> points(
+        nVertices, std::make_shared<dftefe::utils::Point>(dim, 0.0));
       std::vector<dealii::Point<dim, double>> pointsDealii;
       pointsDealii.resize(nVertices);
       for (unsigned int iVertex = 0; iVertex < nVertices; iVertex++)
@@ -58,7 +58,6 @@ namespace dealii
         }
 
       return points;
-
     }
 
     template <unsigned int dim>
@@ -66,7 +65,8 @@ namespace dealii
     FECellDealii<dim>::getVertex(size_type i) const
     {
       std::shared_ptr<dftefe::utils::Point> point =
-          std::make_shared<dftefe::utils::Point>(dim,0.0);;
+        std::make_shared<dftefe::utils::Point>(dim, 0.0);
+      ;
 
       convertToDftefePoint<dim>(d_dealiiFECellIter->vertex(i), point);
 
@@ -80,27 +80,25 @@ namespace dealii
       utils::throwException(
         false, "getNodalPoints() in FECellDealii not yet implemented.");
       return 0;
-
     }
 
     template <unsigned int dim>
     size_type
     FECellDealii<dim>::getId() const
     {
-      utils::throwException(
-        false, "getId() in FECellDealii not yet implemented.");
+      utils::throwException(false,
+                            "getId() in FECellDealii not yet implemented.");
       return 0;
-
     }
 
     template <unsigned int dim>
     bool
-    FECellDealii<dim>::isPointInside(std::shared_ptr<const dftefe::utils::Point> point) const
+    FECellDealii<dim>::isPointInside(
+      std::shared_ptr<const dftefe::utils::Point> point) const
     {
       dealii::Point<dim, double> dealiiPoint;
       convertToDealiiPoint<dim>(point, dealiiPoint);
       return d_dealiiFECellIter->point_inside(dealiiPoint);
-
     }
 
     template <unsigned int dim>
@@ -178,16 +176,16 @@ namespace dealii
     FECellDealii<dim>::getDim() const
     {
       return dim;
-
     }
 
     template <unsigned int dim>
     std::shared_ptr<dftefe::utils::Point>
-    FECellDealii<dim>::getParametricPoint(std::shared_ptr<const Point> realPoint,
-                       const CellMappingBase &cellMapping) const
+    FECellDealii<dim>::getParametricPoint(
+      std::shared_ptr<const Point> realPoint,
+      const CellMappingBase &      cellMapping) const
     {
       std::shared_ptr<dftefe::utils::Point> parametricPoint =
-        std::make_shared<dftefe::utils::Point>(dim,0.0);
+        std::make_shared<dftefe::utils::Point>(dim, 0.0);
       bool isPointInside;
       cellMapping.getParametricPoint(realPoint,
                                      *this,
@@ -195,13 +193,13 @@ namespace dealii
                                      isPointInside);
 
       return parametricPoint;
-
     }
 
     template <unsigned int dim>
     std::shared_ptr<Point>
-    FECellDealii<dim>::getRealPoint(std::shared_ptr<const Point> parametricPoint,
-                 const CellMappingBase &      cellMapping) const
+    FECellDealii<dim>::getRealPoint(
+      std::shared_ptr<const Point> parametricPoint,
+      const CellMappingBase &      cellMapping) const
     {
       utils::throwException(
         false, "getRealPoint() in FECellDealii not yet implemented.");
@@ -210,9 +208,7 @@ namespace dealii
     template <unsigned int dim>
     global_size_type
     FECellDealii<dim>::getLocalToGlobalDoFId(size_type i) const
-    {
-
-    }
+    {}
 
     template <unsigned int dim>
     size_type
@@ -225,10 +221,8 @@ namespace dealii
     dealii::DoFHandler<dim>::active_cell_iterator &
     FECellDealii<dim>::getDealiiFECellIter()
     {
-
       return d_dealiiFECellIter;
-
     }
 
-  }
-}
+  } // namespace basis
+} // namespace dealii

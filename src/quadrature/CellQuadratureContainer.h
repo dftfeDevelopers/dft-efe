@@ -168,6 +168,22 @@ namespace dftefe
       size_type
       nCellQuadraturePoints(const unsigned int cellId) const;
 
+      /**
+       * @brief A function to return the starting index of the quadrature point of each cell
+       *
+       * @returns  vector storing the starting index of the quadrature point of each cell
+       */
+      const std::vector<size_type> &
+      getCellQuadStartIds() const;
+
+      /**
+       * @brief A function to return the starting index of the quadrature point of a given cell
+       *
+       * @param[in] cellId index of the cell
+       * @returns  the starting index of the quadrature point of the cell
+       */
+      size_type
+      getCellQuadStartId(const size_type cellId) const;
 
 
     private:
@@ -179,7 +195,7 @@ namespace dftefe
       unsigned int                                       d_dim;
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
-      bool d_storeJacobianInverse;
+      bool                                               d_storeJacobianInverse;
     };
   } // end of namespace quadrature
 
