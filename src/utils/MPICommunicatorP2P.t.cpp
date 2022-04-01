@@ -283,5 +283,13 @@ namespace dftefe
     {
       return d_mpiPatternP2P;
     }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    int
+    MPICommunicatorP2P<ValueType, memorySpace>::getBlockSize() const
+    {
+      return d_blockSize;
+    }
+
   } // namespace utils
 } // namespace dftefe

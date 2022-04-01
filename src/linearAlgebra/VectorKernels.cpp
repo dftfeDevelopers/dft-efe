@@ -7,12 +7,11 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::add(
-      const size_type  size,
-      const ValueType *u,
-      ValueType *      v)
+    VectorKernels<ValueType, memorySpace>::add(const size_type  size,
+                                               const ValueType *u,
+                                               ValueType *      v)
     {
       for (size_type i = 0; i < size; ++i)
         {
@@ -20,12 +19,11 @@ namespace dftefe
         }
     }
 
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::sub(
-      const size_type  size,
-      const ValueType *u,
-      ValueType *      v)
+    VectorKernels<ValueType, memorySpace>::sub(const size_type  size,
+                                               const ValueType *u,
+                                               ValueType *      v)
     {
       for (size_type i = 0; i < size; ++i)
         {
@@ -34,11 +32,10 @@ namespace dftefe
     }
 
 
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
-    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::l2Norm(
-      const size_type  size,
-      const ValueType *u)
+    VectorKernels<ValueType, memorySpace>::l2Norm(const size_type  size,
+                                                  const ValueType *u)
     {
       double temp = 0.0;
       for (size_type i = 0; i < size; ++i)
@@ -49,26 +46,46 @@ namespace dftefe
     }
 
 
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
-    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::lInfNorm(
-      const size_type  size,
-      const ValueType *u)
+    VectorKernels<ValueType, memorySpace>::lInfNorm(const size_type  size,
+                                                    const ValueType *u)
     {
       return dftefe::utils::abs_(
         *std::max_element(u, u + size, dftefe::utils::absCompare<ValueType>));
     }
 
 
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::vector<double>
+    VectorKernels<ValueType, memorySpace>::l2Norms(const size_type  size,
+                                                   const size_type  numVectors,
+                                                   const ValueType *u)
+    {
+      std::vector<double> l2norms(numVectors, 0.0);
+      return l2norms;
+    }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::vector<double>
+    VectorKernels<ValueType, memorySpace>::lInfNorms(const size_type size,
+                                                     const size_type numVectors,
+                                                     const ValueType *u)
+    {
+      std::vector<double> linfnorms(numVectors, 0.0);
+      return linfnorms;
+    }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>::add(
-      size_type        size,
-      ValueType        a,
-      const ValueType *u,
-      ValueType        b,
-      const ValueType *v,
-      ValueType *      w)
+    VectorKernels<ValueType, memorySpace>::add(const size_type  size,
+                                               const ValueType  a,
+                                               const ValueType *u,
+                                               const ValueType  b,
+                                               const ValueType *v,
+                                               ValueType *      w)
     {
       for (int i = 0; i < size; ++i)
         {
@@ -84,5 +101,21 @@ namespace dftefe
                                  dftefe::utils::MemorySpace::HOST>;
     template class VectorKernels<std::complex<float>,
                                  dftefe::utils::MemorySpace::HOST>;
+
+#ifdef DFTEFE_WITH_DEVICE
+    template class VectorKernels<size_type,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<int, dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<double,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<float,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class VectorKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+#endif
+
+
   } // namespace linearAlgebra
 } // namespace dftefe

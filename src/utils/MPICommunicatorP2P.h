@@ -73,6 +73,9 @@ namespace dftefe
       std::shared_ptr<const MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
 
+      int
+      getBlockSize() const;
+
     private:
       std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 

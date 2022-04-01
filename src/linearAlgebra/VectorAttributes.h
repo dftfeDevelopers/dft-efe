@@ -41,8 +41,7 @@ namespace dftefe
         DISTRIBUTED
       };
 
-      VectorAttributes(const Distribution distribution,
-                       const size_type    numComponents = 1);
+      VectorAttributes(const Distribution distribution);
       VectorAttributes()  = default;
       ~VectorAttributes() = default;
 
@@ -57,7 +56,6 @@ namespace dftefe
 
     private:
       Distribution d_distribution;
-      size_type    d_numComponents;
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

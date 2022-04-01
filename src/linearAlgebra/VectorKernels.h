@@ -2,6 +2,7 @@
 #define dftefeVectorKernels_h
 
 #include <utils/MemoryManager.h>
+#include <vector>
 
 namespace dftefe
 {
@@ -56,6 +57,30 @@ namespace dftefe
       static double
       lInfNorm(size_type size, const ValueType *u);
 
+      /**
+       * @brief compute \f$ l_2 \f$ norms of each vector of multi vector
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] size size of vector
+       * @param[in] size number of vectors
+       * @param[in] u array
+       * @return \f$ l_2 \f$ norm of u as double type
+       */
+      static std::vector<double>
+      l2Norms(size_type size, size_type numVectors, const ValueType *u);
+
+      /**
+       * @brief compute  \f$ l_{\inf} \f$ norm of each vector of multi vector
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] size size of vector
+       * @param[in] size number of vectors
+       * @param[in] u array
+       * @return  \f$ l_{\inf} \f$ norm of u as double type
+       */
+      static std::vector<double>
+      lInfNorms(size_type size, size_type numVectors, const ValueType *u);
+
 
       /**
        * @brief Template for performing \f$ w = au + bv \f$
@@ -75,68 +100,15 @@ namespace dftefe
           ValueType *      w);
     };
 
-    template <typename ValueType>
-    class VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST>
-    {
-    public:
-      /**
-       * @tparam ValueType
-       * @param u
-       * @param v
-       */
-      static void
-      add(size_type size, const ValueType *u, ValueType *v);
-
-      /**
-       * @tparam ValueType
-       * @param u
-       * @param v
-       */
-      static void
-      sub(size_type size, const ValueType *u, ValueType *v);
-
-      static double
-      l2Norm(size_type size, const ValueType *u);
-
-      static double
-      lInfNorm(size_type size, const ValueType *u);
-
-      /**
-       * @brief Performing \f$ w = au + bv \f$ for the host
-       * @param[in] size size of the array
-       * @param[in] a scalar
-       * @param[in] u array
-       * @param[in] b scalar
-       * @param[in] v array
-       * @param[out] w array of the result
-       */
-      static void
-      add(size_type        size,
-          ValueType        a,
-          const ValueType *u,
-          ValueType        b,
-          const ValueType *v,
-          ValueType *      w);
-    };
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
     class VectorKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>
     {
     public:
-      /**
-       * @tparam ValueType
-       * @param u
-       * @param v
-       */
       static void
       add(size_type size, const ValueType *u, ValueType *v);
 
-      /**
-       * @tparam ValueType
-       * @param u
-       * @param v
-       */
       static void
       sub(size_type size, const ValueType *u, ValueType *v);
 
@@ -146,59 +118,12 @@ namespace dftefe
       static double
       lInfNorm(size_type size, const ValueType *u);
 
-      /**
-       * @brief Performing \f$ w = au + bv \f$ for the device
-       * @param[in] size size of the array
-       * @param[in] a scalar
-       * @param[in] u array
-       * @param[in] b scalar
-       * @param[in] v array
-       * @param[out] w array of the result
-       */
-      static void
-      add(size_type        size,
-          ValueType        a,
-          const ValueType *u,
-          ValueType        b,
-          const ValueType *v,
-          ValueType *      w);
-    };
+      static std::vector<double>
+      l2Norms(size_type size, size_type numVectors, const ValueType *u);
 
-    template <typename ValueType>
-    class VectorKernels<ValueType, dftefe::utils::MemorySpace::HOST_PINNED>
-    {
-    public:
-      /**
-       * @tparam ValueType
-       * @param u
-       * @param v
-       */
-      static void
-      add(size_type size, const ValueType *u, ValueType *v);
+      static std::vector<double>
+      lInfNorms(size_type size, size_type numVectors, const ValueType *u);
 
-      /**
-       * @tparam ValueType
-       * @param u
-       * @param v
-       */
-      static void
-      sub(size_type size, const ValueType *u, ValueType *v);
-
-      static double
-      l2Norm(size_type size, const ValueType *u);
-
-      static double
-      lInfNorm(size_type size, const ValueType *u);
-
-      /**
-       * @brief Performing \f$ w = au + bv \f$ for the device
-       * @param[in] size size of the array
-       * @param[in] a scalar
-       * @param[in] u array
-       * @param[in] b scalar
-       * @param[in] v array
-       * @param[out] w array of the result
-       */
       static void
       add(size_type        size,
           ValueType        a,
