@@ -29,7 +29,7 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    //    blasWrapper::Queue &
+    //    blasLapack::Queue &
     //    QueueManager::getBlasQueue()
     //    {
     //      return blasGpuQueue;

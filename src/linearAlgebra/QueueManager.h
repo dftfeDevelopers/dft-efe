@@ -36,7 +36,7 @@ namespace dftefe
     class QueueManager
     {
     public:
-      //      blasWrapper::Queue &
+      //      blasLapack::Queue &
       //      getBlasQueue();
       //
       //      void
