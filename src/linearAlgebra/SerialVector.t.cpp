@@ -171,14 +171,14 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::l2Norm() const
     {
-      return nrm2(d_storage->size(), this->data());
+      return nrm2(d_storage->size(), this->data(), 1);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     SerialVector<ValueType, memorySpace>::lInfNorm() const
     {
-      return amax(d_storage->size(), this->data());
+      return amax(d_storage->size(), this->data(), 1);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

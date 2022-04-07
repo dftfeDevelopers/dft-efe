@@ -8,7 +8,10 @@ namespace dftefe
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
-    asum(size_type n, ValueType const *x, size_type incx)
+    asum(const size_type                          n,
+         ValueType const *                        x,
+         const size_type                          incx,
+         blasWrapper::blasQueueType<memorySpace> &blasQueue)
     {
       //      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
       utils::throwException(
@@ -21,7 +24,10 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
-    amax(size_type n, ValueType const *x, size_type incx)
+    amax(const size_type                          n,
+         ValueType const *                        x,
+         const size_type                          incx,
+         blasWrapper::blasQueueType<memorySpace> &blasQueue)
     {
       utils::throwException(
         memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -36,12 +42,13 @@ namespace dftefe
               typename ValueType2,
               dftefe::utils::MemorySpace memorySpace>
     void
-    axpy(size_type                                        n,
-         blasWrapper::scalar_type<ValueType1, ValueType2> alpha,
-         ValueType1 const *                               x,
-         size_type                                        incx,
-         ValueType2 *                                     y,
-         size_type                                        incy)
+    axpy(const size_type                                        n,
+         const blasWrapper::scalar_type<ValueType1, ValueType2> alpha,
+         ValueType1 const *                                     x,
+         const size_type                                        incx,
+         ValueType2 *                                           y,
+         const size_type                                        incy,
+         blasWrapper::blasQueueType<memorySpace> &              blasQueue)
     {
       utils::throwException(
         memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -53,11 +60,12 @@ namespace dftefe
               typename ValueType2,
               dftefe::utils::MemorySpace memorySpace>
     blasWrapper::scalar_type<ValueType1, ValueType2>
-    dot(size_type         n,
-        ValueType1 const *x,
-        size_type         incx,
-        ValueType2 const *y,
-        size_type         incy)
+    dot(const size_type                          n,
+        ValueType1 const *                       x,
+        const size_type                          incx,
+        ValueType2 const *                       y,
+        const size_type                          incy,
+        blasWrapper::blasQueueType<memorySpace> &blasQueue)
     {
       utils::throwException(
         memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -70,7 +78,10 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
-    nrm2(size_type n, ValueType const *x, size_type incx)
+    nrm2(const size_type                          n,
+         ValueType const *                        x,
+         const size_type                          incx,
+         blasWrapper::blasQueueType<memorySpace> &blasQueue)
     {
       utils::throwException(
         memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -84,20 +95,20 @@ namespace dftefe
     template <typename ValueType>
     void
     gemm(
-      blasWrapper::Layout                                           layout,
-      blasWrapper::Op                                               transA,
-      blasWrapper::Op                                               transB,
-      size_type                                                     m,
-      size_type                                                     n,
-      size_type                                                     k,
-      ValueType                                                     alpha,
+      const blasWrapper::Layout                                     layout,
+      const blasWrapper::Op                                         transA,
+      const blasWrapper::Op                                         transB,
+      const size_type                                               m,
+      const size_type                                               n,
+      const size_type                                               k,
+      const ValueType                                               alpha,
       ValueType const *                                             dA,
-      size_type                                                     ldda,
+      const size_type                                               ldda,
       ValueType const *                                             dB,
-      size_type                                                     lddb,
-      ValueType                                                     beta,
+      const size_type                                               lddb,
+      const ValueType                                               beta,
       ValueType *                                                   dC,
-      size_type                                                     lddc,
+      const size_type                                               lddc,
       blasWrapper::blasQueueType<dftefe::utils::MemorySpace::HOST> &blasQueue)
     {
       blas::gemm(layout,
@@ -119,20 +130,20 @@ namespace dftefe
     template <typename ValueType>
     void
     gemm(
-      blasWrapper::Layout                                             layout,
-      blasWrapper::Op                                                 transA,
-      blasWrapper::Op                                                 transB,
-      size_type                                                       m,
-      size_type                                                       n,
-      size_type                                                       k,
-      ValueType                                                       alpha,
+      const blasWrapper::Layout                                       layout,
+      const blasWrapper::Op                                           transA,
+      const blasWrapper::Op                                           transB,
+      const size_type                                                 m,
+      const size_type                                                 n,
+      const size_type                                                 k,
+      const ValueType                                                 alpha,
       ValueType const *                                               dA,
-      size_type                                                       ldda,
+      const size_type                                                 ldda,
       ValueType const *                                               dB,
-      size_type                                                       lddb,
-      ValueType                                                       beta,
+      const size_type                                                 lddb,
+      const ValueType                                                 beta,
       ValueType *                                                     dC,
-      size_type                                                       lddc,
+      const size_type                                                 lddc,
       blasWrapper::blasQueueType<dftefe::utils::MemorySpace::DEVICE> &blasQueue)
     {
       blas::gemm(layout,

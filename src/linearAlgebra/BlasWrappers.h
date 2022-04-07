@@ -33,37 +33,55 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType>
+    template <typename ValueType,
+              typename dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
-    asum(size_type n, ValueType const *x, size_type incx = 1);
+    asum(size_type                                n,
+         ValueType const *                        x,
+         size_type                                incx,
+         blasWrapper::blasQueueType<memorySpace> &blasQueue);
 
-    template <typename ValueType>
+    template <typename ValueType,
+              typename dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
-    amax(size_type n, ValueType const *x, size_type incx = 1);
+    amax(size_type                                n,
+         ValueType const *                        x,
+         size_type                                incx,
+         blasWrapper::blasQueueType<memorySpace> &blasQueue);
 
 
-    template <typename ValueType1, typename ValueType2>
+    template <typename ValueType1,
+              typename ValueType2,
+              typename dftefe::utils::MemorySpace memorySpace>
     void
     axpy(size_type                                        n,
          blasWrapper::scalar_type<ValueType1, ValueType2> alpha,
          ValueType1 const *                               x,
          size_type                                        incx,
          ValueType2 *                                     y,
-         size_type                                        incy);
+         size_type                                        incy,
+         blasWrapper::blasQueueType<memorySpace> &        blasQueue);
 
 
-    template <typename ValueType1, typename ValueType2>
+    template <typename ValueType1,
+              typename ValueType2,
+              typename dftefe::utils::MemorySpace memorySpace>
     blasWrapper::scalar_type<ValueType1, ValueType2>
-    dot(size_type         n,
-        ValueType1 const *x,
-        size_type         incx,
-        ValueType2 const *y,
-        size_type         incy);
+    dot(size_type                                n,
+        ValueType1 const *                       x,
+        size_type                                incx,
+        ValueType2 const *                       y,
+        size_type                                incy,
+        blasWrapper::blasQueueType<memorySpace> &blasQueue);
 
 
-    template <typename ValueType>
+    template <typename ValueType,
+              typename dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
-    nrm2(size_type n, ValueType const *x, size_type incx = 1);
+    nrm2(size_type                                n,
+         ValueType const *                        x,
+         size_type                                incx,
+         blasWrapper::blasQueueType<memorySpace> &blasQueue);
 
     template <typename ValueType,
               typename dftefe::utils::MemorySpace memorySpace>

@@ -374,7 +374,8 @@ namespace dftefe
     double
     DistributedVector<ValueType, memorySpace>::l2Norm() const
     {
-      const double l2NormLocallyOwned = nrm2(d_locallyOwnedSize, this->data());
+      const double l2NormLocallyOwned =
+        nrm2(d_locallyOwnedSize, this->data(), 1);
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
