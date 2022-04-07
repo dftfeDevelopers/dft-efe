@@ -13,6 +13,7 @@ else:
 parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
 cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
+bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py")
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 """
 Types of tags
@@ -79,14 +80,15 @@ class BuildOnlyTestSerialVectorDoubleHostSetValues(rfm.CompileOnlyRegressionTest
 
         else:
             msg = ""
-            return sn.assert_true(hasTestPassed, msg=msg)
+            bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
+        return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
 class BuildAndRunTestSerialVectorDoubleHostSetValues(rfm.RegressionTest):
     descr = '''Compile and run test for setting values of SerialVector'''
     build_system = 'CMake'
     make_opts = ['TestSerialVectorDoubleHostSetValues']
-    executable = './TestSerialVectorDoubleHostSetValues'
+    executable = './TestSerialVectorDoubleHostSetValues.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',

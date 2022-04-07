@@ -32,6 +32,7 @@ else:
 parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
 cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
+bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py")
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 """
 Types of tags
@@ -50,18 +51,18 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestBlasWrappersDoubleGemmHost(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestBlasWrappersDoubleGemmHost using CMake'
+class BuildOnlyTestBlasLapackComplexDoubleGemmHost(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestBlasLapackComplexDoubleGemmHost using CMake'
     build_system = 'CMake'
-    make_opts = ['TestBlasWrappersDoubleGemmHost']
+    make_opts = ['TestBlasLapackComplexDoubleGemmHost']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'parallel'}
     tags = {x.lower() for x in tagsDict.values()}
-    #NOTE: For any new systems:partition added to the config file, 
+    #NOTE: For any new systems:partition added to the config file,
     # they must also be added to the system_partition_in setupSystems.py
-    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_systems = ss.getValidSystems(tagsDict['arch'])
     valid_prog_environs = ['*']
     keep_files = []
     config_opts = cmflags.getConfig()
@@ -87,7 +88,7 @@ class BuildOnlyTestBlasWrappersDoubleGemmHost(rfm.CompileOnlyRegressionTest):
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
-        
+
         hasTestPassed = not hasWarning and not hasError
         msg = ""
         if hasError:
@@ -98,14 +99,15 @@ class BuildOnlyTestBlasWrappersDoubleGemmHost(rfm.CompileOnlyRegressionTest):
 
         else:
             msg = ""
-            return sn.assert_true(hasTestPassed, msg=msg)
+            bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
+        return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestBlasWrappersDoubleGemmHost(rfm.RegressionTest):
+class BuildAndRunTestBlasLapackComplexDoubleGemmHost(rfm.RegressionTest):
     descr = '''Compile and run test  for checking double Gemm on host'''
     build_system = 'CMake'
-    make_opts = ['TestBlasWrappersDoubleGemmHost']
-    executable = './TestBlasWrappersDoubleGemmHost'
+    make_opts = ['TestBlasLapackComplexDoubleGemmHost']
+    executable = "./TestBlasLapackComplexDoubleGemmHost.x"
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -138,9 +140,9 @@ class BuildAndRunTestBlasWrappersDoubleGemmHost(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestBlasWrappersDoubleGemmHost."
-        msgThrownException = "Found exceptions in TestBlasWrappersDoubleGemmHost."
-        msgAssertFail = "Found assert fail(s) in TestBlasWrappersDoubleGemmHost."
+        msgError = "Found error(s) in TestBlasLapackComplexDoubleGemmHost."
+        msgThrownException = "Found exceptions in TestBlasLapackComplexDoubleGemmHost."
+        msgAssertFail = "Found assert fail(s) in TestBlasLapackComplexDoubleGemmHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -161,22 +163,18 @@ class BuildAndRunTestBlasWrappersDoubleGemmHost(rfm.RegressionTest):
         msg = ""
         if hasError:
             msg = msgError
-
         elif hasAssertFail:
             msg = msgAssertFail
-
         elif hasThrownException:
             msg = msgThrownException
-
         else:
             msg=""
-
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestBlasWrappersDoubleGemmHost(rfm.RunOnlyRegressionTest):
+class RunOnlyTestBlasLapackComplexDoubleGemmHost(rfm.RunOnlyRegressionTest):
     descr = '''Run only test for checking double Gemm on host'''
-    target_name = 'TestBlasWrappersDoubleGemmHost'
+    target_name = 'TestBlasLapackComplexDoubleGemmHost'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -185,12 +183,12 @@ class RunOnlyTestBlasWrappersDoubleGemmHost(rfm.RunOnlyRegressionTest):
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
-    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_systems = ss.getValidSystems(tagsDict['arch'])
     valid_prog_environs = ['*']
     keep_files = []
     config_opts = cmflags.getConfig()
 
-    
+
     @run_before('run')
     def set_launcher_and_resources(self):
         if "serial" in self.tags:
@@ -204,13 +202,13 @@ class RunOnlyTestBlasWrappersDoubleGemmHost(rfm.RunOnlyRegressionTest):
         well as define an error message to display if the test fails.
         '''
         # This test does not generate any output. It throws an exception
-        # if the test fails 
+        # if the test fails
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestBlasWrappersDoubleGemmHost."
-        msgThrownException = "Found exceptions in TestBlasWrappersDoubleGemmHost."
-        msgAssertFail = "Found assert fail(s) in TestBlasWrappersDoubleGemmHost."
+        msgError = "Found error(s) in TestBlasLapackComplexDoubleGemmHost."
+        msgThrownException = "Found exceptions in TestBlasLapackComplexDoubleGemmHost."
+        msgAssertFail = "Found assert fail(s) in TestBlasLapackComplexDoubleGemmHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -220,14 +218,14 @@ class RunOnlyTestBlasWrappersDoubleGemmHost(rfm.RunOnlyRegressionTest):
         matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasAssertFail = False
-        
+
         matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasThrownException = False
-        
-        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
-        
+
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException])
+
         msg = ""
         if hasError:
             msg = msgError

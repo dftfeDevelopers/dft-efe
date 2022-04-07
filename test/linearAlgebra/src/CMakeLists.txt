@@ -55,9 +55,13 @@ add_executable(TestSerialVectorDoubleInPlaceSubtractHost TestSerialVectorDoubleI
 target_link_libraries(TestSerialVectorDoubleInPlaceSubtractHost PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialVectorDoubleInPlaceSubtractHost PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleInPlaceSubtractHost" SUFFIX ".x")
 
-add_executable(TestBlasWrappersDoubleGemmHost TestBlasWrappersDoubleGemmHost.cpp)
-target_link_libraries(TestBlasWrappersDoubleGemmHost PUBLIC dft-efe-linalg)
-set_target_properties(TestBlasWrappersDoubleGemmHost PROPERTIES OUTPUT_NAME "TestBlasWrappersDoubleGemmHost" SUFFIX ".x")
+add_executable(TestBlasLapackDoubleGemmHost TestBlasLapackDoubleGemmHost.cpp)
+target_link_libraries(TestBlasLapackDoubleGemmHost PUBLIC dft-efe-linalg)
+set_target_properties(TestBlasLapackDoubleGemmHost PROPERTIES OUTPUT_NAME "TestBlasLapackDoubleGemmHost" SUFFIX ".x")
+
+add_executable(TestBlasLapackComplexDoubleGemmHost TestBlasLapackComplexDoubleGemmHost.cpp)
+target_link_libraries(TestBlasLapackComplexDoubleGemmHost PUBLIC dft-efe-linalg)
+set_target_properties(TestBlasLapackComplexDoubleGemmHost PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmHost" SUFFIX ".x")
 
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)

@@ -1,3 +1,38 @@
+#  Copyright (c) 2022-2022.
+#  The Regents of the University of Michigan and DFT-EFE developers.
+#
+#  This file is part of the DFT-EFE code.
+#
+#  DFT-EFE is free software: you can redistribute it and/or modify
+#    it under the terms of the Lesser GNU General Public License as
+#    published by the Free Software Foundation, either version 3 of
+#    the License, or (at your option) any later version.
+#
+#  DFT-EFE is distributed in the hope that it will be useful, but
+#    WITHOUT ANY WARRANTY; without even the implied warranty
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#    See the Lesser GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#    License at the top level of DFT-EFE distribution.  If not, see
+#    <https://www.gnu.org/licenses/>.
+#
+#  This file is part of the DFT-EFE code.
+#
+#  DFT-EFE is free software: you can redistribute it and/or modify
+#    it under the terms of the Lesser GNU General Public License as
+#    published by the Free Software Foundation, either version 3 of
+#    the License, or (at your option) any later version.
+#
+#  DFT-EFE is distributed in the hope that it will be useful, but
+#    WITHOUT ANY WARRANTY; without even the implied warranty
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#    See the Lesser GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#    License at the top level of DFT-EFE distribution.  If not, see
+#    <https://www.gnu.org/licenses/>.
+
 import reframe as rfm
 import reframe.utility.sanity as sn
 from reframe.utility.sanity import evaluate
@@ -32,10 +67,10 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestSerialVectorDoubleAddHost(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestSerialVectorDoubleAddHost using CMake'
+class BuildOnlyTestBlasLapackDoubleGemmHost(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestBlasLapackDoubleGemmHost using CMake'
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleAddHost']
+    make_opts = ['TestBlasLapackDoubleGemmHost']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -84,11 +119,11 @@ class BuildOnlyTestSerialVectorDoubleAddHost(rfm.CompileOnlyRegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestSerialVectorDoubleAddHost(rfm.RegressionTest):
-    descr = '''Compile and run test for adding two SerialVectors with double datatype'''
+class BuildAndRunTestBlasLapackDoubleGemmHost(rfm.RegressionTest):
+    descr = '''Compile and run test  for checking double Gemm on host'''
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleAddHost']
-    executable = './TestSerialVectorDoubleAddHost.x'
+    make_opts = ['TestBlasLapackDoubleGemmHost']
+    executable = './TestBlasLapackDoubleGemmHost.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -121,9 +156,9 @@ class BuildAndRunTestSerialVectorDoubleAddHost(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleAddHost."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleAddHost."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleAddHost."
+        msgError = "Found error(s) in TestBlasLapackDoubleGemmHost."
+        msgThrownException = "Found exceptions in TestBlasLapackDoubleGemmHost."
+        msgAssertFail = "Found assert fail(s) in TestBlasLapackDoubleGemmHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -157,9 +192,9 @@ class BuildAndRunTestSerialVectorDoubleAddHost(rfm.RegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestSerialVectorDoubleAddHost(rfm.RunOnlyRegressionTest):
-    descr = '''Run only test for adding two SerialVectors with double datatype'''
-    target_name = 'TestSerialVectorDoubleAddHost'
+class RunOnlyTestBlasLapackDoubleGemmHost(rfm.RunOnlyRegressionTest):
+    descr = '''Run only test for checking double Gemm on host'''
+    target_name = 'TestBlasLapackDoubleGemmHost'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -191,9 +226,9 @@ class RunOnlyTestSerialVectorDoubleAddHost(rfm.RunOnlyRegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleAddHost."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleAddHost."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleAddHost."
+        msgError = "Found error(s) in TestBlasLapackDoubleGemmHost."
+        msgThrownException = "Found exceptions in TestBlasLapackDoubleGemmHost."
+        msgAssertFail = "Found assert fail(s) in TestBlasLapackDoubleGemmHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
