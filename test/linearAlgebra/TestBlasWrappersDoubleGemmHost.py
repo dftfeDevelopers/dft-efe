@@ -50,10 +50,10 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestBlasWrappersGemmHost(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestBlasWrappersGemmHost using CMake'
+class BuildOnlyTestBlasWrappersDoubleGemmHost(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestBlasWrappersDoubleGemmHost using CMake'
     build_system = 'CMake'
-    make_opts = ['TestBlasWrappersGemmHost']
+    make_opts = ['TestBlasWrappersDoubleGemmHost']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -101,11 +101,11 @@ class BuildOnlyTestBlasWrappersGemmHost(rfm.CompileOnlyRegressionTest):
             return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestBlasWrappersGemmHost(rfm.RegressionTest):
-    descr = '''Compile and run test for subtracting two SerialVectors with double datatype'''
+class BuildAndRunTestBlasWrappersDoubleGemmHost(rfm.RegressionTest):
+    descr = '''Compile and run test  for checking double Gemm on host'''
     build_system = 'CMake'
-    make_opts = ['TestBlasWrappersGemmHost']
-    executable = './TestBlasWrappersGemmHost'
+    make_opts = ['TestBlasWrappersDoubleGemmHost']
+    executable = './TestBlasWrappersDoubleGemmHost'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -138,9 +138,9 @@ class BuildAndRunTestBlasWrappersGemmHost(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestBlasWrappersGemmHost."
-        msgThrownException = "Found exceptions in TestBlasWrappersGemmHost."
-        msgAssertFail = "Found assert fail(s) in TestBlasWrappersGemmHost."
+        msgError = "Found error(s) in TestBlasWrappersDoubleGemmHost."
+        msgThrownException = "Found exceptions in TestBlasWrappersDoubleGemmHost."
+        msgAssertFail = "Found assert fail(s) in TestBlasWrappersDoubleGemmHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -174,9 +174,9 @@ class BuildAndRunTestBlasWrappersGemmHost(rfm.RegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestBlasWrappersGemmHost(rfm.RunOnlyRegressionTest):
-    descr = '''Run only test for subtracting two SerialVectors with double datatype'''
-    target_name = 'TestBlasWrappersGemmHost'
+class RunOnlyTestBlasWrappersDoubleGemmHost(rfm.RunOnlyRegressionTest):
+    descr = '''Run only test for checking double Gemm on host'''
+    target_name = 'TestBlasWrappersDoubleGemmHost'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -208,9 +208,9 @@ class RunOnlyTestBlasWrappersGemmHost(rfm.RunOnlyRegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestBlasWrappersGemmHost."
-        msgThrownException = "Found exceptions in TestBlasWrappersGemmHost."
-        msgAssertFail = "Found assert fail(s) in TestBlasWrappersGemmHost."
+        msgError = "Found error(s) in TestBlasWrappersDoubleGemmHost."
+        msgThrownException = "Found exceptions in TestBlasWrappersDoubleGemmHost."
+        msgAssertFail = "Found assert fail(s) in TestBlasWrappersDoubleGemmHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

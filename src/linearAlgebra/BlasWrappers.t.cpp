@@ -6,7 +6,7 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace blasWrapper
+    namespace blasLapack
     {
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
@@ -162,7 +162,7 @@ namespace dftefe
                    lddc,
                    blasQueue);
       }
-    } // namespace blasWrapper
+    } // namespace blasLapack
   }   // namespace linearAlgebra
 
 } // namespace dftefe

@@ -46,7 +46,7 @@ namespace dftefe
       int cpuQueue;
 
       // FIXME Should this is be inside DFTEFE_WITH_GPU ????
-      static blasWrapper::Queue blasGpuQueue;
+      static blasLapack::Queue blasGpuQueue;
     };
 
   } // namespace linearAlgebra

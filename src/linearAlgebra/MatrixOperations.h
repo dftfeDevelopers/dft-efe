@@ -40,21 +40,21 @@ namespace dftefe
     class MatrixOperations
     {
       void
-      matMulc(blasWrapper::Layout                      layout,
-              blasWrapper::Op                          transA,
-              blasWrapper::Op                          transB,
-              size_type                                m,
-              size_type                                n,
-              size_type                                k,
-              ValueType                                alpha,
-              ValueType const *                        dA,
-              size_type                                ldda,
-              ValueType const *                        dB,
-              size_type                                lddb,
-              ValueType                                beta,
-              ValueType *                              dC,
-              size_type                                lddc,
-              blasWrapper::blasQueueType<memorySpace> &blasQueue);
+      matMulc(blasLapack::Layout                      layout,
+              blasLapack::Op                          transA,
+              blasLapack::Op                          transB,
+              size_type                               m,
+              size_type                               n,
+              size_type                               k,
+              ValueType                               alpha,
+              ValueType const *                       dA,
+              size_type                               ldda,
+              ValueType const *                       dB,
+              size_type                               lddb,
+              ValueType                               beta,
+              ValueType *                             dC,
+              size_type                               lddc,
+              blasLapack::blasQueueType<memorySpace> &blasQueue);
     };
   } // namespace linearAlgebra
 

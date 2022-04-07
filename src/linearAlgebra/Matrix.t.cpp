@@ -140,7 +140,7 @@ namespace dftefe
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    blasWrapper::blasQueueType<memorySpace> &
+    blasLapack::blasQueueType<memorySpace> &
     Matrix<ValueType, memorySpace>::getQueue()
     {
       return d_blasQueue;

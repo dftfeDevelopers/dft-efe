@@ -138,7 +138,7 @@ namespace dftefe
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
       size_type                                         rows,
       size_type                                         cols,
-      blasWrapper::blasQueueType<memorySpace> &         blasQueueInput,
+      blasLapack::blasQueueType<memorySpace> &          blasQueueInput,
       ValueType                                         initVal,
       typename Matrix<ValueType, memorySpace>::Property property,
       typename Matrix<ValueType, memorySpace>::Uplo     uplo,

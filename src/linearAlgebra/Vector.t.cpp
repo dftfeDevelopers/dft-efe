@@ -38,7 +38,7 @@ namespace dftefe
       const global_size_type    globalSize,
       const size_type           locallyOwnedSize,
       const size_type           ghostSize,
-      std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<const blasLapack::blasQueueType<memorySpace>> blasQueue)
       : d_storage(storage)
       , d_blasQueue(blasQueue)
       , d_vectorAttributes(
@@ -154,7 +154,7 @@ namespace dftefe
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      blasWrapper::axpy(
+      blasLapack::axpy(
         d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
 
       return *this;
@@ -179,7 +179,7 @@ namespace dftefe
         d_localSize <= rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      blasWrapper::axpy(
+      blasLapack::axpy(
         d_localSize, 1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
     }
 
@@ -202,7 +202,7 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      blasWrapper::axpy(
+      blasLapack::axpy(
         d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
       return *this;
     }
@@ -226,7 +226,7 @@ namespace dftefe
         (d_localSize <= rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      blasWrapper::axpy(
+      blasLapack::axpy(
         d_localSize, -1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
     }
 
@@ -306,11 +306,11 @@ namespace dftefe
         "Mismatch of sizes of the underlying storages"
         "of the Vectors that are added.");
 
-      //FIXME: fuse both operations for efficiency
-      blasWrapper::axpy(
+      // FIXME: fuse both operations for efficiency
+      blasLapack::axpy(
         uStorageSize, a, u.data(), 1, w.data(), 1, u.d_blasQueue);
 
-      blasWrapper::axpy(
+      blasLapack::axpy(
         uStorageSize, b, v.data(), 1, w.data(), 1, v.d_blasQueue);
     }
   } // namespace linearAlgebra

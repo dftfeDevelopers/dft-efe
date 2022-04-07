@@ -107,7 +107,7 @@ namespace dftefe
       explicit SerialVector(
         size_type size,
         ValueType initVal,
-        std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>>
+        std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
           blasQueue);
 
       /**
@@ -127,11 +127,10 @@ namespace dftefe
        * access through \p storage will lead to <b>undefined behavior</b>.
        *
        */
-      SerialVector(
-        std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-          storage,
-        std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>>
-          blasQueue);
+      SerialVector(std::unique_ptr<
+                     typename Vector<ValueType, memorySpace>::Storage> storage,
+                   std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
+                     blasQueue);
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector

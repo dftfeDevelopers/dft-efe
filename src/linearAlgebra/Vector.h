@@ -335,7 +335,7 @@ namespace dftefe
              const global_size_type    globalSize,
              const size_type           locallyOwnedSize,
              const size_type           ghostSize,
-             std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>>
+             std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
                blasQueue);
 
       /**
@@ -344,9 +344,8 @@ namespace dftefe
       Vector();
 
     protected:
-      std::unique_ptr<Storage> d_storage;
-      std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>>
-                       d_blasQueue;
+      std::unique_ptr<Storage>                                      d_storage;
+      std::shared_ptr<const blasLapack::blasQueueType<memorySpace>> d_blasQueue;
       VectorAttributes d_vectorAttributes;
       size_type        d_localSize;
       global_size_type d_globalSize;

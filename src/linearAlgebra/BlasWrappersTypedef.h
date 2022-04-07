@@ -33,7 +33,7 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace blasWrapper
+    namespace blasLapack
     {
       using Side   = blas::Side;
       using Op     = blas::Op;
@@ -75,7 +75,7 @@ namespace dftefe
       using blasQueueType = typename blasQueueTypedef<memorySpace>::TYPE;
 
 
-    } // namespace blasWrapper
+    } // namespace blasLapack
 
   } // namespace linearAlgebra
 

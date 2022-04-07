@@ -390,7 +390,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::l2Norm() const
     {
       const double l2NormLocallyOwned =
-        blasWrapper::nrm2(d_locallyOwnedSize, this->data(), 1, d_blasQueue);
+        blasLapack::nrm2(d_locallyOwnedSize, this->data(), 1, d_blasQueue);
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
@@ -413,7 +413,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::lInfNorm() const
     {
       const double lInfNormLocallyOwned =
-        blasWrapper::amax(d_locallyOwnedSize, this->data(), 1, d_blasQueue);
+        blasLapack::amax(d_locallyOwnedSize, this->data(), 1, d_blasQueue);
       double returnValue = lInfNormLocallyOwned;
 #ifdef DFTEFE_WITH_MPI
       MPI_Allreduce(&lInfNormLocallyOwned,

@@ -114,7 +114,7 @@ namespace dftefe
       explicit SerialDenseMatrix(
         size_type                                         rows,
         size_type                                         cols,
-        blasWrapper::blasQueueType<memorySpace> &         blasQueueInput,
+        blasLapack::blasQueueType<memorySpace> &          blasQueueInput,
         ValueType                                         initVal = 0,
         typename Matrix<ValueType, memorySpace>::Property property =
           Matrix<ValueType, memorySpace>::Property::GENERAL,
