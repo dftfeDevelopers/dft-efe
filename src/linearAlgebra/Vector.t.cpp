@@ -23,7 +23,7 @@
  * @author Bikash Kanungo
  */
 
-#include "BlasWrappers.h"
+#include <linearAlgebra/BlasWrappers.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe

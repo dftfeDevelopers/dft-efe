@@ -24,7 +24,7 @@
  */
 #include <utils/Exceptions.h>
 #include <cmath>
-#include "BlasWrappers.h"
+#include <linearAlgebra/BlasWrappers.h>
 
 namespace dftefe
 {
