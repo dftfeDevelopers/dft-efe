@@ -27,7 +27,7 @@ namespace dftefe
     {
       isInitialized = true;
       isFinalized   = false;
-      for (unsigned int iCell = 0; iCell < nLocalCells(); iCell++)
+      for (unsigned int iCell = 0; iCell < nLocallyActiveCells(); iCell++)
         {
           // delete
           d_triaVectorCell[iCell].reset();
@@ -44,7 +44,7 @@ namespace dftefe
       isInitialized      = false;
       isFinalized        = true;
       unsigned int iCell = 0;
-      d_triaVectorCell.resize(nLocalCells());
+      d_triaVectorCell.resize(nLocallyActiveCells());
 
       for (unsigned int iLevel = 0;
            iLevel < d_triangulationDealii.n_global_levels();
@@ -60,7 +60,7 @@ namespace dftefe
         }
 
       utils::throwException(
-        iCell == nLocalCells(),
+        iCell == nLocallyActiveCells(),
         "Number of active cells is not matching in Finalize."
         "Kneel at the altar of Lord Vishal and"
         "he may grant your wish to rectify this error.");
@@ -287,7 +287,7 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    dealii::Triangulation<dim>
+    dealii::Triangulation<dim> &
     TriangulationDealiiSerial<dim>::returnDealiiTria()
     {
       return d_triangulationDealii;

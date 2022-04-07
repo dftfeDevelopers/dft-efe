@@ -20,7 +20,7 @@ namespace dftefe
         size_type &                                        numQuadPoints)
       {
         const unsigned int dim      = triangulation->getDim();
-        const size_type    numCells = triangulation->nLocalCells();
+        const size_type    numCells = triangulation->nLocallyActiveCells();
         numCellQuadPoints.resize(numCells, 0);
         cellQuadStartIds.resize(numCells, 0);
         numQuadPoints = 0;
@@ -83,7 +83,7 @@ namespace dftefe
       utils::throwException(
         d_dim == quadratureRule->getDim(),
         "Mismatch of dimension of the quadrature points and the triangulation.");
-      d_numCells = triangulation->nLocalCells();
+      d_numCells = triangulation->nLocallyActiveCells();
       d_quadratureRuleVec =
         std::vector<std::shared_ptr<const QuadratureRule>>(d_numCells,
                                                            quadratureRule);
@@ -109,7 +109,7 @@ namespace dftefe
       , d_JxW(0)
       , d_numQuadPoints(0)
     {
-      d_numCells = triangulation->nLocalCells();
+      d_numCells = triangulation->nLocallyActiveCells();
       utils::throwException(
         d_numCells == d_quadratureRuleVec.size(),
         "Mismatch of number of cells in the quadratureRuleVec and the"
@@ -149,7 +149,7 @@ namespace dftefe
         d_dim == baseQuadratureRule->getDim(),
         "Mismatch of dimension of the quadrature points and the triangulation.");
 
-      d_numCells = triangulation->nLocalCells();
+      d_numCells = triangulation->nLocallyActiveCells();
       d_quadratureRuleVec.resize(d_numCells);
       d_numCellQuadPoints.resize(d_numCells, 0);
       d_cellQuadStartIds.resize(d_numCells, 0);
