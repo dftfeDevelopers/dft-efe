@@ -217,17 +217,26 @@ namespace dftefe
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiParallel<dim>::nLocalCells() const
+    TriangulationDealiiParallel<dim>::nLocallyActiveCells() const
     {
       return d_triangulationDealii.n_active_cells();
     }
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiParallel<dim>::nGlobalCells() const
+    TriangulationDealiiParallel<dim>::nGloballyActiveCells() const
     {
       return d_triangulationDealii.n_global_active_cells();
     }
+
+    template <unsigned int dim>
+    size_type
+    TriangulationDealiiParallel<dim>::nCells() const
+    {
+      return d_triangulationDealii.n_cells();
+    }
+
+
 
     template <unsigned int dim>
     std::vector<size_type>

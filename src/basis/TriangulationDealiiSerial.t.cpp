@@ -216,16 +216,23 @@ namespace dftefe
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiSerial<dim>::nLocalCells() const
+    TriangulationDealiiSerial<dim>::nLocallyActiveCells() const
     {
       return d_triangulationDealii.n_active_cells();
     }
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiSerial<dim>::nGlobalCells() const
+    TriangulationDealiiSerial<dim>::nGloballyActiveCells() const
     {
       return d_triangulationDealii.n_global_active_cells();
+    }
+
+    template <unsigned int dim>
+    size_type
+    TriangulationDealiiSerial<dim>::nCells() const
+    {
+      return d_triangulationDealii.n_cells();
     }
 
     template <unsigned int dim>

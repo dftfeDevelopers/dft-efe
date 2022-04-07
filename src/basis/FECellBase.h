@@ -78,8 +78,9 @@ namespace dftefe
       getRealPoint(std::shared_ptr<const Point> parametricPoint,
                    const CellMappingBase &      cellMapping) const = 0;
 
-      virtual global_size_type
-      getLocalToGlobalDoFId(size_type i) const = 0;
+      virtual
+      void cellNodeIdtoLocalNodeId( std::vector<global_size_type>  &
+                                                   vecId) const = 0 ;
 
       virtual size_type
       getFEOrder() const = 0;

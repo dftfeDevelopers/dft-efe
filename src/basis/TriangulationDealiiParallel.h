@@ -63,10 +63,12 @@ namespace dftefe
       clearUserFlags() override;
       void
       executeCoarseningAndRefinement() override;
+      unsigned int
+      nLocallyActiveCells() const override;
       size_type
-      nLocalCells() const override;
+      nGloballyActiveCells() const override;
       size_type
-      nGlobalCells() const override;
+      nCells() const override;
       /**
        * \todo
        * TODO:

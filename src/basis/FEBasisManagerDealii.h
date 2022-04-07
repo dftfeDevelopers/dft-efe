@@ -30,6 +30,7 @@
 #include <utils/Point.h>
 #include <basis/FEBasisManager.h>
 #include <memory>
+#include <deal.II/fe/fe_q.h>
 
 /// dealii includes
 #include <deal.II/dofs/dof_handler.h>
@@ -62,11 +63,11 @@ namespace dftefe
       void
       reinit(const TriangulationBase &triangulation, const size_type feOrder);
       size_type
-      nLocallyActiveCells() const;
+      nLocallyActiveCells() const = 0;
       size_type
-      nLocallyOwnedCells() const;
+      nOwnedCells() const = 0;
       size_type
-      nGlobalCells() const;
+      nGloballyActiveCells() const = 0;
       size_type
       getFEOrder(size_type cellId) const;
       size_type

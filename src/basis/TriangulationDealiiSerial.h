@@ -38,10 +38,12 @@ namespace dftefe
       clearUserFlags() override;
       void
       executeCoarseningAndRefinement() override;
+      unsigned int
+      nLocallyActiveCells() const override;
       size_type
-      nLocalCells() const override;
-      size_type
-      nGlobalCells() const override;
+      nGloballyActiveCells() const override;
+      unsigned int
+      nCells() const override;
       /**
        * \todo
        * TODO:
@@ -62,7 +64,7 @@ namespace dftefe
       getDim() const override;
 
       // class specific member function
-      dealii::Triangulation<dim>
+      dealii::Triangulation<dim> &
       returnDealiiTria();
 
         private:

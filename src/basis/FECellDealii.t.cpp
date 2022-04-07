@@ -78,17 +78,17 @@ namespace dealii
     FECellDealii<dim>::getNodalPoints() const
     {
       utils::throwException(
-        false, "getNodalPoints() in FECellDealii not yet implemented.");
-      return 0;
+        false,
+        "getNodalPoints() in FECellDealii can not be implemented.");
     }
 
     template <unsigned int dim>
     size_type
     FECellDealii<dim>::getId() const
     {
-      utils::throwException(false,
-                            "getId() in FECellDealii not yet implemented.");
-      return 0;
+      utils::throwException(
+        false,
+        "getId() in FECellDealii not yet implemented.");
     }
 
     template <unsigned int dim>
@@ -201,14 +201,20 @@ namespace dealii
       std::shared_ptr<const Point> parametricPoint,
       const CellMappingBase &      cellMapping) const
     {
-      utils::throwException(
-        false, "getRealPoint() in FECellDealii not yet implemented.");
+      std::shared_ptr<dftefe::utils::Point> realPoint =
+        std::make_shared<dftefe::utils::Point>(dim, 0.0);
+      bool isPointInside;
+      cellMapping.getRealPoint(parametricPoint,
+                               *this,
+                               realPoint);
     }
 
     template <unsigned int dim>
-    global_size_type
-    FECellDealii<dim>::getLocalToGlobalDoFId(size_type i) const
-    {}
+    void FECellDealii<dim>::cellNodeIdtoLocalNodeId( std::vector<global_size_type>  &
+      vecId) const
+    {
+      d_dealiiFECellIter->get_dof_indices(vecId);
+    }
 
     template <unsigned int dim>
     size_type
