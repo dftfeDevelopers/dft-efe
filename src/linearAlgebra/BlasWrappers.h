@@ -86,4 +86,5 @@ namespace dftefe
   } // namespace linearAlgebra
 } // namespace dftefe
 
+#include "BlasWrappers.t.cpp"
 #endif // dftefeBlasWrappers_h

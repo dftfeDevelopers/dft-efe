@@ -19,6 +19,11 @@ add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
 target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)
 set_target_properties(TestVectorAggregate1 PROPERTIES OUTPUT_NAME "TestVectorAggregate1" SUFFIX ".x")
 
+# CPU: testing blaspp
+add_executable(TestBlas1 TestBlas1.cpp)
+target_link_libraries(TestBlas1 PUBLIC dft-efe-linalg)
+set_target_properties(TestBlas1 PROPERTIES OUTPUT_NAME "TestBlas1" SUFFIX ".x")
+
 # CPU: testing l2Norm, lInfNorm
 add_executable(TestVectorNorms TestVectorNorms.cpp)
 target_link_libraries(TestVectorNorms PUBLIC dft-efe-linalg)

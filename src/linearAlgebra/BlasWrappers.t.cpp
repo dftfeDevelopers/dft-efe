@@ -10,21 +10,21 @@ namespace dftefe
     blasWrapper::real_type<ValueType>
     asum(size_type n, ValueType const *x, size_type incx)
     {
-      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
+//      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
       utils::throwException(
-        !std::is_same<memorySpace, memorySpaceDevice>::value,
+        memorySpace != dftefe::utils::MemorySpace::DEVICE,
         "blas::asum() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       blasWrapper::real_type<ValueType> output;
       output = blas::asum(n, x, incx);
       return output;
     }
 
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
     amax(size_type n, ValueType const *x, size_type incx)
     {
       utils::throwException(
-        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        memorySpace != dftefe::utils::MemorySpace::DEVICE,
         "blas::amax() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
       size_type outputIndex;
@@ -44,7 +44,7 @@ namespace dftefe
          size_type                                        incy)
     {
       utils::throwException(
-        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        memorySpace != dftefe::utils::MemorySpace::DEVICE,
         "blas::axpy() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       blas::axpy(n, alpha, x, incx, y, incy);
     }
@@ -60,20 +60,20 @@ namespace dftefe
         size_type         incy)
     {
       utils::throwException(
-        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        memorySpace != dftefe::utils::MemorySpace::DEVICE,
         "blas::dot() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
-      blasWrapper::real_type<ValueType> output;
+      blasWrapper::scalar_type<ValueType1, ValueType2> output;
       output = blas::dot(n, x, incx, y, incy);
       return output;
     }
 
-    template <typename ValueType>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     blasWrapper::real_type<ValueType>
     nrm2(size_type n, ValueType const *x, size_type incx)
     {
       utils::throwException(
-        !std::is_same<memorySpace, dftefe::utils::MemorySpace::DEVICE>::value,
+        memorySpace != dftefe::utils::MemorySpace::DEVICE,
         "blas::nrm2() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       blasWrapper::real_type<ValueType> output;
       output = blas::nrm2(n, x, incx);

@@ -47,9 +47,7 @@ if(ENABLE_CUDA)
                           CUDA_STANDARD 14
                           CUDA_STANDARD_REQUIRED ON)
    find_package(CUDAToolkit REQUIRED)
-   target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas blaspp)
-	else()
-	target_link_libraries(dft-efe-linalg PRIVATE blaspp)
+   target_link_libraries(dft-efe-linalg PRIVATE CUDA::cublas)
 endif()
 
 if (NOT TARGET dft-efe-utils)
@@ -57,5 +55,5 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 
-target_link_libraries(dft-efe-linalg PUBLIC dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
+target_link_libraries(dft-efe-linalg PUBLIC dft-efe-utils blaspp ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
 endif()
