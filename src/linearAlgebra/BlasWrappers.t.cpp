@@ -10,7 +10,7 @@ namespace dftefe
     blasWrapper::real_type<ValueType>
     asum(size_type n, ValueType const *x, size_type incx)
     {
-//      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
+      //      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
       utils::throwException(
         memorySpace != dftefe::utils::MemorySpace::DEVICE,
         "blas::asum() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
