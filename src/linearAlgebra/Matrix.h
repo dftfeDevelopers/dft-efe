@@ -28,7 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <vector>
-#include "BlasWrappersTypedef.h"
+#include "BlasLapackTypedef.h"
 #include <utils/MemoryStorage.h>
 #include "QueueManager.h"
 #include <memory>

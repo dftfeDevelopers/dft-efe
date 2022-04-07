@@ -28,8 +28,8 @@
 
 
 #include <blas.hh>
-#include "BlasWrappers.h"
-#include "BlasWrappersTypedef.h"
+#include "BlasLapack.h"
+#include "BlasLapackTypedef.h"
 #include <utils/MemorySpaceType.h>
 
 namespace dftefe

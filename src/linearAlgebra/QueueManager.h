@@ -27,7 +27,7 @@
 #define dftefeQueueManager_h
 
 #include <blas.hh>
-#include "BlasWrappersTypedef.h"
+#include "BlasLapackTypedef.h"
 
 namespace dftefe
 {

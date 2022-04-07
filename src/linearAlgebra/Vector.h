@@ -27,7 +27,7 @@
 #define dftefeVector_h
 
 #include <linearAlgebra/VectorAttributes.h>
-#include <linearAlgebra/BlasWrappers.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 #include <memory>

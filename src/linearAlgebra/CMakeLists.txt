@@ -8,7 +8,7 @@ endif()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-		BlasWrappers.cpp
+        BlasLapack.cpp
 		DistributedVector.cpp
         Matrix.cpp
 		MatrixOperations.cpp

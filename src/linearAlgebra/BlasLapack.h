@@ -27,7 +27,7 @@
 #define dftefeBlasWrappers_h
 
 #include <blas.hh>
-#include "BlasWrappersTypedef.h"
+#include "BlasLapackTypedef.h"
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -107,5 +107,5 @@ namespace dftefe
   }   // namespace linearAlgebra
 } // namespace dftefe
 
-#include "BlasWrappers.t.cpp"
+#include "BlasLapack.t.cpp"
 #endif // dftefeBlasWrappers_h

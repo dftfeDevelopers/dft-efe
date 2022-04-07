@@ -23,7 +23,7 @@
 * @author Ian C. Lin.
 */
 
-#include <linearAlgebra/BlasWrappers.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <vector>
 #include <iostream>
 

@@ -24,7 +24,7 @@
  */
 
 
-#include "BlasWrappers.h"
+#include "BlasLapack.h"
 
 
 namespace dftefe
