@@ -153,8 +153,8 @@ namespace dftefe
       d_quadratureRuleVec.resize(d_numCells);
       d_numCellQuadPoints.resize(d_numCells, 0);
       d_cellQuadStartIds.resize(d_numCells, 0);
-      d_numQuadPoints                                    = 0;
-      unsigned int                                 iCell = 0;
+      d_numQuadPoints                                                 = 0;
+      unsigned int                                              iCell = 0;
       basis::TriangulationBase::const_TriangulationCellIterator cellIter =
         triangulation->beginLocal();
       for (; cellIter != triangulation->endLocal(); ++cellIter)
@@ -301,5 +301,18 @@ namespace dftefe
     {
       return d_numCellQuadPoints[cellId];
     }
+
+    const std::vector<size_type> &
+    CellQuadratureContainer::getCellQuadStartIds() const
+    {
+      return d_cellQuadStartIds;
+    }
+
+    size_type
+    CellQuadratureContainer::getCellQuadStartId(const size_type cellId) const
+    {
+      return d_cellQuadStartIds[cellId];
+    }
+
   } // end of namespace quadrature
 } // end of namespace dftefe

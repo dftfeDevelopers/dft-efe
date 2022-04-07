@@ -54,17 +54,15 @@ namespace dftefe
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const;
       std::vector<double>
-      getBasisFunctionDerivative(
-        const size_type     basisId,
-        const utils::Point &point,
-        const size_type     derivativeOrder = 1) const;
+      getBasisFunctionDerivative(const size_type     basisId,
+                                 const utils::Point &point,
+                                 const size_type     derivativeOrder = 1) const;
 
       ////// FE specific  member functions /////
       void
-      reinit(const TriangulationBase &triangulation,
-             const size_type          feOrder) ;
+      reinit(const TriangulationBase &triangulation, const size_type feOrder);
       size_type
-      nLocallyActiveCells() const ;
+      nLocallyActiveCells() const;
       size_type
       nLocallyOwnedCells() const;
       size_type
@@ -76,11 +74,11 @@ namespace dftefe
       bool
       isHPRefined() const;
       size_type
-      nLocalNodes() const ;
+      nLocalNodes() const;
       global_size_type
       nGlobalNodes() const;
       std::vector<size_type>
-      getLocalNodeIds(size_type cellId) const ;
+      getLocalNodeIds(size_type cellId) const;
       std::vector<size_type>
       getGlobalNodeIds() const;
       std::vector<size_type>
@@ -112,11 +110,15 @@ namespace dftefe
       std::shared_ptr<const dealii::DoFHandler<dim>>
       getDoFHandler();
 
+      const dealii::FiniteElement<dim> &
+      getReferenceFE(const size_type cellId) const;
+
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
-      bool d_isHPRefined;
-
+      bool                                     d_isHPRefined;
+      std::vector<std::shared_ptr<FECellBase>> d_locallyActiveCells;
+      std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis

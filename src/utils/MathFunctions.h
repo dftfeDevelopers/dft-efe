@@ -28,13 +28,17 @@
 
 #include <utils/TypeConfig.h>
 #include <cmath>
-namespace dftefe {
-namespace utils {
-  namespace mathFunctions 
+namespace dftefe
+{
+  namespace utils
   {
-    int intPow(int base, unsigned int e); 
-    size_type sizeTypePow(size_type base, size_type e); 
-  }
-} // end of namespace utils
-}// end of namespace dftefe
+    namespace mathFunctions
+    {
+      int
+      intPow(int base, unsigned int e);
+      size_type
+      sizeTypePow(size_type base, size_type e);
+    } // namespace mathFunctions
+  }   // end of namespace utils
+} // end of namespace dftefe
 #endif // dftefeMathFunctions_h
