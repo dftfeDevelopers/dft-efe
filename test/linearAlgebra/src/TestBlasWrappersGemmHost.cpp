@@ -23,35 +23,18 @@
 * @author Ian C. Lin.
 */
 
-#include <iostream>
-#include <fstream>
-
-#include "linearAlgebra/BlasWrappers.h"
-
-/**
-* @brief print out column major matrix in a readable format
-* @param mat matrix input
-* @param m number of rows
-* @param n number of columns
-*/
-void printMatrix(const std::vector<double> &mat, int64_t m, int64_t n) {
- for (auto i = 0; i < m; ++i) {
-     for (auto j = 0; j < n; ++j) {
-         printf("%.8f, ", mat[i+j*m]);
-       }
-     printf("\n");
-   }
-}
+#include <vector>
 
 int
 main(int argc, char **argv) {
- std::string filename = "TestBlas1.out";
- std::fstream fout(filename);
 
- int Am = 10, An = 5, Bm = An, Bn = 3, Cm = Am, Cn = Bn;
+ size_type Am = 10, An = 5, Bm = An, Bn = 3, Cm = Am, Cn = Bn;
+
+ std::vector<double> colMajA = {-4.47950, 3.59405, 3.10196, -6.74777, -7.62005, -0.03272, 9.19488, -3.19229, 1.70536, -5.52376, 5.02534, -4.89810, 0.11914, 3.98153, 7.81807, 9.18583, 0.94431, -7.22751, -7.01412, -4.84983, 6.81435, -4.91436, 6.28570, -5.12950, 8.58527, -3.00032, -6.06809, -4.97832, 2.32089, -0.53422, -2.96681, 6.61657, 1.70528, 0.99447, 8.34387, -4.28322, 5.14400, 5.07458, -2.39108, 1.35643, -8.48291, -8.92100, 0.61595, 5.58334, 8.68021, -7.40188, 1.37647, -0.61219, -9.76196, -3.25755};
+
  int lda = Am, ldb = Bm, ldc = Cm;
  std::vector<double> A(Am*An), B(Bm*Bn), C(Cm*Cn, 0.0);
- double alpha = 1.5, beta = 0.0;
+ double alpha = 1.5, beta = 1.1;
  for (auto i = 0; i < A.size(); ++i) {
      A[i] = i;
    }
@@ -83,5 +66,7 @@ main(int argc, char **argv) {
                              a);
 
  std::cout << "mat C: " << std::endl;
- for (auto i : C) {printf("%.4f ", i);}
+ for (auto i : C) {
+     printf("%.4f ", i);
+   }
 }

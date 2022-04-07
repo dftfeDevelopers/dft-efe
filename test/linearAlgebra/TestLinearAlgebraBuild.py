@@ -90,7 +90,7 @@ class BuildOnlyTestLinearAlgebra(rfm.CompileOnlyRegressionTest):
         hasTestPassed = not hasWarning and not hasError
         msg = ""
         if hasError:
-            msg = msgError/home/iancclin/project/DFT-EFE-hackathon/dft-efe/test/linearAlgebra/src
+            msg = msgError
         elif hasWarning:
             msg = msgWarning
         else:

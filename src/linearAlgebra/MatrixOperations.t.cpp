@@ -23,21 +23,21 @@ namespace dftefe
       size_type                                lddc,
       blasWrapper::blasQueueType<memorySpace> &blasQueue)
     {
-      dftefe::linearAlgebra::gemm(layout,
-                                  transA,
-                                  transB,
-                                  m,
-                                  n,
-                                  k,
-                                  alpha,
-                                  dA,
-                                  ldda,
-                                  dB,
-                                  lddb,
-                                  beta,
-                                  dC,
-                                  lddc,
-                                  blasQueue);
+      dftefe::linearAlgebra::blasWrapper::gemm(layout,
+                                               transA,
+                                               transB,
+                                               m,
+                                               n,
+                                               k,
+                                               alpha,
+                                               dA,
+                                               ldda,
+                                               dB,
+                                               lddb,
+                                               beta,
+                                               dC,
+                                               lddc,
+                                               blasQueue);
     }
 
   } // namespace linearAlgebra

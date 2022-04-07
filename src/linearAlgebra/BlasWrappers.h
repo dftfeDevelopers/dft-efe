@@ -33,75 +33,78 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType,
-              typename dftefe::utils::MemorySpace memorySpace>
-    blasWrapper::real_type<ValueType>
-    asum(size_type                                n,
-         ValueType const *                        x,
-         size_type                                incx,
-         blasWrapper::blasQueueType<memorySpace> &blasQueue);
+    namespace blasWrapper
+    {
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      real_type<ValueType>
+      asum(size_type                   n,
+           ValueType const *           x,
+           size_type                   incx,
+           blasQueueType<memorySpace> &blasQueue);
 
-    template <typename ValueType,
-              typename dftefe::utils::MemorySpace memorySpace>
-    blasWrapper::real_type<ValueType>
-    amax(size_type                                n,
-         ValueType const *                        x,
-         size_type                                incx,
-         blasWrapper::blasQueueType<memorySpace> &blasQueue);
-
-
-    template <typename ValueType1,
-              typename ValueType2,
-              typename dftefe::utils::MemorySpace memorySpace>
-    void
-    axpy(size_type                                        n,
-         blasWrapper::scalar_type<ValueType1, ValueType2> alpha,
-         ValueType1 const *                               x,
-         size_type                                        incx,
-         ValueType2 *                                     y,
-         size_type                                        incy,
-         blasWrapper::blasQueueType<memorySpace> &        blasQueue);
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      real_type<ValueType>
+      amax(size_type                   n,
+           ValueType const *           x,
+           size_type                   incx,
+           blasQueueType<memorySpace> &blasQueue);
 
 
-    template <typename ValueType1,
-              typename ValueType2,
-              typename dftefe::utils::MemorySpace memorySpace>
-    blasWrapper::scalar_type<ValueType1, ValueType2>
-    dot(size_type                                n,
-        ValueType1 const *                       x,
-        size_type                                incx,
-        ValueType2 const *                       y,
-        size_type                                incy,
-        blasWrapper::blasQueueType<memorySpace> &blasQueue);
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      axpy(size_type                           n,
+           scalar_type<ValueType1, ValueType2> alpha,
+           ValueType1 const *                  x,
+           size_type                           incx,
+           ValueType2 *                        y,
+           size_type                           incy,
+           blasQueueType<memorySpace> &        blasQueue);
 
 
-    template <typename ValueType,
-              typename dftefe::utils::MemorySpace memorySpace>
-    blasWrapper::real_type<ValueType>
-    nrm2(size_type                                n,
-         ValueType const *                        x,
-         size_type                                incx,
-         blasWrapper::blasQueueType<memorySpace> &blasQueue);
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      scalar_type<ValueType1, ValueType2>
+      dot(size_type                   n,
+          ValueType1 const *          x,
+          size_type                   incx,
+          ValueType2 const *          y,
+          size_type                   incy,
+          blasQueueType<memorySpace> &blasQueue);
 
-    template <typename ValueType,
-              typename dftefe::utils::MemorySpace memorySpace>
-    void
-    gemm(blasWrapper::Layout                      layout,
-         blasWrapper::Op                          transA,
-         blasWrapper::Op                          transB,
-         size_type                                m,
-         size_type                                n,
-         size_type                                k,
-         ValueType                                alpha,
-         ValueType const *                        dA,
-         size_type                                ldda,
-         ValueType const *                        dB,
-         size_type                                lddb,
-         ValueType                                beta,
-         ValueType *                              dC,
-         size_type                                lddc,
-         blasWrapper::blasQueueType<memorySpace> &blasQueue);
-  } // namespace linearAlgebra
+
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      real_type<ValueType>
+      nrm2(size_type                   n,
+           ValueType const *           x,
+           size_type                   incx,
+           blasQueueType<memorySpace> &blasQueue);
+
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      gemm(Layout                      layout,
+           Op                          transA,
+           Op                          transB,
+           size_type                   m,
+           size_type                   n,
+           size_type                   k,
+           ValueType                   alpha,
+           ValueType const *           dA,
+           size_type                   ldda,
+           ValueType const *           dB,
+           size_type                   lddb,
+           ValueType                   beta,
+           ValueType *                 dC,
+           size_type                   lddc,
+           blasQueueType<memorySpace> &blasQueue);
+    } // namespace blasWrapper
+  }   // namespace linearAlgebra
 } // namespace dftefe
 
 #include "BlasWrappers.t.cpp"
