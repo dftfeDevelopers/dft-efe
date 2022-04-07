@@ -20,10 +20,9 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Sambit Das
  */
 
-#include <linearAlgebra/BlasWrappers.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe
@@ -34,11 +33,14 @@ namespace dftefe
     // Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(std::unique_ptr<Storage> &storage,
-                                           const global_size_type    globalSize,
-                                           const size_type locallyOwnedSize,
-                                           const size_type ghostSize)
+    Vector<ValueType, memorySpace>::Vector(
+      std::unique_ptr<Storage> &storage,
+      const global_size_type    globalSize,
+      const size_type           locallyOwnedSize,
+      const size_type           ghostSize,
+      std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>> blasQueue)
       : d_storage(storage)
+      , d_blasQueue(blasQueue)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
@@ -54,6 +56,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector()
       : d_storage(nullptr)
+      , d_blasQueue(nullptr)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
@@ -151,7 +154,8 @@ namespace dftefe
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      axpy(d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1);
+      blasWrapper::axpy(
+        d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
 
       return *this;
     }
@@ -175,7 +179,8 @@ namespace dftefe
         d_localSize <= rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      axpy(d_localSize, 1.0, rhs.data(), 1, this->data(), 1);
+      blasWrapper::axpy(
+        d_localSize, 1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -197,7 +202,8 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      axpy(d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1);
+      blasWrapper::axpy(
+        d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
       return *this;
     }
 
@@ -220,7 +226,8 @@ namespace dftefe
         (d_localSize <= rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      axpy(d_localSize, -1.0, rhs.data(), 1, this->data(), 1);
+      blasWrapper::axpy(
+        d_localSize, -1.0, rhs.data(), 1, this->data(), 1, d_blasQueue);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -298,9 +305,13 @@ namespace dftefe
         (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
         "Mismatch of sizes of the underlying storages"
         "of the Vectors that are added.");
-      axpy(uStorageSize, a, u.data(), 1, w.data(), 1);
 
-      axpy(uStorageSize, b, v.data(), 1, w.data(), 1);
+      //FIXME: fuse both operations for efficiency
+      blasWrapper::axpy(
+        uStorageSize, a, u.data(), 1, w.data(), 1, u.d_blasQueue);
+
+      blasWrapper::axpy(
+        uStorageSize, b, v.data(), 1, w.data(), 1, v.d_blasQueue);
     }
   } // namespace linearAlgebra
 } // namespace dftefe

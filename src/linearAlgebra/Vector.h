@@ -20,13 +20,14 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Sambit Das
  */
 
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
 #include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/BlasWrappers.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 #include <memory>
@@ -323,6 +324,8 @@ namespace dftefe
        * @param[in] ghostSize size of the part of the vector that is owned by
        * the other processors but required by the current processor. For a
        * SerialVector, the ghostSize is 0.
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
        *
        * @note Since we are passing the ownership of the input storage to the Vector, the
        * storage will point to NULL after a call to this Constructor. Accessing
@@ -331,7 +334,9 @@ namespace dftefe
       Vector(std::unique_ptr<Storage> &storage,
              const global_size_type    globalSize,
              const size_type           locallyOwnedSize,
-             const size_type           ghostSize);
+             const size_type           ghostSize,
+             std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>>
+               blasQueue);
 
       /**
        * @brief Default Constructor
@@ -340,11 +345,13 @@ namespace dftefe
 
     protected:
       std::unique_ptr<Storage> d_storage;
-      VectorAttributes         d_vectorAttributes;
-      size_type                d_localSize;
-      global_size_type         d_globalSize;
-      size_type                d_locallyOwnedSize;
-      size_type                d_ghostSize;
+      std::shared_ptr<const blasWrapper::blasQueueType<memorySpace>>
+                       d_blasQueue;
+      VectorAttributes d_vectorAttributes;
+      size_type        d_localSize;
+      global_size_type d_globalSize;
+      size_type        d_locallyOwnedSize;
+      size_type        d_ghostSize;
     };
 
     // helper functions
