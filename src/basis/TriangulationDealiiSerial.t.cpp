@@ -278,6 +278,13 @@ namespace dftefe
     {
       return dim;
     }
+
+    template <unsigned int dim>
+    dealii::Triangulation<dim>
+    TriangulationDealiiSerial<dim>::returnDealiiTria()
+    {
+      return d_triangulationDealii;
+    }
   } // namespace basis
 
 } // namespace dftefe

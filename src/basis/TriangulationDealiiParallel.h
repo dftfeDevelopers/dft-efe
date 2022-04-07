@@ -86,6 +86,11 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
+      // Class specific member function
+
+
+      dealii::parallel::Distributed::Triangulation<dim> &
+        returnDealiiTria();
 
     private:
       /**

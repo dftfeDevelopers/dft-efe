@@ -31,8 +31,10 @@ namespace dftefe
     FEBasisManagerDealii<dim>::FEBasisManagerDealii(TriangulationBase &tria)
     :d_isHPRefined(false)
     {
+
       d_triangulation = tria;
       d_dofHandler = std::make_shared<dealii::DoFHandler< dim>();
+
     }
 
     template <size_type dim>
@@ -62,10 +64,32 @@ namespace dftefe
     reinit(const TriangulationBase &triangulation,
            const size_type          feOrder)
     {
+      const TriangulationDealiiParallel<dim> dealiiParallelTria =
+        dynamic_cast<const TriangulationDealiiParallel<dim> &>(triangulation);
+
+      if (!(dealiiParallelTria == nullptr) )
+        {
+          d_dofHandler->initialize(dealiiParallelTria->returnDealiiTria(), feOrder);
+        }
+      else
+        {
+          const TriangulationDealiiSerial<dim> dealiiSerialTria =
+            dynamic_cast<const TriangulationDealiiSerial<dim> &>(triangulation);
+
+          if (!(dealiiParallelTria == nullptr) )
+            {
+              d_dofHandler->initialize(dealiiSerialTria->returnDealiiTria(), feOrder);
+            }
+          else
+            {
+              utils::throwException(
+                false, "reinit() in FEBasisManagerDealii is not able to re cast the Triangulation.");
+            }
+
+        }
+
       // TODO check how to pass the triangulation to dofHandler
       d_triangulation = triangulation;
-      d_dofHandler->initialize(triangulation, feOrder);
-
     }
 
     template <size_type dim>

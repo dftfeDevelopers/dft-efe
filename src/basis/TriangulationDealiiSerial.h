@@ -61,8 +61,11 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
+      // class specific member function
+      dealii::Triangulation<dim>
+      returnDealiiTria();
 
-    private:
+        private:
       /**
        * \todo
        * TODO:
