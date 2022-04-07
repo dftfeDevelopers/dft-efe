@@ -22,9 +22,9 @@
 /*
  * @author Bikash Kanungo
  */
-#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
 #include <cmath>
+#include "BlasWrappers.h"
 
 namespace dftefe
 {
@@ -125,6 +125,144 @@ namespace dftefe
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
     }
+
+    /**
+     * @brief Constructor using locally owned range. This vector does not contain any
+     * ghost indices
+     * @note This way of construction is expensive. One should use the other
+     * constructor based on an input MPICommunicatorP2P or another vector as far
+     * as possible.
+     */
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributedVector<ValueType, memorySpace>::DistributedVector(
+      const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+      const MPI_Comm &                                    mpiComm,
+      const ValueType initVal /*= ValueType()*/)
+    {
+      std::vector<dftefe::global_size_type> ghostIndices;
+      ghostIndices.resize(0);
+      //
+      // TODO Move the warning message to a Logger class
+      //
+      int         mpiRank;
+      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
+      std::string msg = "Error occured while using MPI_Comm_rank. "
+                        "Error code: " +
+                        std::to_string(err);
+      utils::throwException(err == MPI_SUCCESS, msg);
+      if (mpiRank == 0)
+        {
+          msg =
+            "WARNING: Constructing a DistributedVector using locally owned "
+            "range and ghost indices is expensive. As far as possible, one should "
+            " use the other constructor based on an input MPICommunicatorP2P.";
+          std::cout << msg << std::endl;
+        }
+      ////////////
+
+      d_mpiPatternP2P =
+        std::make_shared<const utils::MPIPatternP2P<memorySpace>>(
+          locallyOwnedRange, ghostIndices, mpiComm);
+
+      // block size set to 1 as it is a single vector
+      const size_type blockSize = 1;
+      d_mpiCommunicatorP2P      = std::make_shared<
+        const utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, blockSize);
+
+      d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
+      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_storage =
+        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+          d_localSize, initVal);
+    }
+
+
+    /**
+     * @brief This constructor takes the total indices and divides them
+     * up equitably across all processors. This decompositon is not compatible
+     * with other constructors.
+     * @note This way of construction is expensive. One should use the other
+     * constructor based on an input MPICommunicatorP2P or another vector as far
+     * as possible.
+     */
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributedVector<ValueType, memorySpace>::DistributedVector(
+      const global_size_type totalGlobalDofs,
+      const MPI_Comm &       mpiComm,
+      const ValueType        initVal /*= ValueType()*/)
+    {
+      std::vector<dftefe::global_size_type> ghostIndices;
+      ghostIndices.resize(0);
+
+      std::pair<global_size_type, global_size_type> locallyOwnedRange;
+
+      //
+      // TODO Move the warning message to a Logger class
+      //
+      int         mpiRank;
+      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
+      std::string msg = "Error occured while using MPI_Comm_rank. "
+                        "Error code: " +
+                        std::to_string(err);
+      utils::throwException(err == MPI_SUCCESS, msg);
+      if (mpiRank == 0)
+        {
+          msg =
+            "WARNING: Constructing a DistributedVector using locally owned "
+            "range and ghost indices is expensive. As far as possible, one should "
+            " use the other constructor based on an input MPICommunicatorP2P.";
+          std::cout << msg << std::endl;
+        }
+
+      int mpiProcess;
+
+      int         errProc = MPI_Comm_size(mpiComm, &mpiProcess);
+      std::string msgProc = "Error occured while using MPI_Comm_size. "
+                            "Error code: " +
+                            std::to_string(errProc);
+      utils::throwException(errProc == MPI_SUCCESS, msgProc);
+
+      dftefe::global_size_type locallyOwnedSize = totalGlobalDofs / mpiProcess;
+      if (mpiRank < totalGlobalDofs % mpiProcess)
+        locallyOwnedSize++;
+
+      dftefe::global_size_type startIndex =
+        mpiRank * (totalGlobalDofs / mpiProcess);
+      if (mpiRank < totalGlobalDofs % mpiProcess)
+        startIndex += mpiRank;
+      else
+        startIndex += totalGlobalDofs % mpiProcess;
+
+      locallyOwnedRange.first  = startIndex;
+      locallyOwnedRange.second = startIndex + locallyOwnedSize;
+
+
+      ////////////
+
+      d_mpiPatternP2P =
+        std::make_shared<const utils::MPIPatternP2P<memorySpace>>(
+          locallyOwnedRange, ghostIndices, mpiComm);
+
+      // block size set to 1 as it is a single vector
+      const size_type blockSize = 1;
+      d_mpiCommunicatorP2P      = std::make_shared<
+        const utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, blockSize);
+
+      d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
+      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_storage =
+        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+          d_localSize, initVal);
+    }
+
 #endif // DFTEFE_WITH_MPI
 
     //
@@ -147,12 +285,25 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       VectorAttributes vectorAttributesDistributed(
         VectorAttributes::Distribution::DISTRIBUTED);
-      bool areCompatible = d_vectorAttributes.areDistributionCompatible(
-        vectorAttributesDistributed);
-      utils::throwException<utils::LogicError>(
-        areCompatible,
-        "Trying to copy from an incompatible Vector. One is a SerialVector and the "
-        " other a DistributedVector.");
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    DistributedVector<ValueType, memorySpace>::DistributedVector(
+      const DistributedVector &u,
+      ValueType                initVal)
+    {
+      d_storage =
+        std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
+          (u.d_storage)->size(), initVal);
+      d_vectorAttributes   = u.d_vectorAttributes;
+      d_localSize          = u.d_localSize;
+      d_locallyOwnedSize   = u.d_locallyOwnedSize;
+      d_ghostSize          = u.d_ghostSize;
+      d_globalSize         = u.d_globalSize;
+      d_mpiCommunicatorP2P = u.d_mpiCommunicatorP2P;
+      d_mpiPatternP2P      = u.d_mpiPatternP2P;
+      VectorAttributes vectorAttributesDistributed(
+        VectorAttributes::Distribution::DISTRIBUTED);
     }
 
     //
@@ -172,12 +323,6 @@ namespace dftefe
       d_mpiPatternP2P      = std::move(u.d_mpiPatternP2P);
       VectorAttributes vectorAttributesDistributed(
         VectorAttributes::Distribution::DISTRIBUTED);
-      bool areCompatible = d_vectorAttributes.areDistributionCompatible(
-        vectorAttributesDistributed);
-      utils::throwException<utils::LogicError>(
-        areCompatible,
-        "Trying to move from an incompatible Vector. One is a SerialVector and the "
-        " other a DistributedVector.");
     }
 
     //
@@ -201,12 +346,6 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       VectorAttributes vectorAttributesDistributed(
         VectorAttributes::Distribution::DISTRIBUTED);
-      bool areCompatible = d_vectorAttributes.areDistributionCompatible(
-        vectorAttributesDistributed);
-      utils::throwException<utils::LogicError>(
-        areCompatible,
-        "Trying to copy assign from an incompatible Vector. One is a SerialVector and the "
-        " other a DistributedVector.");
       return *this;
     }
 
@@ -227,21 +366,15 @@ namespace dftefe
       d_mpiPatternP2P      = std::move(u.d_mpiPatternP2P);
       VectorAttributes vectorAttributesDistributed(
         VectorAttributes::Distribution::DISTRIBUTED);
-      bool areCompatible = d_vectorAttributes.areDistributionCompatible(
-        vectorAttributesDistributed);
-      utils::throwException<utils::LogicError>(
-        areCompatible,
-        "Trying to move asign from an incompatible Vector. One is a SerialVector and the "
-        " other a DistributedVector.");
+
+      return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     DistributedVector<ValueType, memorySpace>::l2Norm() const
     {
-      const double l2NormLocallyOwned =
-        VectorKernels<ValueType, memorySpace>::l2Norm(d_locallyOwnedSize,
-                                                      this->data());
+      const double l2NormLocallyOwned = nrm2(d_locallyOwnedSize, this->data());
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
@@ -264,8 +397,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::lInfNorm() const
     {
       const double lInfNormLocallyOwned =
-        VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage->size(),
-                                                        this->data());
+        amax(d_locallyOwnedSize, this->data());
       double returnValue = lInfNormLocallyOwned;
 #ifdef DFTEFE_WITH_MPI
       MPI_Allreduce(&lInfNormLocallyOwned,

@@ -23,7 +23,7 @@
  * @author Bikash Kanungo
  */
 
-#include <linearAlgebra/VectorKernels.h>
+#include "BlasWrappers.h"
 #include <utils/Exceptions.h>
 
 namespace dftefe
@@ -151,10 +151,31 @@ namespace dftefe
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      VectorKernels<ValueType, memorySpace>::add(d_storage->size(),
-                                                 rhs.data(),
-                                                 this->data());
+      axpy(d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1);
+
       return *this;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    Vector<ValueType, memorySpace>::addLocal(
+      const Vector<ValueType, memorySpace> &rhs)
+    {
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to add incompatible Vectors. One is a serial Vector and the "
+        " other a distributed Vector.");
+      utils::throwException<utils::LengthError>(
+        rhs.size() == d_globalSize,
+        "Mismatch of sizes of the two Vectors that are being added.");
+      const size_type rhsStorageSize = (rhs.getValues()).size();
+      utils::throwException<utils::LengthError>(
+        d_localSize <= rhsStorageSize,
+        "Mismatch of sizes of the underlying"
+        "storage of the two Vectors that are being added.");
+      axpy(d_localSize, 1.0, rhs.data(), 1, this->data(), 1);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -166,7 +187,7 @@ namespace dftefe
         d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to add incompatible Vectors. "
+        "Trying to subtract incompatible Vectors. "
         "One is a serial vector and the other a distributed Vector.");
       utils::throwException<utils::LengthError>(
         rhs.size() == this->size(),
@@ -176,10 +197,30 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      VectorKernels<ValueType, memorySpace>::sub(d_storage->size(),
-                                                 rhs.data(),
-                                                 this->data());
+      axpy(d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1);
       return *this;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    Vector<ValueType, memorySpace>::subLocal(
+      const Vector<ValueType, memorySpace> &rhs)
+    {
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to subtract incompatible Vectors. "
+        "One is a serial vector and the other a distributed Vector.");
+      utils::throwException<utils::LengthError>(
+        rhs.size() == d_globalSize,
+        "Mismatch of sizes of the two Vectors that are being subtracted.");
+      const size_type rhsStorageSize = (rhs.getValues()).size();
+      utils::throwException<utils::LengthError>(
+        (d_localSize <= rhsStorageSize),
+        "Mismatch of sizes of the underlying"
+        "storage of the two Vectors that are being subtracted.");
+      axpy(d_localSize, -1.0, rhs.data(), 1, this->data(), 1);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -257,8 +298,9 @@ namespace dftefe
         (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
         "Mismatch of sizes of the underlying storages"
         "of the Vectors that are added.");
-      VectorKernels<ValueType, memorySpace>::add(
-        uStorageSize, a, u.data(), b, v.data(), w.data());
+      axpy(uStorageSize, a, u.data(), 1, w.data(), 1);
+
+      axpy(uStorageSize, b, v.data(), 1, w.data(), 1);
     }
   } // namespace linearAlgebra
 } // namespace dftefe

@@ -23,8 +23,8 @@
  * @author Ian C. Lin, Sambit Das, Bikash Kanungo.
  */
 
-#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
+#include "BlasWrappers.h"
 
 namespace dftefe
 {
@@ -171,16 +171,14 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::l2Norm() const
     {
-      return VectorKernels<ValueType, memorySpace>::l2Norm(d_storage->size(),
-                                                           this->data());
+      return nrm2(d_storage->size(), this->data());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     SerialVector<ValueType, memorySpace>::lInfNorm() const
     {
-      return VectorKernels<ValueType, memorySpace>::lInfNorm(d_storage->size(),
-                                                             this->data());
+      return amax(d_storage->size(), this->data());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

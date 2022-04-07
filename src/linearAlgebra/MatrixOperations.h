@@ -20,48 +20,45 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das.
+ * @author Vishal Subramanian.
  */
 
-#ifdef DFTEFE_WITH_DEVICE
-#  ifndef dftefeDeviceLAContextsSingleton_h
-#    define dftefeDeviceLAContextsSingleton_h
+#ifndef dftefeMatrixOperations_h
+#define dftefeMatrixOperations_h
 
-#    ifdef DFTEFE_WITH_DEVICE_CUDA
-#      include <linearAlgebra/DeviceLATypeConfig.cuh>
-#    endif
+
+#include <blas.hh>
+#include "BlasWrappers.h"
+#include "BlasWrappersTypedef.h"
+#include <utils/MemorySpaceType.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    class DeviceLAContextsSingleton
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    class MatrixOperations
     {
-    protected:
-      static DeviceLAContextsSingleton *d_instPtr;
-
-    public:
-      static DeviceLAContextsSingleton *
-      getInstance();
-
       void
-      createDeviceBlasHandle();
-
-      void
-      destroyDeviceBlasHandle();
-
-      deviceBlasHandleType &
-      getDeviceBlasHandle();
-
-    private:
-      DeviceLAContextsSingleton()
-      {}
-
-      deviceBlasHandleType d_blasHandle;
+      matMulc(blasWrapper::Layout                      layout,
+              blasWrapper::Op                          transA,
+              blasWrapper::Op                          transB,
+              size_type                                m,
+              size_type                                n,
+              size_type                                k,
+              ValueType                                alpha,
+              ValueType const *                        dA,
+              size_type                                ldda,
+              ValueType const *                        dB,
+              size_type                                lddb,
+              ValueType                                beta,
+              ValueType *                              dC,
+              size_type                                lddc,
+              blasWrapper::blasQueueType<memorySpace> &blasQueue);
     };
   } // namespace linearAlgebra
 
 } // namespace dftefe
 
-#  endif
-#endif // DFTEFE_WITH_DEVICE
+#include "MatrixOperations.t.cpp"
+#endif // dftefeMatrixOperations_h

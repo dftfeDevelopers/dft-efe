@@ -20,54 +20,38 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das.
+ * @author Vishal Subramanian
  */
 
-#ifdef DFTEFE_WITH_DEVICE
-#  ifndef dftefeDeviceBlasLapackTemplates_h
-#    define dftefeDeviceBlasLapackTemplates_h
+#ifndef dftefeQueueManager_h
+#define dftefeQueueManager_h
 
-#    include <linearAlgebra/DeviceLAContextsSingleton.h>
+#include <blas.hh>
+#include "BlasWrappersTypedef.h"
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType>
-    class DeviceBlasLapack
+    class QueueManager
     {
     public:
-      static void
-      gemm(deviceBlasHandleType &  handle,
-           deviceBlasOperationType transa,
-           deviceBlasOperationType transb,
-           int                     m,
-           int                     n,
-           int                     k,
-           const ValueType *       alpha,
-           const ValueType *       A,
-           int                     lda,
-           const ValueType *       B,
-           int                     ldb,
-           const ValueType *       beta,
-           ValueType *             C,
-           int                     ldc);
+      //      blasWrapper::Queue &
+      //      getBlasQueue();
+      //
+      //      void
+      //      createBlasQueue();
 
-      static void
-      nrm2(deviceBlasHandleType &handle,
-           int                   n,
-           const ValueType *     x,
-           int                   incx,
-           double *              result);
+    private:
+      int cpuQueue;
 
-      static void
-      iamax(deviceBlasHandleType &handle,
-            int                   n,
-            const ValueType *     x,
-            int                   incx,
-            int *                 maxid);
+      // FIXME Should this is be inside DFTEFE_WITH_GPU ????
+      static blasWrapper::Queue blasGpuQueue;
     };
+
   } // namespace linearAlgebra
+
 } // namespace dftefe
-#  endif
-#endif // DFTEFE_WITH_DEVICE
+
+#include "QueueManager.t.cpp"
+#endif // define queueManager_h

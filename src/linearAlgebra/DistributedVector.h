@@ -142,6 +142,44 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
         const ValueType initVal = ValueType());
+
+      /**
+       * @brief Constructor based on locally owned indices. This does not contain
+       * any ghost indices. This is to store the locally owned part of a
+       * distributed Vector
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPICommunicatorP2P as far as possible.
+       *
+       * @param locallyOwnedRange a pair \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor.
+       *
+       * @note The locallyOwnedRange should be an open interval where the start index included,
+       * but the end index is not included.
+       */
+      DistributedVector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const MPI_Comm &                                    mpiComm,
+        const ValueType initVal /*= ValueType()*/);
+
+
+      /**
+       * @brief Constructor based on total number of global indices.
+       * This does not contain any ghost indices. This is to store the locally
+       * owned part of a distributed Vector. The vector is divided to ensure
+       * equitability as much as possible.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPICommunicatorP2P as far as possible.
+       * Further, the decomposotion is not compatible with other ways of
+       * distributed vector construction.
+       *
+       * @param totalGlobalDofs Total number of global indices that is distributed
+       * over the processors.
+       *
+       */
+      DistributedVector(const global_size_type totalGlobalDofs,
+                        const MPI_Comm &       mpiComm,
+                        const ValueType        initVal /*= ValueType()*/);
+
 #endif // DFTEFE_WITH_MPI
 
       /**
@@ -149,6 +187,13 @@ namespace dftefe
        * @param[in] u DistributedVector object to copy from
        */
       DistributedVector(const DistributedVector &u);
+
+      /**
+       * @brief Copy constructor with reinitialisation
+       * @param[in] u DistributedVector object to copy from
+       * @param[in] initVal Initial value of the vector
+       */
+      DistributedVector(const DistributedVector &u, ValueType initVal);
 
       /**
        * @brief Move constructor

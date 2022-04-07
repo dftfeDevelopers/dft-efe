@@ -4,31 +4,18 @@ if(${CMAKE_CXX_STANDARD})
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-message (" DFTEFE_BLAS_LIBRARIES = ${DFTEFE_BLAS_LIBRARIES}")
-message (" DFTEFE_SCALAPACK_LIBRARIES = ${DFTEFE_SCALAPACK_LIBRARIES}")
-
-
-if ("${DFTEFE_BLAS_LIBRARIES}" STREQUAL "")
-	message (FATAL_ERROR  "DFTEFE_BLAS libraries not specified. Please specify -DDFTEFE_BLAS_LIBRARIES in command line")
-endif ()
-
-
-if ("${DFTEFE_SCALAPACK_LIBRARIES}" STREQUAL "")
-	message (FATAL_ERROR  "DFTEFE_SCALAPACK libraries not specified. Please specify -DDFTEFE_SCALAPACK_LIBRARIES in command line")
-endif ()
 
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-		DeviceBlasLapackTemplates.cu
-		DeviceLAContextsSingleton.cu
-		VectorKernels.cu
-		VectorKernels.cpp
-		DeviceLAContextsSingleton.cpp
-		VectorAttributes.cpp
-		SerialVector.cpp
+		BlasWrappers.cpp
 		DistributedVector.cpp
-		)
+        Matrix.cpp
+		MatrixOperations.cpp
+		QueueManager.cpp
+		SerialDenseMatrix.cpp
+		SerialVector.cpp
+		VectorAttributes.cpp)
 
 add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
@@ -36,16 +23,22 @@ if(ENABLE_CUDA)
     enable_language(CUDA)
 	add_compile_definitions(DFTEFE_WITH_DEVICE)
 	add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+	set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/gpu/gcc8.2.0_openmpi4.0.6_nvcc11.4.0")
+else()
+	set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/cpu/gcc8.2.0_openmpi4.0.6")
 endif()
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
-		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH} )
 		set(DFTEFE_LINEARALGEBRA_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 	endif()
 endif()
+
+target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include )
+target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
 include_directories(../)
 
@@ -62,5 +55,5 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 
-target_link_libraries(dft-efe-linalg PUBLIC dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
+target_link_libraries(dft-efe-linalg PUBLIC dft-efe-utils blaspp ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
 endif()
