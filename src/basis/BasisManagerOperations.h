@@ -20,43 +20,43 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeVectorAttributes_h
-#define dftefeVectorAttributes_h
+#ifndef dftefeBasisOperationsManager_h
+#define dftefeBasisOperationsManager_h
 
 #include <utils/TypeConfig.h>
-
+#include <utils/MemorySpaceType.h>
+#include <utils/ScalarSpatialFunction.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace basis
   {
-    class VectorAttributes
+    /**
+     * An abstract class to handle interactions between a basis and a
+     * field (e.g., integration of field with basis).
+     */
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    class BasisOperationsManager
     {
     public:
-      enum class Distribution
-      {
-        SERIAL,
-        DISTRIBUTED
-      };
+      virtual ~BasisOperationsManager() = default;
+      virtual void
+      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
+                               const CellQuadratureContainer &         q,
+                               Field<ValueType, memorySpace> &         field);
 
-      VectorAttributes(const Distribution distribution);
-      VectorAttributes()  = default;
-      ~VectorAttributes() = default;
+      virtual void
+      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
+                               Field<ValueType, memorySpace> &field);
 
-      bool
-      areAttributesCompatible(const VectorAttributes &vecAttributes) const;
+      virtual void
+      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
+                               const CellQuadratureContainer &      q,
+                               Field<ValueType, memorySpace> &fieldOutput);
 
-      bool
-      areDistributionCompatible(const VectorAttributes &vecAttributes) const;
-
-      Distribution
-      getDistribution() const;
-
-    private:
-      Distribution d_distribution;
-    };
-  } // end of namespace linearAlgebra
+    }; // end of BasisOperationsManager
+  }    // end of namespace basis
 } // end of namespace dftefe
-#endif
+#endif // dftefeBasisOperationsManager_h

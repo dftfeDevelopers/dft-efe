@@ -20,12 +20,12 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Sambit Das
  */
 
 
-#ifndef dftefeDistributedVector_h
-#define dftefeDistributedVector_h
+#ifndef dftefeDistributedMultiVector_h
+#define dftefeDistributedMultiVector_h
 
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/VectorAttributes.h>
@@ -39,34 +39,36 @@ namespace dftefe
   namespace linearAlgebra
   {
     /**
-     * @brief A derived class of VectorBase for a distributed vector
-     * (i.e., a vector that is distributed across a set of processors)
+     * @brief A derived class of MultiVector for a distributed multi vector
+     * (i.e., a multi vector that is distributed across a set of processors)
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
-     *  in the vector (i.e., int, double, complex<double>, etc.)
+     *  in the multi vector (i.e., int, double, complex<double>, etc.)
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
-     * DEVICE) in which the vector must reside.
+     * DEVICE) in which the multi vector must reside.
      *
-     * @note Broadly, there are two ways of constructing a DistributedVector.
+     * @note Broadly, there are two ways of constructing a DistributedMultiVector.
      *  1. [<b>Prefered and efficient approach</b>] The first approach takes a
      * pointer to an MPICommunicatorP2P as an input argument. The
      * MPICommunicatorP2P, in turn, contains all the information reagrding the
-     * locally owned and ghost part of the DistributedVector. This is the most
-     * efficient way of constructing a DistributedVector as it allows for
-     * reusing of an already constructed MPICommunicator.
+     * locally owned and ghost part of the DistributedMultiVector as well as the
+     * number of vectors. This is the most efficient way of constructing a
+     * DistributedMultiVector as it allows for reusing of an already constructed
+     * MPICommunicator.
      *  2. [<b> Expensive approach</b>] The second approach takes in the locally
-     * owned and ghost indices and internally creates an MPIPatternP2P object
-     * which, in turn, is used to create an MPICommunicatorP2P object. Given
-     * that the creation of an MPIPatternP2P is expensive, this route of
-     *     constructing a DistributedVector <b>should</b> be avoided.
+     * owned, ghost indices, and number of vectors and internally creates an
+     * MPIPatternP2P object which, in turn, is used to create an
+     * MPICommunicatorP2P object. Given that the creation of an MPIPatternP2P is
+     * expensive, this route of constructing a DistributedMultiVector
+     * <b>should</b> be avoided.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class DistributedVector : public Vector<ValueType, memorySpace>
+    class DistributedMultiVector : public MultiVector<ValueType, memorySpace>
     {
     public:
       //
-      // Pulling base class (Vector) protected names here so to avoid full name
-      // scoping inside the source file. The other work around is to use
+      // Pulling base class (MultiVector) protected names here so to avoid full
+      // name scoping inside the source file. The other work around is to use
       // this->d_m (where d_m is a protected data member of base class). This is
       // something which is peculiar to inheritance using class templates. The
       // reason why this is so is the fact that C++ does not consider base class
@@ -79,46 +81,47 @@ namespace dftefe
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
       using Vector<ValueType, memorySpace>::d_ghostSize;
       using Vector<ValueType, memorySpace>::d_localSize;
+      using Vector<ValueType, memorySpace>::d_numVectors;
 
     public:
       /**
        * @brief Default Destructor
        */
-      ~DistributedVector() = default;
+      ~DistributedMultiVector() = default;
 
 #ifdef DFTEFE_WITH_MPI
       /**
        * @brief Constructor based on an input mpiCommunicatorP2P.
        *
        * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
-       * based on which the DistributedVector will be created.
-       * @param[in] initVal value with which the DistributedVector shoud be
+       * based on which the DistributedMultiVector will be created.
+       * @param[in] initVal value with which the DistributedMultiVector shoud be
        * initialized
        *
        */
-      DistributedVector(
+      DistributedMultiVector(
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
         const ValueType initVal = ValueType());
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
-       * This allows the DistributedVector to take ownership of input
-       * Vector::Storage (i.e., utils::MemoryStorage) This is useful when one
-       * does not want to allocate new memory and instead use memory allocated
-       * in the Vector::Storage (i.e., MemoryStorage).
+       * This allows the DistributedMultiVector to take ownership of input
+       * MultiVector::Storage (i.e., utils::MemoryStorage) This is useful when
+       * one does not want to allocate new memory and instead use memory
+       * allocated in the MultiVector::Storage (i.e., MemoryStorage).
        *
-       * @param[in] storage unique_ptr to Vector::Storage whose ownership
-       * is to be transfered to the DistributedVector
+       * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
+       * is to be transfered to the DistributedMultiVector
        * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
-       * based on which the DistributedVector will be created.
+       * based on which the DistributedMultiVector will be created.
        *
-       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector.
+       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedMultiVector.
        * Thus, after the function call \p storage will point to NULL and any
        * access through \p storage will lead to <b>undefined behavior</b>.
        *
        */
-      DistributedVector(
+      DistributedMultiVector(
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
@@ -137,103 +140,62 @@ namespace dftefe
        * @note The locallyOwnedRange should be an open interval where the start index included,
        * but the end index is not included.
        */
-      DistributedVector(
+      DistributedMultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
-        const ValueType initVal = ValueType());
-
-      /**
-       * @brief Constructor based on locally owned indices. This does not contain
-       * any ghost indices. This is to store the locally owned part of a
-       * distributed Vector
-       * @note This way of construction is expensive. One should use the other
-       * constructor based on an input MPICommunicatorP2P as far as possible.
-       *
-       * @param locallyOwnedRange a pair \f$(a,b)\f$ which defines a range of indices (continuous)
-       * that are owned by the current processor.
-       *
-       * @note The locallyOwnedRange should be an open interval where the start index included,
-       * but the end index is not included.
-       */
-      DistributedVector(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const MPI_Comm &                                    mpiComm,
-        const ValueType initVal /*= ValueType()*/);
-
-
-      /**
-       * @brief Constructor based on total number of global indices.
-       * This does not contain any ghost indices. This is to store the locally
-       * owned part of a distributed Vector. The vector is divided to ensure
-       * equitability as much as possible.
-       * @note This way of construction is expensive. One should use the other
-       * constructor based on an input MPICommunicatorP2P as far as possible.
-       * Further, the decomposotion is not compatible with other ways of
-       * distributed vector construction.
-       *
-       * @param totalGlobalDofs Total number of global indices that is distributed
-       * over the processors.
-       *
-       */
-      DistributedVector(const global_size_type totalGlobalDofs,
-                        const MPI_Comm &       mpiComm,
-                        const ValueType        initVal /*= ValueType()*/);
-
+        size_type                                           numVectors,
+        ValueType initVal = ValueType());
 #endif // DFTEFE_WITH_MPI
 
       /**
        * @brief Copy constructor
-       * @param[in] u DistributedVector object to copy from
+       * @param[in] u DistributedMultiVector object to copy from
        */
-      DistributedVector(const DistributedVector &u);
-
-      /**
-       * @brief Copy constructor with reinitialisation
-       * @param[in] u DistributedVector object to copy from
-       * @param[in] initVal Initial value of the vector
-       */
-      DistributedVector(const DistributedVector &u, ValueType initVal);
+      DistributedMultiVector(const DistributedMultiVector &u);
 
       /**
        * @brief Move constructor
-       * @param[in] u DistributedVector object to move from
+       * @param[in] u DistributedMultiVector object to move from
        */
-      DistributedVector(DistributedVector &&u) noexcept;
+      DistributedMultiVector(DistributedMultiVector &&u) noexcept;
 
       /**
        * @brief Copy assignment operator
-       * @param[in] u const reference to DistributedVector object to copy from
+       * @param[in] u const reference to DistributedMultiVector object to copy
+       * from
        * @return reference to this object after copying data from u
        */
-      DistributedVector &
-      operator=(const DistributedVector &u);
+      DistributedMultiVector &
+      operator=(const DistributedMultiVector &u);
 
       /**
        * @brief Move assignment operator
-       * @param[in] u const reference to DistributedVector object to move from
+       * @param[in] u const reference to DistributedMultiVector object to move
+       * from
        * @return reference to this object after moving data from u
        */
-      DistributedVector &
-      operator=(DistributedVector &&u);
+      DistributedMultiVector &
+      operator=(DistributedMultiVector &&u);
 
       /**
        * @brief Default constructor
        */
-      DistributedVector() = default;
-      /**
-       * @brief Returns \f$ l_2 \f$ norm of the DistributedVector
-       * @return \f$ l_2 \f$  norm of the vector
-       */
-      double
-      l2Norm() const override;
+      DistributedMultiVector() = default;
 
       /**
-       * @brief Returns \f$ l_{\inf} \f$ norm of the DistributedVector
-       * @return \f$ l_{\inf} \f$  norm of the vector
+       * @brief Returns \f$ l_2 \f$ norms of all the \f$N\f$ vectors in the  MultiVector
+       * @return \f$ l_2 \f$  norms of the various vectors as std::vector<double> type
        */
-      double
-      lInfNorm() const override;
+      std::vector<double>
+      l2Norms() const override;
+
+      /**
+       * @brief Returns \f$ l_{\inf} \f$ norms of all the \f$N\f$ vectors in the  MultiVector
+       * @return \f$ l_{\inf} \f$  norms of the various vectors as std::vector<double> type
+       */
+      std::vector<double>
+      lInfNorms() const override;
 
       void
       updateGhostValues(const size_type communicationChannel = 0) override;
@@ -263,5 +225,5 @@ namespace dftefe
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#include <linearAlgebra/DistributedVector.t.cpp>
-#endif // dftefeDistributedVector_h
+#include <linearAlgebra/DistributedMultiVector.t.cpp>
+#endif // dftefeDistributedMultiVector_h

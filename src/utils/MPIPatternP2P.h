@@ -92,20 +92,17 @@ namespace dftefe
       size_type
       localGhostSize() const;
 
-      size_type
-      localSize() const;
+      bool
+      inLocallyOwnedRange(const global_size_type globalId) const;
 
       bool
-      inLocallyOwnedRange(const global_size_type) const;
-
-      bool
-      isGhostEntry(const global_size_type) const;
+      isGhostEntry(const global_size_type globalId) const;
 
       size_type
-      globalToLocal(const global_size_type) const;
+      globalToLocal(const global_size_type globalId) const;
 
       global_size_type
-      localToGlobal(const size_type) const;
+      localToGlobal(const size_type localId) const;
 
       const GlobalSizeTypeVector &
       getGhostIndices() const;
@@ -257,7 +254,7 @@ namespace dftefe
        * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
        *  d_ghostIndices[a_i] and d_ghostIndices[b_i].
        */
-      SizeTypeVector d_LocalGhostIndicesRanges;
+      SizeTypeVector d_localGhostIndicesRanges;
 
       /**
        * Number of target processors for the current processor. A

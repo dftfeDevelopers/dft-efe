@@ -20,32 +20,35 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das, Bikash Kanungo.
+ * @author Sambit Das.
  */
 
+#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
-#include "BlasWrappers.h"
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
     //
-    // Constructor using size and init value
+    // Constructor using size, numVectors and init value
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace>::SerialVector(const size_type size,
-                                                       const ValueType initVal)
+    SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
+      const size_type size,
+      const size_type numVectors,
+      const ValueType initVal)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
-          size, initVal);
+          size * numVectors, initVal);
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::SERIAL);
       d_globalSize       = size;
       d_locallyOwnedSize = size;
       d_ghostSize        = 0;
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_numVectors       = numVectors;
     }
 
     //
@@ -53,7 +56,7 @@ namespace dftefe
     // utils::MemoryStorage)
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace>::SerialVector(
+    SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage)
     {
       d_storage = std::move(storage);
@@ -63,14 +66,15 @@ namespace dftefe
       d_locallyOwnedSize = d_storage.size();
       d_ghostSize        = 0;
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_numVectors       = numVectors;
     }
 
     //
     // Copy Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace>::SerialVector(
-      const SerialVector<ValueType, memorySpace> &u)
+    SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
+      const SerialMultiVector<ValueType, memorySpace> &u)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -81,13 +85,14 @@ namespace dftefe
       d_locallyOwnedSize = u.d_locallyOwnedSize;
       d_ghostSize        = u.d_ghostSize;
       d_localSize        = u.d_localSize;
+      d_numVectors       = u.d_numVectors;
       VectorAttributes vectorAttributesSerial(
         VectorAttributes::Distribution::SERIAL);
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to copy from an incompatible Vector. One is a SerialVector and the "
+        "Trying to copy from an incompatible Vector. One is a SerialMultiVector and the "
         " other a DistributedVector.");
     }
 
@@ -95,8 +100,8 @@ namespace dftefe
     // Move Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace>::SerialVector(
-      SerialVector<ValueType, memorySpace> &&u) noexcept
+    SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
+      SerialMultiVector<ValueType, memorySpace> &&u) noexcept
     {
       d_storage          = std::move(u.d_storage);
       d_vectorAttributes = std::move(u.d_vectorAttributes);
@@ -104,13 +109,14 @@ namespace dftefe
       d_locallyOwnedSize = std::move(u.d_locallyOwnedSize);
       d_ghostSize        = std::move(u.d_ghostSize);
       d_localSize        = std::move(u.d_localSize);
+      d_numVectors       = std::move(u.d_numVectors);
       VectorAttributes vectorAttributesSerial(
         VectorAttributes::Distribution::SERIAL);
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to move from an incompatible Vector. One is a SerialVector and the "
+        "Trying to move from an incompatible Vector. One is a SerialMultiVector and the "
         " other a DistributedVector.");
     }
 
@@ -118,9 +124,9 @@ namespace dftefe
     // Copy assignment
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace> &
-    SerialVector<ValueType, memorySpace>::operator=(
-      const SerialVector<ValueType, memorySpace> &u)
+    SerialMultiVector<ValueType, memorySpace> &
+    SerialMultiVector<ValueType, memorySpace>::operator=(
+      const SerialMultiVector<ValueType, memorySpace> &u)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -131,13 +137,14 @@ namespace dftefe
       d_locallyOwnedSize = u.d_locallyOwnedSize;
       d_ghostSize        = u.d_ghostSize;
       d_localSize        = u.d_localSize;
+      d_numVectors       = u.d_numVectors;
       VectorAttributes vectorAttributesSerial(
         VectorAttributes::Distribution::SERIAL);
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to copy assign from an incompatible Vector. One is a SerialVector and the "
+        "Trying to copy assign from an incompatible Vector. One is a SerialMultiVector and the "
         " other a DistributedVector.");
       return *this;
     }
@@ -146,9 +153,9 @@ namespace dftefe
     // Move assignment
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    SerialVector<ValueType, memorySpace> &
-    SerialVector<ValueType, memorySpace>::operator=(
-      SerialVector<ValueType, memorySpace> &&u)
+    SerialMultiVector<ValueType, memorySpace> &
+    SerialMultiVector<ValueType, memorySpace>::operator=(
+      SerialMultiVector<ValueType, memorySpace> &&u)
     {
       d_storage          = std::move(u.d_storage);
       d_vectorAttributes = std::move(u.d_vectorAttributes);
@@ -156,63 +163,67 @@ namespace dftefe
       d_locallyOwnedSize = std::move(u.d_locallyOwnedSize);
       d_ghostSize        = std::move(u.d_ghostSize);
       d_localSize        = std::move(u.d_localSize);
+      d_numVectors       = std::move(u.d_numVectors);
       VectorAttributes vectorAttributesSerial(
         VectorAttributes::Distribution::SERIAL);
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(vectorAttributesSerial);
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to move assign from an incompatible Vector. One is a SerialVector and the "
+        "Trying to move assign from an incompatible Vector. One is a SerialMultiVector and the "
         " other a DistributedVector.");
       return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
-    SerialVector<ValueType, memorySpace>::l2Norm() const
+    SerialMultiVector<ValueType, memorySpace>::l2Norms() const
     {
-      return nrm2(d_storage->size(), this->data());
+      return VectorKernels<ValueType, memorySpace>::l2Norms(this->size(),
+                                                            this->numVectors(),
+                                                            this->data());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
-    SerialVector<ValueType, memorySpace>::lInfNorm() const
+    SerialMultiVector<ValueType, memorySpace>::lInfNorm() const
     {
-      return amax(d_storage->size(), this->data());
+      return VectorKernels<ValueType, memorySpace>::lInfNorms(
+        this->size(), this->numVectors(), this->data());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::updateGhostValues(
+    SerialMultiVector<ValueType, memorySpace>::updateGhostValues(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
+    SerialMultiVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::updateGhostValuesBegin(
+    SerialMultiVector<ValueType, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::updateGhostValuesEnd()
+    SerialMultiVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
+    SerialMultiVector<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
       const size_type communicationChannel /*= 0*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    SerialVector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
+    SerialMultiVector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
     {}
 
   } // namespace linearAlgebra

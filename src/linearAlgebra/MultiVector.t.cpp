@@ -20,10 +20,10 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Sambit Das
  */
 
-#include "BlasWrappers.h"
+#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe
@@ -34,16 +34,19 @@ namespace dftefe
     // Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(std::unique_ptr<Storage> &storage,
-                                           const global_size_type    globalSize,
-                                           const size_type locallyOwnedSize,
-                                           const size_type ghostSize)
+    MultiVector<ValueType, memorySpace>::MultiVector(
+      std::unique_ptr<Storage> &storage,
+      const global_size_type    globalSize,
+      const size_type           locallyOwnedSize,
+      const size_type           ghostSize,
+      const size_type           numVectors)
       : d_storage(storage)
       , d_vectorAttributes(
-          VectorAttributes(VectorAttributes::Distribution::SERIAL))
+          VectorAttributes(VectorAttributes::Distribution::SERIAL, numVectors))
       , d_globalSize(globalSize)
       , d_locallyOwnedSize(locallyOwnedSize)
       , d_ghostSize(ghostSize)
+      , d_numVectors(numVectors)
     {
       d_localSize = locallyOwnedSize + ghostSize;
     }
@@ -52,187 +55,156 @@ namespace dftefe
     // Default Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector()
+    MultiVector<ValueType, memorySpace>::MultiVector()
       : d_storage(nullptr)
       , d_vectorAttributes(
-          VectorAttributes(VectorAttributes::Distribution::SERIAL))
+          VectorAttributes(VectorAttributes::Distribution::SERIAL, 0))
       , d_globalSize(0)
       , d_locallyOwnedSize(0)
       , d_ghostSize(0)
       , d_localSize(0)
+      , d_numVectors(0)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::iterator
-    Vector<ValueType, memorySpace>::begin()
+    typename MultiVector<ValueType, memorySpace>::iterator
+    MultiVector<ValueType, memorySpace>::begin()
     {
       return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::const_iterator
-    Vector<ValueType, memorySpace>::begin() const
+    typename MultiVector<ValueType, memorySpace>::const_iterator
+    MultiVector<ValueType, memorySpace>::begin() const
     {
       return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::iterator
-    Vector<ValueType, memorySpace>::end()
+    typename MultiVector<ValueType, memorySpace>::iterator
+    MultiVector<ValueType, memorySpace>::end()
     {
       return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::const_iterator
-    Vector<ValueType, memorySpace>::end() const
+    typename MultiVector<ValueType, memorySpace>::const_iterator
+    MultiVector<ValueType, memorySpace>::end() const
     {
       return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     global_size_type
-    Vector<ValueType, memorySpace>::size() const
+    MultiVector<ValueType, memorySpace>::size() const
     {
       return d_globalSize;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
-    Vector<ValueType, memorySpace>::locallyOwnedSize() const
+    MultiVector<ValueType, memorySpace>::locallyOwnedSize() const
     {
       return d_locallyOwnedSize;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
-    Vector<ValueType, memorySpace>::ghostSize() const
+    MultiVector<ValueType, memorySpace>::ghostSize() const
     {
       return d_ghostSize;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
-    Vector<ValueType, memorySpace>::localSize() const
+    MultiVector<ValueType, memorySpace>::localSize() const
     {
       return d_localSize;
     }
 
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MultiVector<ValueType, memorySpace>::numVectors() const
+    {
+      return d_numVectors;
+    }
+
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     ValueType *
-    Vector<ValueType, memorySpace>::data()
+    MultiVector<ValueType, memorySpace>::data()
     {
       return d_storage->data();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const ValueType *
-    Vector<ValueType, memorySpace>::data() const
+    MultiVector<ValueType, memorySpace>::data() const
     {
       return d_storage->data();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace> &
-    Vector<ValueType, memorySpace>::operator+=(
-      const Vector<ValueType, memorySpace> &rhs)
+    MultiVector<ValueType, memorySpace> &
+    MultiVector<ValueType, memorySpace>::operator+=(
+      const MultiVector<ValueType, memorySpace> &rhs)
     {
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the "
-        " other a distributed Vector.");
+        "Trying to add incompatible MultiVectors. One is a serial MultiVector and the "
+        " other a distributed MultiVector.");
       utils::throwException<utils::LengthError>(
-        rhs.size() == this->size(),
-        "Mismatch of sizes of the two Vectors that are being added.");
+        rhs.size() == this->size() && rhs.numVectors() == this->numVectors(),
+        "Mismatch of sizes of the two MultiVectors that are being added.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
-        "storage of the two Vectors that are being added.");
-      axpy(d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1);
-
+        "storage of the two MultiVectors that are being added.");
+      VectorKernels<ValueType, memorySpace>::add(d_storage->size(),
+                                                 rhs.data(),
+                                                 this->data());
       return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::addLocal(
-      const Vector<ValueType, memorySpace> &rhs)
+    MultiVector<ValueType, memorySpace> &
+    MultiVector<ValueType, memorySpace>::operator-=(
+      const MultiVector<ValueType, memorySpace> &rhs)
     {
       bool areCompatible =
         d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the "
-        " other a distributed Vector.");
+        "Trying to add incompatible MultiVectors. "
+        "One is a serial vector and the other a distributed MultiVector.");
       utils::throwException<utils::LengthError>(
-        rhs.size() == d_globalSize,
-        "Mismatch of sizes of the two Vectors that are being added.");
-      const size_type rhsStorageSize = (rhs.getValues()).size();
-      utils::throwException<utils::LengthError>(
-        d_localSize <= rhsStorageSize,
-        "Mismatch of sizes of the underlying"
-        "storage of the two Vectors that are being added.");
-      axpy(d_localSize, 1.0, rhs.data(), 1, this->data(), 1);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace> &
-    Vector<ValueType, memorySpace>::operator-=(
-      const Vector<ValueType, memorySpace> &rhs)
-    {
-      bool areCompatible =
-        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
-      utils::throwException<utils::LogicError>(
-        areCompatible,
-        "Trying to subtract incompatible Vectors. "
-        "One is a serial vector and the other a distributed Vector.");
-      utils::throwException<utils::LengthError>(
-        rhs.size() == this->size(),
-        "Mismatch of sizes of the two Vectors that are being subtracted.");
+        rhs.size() == this->size() && rhs.numVectors() == this->numVectors(),
+        "Mismatch of sizes of the two MultiVectors that are being subtracted.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
-        "storage of the two Vectors that are being subtracted.");
-      axpy(d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1);
+        "storage of the two MultiVectors that are being subtracted.");
+      VectorKernels<ValueType, memorySpace>::sub(d_storage->size(),
+                                                 rhs.data(),
+                                                 this->data());
       return *this;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::subLocal(
-      const Vector<ValueType, memorySpace> &rhs)
-    {
-      bool areCompatible =
-        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
-      utils::throwException<utils::LogicError>(
-        areCompatible,
-        "Trying to subtract incompatible Vectors. "
-        "One is a serial vector and the other a distributed Vector.");
-      utils::throwException<utils::LengthError>(
-        rhs.size() == d_globalSize,
-        "Mismatch of sizes of the two Vectors that are being subtracted.");
-      const size_type rhsStorageSize = (rhs.getValues()).size();
-      utils::throwException<utils::LengthError>(
-        (d_localSize <= rhsStorageSize),
-        "Mismatch of sizes of the underlying"
-        "storage of the two Vectors that are being subtracted.");
-      axpy(d_localSize, -1.0, rhs.data(), 1, this->data(), 1);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    const typename Vector<ValueType, memorySpace>::Storage &
-    Vector<ValueType, memorySpace>::getValues() const
+    const typename MultiVector<ValueType, memorySpace>::Storage &
+    MultiVector<ValueType, memorySpace>::getValues() const
     {
       return *d_storage;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::Storage &
-    Vector<ValueType, memorySpace>::getValues()
+    typename MultiVector<ValueType, memorySpace>::Storage &
+    MultiVector<ValueType, memorySpace>::getValues()
     {
       return *d_storage;
     }
@@ -240,16 +212,16 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     template <dftefe::utils::MemorySpace memorySpace2>
     void
-    Vector<ValueType, memorySpace>::setValues(
-      const typename Vector<ValueType, memorySpace2>::Storage &storage)
+    MultiVector<ValueType, memorySpace>::setValues(
+      const typename MultiVector<ValueType, memorySpace2>::Storage &storage)
     {
       d_storage->copyFrom(storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    Vector<ValueType, memorySpace>::setStorage(
-      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+    MultiVector<ValueType, memorySpace>::setStorage(
+      std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
         &storage)
     {
       d_storage = std::move(storage);
@@ -257,7 +229,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     const VectorAttributes &
-    Vector<ValueType, memorySpace>::getVectorAttributes() const
+    MultiVector<ValueType, memorySpace>::getVectorAttributes() const
     {
       return d_vectorAttributes;
     }
@@ -265,15 +237,13 @@ namespace dftefe
     //
     // Helper functions
     //
-
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
-        const Vector<ValueType, memorySpace> &u,
-        ValueType                             b,
-        const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace> &      w)
+    add(ValueType                                  a,
+        const MultiVector<ValueType, memorySpace> &u,
+        ValueType                                  b,
+        const MultiVector<ValueType, memorySpace> &v,
+        MultiVector<ValueType, memorySpace> &      w)
     {
       const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
       const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
@@ -282,25 +252,26 @@ namespace dftefe
         uVectorAttributes.areDistributionCompatible(vVectorAttributes);
       utils::throwException(
         areCompatible,
-        "Trying to add incompatible Vectors. One is a SerialVector and the other a DistributedVector.");
+        "Trying to add incompatible MultiVectors. One is a SerialVector and the other a DistributedVector");
       areCompatible =
         vVectorAttributes.areDistributionCompatible(wVectorAttributes);
       utils::throwException(
         areCompatible,
-        "Trying to add incompatible vectors. One is a serialVector and the other a DistributedVector.");
+        "Trying to add incompatible MultiVectors. One is a serialVector and the other a DistributedVector.");
       utils::throwException<utils::LengthError>(
-        ((u.size() == v.size()) && (v.size() == w.size())),
-        "Mismatch of sizes of the Vectors that are added.");
+        ((u.size() == v.size()) && (v.size() == w.size()) &&
+         (u.numVectors() == v.numVectors()) &&
+         (v.numVectors() == w.numVectors())),
+        "Mismatch of sizes of the MultiVectors that are added.");
       const size_type uStorageSize = (u.getValues()).size();
       const size_type vStorageSize = (v.getValues()).size();
       const size_type wStorageSize = (w.getValues()).size();
       utils::throwException<utils::LengthError>(
         (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
         "Mismatch of sizes of the underlying storages"
-        "of the Vectors that are added.");
-      axpy(uStorageSize, a, u.data(), 1, w.data(), 1);
-
-      axpy(uStorageSize, b, v.data(), 1, w.data(), 1);
+        "of the MultiVectors that are added.");
+      VectorKernels<ValueType, memorySpace>::add(
+        uStorageSize, a, u.data(), b, v.data(), w.data());
     }
   } // namespace linearAlgebra
 } // namespace dftefe

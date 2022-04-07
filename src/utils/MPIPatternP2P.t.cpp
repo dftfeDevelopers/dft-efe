@@ -246,7 +246,7 @@ namespace dftefe
       , d_numGhostProcs(0)
       , d_ghostProcIds(0)
       , d_numGhostIndicesInGhostProcs(0)
-      , d_LocalGhostIndicesRanges(0)
+      , d_localGhostIndicesRanges(0)
       , d_numTargetProcs(0)
       , d_flattenedLocalGhostIndices(0)
       , d_targetProcIds(0)
@@ -312,7 +312,7 @@ namespace dftefe
       d_numGhostProcs = ghostProcIdToLocalGhostIndices.size();
       d_ghostProcIds.resize(d_numGhostProcs);
       d_numGhostIndicesInGhostProcs.resize(d_numGhostProcs);
-      d_LocalGhostIndicesRanges.resize(2 * d_numGhostProcs);
+      d_localGhostIndicesRanges.resize(2 * d_numGhostProcs);
 
       std::vector<size_type> ghostProcIdsTmp(d_numGhostProcs);
       std::vector<size_type> numGhostIndicesInGhostProcsTmp(d_numGhostProcs);
@@ -366,8 +366,8 @@ namespace dftefe
                           &numGhostIndicesInGhostProcsTmp[0]);
 
       memoryTransfer.copy(2 * d_numGhostProcs,
-                          d_LocalGhostIndicesRanges.begin() &
-                            localGhostIndicesRangesTmp[0]);
+                          d_localGhostIndicesRanges.begin(),
+                          &localGhostIndicesRangesTmp[0]);
 
       d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
       memoryTransfer.copy(d_numGhostIndices,
@@ -566,7 +566,7 @@ namespace dftefe
     const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
     MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
     {
-      return d_LocalGhostIndicesRanges;
+      return d_localGhostIndicesRanges;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
@@ -745,6 +745,40 @@ namespace dftefe
     MPIPatternP2P<memorySpace>::nGlobalIndices() const
     {
       return d_nGlobalIndices;
+    }
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MPIPatternP2P<memorySpace>::localOwnedSize() const
+    {
+      return (d_locallyOwnedRange.second - d_locallyOwnedRange.first);
+    }
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MPIPatternP2P<memorySpace>::localGhostSize() const
+    {
+      return d_numGhostIndices;
+    }
+
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    global_size_type
+    MPIPatternP2P<memorySpace>::localToGlobal(const size_type localId) const
+    {
+      std::string msg =
+        "localId larger than number of locally owned plus ghost ids ";
+      throwException<InvalidArgument>(localId < (d_locallyOwnedRange.second -
+                                                 d_locallyOwnedRange.first) +
+                                                  d_numGhostIndices,
+                                      msg);
+
+      const global_size_type globalId =
+        (localId < (d_locallyOwnedRange.second - d_locallyOwnedRange.first)) ?
+          (d_locallyOwnedRange.first + localId) :
+          d_ghostIndices.data()[localId - (d_locallyOwnedRange.second -
+                                           d_locallyOwnedRange.first)];
+      return globalId;
     }
 
   } // end of namespace utils

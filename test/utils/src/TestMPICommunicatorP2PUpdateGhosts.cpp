@@ -21,7 +21,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Sambit Das
  */
 
 #ifdef DFTEFE_WITH_MPI
@@ -31,7 +31,9 @@
 #include <utils/TypeConfig.h>
 #include <utils/Exceptions.h>
 #include <utils/MPIPatternP2P.h>
+#include <utils/MPICommunicatorP2P.h>
 
+#include <complex>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -42,6 +44,9 @@
 
 using size_type = dftefe::size_type;
 using global_size_type = dftefe::global_size_type;
+
+using MemoryStorageDoubleHost    = dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>;
+using MemoryStorageComplexDoubleHost    = dftefe::utils::MemoryStorage<std::complex<double>, dftefe::utils::MemorySpace::HOST>;
 
 global_size_type getAGhostIndex(const global_size_type numGlobalIndices,
     const global_size_type ownedIndexStart,
@@ -80,10 +85,10 @@ int main()
   const size_type numGhostIndices = (numProcs==1)? 0:std::rand()%maxNumGhostIndices;
   std::set<global_size_type> ghostIndicesSet;
   std::map<size_type, std::vector<size_type>> procIdToLocalGhostIndices; 
-  for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
+  for(size_type iProc = 0; iProc < numProcs; ++iProc)
     procIdToLocalGhostIndices[iProc] = std::vector<size_type>(0);
 
-  for(unsigned int i = 0; i < numGhostIndices; ++i)
+  for(size_type i = 0; i < numGhostIndices; ++i)
   {
     global_size_type ghostIndex = getAGhostIndex(numGlobalIndices,
 	ownedIndexStart, ownedIndexEnd);
@@ -105,16 +110,16 @@ int main()
 
   std::string filename = "GlobalIndices" + std::to_string(rank);
   std::ofstream outfile(filename.c_str());
-  for(unsigned int i = 0; i < numOwnedIndices; ++i)
+  for(size_type i = 0; i < numOwnedIndices; ++i)
     outfile << ownedIndexStart + i << " ";
-  for(unsigned int i = 0; i < numGhostIndices; ++i)
+  for(size_type i = 0; i < numGhostIndices; ++i)
     outfile << ghostIndices[i] << " ";
   
   outfile.close();
   MPI_Barrier(MPI_COMM_WORLD);
 
   std::map<size_type, std::vector<size_type>> procIdToOwnedLocalIndices;
-  for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
+  for(size_type iProc = 0; iProc < numProcs; ++iProc)
   {
     if(iProc != rank)
     {
@@ -135,7 +140,7 @@ int main()
 	  globalIndices.push_back(std::stoi(word));
       }
 
-      for(unsigned int i = 0; i < globalIndices.size(); ++i)
+      for(size_type i = 0; i < globalIndices.size(); ++i)
       {
 	global_size_type globalIndex = globalIndices[i];
 	if(globalIndex >= ownedIndexStart && globalIndex < ownedIndexEnd)
@@ -146,69 +151,90 @@ int main()
     }
   }
 
-  dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::HOST> 
-    mpiPatternP2P(locallyOwnedRange,
+  std::shared_ptr<const dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::HOST>>
+    mpiPatternP2PPtr= std::make_shared<dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::HOST>>(locallyOwnedRange,
 	ghostIndices,
 	MPI_COMM_WORLD);
 
-  auto targetProcIds = mpiPatternP2P.getTargetProcIds();
-  for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
+  // test double and block size=1
+  const size_type ownedSize=mpiPatternP2PPtr->localOwnedSize(); 
+  const size_type ownedPlusGhostSize=mpiPatternP2PPtr->localOwnedSize()+mpiPatternP2PPtr->localGhostSize();
+  std::vector<double> dVecStd1(ownedPlusGhostSize,0.0);
+  for(size_type i = 0; i < ownedSize; ++i)
+    dVecStd1[i] = mpiPatternP2PPtr->localToGlobal(i);
+  
+  MemoryStorageDoubleHost memStorage1(ownedPlusGhostSize);
+  memStorage1.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd1.data());
+
+  dftefe::utils::MPICommunicatorP2P<double,dftefe::utils::MemorySpace::HOST> mpiCommunicatorP2P1(mpiPatternP2PPtr,1);
+
+  mpiCommunicatorP2P1.updateGhostValues(memStorage1); 
+
+  memStorage1.copyTo<dftefe::utils::MemorySpace::HOST>(dVecStd1.data()); 
+
+  for(size_type i = ownedSize; i < ownedPlusGhostSize; ++i)
   {
-    const std::vector<size_type> procOwnedLocalIndices = 
-      procIdToOwnedLocalIndices[iProc];
-    const size_type numOwnedIndices = procOwnedLocalIndices.size();
-    if(numOwnedIndices > 0)
-    {
-      auto ownedLocalIndicesFromMPIPatternP2P = 
-	mpiPatternP2P.getOwnedLocalIndices(iProc);
-      size_type numOwnedIndicesFromMPIPatternP2P = 
-	ownedLocalIndicesFromMPIPatternP2P.size();
-      std::string msg = "In rank " + std::to_string(rank) + 
-	" mismatch in size of ownedLocalIndices corresponding to rank " + 
-	std::to_string(iProc) + " The expected size is " + 
-	std::to_string(numOwnedIndices) + " and the size returned is " +
-	std::to_string(numOwnedIndicesFromMPIPatternP2P);
-      dftefe::utils::throwException(
-	  numOwnedIndices==numOwnedIndicesFromMPIPatternP2P, 
-	  msg);
-
-      std::vector<size_type> ownedLocalIndicesFromMPIPatternP2PSTL(
-	  numOwnedIndices);
-      auto it = ownedLocalIndicesFromMPIPatternP2P.begin();
-      size_type count = 0;
-      for(; it != ownedLocalIndicesFromMPIPatternP2P.end(); ++it)
-      {
-	ownedLocalIndicesFromMPIPatternP2PSTL[count] = *it;
-	++count;
-      }
-
-      std::sort(ownedLocalIndicesFromMPIPatternP2PSTL.begin(), 
-	  ownedLocalIndicesFromMPIPatternP2PSTL.end());
-      std::vector<size_type> expectedOwnedLocalIndices = 
-	procOwnedLocalIndices;
-      std::sort(expectedOwnedLocalIndices.begin(),
-	  expectedOwnedLocalIndices.end());
-      std::string msg1 = "";
-      std::string msg2 = "";
-      for(unsigned int iOwned = 0; iOwned < numOwnedIndices;
-	  ++iOwned)
-      {
-	msg1 += std::to_string(ownedLocalIndicesFromMPIPatternP2PSTL[iOwned]) +
-	  " ";
-	msg2 += std::to_string(expectedOwnedLocalIndices[iOwned]) + " ";
-      }
-
-      msg = "In rank " + std::to_string(rank) + " mismatch of local owned indices"
-	" corresponding to rank " + std::to_string(iProc) + ".\n" 
-	" Expected local owned indices: " + msg2 + "\n"
-	" Received local owned indices: " + msg1;
-
-      dftefe::utils::throwException(ownedLocalIndicesFromMPIPatternP2PSTL ==
-	  expectedOwnedLocalIndices, msg);
-
-    }
-
+      const double expectedVal=mpiPatternP2PPtr->localToGlobal(i);
+      std::string msg = "In rank " + std::to_string(rank) + " mismatch of ghost value for double and block size=1 case"
+    " Expected ghost value: " + std::to_string(expectedVal) + "\n"
+    " Received ghost value: " + std::to_string(dVecStd1[i]);
+      dftefe::utils::throwException(std::abs(dVecStd1[i]-expectedVal) <=1e-10, msg);
   }
+
+
+  // test std::complex<double> and block size=1
+  std::vector<std::complex<double>> dVecStd2(ownedPlusGhostSize,0.0);
+  for(size_type i = 0; i < ownedSize; ++i)
+    dVecStd2[i] = std::complex<double>(mpiPatternP2PPtr->localToGlobal(i),-mpiPatternP2PPtr->localToGlobal(i));
+  
+  MemoryStorageComplexDoubleHost memStorage2(ownedPlusGhostSize);
+  memStorage2.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd2.data());
+
+  dftefe::utils::MPICommunicatorP2P<std::complex<double>,dftefe::utils::MemorySpace::HOST> mpiCommunicatorP2P2(mpiPatternP2PPtr,1);
+
+  mpiCommunicatorP2P2.updateGhostValues(memStorage2); 
+
+  memStorage2.copyTo<dftefe::utils::MemorySpace::HOST>(dVecStd2.data()); 
+
+  for(size_type i = ownedSize; i < ownedPlusGhostSize; ++i)
+  {
+      const std::complex<double> expectedVal= std::complex<double>(mpiPatternP2PPtr->localToGlobal(i),-mpiPatternP2PPtr->localToGlobal(i));
+      std::string msg = "In rank " + std::to_string(rank) + " mismatch of ghost value for std::complex<double> and block size=1 case"
+    " Expected ghost real value: " + std::to_string(expectedVal.real()) + "\n"
+    " Received ghost real value: " + std::to_string(dVecStd2[i].real()) + "\n"
+    " Expected ghost imag value: " + std::to_string(expectedVal.imag()) + "\n"
+    " Received ghost imag value: " + std::to_string(dVecStd2[i].imag());    
+      dftefe::utils::throwException(std::abs(dVecStd2[i].real()-expectedVal.real()) <=1e-10 
+                                         && std::abs(dVecStd2[i].imag()-expectedVal.imag()) <=1e-10, msg);
+  }
+
+
+  // test double and block size=3
+  const size_type blockSize=3;
+  const size_type ownedSizeMultivector=(mpiPatternP2PPtr->localOwnedSize())*blockSize; 
+  const size_type ownedPlusGhostSizeMultivector=(mpiPatternP2PPtr->localOwnedSize()+mpiPatternP2PPtr->localGhostSize())*blockSize;
+  std::vector<double> dVecStd3(ownedPlusGhostSizeMultivector,0.0);
+  for(size_type i = 0; i < ownedSizeMultivector; ++i)
+    dVecStd3[i] = mpiPatternP2PPtr->localToGlobal(i/blockSize)*blockSize+i%blockSize;
+  
+  MemoryStorageDoubleHost memStorage3(ownedPlusGhostSizeMultivector);
+  memStorage3.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd3.data());
+
+  dftefe::utils::MPICommunicatorP2P<double,dftefe::utils::MemorySpace::HOST> mpiCommunicatorP2P3(mpiPatternP2PPtr,blockSize);
+
+  mpiCommunicatorP2P3.updateGhostValues(memStorage3); 
+
+  memStorage3.copyTo<dftefe::utils::MemorySpace::HOST>(dVecStd3.data()); 
+
+  for(size_type i = ownedSizeMultivector; i < ownedPlusGhostSizeMultivector; ++i)
+  {
+      const double expectedVal=mpiPatternP2PPtr->localToGlobal(i/blockSize)*blockSize+i%blockSize;
+      std::string msg = "In rank " + std::to_string(rank) + " mismatch of ghost value for double and block size=3 case"
+    " Expected ghost value: " + std::to_string(expectedVal) + "\n"
+    " Received ghost value: " + std::to_string(dVecStd3[i]);
+      dftefe::utils::throwException(std::abs(dVecStd3[i]-expectedVal) <=1e-10, msg);
+  }
+
   MPI_Finalize();
 #endif  
 }

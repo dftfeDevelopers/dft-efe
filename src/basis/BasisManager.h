@@ -20,43 +20,36 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeVectorAttributes_h
-#define dftefeVectorAttributes_h
+#ifndef dftefeBasisManager_h
+#define dftefeBasisManager_h
 
 #include <utils/TypeConfig.h>
-
+#include <utils/Point.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace basis
   {
-    class VectorAttributes
+    /**
+     * An abstract class to handle basis related operations, such as
+     * evaluating the value and gradients of any basis function at a
+     * point.
+     */
+    class BasisManager
     {
     public:
-      enum class Distribution
-      {
-        SERIAL,
-        DISTRIBUTED
-      };
+      virtual ~BasisManager() = default;
+      virtual double
+      getBasisFunctionValue(const size_type     basisId,
+                            const utils::Point &point) const = 0;
+      virtual std::vector<double>
+      getBasisFunctionDerivative(const size_type     basisId,
+                                 const utils::Point &point,
+                                 const size_type derivativeOrder = 1) const = 0;
 
-      VectorAttributes(const Distribution distribution);
-      VectorAttributes()  = default;
-      ~VectorAttributes() = default;
-
-      bool
-      areAttributesCompatible(const VectorAttributes &vecAttributes) const;
-
-      bool
-      areDistributionCompatible(const VectorAttributes &vecAttributes) const;
-
-      Distribution
-      getDistribution() const;
-
-    private:
-      Distribution d_distribution;
-    };
-  } // end of namespace linearAlgebra
+    }; // end of BasisManager
+  }    // end of namespace basis
 } // end of namespace dftefe
-#endif
+#endif // dftefeBasisManager_h
