@@ -13,6 +13,7 @@ else:
 parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
 cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
+bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py")
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 """
 Types of tags
@@ -75,4 +76,5 @@ class BuildOnlyTestCubicSplineTK(rfm.CompileOnlyRegressionTest):
 
         else:
             msg = ""
-            return sn.assert_true(hasTestPassed, msg=msg)
+            bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
+        return sn.assert_true(hasTestPassed, msg=msg)
