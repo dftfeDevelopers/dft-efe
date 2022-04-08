@@ -22,20 +22,20 @@ namespace dftefe
     {
     public:
       virtual ~FECellBase() = default;
-      virtual std::vector<std::shared_ptr<Point>>
+      virtual std::vector<std::shared_ptr<utils::Point>>
       getVertices() const = 0;
 
-      virtual std::shared_ptr<Point>
+      virtual std::shared_ptr<utils::Point>
       getVertex(size_type i) const = 0;
 
-      virtual std::vector<std::shared_ptr<Point>>
+      virtual std::vector<std::shared_ptr<utils::Point>>
       getNodalPoints() const = 0;
 
       virtual size_type
       getId() const = 0;
 
       virtual bool
-      isPointInside(std::shared_ptr<const Point> point) const = 0;
+      isPointInside(std::shared_ptr<const utils::Point> point) const = 0;
 
       virtual bool
       isAtBoundary(const unsigned int i) const = 0;
@@ -67,19 +67,19 @@ namespace dftefe
       virtual bool
       isArtificial() const = 0;
 
-      virtual int
+      virtual size_type
       getDim() const = 0;
 
-      virtual std::shared_ptr<Point>
-      getParametricPoint(std::shared_ptr<const Point> realPoint,
+      virtual std::shared_ptr<utils::Point>
+      getParametricPoint(std::shared_ptr<const utils::Point> realPoint,
                          const CellMappingBase &      cellMapping) const = 0;
 
-      virtual std::shared_ptr<Point>
-      getRealPoint(std::shared_ptr<const Point> parametricPoint,
+      virtual std::shared_ptr<utils::Point>
+      getRealPoint(std::shared_ptr<const utils::Point> parametricPoint,
                    const CellMappingBase &      cellMapping) const = 0;
 
       virtual
-      void cellNodeIdtoLocalNodeId( std::vector<global_size_type>  &
+      void cellNodeIdtoGlobalNodeId( std::vector<size_type>  &
                                                    vecId) const = 0 ;
 
       virtual size_type

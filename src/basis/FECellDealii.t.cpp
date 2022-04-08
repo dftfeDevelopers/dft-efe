@@ -28,12 +28,12 @@
 #include <utils/Exceptions.h>
 #include <deal.II/base/geometry_info.h>
 
-namespace dealii
+namespace dftefe
 {
   namespace basis
   {
     template <unsigned int dim>
-    FECellDealii<dim>::FECellDealii(
+    FECellDealii<dim>::FECellDealii( typename
       dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter)
     {
       // TODO check if this is correct and wont lead to seg faults
@@ -181,7 +181,7 @@ namespace dealii
     template <unsigned int dim>
     std::shared_ptr<dftefe::utils::Point>
     FECellDealii<dim>::getParametricPoint(
-      std::shared_ptr<const Point> realPoint,
+      std::shared_ptr<const utils::Point> realPoint,
       const CellMappingBase &      cellMapping) const
     {
       std::shared_ptr<dftefe::utils::Point> parametricPoint =
@@ -196,9 +196,9 @@ namespace dealii
     }
 
     template <unsigned int dim>
-    std::shared_ptr<Point>
+    std::shared_ptr<utils::Point>
     FECellDealii<dim>::getRealPoint(
-      std::shared_ptr<const Point> parametricPoint,
+      std::shared_ptr<const utils::Point> parametricPoint,
       const CellMappingBase &      cellMapping) const
     {
       std::shared_ptr<dftefe::utils::Point> realPoint =
@@ -210,7 +210,7 @@ namespace dealii
     }
 
     template <unsigned int dim>
-    void FECellDealii<dim>::cellNodeIdtoLocalNodeId( std::vector<global_size_type>  &
+    void FECellDealii<dim>::cellNodeIdtoGlobalNodeId( std::vector<size_type>  &
       vecId) const
     {
       d_dealiiFECellIter->get_dof_indices(vecId);
@@ -224,7 +224,7 @@ namespace dealii
     }
 
     template <unsigned int dim>
-    dealii::DoFHandler<dim>::active_cell_iterator &
+    typename dealii::DoFHandler<dim>::active_cell_iterator &
     FECellDealii<dim>::getDealiiFECellIter()
     {
       return d_dealiiFECellIter;

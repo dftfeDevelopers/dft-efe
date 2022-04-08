@@ -9,7 +9,11 @@ set(DFT-EFE-BASIS-SOURCES
 	TriangulationCellDealii.cpp
 	TriangulationDealiiSerial.cpp
 	LinearCellMappingDealii.cpp
-	ParentToChildCellsManagerDealii.cpp)
+	ParentToChildCellsManagerDealii.cpp
+        TriangulationDealiiParallel.cpp
+        FEConstraintsDealii.cpp
+        FEConstraintsBase.cpp
+        FEBasisDataStorageDealii.cpp)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 

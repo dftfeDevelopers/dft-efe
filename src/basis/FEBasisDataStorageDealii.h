@@ -31,7 +31,7 @@
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
 #include <basis/FEBasisManagerDealii.h>
-#include <basis/ConstraintsDealii.h>
+#include <basis/FEConstraintsDealii.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <memory>
 #include <map>
@@ -52,11 +52,11 @@ namespace dftefe
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
       using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
-      using Storage = BasisDataStorage<ValueType, memorySpace>::Storage;
+      using Storage = typename BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManagerDealii>           feBM,
-        std::vector<std::shared_ptr<const ConstraintsDealii>> constraintsVec,
+        std::shared_ptr<const FEBasisManagerDealii<dim>>           feBM,
+        std::vector<std::shared_ptr<const FEConstraintsDealii<dim,ValueType>>> constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
         const bool storeValues,
@@ -72,6 +72,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::CellQuadratureContainer>
                                         quadratureContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const bool                      storeValues,
         const bool                      storeGradient,
         const bool                      storeHessian,
         const bool                      storeOverlap) override;
@@ -155,7 +156,7 @@ namespace dftefe
                                   &quadratureRuleAttributes) const override;
 
     private:
-      std::shared_ptr<const FEBasisManagerDealii> d_feBM;
+      std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBM;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
         d_basisQuadStorage;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>

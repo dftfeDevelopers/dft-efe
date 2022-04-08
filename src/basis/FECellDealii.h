@@ -28,6 +28,8 @@
 
 #include <utils/TypeConfig.h>
 #include <deal.II/dofs/dof_accessor.h>
+#include <utils/Point.h>
+#include "FECellBase.h"
 namespace dftefe
 {
   namespace basis
@@ -42,20 +44,20 @@ namespace dftefe
       FECellDealii(DealiiFECellIterator dealiiFECellIter);
       ~FECellDealii();
 
-      std::vector<std::shared_ptr<Point>>
+      std::vector<std::shared_ptr<utils::Point>>
       getVertices() const override;
 
-      std::shared_ptr<Point>
+      std::shared_ptr<utils::Point>
       getVertex(size_type i) const override;
 
-      std::vector<std::shared_ptr<Point>>
+      std::vector<std::shared_ptr<utils::Point>>
       getNodalPoints() const override;
 
       size_type
       getId() const override;
 
       bool
-      isPointInside(std::shared_ptr<const Point> point) const override;
+      isPointInside(std::shared_ptr<const utils::Point> point) const override;
 
       bool
       isAtBoundary(const unsigned int i) const override;
@@ -90,15 +92,15 @@ namespace dftefe
       int
       getDim() const override;
 
-      std::shared_ptr<Point>
-      getParametricPoint(std::shared_ptr<const Point> realPoint,
+      std::shared_ptr<utils::Point>
+      getParametricPoint(std::shared_ptr<const utils::Point> realPoint,
                          const CellMappingBase &cellMapping) const override;
 
-      std::shared_ptr<Point>
-      getRealPoint(std::shared_ptr<const Point> parametricPoint,
+      std::shared_ptr<utils::Point>
+      getRealPoint(std::shared_ptr<const utils::Point> parametricPoint,
                    const CellMappingBase &      cellMapping) const override;
 
-      void cellNodeIdtoGlobalNodeId( std::vector<global_size_type>  &
+      void cellNodeIdtoGlobalNodeId( std::vector<size_type>  &
                                                    vecId) const override;
       size_type
       getFEOrder() const override;

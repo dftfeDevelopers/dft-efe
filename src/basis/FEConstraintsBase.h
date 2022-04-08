@@ -43,9 +43,8 @@ namespace dftefe
     public:
       virtual void clear () = 0 ;
 
-      template <unsigned int dim>
       virtual void makeHangingNodeConstraint(
-        FEBasisManager<dim> &feBasis) = 0;
+        FEBasisManager &feBasis) = 0;
 
       virtual void addLine(size_type lineId) = 0;
 

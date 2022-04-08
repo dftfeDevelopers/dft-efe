@@ -10,7 +10,7 @@ namespace dftefe
   namespace basis
   {
     template <unsigned int dim>
-    TriangulationDealiiParallel<dim>::TriangulationDealiiParallel()
+    TriangulationDealiiParallel<dim>::TriangulationDealiiParallel(const MPI_Comm &mpi_communicator)
       : d_triangulationDealii(mpi_communicator)
       , isInitialized(false)
       , isFinalized(false)
@@ -28,7 +28,7 @@ namespace dftefe
     {
       isInitialized = true;
       isFinalized   = false;
-      for (unsigned int iCell = 0; iCell < nLocalCells(); iCell++)
+      for (unsigned int iCell = 0; iCell < nLocallyActiveCells(); iCell++)
         {
           // delete
           d_triaVectorCell[iCell].reset();
@@ -45,7 +45,7 @@ namespace dftefe
       isInitialized      = false;
       isFinalized        = true;
       unsigned int iCell = 0;
-      d_triaVectorCell.resize(nLocalCells());
+      d_triaVectorCell.resize(nLocallyActiveCells());
 
       for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_levels();
            iLevel++)
@@ -60,7 +60,7 @@ namespace dftefe
         }
 
       utils::throwException(
-        iCell == nLocalCells(),
+        iCell == nLocallyActiveCells(),
         "Number of active cells is not matching in Finalize."
         "Kneel at the altar of Lord Vishal and"
         "he may grant your wish to rectify this error.");
@@ -290,7 +290,7 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    dealii::parallel::Distributed::Triangulation<dim> &
+    dealii::parallel::distributed::Triangulation<dim> &
     TriangulationDealiiParallel<dim>::returnDealiiTria()
     {
       return d_triangulationDealii;

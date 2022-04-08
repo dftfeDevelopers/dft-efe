@@ -27,23 +27,24 @@
 #define dftefeFEConstraintsDealii_h
 
 #include "FEConstraintsBase.h"
+#include "FEBasisManager.h"
+#include <utils/TypeConfig.h>
 #include <deal.II/lac/affine_constraints.h>
-namespace dealii
+namespace dftefe
 {
   namespace basis
   {
 
-    template <typename ValueType>
-    class FEConstraintsDealii : public FEBasisManager<ValueType>
+    template <size_type dim,typename ValueType>
+    class FEConstraintsDealii : public FEConstraintsBase<ValueType>
     {
     public:
       FEConstraintsDealii();
       ~FEConstraintsDealii();
       void clear () override ;
 
-      template <unsigned int dim>
       void makeHangingNodeConstraint(
-        FEBasisManager<dim> &feBasis) override;
+        FEBasisManager &feBasis) override;
 
       void addLine(size_type lineId) override;
 
@@ -62,5 +63,5 @@ namespace dealii
 
   }
 }
-
+#include "FEConstraintsDealii.t.cpp"
 #endif // dftefeFEConstraintsDealii_h

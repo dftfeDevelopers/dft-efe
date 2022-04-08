@@ -41,7 +41,6 @@ namespace dftefe
      * point, getting cell and nodal information, etc.
      *
      */
-    template <size_type dim>
     class FEBasisManager : public BasisManager
     {
       //

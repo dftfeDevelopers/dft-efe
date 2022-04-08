@@ -46,8 +46,8 @@ namespace dftefe
     class FEBasisManagerDealii : public FEBasisManager
     {
     public:
-      using FECellIterator       = FEBasisManager<dim>::FECellIterator;
-      using const_FECellIterator = FEBasisManager<dim>::const_FECellIterator;
+      using FECellIterator       = FEBasisManager::FECellIterator;
+      using const_FECellIterator = FEBasisManager::const_FECellIterator;
 
       FEBasisManagerDealii(TriangulationBase &tria);
       ~FEBasisManagerDealii();
@@ -83,7 +83,7 @@ namespace dftefe
       std::vector<size_type>
       getGlobalNodeIds() const;
       std::vector<size_type>
-      getCellDofsLocalIds(size_type cellId) const;
+      getCellDofsGlobalIds(size_type cellId) const;
       std::vector<size_type>
       getBoundaryIds() const;
       FECellIterator
@@ -124,4 +124,5 @@ namespace dftefe
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis
 } // end of namespace dftefe
+#include "FEBasisManagerDealii.t.cpp"
 #endif // dftefeFEBasisManagerDealii_h
