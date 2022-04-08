@@ -231,6 +231,14 @@ namespace dftefe
       getValues() const;
 
       /**
+       * @brief Returns a shared pointer to underlyign BlasQueue.
+       *
+       * @return shared pointer to BlasQueue.
+       */
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+      getBlasQueue();
+
+      /**
        * @brief Set values in the Vector using a user provided Vector::Storage object (i.e., MemoryStorage object).
        * The MemoryStorage may lie in a different memoryspace (say memSpace2)
        * than the Vector's memory space (memSpace). The function internally does
@@ -335,8 +343,7 @@ namespace dftefe
              const global_size_type    globalSize,
              const size_type           locallyOwnedSize,
              const size_type           ghostSize,
-             std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
-               blasQueue);
+             std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Default Constructor
@@ -344,8 +351,8 @@ namespace dftefe
       Vector();
 
     protected:
-      std::unique_ptr<Storage>                                      d_storage;
-      std::shared_ptr<const blasLapack::blasQueueType<memorySpace>> d_blasQueue;
+      std::unique_ptr<Storage>                                d_storage;
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> d_blasQueue;
       VectorAttributes d_vectorAttributes;
       size_type        d_localSize;
       global_size_type d_globalSize;

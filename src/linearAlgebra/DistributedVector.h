@@ -101,8 +101,7 @@ namespace dftefe
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
         const ValueType initVal,
-        std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
-          blasQueue);
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -126,8 +125,7 @@ namespace dftefe
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
           mpiCommunicatorP2P,
-        std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
-          blasQueue);
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -147,8 +145,7 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
         const ValueType                                     initVal,
-        std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
-          blasQueue);
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor based on locally owned indices. This does not contain
@@ -167,8 +164,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const MPI_Comm &                                    mpiComm,
         const ValueType                                     initVal,
-        std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
-          blasQueue);
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
 
       /**
@@ -186,11 +182,10 @@ namespace dftefe
        *
        */
       DistributedVector(
-        const global_size_type totalGlobalDofs,
-        const MPI_Comm &       mpiComm,
-        const ValueType        initVal,
-        std::shared_ptr<const blasLapack::blasQueueType<memorySpace>>
-          blasQueue);
+        const global_size_type                                  totalGlobalDofs,
+        const MPI_Comm &                                        mpiComm,
+        const ValueType                                         initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
 #endif // DFTEFE_WITH_MPI
 

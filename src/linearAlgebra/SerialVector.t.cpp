@@ -35,9 +35,9 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
-      const size_type                                               size,
-      const ValueType                                               initVal,
-      std::shared_ptr<const blasLapack::blasQueueType<memorySpace>> blasQueue)
+      const size_type                                         size,
+      const ValueType                                         initVal,
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -58,7 +58,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
-      std::shared_ptr<const blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
     {
       d_storage   = std::move(storage);
       d_blasQueue = blasQueue;
@@ -180,14 +180,14 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::l2Norm() const
     {
-      return blasLapack::nrm2(d_storage->size(), this->data(), 1, d_blasQueue);
+      return blasLapack::nrm2(d_storage->size(), this->data(), 1, *d_blasQueue);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     SerialVector<ValueType, memorySpace>::lInfNorm() const
     {
-      return blasLapack::amax(d_storage->size(), this->data(), 1, d_blasQueue);
+      return blasLapack::amax(d_storage->size(), this->data(), 1, *d_blasQueue);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
