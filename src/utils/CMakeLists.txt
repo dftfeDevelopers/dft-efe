@@ -20,6 +20,8 @@ set(DFT-EFE-UTILS-SOURCES
 	ExpModX.cpp
 	LogModX.cpp
 	OptimizedIndexSet.cpp
+	MathFunctions.cpp
+	StringOperations.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
   MPICommunicatorP2PKernels.cpp)

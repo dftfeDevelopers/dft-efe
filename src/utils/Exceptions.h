@@ -78,8 +78,8 @@ template parameter instead. Available typedefs LogicError - std::logic_error
 
 #else
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
-#  define DFTEFE_Assert(expr) assert(expr)
-#  define DFTEFE_AssertWithMsg(expr, msg) assert((expr) && (msg))
+#define DFTEFE_Assert(expr) assert(expr)
+#define DFTEFE_AssertWithMsg(expr, msg) assert((expr) && (msg))
 
 #endif
 

@@ -20,46 +20,55 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
-#include<utils/TypeConfig.h>
-namespace dftefe
-{
-  namespace utils
-  {
-    namespace mathFunctions
-    {
-      int
-      intPow(int base, unsigned int e)
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <utils/StringOperations.h>
+#include <utils/Exceptions.h>
+namespace dftefe {
+
+  namespace utils {
+
+    namespace stringOps {
+
+      bool strToInt(const std::string s, int & i)
       {
-        int result = 1;
-        for (;;)
-          {
-            if (e & 1)
-              result *= base;
-            e >>= 1;
-            if (!e)
-              break;
-            base *= base;
-          }
-        return result;
+	try
+	{
+	  i = boost::lexical_cast<int>(s);
+	}
+	catch (const boost::bad_lexical_cast &e)
+	{
+	  return false;
+	}
+	return true;
       }
 
-      size_type
-      sizeTypePow(size_type base, size_type e)
+      bool strToDouble(const std::string s, double & x)
       {
-        size_type result = 1;
-        for (;;)
-          {
-            if (e & 1)
-              result *= base;
-            e >>= 1;
-            if (!e)
-              break;
-            base *= base;
-          }
-        return result;
+	try
+	{
+	  x = boost::lexical_cast<double>(s);
+	}
+	catch (const boost::bad_lexical_cast &e)
+	{
+	  return false;
+	}
+	return true;
       }
-    } // namespace mathFunctions
-  }   // namespace utils
-} // namespace dftefe
+
+      void
+	trim(std::string & s)
+	{
+	  boost::algorithm::trim(s);
+	}
+
+      std::string
+	trimCopy(const std::string & s)
+	{
+	  return boost::algorithm::trim_copy(s);
+	}
+    }// end of namespace stringOps
+  } // end of namespace utils
+} // end of namespace dftefe
