@@ -97,7 +97,7 @@ namespace dftefe
         {QuadratureRuleType::GLL_9, 9},     {QuadratureRuleType::GLL_10, 10},
         {QuadratureRuleType::GLL_11, 11},   {QuadratureRuleType::GLL_12, 12}};
 
-    std::map<QuadratureRuleType, size_type>
+    std::map<QuadratureRuleType, QuadratureFamily>
       _dftefe_quadrature_rule_to_quad_family_ = {
         {QuadratureRuleType::GAUSS_1, QuadratureFamily::GAUSS},
         {QuadratureRuleType::GAUSS_2, QuadratureFamily::GAUSS},
@@ -155,7 +155,7 @@ namespace dftefe
     public:
       QuadraturePointAttributes()
         : cellId(0)
-        , quadRuleAttributesPtr(nullptr)
+        , quadratureRuleAttributesPtr(nullptr)
         , quadPointId(0){};
 
       QuadraturePointAttributes(

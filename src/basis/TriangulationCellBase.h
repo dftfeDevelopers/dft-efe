@@ -38,7 +38,7 @@ namespace dftefe
       virtual bool
       isAtBoundary() const = 0;
 
-      virtual unsigned int
+      virtual size_type
       getDim() const = 0;
 
 

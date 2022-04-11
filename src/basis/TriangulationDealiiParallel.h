@@ -63,10 +63,12 @@ namespace dftefe
       clearUserFlags() override;
       void
       executeCoarseningAndRefinement() override;
+      unsigned int
+      nLocallyActiveCells() const override;
       size_type
-      nLocalCells() const override;
+      nGloballyActiveCells() const override;
       size_type
-      nGlobalCells() const override;
+      nCells() const override;
       /**
        * \todo
        * TODO:
@@ -86,6 +88,11 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
+      // Class specific member function
+
+
+      dealii::parallel::distributed::Triangulation<dim> &
+        returnDealiiTria();
 
     private:
       /**
@@ -102,7 +109,7 @@ namespace dftefe
     private:
       bool                                                isInitialized;
       bool                                                isFinalized;
-      dealii::parallel::Distributed::Triangulation<dim>   d_triangulationDealii;
+      dealii::parallel::distributed::Triangulation<dim>   d_triangulationDealii;
       std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorCell;
 
     }; // end of class TriangulationDealiiParallel

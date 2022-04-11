@@ -23,6 +23,11 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
+# include "TriangulationDealiiParallel.h"
+# include "TriangulationDealiiSerial.h"
+# include "FECellDealii.h"
+ 
+
 namespace dftefe
 {
   namespace basis
@@ -32,7 +37,7 @@ namespace dftefe
       : d_isHPRefined(false)
     {
       d_triangulation = tria;
-      d_dofHandler    = std::make_shared<dealii::DoFHandler<dim>>();
+      d_dofHandler = std::make_shared<dealii::DoFHandler< dim>>();
     }
 
     template <size_type dim>
@@ -51,7 +56,7 @@ namespace dftefe
     FEBasisManagerDealii<dim>::getBasisFunctionDerivative(
       const size_type     basisId,
       const utils::Point &point,
-      const size_type     derivativeOrder = 1) const
+      const size_type     derivativeOrder) const
     {
       utils::throwException(
         false,
@@ -63,35 +68,98 @@ namespace dftefe
     FEBasisManagerDealii<dim>::reinit(const TriangulationBase &triangulation,
                                       const size_type          feOrder)
     {
+      dealii::FE_Q<dim> feElem(feOrder);
+      const TriangulationDealiiParallel<dim> * dealiiParallelTria =
+        dynamic_cast<const TriangulationDealiiParallel<dim> *>(&triangulation);
+
+      if (!(dealiiParallelTria == nullptr) )
+        {
+          d_dofHandler->initialize(dealiiParallelTria->returnDealiiTria(), feElem);
+        }
+      else
+        {
+          const TriangulationDealiiSerial<dim> *dealiiSerialTria =
+            dynamic_cast<const TriangulationDealiiSerial<dim> *>(&triangulation);
+
+          if (!(dealiiSerialTria == nullptr) )
+            {
+              d_dofHandler->initialize(dealiiSerialTria->returnDealiiTria(), feElem);
+            }
+          else
+            {
+              utils::throwException(
+                false, "reinit() in FEBasisManagerDealii is not able to re cast the Triangulation.");
+            }
+
+        }
+
       // TODO check how to pass the triangulation to dofHandler
       d_triangulation = triangulation;
-      d_dofHandler->initialize(triangulation, feOrder);
+
+      typename dealii::DoFHandler<dim>::active_cell_iterator cell =
+        d_dofHandler->begin_active();
+      typename dealii::DoFHandler<dim>::active_cell_iterator endc =
+        d_dofHandler->end();
+
+      for (  ; cell != endc ;cell++ )
+        if( cell->is_locally_active())
+        {
+          std::shared_ptr<FECellDealii<dim>> cellDealii = std::make_shared
+            <FECellDealii<dim>>(cell);
+
+          d_locallyActiveCells.push_back(cellDealii);
+        }
+
+     cell =
+        d_dofHandler->begin_active();
+     endc =
+        d_dofHandler->end();
+
+      for (  ; cell != endc ;cell++ )
+        if( cell->is_locally_owned())
+          {
+            std::shared_ptr<FECellDealii<dim>> cellDealii = std::make_shared
+              <FECellDealii<dim>>(cell);
+
+            d_locallyActiveCells.push_back(cellDealii);
+            d_locallyOwnedCells.push_back(cellDealii);
+          }
+
+
+      cell = d_dofHandler->begin_active();
+      for (  ; cell != endc ;cell++ )
+        if(cell->is_ghost())
+          {
+            std::shared_ptr<FECellDealii<dim>> cellDealii = std::make_shared
+              <FECellDealii<dim>>(cell);
+
+            d_locallyOwnedCells.push_back(cellDealii);
+          }
+
     }
 
     template <size_type dim>
     size_type
     FEBasisManagerDealii<dim>::nLocallyActiveCells() const
     {
-      utils::throwException(
-        false,
-        "nLocallyActiveCells() in FEBasisManagerDealii not yet implemented.");
+
+      return d_locallyActiveCells.size();
+
     }
 
     template <size_type dim>
     size_type
-    FEBasisManagerDealii<dim>::nLocallyOwnedCells() const
+    FEBasisManagerDealii<dim>::nOwnedCells() const
     {
-      utils::throwException(
-        false,
-        "nLocallyOwnedCells() in FEBasisManagerDealii not yet implemented.");
+      return d_locallyOwnedCells.size();
     }
 
     template <size_type dim>
     size_type
-    FEBasisManagerDealii<dim>::nGlobalCells() const
+    FEBasisManagerDealii<dim>::nGloballyActiveCells() const
     {
-      utils::throwException(
-        false, "nGlobalCells() in FEBasisManagerDealii not yet implemented.");
+      return d_triangulation->nGloballyActiveCells();
+
     }
 
     template <size_type dim>
@@ -132,80 +200,93 @@ namespace dftefe
     template <size_type dim>
     std::vector<size_type>
     FEBasisManagerDealii<dim>::getLocalNodeIds(size_type cellId) const
-    {}
+    {
+      ///implement this now
+    }
 
     template <size_type dim>
     std::vector<size_type>
     FEBasisManagerDealii<dim>::getGlobalNodeIds() const
-    {}
+    {
+
+      /// implement this now
+    }
 
     template <size_type dim>
     std::vector<size_type>
-    FEBasisManagerDealii<dim>::getCellDofsLocalIds(size_type cellId) const
-    {}
+    FEBasisManagerDealii<dim>::getCellDofsGlobalIds(size_type cellId) const
+    {
+      std::vector<size_type> vecGlobalNodeId(nCellDofs(), 0);
+
+      d_locallyOwnedCells[cellId]->cellNodeIdtoGlobalNodeId(vecGlobalNodeId);
+      return vecGlobalNodeId;
+    }
 
     template <size_type dim>
     std::vector<size_type>
     FEBasisManagerDealii<dim>::getBoundaryIds() const
-    {}
+    {
+      //// implement this now ?
+    }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<std::shared_ptr<FECellBase>>::iterator
+    std::vector<std::shared_ptr<FECellBase>>::iterator
     FEBasisManagerDealii<dim>::beginLocallyOwnedCells()
     {
-      d_dofHandler->begin();
+      return d_locallyOwnedCells.begin();
     }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<std::shared_ptr<FECellBase>>::iterator
+    std::vector<std::shared_ptr<FECellBase>>::iterator
     FEBasisManagerDealii<dim>::endLocallyOwnedCells()
     {
-      d_dofHandler->end();
+      return d_locallyOwnedCells.end();
     }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<
+    std::vector<
       std::shared_ptr<FECellBase>>::const_iterator
     FEBasisManagerDealii<dim>::beginLocallyOwnedCells() const
     {
-      d_dofHandler->begin();
+      return d_locallyOwnedCells.begin();
     }
 
-    FEBasisManager<dim>::std::vector<
+    template <size_type dim>
+    std::vector<
       std::shared_ptr<FECellBase>>::const_iterator
     FEBasisManagerDealii<dim>::endLocallyOwnedCells() const
     {
-      d_dofHandler->end();
+      return d_locallyOwnedCells.end();
     }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<std::shared_ptr<FECellBase>>::iterator
+    std::vector<std::shared_ptr<FECellBase>>::iterator
     FEBasisManagerDealii<dim>::beginLocallyActiveCells()
     {
-      d_dofHandler->begin_active();
+      return d_locallyActiveCells.begin();
     }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<std::shared_ptr<FECellBase>>::iterator
+    std::vector<std::shared_ptr<FECellBase>>::iterator
     FEBasisManagerDealii<dim>::endLocallyActiveCells()
     {
-      d_dofHandler->end_active();
+      return d_locallyActiveCells.end();
     }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<
+    std::vector<
       std::shared_ptr<FECellBase>>::const_iterator
     FEBasisManagerDealii<dim>::beginLocallyActiveCells() const
     {
-      d_dofHandler->begin_active();
+      return d_locallyActiveCells.begin();
     }
 
     template <size_type dim>
-    FEBasisManager<dim>::std::vector<
+    std::vector<
       std::shared_ptr<FECellBase>>::const_iterator
     FEBasisManagerDealii<dim>::endLocallyActiveCells() const
     {
-      d_dofHandler->end_active();
+      return d_locallyActiveCells.end();
     }
 
     template <size_type dim>
