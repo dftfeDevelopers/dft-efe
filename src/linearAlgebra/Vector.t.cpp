@@ -292,12 +292,8 @@ namespace dftefe
         "Mismatch of sizes of the underlying storages"
         "of the Vectors that are added.");
 
-      // FIXME: fuse both operations for efficiency
-      blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        u.localSize(), a, u.data(), 1, w.data(), 1, *(w.getBlasQueue()));
-
-      blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        u.localSize(), b, v.data(), 1, w.data(), 1, *(w.getBlasQueue()));
+      blasLapack::axpby<ValueType, memorySpace>(
+        u.localSize(), a, u.data(), b, v.data(), w.data(), *(w.getBlasQueue()));
     }
   } // namespace linearAlgebra
 } // namespace dftefe

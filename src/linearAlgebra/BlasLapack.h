@@ -27,7 +27,8 @@
 #define dftefeBlasWrappers_h
 
 #include <blas.hh>
-#include "BlasLapackTypedef.h"
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/BlasLapackKernels.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -63,6 +64,18 @@ namespace dftefe
            ValueType2 *                        y,
            size_type                           incy,
            blasQueueType<memorySpace> &        blasQueue);
+
+
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      axpby(size_type                   n,
+            ValueType                   alpha,
+            ValueType const *           x,
+            ValueType                   beta,
+            const ValueType *           y,
+            ValueType *                 z,
+            blasQueueType<memorySpace> &blasQueue);
 
 
       template <typename ValueType1,

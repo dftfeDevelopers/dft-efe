@@ -299,8 +299,8 @@ namespace dftefe
         u.localSize(),
         u.numVectors(),
         a,
-        b,
         u.data(),
+        b,
         w.data(),
         *(w.getBlasQueue()));
     }

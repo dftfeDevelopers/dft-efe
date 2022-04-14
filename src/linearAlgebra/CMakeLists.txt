@@ -13,7 +13,9 @@ endif()
 
 # Add source files here
 set(DFT-EFE-LINALG-SOURCES
-        BlasLapack.cpp
+    BlasLapack.cpp
+    BlasLapackKernels.cpp
+    BlasLapackKernels.cu
 		DistributedVector.cpp
         Matrix.cpp
 		MatrixOperations.cpp

@@ -1,5 +1,6 @@
 #include <utils/Exceptions.h>
 #include <utils/MemorySpaceType.h>
+#include <linearAlgebra/BlasLapackKernels.h>
 #include <type_traits>
 
 namespace dftefe
@@ -57,6 +58,21 @@ namespace dftefe
           "blas::axpy() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         blas::axpy(n, alpha, x, incx, y, incy);
       }
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      axpby(const size_type             n,
+            const ValueType             alpha,
+            const ValueType *           x,
+            const ValueType             beta,
+            const ValueType *           y,
+            ValueType *                 z,
+            blasQueueType<memorySpace> &blasQueue)
+      {
+        BlasLapackKernels<ValueType, memorySpace>::axpby(
+          n, alpha, x, beta, y, z);
+      }
+
 
       template <typename ValueType1,
                 typename ValueType2,
