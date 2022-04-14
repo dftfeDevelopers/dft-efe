@@ -76,6 +76,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Vector<ValueType, memorySpace>::d_storage;
+      using Vector<ValueType, memorySpace>::d_blasQueue;
       using Vector<ValueType, memorySpace>::d_vectorAttributes;
       using Vector<ValueType, memorySpace>::d_globalSize;
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -97,12 +98,14 @@ namespace dftefe
        * based on which the DistributedMultiVector will be created.
        * @param[in] initVal value with which the DistributedMultiVector shoud be
        * initialized
-       *
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST or DEVICE.
        */
       DistributedMultiVector(
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
-        const ValueType initVal = ValueType());
+        const ValueType initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -125,7 +128,8 @@ namespace dftefe
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-          mpiCommunicatorP2P);
+          mpiCommunicatorP2P,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -145,7 +149,8 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
         size_type                                           numVectors,
-        ValueType initVal = ValueType());
+        ValueType                                           initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 #endif // DFTEFE_WITH_MPI
 
       /**

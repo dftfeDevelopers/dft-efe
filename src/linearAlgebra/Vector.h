@@ -185,15 +185,6 @@ namespace dftefe
       operator+=(const Vector &rhs);
 
       /**
-       * @brief addition of elements owned locally in the processor
-       * @param[in] rhs the Vector to add
-       * @throws exception if the sizes and type (SerialVector or
-       * DistributedVector) are incompatible
-       */
-      void
-      addLocal(const Vector &rhs);
-
-      /**
        * @brief Compound subtraction for elementwise addition lhs -= rhs
        * @param[in] rhs the vector to subtract
        * @return the original vector
@@ -236,7 +227,7 @@ namespace dftefe
        * @return shared pointer to BlasQueue.
        */
       std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
-      getBlasQueue();
+      getBlasQueue() const;
 
       /**
        * @brief Set values in the Vector using a user provided Vector::Storage object (i.e., MemoryStorage object).

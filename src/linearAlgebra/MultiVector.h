@@ -27,6 +27,7 @@
 #define dftefeMultiVector_h
 
 #include <linearAlgebra/MultiVectorAttributes.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 #include <memory>
@@ -228,6 +229,14 @@ namespace dftefe
       getValues() const;
 
       /**
+       * @brief Returns a shared pointer to underlyign BlasQueue.
+       *
+       * @return shared pointer to BlasQueue.
+       */
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+      getBlasQueue() const;
+
+      /**
        * @brief Set values in the MultiVector using a user provided MultiVector::Storage object (i.e., MemoryStorage object).
        * The MemoryStorage may lie in a different memoryspace (say memSpace2)
        * than the MultiVector's memory space (memSpace). The function internally
@@ -322,16 +331,21 @@ namespace dftefe
        * the other processors but required by the current processor. For a
        * SerialMultiVector, the ghostSize is 0.
        * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
+       *
        *
        * @note Since we are passing the ownership of the input storage to the MultiVector, the
        * storage will point to NULL after a call to this Constructor. Accessing
        * the input storage pointer will lead to undefined behavior.
        */
-      MultiVector(std::unique_ptr<Storage> &storage,
-                  const global_size_type    globalSize,
-                  const size_type           locallyOwnedSize,
-                  const size_type           ghostSize,
-                  const size_type           numVectors);
+      MultiVector(
+        std::unique_ptr<Storage> &storage,
+        const global_size_type    globalSize,
+        const size_type           locallyOwnedSize,
+        const size_type           ghostSize,
+        const size_type           numVectors,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Default Constructor
@@ -339,13 +353,14 @@ namespace dftefe
       MultiVector();
 
     protected:
-      std::unique_ptr<Storage> d_storage;
-      VectorAttributes         d_vectorAttributes;
-      size_type                d_localSize;
-      global_size_type         d_globalSize;
-      size_type                d_locallyOwnedSize;
-      size_type                d_ghostSize;
-      size_type                d_numVectors;
+      std::unique_ptr<Storage>                                d_storage;
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> d_blasQueue;
+      VectorAttributes d_vectorAttributes;
+      size_type        d_localSize;
+      global_size_type d_globalSize;
+      size_type        d_locallyOwnedSize;
+      size_type        d_ghostSize;
+      size_type        d_numVectors;
     };
 
     // helper functions

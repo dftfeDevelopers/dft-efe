@@ -35,12 +35,14 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
-      std::unique_ptr<Storage> &storage,
-      const global_size_type    globalSize,
-      const size_type           locallyOwnedSize,
-      const size_type           ghostSize,
-      const size_type           numVectors)
+      std::unique_ptr<Storage> &                              storage,
+      const global_size_type                                  globalSize,
+      const size_type                                         locallyOwnedSize,
+      const size_type                                         ghostSize,
+      const size_type                                         numVectors,
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
       : d_storage(storage)
+      , d_blasQueue(blasQueue)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL, numVectors))
       , d_globalSize(globalSize)
@@ -57,6 +59,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector()
       : d_storage(nullptr)
+      , d_blasQueue(nullptr)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL, 0))
       , d_globalSize(0)
@@ -157,16 +160,22 @@ namespace dftefe
         "Trying to add incompatible MultiVectors. One is a serial MultiVector and the "
         " other a distributed MultiVector.");
       utils::throwException<utils::LengthError>(
-        rhs.size() == this->size() && rhs.numVectors() == this->numVectors(),
+        rhs.size() == this->size() && rhs.localSize() == this->localSize() &&
+          rhs.numVectors() == this->numVectors(),
         "Mismatch of sizes of the two MultiVectors that are being added.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two MultiVectors that are being added.");
-      VectorKernels<ValueType, memorySpace>::add(d_storage->size(),
-                                                 rhs.data(),
-                                                 this->data());
+
+      blasLapack::axpyMultiVector<ValueType, ValueType, memorySpace>(
+        this->localSize(),
+        this->numVectors(),
+        1.0,
+        rhs.data(),
+        this->data(),
+        *d_blasQueue);
       return *this;
     }
 
@@ -182,16 +191,21 @@ namespace dftefe
         "Trying to add incompatible MultiVectors. "
         "One is a serial vector and the other a distributed MultiVector.");
       utils::throwException<utils::LengthError>(
-        rhs.size() == this->size() && rhs.numVectors() == this->numVectors(),
+        rhs.size() == this->size() && rhs.localSize() == this->localSize() &&
+          rhs.numVectors() == this->numVectors(),
         "Mismatch of sizes of the two MultiVectors that are being subtracted.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two MultiVectors that are being subtracted.");
-      VectorKernels<ValueType, memorySpace>::sub(d_storage->size(),
-                                                 rhs.data(),
-                                                 this->data());
+      blasLapack::axpyMultiVector<ValueType, ValueType, memorySpace>(
+        this->localSize(),
+        this->numVectors(),
+        -1.0,
+        rhs.data(),
+        this->data(),
+        *d_blasQueue);
       return *this;
     }
 
@@ -207,6 +221,13 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::getValues()
     {
       return *d_storage;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+    Vector<ValueType, memorySpace>::getBlasQueue() const
+    {
+      return d_blasQueue;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -260,6 +281,8 @@ namespace dftefe
         "Trying to add incompatible MultiVectors. One is a serialVector and the other a DistributedVector.");
       utils::throwException<utils::LengthError>(
         ((u.size() == v.size()) && (v.size() == w.size()) &&
+         &&(u.localSize() == v.localSize()) &&
+         (v.localSize() == w.localSize()) &&
          (u.numVectors() == v.numVectors()) &&
          (v.numVectors() == w.numVectors())),
         "Mismatch of sizes of the MultiVectors that are added.");
@@ -270,8 +293,16 @@ namespace dftefe
         (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
         "Mismatch of sizes of the underlying storages"
         "of the MultiVectors that are added.");
-      VectorKernels<ValueType, memorySpace>::add(
-        uStorageSize, a, u.data(), b, v.data(), w.data());
+
+      // FIXME: fuse both operations for efficiency
+      blasLapack::axpbyMultiVector<ValueType, ValueType, memorySpace>(
+        u.localSize(),
+        u.numVectors(),
+        a,
+        b,
+        u.data(),
+        w.data(),
+        *(w.getBlasQueue()));
     }
   } // namespace linearAlgebra
 } // namespace dftefe

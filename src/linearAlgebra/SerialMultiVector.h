@@ -58,6 +58,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Vector<ValueType, memorySpace>::d_storage;
+      using Vector<ValueType, memorySpace>::d_blasQueue;
       using Vector<ValueType, memorySpace>::d_vectorAttributes;
       using Vector<ValueType, memorySpace>::d_globalSize;
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -104,10 +105,15 @@ namespace dftefe
        * @param[in] size size of each vector in the SerialMultiVector
        * @param[in] numVector number of vectors in the SerialMultiVector
        * @param[in] initVal initial value of elements of the SerialMultiVector
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST or DEVICE.
+       *
        */
-      explicit SerialMultiVector(size_type       size,
-                                 size_type       numVectors,
-                                 const ValueType initVal = ValueType());
+      explicit SerialMultiVector(
+        size_type                                               size,
+        size_type                                               numVectors,
+        const ValueType                                         initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor with predefined MultiVector::Storage (i.e., utils::MemoryStorage).
@@ -128,7 +134,8 @@ namespace dftefe
        */
       SerialMultiVector(
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-          storage);
+                                                                storage,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Returns \f$ l_2 \f$ norms of all the \f$N\f$ vectors in the  MultiVector

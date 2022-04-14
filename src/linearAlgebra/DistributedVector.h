@@ -95,6 +95,8 @@ namespace dftefe
        * based on which the DistributedVector will be created.
        * @param[in] initVal value with which the DistributedVector shoud be
        * initialized
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
        *
        */
       DistributedVector(
@@ -114,6 +116,8 @@ namespace dftefe
        * is to be transfered to the DistributedVector
        * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
        * based on which the DistributedVector will be created.
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
        *
        * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector.
        * Thus, after the function call \p storage will point to NULL and any
