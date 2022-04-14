@@ -24,6 +24,8 @@
  */
 
 #include <linearAlgebra/BlasLapack.h>
+#include "SerialDenseMatrix.h"
+
 
 namespace dftefe
 {
@@ -174,6 +176,5 @@ namespace dftefe
 
       return value;
     }
-
   } // namespace linearAlgebra
 } // namespace dftefe

@@ -63,6 +63,11 @@ add_executable(TestBlasLapackComplexDoubleGemmHost TestBlasLapackComplexDoubleGe
 target_link_libraries(TestBlasLapackComplexDoubleGemmHost PUBLIC dft-efe-linalg)
 set_target_properties(TestBlasLapackComplexDoubleGemmHost PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmHost" SUFFIX ".x")
 
+add_executable(TestSerialDenseMatrixDoubleFrobeniusNormHost TestSerialDenseMatrixDoubleFrobeniusNormHost.cpp)
+target_link_libraries(TestSerialDenseMatrixDoubleFrobeniusNormHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialDenseMatrixDoubleFrobeniusNormHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleFrobeniusNormHost" SUFFIX ".x")
+
+
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
 #target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)

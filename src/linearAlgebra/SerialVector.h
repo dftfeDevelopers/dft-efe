@@ -47,7 +47,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class SerialVector : public Vector<ValueType, memorySpace>
     {
-    public:
+    protected:
       //
       // Pulling base class (Vector) protected names here so to avoid full name
       // scoping inside the source file. The other work around is to use
