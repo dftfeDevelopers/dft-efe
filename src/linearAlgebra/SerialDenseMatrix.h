@@ -52,7 +52,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class SerialDenseMatrix : public Matrix<ValueType, memorySpace>
     {
-    public:
+    protected:
       //
       // Pulling base class (Matrix) protected names here so to avoid full name
       // scoping inside the source file. The other work around is to use
@@ -72,6 +72,7 @@ namespace dftefe
       using Matrix<ValueType, memorySpace>::d_uplo;
       using Matrix<ValueType, memorySpace>::d_layout;
 
+    public:
       SerialDenseMatrix() = default;
 
       /**
