@@ -33,7 +33,7 @@ namespace dftefe
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
-          "blas::amax() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+          "amax() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
         size_type outputIndex;
         outputIndex = blas::iamax(n, x, incx);
