@@ -22,6 +22,9 @@
 /*
  * @author Ian C. Lin, Vishal Subramanian
  */
+
+#include <linearAlgebra/BlasLapack.h>
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -136,13 +139,13 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
-      size_type                                         rows,
-      size_type                                         cols,
-      blasLapack::blasQueueType<memorySpace> &          blasQueueInput,
-      ValueType                                         initVal,
-      typename Matrix<ValueType, memorySpace>::Property property,
-      typename Matrix<ValueType, memorySpace>::Uplo     uplo,
-      typename Matrix<ValueType, memorySpace>::Layout   layout)
+      size_type                                               rows,
+      size_type                                               cols,
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueueInput,
+      ValueType                                               initVal,
+      typename Matrix<ValueType, memorySpace>::Property       property,
+      typename Matrix<ValueType, memorySpace>::Uplo           uplo,
+      typename Matrix<ValueType, memorySpace>::Layout         layout)
     {
       d_nGlobalRows = rows;
       d_nGlobalCols = cols;
@@ -166,7 +169,8 @@ namespace dftefe
     SerialDenseMatrix<ValueType, memorySpace>::frobeniusNorm() const
     {
       double value = 0;
-      value        = nrm2(d_nLocalCols * d_nLocalRows, this->data(), 1);
+      value        = blasLapack::nrm2<ValueType, memorySpace>(
+        d_nLocalCols * d_nLocalRows, this->data(), 1, *d_blasQueue);
 
       return value;
     }

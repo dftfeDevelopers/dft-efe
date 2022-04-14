@@ -52,15 +52,15 @@ namespace dftefe
 
       enum class Uplo : char
       {
-        GENERAL = blas::Uplo::General,
-        UPPER   = blas::Uplo::Upper,
-        LOWER   = blas::Uplo::Lower
+        GENERAL = char(blas::Uplo::General),
+        UPPER   = char(blas::Uplo::Upper),
+        LOWER   = char(blas::Uplo::Lower)
       };
 
       enum class Layout : char
       {
-        COLMAJ = blas::Layout::ColMajor,
-        ROWMAJ = blas::Layout::RowMajor,
+        COLMAJ = char(blas::Layout::ColMajor),
+        ROWMAJ = char(blas::Layout::RowMajor),
       };
 
       using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
@@ -110,7 +110,7 @@ namespace dftefe
        * Matrix.
        */
       const_iterator
-      end() const = 0;
+      end() const;
 
       /**
        * @brief Return the raw pointer to the Matrix

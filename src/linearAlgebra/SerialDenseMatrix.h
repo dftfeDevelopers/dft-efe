@@ -26,12 +26,13 @@
 #ifndef dftefeSerialDenseMatrix_h
 #define dftefeSerialDenseMatrix_h
 
-#include "Matrix.h"
-#include <utils/TypeConfig.h>
+
 #include <vector>
-#include "BlasLapackTypedef.h"
 #include <utils/MemoryStorage.h>
-#include "QueueManager.h"
+#include <utils/TypeConfig.h>
+#include <linearAlgebra/Matrix.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/QueueManager.h>
 
 namespace dftefe
 {
@@ -112,11 +113,11 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the Vector
        */
       explicit SerialDenseMatrix(
-        size_type                                         rows,
-        size_type                                         cols,
-        blasLapack::blasQueueType<memorySpace> &          blasQueueInput,
-        ValueType                                         initVal = 0,
-        typename Matrix<ValueType, memorySpace>::Property property =
+        size_type                                               rows,
+        size_type                                               cols,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueueInput,
+        ValueType                                               initVal = 0,
+        typename Matrix<ValueType, memorySpace>::Property       property =
           Matrix<ValueType, memorySpace>::Property::GENERAL,
         typename Matrix<ValueType, memorySpace>::Uplo uplo =
           Matrix<ValueType, memorySpace>::Uplo::GENERAL,
