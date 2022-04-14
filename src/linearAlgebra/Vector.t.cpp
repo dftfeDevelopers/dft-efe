@@ -154,7 +154,7 @@ namespace dftefe
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      blasLapack::axpy<ValueType, memorySpace>(
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
         d_storage->size(), 1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
 
       return *this;
@@ -179,7 +179,7 @@ namespace dftefe
         d_localSize <= rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      blasLapack::axpy<ValueType, memorySpace>(
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
         d_localSize, 1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
     }
 
@@ -202,7 +202,7 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      blasLapack::axpy<ValueType, memorySpace>(
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
         d_storage->size(), -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
       return *this;
     }
@@ -226,7 +226,7 @@ namespace dftefe
         (d_localSize <= rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      blasLapack::axpy<ValueType, memorySpace>(
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
         d_localSize, -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
     }
 
@@ -314,10 +314,10 @@ namespace dftefe
         "of the Vectors that are added.");
 
       // FIXME: fuse both operations for efficiency
-      blasLapack::axpy<ValueType, memorySpace>(
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
         uStorageSize, a, u.data(), 1, w.data(), 1, *(w.getBlasQueue()));
 
-      blasLapack::axpy<ValueType, memorySpace>(
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
         uStorageSize, b, v.data(), 1, w.data(), 1, *(w.getBlasQueue()));
     }
   } // namespace linearAlgebra
