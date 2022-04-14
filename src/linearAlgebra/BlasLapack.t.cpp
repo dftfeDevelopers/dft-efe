@@ -119,7 +119,6 @@ namespace dftefe
       {
         return BlasLapackKernels<ValueType, memorySpace>::nrms2MultiVector(
           vecSize, numVec, multiVecData);
-        ;
       }
 
 
