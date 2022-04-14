@@ -110,6 +110,19 @@ namespace dftefe
       }
 
 
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      std::vector<double>
+      nrms2MultiVector(const size_type             vecSize,
+                       const size_type             numVec,
+                       const ValueType *           multiVecData,
+                       blasQueueType<memorySpace> &blasQueue)
+      {
+        return BlasLapackKernels<ValueType, memorySpace>::nrms2MultiVector(
+          vecSize, numVec, multiVecData);
+        ;
+      }
+
+
       template <typename ValueType>
       void
       gemm(const Layout                                     layout,

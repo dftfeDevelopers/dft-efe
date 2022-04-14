@@ -32,6 +32,20 @@ namespace dftefe
             ValueType        beta,
             const ValueType *y,
             ValueType *      z);
+
+      /**
+       * @brief Template for computing \f$ l_2 \f$ norms of all the numVec vectors in a multi Vector
+       * @param[in] vecSize size of each vector
+       * @param[in] numVec number of vectors in the multi Vector
+       * @param[in] multiVecData multi vector data in row major format i.e.
+       * vector index is the fastest index
+       *
+       * @return \f$ l_2 \f$  norms of all the vectors
+       */
+      static std::vector<double>
+      nrms2MultiVector(size_type        vecSize,
+                       size_type        numVec,
+                       const ValueType *multiVecData);
     };
 
 
@@ -47,6 +61,11 @@ namespace dftefe
             ValueType        beta,
             const ValueType *y,
             ValueType *      z);
+
+      static std::vector<double>
+      nrms2MultiVector(size_type        vecSize,
+                       size_type        numVec,
+                       const ValueType *multiVecData);
     };
 #endif
 

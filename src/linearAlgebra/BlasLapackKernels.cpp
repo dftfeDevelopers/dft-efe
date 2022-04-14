@@ -22,6 +22,18 @@ namespace dftefe
         }
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::vector<double>
+    BlasLapackKernels<ValueType, memorySpace>::nrms2MultiVector(
+      const size_type  vecSize,
+      const size_type  numVec,
+      const ValueType *multiVecData)
+    {
+      std::vector<double> nrms2(numVec, 0);
+      return nrms2;
+    }
+
+
     template class BlasLapackKernels<size_type,
                                      dftefe::utils::MemorySpace::HOST>;
     template class BlasLapackKernels<int, dftefe::utils::MemorySpace::HOST>;

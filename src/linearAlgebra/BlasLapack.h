@@ -66,6 +66,15 @@ namespace dftefe
            blasQueueType<memorySpace> &        blasQueue);
 
 
+      /**
+       * @brief Template for performing \f$ z = \alpha x + \beta y \f$
+       * @param[in] size size of the array
+       * @param[in] \f$ alpha \f$ scalar
+       * @param[in] x array
+       * @param[in] \f$ beta \f$ scalar
+       * @param[in] y array
+       * @param[out] z array
+       */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
@@ -97,6 +106,24 @@ namespace dftefe
            ValueType const *           x,
            size_type                   incx,
            blasQueueType<memorySpace> &blasQueue);
+
+
+      /**
+       * @brief Template for computing \f$ l_2 \f$ norms of all the numVec vectors in a multi Vector
+       * @param[in] vecSize size of each vector
+       * @param[in] numVec number of vectors in the multi Vector
+       * @param[in] multiVecData multi vector data in row major format i.e.
+       * vector index is the fastest index
+       *
+       * @return \f$ l_2 \f$  norms of all the vectors
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      std::vector<double>
+      nrms2MultiVector(size_type                   vecSize,
+                       size_type                   numVec,
+                       ValueType const *           multiVecData,
+                       blasQueueType<memorySpace> &blasQueue);
 
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>

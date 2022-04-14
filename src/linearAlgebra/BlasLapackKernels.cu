@@ -55,6 +55,17 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(z));
     }
 
+    template <typename ValueType>
+    std::vector<double>
+    BlasLapackKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::
+      nrms2MultiVector(size_type        vecSize,
+                       size_type        numVec,
+                       ValueType const *multiVecData)
+    {
+      std::vector<double> nrms2(numVec, 0);
+      return nrms2;
+    }
+
     template class BlasLapackKernels<size_type,
                                      dftefe::utils::MemorySpace::DEVICE>;
     template class BlasLapackKernels<int, dftefe::utils::MemorySpace::DEVICE>;
