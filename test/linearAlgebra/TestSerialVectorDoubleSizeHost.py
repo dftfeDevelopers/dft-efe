@@ -32,10 +32,10 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestSerialVectorDoubleHostSize(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestSerialVectorDoubleHostSize using CMake'
+class BuildOnlyTestSerialVectorDoubleSizeHost(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestSerialVectorDoubleSizeHost using CMake'
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleHostSize']
+    make_opts = ['TestSerialVectorDoubleSizeHost']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -84,11 +84,11 @@ class BuildOnlyTestSerialVectorDoubleHostSize(rfm.CompileOnlyRegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestSerialVectorDoubleHostSize(rfm.RegressionTest):
+class BuildAndRunTestSerialVectorDoubleSizeHost(rfm.RegressionTest):
     descr = '''Compile and run test for size of SerialVector'''
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleHostSize']
-    executable = './TestSerialVectorDoubleHostSize.x'
+    make_opts = ['TestSerialVectorDoubleSizeHost']
+    executable = './TestSerialVectorDoubleSizeHost.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -122,9 +122,9 @@ class BuildAndRunTestSerialVectorDoubleHostSize(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleHostSize."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleHostSize."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleHostSize."
+        msgError = "Found error(s) in TestSerialVectorDoubleSizeHost."
+        msgThrownException = "Found exceptions in TestSerialVectorDoubleSizeHost."
+        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleSizeHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -158,9 +158,9 @@ class BuildAndRunTestSerialVectorDoubleHostSize(rfm.RegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestSerialVectorDoubleHostSize(rfm.RunOnlyRegressionTest):
+class RunOnlyTestSerialVectorDoubleSizeHost(rfm.RunOnlyRegressionTest):
     descr = '''Run only test for size of SerialVector'''
-    target_name = 'TestSerialVectorDoubleHostSize'
+    target_name = 'TestSerialVectorDoubleSizeHost'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -193,9 +193,9 @@ class RunOnlyTestSerialVectorDoubleHostSize(rfm.RunOnlyRegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleHostSize."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleHostSize."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleHostSize."
+        msgError = "Found error(s) in TestSerialVectorDoubleSizeHost."
+        msgThrownException = "Found exceptions in TestSerialVectorDoubleSizeHost."
+        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleSizeHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
