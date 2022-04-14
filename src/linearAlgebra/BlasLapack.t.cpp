@@ -76,6 +76,7 @@ namespace dftefe
         blas::axpy(n, alpha, x, incx, y, incy);
       }
 
+
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
       axpby(const size_type             n,
@@ -87,6 +88,22 @@ namespace dftefe
             blasQueueType<memorySpace> &blasQueue)
       {
         Kernels<ValueType, memorySpace>::axpby(n, alpha, x, beta, y, z);
+      }
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      axpbyMultiVector(const size_type             vecSize,
+                       const size_type             numVec,
+                       const ValueType             alpha,
+                       const ValueType *           x,
+                       const ValueType             beta,
+                       const ValueType *           y,
+                       ValueType *                 z,
+                       blasQueueType<memorySpace> &blasQueue)
+      {
+        Kernels<ValueType, memorySpace>::axpbyMultiVector(
+          vecSize, numVec, alpha, x, beta, y, z);
       }
 
 

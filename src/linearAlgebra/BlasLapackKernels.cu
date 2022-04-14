@@ -24,13 +24,30 @@ namespace dftefe
                           const ValueType *y,
                           ValueType *      z)
         {
-          const unsigned int globalThreadId =
+          const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
-          for (unsigned int i = globalThreadId; i < size;
+          for (size_type i = globalThreadId; i < size;
                i += blockDim.x * gridDim.x)
             {
               z[i] = dftefe::utils::add(dftefe::utils::mult(alpha, x[i]),
                                         dftefe::utils::mult(beta, y[i]));
+            }
+        }
+
+
+        template <typename ValueType>
+        __global__ void
+        absSquareEntriesDeviceKernel(const size_type  size,
+                                     const ValueType *x,
+                                     double *         y)
+        {
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              const double temp = dftefe::utils::abs(x[i]);
+              y[i]              = temp * temp;
             }
         }
 
@@ -79,12 +96,50 @@ namespace dftefe
       template <typename ValueType>
       std::vector<double>
       Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::nrms2MultiVector(
-        size_type                                        vecSize,
-        size_type                                        numVec,
-        ValueType const *                                multiVecData,
-        blasQueueType<dftefe::utils::MemorySpace::HOST> &blasQueue)
+        size_type                                          vecSize,
+        size_type                                          numVec,
+        ValueType const *                                  multiVecData,
+        blasQueueType<dftefe::utils::MemorySpace::DEVICE> &blasQueue)
       {
         std::vector<double> nrms2(numVec, 0);
+
+        dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+          nrmsSqVecDevice(numVec, 0.0);
+        dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+          onesVecDevice(vecSize, 1.0);
+        dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+          squaredEntriesDevice(vecSize * numVec, 0.0);
+
+        absSquareEntriesDeviceKernel<<<
+          (vecSize * numVec) / dftefe::utils::BLOCK_SIZE + 1,
+          dftefe::utils::BLOCK_SIZE>>>(
+          vecSize * numVec,
+          dftefe::utils::makeDataTypeDeviceCompatible(multiVecData),
+          dftefe::utils::makeDataTypeDeviceCompatible(
+            squaredEntriesDevice.begin()));
+
+        blas::gemm(Layout::ColMajor,
+                   Op::NoTrans,
+                   Op::Trans,
+                   1,
+                   numVec,
+                   vecSize,
+                   1.0,
+                   onesVecDevice.data(),
+                   1,
+                   squaredEntriesDevice.data(),
+                   numVec,
+                   1.0,
+                   nrmsSqVecDevice.data(),
+                   1,
+                   blasQueue);
+
+
+        nrmsSqVecDevice.copyTo<dftefe::utils::MemorySpace::HOST>(&nrms2[0]);
+
+        for (size_type i = 0; i < numVec; i++)
+          nrms2[i] = std::sqrt(nrms2[i]);
+
         return nrms2;
       }
 

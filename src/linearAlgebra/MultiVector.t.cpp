@@ -169,13 +169,14 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two MultiVectors that are being added.");
 
-      blasLapack::axpyMultiVector<ValueType, ValueType, memorySpace>(
-        this->localSize(),
-        this->numVectors(),
-        1.0,
-        rhs.data(),
-        this->data(),
-        *d_blasQueue);
+      blasLapack::axpby<ValueType, memorySpace>(this->localSize() *
+                                                  this->numVectors(),
+                                                1.0,
+                                                this->data(),
+                                                1.0,
+                                                rhs.data(),
+                                                this->data(),
+                                                *(this->getBlasQueue()));
       return *this;
     }
 
@@ -199,13 +200,14 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two MultiVectors that are being subtracted.");
-      blasLapack::axpyMultiVector<ValueType, ValueType, memorySpace>(
-        this->localSize(),
-        this->numVectors(),
-        -1.0,
-        rhs.data(),
-        this->data(),
-        *d_blasQueue);
+      blasLapack::axpby<ValueType, memorySpace>(this->localSize() *
+                                                  this->numVectors(),
+                                                1.0,
+                                                this->data(),
+                                                -1.0,
+                                                rhs.data(),
+                                                this->data(),
+                                                *(this->getBlasQueue()));
       return *this;
     }
 
@@ -294,15 +296,12 @@ namespace dftefe
         "Mismatch of sizes of the underlying storages"
         "of the MultiVectors that are added.");
 
-      // FIXME: fuse both operations for efficiency
-      blasLapack::axpbyMultiVector<ValueType, ValueType, memorySpace>(
-        u.localSize(),
-        u.numVectors(),
-        a,
-        u.data(),
-        b,
-        w.data(),
-        *(w.getBlasQueue()));
+      blasLapack::axpby<ValueType, memorySpace>(u.localSize() * u.numVectors(),
+                                                a,
+                                                u.data(),
+                                                b,
+                                                w.data(),
+                                                *(w.getBlasQueue()));
     }
   } // namespace linearAlgebra
 } // namespace dftefe

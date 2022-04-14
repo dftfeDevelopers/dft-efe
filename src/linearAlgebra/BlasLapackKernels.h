@@ -37,6 +37,7 @@ namespace dftefe
               const ValueType *y,
               ValueType *      z);
 
+
         /**
          * @brief Template for computing \f$ l_{\inf} \f$ norms of all the numVec vectors in a multi Vector
          * @param[in] vecSize size of each vector
@@ -61,11 +62,10 @@ namespace dftefe
          * @return \f$ l_2 \f$  norms of all the vectors
          */
         static std::vector<double>
-        nrms2MultiVector(
-          size_type                                        vecSize,
-          size_type                                        numVec,
-          const ValueType *                                multiVecData,
-          blasQueueType<dftefe::utils::MemorySpace::HOST> &blasQueue);
+        nrms2MultiVector(size_type                   vecSize,
+                         size_type                   numVec,
+                         const ValueType *           multiVecData,
+                         blasQueueType<memorySpace> &blasQueue);
       };
 
 
@@ -82,6 +82,7 @@ namespace dftefe
               const ValueType *y,
               ValueType *      z);
 
+
         static std::vector<double>
         amaxsMultiVector(size_type        vecSize,
                          size_type        numVec,
@@ -89,10 +90,10 @@ namespace dftefe
 
         static std::vector<double>
         nrms2MultiVector(
-          size_type                                        vecSize,
-          size_type                                        numVec,
-          const ValueType *                                multiVecData,
-          blasQueueType<dftefe::utils::MemorySpace::HOST> &blasQueue);
+          size_type                                          vecSize,
+          size_type                                          numVec,
+          const ValueType *                                  multiVecData,
+          blasQueueType<dftefe::utils::MemorySpace::DEVICE> &blasQueue);
       };
 #endif
     } // namespace blasLapack
