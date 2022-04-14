@@ -42,6 +42,7 @@ absCompare(const std::complex<double> & a,
 int
 main()
 {
+  const dftefe::utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
   const double lo = -10.0;
   const double hi = 10.0;
   unsigned int vSize = 3;

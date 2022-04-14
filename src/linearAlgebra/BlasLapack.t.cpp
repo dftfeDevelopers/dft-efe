@@ -37,7 +37,7 @@ namespace dftefe
 
         size_type outputIndex;
         outputIndex = blas::iamax(n, x, incx);
-        return *(x + outputIndex);
+        return std::abs(*(x + outputIndex));
       }
 
       template <typename ValueType1,
