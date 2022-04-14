@@ -32,10 +32,10 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestSerialVectorDoubleHostGetValues(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestSerialVectorDoubleHostGetValues using CMake'
+class BuildOnlyTestSerialVectorDoubleSetValuesHost(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestSerialVectorDoubleSetValuesHost using CMake'
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleHostGetValues']
+    make_opts = ['TestSerialVectorDoubleSetValuesHost']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -84,11 +84,11 @@ class BuildOnlyTestSerialVectorDoubleHostGetValues(rfm.CompileOnlyRegressionTest
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestSerialVectorDoubleHostGetValues(rfm.RegressionTest):
-    descr = '''Compile and run test for getting values of SerialVector'''
+class BuildAndRunTestSerialVectorDoubleSetValuesHost(rfm.RegressionTest):
+    descr = '''Compile and run test for setting values of SerialVector'''
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleHostGetValues']
-    executable = './TestSerialVectorDoubleHostGetValues.x'
+    make_opts = ['TestSerialVectorDoubleSetValuesHost']
+    executable = './TestSerialVectorDoubleSetValuesHost.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -121,9 +121,9 @@ class BuildAndRunTestSerialVectorDoubleHostGetValues(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleHostGetValues."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleHostGetValues."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleHostGetValues."
+        msgError = "Found error(s) in TestSerialVectorDoubleSetValuesHost."
+        msgThrownException = "Found exceptions in TestSerialVectorDoubleSetValuesHost."
+        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleSetValuesHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -157,9 +157,9 @@ class BuildAndRunTestSerialVectorDoubleHostGetValues(rfm.RegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestSerialVectorDoubleHostGetValues(rfm.RunOnlyRegressionTest):
-    descr = '''Run only test for getting values of SerialVector'''
-    target_name = 'TestSerialVectorDoubleHostGetValues'
+class RunOnlyTestSerialVectorDoubleSetValuesHost(rfm.RunOnlyRegressionTest):
+    descr = '''Run only test for setting values of SerialVector'''
+    target_name = 'TestSerialVectorDoubleSetValuesHost'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -191,9 +191,9 @@ class RunOnlyTestSerialVectorDoubleHostGetValues(rfm.RunOnlyRegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleHostGetValues."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleHostGetValues."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleHostGetValues."
+        msgError = "Found error(s) in TestSerialVectorDoubleSetValuesHost."
+        msgThrownException = "Found exceptions in TestSerialVectorDoubleSetValuesHost."
+        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleSetValuesHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

@@ -32,10 +32,10 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestSerialVectorDoubleHostSetStorage(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestSerialVectorDoubleHostSetStorage using CMake'
+class BuildOnlyTestSerialVectorDoubleSetStorageHost(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestSerialVectorDoubleSetStorageHost using CMake'
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleHostSetStorage']
+    make_opts = ['TestSerialVectorDoubleSetStorageHost']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -84,11 +84,11 @@ class BuildOnlyTestSerialVectorDoubleHostSetStorage(rfm.CompileOnlyRegressionTes
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestSerialVectorDoubleHostSetStorage(rfm.RegressionTest):
+class BuildAndRunTestSerialVectorDoubleSetStorageHost(rfm.RegressionTest):
     descr = '''Compile and run test for setting storage of SerialVector'''
     build_system = 'CMake'
-    make_opts = ['TestSerialVectorDoubleHostSetStorage']
-    executable = './TestSerialVectorDoubleHostSetStorage.x'
+    make_opts = ['TestSerialVectorDoubleSetStorageHost']
+    executable = './TestSerialVectorDoubleSetStorageHost.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -121,9 +121,9 @@ class BuildAndRunTestSerialVectorDoubleHostSetStorage(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleHostSetStorage."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleHostSetStorage."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleHostSetStorage."
+        msgError = "Found error(s) in TestSerialVectorDoubleSetStorageHost."
+        msgThrownException = "Found exceptions in TestSerialVectorDoubleSetStorageHost."
+        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleSetStorageHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -157,9 +157,9 @@ class BuildAndRunTestSerialVectorDoubleHostSetStorage(rfm.RegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestSerialVectorDoubleHostSetStorage(rfm.RunOnlyRegressionTest):
+class RunOnlyTestSerialVectorDoubleSetStorageHost(rfm.RunOnlyRegressionTest):
     descr = '''Run only test setting storage of SerialVector'''
-    target_name = 'TestSerialVectorDoubleHostSetStorage'
+    target_name = 'TestSerialVectorDoubleSetStorageHost'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -191,9 +191,9 @@ class RunOnlyTestSerialVectorDoubleHostSetStorage(rfm.RunOnlyRegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestSerialVectorDoubleHostSetStorage."
-        msgThrownException = "Found exceptions in TestSerialVectorDoubleHostSetStorage."
-        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleHostSetStorage."
+        msgError = "Found error(s) in TestSerialVectorDoubleSetStorageHost."
+        msgThrownException = "Found exceptions in TestSerialVectorDoubleSetStorageHost."
+        msgAssertFail = "Found assert fail(s) in TestSerialVectorDoubleSetStorageHost."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

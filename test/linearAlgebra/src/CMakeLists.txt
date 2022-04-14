@@ -15,21 +15,21 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 include_directories(${MAIN_PROJECT_DIR}/src)
 
 # CPU: testing +=, -=, add, copy constructor
-add_executable(TestSerialVectorDoubleHostSize TestSerialVectorDoubleHostSize.cpp)
-target_link_libraries(TestSerialVectorDoubleHostSize PUBLIC dft-efe-linalg)
-set_target_properties(TestSerialVectorDoubleHostSize PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleHostSize" SUFFIX ".x")
+add_executable(TestSerialVectorDoubleSizeHost TestSerialVectorDoubleSizeHost.cpp)
+target_link_libraries(TestSerialVectorDoubleSizeHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialVectorDoubleSizeHost PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleSizeHost" SUFFIX ".x")
 
-add_executable(TestSerialVectorDoubleHostGetValues TestSerialVectorDoubleHostGetValues.cpp)
-target_link_libraries(TestSerialVectorDoubleHostGetValues PUBLIC dft-efe-linalg)
-set_target_properties(TestSerialVectorDoubleHostGetValues PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleHostGetValues" SUFFIX ".x")
+add_executable(TestSerialVectorDoubleGetValuesHost TestSerialVectorDoubleGetValuesHost.cpp)
+target_link_libraries(TestSerialVectorDoubleGetValuesHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialVectorDoubleGetValuesHost PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleGetValuesHost" SUFFIX ".x")
 
-add_executable(TestSerialVectorDoubleHostSetValues TestSerialVectorDoubleHostSetValues.cpp)
-target_link_libraries(TestSerialVectorDoubleHostSetValues PUBLIC dft-efe-linalg)
-set_target_properties(TestSerialVectorDoubleHostSetValues PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleHostSetValues" SUFFIX ".x")
+add_executable(TestSerialVectorDoubleSetValuesHost TestSerialVectorDoubleSetValuesHost.cpp)
+target_link_libraries(TestSerialVectorDoubleSetValuesHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialVectorDoubleSetValuesHost PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleSetValuesHost" SUFFIX ".x")
 
-add_executable(TestSerialVectorDoubleHostSetStorage TestSerialVectorDoubleHostSetStorage.cpp)
-target_link_libraries(TestSerialVectorDoubleHostSetStorage PUBLIC dft-efe-linalg)
-set_target_properties(TestSerialVectorDoubleHostSetStorage PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleHostSetStorage" SUFFIX ".x")
+add_executable(TestSerialVectorDoubleSetStorageHost TestSerialVectorDoubleSetStorageHost.cpp)
+target_link_libraries(TestSerialVectorDoubleSetStorageHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialVectorDoubleSetStorageHost PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleSetStorageHost" SUFFIX ".x")
 
 add_executable(TestSerialVectorDoubleNormHost TestSerialVectorDoubleNormHost.cpp)
 target_link_libraries(TestSerialVectorDoubleNormHost PUBLIC dft-efe-linalg)
