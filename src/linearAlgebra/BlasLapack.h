@@ -28,7 +28,6 @@
 
 #include <blas.hh>
 #include <linearAlgebra/BlasLapackTypedef.h>
-#include <linearAlgebra/BlasLapackKernels.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -51,6 +50,23 @@ namespace dftefe
            ValueType const *           x,
            size_type                   incx,
            blasQueueType<memorySpace> &blasQueue);
+
+      /**
+       * @brief Template for computing \f$ l_{\inf} \f$ norms of all the numVec vectors in a multi Vector
+       * @param[in] vecSize size of each vector
+       * @param[in] numVec number of vectors in the multi Vector
+       * @param[in] multiVecData multi vector data in row major format i.e.
+       * vector index is the fastest index
+       *
+       * @return \f$ l_{\inf} \f$  norms of all the vectors
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      std::vector<double>
+      amaxsMultiVector(size_type                   vecSize,
+                       size_type                   numVec,
+                       ValueType const *           multiVecData,
+                       blasQueueType<memorySpace> &blasQueue);
 
 
       template <typename ValueType1,

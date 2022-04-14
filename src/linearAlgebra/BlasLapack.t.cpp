@@ -41,6 +41,23 @@ namespace dftefe
         return std::abs(*(x + outputIndex));
       }
 
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      std::vector<double>
+      amaxsMultiVector(const size_type             vecSize,
+                       const size_type             numVec,
+                       const ValueType *           multiVecData,
+                       blasQueueType<memorySpace> &blasQueue)
+      {
+        utils::throwException(
+          memorySpace != dftefe::utils::MemorySpace::DEVICE,
+          "amaxsMultiVector() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+
+
+        return Kernels<ValueType, memorySpace>::amaxsMultiVector(vecSize,
+                                                                 numVec,
+                                                                 multiVecData);
+      }
+
       template <typename ValueType1,
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
@@ -69,8 +86,7 @@ namespace dftefe
             ValueType *                 z,
             blasQueueType<memorySpace> &blasQueue)
       {
-        BlasLapackKernels<ValueType, memorySpace>::axpby(
-          n, alpha, x, beta, y, z);
+        Kernels<ValueType, memorySpace>::axpby(n, alpha, x, beta, y, z);
       }
 
 
@@ -117,8 +133,10 @@ namespace dftefe
                        const ValueType *           multiVecData,
                        blasQueueType<memorySpace> &blasQueue)
       {
-        return BlasLapackKernels<ValueType, memorySpace>::nrms2MultiVector(
-          vecSize, numVec, multiVecData);
+        return Kernels<ValueType, memorySpace>::nrms2MultiVector(vecSize,
+                                                                 numVec,
+                                                                 multiVecData,
+                                                                 blasQueue);
       }
 
 
