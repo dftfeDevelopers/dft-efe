@@ -24,13 +24,11 @@
  */
 
 #include<utils/Exceptions.h>
-#include<atoms/AtomFieldDataSpherical.h>
+#include<atoms/AtomSphericalData.h>
 #include<string>
 #include<iostream>
 int main()
 {
-  std::string atomFileName = "TestAtom.data";
-  dftefe::atoms::AtomFieldDataSpherical atomFieldDataSphericalRho(atomFileName,
-	     "Rho");
-  DFTEFE_AssertWithMsg(false, "test");
+  std::string atomFileName = "TestAtom.xml";
+  dftefe::atoms::AtomSphericalData atomTest(atomFileName);
 }

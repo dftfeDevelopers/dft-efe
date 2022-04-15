@@ -23,14 +23,24 @@
  * @author Bikash Kanungo
  */
 
-#include<utils/Exceptions.h>
-#include<atoms/AtomFieldDataSpherical.h>
-#include<string>
-#include<iostream>
-int main()
+#ifndef dftefeSphericalData_h
+#define dftefeSphericalData_h
+
+#include <utils/TypeConfig.h>
+#include <vector>
+namespace dftefe
 {
-  std::string atomFileName = "TestAtom.data";
-  dftefe::atoms::AtomFieldDataSpherical atomFieldDataSphericalRho(atomFileName,
-	     "Rho");
-  DFTEFE_AssertWithMsg(false, "test");
-}
+    namespace atoms
+    {
+      struct SphericalData
+      {
+	std::vector<int> qNumbers;
+	std::vector<double> radialPoints;
+	std::vector<double> radialValues;
+	double cutoff;
+	double smoothness;
+      };
+
+    } // end of namespace atoms
+} // end of namespace dftefe
+#endif // dftefeSphericalData_h

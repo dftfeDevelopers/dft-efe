@@ -13,3 +13,7 @@ include_directories(${MAIN_PROJECT_DIR}/src)
 add_executable(TestAtomFieldDataSpherical TestAtomFieldDataSpherical.cpp)
 target_link_libraries(TestAtomFieldDataSpherical PUBLIC dft-efe-atoms)
 set_target_properties(TestAtomFieldDataSpherical PROPERTIES OUTPUT_NAME "TestAtomFieldDataSpherical")
+
+add_executable(TestAtomSphericalData TestAtomSphericalData.cpp)
+target_link_libraries(TestAtomSphericalData PUBLIC dft-efe-atoms)
+set_target_properties(TestAtomSphericalData PROPERTIES OUTPUT_NAME "TestAtomSphericalData")
