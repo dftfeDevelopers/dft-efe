@@ -74,24 +74,18 @@ namespace dftefe
 
     template <size_type dim, typename ValueType>
     void
-    FEConstraintsDealii<dim, ValueType>::addLine(size_type lineId)
-    {
-      utils::throwException(
-        !d_isClosed, " Clear the constraint matrix before adding constraints");
-      d_constraintMatrix->add_line(lineId);
-      d_isCleared = false;
-      d_isClosed  = false;
-    }
-    template <size_type dim, typename ValueType>
-    void
     FEConstraintsDealii<dim, ValueType>::setInhomogeneity(
-      size_type lineId,
+      size_type basisId,
       ValueType constraintValue)
     {
       utils::throwException(
         !d_isClosed,
         " Clear the constraint matrix before setting inhomogeneities");
-      d_constraintMatrix->set_inhomogeneity(lineId, constraintValue);
+      if(this->isConstrained(basisId) == false)
+      { 
+	d_constraintMatrix->add_line(basisId);
+      }
+      d_constraintMatrix->set_inhomogeneity(basisId, constraintValue);
       d_isCleared = false;
       d_isClosed  = false;
     }
@@ -105,9 +99,9 @@ namespace dftefe
 
     template <size_type dim, typename ValueType>
     bool
-      FEConstraintsDealii<dim, ValueType>::isConstrained(size_type nodeId)
+      FEConstraintsDealii<dim, ValueType>::isConstrained(size_type basisId)
     {
-      return d_constraintMatrix->is_constrained(nodeId);
+      return d_constraintMatrix->is_constrained(basisId);
     }
 
     template <size_type dim, typename ValueType>
@@ -160,12 +154,10 @@ namespace dftefe
     }
 
     template <size_type dim, typename ValueType>
-    //std::shared_ptr <dealii::AffineConstraints<ValueType>>
-    //const dealii::AffineConstraints<ValueType> *
     const dealii::AffineConstraints<ValueType> &
     FEConstraintsDealii<dim, ValueType>::getAffineConstraints() const
     {
-      return *d_constraintMatrix;//.get();
+      return *d_constraintMatrix;
     }
   }
 }

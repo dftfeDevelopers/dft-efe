@@ -26,7 +26,8 @@
 #ifndef dftefeFEConstraintsBase_h
 #define dftefeFEConstraintsBase_h
 
-#include "FEBasisManager.h"
+#include <basis/FEBasisManager.h>
+#include <basis/Constraints.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -34,31 +35,31 @@ namespace dftefe
   {
     /**
      *
-     * An abstract class to handle the Constraints related
-     * to hanging nodes and boundary consitions
+     * An abstract class to handle the constraints related to FE basis, such as
+     * hanging nodes and boundary condition constraints
      */
     template <typename ValueType>
-    class FEConstraintsBase
+    class FEConstraintsBase : public Constraints
     {
     public:
+      ~FEConstraintsBase() = default;
       virtual void clear () = 0 ;
 
-      virtual void makeHangingNodeConstraint(
-        std::shared_ptr<FEBasisManager> feBasis) = 0;
-
-      virtual void addLine(size_type lineId) = 0;
-
-      virtual void setInhomogeneity(size_type lineId,
+      virtual void setInhomogeneity(size_type basisId,
                                      ValueType constraintValue) = 0;
       virtual void close() = 0;
 
-      virtual bool isClosed() =0;
+      virtual bool isClosed() = 0;
 
       virtual void setHomogeneousDirichletBC() = 0 ;
 
-      virtual bool isConstrained( size_type nodeId) = 0;
-
-
+      virtual bool isConstrained(size_type basisId) = 0;
+      
+      //
+      // FE related functions
+      //
+      virtual void makeHangingNodeConstraint(
+        std::shared_ptr<FEBasisManager> feBasis) = 0;
 
     };
 

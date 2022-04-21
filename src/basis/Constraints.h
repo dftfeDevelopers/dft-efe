@@ -21,56 +21,32 @@
 
 /*
 * @author Vishal Subramanian
- */
+*/
 
-#ifndef dftefeFEConstraintsDealii_h
-#define dftefeFEConstraintsDealii_h
+#ifndef dftefeConstraints_h
+#define dftefeConstraints_h
 
-#include <basis/FEConstraintsBase.h>
-#include <basis/FEBasisManager.h>
 #include <utils/TypeConfig.h>
-#include <deal.II/lac/affine_constraints.h>
-#include "FEBasisManagerDealii.h"
 namespace dftefe
 {
   namespace basis
   {
-
-    template <size_type dim,typename ValueType>
-    class FEConstraintsDealii : public FEConstraintsBase<ValueType>
+    /**
+     * An abstract class to handle the constraints related to a basis
+     */
+    class Constraints
     {
     public:
-      FEConstraintsDealii();
-      ~FEConstraintsDealii() = default;
-      void clear () override ;
-      void setInhomogeneity(size_type basisId,
-                        ValueType constraintValue) override;
-      bool isConstrained( size_type basisId) override;
-      void close() override;
-      bool isClosed() override;
-      void setHomogeneousDirichletBC() override;
-
-      //
-      // FE related functions
-      //
-      void makeHangingNodeConstraint(
-        std::shared_ptr<FEBasisManager> feBasis) override;
-      
-     //
-     // dealii specific fucntions
-     //
-     const dealii::AffineConstraints<ValueType> &
-     getAffineConstraints() const;
-
-    private:
-      std::shared_ptr <dealii::AffineConstraints<ValueType>> d_constraintMatrix;
-      std::shared_ptr <const FEBasisManagerDealii<dim>> d_dofHandler;
-      bool d_isCleared;
-      bool d_isClosed;
-
+      ~Constraints() = default;
+      virtual void clear () = 0 ;
+      virtual void setInhomogeneity(size_type basisId,
+      virtual void close() = 0;
+      virtual bool isClosed() = 0;
+      virtual void setHomogeneousDirichletBC() = 0 ;
+      virtual bool isConstrained(size_type basisId) = 0;
     };
 
   }
 }
-#include "FEConstraintsDealii.t.cpp"
-#endif // dftefeFEConstraintsDealii_h
+
+#endif // dftefeConstraints_h
