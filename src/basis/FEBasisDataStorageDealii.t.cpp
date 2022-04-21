@@ -115,7 +115,7 @@ namespace dftefe
         dealii::FEValues<dim> dealiiFEValues(feBM->getReferenceFE(cellId),
                                              dealiiQuadratureRule,
                                              dealiiUpdateFlags);
-        const size_type       numLocallyOwnedCells = feBM->nLocallyOwnedCells();
+        const size_type       numLocallyOwnedCells = feBM->nLocallyActiveCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBM->nCellDofs(cellId);
         const size_type numQuadPointsPerCell =
@@ -372,7 +372,7 @@ namespace dftefe
         // this function
         const size_type cellId               = 0;
         const size_type feOrder              = feBM->getFEOrder(cellId);
-        const size_type numLocallyOwnedCells = feBM->nLocallyOwnedCells();
+        const size_type numLocallyOwnedCells = feBM->nLocallyActiveCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBM->nCellDofs(cellId);
 
@@ -581,7 +581,7 @@ namespace dftefe
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
           basisOverlapTmp.size(), basisOverlap.data(), basisOverlapTmp.data());
       }
-
+/*
       template <typename ValueType,utils::MemorySpace memorySpace, size_type dim>
       void
       storeValues(std::shared_ptr<const FEBasisManagerDealii<dim>> feBM,
@@ -605,7 +605,8 @@ namespace dftefe
           {
             if (feBM->isHPRefined() == false)
               {
-                storeValuesHRefinedSameQuadEveryCell(feBM,
+                storeValuesHRefinedSameQuadEveryCell
+                  <ValueType,memorySpace, dim >(feBM,
                                                      basisQuadStorage,
                                                      basisGradientQuadStorage,
                                                      basisHessianQuadStorage,
@@ -618,28 +619,34 @@ namespace dftefe
           }
       }
 
+      */
+
     } // namespace FEBasisDataStorageDealiiInternal
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManagerDealii<dim>>      feBM,
-        std::vector<std::shared_ptr<const FEConstraintsDealii<dim,ValueType>>> constraintsVec,
+        std::shared_ptr<const FEBasisManager>      feBM,
+        std::vector<std::shared_ptr< FEConstraintsBase<double>>> constraintsVec,
         const std::vector<quadrature::QuadratureRuleAttributes> &quadratureRuleAttribuesVec,
         const bool                                   storeValues,
         const bool                                   storeGradients,
         const bool                                   storeHessians,
         const bool                                   storeJxW,
         const bool                                   storeQuadRealPoints)
-      : d_feBM(feBM)
-      , d_dofsInCell(0)
+      : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
     {
+      d_feBM =
+        std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(feBM);
+      utils::throwException(
+        d_feBM != nullptr,
+        " Could not cast the FEBasisManager to FEBasisManagerDealii in FEBasisDataStorageDealii");
       const size_type numConstraints  = constraintsVec.size();
       const size_type numQuadRuleType = quadratureRuleAttribuesVec.size();
       std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler =
-        feBM->getDoFHandler();
-      const size_type numLocallyOwnedCells = d_feBM->nLocallyOwnedCells();
+        d_feBM->getDoFHandler();
+      const size_type numLocallyOwnedCells = d_feBM->nLocallyActiveCells();
       d_dofsInCell.resize(numLocallyOwnedCells, 0);
       size_type cumulativeBasisOverlapId = 0;
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
@@ -656,8 +663,13 @@ namespace dftefe
         dealiiAffineConstraintsVec(numConstraints, nullptr);
       for (size_type i = 0; i < numConstraints; ++i)
         {
+          std::shared_ptr<const FEConstraintsDealii<dim,ValueType>> constraintsDealii =
+            std::dynamic_pointer_cast<const FEConstraintsDealii<dim,ValueType>>(constraintsVec[i]);
+          utils::throwException(
+            constraintsDealii != nullptr,
+            " Could not cast the FEConstraintsBase to FEConstraintsDealii in FEBasisDataStorageDealii");
           dealiiAffineConstraintsVec[i] =
-            (constraintsVec[i]->getAffineConstraints()).get();
+            (constraintsDealii->getAffineConstraints()).get();
         }
 
       std::vector<dealii::Quadrature<dim>> dealiiQuadratureTypeVec(0);
@@ -669,10 +681,10 @@ namespace dftefe
             quadratureRuleAttribuesVec[i].getQuadratureFamily();
           if (quadFamily == quadrature::QuadratureFamily::GAUSS)
             dealiiQuadratureTypeVec.push_back(
-              dealii::QGauss<1>(num1DQuadPoints));
+              dealii::QGauss<dim>(num1DQuadPoints));
           else if (quadFamily == quadrature::QuadratureFamily::GLL)
             dealiiQuadratureTypeVec.push_back(
-              dealii::QGaussLobatto<1>(num1DQuadPoints));
+              dealii::QGaussLobatto<dim>(num1DQuadPoints));
           else
             utils::throwException<utils::InvalidArgument>(
               false,
@@ -728,7 +740,8 @@ namespace dftefe
           std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
           std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
           FEBasisDataStorageDealiiInternal::
-            storeValuesHRefinedSameQuadEveryCell(
+            storeValuesHRefinedSameQuadEveryCell
+              <ValueType,memorySpace, dim >(
               d_feBM,
               basisQuadStorage,
               basisGradientQuadStorage,
@@ -798,7 +811,8 @@ namespace dftefe
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
 
-      FEBasisDataStorageDealiiInternal::storeValuesHRefinedAdaptiveQuad(
+      FEBasisDataStorageDealiiInternal::storeValuesHRefinedAdaptiveQuad
+        <ValueType, memorySpace, dim>(
         d_feBM,
         basisQuadStorage,
         basisGradientQuadStorage,
@@ -840,6 +854,19 @@ namespace dftefe
       d_nQuadPointsIncell[quadratureRuleAttributes] = nQuadPointsInCell;
     }
 
+//    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+//    std::shared_ptr<const quadrature::CellQuadratureContainer>
+//    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getCellQuadratureRuleContainer(
+//      const QuadratureRuleAttributes &quadratureRuleAttributes) const
+//    {
+//      utils::throwException(
+//        false,
+//        "  getCellQuadratureRuleContainer is not implemented ");
+//
+//      std::shared_ptr<const quadrature::CellQuadratureContainer> cellQuad;
+//      return ;
+//
+//    }
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     const typename BasisDataStorage<ValueType, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
@@ -1213,27 +1240,27 @@ namespace dftefe
       auto itBasisQuad = d_basisQuadStorage.find(quadratureRuleAttributes);
       if (itBasisQuad != d_basisQuadStorage.end())
         {
-          delete *itBasisQuad;
+          delete itBasisQuad;
         }
 
       auto itBasisGradientQuad =
         d_basisGradientQuadStorage.find(quadratureRuleAttributes);
       if (itBasisGradientQuad != d_basisGradientQuadStorage.end())
         {
-          delete *itBasisGradientQuad;
+          delete itBasisGradientQuad;
         }
 
       auto itBasisHessianQuad =
         d_basisHessianQuadStorage.find(quadratureRuleAttributes);
       if (itBasisHessianQuad != d_basisHessianQuadStorage.end())
         {
-          delete *itBasisHessianQuad;
+          delete itBasisHessianQuad;
         }
 
       auto itBasisOverlap = d_basisOverlap.find(quadratureRuleAttributes);
       if (itBasisOverlap != d_basisOverlap.end())
         {
-          delete *itBasisOverlap;
+          delete itBasisOverlap;
         }
     }
 

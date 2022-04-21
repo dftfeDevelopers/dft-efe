@@ -287,8 +287,8 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    dealii::Triangulation<dim> &
-    TriangulationDealiiSerial<dim>::returnDealiiTria()
+    const dealii::Triangulation<dim> &
+    TriangulationDealiiSerial<dim>::returnDealiiTria() const
     {
       return d_triangulationDealii;
     }

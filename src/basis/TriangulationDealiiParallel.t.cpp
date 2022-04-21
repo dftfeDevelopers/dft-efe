@@ -290,8 +290,8 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    dealii::parallel::distributed::Triangulation<dim> &
-    TriangulationDealiiParallel<dim>::returnDealiiTria()
+    const dealii::parallel::distributed::Triangulation<dim> &
+    TriangulationDealiiParallel<dim>::returnDealiiTria() const
     {
       return d_triangulationDealii;
     }

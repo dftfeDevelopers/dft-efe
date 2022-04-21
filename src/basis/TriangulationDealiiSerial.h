@@ -64,8 +64,8 @@ namespace dftefe
       getDim() const override;
 
       // class specific member function
-      dealii::Triangulation<dim> &
-      returnDealiiTria();
+      const dealii::Triangulation<dim> &
+      returnDealiiTria() const;
 
         private:
       /**

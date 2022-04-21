@@ -31,6 +31,7 @@
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
 #include <basis/FEBasisManagerDealii.h>
+#include <basis/FEBasisManager.h>
 #include <basis/FEConstraintsDealii.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <memory>
@@ -55,8 +56,8 @@ namespace dftefe
       using Storage = typename BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManagerDealii<dim>>           feBM,
-        std::vector<std::shared_ptr<const FEConstraintsDealii<dim,ValueType>>> constraintsVec,
+        std::shared_ptr<const FEBasisManager>           feBM,
+        std::vector<std::shared_ptr< FEConstraintsBase<double>>> constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
         const bool storeValues,
@@ -81,6 +82,9 @@ namespace dftefe
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) override;
 
+//      std::shared_ptr<const quadrature::CellQuadratureContainer>
+//      getCellQuadratureRuleContainer(
+//        const QuadratureRuleAttributes &quadratureRuleAttributes) const override;
       // functions to get data for a basis function on a given quad point in a
       // cell
       Storage

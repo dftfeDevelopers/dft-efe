@@ -49,25 +49,24 @@ namespace dftefe
       using FECellIterator       = FEBasisManager::FECellIterator;
       using const_FECellIterator = FEBasisManager::const_FECellIterator;
 
-      FEBasisManagerDealii(TriangulationBase &tria);
-      ~FEBasisManagerDealii();
+      FEBasisManagerDealii(std::shared_ptr<const TriangulationBase>triangulation);
       double
       getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) const;
+                            const utils::Point &point) const override;
       std::vector<double>
       getBasisFunctionDerivative(const size_type     basisId,
                                  const utils::Point &point,
-                                 const size_type     derivativeOrder = 1) const;
+                                 const size_type     derivativeOrder = 1) const override;
 
       ////// FE specific  member functions /////
       void
-      reinit(const TriangulationBase &triangulation, const size_type feOrder);
+      reinit(std::shared_ptr<const TriangulationBase>triangulation, const size_type feOrder) override;
       size_type
-      nLocallyActiveCells() const = 0;
+      nLocallyActiveCells() const override;
       size_type
-      nOwnedCells() const = 0;
+      nOwnedCells() const override;
       size_type
-      nGloballyActiveCells() const = 0;
+      nGloballyActiveCells() const override;
       size_type
       getFEOrder(size_type cellId) const;
       size_type
@@ -82,8 +81,9 @@ namespace dftefe
       getLocalNodeIds(size_type cellId) const;
       std::vector<size_type>
       getGlobalNodeIds() const;
-      std::vector<size_type>
-      getCellDofsGlobalIds(size_type cellId) const;
+      void
+      getCellDofsGlobalIds(size_type cellId,
+                           std::vector<global_size_type> &vecGlobalNodeId) const;
       std::vector<size_type>
       getBoundaryIds() const;
       FECellIterator
@@ -109,7 +109,7 @@ namespace dftefe
       // dealii specific functions
       //
       std::shared_ptr<const dealii::DoFHandler<dim>>
-      getDoFHandler();
+      getDoFHandler() const;
 
       const dealii::FiniteElement<dim> &
       getReferenceFE(const size_type cellId) const;

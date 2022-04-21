@@ -91,8 +91,8 @@ namespace dftefe
       // Class specific member function
 
 
-      dealii::parallel::distributed::Triangulation<dim> &
-        returnDealiiTria();
+      const dealii::parallel::distributed::Triangulation<dim> &
+        returnDealiiTria() const ;
 
     private:
       /**

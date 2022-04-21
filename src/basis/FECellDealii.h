@@ -42,13 +42,12 @@ namespace dftefe
 
     public:
       FECellDealii(DealiiFECellIterator dealiiFECellIter);
-      ~FECellDealii();
 
-      std::vector<std::shared_ptr<utils::Point>>
-      getVertices() const override;
+      void
+      getVertices( std::vector<utils::Point> &points ) const override;
 
-      std::shared_ptr<utils::Point>
-      getVertex(size_type i) const override;
+      void
+      getVertex(size_type i, utils::Point &point) const override;
 
       std::vector<std::shared_ptr<utils::Point>>
       getNodalPoints() const override;
@@ -57,7 +56,7 @@ namespace dftefe
       getId() const override;
 
       bool
-      isPointInside(std::shared_ptr<const utils::Point> point) const override;
+      isPointInside(const utils::Point &point) const override;
 
       bool
       isAtBoundary(const unsigned int i) const override;
@@ -89,20 +88,28 @@ namespace dftefe
       bool
       isArtificial() const override;
 
-      int
+      size_type
       getDim() const override;
 
-      std::shared_ptr<utils::Point>
-      getParametricPoint(std::shared_ptr<const utils::Point> realPoint,
-                         const CellMappingBase &cellMapping) const override;
+      void
+      getParametricPoint(const utils::Point &   realPoint,
+                         const CellMappingBase &cellMapping,
+                         utils::Point &         parametricPoint) const override;
 
-      std::shared_ptr<utils::Point>
-      getRealPoint(std::shared_ptr<const utils::Point> parametricPoint,
-                   const CellMappingBase &      cellMapping) const override;
+      void
+      getRealPoint(const utils::Point &   parametricPoint,
+                   const CellMappingBase &cellMapping,
+                   utils::Point &         realPoint) const override;
 
-      void cellNodeIdtoGlobalNodeId( std::vector<size_type>  &
+      void cellNodeIdtoGlobalNodeId( std::vector<global_size_type>  &
                                                    vecId) const override;
-      size_type
+
+      size_type getFaceBoundaryId(size_type faceId) const override ;
+
+      void getFaceDoFGlobalIndices(size_type faceId , std::vector<global_size_type> &vecNodeId) const  override;
+
+
+        size_type
       getFEOrder() const override;
 
       DealiiFECellIterator &

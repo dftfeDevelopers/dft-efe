@@ -51,10 +51,9 @@ namespace dftefe
       typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
         const_FECellIterator;
 
-      virtual ~FEBasisManager() = default;
       virtual double
       getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) = 0;
+                            const utils::Point &point)const  = 0;
       virtual std::vector<double>
       getBasisFunctionDerivative(const size_type     basisId,
                                  const utils::Point &point,
@@ -62,7 +61,7 @@ namespace dftefe
 
       ////// FE specific virtual member functions /////
       virtual void
-      reinit(const TriangulationBase &triangulation, const size_type feOrder);
+      reinit(std::shared_ptr<const TriangulationBase>triangulation, const size_type feOrder) = 0;
       virtual size_type
       nLocallyActiveCells() const = 0;
       virtual size_type
@@ -83,8 +82,9 @@ namespace dftefe
       getLocalNodeIds(size_type cellId) const = 0;
       virtual std::vector<size_type>
       getGlobalNodeIds() const = 0;
-      virtual std::vector<size_type>
-      getCellDofsLocalIds(size_type cellId) const = 0;
+      virtual void
+      getCellDofsGlobalIds(size_type cellId,
+                           std::vector<global_size_type> &vecGlobalNodeId)  const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual FECellIterator

@@ -30,6 +30,7 @@
 #include "FEBasisManager.h"
 #include <utils/TypeConfig.h>
 #include <deal.II/lac/affine_constraints.h>
+#include "FEBasisManagerDealii.h"
 namespace dftefe
 {
   namespace basis
@@ -44,18 +45,26 @@ namespace dftefe
       void clear () override ;
 
       void makeHangingNodeConstraint(
-        FEBasisManager &feBasis) override;
+        std::shared_ptr<FEBasisManager> feBasis) override;
 
       void addLine(size_type lineId) override;
 
       void setInhomogeneity(size_type lineId,
                         ValueType constraintValue) override;
+      bool isConstrained( size_type nodeId) override;
       void close() override;
 
       bool isClosed() override;
 
+      void setHomogeneousDirichletBC() override;
+
+      //dealii specific fucntions
+      const std::shared_ptr <dealii::AffineConstraints<ValueType>>
+      getAffineConstraints() ;
+
     private:
       std::shared_ptr <dealii::AffineConstraints<ValueType>> d_constraintMatrix;
+      std::shared_ptr <const FEBasisManagerDealii<dim>> d_dofHandler;
       bool d_isCleared;
       bool d_isClosed;
 

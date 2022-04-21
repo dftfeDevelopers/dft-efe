@@ -33,13 +33,11 @@ namespace dftefe
   namespace basis
   {
     template <size_type dim>
-    FEBasisManagerDealii<dim>::FEBasisManagerDealii(TriangulationBase &tria)
+    FEBasisManagerDealii<dim>::FEBasisManagerDealii(std::shared_ptr<const TriangulationBase>triangulation)
       : d_isHPRefined(false)
     {
-
-      d_triangulation = tria;
+      d_triangulation = triangulation ;
       d_dofHandler = std::make_shared<dealii::DoFHandler< dim>>();
-
     }
 
     template <size_type dim>
@@ -51,6 +49,7 @@ namespace dftefe
       utils::throwException(
         false,
         "getBasisFunctionValue() in FEBasisManagerDealii not yet implemented.");
+      return 0;
     }
 
     template <size_type dim>
@@ -63,29 +62,36 @@ namespace dftefe
       utils::throwException(
         false,
         "getBasisFunctionDerivative() in FEBasisManagerDealii not yet implemented.");
+
+      std::vector<double> vecReturn;
+      return vecReturn;
     }
 
     template <size_type dim>
     void
-    FEBasisManagerDealii<dim>::reinit(const TriangulationBase &triangulation,
+    FEBasisManagerDealii<dim>::reinit(std::shared_ptr<const TriangulationBase>triangulation,
                                       const size_type          feOrder)
     {
       dealii::FE_Q<dim> feElem(feOrder);
       const TriangulationDealiiParallel<dim> * dealiiParallelTria =
-        dynamic_cast<const TriangulationDealiiParallel<dim> *>(&triangulation);
+        dynamic_cast<const TriangulationDealiiParallel<dim> *>(triangulation.get());
 
       if (!(dealiiParallelTria == nullptr) )
         {
-          d_dofHandler->initialize(dealiiParallelTria->returnDealiiTria(), feElem);
+//          d_dofHandler->initialize(dealiiParallelTria->returnDealiiTria(), feElem);
+          d_dofHandler->reinit(dealiiParallelTria->returnDealiiTria());
+          d_dofHandler->distribute_dofs(feElem);
         }
       else
         {
           const TriangulationDealiiSerial<dim> *dealiiSerialTria =
-            dynamic_cast<const TriangulationDealiiSerial<dim> *>(&triangulation);
+            dynamic_cast<const TriangulationDealiiSerial<dim> *>(triangulation.get());
 
           if (!(dealiiSerialTria == nullptr) )
             {
-              d_dofHandler->initialize(dealiiSerialTria->returnDealiiTria(), feElem);
+//              d_dofHandler->initialize(dealiiSerialTria->returnDealiiTria(), feElem);
+              d_dofHandler->reinit(dealiiSerialTria->returnDealiiTria());
+              d_dofHandler->distribute_dofs(feElem);
             }
           else
             {
@@ -104,7 +110,7 @@ namespace dftefe
         d_dofHandler->end();
 
       for (  ; cell != endc ;cell++ )
-        if( cell->is_locally_active())
+        if( cell->is_locally_owned())
         {
           std::shared_ptr<FECellDealii<dim>> cellDealii = std::make_shared
             <FECellDealii<dim>>(cell);
@@ -189,7 +195,7 @@ namespace dftefe
     size_type
     FEBasisManagerDealii<dim>::nLocalNodes() const
     {
-      d_dofHandler->n_locally_owned_dofs();
+      return d_dofHandler->n_locally_owned_dofs();
     }
 
     template <size_type dim>
@@ -203,6 +209,11 @@ namespace dftefe
     std::vector<size_type>
     FEBasisManagerDealii<dim>::getLocalNodeIds(size_type cellId) const
     {
+      utils::throwException(
+        false,
+        "getLocalNodeIds() in FEBasisManagerDealii is not be implemented.");
+      std::vector<size_type> vec;
+      return vec;
       ///implement this now
     }
 
@@ -210,24 +221,34 @@ namespace dftefe
     std::vector<size_type>
     FEBasisManagerDealii<dim>::getGlobalNodeIds() const
     {
+      utils::throwException(
+        false,
+        "getGlobalNodeIds() in FEBasisManagerDealii is not be implemented.");
+      std::vector<size_type> vec;
+      return vec;
 
       /// implement this now
     }
 
     template <size_type dim>
-    std::vector<size_type>
-    FEBasisManagerDealii<dim>::getCellDofsGlobalIds(size_type cellId) const
+    void
+    FEBasisManagerDealii<dim>::getCellDofsGlobalIds(size_type cellId,
+                                                    std::vector<global_size_type> &vecGlobalNodeId ) const
     {
-      std::vector<size_type> vecGlobalNodeId(nCellDofs(), 0);
+     vecGlobalNodeId.resize(nCellDofs(cellId), 0);
 
       d_locallyOwnedCells[cellId]->cellNodeIdtoGlobalNodeId(vecGlobalNodeId);
-      return vecGlobalNodeId;
     }
 
     template <size_type dim>
     std::vector<size_type>
     FEBasisManagerDealii<dim>::getBoundaryIds() const
     {
+      utils::throwException(
+        false,
+        "getBoundaryIds() in FEBasisManagerDealii is not be implemented.");
+      std::vector<size_type> vec;
+      return vec;
       //// implement this now ?
     }
 
@@ -303,7 +324,7 @@ namespace dftefe
     //
     template <size_type dim>
     std::shared_ptr<const dealii::DoFHandler<dim>>
-    FEBasisManagerDealii<dim>::getDoFHandler()
+    FEBasisManagerDealii<dim>::getDoFHandler() const
     {
       return d_dofHandler;
     }

@@ -44,7 +44,7 @@ namespace dftefe
       virtual void clear () = 0 ;
 
       virtual void makeHangingNodeConstraint(
-        FEBasisManager &feBasis) = 0;
+        std::shared_ptr<FEBasisManager> feBasis) = 0;
 
       virtual void addLine(size_type lineId) = 0;
 
@@ -53,6 +53,11 @@ namespace dftefe
       virtual void close() = 0;
 
       virtual bool isClosed() =0;
+
+      virtual void setHomogeneousDirichletBC() = 0 ;
+
+      virtual bool isConstrained( size_type nodeId) = 0;
+
 
 
     };

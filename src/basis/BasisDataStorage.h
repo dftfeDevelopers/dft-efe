@@ -70,14 +70,14 @@ namespace dftefe
       virtual void deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
 
-      virtual std::shared_ptr<const quadrature::CellQuadratureContainer>
-      getCellQuadratureRuleContainer(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+//      virtual std::shared_ptr<const quadrature::CellQuadratureContainer>
+//      getCellQuadratureRuleContainer(
+//        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
 
       // functions to get data for a basis function on a given quad point in a
       // cell
-      virtual ValueType
+      virtual Storage
       getBasisData(const QuadraturePointAttributes &attributes,
                    const size_type                  basisId) const = 0;
       virtual Storage
@@ -132,7 +132,7 @@ namespace dftefe
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       // get overlap of two basis functions in a cell
-      virtual ValueType
+      virtual Storage
       getBasisOverlap(const QuadratureRuleAttributes &quadratureRuleAttributes,
                       const size_type                 cellId,
                       const size_type                 basisId1,
