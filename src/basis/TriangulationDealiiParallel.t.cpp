@@ -10,7 +10,8 @@ namespace dftefe
   namespace basis
   {
     template <unsigned int dim>
-    TriangulationDealiiParallel<dim>::TriangulationDealiiParallel(const MPI_Comm &mpi_communicator)
+    TriangulationDealiiParallel<dim>::TriangulationDealiiParallel(
+      const MPI_Comm &mpi_communicator)
       : d_triangulationDealii(mpi_communicator)
       , isInitialized(false)
       , isFinalized(false)

@@ -80,14 +80,15 @@ namespace dftefe
     }
 
     bool
-    QuadratureRuleAttributes::operator<(const QuadratureRuleAttributes & quadratureRuleAttributes) const
+    QuadratureRuleAttributes::operator<(
+      const QuadratureRuleAttributes &quadratureRuleAttributes) const
     {
-       if(d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily)
-       {
-	 return d_num1DPoints < quadratureRuleAttributes.d_num1DPoints;
-       }
-       else
-	 return d_quadratureFamily < quadratureRuleAttributes.d_quadratureFamily;
+      if (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily)
+        {
+          return d_num1DPoints < quadratureRuleAttributes.d_num1DPoints;
+        }
+      else
+        return d_quadratureFamily < quadratureRuleAttributes.d_quadratureFamily;
     }
   } // end of namespace quadrature
 } // end of namespace dftefe

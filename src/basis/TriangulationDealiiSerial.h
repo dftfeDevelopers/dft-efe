@@ -67,7 +67,7 @@ namespace dftefe
       const dealii::Triangulation<dim> &
       returnDealiiTria() const;
 
-        private:
+    private:
       /**
        * \todo
        * TODO:

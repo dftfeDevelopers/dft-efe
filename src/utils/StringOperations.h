@@ -26,19 +26,25 @@
 #ifndef dftefeStringOperations_h
 #define dftefeStringOperations_h
 
-namespace dftefe {
-  namespace utils {
-    namespace stringOps {
-      
-      bool strToInt(const std::string s, int & i);
-      
-      bool strToDouble(const std::string s, double & x);
-      
-      void trim(std::string & s);
-      
-      std::string trimCopy(const std::string & s);
+namespace dftefe
+{
+  namespace utils
+  {
+    namespace stringOps
+    {
+      bool
+      strToInt(const std::string s, int &i);
 
-    }// end of namespace stringOps
-  }// end of namespace utils
-}// end of namespace dftefe
-#endif //dftefeStringOperations_h
+      bool
+      strToDouble(const std::string s, double &x);
+
+      void
+      trim(std::string &s);
+
+      std::string
+      trimCopy(const std::string &s);
+
+    } // end of namespace stringOps
+  }   // end of namespace utils
+} // end of namespace dftefe
+#endif // dftefeStringOperations_h

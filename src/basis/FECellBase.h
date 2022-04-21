@@ -80,13 +80,16 @@ namespace dftefe
                    const CellMappingBase &cellMapping,
                    utils::Point &         realPoint) const = 0;
 
-      virtual
-      void cellNodeIdtoGlobalNodeId( std::vector<global_size_type>  &
-                                                   vecId) const = 0 ;
+      virtual void
+      cellNodeIdtoGlobalNodeId(std::vector<global_size_type> &vecId) const = 0;
 
-      virtual size_type getFaceBoundaryId(size_type faceId) const = 0 ;
+      virtual size_type
+      getFaceBoundaryId(size_type faceId) const = 0;
 
-      virtual void getFaceDoFGlobalIndices(size_type faceId, std::vector<global_size_type> &vecNodeId) const  = 0;
+      virtual void
+      getFaceDoFGlobalIndices(
+        size_type                      faceId,
+        std::vector<global_size_type> &vecNodeId) const = 0;
 
       virtual size_type
       getFEOrder() const = 0;

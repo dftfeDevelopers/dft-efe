@@ -49,18 +49,21 @@ namespace dftefe
       using FECellIterator       = FEBasisManager::FECellIterator;
       using const_FECellIterator = FEBasisManager::const_FECellIterator;
 
-      FEBasisManagerDealii(std::shared_ptr<const TriangulationBase>triangulation);
+      FEBasisManagerDealii(
+        std::shared_ptr<const TriangulationBase> triangulation);
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;
       std::vector<double>
-      getBasisFunctionDerivative(const size_type     basisId,
-                                 const utils::Point &point,
-                                 const size_type     derivativeOrder = 1) const override;
+      getBasisFunctionDerivative(
+        const size_type     basisId,
+        const utils::Point &point,
+        const size_type     derivativeOrder = 1) const override;
 
       ////// FE specific  member functions /////
       void
-      reinit(std::shared_ptr<const TriangulationBase>triangulation, const size_type feOrder) override;
+      reinit(std::shared_ptr<const TriangulationBase> triangulation,
+             const size_type                          feOrder) override;
       size_type
       nLocallyActiveCells() const override;
       size_type
@@ -82,8 +85,9 @@ namespace dftefe
       std::vector<size_type>
       getGlobalNodeIds() const;
       void
-      getCellDofsGlobalIds(size_type cellId,
-                           std::vector<global_size_type> &vecGlobalNodeId) const;
+      getCellDofsGlobalIds(
+        size_type                      cellId,
+        std::vector<global_size_type> &vecGlobalNodeId) const;
       std::vector<size_type>
       getBoundaryIds() const;
       FECellIterator

@@ -50,25 +50,25 @@ namespace dftefe
       storeValuesHRefinedSameQuadEveryCell(
         std::shared_ptr<const FEBasisManagerDealii<dim>> feBM,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-          basisQuadStorage,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &basisQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-          basisGradientQuadStorage,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &basisGradientQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-          basisHessianQuadStorage,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &basisHessianQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-                                        basisOverlap,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &                                         basisOverlap,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        std::vector<size_type> &        nQuadPointsInCell,
-        std::vector<size_type> &        cellStartIdsBasisQuadStorage,
-        std::vector<size_type> &        cellStartIdsBasisGradientQuadStorage,
-        std::vector<size_type> &        cellStartIdsBasisHessianQuadStorage,
-        const bool                      storeValues,
-        const bool                      storeGradients,
-        const bool                      storeHessians)
+        std::vector<size_type> &                    nQuadPointsInCell,
+        std::vector<size_type> &cellStartIdsBasisQuadStorage,
+        std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
+        std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
+        const bool              storeValues,
+        const bool              storeGradients,
+        const bool              storeHessians)
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
@@ -101,7 +101,8 @@ namespace dftefe
           "rule, storing the classical finite element basis data is only supported "
           " for a Cartesian tensor structured quadrature grid.");
 
-        dealii::UpdateFlags dealiiUpdateFlags = dealii::update_values | dealii::update_JxW_values ;
+        dealii::UpdateFlags dealiiUpdateFlags =
+          dealii::update_values | dealii::update_JxW_values;
         if (storeGradients)
           dealiiUpdateFlags |= dealii::update_gradients;
         if (storeHessians)
@@ -113,7 +114,7 @@ namespace dftefe
         dealii::FEValues<dim> dealiiFEValues(feBM->getReferenceFE(cellId),
                                              dealiiQuadratureRule,
                                              dealiiUpdateFlags);
-        const size_type       numLocallyOwnedCells = feBM->nLocallyActiveCells();
+        const size_type numLocallyOwnedCells = feBM->nLocallyActiveCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBM->nCellDofs(cellId);
         const size_type numQuadPointsPerCell =
@@ -320,17 +321,17 @@ namespace dftefe
       storeValuesHRefinedAdaptiveQuad(
         std::shared_ptr<const FEBasisManagerDealii<dim>> feBM,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-          basisQuadStorage,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &basisQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-          basisGradientQuadStorage,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &basisGradientQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-          basisHessianQuadStorage,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &basisHessianQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
-                                        basisOverlap,
+          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          &                                         basisOverlap,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::CellQuadratureContainer>
                                 quadratureContainer,
@@ -358,7 +359,8 @@ namespace dftefe
           }
 
 
-        dealii::UpdateFlags dealiiUpdateFlags = dealii::update_values | dealii::update_JxW_values;
+        dealii::UpdateFlags dealiiUpdateFlags =
+          dealii::update_values | dealii::update_JxW_values;
 
         if (storeGradients)
           dealiiUpdateFlags |= dealii::update_gradients;
@@ -577,64 +579,62 @@ namespace dftefe
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
           basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
       }
-/*
-      template <typename ValueType,utils::MemorySpace memorySpace, size_type dim>
-      void
-      storeValues(std::shared_ptr<const FEBasisManagerDealii<dim>> feBM,
-                  std::shared_ptr<typename BasisDataStorage<ValueType, memorySpace>::Storage>
-                    basisQuadStorage,
-                  std::shared_ptr<typename BasisDataStorage<ValueType, memorySpace>::Storage>
-                    basisGradientQuadStorage,
-                  std::shared_ptr<typename BasisDataStorage<ValueType, memorySpace>::Storage>
-                    basisHessianQuadStorage,
-                  std::shared_ptr<typename BasisDataStorage<ValueType, memorySpace>::Storage>
-                    basisOverlap,
-                  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-                  const bool                      storeValues,
-                  const bool                      storeGradients,
-                  const bool                      storeHessians)
-      {
-        const quadrature::QuadratureFamily quadratureFamily =
-          quadratureRuleAttributes.getQuadratureFamily();
-        if ((quadratureFamily == quadrature::QuadratureFamily::GAUSS) ||
-            (quadratureFamily == quadrature::QuadratureFamily::GLL))
-          {
-            if (feBM->isHPRefined() == false)
-              {
-                storeValuesHRefinedSameQuadEveryCell
-                  <ValueType,memorySpace, dim >(feBM,
-                                                     basisQuadStorage,
-                                                     basisGradientQuadStorage,
-                                                     basisHessianQuadStorage,
-                                                     basisOverlap,
-                                                     quadratureRuleAttributes,
-                                                     storeValues,
-                                                     storeGradients,
-                                                     storeHessians);
-              }
-          }
-      }
+      /*
+            template <typename ValueType,utils::MemorySpace memorySpace,
+         size_type dim> void storeValues(std::shared_ptr<const
+         FEBasisManagerDealii<dim>> feBM, std::shared_ptr<typename
+         BasisDataStorage<ValueType, memorySpace>::Storage> basisQuadStorage,
+                        std::shared_ptr<typename BasisDataStorage<ValueType,
+         memorySpace>::Storage> basisGradientQuadStorage,
+                        std::shared_ptr<typename BasisDataStorage<ValueType,
+         memorySpace>::Storage> basisHessianQuadStorage,
+                        std::shared_ptr<typename BasisDataStorage<ValueType,
+         memorySpace>::Storage> basisOverlap, const
+         quadrature::QuadratureRuleAttributes &quadratureRuleAttributes, const
+         bool                      storeValues, const bool storeGradients, const
+         bool                      storeHessians)
+            {
+              const quadrature::QuadratureFamily quadratureFamily =
+                quadratureRuleAttributes.getQuadratureFamily();
+              if ((quadratureFamily == quadrature::QuadratureFamily::GAUSS) ||
+                  (quadratureFamily == quadrature::QuadratureFamily::GLL))
+                {
+                  if (feBM->isHPRefined() == false)
+                    {
+                      storeValuesHRefinedSameQuadEveryCell
+                        <ValueType,memorySpace, dim >(feBM,
+                                                           basisQuadStorage,
+                                                           basisGradientQuadStorage,
+                                                           basisHessianQuadStorage,
+                                                           basisOverlap,
+                                                           quadratureRuleAttributes,
+                                                           storeValues,
+                                                           storeGradients,
+                                                           storeHessians);
+                    }
+                }
+            }
 
-      */
+            */
 
     } // namespace FEBasisDataStorageDealiiInternal
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManager>      feBM,
-        std::vector<std::shared_ptr< FEConstraintsBase<double>>> constraintsVec,
-        const std::vector<quadrature::QuadratureRuleAttributes> &quadratureRuleAttribuesVec,
-        const bool                                   storeValues,
-        const bool                                   storeGradients,
-        const bool                                   storeHessians,
-        const bool                                   storeJxW,
-        const bool                                   storeQuadRealPoints)
+        std::shared_ptr<const FEBasisManager>                   feBM,
+        std::vector<std::shared_ptr<FEConstraintsBase<double>>> constraintsVec,
+        const std::vector<quadrature::QuadratureRuleAttributes>
+          &        quadratureRuleAttribuesVec,
+        const bool storeValues,
+        const bool storeGradients,
+        const bool storeHessians,
+        const bool storeJxW,
+        const bool storeQuadRealPoints)
       : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
     {
-      d_feBM =
-        std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(feBM);
+      d_feBM = std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(feBM);
       utils::throwException(
         d_feBM != nullptr,
         " Could not cast the FEBasisManager to FEBasisManagerDealii in FEBasisDataStorageDealii");
@@ -644,7 +644,7 @@ namespace dftefe
         d_feBM->getDoFHandler();
       const size_type numLocallyOwnedCells = d_feBM->nLocallyActiveCells();
       d_dofsInCell.resize(numLocallyOwnedCells, 0);
-      d_cellStartIdsBasisOverlap.resize(numLocallyOwnedCells,0);
+      d_cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
       size_type cumulativeBasisOverlapId = 0;
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         {
@@ -660,8 +660,9 @@ namespace dftefe
         dealiiAffineConstraintsVec(numConstraints, nullptr);
       for (size_type i = 0; i < numConstraints; ++i)
         {
-          std::shared_ptr<const FEConstraintsDealii<dim,ValueType>> constraintsDealii =
-            std::dynamic_pointer_cast<const FEConstraintsDealii<dim,ValueType>>(constraintsVec[i]);
+          std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>
+            constraintsDealii = std::dynamic_pointer_cast<
+              const FEConstraintsDealii<dim, ValueType>>(constraintsVec[i]);
           utils::throwException(
             constraintsDealii != nullptr,
             " Could not cast the FEConstraintsBase to FEConstraintsDealii in FEBasisDataStorageDealii");
@@ -737,8 +738,7 @@ namespace dftefe
           std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
           std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
           FEBasisDataStorageDealiiInternal::
-            storeValuesHRefinedSameQuadEveryCell
-              <ValueType,memorySpace, dim >(
+            storeValuesHRefinedSameQuadEveryCell<ValueType, memorySpace, dim>(
               d_feBM,
               basisQuadStorage,
               basisGradientQuadStorage,
@@ -784,12 +784,12 @@ namespace dftefe
     void
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::evaluateBasisData(
       std::shared_ptr<const quadrature::CellQuadratureContainer>
-                                      quadratureContainer,
+                                                  quadratureContainer,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const bool                      storeValues,
-      const bool                      storeGradient,
-      const bool                      storeHessian,
-      const bool                      storeOverlap)
+      const bool                                  storeValues,
+      const bool                                  storeGradient,
+      const bool                                  storeHessian,
+      const bool                                  storeOverlap)
     {
       std::shared_ptr<
         typename BasisDataStorage<ValueType, memorySpace>::Storage>
@@ -808,22 +808,22 @@ namespace dftefe
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
 
-      FEBasisDataStorageDealiiInternal::storeValuesHRefinedAdaptiveQuad
-        <ValueType, memorySpace, dim>(
-        d_feBM,
-        basisQuadStorage,
-        basisGradientQuadStorage,
-        basisHessianQuadStorage,
-        basisOverlap,
-        quadratureRuleAttributes,
-        quadratureContainer,
-        nQuadPointsInCell,
-        cellStartIdsBasisQuadStorage,
-        cellStartIdsBasisGradientQuadStorage,
-        cellStartIdsBasisHessianQuadStorage,
-        storeValues,
-        storeGradient,
-        storeHessian);
+      FEBasisDataStorageDealiiInternal::
+        storeValuesHRefinedAdaptiveQuad<ValueType, memorySpace, dim>(
+          d_feBM,
+          basisQuadStorage,
+          basisGradientQuadStorage,
+          basisHessianQuadStorage,
+          basisOverlap,
+          quadratureRuleAttributes,
+          quadratureContainer,
+          nQuadPointsInCell,
+          cellStartIdsBasisQuadStorage,
+          cellStartIdsBasisGradientQuadStorage,
+          cellStartIdsBasisHessianQuadStorage,
+          storeValues,
+          storeGradient,
+          storeHessian);
 
       if (storeValues)
         {
@@ -851,24 +851,26 @@ namespace dftefe
       d_nQuadPointsIncell[quadratureRuleAttributes] = nQuadPointsInCell;
     }
 
-//    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
-//    std::shared_ptr<const quadrature::CellQuadratureContainer>
-//    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getCellQuadratureRuleContainer(
-//      const QuadratureRuleAttributes &quadratureRuleAttributes) const
-//    {
-//      utils::throwException(
-//        false,
-//        "  getCellQuadratureRuleContainer is not implemented ");
-//
-//      std::shared_ptr<const quadrature::CellQuadratureContainer> cellQuad;
-//      return ;
-//
-//    }
+    //    template <typename ValueType, utils::MemorySpace memorySpace,
+    //    size_type dim> std::shared_ptr<const
+    //    quadrature::CellQuadratureContainer>
+    //    FEBasisDataStorageDealii<ValueType, memorySpace,
+    //    dim>::getCellQuadratureRuleContainer(
+    //      const QuadratureRuleAttributes &quadratureRuleAttributes) const
+    //    {
+    //      utils::throwException(
+    //        false,
+    //        "  getCellQuadratureRuleContainer is not implemented ");
+    //
+    //      std::shared_ptr<const quadrature::CellQuadratureContainer> cellQuad;
+    //      return ;
+    //
+    //    }
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     const typename BasisDataStorage<ValueType, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
-      getBasisDataInAllCells(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes) const
+      getBasisDataInAllCells(const quadrature::QuadratureRuleAttributes
+                               &quadratureRuleAttributes) const
     {
       auto it = d_basisQuadStorage.find(quadratureRuleAttributes);
       if (it != d_basisQuadStorage.end())
@@ -886,8 +888,8 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     const typename BasisDataStorage<ValueType, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
-      getBasisGradientDataInAllCells(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes) const
+      getBasisGradientDataInAllCells(const quadrature::QuadratureRuleAttributes
+                                       &quadratureRuleAttributes) const
     {
       auto it = d_basisGradientQuadStorage.find(quadratureRuleAttributes);
       if (it != d_basisGradientQuadStorage.end())
@@ -905,8 +907,8 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     const typename BasisDataStorage<ValueType, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
-      getBasisHessianDataInAllCells(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes) const
+      getBasisHessianDataInAllCells(const quadrature::QuadratureRuleAttributes
+                                      &quadratureRuleAttributes) const
     {
       auto it = d_basisHessianQuadStorage.find(quadratureRuleAttributes);
       if (it != d_basisHessianQuadStorage.end())
@@ -926,7 +928,7 @@ namespace dftefe
     typename BasisDataStorage<ValueType, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisDataInCell(
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const size_type                 cellId) const
+      const size_type                             cellId) const
     {
       auto itBasisQuad = d_basisQuadStorage.find(quadratureRuleAttributes);
       utils::throwException(
@@ -963,7 +965,7 @@ namespace dftefe
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       getBasisGradientDataInCell(
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const
+        const size_type                             cellId) const
     {
       auto itBasisGradientQuad =
         d_basisGradientQuadStorage.find(quadratureRuleAttributes);
@@ -981,8 +983,8 @@ namespace dftefe
         "Quad points in cell is not evaluated for the given QuadratureRuleAttributes.");
       std::shared_ptr<
         typename BasisDataStorage<ValueType, memorySpace>::Storage>
-        basisGradientQuadStorage                      = itBasisGradientQuad->second;
-      const std::vector<size_type> &cellStartIds      = itCellStartIds->second;
+        basisGradientQuadStorage                 = itBasisGradientQuad->second;
+      const std::vector<size_type> &cellStartIds = itCellStartIds->second;
       const std::vector<size_type> &nQuadPointsInCell = itNQuad->second;
       const size_type               sizeToCopy =
         nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
@@ -1000,7 +1002,7 @@ namespace dftefe
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       getBasisHessianDataInCell(
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const
+        const size_type                             cellId) const
     {
       auto itBasisHessianQuad =
         d_basisHessianQuadStorage.find(quadratureRuleAttributes);
@@ -1018,8 +1020,8 @@ namespace dftefe
         "Quad points in cell is not evaluated for the given QuadratureRuleAttributes.");
       std::shared_ptr<
         typename BasisDataStorage<ValueType, memorySpace>::Storage>
-        basisHessianQuadStorage                       = itBasisHessianQuad->second;
-      const std::vector<size_type> &cellStartIds      = itCellStartIds->second;
+        basisHessianQuadStorage                  = itBasisHessianQuad->second;
+      const std::vector<size_type> &cellStartIds = itCellStartIds->second;
       const std::vector<size_type> &nQuadPointsInCell = itNQuad->second;
       const size_type               sizeToCopy =
         nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim * dim;
@@ -1096,8 +1098,8 @@ namespace dftefe
         "Quad points in cell is not evaluated for the given QuadratureRuleAttributes.");
       std::shared_ptr<
         typename BasisDataStorage<ValueType, memorySpace>::Storage>
-        basisGradientQuadStorage                      = itBasisGradientQuad->second;
-      const std::vector<size_type> &cellStartIds      = itCellStartIds->second;
+        basisGradientQuadStorage                 = itBasisGradientQuad->second;
+      const std::vector<size_type> &cellStartIds = itCellStartIds->second;
       const std::vector<size_type> &nQuadPointsInCell = itNQuad->second;
       typename BasisDataStorage<ValueType, memorySpace>::Storage returnValue(
         dim);
@@ -1139,8 +1141,8 @@ namespace dftefe
         "Quad points in cell is not evaluated for the given QuadratureRuleAttributes.");
       std::shared_ptr<
         typename BasisDataStorage<ValueType, memorySpace>::Storage>
-        basisHessianQuadStorage                       = itBasisHessianQuad->second;
-      const std::vector<size_type> &cellStartIds      = itCellStartIds->second;
+        basisHessianQuadStorage                  = itBasisHessianQuad->second;
+      const std::vector<size_type> &cellStartIds = itCellStartIds->second;
       const std::vector<size_type> &nQuadPointsInCell = itNQuad->second;
       typename BasisDataStorage<ValueType, memorySpace>::Storage returnValue(
         dim * dim);
@@ -1164,8 +1166,8 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     const typename BasisDataStorage<ValueType, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
-      getBasisOverlapInAllCells(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes) const
+      getBasisOverlapInAllCells(const quadrature::QuadratureRuleAttributes
+                                  &quadratureRuleAttributes) const
     {
       auto it = d_basisOverlap.find(quadratureRuleAttributes);
       if (it != d_basisOverlap.end())
@@ -1185,7 +1187,7 @@ namespace dftefe
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       getBasisOverlapInCell(
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const
+        const size_type                             cellId) const
     {
       auto itBasisOverlap = d_basisOverlap.find(quadratureRuleAttributes);
       utils::throwException(
@@ -1208,9 +1210,9 @@ namespace dftefe
     typename BasisDataStorage<ValueType, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisOverlap(
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const size_type                 cellId,
-      const size_type                 basisId1,
-      const size_type                 basisId2) const
+      const size_type                             cellId,
+      const size_type                             basisId1,
+      const size_type                             basisId2) const
     {
       auto itBasisOverlap = d_basisOverlap.find(quadratureRuleAttributes);
       utils::throwException(
@@ -1237,75 +1239,83 @@ namespace dftefe
       auto itBasisQuad = d_basisQuadStorage.find(quadratureRuleAttributes);
       if (itBasisQuad != d_basisQuadStorage.end())
         {
-	  utils::throwException((itBasisQuad->second).use_count() == 1,
-	      "More than one owner for the basis quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
+          utils::throwException(
+            (itBasisQuad->second).use_count() == 1,
+            "More than one owner for the basis quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
           delete (itBasisQuad->second).get();
-	  d_basisQuadStorage.erase(itBasisQuad);
+          d_basisQuadStorage.erase(itBasisQuad);
         }
 
       auto itBasisGradientQuad =
         d_basisGradientQuadStorage.find(quadratureRuleAttributes);
       if (itBasisGradientQuad != d_basisGradientQuadStorage.end())
         {
-	  utils::throwException((itBasisGradientQuad->second).use_count() == 1,
-	      "More than one owner for the basis gradient quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
+          utils::throwException(
+            (itBasisGradientQuad->second).use_count() == 1,
+            "More than one owner for the basis gradient quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
           delete (itBasisGradientQuad->second).get();
-	  d_basisGradientQuadStorage.erase(itBasisGradientQuad);
+          d_basisGradientQuadStorage.erase(itBasisGradientQuad);
         }
 
       auto itBasisHessianQuad =
         d_basisHessianQuadStorage.find(quadratureRuleAttributes);
       if (itBasisHessianQuad != d_basisHessianQuadStorage.end())
         {
-	  utils::throwException((itBasisHessianQuad->second).use_count() == 1,
-	      "More than one owner for the basis hessian quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
+          utils::throwException(
+            (itBasisHessianQuad->second).use_count() == 1,
+            "More than one owner for the basis hessian quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
           delete (itBasisHessianQuad->second).get();
-	  d_basisHessianQuadStorage.erase(itBasisHessianQuad);
+          d_basisHessianQuadStorage.erase(itBasisHessianQuad);
         }
 
       auto itBasisOverlap = d_basisOverlap.find(quadratureRuleAttributes);
       if (itBasisOverlap != d_basisOverlap.end())
         {
-	  utils::throwException((itBasisOverlap->second).use_count() == 1,
-	      "More than one owner for the basis overlap storage found in FEBasisDataStorageDealii. Not safe to delete it.");
+          utils::throwException(
+            (itBasisOverlap->second).use_count() == 1,
+            "More than one owner for the basis overlap storage found in FEBasisDataStorageDealii. Not safe to delete it.");
           delete (itBasisOverlap->second).get();
-	  d_basisOverlap.erase(itBasisOverlap);
-
+          d_basisOverlap.erase(itBasisOverlap);
         }
     }
 
- template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     typename BasisDataStorage<ValueType, memorySpace>::Storage
-      FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisDataInCell(
+    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisDataInCell(
+      const QuadratureRuleAttributes &quadratureRuleAttributes,
+      const size_type                 cellId,
+      const size_type                 basisId) const
+    {
+      utils::throwException(
+        false,
+        "getBasisDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    typename BasisDataStorage<ValueType, memorySpace>::Storage
+    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
+      getBasisGradientDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const
-      {
+    {
+      utils::throwException(
+        false,
+        "getBasisGradientDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+    }
 
-	utils::throwException(false, "getBasisDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
-
-      }
-      
- template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     typename BasisDataStorage<ValueType, memorySpace>::Storage
-      FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisGradientDataInCell(
+    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
+      getBasisHessianDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const
-      {
-	utils::throwException(false, "getBasisGradientDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
-      }
-      
- template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
-    typename BasisDataStorage<ValueType, memorySpace>::Storage
-      FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisHessianDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId,
-        const size_type                 basisId) const
-      {
-
-	utils::throwException(false, "getBasisHessianDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
-      }
+    {
+      utils::throwException(
+        false,
+        "getBasisHessianDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+    }
 
   } // end of namespace basis
 } // end of namespace dftefe

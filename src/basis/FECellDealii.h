@@ -44,7 +44,7 @@ namespace dftefe
       FECellDealii(DealiiFECellIterator dealiiFECellIter);
 
       void
-      getVertices( std::vector<utils::Point> &points ) const override;
+      getVertices(std::vector<utils::Point> &points) const override;
 
       void
       getVertex(size_type i, utils::Point &point) const override;
@@ -101,15 +101,20 @@ namespace dftefe
                    const CellMappingBase &cellMapping,
                    utils::Point &         realPoint) const override;
 
-      void cellNodeIdtoGlobalNodeId( std::vector<global_size_type>  &
-                                                   vecId) const override;
+      void
+      cellNodeIdtoGlobalNodeId(
+        std::vector<global_size_type> &vecId) const override;
 
-      size_type getFaceBoundaryId(size_type faceId) const override ;
+      size_type
+      getFaceBoundaryId(size_type faceId) const override;
 
-      void getFaceDoFGlobalIndices(size_type faceId , std::vector<global_size_type> &vecNodeId) const  override;
+      void
+      getFaceDoFGlobalIndices(
+        size_type                      faceId,
+        std::vector<global_size_type> &vecNodeId) const override;
 
 
-        size_type
+      size_type
       getFEOrder() const override;
 
       DealiiFECellIterator &

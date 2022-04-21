@@ -59,7 +59,8 @@ namespace dftefe
 
     public:
       virtual ~BasisDataStorage() = default;
-      virtual void evaluateBasisData(
+      virtual void
+      evaluateBasisData(
         std::shared_ptr<const quadrature::CellQuadratureContainer>
                                         quadratureContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -67,12 +68,14 @@ namespace dftefe
         const bool                      storeGradient,
         const bool                      storeHessian,
         const bool                      storeOverlap) = 0;
-      virtual void deleteBasisData(
+      virtual void
+      deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
 
-//      virtual std::shared_ptr<const quadrature::CellQuadratureContainer>
-//      getCellQuadratureRuleContainer(
-//        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      //      virtual std::shared_ptr<const quadrature::CellQuadratureContainer>
+      //      getCellQuadratureRuleContainer(
+      //        const QuadratureRuleAttributes &quadratureRuleAttributes) const
+      //        = 0;
 
 
       // functions to get data for a basis function on a given quad point in a

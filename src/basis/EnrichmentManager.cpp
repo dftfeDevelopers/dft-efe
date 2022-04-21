@@ -5,7 +5,7 @@
 // Finite Element Method.
 //
 #if defined(HAVE_CONFIG_H)
-#include "dft_config.h"
+#  include "dft_config.h"
 #endif // HAVE_CONFIG_H
 
 #include "EnrichedFunctionManager.h"
@@ -13,36 +13,31 @@
 #include <utils/point/Point.h>
 
 #if defined(HAVE_ALGORITHM)
-#include <algorithm>
+#  include <algorithm>
 #else
-#error algorithm header file not available.
+#  error algorithm header file not available.
 #endif // HAVE_ALGORITHM
 //
 //
 //
 
-namespace dft {
-
-    
+namespace dft
+{
   //
   // Constructor.
   //
   EnrichedFunctionManager::EnrichedFunctionManager()
   {
-    
     //
-    // 
     //
-    return; 
-
+    //
+    return;
   }
 
 
   EnrichedFunctionManager::~EnrichedFunctionManager()
   {
-    
-     
     return;
-  }  
+  }
 
-}
+} // namespace dft

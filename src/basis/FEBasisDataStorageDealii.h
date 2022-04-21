@@ -53,11 +53,12 @@ namespace dftefe
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
       using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
-      using Storage = typename BasisDataStorage<ValueType, memorySpace>::Storage;
+      using Storage =
+        typename BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManager>           feBM,
-        std::vector<std::shared_ptr< FEConstraintsBase<double>>> constraintsVec,
+        std::shared_ptr<const FEBasisManager>                   feBM,
+        std::vector<std::shared_ptr<FEConstraintsBase<double>>> constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
         const bool storeValues,
@@ -82,9 +83,10 @@ namespace dftefe
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) override;
 
-//      std::shared_ptr<const quadrature::CellQuadratureContainer>
-//      getCellQuadratureRuleContainer(std::shared_ptr<Storage>>
-//        const QuadratureRuleAttributes &quadratureRuleAttributes) const override;
+      //      std::shared_ptr<const quadrature::CellQuadratureContainer>
+      //      getCellQuadratureRuleContainer(std::shared_ptr<Storage>>
+      //        const QuadratureRuleAttributes &quadratureRuleAttributes) const
+      //        override;
       // functions to get data for a basis function on a given quad point in a
       // cell
       Storage
@@ -119,7 +121,7 @@ namespace dftefe
       Storage
       getBasisDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override; 
+        const size_type                 cellId) const override;
       Storage
       getBasisGradientDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -140,7 +142,7 @@ namespace dftefe
       const Storage &
       getBasisHessianDataInAllCells(const QuadratureRuleAttributes
                                       &quadratureRuleAttributes) const override;
-      
+
       // get overlap of two basis functions in a cell
       Storage
       getBasisOverlap(const QuadratureRuleAttributes &quadratureRuleAttributes,

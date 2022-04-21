@@ -92,7 +92,7 @@ namespace dftefe
 
 
       const dealii::parallel::distributed::Triangulation<dim> &
-        returnDealiiTria() const ;
+      returnDealiiTria() const;
 
     private:
       /**

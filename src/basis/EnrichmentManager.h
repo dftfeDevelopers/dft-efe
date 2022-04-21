@@ -34,151 +34,152 @@ namespace dftefe
 {
   namespace basis
   {
-
     /**
-     * @brief Base class which provides access to the enrichment functions 
-     * 
+     * @brief Base class which provides access to the enrichment functions
+     *
      * @tparam ValueType the primitive data for the enrichment function (e.g., double, float, complex<double>, complex<float>, etc.).
      * @tparam dim dimension of the enrichment (e.g., 1D, 2D, 3D,...).
      *
      */
-    template<typename ValueType, size_type dim>
-      class EnrichmentManager {
+    template <typename ValueType, size_type dim>
+    class EnrichmentManager
+    {
+      //
+      // types
+      //
+    public:
+      /**
+       * @brief Destructor.
+       */
+      virtual ~EnrichmentManager() = default;
 
-	//
-	// types
-	//
-	public:
-	  
-	  /**
-	   * @brief Destructor.
-	   */
-	  virtual ~EnrichmentManager() = default;
+      /**
+       * @brief Get number of enrichement functions.
+       *
+       * @return Number of enrichment functions.
+       */
+      virtual int
+      nFunctions() const = 0;
 
-	  /**
-	   * @brief Get number of enrichement functions.
-	   *
-	   * @return Number of enrichment functions.
-	   */
-	  virtual int nFunctions() const = 0;
+      /**
+       * @brief Get the value of an enrichment function at a point
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] point coordinate of the point
+       *
+       * @return value of the enrichment function at the point
+       */
+      virtual ValueType
+      getValue(const size_type functionId, const utils::Point &point) const = 0;
 
-	  /**
-	   * @brief Get the value of an enrichment function at a point 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] point coordinate of the point 
-	   * 
-	   * @return value of the enrichment function at the point
-	   */ 
-	  virtual 
-	    ValueType
-	    getValue(const size_type functionId, const utils::Point & point) const = 0;
-	  
-	  /**
-	   * @brief Get the value of an enrichment function at a point 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] point coordinate of the point 
-	   * 
-	   * @return value of the enrichment function at the point
-	   */ 
-	  virtual 
-	    ValueType
-	    getValue(const size_type functionId, const std::vector<double> & point) const = 0;
+      /**
+       * @brief Get the value of an enrichment function at a point
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] point coordinate of the point
+       *
+       * @return value of the enrichment function at the point
+       */
+      virtual ValueType
+      getValue(const size_type            functionId,
+               const std::vector<double> &point) const = 0;
 
 
-	  /**
-	   * @brief Get the value of an enriched function for a set of points 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] points vector of Point containing the coordinates of all the input points
-	   * 
-	   * @return values of the enrichment function on all the input points
-	   */ 
-	  virtual 
-	    std::vector<ValueType>
-	    getValues(const int functionId,
-		const std::vector<utils::Point> & points) const = 0;
+      /**
+       * @brief Get the value of an enriched function for a set of points
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] points vector of Point containing the coordinates of all the
+       * input points
+       *
+       * @return values of the enrichment function on all the input points
+       */
+      virtual std::vector<ValueType>
+      getValues(const int                        functionId,
+                const std::vector<utils::Point> &points) const = 0;
 
-	  /**
-	   * @brief Get the value of an enriched function for a set of points 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] points 2D vector containing the coordinates of all the input points.
-	   * The expected format is such that points[i][j] should correspond to the j-th coordinate
-	   * of the i-th point.
-	   * 
-	   * @return values of the enrichment function on all the input points
-	   */ 
-	  virtual 
-	    std::vector<ValueType>
-	    getValues(const int functionId,
-		const std::vector<std::vector<double>> & points) const = 0;
+      /**
+       * @brief Get the value of an enriched function for a set of points
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] points 2D vector containing the coordinates of all the input
+       * points. The expected format is such that points[i][j] should correspond
+       * to the j-th coordinate of the i-th point.
+       *
+       * @return values of the enrichment function on all the input points
+       */
+      virtual std::vector<ValueType>
+      getValues(const int                               functionId,
+                const std::vector<std::vector<double>> &points) const = 0;
 
-	  /**
-	   * @brief Get the derivative of an enrichment function at a point 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] point coordinate of the point
-	   * @param[in] derivativeOrder order of derivative 
-	   * 
-	   * @return vector containing the derivative of the enrichment function at the point.
-	   * The i-th value in the value denotes the derivative with respect to the i-th coordinate of the point. 
-	   */ 
-	  virtual 
-	    std::vector<ValueType>
-	    getDerivativeValue(const size_type functionId, const utils::Point & point, const size_type derivativeOrder) const = 0;
-	  
-	  /**
-	   * @brief Get the derivative of an enrichment function at a point 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] point coordinate of the point
-	   * @param[in] derivativeOrder order of derivative 
-	   * 
-	   * @return vector containing the derivative of the enrichment function at the point.
-	   * The i-th value in the vector denotes the derivative with respect to the i-th coordinate of the point. 
-	   */ 
-	  virtual 
-	    ValueType
-	    getDerivativeValue(const size_type functionId, const std::vector<double> & point, const size_type derivativeOrder) const = 0;
+      /**
+       * @brief Get the derivative of an enrichment function at a point
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] point coordinate of the point
+       * @param[in] derivativeOrder order of derivative
+       *
+       * @return vector containing the derivative of the enrichment function at the point.
+       * The i-th value in the value denotes the derivative with respect to the
+       * i-th coordinate of the point.
+       */
+      virtual std::vector<ValueType>
+      getDerivativeValue(const size_type     functionId,
+                         const utils::Point &point,
+                         const size_type     derivativeOrder) const = 0;
 
-	  /**
-	   * @brief Get the derivative of an enriched function for a set of points 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] points vector of Point containing the coordinates of all the input points
-	   * @param[in] derivativeOrder order of derivative 
-	   * 
-	   * @return 2D vector containing the derivative of the enrichment function at all the input points.
-	   * The (i,j)-th value in the 2D vector denotes the derivative with respect to the j-th coordinate of the i-th point. 
-	   */ 
-	  virtual 
-	    std::vector<std::vector<ValueType>>
-	    getDerivativeValues(const int functionId,
-		const std::vector<utils::Point> & points,
-		const size_type derivativeOrder) const = 0;
+      /**
+       * @brief Get the derivative of an enrichment function at a point
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] point coordinate of the point
+       * @param[in] derivativeOrder order of derivative
+       *
+       * @return vector containing the derivative of the enrichment function at the point.
+       * The i-th value in the vector denotes the derivative with respect to the
+       * i-th coordinate of the point.
+       */
+      virtual ValueType
+      getDerivativeValue(const size_type            functionId,
+                         const std::vector<double> &point,
+                         const size_type            derivativeOrder) const = 0;
 
-	  /**
-	   * @brief Get the derivative of an enriched function for a set of points 
-	   *
-	   * @param[in] functionId index of the enrichment function
-	   * @param[in] points vector of Point containing the coordinates of all the input points
-	   * @param[in] derivativeOrder order of derivative 
-	   * 
-	   * @return 2D vector containing the derivative of the enrichment function at all the input points.
-	   * The (i,j)-th value in the 2D vector denotes the derivative with respect to the j-th coordinate of the i-th point. 
-	   */ 
-	  virtual 
-	    std::vector<std::vector<ValueType>>
-	    getDerivativeValues(const int functionId,
-		const std::vector<std::vector<double>> & points,
-		const size_type derivativeOrder) const = 0;
+      /**
+       * @brief Get the derivative of an enriched function for a set of points
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] points vector of Point containing the coordinates of all the
+       * input points
+       * @param[in] derivativeOrder order of derivative
+       *
+       * @return 2D vector containing the derivative of the enrichment function at all the input points.
+       * The (i,j)-th value in the 2D vector denotes the derivative with respect
+       * to the j-th coordinate of the i-th point.
+       */
+      virtual std::vector<std::vector<ValueType>>
+      getDerivativeValues(const int                        functionId,
+                          const std::vector<utils::Point> &points,
+                          const size_type derivativeOrder) const = 0;
 
-      };
+      /**
+       * @brief Get the derivative of an enriched function for a set of points
+       *
+       * @param[in] functionId index of the enrichment function
+       * @param[in] points vector of Point containing the coordinates of all the
+       * input points
+       * @param[in] derivativeOrder order of derivative
+       *
+       * @return 2D vector containing the derivative of the enrichment function at all the input points.
+       * The (i,j)-th value in the 2D vector denotes the derivative with respect
+       * to the j-th coordinate of the i-th point.
+       */
+      virtual std::vector<std::vector<ValueType>>
+      getDerivativeValues(const int                               functionId,
+                          const std::vector<std::vector<double>> &points,
+                          const size_type derivativeOrder) const = 0;
+    };
 
   } // end of namespace basis
 } // end of namespace dftefe
 
 #endif // dftefeEnrichmentManager_h
-

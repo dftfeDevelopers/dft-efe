@@ -18,11 +18,6 @@ namespace dftefe
         std::make_shared<dealii::AffineConstraints<ValueType>>();
     }
 
-    // default destructor
-    template <size_type dim, typename ValueType>
-    FEConstraintsDealii<dim, ValueType>::~FEConstraintsDealii()
-    {}
-
 
     template <size_type dim, typename ValueType>
     void
@@ -51,7 +46,7 @@ namespace dftefe
         d_isCleared && !d_isClosed,
         " Clear the constraint matrix before making hanging node constraints");
 
-      std::shared_ptr<const FEBasisManagerDealii<dim> >dealiiDoFHandler =
+      std::shared_ptr<const FEBasisManagerDealii<dim>> dealiiDoFHandler =
         std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(feBasis);
 
       utils::throwException(
@@ -81,10 +76,10 @@ namespace dftefe
       utils::throwException(
         !d_isClosed,
         " Clear the constraint matrix before setting inhomogeneities");
-      if(this->isConstrained(basisId) == false)
-      { 
-	d_constraintMatrix->add_line(basisId);
-      }
+      if (this->isConstrained(basisId) == false)
+        {
+          d_constraintMatrix->add_line(basisId);
+        }
       d_constraintMatrix->set_inhomogeneity(basisId, constraintValue);
       d_isCleared = false;
       d_isClosed  = false;
@@ -99,7 +94,7 @@ namespace dftefe
 
     template <size_type dim, typename ValueType>
     bool
-      FEConstraintsDealii<dim, ValueType>::isConstrained(size_type basisId)
+    FEConstraintsDealii<dim, ValueType>::isConstrained(size_type basisId)
     {
       return d_constraintMatrix->is_constrained(basisId);
     }
@@ -109,32 +104,30 @@ namespace dftefe
     FEConstraintsDealii<dim, ValueType>::setHomogeneousDirichletBC()
     {
       dealii::IndexSet locallyRelevantDofs;
-      dealii::DoFTools::extract_locally_relevant_dofs(*(d_dofHandler->getDoFHandler()),
-                                                      locallyRelevantDofs);
+      dealii::DoFTools::extract_locally_relevant_dofs(
+        *(d_dofHandler->getDoFHandler()), locallyRelevantDofs);
 
       const unsigned int vertices_per_cell =
         dealii::GeometryInfo<dim>::vertices_per_cell;
-      const unsigned int dofs_per_cell = d_dofHandler->getDoFHandler()->get_fe().dofs_per_cell;
+      const unsigned int dofs_per_cell =
+        d_dofHandler->getDoFHandler()->get_fe().dofs_per_cell;
       const unsigned int faces_per_cell =
         dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face = d_dofHandler->getDoFHandler()->get_fe().dofs_per_face;
+      const unsigned int dofs_per_face =
+        d_dofHandler->getDoFHandler()->get_fe().dofs_per_face;
 
-      std::vector<global_size_type> cellGlobalDofIndices(
-        dofs_per_cell);
-      std::vector<global_size_type> iFaceGlobalDofIndices(
-        dofs_per_face);
+      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
+      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
       std::vector<bool> dofs_touched(d_dofHandler->nGlobalNodes(), false);
-      auto cell =
-                                       d_dofHandler->beginLocallyOwnedCells(),
-                                     endc =
-                                       d_dofHandler->endLocallyOwnedCells();
+      auto              cell = d_dofHandler->beginLocallyOwnedCells(),
+           endc              = d_dofHandler->endLocallyOwnedCells();
       for (; cell != endc; ++cell)
         {
           (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
           for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
             {
-              (*cell)->getFaceDoFGlobalIndices(iFace,iFaceGlobalDofIndices);
+              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
               for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
                    ++iFaceDof)
                 {
@@ -145,7 +138,6 @@ namespace dftefe
                   dofs_touched[nodeId] = true;
                   if (!isConstrained(nodeId))
                     {
-                      addLine(nodeId);
                       setInhomogeneity(nodeId, 0);
                     } // non-hanging node check
                 }     // Face dof loop
@@ -159,5 +151,5 @@ namespace dftefe
     {
       return *d_constraintMatrix;
     }
-  }
-}
+  } // namespace basis
+} // namespace dftefe

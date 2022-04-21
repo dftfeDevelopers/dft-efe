@@ -33,8 +33,8 @@ namespace dftefe
   namespace basis
   {
     template <unsigned int dim>
-    FECellDealii<dim>::FECellDealii( typename
-      dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter)
+    FECellDealii<dim>::FECellDealii(
+      typename dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter)
     {
       // TODO check if this is correct and wont lead to seg faults
       d_dealiiFECellIter = dealiiFECellIter;
@@ -42,7 +42,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    FECellDealii<dim>::getVertices(std::vector<utils::Point> &points ) const
+    FECellDealii<dim>::getVertices(std::vector<utils::Point> &points) const
     {
       const unsigned int nVertices =
         dealii::GeometryInfo<dim>::vertices_per_cell;
@@ -68,8 +68,7 @@ namespace dftefe
     FECellDealii<dim>::getNodalPoints() const
     {
       utils::throwException(
-        false,
-        "getNodalPoints() in FECellDealii can not be implemented.");
+        false, "getNodalPoints() in FECellDealii can not be implemented.");
 
       std::vector<std::shared_ptr<dftefe::utils::Point>> returnPoint;
       return returnPoint;
@@ -79,16 +78,14 @@ namespace dftefe
     size_type
     FECellDealii<dim>::getId() const
     {
-      utils::throwException(
-        false,
-        "getId() in FECellDealii not yet implemented.");
+      utils::throwException(false,
+                            "getId() in FECellDealii not yet implemented.");
       return 0;
     }
 
     template <unsigned int dim>
     bool
-    FECellDealii<dim>::isPointInside(
-      const utils::Point &point) const
+    FECellDealii<dim>::isPointInside(const utils::Point &point) const
     {
       dealii::Point<dim, double> dealiiPoint;
       convertToDealiiPoint<dim>(point, dealiiPoint);
@@ -176,7 +173,7 @@ namespace dftefe
     void
     FECellDealii<dim>::getParametricPoint(const utils::Point &   realPoint,
                                           const CellMappingBase &cellMapping,
-                                          utils::Point &         parametricPoint) const
+                                          utils::Point &parametricPoint) const
     {
       bool isPointInside;
       cellMapping.getParametricPoint(realPoint,
@@ -192,26 +189,29 @@ namespace dftefe
                                     utils::Point &         realPoint) const
     {
       bool isPointInside;
-      cellMapping.getRealPoint(parametricPoint,
-                               *this,
-                               realPoint);
+      cellMapping.getRealPoint(parametricPoint, *this, realPoint);
     }
 
     template <unsigned int dim>
-    void FECellDealii<dim>::cellNodeIdtoGlobalNodeId( std::vector<global_size_type>  &
-      vecId) const
+    void
+    FECellDealii<dim>::cellNodeIdtoGlobalNodeId(
+      std::vector<global_size_type> &vecId) const
     {
       d_dealiiFECellIter->get_dof_indices(vecId);
     }
 
     template <unsigned int dim>
-    size_type FECellDealii<dim>::getFaceBoundaryId(size_type faceId) const
+    size_type
+    FECellDealii<dim>::getFaceBoundaryId(size_type faceId) const
     {
       return d_dealiiFECellIter->face(faceId)->boundary_id();
     }
 
     template <unsigned int dim>
-    void FECellDealii<dim>::getFaceDoFGlobalIndices(size_type faceId, std::vector<global_size_type> &vecNodeId) const
+    void
+    FECellDealii<dim>::getFaceDoFGlobalIndices(
+      size_type                      faceId,
+      std::vector<global_size_type> &vecNodeId) const
     {
       d_dealiiFECellIter->face(faceId)->get_dof_indices(vecNodeId);
     }
@@ -231,4 +231,4 @@ namespace dftefe
     }
 
   } // namespace basis
-} // namespace dealii
+} // namespace dftefe

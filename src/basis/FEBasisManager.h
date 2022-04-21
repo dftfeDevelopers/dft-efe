@@ -53,7 +53,7 @@ namespace dftefe
 
       virtual double
       getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point)const  = 0;
+                            const utils::Point &point) const = 0;
       virtual std::vector<double>
       getBasisFunctionDerivative(const size_type     basisId,
                                  const utils::Point &point,
@@ -61,7 +61,8 @@ namespace dftefe
 
       ////// FE specific virtual member functions /////
       virtual void
-      reinit(std::shared_ptr<const TriangulationBase>triangulation, const size_type feOrder) = 0;
+      reinit(std::shared_ptr<const TriangulationBase> triangulation,
+             const size_type                          feOrder) = 0;
       virtual size_type
       nLocallyActiveCells() const = 0;
       virtual size_type
@@ -83,8 +84,9 @@ namespace dftefe
       virtual std::vector<size_type>
       getGlobalNodeIds() const = 0;
       virtual void
-      getCellDofsGlobalIds(size_type cellId,
-                           std::vector<global_size_type> &vecGlobalNodeId)  const = 0;
+      getCellDofsGlobalIds(
+        size_type                      cellId,
+        std::vector<global_size_type> &vecGlobalNodeId) const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual FECellIterator
