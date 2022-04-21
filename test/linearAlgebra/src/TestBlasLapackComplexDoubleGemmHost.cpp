@@ -90,7 +90,7 @@ main(int argc, char **argv)
        ldc,
        queue);
 
-  for(unsigned int i = 0; i < C.size(); ++i)
+  for(dftefe::size_type i = 0; i < C.size(); ++i)
     {
       if(std::fabs(C[i].real()-colMajCRef[i].real()) > tol || std::fabs(C[i].imag()-colMajCRef[i].imag()) > tol)
         {
@@ -128,7 +128,7 @@ main(int argc, char **argv)
        ldc,
        queue);
 
-  for(unsigned int i = 0; i < C.size(); ++i)
+  for(dftefe::size_type i = 0; i < C.size(); ++i)
     {
       if(std::fabs(C[i].real()-rowMajRef[i].real()) > tol || std::fabs(C[i].imag()-rowMajRef[i].imag()) > tol)
         {

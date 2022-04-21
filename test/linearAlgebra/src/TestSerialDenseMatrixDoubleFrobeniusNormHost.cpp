@@ -34,14 +34,14 @@ int main () {
 
   const auto HOST = dftefe::utils::MemorySpace::HOST;
   typedef dftefe::linearAlgebra::blasLapack::blasQueueType<HOST> QUEUE;
-  int                                                    nRows = 5, nCols = 3;
+  dftefe::size_type                                                   nRows = 5, nCols = 3;
   QUEUE                                                  queue;
   dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> A(
     nRows, nCols, std::make_shared<QUEUE>(queue));
 
   double lo = -10.0, hi = 10.0;
   std::vector<double> AData(nRows*nCols, 0.0);
-  for (int i = 0; i < AData.size(); ++i) {
+  for (dftefe::size_type i = 0; i < AData.size(); ++i) {
       AData[i] = lo + (hi - lo)*std::rand()/RAND_MAX;
       *(A.data() + i) = AData[i];
     }

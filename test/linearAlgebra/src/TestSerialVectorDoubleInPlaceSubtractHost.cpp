@@ -43,7 +43,7 @@ main()
   std::shared_ptr<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>>();  
   const double lo = -10.0;
   const double hi = 10.0;
-  unsigned int vSize = 3;
+  dftefe::size_type vSize = 3;
   const double tol = 1e-13;
 
   // test double
@@ -56,7 +56,7 @@ main()
     it = lo + (hi-lo)*std::rand()/RAND_MAX;
 
   std::vector<double> dVecStd3(vSize);
-  for(unsigned int i = 0; i < vSize; ++i)
+  for(dftefe::size_type i = 0; i < vSize; ++i)
     dVecStd3[i] = dVecStd1[i] - dVecStd2[i];
 
   std::unique_ptr<MemoryStorageDoubleHost> memStorage1 
@@ -78,7 +78,7 @@ main()
   std::vector<double> dVec3HostCopy(vSize);
   dVec3Storage.copyTo<Host>(dVec3HostCopy.data()); 
 
-  for(unsigned int i = 0; i < vSize; ++i)
+  for(dftefe::size_type i = 0; i < vSize; ++i)
   {
     if(std::fabs(dVecStd3[i]-dVec3HostCopy[i]) > tol)
     { 

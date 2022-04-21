@@ -35,7 +35,7 @@ main()
   typedef dftefe::linearAlgebra::blasLapack::blasQueueType<HOST> QUEUE;
   typedef dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> MATRIX;
 
-  int    nRows = 5, nCols = 3;
+  dftefe::size_type   nRows = 5, nCols = 3;
   QUEUE  queue;
   MATRIX A(nRows, nCols, std::make_shared<QUEUE>(queue), 0);
 

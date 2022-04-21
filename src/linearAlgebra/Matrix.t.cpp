@@ -155,13 +155,18 @@ namespace dftefe
       utils::throwException<utils::LengthError>(
         (rhs.getGlobalRows() == this->getGlobalRows()) &&
           (rhs.getGlobalCols() == this->getGlobalCols()),
-        "Mismatch of sizes of the two Matrices that are being added.");
+        "Mismatch of global sizes of the two Matrices that are being added.");
+      utils::throwException<utils::LengthError>(
+        (rhs.getLocalRows() == this->getLocalRows()) &&
+          (rhs.getLocalCols() == this->getLocalCols()),
+        "Mismatch of local sizes of the two Matrices that are being added.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         d_data->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      axpy(d_data->size(), 1.0, rhs.data(), 1, this->data(), 1);
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
+        this->d_data->size(), 1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
 
       return *this;
     }
@@ -172,27 +177,21 @@ namespace dftefe
     Matrix<ValueType, memorySpace>::operator-=(
       const Matrix<ValueType, memorySpace> &rhs)
     {
-      // TODO check if the matrices are compatible and set the
-      // appropriate attributes ( hermitian, diagonal, lower triangular, upper
-      // triangular)
-      // TODO check if both the matrices are stored in colMajor or rowMajor
-      // format
-      //      bool areCompatible =
-      //        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
-      //      utils::throwException<utils::LogicError>(
-      //        areCompatible,
-      //        "Trying to subtract incompatible Vectors. "
-      //        "One is a serial vector and the other a distributed Vector.");
       utils::throwException<utils::LengthError>(
         (rhs.getGlobalRows() == this->getGlobalRows()) &&
           (rhs.getGlobalCols() == this->getGlobalCols()),
-        "Mismatch of sizes of the two Matrices that are being added.");
+        "Mismatch of global sizes of the two Matrices that are being added.");
+      utils::throwException<utils::LengthError>(
+        (rhs.getLocalRows() == this->getLocalRows()) &&
+          (rhs.getLocalCols() == this->getLocalCols()),
+        "Mismatch of local sizes of the two Matrices that are being added.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         d_data->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      axpy(d_data->size(), -1.0, rhs.data(), 1, this->data(), 1);
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
+        this->d_data->size(), -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
       return *this;
     }
 
@@ -217,15 +216,15 @@ namespace dftefe
     Matrix<ValueType, memorySpace>::setValues(
       const typename Matrix<ValueType, memorySpace2>::Storage &storage)
     {
-      *d_data->copyFrom(storage);
+      d_data->copyFrom(storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     Matrix<ValueType, memorySpace>::setStorage(
-      std::shared_ptr<typename Matrix<ValueType, memorySpace>::Storage> storage)
+      std::unique_ptr<typename Matrix<ValueType, memorySpace>::Storage> &storage)
     {
-      d_data = storage;
+      d_data = std::move(storage);
     }
 
 

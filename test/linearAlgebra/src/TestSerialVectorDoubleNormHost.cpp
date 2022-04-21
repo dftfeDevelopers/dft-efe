@@ -36,7 +36,7 @@ main()
   const dftefe::utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
   const double lo = -10.0;
   const double hi = 10.0;
-  unsigned int vSize = 3;
+  dftefe::size_type vSize = 3;
   const double tol = 1e-13;
   
   // test double

@@ -50,7 +50,7 @@ main()
 
   MATRIX B(A);
 
-  for (unsigned int i = 0; i < AData.size(); ++i)
+  for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
       if (std::fabs(AData[i] - *(B.data() + i)) > tol)
         {
@@ -67,7 +67,7 @@ main()
 
   MATRIX C;
   C = A;
-  for (unsigned int i = 0; i < AData.size(); ++i)
+  for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
       if (std::fabs(AData[i] - *(C.data() + i)) > tol)
         {
@@ -85,7 +85,7 @@ main()
   MATRIX D;
   D = std::move(A);
 
-  for (unsigned int i = 0; i < AData.size(); ++i)
+  for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
       if (std::fabs(AData[i] - *(D.data() + i)) > tol)
         {
@@ -103,7 +103,7 @@ main()
 
   MATRIX E = std::move(D);
 
-  for (unsigned int i = 0; i < AData.size(); ++i)
+  for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
       if (std::fabs(AData[i] - *(E.data() + i)) > tol)
         {

@@ -95,7 +95,7 @@ main(int argc, char **argv)
       ldc,
       queue);
 
- for(unsigned int i = 0; i < C.size(); ++i)
+ for(dftefe::size_type i = 0; i < C.size(); ++i)
    {
      if(std::fabs(C[i]-colMajCRef[i]) > tol)
        {
@@ -161,7 +161,7 @@ main(int argc, char **argv)
       ldc,
       queue);
 
- for(unsigned int i = 0; i < C.size(); ++i)
+ for(dftefe::size_type i = 0; i < C.size(); ++i)
    {
      if(std::fabs(C[i]-rowMajCRef[i]) > tol)
        {

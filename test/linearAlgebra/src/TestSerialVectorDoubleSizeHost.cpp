@@ -39,7 +39,7 @@ using SerialVectorDoubleHost = dftefe::linearAlgebra::SerialVector<double, dftef
 main()
 {
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
-  unsigned int vSize = 3;
+  dftefe::size_type vSize = 3;
   std::shared_ptr<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>>();  
   std::shared_ptr<VectorDoubleHost> dVec
     = std::make_shared<SerialVectorDoubleHost>(vSize, 0,queue);

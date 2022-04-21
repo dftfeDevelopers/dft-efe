@@ -273,20 +273,21 @@ namespace dftefe
         const typename Matrix<ValueType, memorySpace2>::Storage &storage);
 
       /**
-       * @brief Point the underlying data of the Vector to a given Matrix::Storage object (i.e., MemoryStorage object).
-       * This allows the Matrix to share ownership of user defined
-       * Matrix::Storage (i.e., MemoryStorage) data. This is useful when one
-       * does not want to copy data into the Matrix's underlying MemoryStorage.
+       * @brief Transfer ownership of a user provided Matrix::Storage object (i.e., MemoryStorage object)
+       * to the Vector. This is useful when a MemoryStorage has been already
+       * been allocated and we need the Matrix to claim its ownership. This
+       * avoids reallocation of memory.
        *
-       * @note Since it allows the Matrix to share ownership of a user provided MemoryStorage, any change to the data
-       * either through the user provided MemoryStorage or the Vector will
-       * reflect in both.
+       * @param[in] storage unique_ptr to MemoryStorage object whose ownership
+       * is to be passed to the Matrix
        *
-       * @param[in] storage shared_ptr to MemoryStorage object whose ownership
-       * is to be shared by the Matrix
+       * @note Since we are passing the ownership of the input storage to the Matrix, the
+       * storage will point to NULL after a call to this function. Accessing the
+       * input storage pointer will lead to undefined behavior.
+       *
        */
       void
-      setStorage(std::shared_ptr<Storage> storage);
+      setStorage(std::unique_ptr<Storage> &storage);
 
       /**
        * @brief Returns the Queue associated with this Matrix object

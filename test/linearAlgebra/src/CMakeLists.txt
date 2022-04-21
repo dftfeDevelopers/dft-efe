@@ -79,10 +79,25 @@ add_executable(TestSerialDenseMatrixDoubleConstructorHost TestSerialDenseMatrixD
 target_link_libraries(TestSerialDenseMatrixDoubleConstructorHost PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialDenseMatrixDoubleConstructorHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleConstructorHost" SUFFIX ".x")
 
+add_executable(TestSerialDenseMatrixDoubleSetValuesHost TestSerialDenseMatrixDoubleSetValuesHost.cpp)
+target_link_libraries(TestSerialDenseMatrixDoubleSetValuesHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialDenseMatrixDoubleSetValuesHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleSetValuesHost" SUFFIX ".x")
+
+add_executable(TestSerialDenseMatrixDoubleGetValuesHost TestSerialDenseMatrixDoubleGetValuesHost.cpp)
+target_link_libraries(TestSerialDenseMatrixDoubleGetValuesHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialDenseMatrixDoubleGetValuesHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+
 add_executable(TestSerialMultiVectorDoubleAddHost TestSerialMultiVectorDoubleAddHost.cpp)
 target_link_libraries(TestSerialMultiVectorDoubleAddHost PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialMultiVectorDoubleAddHost PROPERTIES OUTPUT_NAME "TestSerialMultiVectorDoubleAddHost" SUFFIX ".x")
 
+add_executable(TestSerialDenseMatrixDoubleInPlaceAddHost TestSerialDenseMatrixDoubleInPlaceAddHost.cpp)
+target_link_libraries(TestSerialDenseMatrixDoubleInPlaceAddHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialDenseMatrixDoubleInPlaceAddHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+
+add_executable(TestSerialDenseMatrixDoubleInPlaceSubtractHost TestSerialDenseMatrixDoubleInPlaceSubtractHost.cpp)
+target_link_libraries(TestSerialDenseMatrixDoubleInPlaceSubtractHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialDenseMatrixDoubleInPlaceSubtractHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
