@@ -50,16 +50,16 @@ namespace dftefe
       storeValuesHRefinedSameQuadEveryCell(
         std::shared_ptr<const FEBasisManagerDealii<dim>> feBM,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
           basisQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
           basisGradientQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
           basisHessianQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
                                         basisOverlap,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::vector<size_type> &        nQuadPointsInCell,
@@ -101,9 +101,7 @@ namespace dftefe
           "rule, storing the classical finite element basis data is only supported "
           " for a Cartesian tensor structured quadrature grid.");
 
-        dealii::UpdateFlags dealiiUpdateFlags = dealii::update_default;
-        if (storeValues)
-          dealiiUpdateFlags |= dealii::update_values;
+        dealii::UpdateFlags dealiiUpdateFlags = dealii::update_values | dealii::update_JxW_values ;
         if (storeGradients)
           dealiiUpdateFlags |= dealii::update_gradients;
         if (storeHessians)
@@ -322,16 +320,16 @@ namespace dftefe
       storeValuesHRefinedAdaptiveQuad(
         std::shared_ptr<const FEBasisManagerDealii<dim>> feBM,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
           basisQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
           basisGradientQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
           basisHessianQuadStorage,
         std::shared_ptr<
-          typename BasisDataStorage<ValueType, memorySpace>::Storage>
+          typename BasisDataStorage<ValueType, memorySpace>::Storage> &
                                         basisOverlap,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::CellQuadratureContainer>
@@ -360,10 +358,8 @@ namespace dftefe
           }
 
 
-        dealii::UpdateFlags dealiiUpdateFlags = dealii::update_default;
+        dealii::UpdateFlags dealiiUpdateFlags = dealii::update_values | dealii::update_JxW_values;
 
-        if (storeValues)
-          dealiiUpdateFlags |= dealii::update_values;
         if (storeGradients)
           dealiiUpdateFlags |= dealii::update_gradients;
         if (storeHessians)
@@ -648,6 +644,7 @@ namespace dftefe
         d_feBM->getDoFHandler();
       const size_type numLocallyOwnedCells = d_feBM->nLocallyActiveCells();
       d_dofsInCell.resize(numLocallyOwnedCells, 0);
+      d_cellStartIdsBasisOverlap.resize(numLocallyOwnedCells,0);
       size_type cumulativeBasisOverlapId = 0;
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         {

@@ -9,6 +9,7 @@
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
+#include <utils/MemoryStorage.h>
 #include <vector>
 #include <memory>
 #include <deal.II/fe/fe_q.h>
@@ -61,6 +62,17 @@ int main()
                                                                               false,
                                                                               false,
                                                                               false);
+
+  const dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST> &shapeFuncValue =
+    feBasisData.getBasisDataInAllCells(quadAttr[0]);
+
+//  for (auto it = shapeFuncValue.begin(); it != shapeFuncValue.end(); it++)
+//    {
+//      std::cout<<" value = "<<*it<<"\n";
+//    }
+
+
+  
 
 
 
