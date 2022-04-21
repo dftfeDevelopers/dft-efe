@@ -113,7 +113,7 @@ namespace dftefe
        * blas::Queue
        * @param[in] initVal initial value of elements of the Vector
        */
-      explicit SerialDenseMatrix(
+      SerialDenseMatrix(
         size_type                                               rows,
         size_type                                               cols,
         std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueueInput,

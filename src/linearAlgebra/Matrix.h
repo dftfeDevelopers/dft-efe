@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin.
+ * @author Ian C. Lin, Vishal subramanian.
  */
 
 #ifndef dftefeMatrix_h
@@ -104,7 +104,7 @@ namespace dftefe
       end();
 
       /**
-       * @brief Return iterator pointing to the end of MAtrix data.
+       * @brief Return iterator pointing to the end of Matrix data.
        *
        * @returns Constant iterator pointing to the end of
        * Matrix.
@@ -314,7 +314,7 @@ namespace dftefe
       Uplo     d_uplo;
       Layout   d_layout;
 
-      std::shared_ptr<Storage> d_data;
+      std::unique_ptr<Storage> d_data;
     };
   } // namespace linearAlgebra
 } // namespace dftefe
