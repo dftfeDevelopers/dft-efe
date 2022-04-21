@@ -74,7 +74,7 @@ class BuildOnlyTestBlasLapackDoubleGemmHost(rfm.CompileOnlyRegressionTest):
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     #NOTE: For any new systems:partition added to the config file, 
     # they must also be added to the system_partition_in setupSystems.py
@@ -203,7 +203,7 @@ class RunOnlyTestBlasLapackDoubleGemmHost(rfm.RunOnlyRegressionTest):
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
-    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_systems = ss.getValidSystems(tagsDict['arch'])
     valid_prog_environs = ['*']
     keep_files = []
     config_opts = cmflags.getConfig()

@@ -59,6 +59,18 @@ site_configuration = {
                                         '--mem-per-cpu={mem_per_cpu}']
                         }
                     ]
+                },
+                {
+                    'name': 'interactive',
+                    'scheduler': 'local',
+                    'launcher': 'local',
+                    'environs': ['builtin'],
+                    'resources': [
+                        {
+                            'name': 'cpu',
+                            'options': ['']
+                        }
+                    ]
                 }
             ]
         },

@@ -58,7 +58,7 @@ class BuildOnlyTestSerialDenseMatrixDoubleInPlaceSubtractHost(rfm.CompileOnlyReg
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     #NOTE: For any new systems:partition added to the config file, 
     # they must also be added to the system_partition_in setupSystems.py

@@ -71,8 +71,6 @@ main()
  std::vector<double>            dMatrixHostCopy(vSize);
  dMatrixData.copyTo<Host>(dMatrixHostCopy.data());
 
- dVecStd[5] = 2.0;
-
  for (size_type i = 0; i < vSize; ++i)
    {
      if (std::fabs(dVecStd[i] - dMatrixHostCopy[i]) > tol)
