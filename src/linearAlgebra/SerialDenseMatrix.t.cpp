@@ -43,10 +43,10 @@ namespace dftefe
       d_property    = u.d_property;
       d_uplo        = u.d_uplo;
       d_layout      = u.d_layout;
-      d_data        = std::make_shared<
+      d_data        = std::make_unique<
         typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
         d_nGlobalRows * d_nGlobalCols);
-      this->copyFrom<memorySpace>(u);
+      this->template copyFrom<memorySpace>(u);
     }
 
     //
@@ -85,7 +85,7 @@ namespace dftefe
       const SerialDenseMatrix<ValueType, memorySpace> &u)
     {
       d_data =
-        std::make_shared<typename Matrix<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename Matrix<ValueType, memorySpace>::Storage>(
           (u.d_data)->size());
       *d_data = *(u.d_data);
 
@@ -157,7 +157,7 @@ namespace dftefe
       d_property    = property;
       d_uplo        = uplo;
       d_layout      = layout;
-      d_data        = std::make_shared<
+      d_data        = std::make_unique<
         typename dftefe::utils::MemoryStorage<ValueType, memorySpace>>(
         d_nGlobalRows * d_nGlobalCols, initVal);
     }

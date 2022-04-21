@@ -20,11 +20,11 @@
  ******************************************************************************/
 
 /*
- * @author Vishal subramanian
+ * @author Vishal subramanian, Ian C. Lin.
  */
 
 
-#include "BlasLapack.h"
+#include <linearAlgebra/BlasLapack.h>
 
 
 namespace dftefe
@@ -80,7 +80,7 @@ namespace dftefe
     Matrix<ValueType, memorySpace>::copyTo(
       Matrix<ValueType, memorySpaceDst> &dstMatrix) const
     {
-      this->d_data->copyTo(dstMatrix.getDataVec());
+      d_data->template copyTo<memorySpaceDst>(*(dstMatrix.d_data));
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -89,7 +89,7 @@ namespace dftefe
     Matrix<ValueType, memorySpace>::copyFrom(
       const Matrix<ValueType, memorySpaceSrc> &srcMatrix)
     {
-      this->d_data->copyFrom(srcMatrix.getDataVec());
+      d_data->template copyFrom<memorySpaceSrc>(*(srcMatrix.d_data));
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -152,12 +152,6 @@ namespace dftefe
     Matrix<ValueType, memorySpace>::operator+=(
       const Matrix<ValueType, memorySpace> &rhs)
     {
-      //      bool areCompatible =
-      //        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
-      //      utils::throwException<utils::LogicError>(
-      //        areCompatible,
-      //        "Trying to add incompatible Vectors. One is a serial Vector and
-      //        the " " other a distributed Vector.");
       utils::throwException<utils::LengthError>(
         (rhs.getGlobalRows() == this->getGlobalRows()) &&
           (rhs.getGlobalCols() == this->getGlobalCols()),
