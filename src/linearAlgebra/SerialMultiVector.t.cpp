@@ -23,7 +23,6 @@
  * @author Sambit Das.
  */
 
-#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe
@@ -41,7 +40,7 @@ namespace dftefe
       std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
     {
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           size * numVectors, initVal);
       d_blasQueue = blasQueue;
       d_vectorAttributes =
@@ -59,7 +58,9 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
-      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
+      std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
+                                                              storage,
+      const size_type                                         numVectors,
       std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
     {
       d_storage   = std::move(storage);
@@ -81,7 +82,7 @@ namespace dftefe
       const SerialMultiVector<ValueType, memorySpace> &u)
     {
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
       d_blasQueue        = u.d_blasQueue;
@@ -135,7 +136,7 @@ namespace dftefe
       const SerialMultiVector<ValueType, memorySpace> &u)
     {
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
       d_blasQueue        = u.d_blasQueue;

@@ -75,14 +75,14 @@ namespace dftefe
       // templates for name resolution (i.e., they are dependent names and
       // dependent names are not considered)
       //
-      using Vector<ValueType, memorySpace>::d_storage;
-      using Vector<ValueType, memorySpace>::d_blasQueue;
-      using Vector<ValueType, memorySpace>::d_vectorAttributes;
-      using Vector<ValueType, memorySpace>::d_globalSize;
-      using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
-      using Vector<ValueType, memorySpace>::d_ghostSize;
-      using Vector<ValueType, memorySpace>::d_localSize;
-      using Vector<ValueType, memorySpace>::d_numVectors;
+      using MultiVector<ValueType, memorySpace>::d_storage;
+      using MultiVector<ValueType, memorySpace>::d_blasQueue;
+      using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
+      using MultiVector<ValueType, memorySpace>::d_globalSize;
+      using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
+      using MultiVector<ValueType, memorySpace>::d_ghostSize;
+      using MultiVector<ValueType, memorySpace>::d_localSize;
+      using MulitVector<ValueType, memorySpace>::d_numVectors;
 
     public:
       /**
@@ -125,7 +125,7 @@ namespace dftefe
        *
        */
       DistributedMultiVector(
-        std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+        std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
           mpiCommunicatorP2P,

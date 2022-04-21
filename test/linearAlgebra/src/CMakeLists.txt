@@ -68,6 +68,11 @@ target_link_libraries(TestSerialDenseMatrixDoubleFrobeniusNormHost PUBLIC dft-ef
 set_target_properties(TestSerialDenseMatrixDoubleFrobeniusNormHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleFrobeniusNormHost" SUFFIX ".x")
 
 
+add_executable(TestSerialMultiVectorDoubleAddHost TestSerialMultiVectorDoubleAddHost.cpp)
+target_link_libraries(TestSerialMultiVectorDoubleAddHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialMultiVectorDoubleAddHost PROPERTIES OUTPUT_NAME "TestSerialMultiVectorDoubleAddHost" SUFFIX ".x")
+
+
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
 #target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)

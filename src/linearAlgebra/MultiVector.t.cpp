@@ -23,7 +23,6 @@
  * @author Sambit Das
  */
 
-#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe
@@ -44,7 +43,7 @@ namespace dftefe
       : d_storage(storage)
       , d_blasQueue(blasQueue)
       , d_vectorAttributes(
-          VectorAttributes(VectorAttributes::Distribution::SERIAL, numVectors))
+          VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
       , d_locallyOwnedSize(locallyOwnedSize)
       , d_ghostSize(ghostSize)
@@ -61,7 +60,7 @@ namespace dftefe
       : d_storage(nullptr)
       , d_blasQueue(nullptr)
       , d_vectorAttributes(
-          VectorAttributes(VectorAttributes::Distribution::SERIAL, 0))
+          VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
       , d_locallyOwnedSize(0)
       , d_ghostSize(0)
@@ -227,7 +226,7 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
-    Vector<ValueType, memorySpace>::getBlasQueue() const
+    MultiVector<ValueType, memorySpace>::getBlasQueue() const
     {
       return d_blasQueue;
     }
@@ -283,8 +282,7 @@ namespace dftefe
         "Trying to add incompatible MultiVectors. One is a serialVector and the other a DistributedVector.");
       utils::throwException<utils::LengthError>(
         ((u.size() == v.size()) && (v.size() == w.size()) &&
-         &&(u.localSize() == v.localSize()) &&
-         (v.localSize() == w.localSize()) &&
+         (u.localSize() == v.localSize()) && (v.localSize() == w.localSize()) &&
          (u.numVectors() == v.numVectors()) &&
          (v.numVectors() == w.numVectors())),
         "Mismatch of sizes of the MultiVectors that are added.");
@@ -300,6 +298,7 @@ namespace dftefe
                                                 a,
                                                 u.data(),
                                                 b,
+                                                v.data(),
                                                 w.data(),
                                                 *(w.getBlasQueue()));
     }

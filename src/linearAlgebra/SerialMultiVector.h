@@ -57,14 +57,14 @@ namespace dftefe
       // templates for name resolution (i.e., they are dependent names and
       // dependent names are not considered)
       //
-      using Vector<ValueType, memorySpace>::d_storage;
-      using Vector<ValueType, memorySpace>::d_blasQueue;
-      using Vector<ValueType, memorySpace>::d_vectorAttributes;
-      using Vector<ValueType, memorySpace>::d_globalSize;
-      using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
-      using Vector<ValueType, memorySpace>::d_ghostSize;
-      using Vector<ValueType, memorySpace>::d_localSize;
-      using Vector<ValueType, memorySpace>::d_numVectors;
+      using MultiVector<ValueType, memorySpace>::d_storage;
+      using MultiVector<ValueType, memorySpace>::d_blasQueue;
+      using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
+      using MultiVector<ValueType, memorySpace>::d_globalSize;
+      using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
+      using MultiVector<ValueType, memorySpace>::d_ghostSize;
+      using MultiVector<ValueType, memorySpace>::d_localSize;
+      using MultiVector<ValueType, memorySpace>::d_numVectors;
 
     public:
       /**
@@ -103,7 +103,7 @@ namespace dftefe
       /**
        * @brief Constructor for SerialMultiVector with vector size, number of vectors and initial value arguments
        * @param[in] size size of each vector in the SerialMultiVector
-       * @param[in] numVector number of vectors in the SerialMultiVector
+       * @param[in] numVectors number of vectors in the SerialMultiVector
        * @param[in] initVal initial value of elements of the SerialMultiVector
        * @param[in] blasQueue handle for linear algebra operations on
        * HOST or DEVICE.
@@ -112,7 +112,7 @@ namespace dftefe
       explicit SerialMultiVector(
         size_type                                               size,
         size_type                                               numVectors,
-        const ValueType                                         initVal,
+        ValueType                                               initVal,
         std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
@@ -126,15 +126,16 @@ namespace dftefe
        *
        * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
        * is to be transfered to the SerialMultiVector
-       *
+       * @param[in] numVectors number of vectors in the SerialMultiVector
        * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the SerialMultiVector.
        * Thus, after the function call \p storage will point to NULL and any
        * access through \p storage will lead to <b>undefined behavior</b>.
        *
        */
       SerialMultiVector(
-        std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+        std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
                                                                 storage,
+        size_type                                               numVectors,
         std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**

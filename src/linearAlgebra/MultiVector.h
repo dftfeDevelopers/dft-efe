@@ -26,7 +26,7 @@
 #ifndef dftefeMultiVector_h
 #define dftefeMultiVector_h
 
-#include <linearAlgebra/MultiVectorAttributes.h>
+#include <linearAlgebra/VectorAttributes.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>

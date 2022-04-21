@@ -22,7 +22,6 @@
 /*
  * @author Sambit Das
  */
-#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
 #include <cmath>
 
@@ -51,7 +50,7 @@ namespace dftefe
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
       d_numVectors       = d_mpiPatternP2P->getBlockSize();
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * d_numVectors, initVal);
       d_blasQueue = blasQueue;
     }
@@ -62,7 +61,7 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedMultiVector<ValueType, memorySpace>::DistributedMultiVector(
-      std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+      std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
         &storage,
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
         mpiCommunicatorP2P,
@@ -129,7 +128,7 @@ namespace dftefe
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
       d_numVectors       = numVectors;
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * numVectors, initVal);
       d_blasQueue = blasQueue;
     }
@@ -143,7 +142,7 @@ namespace dftefe
       const DistributedMultiVector &u)
     {
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       d_blasQueue          = u.d_blasQueue;
       *d_storage           = *(u.d_storage);
@@ -201,7 +200,7 @@ namespace dftefe
       const DistributedMultiVector &u)
     {
       d_storage =
-        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage           = *(u.d_storage);
       d_blasQueue          = u.d_blasQueue;
