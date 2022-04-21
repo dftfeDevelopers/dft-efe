@@ -66,7 +66,7 @@ namespace dftefe
         const bool storeJxW,
         const bool storeQuadRealPoints);
 
-      ~FEBasisDataStorageDealii();
+      ~FEBasisDataStorageDealii() = default;
 
       void
       evaluateBasisData(
@@ -83,7 +83,7 @@ namespace dftefe
         const QuadratureRuleAttributes &quadratureRuleAttributes) override;
 
 //      std::shared_ptr<const quadrature::CellQuadratureContainer>
-//      getCellQuadratureRuleContainer(
+//      getCellQuadratureRuleContainer(std::shared_ptr<Storage>>
 //        const QuadratureRuleAttributes &quadratureRuleAttributes) const override;
       // functions to get data for a basis function on a given quad point in a
       // cell
@@ -119,7 +119,7 @@ namespace dftefe
       Storage
       getBasisDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override;
+        const size_type                 cellId) const override; 
       Storage
       getBasisGradientDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -140,7 +140,7 @@ namespace dftefe
       const Storage &
       getBasisHessianDataInAllCells(const QuadratureRuleAttributes
                                       &quadratureRuleAttributes) const override;
-
+      
       // get overlap of two basis functions in a cell
       Storage
       getBasisOverlap(const QuadratureRuleAttributes &quadratureRuleAttributes,

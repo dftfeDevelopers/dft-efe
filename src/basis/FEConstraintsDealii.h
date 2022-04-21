@@ -59,8 +59,10 @@ namespace dftefe
       void setHomogeneousDirichletBC() override;
 
       //dealii specific fucntions
-      const std::shared_ptr <dealii::AffineConstraints<ValueType>>
-      getAffineConstraints() ;
+      //std::shared_ptr <dealii::AffineConstraints<ValueType>>
+      //const dealii::AffineConstraints<ValueType> *
+     const dealii::AffineConstraints<ValueType> &
+     getAffineConstraints() const;
 
     private:
       std::shared_ptr <dealii::AffineConstraints<ValueType>> d_constraintMatrix;

@@ -160,10 +160,12 @@ namespace dftefe
     }
 
     template <size_type dim, typename ValueType>
-    const std::shared_ptr <dealii::AffineConstraints<ValueType>>
-    FEConstraintsDealii<dim, ValueType>::getAffineConstraints()
+    //std::shared_ptr <dealii::AffineConstraints<ValueType>>
+    //const dealii::AffineConstraints<ValueType> *
+    const dealii::AffineConstraints<ValueType> &
+    FEConstraintsDealii<dim, ValueType>::getAffineConstraints() const
     {
-      return d_constraintMatrix;
+      return *d_constraintMatrix;//.get();
     }
   }
 }
