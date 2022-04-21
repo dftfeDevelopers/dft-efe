@@ -7,7 +7,7 @@ endif()
 # Add source files here
 set(DFT-EFE-ATOMS-SOURCES
     AtomFieldDataSpherical.cpp
-    AtomSphericalData.cpp
+    AtomSphericalElectronicData.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})

@@ -5,11 +5,53 @@
   <charge>0.0</charge>
   <NR>5</NR>
   <r>0.0 1.1 2.2 3.3 4.4</r>
-  <hartree>
-    <qNumbers>2 1 -1</qNumbers>
+  <density>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      1.5 2.5 3.5 4.5 5.5
+    </values>
+    <cutoffInfo>1e15 1.0</cutoffInfo>
+  </density>
+  <vhartree>
+    <qNumbers>1 0 0</qNumbers>
     <values>
       -5.5 -6.6 -7.7 -8.8 -9.9
     </values>
     <cutoffInfo>2.5 1.1</cutoffInfo>
-  </hartree>
+  </vhartree>
+  <vnuclear>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </vnuclear>
+  <vtotal>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </vtotal>
+  <orbital>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </orbital>
+  <orbital>
+    <qNumbers>2 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </orbital>
+  <orbital>
+    <qNumbers>2 1 -1</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </orbital>
 </atom>

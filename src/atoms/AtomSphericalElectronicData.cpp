@@ -23,7 +23,7 @@
  * @author Bikash Kanungo
  */
 
-#include <atoms/AtomSphericalData.h>
+#include <atoms/AtomSphericalElectronicData.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
 #include <libxml/parser.h>
@@ -36,8 +36,19 @@ namespace dftefe
 {
   namespace atoms
   {
-    namespace {
 
+    namespace AtomSphericalElectronicDataXMLLocal 
+    {
+
+      struct XPathInfo 
+      {
+	xmlDocPtr doc;
+	std::string filename;
+	std::string xpath;
+	std::string ns;
+	std::string nsHRef;
+      };
+      
       bool
 	splitStringToInts(const std::string s, std::vector<int> & vals, size_type reserveSize = 0)
 	{
@@ -56,6 +67,7 @@ namespace dftefe
 	  }
 	  return convSuccess;
 	}
+      
       bool
 	splitStringToDoubles(const std::string s, std::vector<double> & vals, size_type reserveSize = 0)
 	{
@@ -74,26 +86,6 @@ namespace dftefe
 	  }
 	  return convSuccess;
 	}
-
-      std::string getXPath(const std::string & rootElementName,
-	  const std::string & ns,
-	  const std::string elementName)
-      {
-	return "/" + ns + ":" + rootElementName + "/" + ns + ":" + elementName;
-      }
-    }
-
-    namespace AtomSphericalDataXMLLocal 
-    {
-
-      struct XPathInfo 
-      {
-	xmlDocPtr doc;
-	std::string filename;
-	std::string xpath;
-	std::string ns;
-	std::string nsHRef;
-      };
 
       xmlDocPtr
 	getDoc(const std::string filename) 
@@ -202,7 +194,7 @@ namespace dftefe
 	}
 
       void
-	getSphericalDataFromXMLNodeData(
+	readSphericalDataFromXMLNodeData(
 	    std::vector<std::string> & radialValuesStrings,
 	    std::vector<std::string> & qNumbersStrings,
 	    std::vector<std::string> & cutOffInfoStrings,
@@ -273,54 +265,54 @@ namespace dftefe
 	  xmlXPathFreeObject(ptrToXmlXPathObject);
 	}
       
-      void
-	processSphericalDataFromXMLNodeData(std::map<std::vector<int>, std::vector<double>> & d_qNumbersToRadialField,
-	    const std::vector<std::string> & nodeStrings,
-	    const std::vector<std::vector<std::pair<std::string, std::string>>> & attrStrings,
-	    const XPathInfo & xPathInfo,
-	    const size_type numPoints)
-	{
-
-	  const size_type N  = nodeStrings.size();
-	  std::set<std::vector<int>> qNumbersSet;
-	  bool convSuccess = false;
-	  for(size_type i = 0; i < N; ++i)
-	  {
-	    std::vector<double> vals(0);
-	    convSuccess = splitStringToDoubles(nodeStrings[0], vals, numPoints); 
-      	    utils::throwException(convSuccess, 
-	  	"Error while converting values in " + xPathInfo.xpath + " element in " + xPathInfo.filename + " to double");
-	    utils::throwException(vals.size() == numPoints, 
-	     "Mismatch in number of points specified and number of points "
-	     "provided in " + xPathInfo.xpath + " element in " + 
-	    xPathInfo.filename);
-	    const std::vector<std::pair<std::string, std::string>> attrString = attrStrings[i];
-	    utils::throwException(attrString.size() == 3, 
-	    "Expected three attributes (i.e., n, l, m quantum numbers) in " + xPathInfo.xpath + " element in " + xPathInfo.filename);
-	    utils::throwException(attrString[0].first=="n", 
-		"The first attribute for " + xPathInfo.xpath + " element in " + xPathInfo.filename + " must be \"n\""); 
-	    utils::throwException(attrString[1].first=="l", 
-		"The second attribute for " + xPathInfo.xpath + " element in " + xPathInfo.filename + " must be \"l\""); 
-	    utils::throwException(attrString[2].first=="m", 
-		"The third attribute for " + xPathInfo.xpath + " element in " + xPathInfo.filename + " must be \"m\"");
-	    std::vector<int> qNumbers(3);
-	    for(size_type j = 0; j < 3; ++j)
-	    {
-	      convSuccess = utils::stringOps::strToInt(attrString[j].second, qNumbers[j]);
-	      utils::throwException(convSuccess,
-                "Error while converting the " + std::to_string(j) + 
-		"-th quantum number in " + xPathInfo.xpath + 
-		" element in " + xPathInfo.filename + " to integer");
-	    } 
-	    d_qNumbersToRadialField[qNumbers] = vals;
-	    qNumbersSet.insert(qNumbers);
-	  }
-		
-	  utils::throwException(qNumbersSet.size() == N, 
-	    "Found repeated quantum numbers while processing the attributes of " + 
-	    xPathInfo.xpath + " element in " + xPathInfo.filename);
-
-	}
+//      void
+//	processSphericalDataFromXMLNodeData(std::map<std::vector<int>, std::vector<double>> & d_qNumbersToRadialField,
+//	    const std::vector<std::string> & nodeStrings,
+//	    const std::vector<std::vector<std::pair<std::string, std::string>>> & attrStrings,
+//	    const XPathInfo & xPathInfo,
+//	    const size_type numPoints)
+//	{
+//
+//	  const size_type N  = nodeStrings.size();
+//	  std::set<std::vector<int>> qNumbersSet;
+//	  bool convSuccess = false;
+//	  for(size_type i = 0; i < N; ++i)
+//	  {
+//	    std::vector<double> vals(0);
+//	    convSuccess = splitStringToDoubles(nodeStrings[0], vals, numPoints); 
+//      	    utils::throwException(convSuccess, 
+//	  	"Error while converting values in " + xPathInfo.xpath + " element in " + xPathInfo.filename + " to double");
+//	    utils::throwException(vals.size() == numPoints, 
+//	     "Mismatch in number of points specified and number of points "
+//	     "provided in " + xPathInfo.xpath + " element in " + 
+//	    xPathInfo.filename);
+//	    const std::vector<std::pair<std::string, std::string>> attrString = attrStrings[i];
+//	    utils::throwException(attrString.size() == 3, 
+//	    "Expected three attributes (i.e., n, l, m quantum numbers) in " + xPathInfo.xpath + " element in " + xPathInfo.filename);
+//	    utils::throwException(attrString[0].first=="n", 
+//		"The first attribute for " + xPathInfo.xpath + " element in " + xPathInfo.filename + " must be \"n\""); 
+//	    utils::throwException(attrString[1].first=="l", 
+//		"The second attribute for " + xPathInfo.xpath + " element in " + xPathInfo.filename + " must be \"l\""); 
+//	    utils::throwException(attrString[2].first=="m", 
+//		"The third attribute for " + xPathInfo.xpath + " element in " + xPathInfo.filename + " must be \"m\"");
+//	    std::vector<int> qNumbers(3);
+//	    for(size_type j = 0; j < 3; ++j)
+//	    {
+//	      convSuccess = utils::stringOps::strToInt(attrString[j].second, qNumbers[j]);
+//	      utils::throwException(convSuccess,
+//                "Error while converting the " + std::to_string(j) + 
+//		"-th quantum number in " + xPathInfo.xpath + 
+//		" element in " + xPathInfo.filename + " to integer");
+//	    } 
+//	    d_qNumbersToRadialField[qNumbers] = vals;
+//	    qNumbersSet.insert(qNumbers);
+//	  }
+//		
+//	  utils::throwException(qNumbersSet.size() == N, 
+//	    "Found repeated quantum numbers while processing the attributes of " + 
+//	    xPathInfo.xpath + " element in " + xPathInfo.filename);
+//
+//	}
       
       void
 	processSphericalDataFromXMLNodeData(std::vector<SphericalData> & sphericalDataVec,
@@ -341,37 +333,39 @@ namespace dftefe
 	      "Mismatch in number of \"values\" and \"cutoffInfo\" child "
 	      "elements found for element " + xPathInfo.xpath  + " in file "
 	      + xPathInfo.filename);
-	
+
 	  sphericalDataVec.resize(N);
+	
 	  std::set<std::vector<int>> qNumbersSet;
 	  bool convSuccess = false;
 	  for(size_type i = 0; i < N; ++i)
 	  {
-	    sphericalDataVec[i].radialPoints = radialPoints;
+	    SphericalData & sphericalData = sphericalDataVec[i];
+	    sphericalData.radialPoints = radialPoints;
 	    
 	    convSuccess = splitStringToDoubles(radialValueStrings[i], 
-		sphericalDataVec[i].radialValues, 
+		sphericalData.radialValues, 
 		numPoints); 
       	    utils::throwException(convSuccess, 
 	  	"Error while converting values in " + xPathInfo.xpath + " element in " + xPathInfo.filename + " to double");
-	    utils::throwException(sphericalDataVec[i].radialValues.size() == numPoints, 
+	    utils::throwException(sphericalData.radialValues.size() == numPoints, 
 	     "Mismatch in number of points specified and number of points "
 	     "provided in " + xPathInfo.xpath + " element in " + 
 	    xPathInfo.filename);
 
 	    convSuccess = splitStringToInts(qNumberStrings[i], 
-		sphericalDataVec[i].qNumbers, 3); 
+		sphericalData.qNumbers, 3); 
       	    utils::throwException(convSuccess, 
 	  	"Error while converting quantum numbers in " 
 		+ xPathInfo.xpath + " element in " + xPathInfo.filename + 
 		" to double");
-	    utils::throwException(sphericalDataVec[i].qNumbers.size() == 3, 
+	    utils::throwException(sphericalData.qNumbers.size() == 3, 
 	    "Expected three quantum number (i.e., n, l, m) in \"qNumbers\" "
 	    "child element in " + xPathInfo.xpath + " element in " + 
 	    xPathInfo.filename);
-	    int n = sphericalDataVec[i].qNumbers[0];
-	    int l = sphericalDataVec[i].qNumbers[1];
-	    int m = sphericalDataVec[i].qNumbers[2];
+	    int n = sphericalData.qNumbers[0];
+	    int l = sphericalData.qNumbers[1];
+	    int m = sphericalData.qNumbers[2];
 	    utils::throwException(n > 0, 
 		"Principal (n) quantum number less than 1 found in " + 
 		xPathInfo.xpath + " element in " + xPathInfo.filename);
@@ -383,7 +377,7 @@ namespace dftefe
 		"Magnetic quantum number (m) found outside of -l and +l "
 		"(l = angular quantum number) in " + xPathInfo.xpath + 
 		" element in " + xPathInfo.filename);
-	    qNumbersSet.insert(sphericalDataVec[i].qNumbers);
+	    qNumbersSet.insert(sphericalData.qNumbers);
 	   
 	    std::vector<double> cutoffInfo(0);
 	    convSuccess = splitStringToDoubles(cutOffInfoStrings[i], 
@@ -396,8 +390,8 @@ namespace dftefe
 	     "Expected two values (cutoff and smoothness factor) in " 
 	     " \"cutoffInfo\" child element in " + xPathInfo.xpath + 
 	     " element in " + xPathInfo.filename);
-	    sphericalDataVec[i].cutoff = cutoffInfo[0];
-	    sphericalDataVec[i].smoothness = cutoffInfo[1];
+	    sphericalData.cutoff = cutoffInfo[0];
+	    sphericalData.smoothness = cutoffInfo[1];
 	  }
 		
 	  utils::throwException(qNumbersSet.size() == N, 
@@ -405,10 +399,49 @@ namespace dftefe
 	    xPathInfo.xpath + " element in " + xPathInfo.filename);
 
 	}
+
     }
 
+    namespace {
 
-    AtomSphericalData::AtomSphericalData(const std::string filename):
+
+      std::string getXPath(const std::string & rootElementName,
+	  const std::string & ns,
+	  const std::string elementName)
+      {
+	return "/" + ns + ":" + rootElementName + "/" + ns + ":" + elementName;
+      }
+      
+      void getSphericalDataFromXMLNode(std::vector<SphericalData> & sphericalDataVec,
+	  const std::vector<double> & radialPoints,
+	  const AtomSphericalElectronicDataXMLLocal::XPathInfo & xPathInfo)
+      {
+	std::vector<std::string> radialValuesStrings(0);
+	std::vector<std::string> qNumbersStrings(0);
+	std::vector<std::string> cutOffInfoStrings(0);
+	AtomSphericalElectronicDataXMLLocal::readSphericalDataFromXMLNodeData(radialValuesStrings, qNumbersStrings, cutOffInfoStrings, xPathInfo);
+	AtomSphericalElectronicDataXMLLocal::processSphericalDataFromXMLNodeData(sphericalDataVec,
+	    radialValuesStrings,
+	    qNumbersStrings,
+	    cutOffInfoStrings,
+	    radialPoints,
+	    xPathInfo);
+      }
+
+      void storeQNumbersToDataIdMap(const std::vector<SphericalData> & sphericalDataVec,
+	  std::map<std::vector<int>, size_type> & qNumbersToDataIdMap)
+      {
+	size_type N = sphericalDataVec.size();
+	for(size_type i = 0; i < N; ++i)
+	{
+	  qNumbersToDataIdMap[sphericalDataVec[i].qNumbers] = i;
+	}
+      }
+
+
+    }
+
+    AtomSphericalElectronicData::AtomSphericalElectronicData(const std::string filename):
       d_filename(filename),
       d_charge(0.0),
       d_Z(0.0)
@@ -418,9 +451,9 @@ namespace dftefe
       std::string rootElementName = "atom";
       std::string ns = "dft-efe";
       std::string nsHRef = "http://www.dft-efe.com/dft-efe";
-      ptrToXmlDoc = AtomSphericalDataXMLLocal::getDoc(filename);
+      ptrToXmlDoc = AtomSphericalElectronicDataXMLLocal::getDoc(filename);
 
-      AtomSphericalDataXMLLocal::XPathInfo xPathInfo;
+      AtomSphericalElectronicDataXMLLocal::XPathInfo xPathInfo;
       xPathInfo.filename = filename;
       xPathInfo.doc = ptrToXmlDoc;
       xPathInfo.ns = ns;
@@ -429,10 +462,10 @@ namespace dftefe
       bool convSuccess = false;
       std::vector<std::string> nodeStrings(0);
       std::vector<std::vector<std::pair<std::string, std::string>>> attrStrings(0);
-      
+
       // get symbol
       xPathInfo.xpath = getXPath(rootElementName, ns, "symbol");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalElectronicDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
       utils::throwException(nodeStrings.size()==1, 
 	  "Found more than one " + xPathInfo.xpath  + " element in " + filename);
       // remove leading or trailing whitespace
@@ -440,7 +473,7 @@ namespace dftefe
 
       // get atomic number
       xPathInfo.xpath = getXPath(rootElementName, ns, "Z");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalElectronicDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
       utils::throwException(nodeStrings.size()==1, 
 	  "Found more than one " + xPathInfo.xpath  + " element in " + filename);
       // remove leading or trailing whitespace
@@ -451,7 +484,7 @@ namespace dftefe
 
       // get charge
       xPathInfo.xpath = getXPath(rootElementName, ns, "charge");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalElectronicDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
       utils::throwException(nodeStrings.size()==1, 
 	  "Found more than one " + xPathInfo.xpath  + " element in " + filename);
       // remove leading or trailing whitespace
@@ -462,7 +495,7 @@ namespace dftefe
 
       // get number of radial points 
       xPathInfo.xpath = getXPath(rootElementName, ns, "NR");;
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalElectronicDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
       utils::throwException(nodeStrings.size()==1, 
 	  "Found more than one " + xPathInfo.xpath  + " element in " + filename);
       // remove leading or trailing whitespace
@@ -477,34 +510,48 @@ namespace dftefe
 
       // get radial points
       xPathInfo.xpath = getXPath(rootElementName, ns, "r");;
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalElectronicDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
       utils::throwException(nodeStrings.size()==1, 
 	  "Found more than one " + xPathInfo.xpath  + " element in " + filename);
       d_radialPoints.resize(0); 
-      convSuccess = splitStringToDoubles(nodeStrings[0], d_radialPoints, d_numRadialPoints); 
+      convSuccess = AtomSphericalElectronicDataXMLLocal::splitStringToDoubles(nodeStrings[0], d_radialPoints, d_numRadialPoints); 
       utils::throwException(convSuccess, 
 	  "Error while converting " + xPathInfo.xpath + " element in " + filename + " to double");
       utils::throwException(d_radialPoints.size()==d_numRadialPoints,
 	  "Mismatch in number of radial points specified and the number of "
 	  " radial points provided in " + filename);
 
-      // get hartree values
-      xPathInfo.xpath = getXPath(rootElementName, ns, "hartree");
+      // get density values
+      xPathInfo.xpath = getXPath(rootElementName, ns, "density");
+      getSphericalDataFromXMLNode(d_densityData, d_radialPoints, xPathInfo);
+      storeQNumbersToDataIdMap(d_densityData, d_qNumbersToDensityDataIdMap);
 
-      std::vector<std::string> radialValueStrings(0);
-      std::vector<std::string> qNumberStrings(0);
-      std::vector<std::string> cutOffInfoStrings(0);
-      AtomSphericalDataXMLLocal::getSphericalDataFromXMLNodeData(radialValueStrings,
-              qNumberStrings,
-              cutOffInfoStrings,
-              xPathInfo);
-      //AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings, attrStrings);
-      AtomSphericalDataXMLLocal::processSphericalDataFromXMLNodeData(d_hartree,
-	    radialValueStrings,
-	    qNumberStrings,
-	    cutOffInfoStrings,
-	    d_radialPoints,
-	    xPathInfo);
+      // get Hartree potential values
+      xPathInfo.xpath = getXPath(rootElementName, ns, "vhartree");
+      getSphericalDataFromXMLNode(d_vHartreeData, d_radialPoints, xPathInfo);
+      storeQNumbersToDataIdMap(d_vHartreeData, d_qNumbersToVHartreeDataIdMap);
+      
+      // get nuclear potential values
+      xPathInfo.xpath = getXPath(rootElementName, ns, "vnuclear");
+      getSphericalDataFromXMLNode(d_vNuclearData, d_radialPoints, xPathInfo);
+      storeQNumbersToDataIdMap(d_vNuclearData, d_qNumbersToVNuclearDataIdMap);
+      utils::throwException(d_vHartreeData.size() == d_vNuclearData.size(),
+	  "Mismatch in number of total hartree and nuclear potential found in file: " 
+	  + d_filename);
+      
+      // get total potential values (total potential = hartree potential + nuclear potential)
+      xPathInfo.xpath = getXPath(rootElementName, ns, "vtotal");
+      getSphericalDataFromXMLNode(d_vTotalData, d_radialPoints, xPathInfo);
+      storeQNumbersToDataIdMap(d_vTotalData, d_qNumbersToVTotalDataIdMap);
+    
+      utils::throwException(d_vTotalData.size() == d_vNuclearData.size(),
+	  "Mismatch in number of total potential and nuclear potential found in file: " 
+	  + d_filename);
+
+      // get orbitals
+      xPathInfo.xpath = getXPath(rootElementName, ns, "orbital");
+      getSphericalDataFromXMLNode(d_orbitalData, d_radialPoints, xPathInfo);
+      storeQNumbersToDataIdMap(d_orbitalData, d_qNumbersToOrbitalDataIdMap);
 
       xmlFreeDoc(ptrToXmlDoc);
       xmlCleanupParser();
@@ -514,34 +561,58 @@ namespace dftefe
     }
 
     double
-    AtomSphericalData::getAtomicNumber() const
-    {
-      return d_Z;
-    }
+      AtomSphericalElectronicData::getAtomicNumber() const
+      {
+	return d_Z;
+      }
 
     double
-    AtomSphericalData::getCharge() const
-    {
-      return d_charge;
-    }
-    
+      AtomSphericalElectronicData::getCharge() const
+      {
+	return d_charge;
+      }
+
     std::string
-    AtomSphericalData::getSymbol() const
-    {
-      return d_symbol;
-    }
-	  
+      AtomSphericalElectronicData::getSymbol() const
+      {
+	return d_symbol;
+      }
+
     std::vector<double> 
-    AtomSphericalData::getRadialPoints() const
-    {
-      return d_radialPoints;
-    }
+      AtomSphericalElectronicData::getRadialPoints() const
+      {
+	return d_radialPoints;
+      }
+    
+    const std::vector<SphericalData> & 
+      AtomSphericalElectronicData::getDensityData() const
+      {
+	return d_densityData;
+      }
 
     const std::vector<SphericalData> & 
-    AtomSphericalData::getHartreeData() const
-    {
-      return d_hartree;
-    }
+      AtomSphericalElectronicData::getVHartreeData() const
+      {
+	return d_vHartreeData;
+      }
+    
+    const std::vector<SphericalData> & 
+      AtomSphericalElectronicData::getVNuclearData() const
+      {
+	return d_vNuclearData;
+      }
+    
+    const std::vector<SphericalData> & 
+      AtomSphericalElectronicData::getVTotalData() const
+      {
+	return d_vTotalData;
+      }
+    
+    const std::vector<SphericalData> & 
+      AtomSphericalElectronicData::getOrbitalData() const
+      {
+	return d_orbitalData;
+      }
 
   } // end of namespace atoms
 } // end of namespace dftefe
