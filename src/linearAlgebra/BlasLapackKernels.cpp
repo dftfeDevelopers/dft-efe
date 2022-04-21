@@ -64,7 +64,7 @@ namespace dftefe
 
         for (size_type i = 0; i < vecSize; ++i)
           for (size_type j = 0; j < numVec; ++j)
-            nrms2[i] += utils::absSq(multiVecData[i * numVec + j]);
+            nrms2[j] += utils::absSq(multiVecData[i * numVec + j]);
 
         for (size_type i = 0; i < numVec; ++i)
           nrms2[i] = std::sqrt(nrms2[i]);

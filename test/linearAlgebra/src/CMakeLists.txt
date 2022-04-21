@@ -83,6 +83,9 @@ add_executable(TestSerialMultiVectorDoubleAddHost TestSerialMultiVectorDoubleAdd
 target_link_libraries(TestSerialMultiVectorDoubleAddHost PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialMultiVectorDoubleAddHost PROPERTIES OUTPUT_NAME "TestSerialMultiVectorDoubleAddHost" SUFFIX ".x")
 
+add_executable(TestSerialMultiVectorDoubleNormHost TestSerialMultiVectorDoubleNormHost.cpp)
+target_link_libraries(TestSerialMultiVectorDoubleNormHost PUBLIC dft-efe-linalg)
+set_target_properties(TestSerialMultiVectorDoubleNormHost PROPERTIES OUTPUT_NAME "TestSerialMultiVectorDoubleNormHost" SUFFIX ".x")
 
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
