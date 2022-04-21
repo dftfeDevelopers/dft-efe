@@ -20,46 +20,38 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
-#include<utils/TypeConfig.h>
+
+#ifndef dftefePeriodicTableManager_h
+#define dftefePeriodicTableManager_h
+
+#include <utils/TypeConfig.h>
+#include <map>
+#include <string>
 namespace dftefe
 {
-  namespace utils
+  namespace utils 
   {
-    namespace mathFunctions
-    {
-      int
-      intPow(int base, unsigned int e)
-      {
-        int result = 1;
-        for (;;)
-          {
-            if (e & 1)
-              result *= base;
-            e >>= 1;
-            if (!e)
-              break;
-            base *= base;
-          }
-        return result;
-      }
 
-      size_type
-      sizeTypePow(size_type base, size_type e)
-      {
-        size_type result = 1;
-        for (;;)
-          {
-            if (e & 1)
-              result *= base;
-            e >>= 1;
-            if (!e)
-              break;
-            base *= base;
-          }
-        return result;
-      }
-    } // namespace mathFunctions
-  }   // namespace utils
-} // namespace dftefe
+  /**
+   * @brief Provides a map from Atomic Number to Atomic Symbol
+   */
+ 
+   class PeriodicTableManager {
+
+    public:
+
+    /**
+     * @brief Constructor 
+     */
+    PeriodicTableManager();  
+
+    private:
+     static std::map<std::string, double> d_symbolToAtomicNumberMap;
+     static std::map<double, std::string> d_atomicNumberToSymbolMap;
+  };   
+
+  } // end of namespace utils
+} // end of namespace dftefe
+#endif // dftefePeriodicTableManager_h

@@ -20,46 +20,25 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
-#include<utils/TypeConfig.h>
-namespace dftefe
-{
-  namespace utils
-  {
-    namespace mathFunctions
-    {
-      int
-      intPow(int base, unsigned int e)
-      {
-        int result = 1;
-        for (;;)
-          {
-            if (e & 1)
-              result *= base;
-            e >>= 1;
-            if (!e)
-              break;
-            base *= base;
-          }
-        return result;
-      }
 
-      size_type
-      sizeTypePow(size_type base, size_type e)
-      {
-        size_type result = 1;
-        for (;;)
-          {
-            if (e & 1)
-              result *= base;
-            e >>= 1;
-            if (!e)
-              break;
-            base *= base;
-          }
-        return result;
-      }
-    } // namespace mathFunctions
-  }   // namespace utils
-} // namespace dftefe
+#ifndef dftefeStringOperations_h
+#define dftefeStringOperations_h
+
+namespace dftefe {
+  namespace utils {
+    namespace stringOps {
+      
+      bool strToInt(const std::string s, int & i);
+      
+      bool strToDouble(const std::string s, double & x);
+      
+      void trim(std::string & s);
+      
+      std::string trimCopy(const std::string & s);
+
+    }// end of namespace stringOps
+  }// end of namespace utils
+}// end of namespace dftefe
+#endif //dftefeStringOperations_h
