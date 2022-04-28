@@ -29,7 +29,7 @@ namespace dftefe
     {
       isInitialized = true;
       isFinalized   = false;
-      for (unsigned int iCell = 0; iCell < nLocallyActiveCells(); iCell++)
+      for (unsigned int iCell = 0; iCell < nLocallyOwnedCells(); iCell++)
         {
           // delete
           d_triaVectorCell[iCell].reset();
@@ -46,7 +46,7 @@ namespace dftefe
       isInitialized      = false;
       isFinalized        = true;
       unsigned int iCell = 0;
-      d_triaVectorCell.resize(nLocallyActiveCells());
+      d_triaVectorCell.resize(nLocallyOwnedCells());
 
       for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_levels();
            iLevel++)
@@ -61,7 +61,7 @@ namespace dftefe
         }
 
       utils::throwException(
-        iCell == nLocallyActiveCells(),
+        iCell == nLocallyOwnedCells(),
         "Number of active cells is not matching in Finalize."
         "Kneel at the altar of Lord Vishal and"
         "he may grant your wish to rectify this error.");
@@ -218,22 +218,25 @@ namespace dftefe
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiParallel<dim>::nLocallyActiveCells() const
+    TriangulationDealiiParallel<dim>::nLocallyOwnedCells() const
     {
+      // TODO check if this is correct
       return d_triangulationDealii.n_active_cells();
     }
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiParallel<dim>::nGloballyActiveCells() const
+    TriangulationDealiiParallel<dim>::nGlobalCells() const
     {
+      // TODO check if this is correct
       return d_triangulationDealii.n_global_active_cells();
     }
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiParallel<dim>::nCells() const
+    TriangulationDealiiParallel<dim>::nLocalCells() const
     {
+      // TODO check if this is correct
       return d_triangulationDealii.n_cells();
     }
 

@@ -87,10 +87,10 @@ namespace dftefe
 	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 	  
 	  const SizeTypeVector &
-	    getLocallyActiveCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+	    getLocallyOwnedCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 
 	  const SizeTypeVector &
-	    getLocallyActiveCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
       };
 
   } // end of namespace basis
