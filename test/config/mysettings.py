@@ -63,7 +63,7 @@ site_configuration = {
                 {
                     'name': 'interactive',
                     'scheduler': 'local',
-                    'launcher': 'local',
+                    'launcher': 'srun',
                     'environs': ['builtin'],
                     'resources': [
                         {
@@ -75,7 +75,7 @@ site_configuration = {
                 {
                     'name': 'interactive-gpu',
                     'scheduler': 'local',
-                    'launcher': 'local',
+                    'launcher': 'srun',
                     'environs': ['builtin'],
                     'resources': [
                         {
