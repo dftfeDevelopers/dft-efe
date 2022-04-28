@@ -23,10 +23,10 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeFEBasisPartitioner_h
-#define dftefeFEBasisPartitioner_h
+#ifndef dftefeFEBasisHandler_h
+#define dftefeFEBasisHandler_h
 
-#include <basis/BasisPartitioner.h>
+#include <basis/BasisHandler.h>
 namespace dftefe
 {
   namespace basis
@@ -37,62 +37,75 @@ namespace dftefe
      * of a finite element basis across multiple processors
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
-      class FEBasisPartitioner : public BasisPartitioner<memorySpace>
+      class FEBasisHandler : public BasisHandler<memorySpace>
     {
 
 	//
 	// typedefs
 	//
 	public:
-	  using SizeTypeVector = BasisPartitioner<memorySpace>::SizeTypeVector;
+	  using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
 	  using GlobalSizeTypeVector = BasisParitioner<memorySpace>::SizeTypeVector;
 
 	public:
-	  ~BasisPartitioner() = default;
+	  ~FEBasisHandler() = default;
 
+	  virtual
 	  std::pair<global_size_type, global_size_type>
 	    getLocallyOwnedRange(const std::string constraintsName) const  = 0;
 
+	  virtual
 	  const GlobalSizeTypeVector & 
 	    getGhostIndices(const std::string constraintsName) const = 0;
 
+	  virtual
 	  size_type
 	    nLocalSize(const std::string constraintsName) const  = 0;
 
+	  virtual
 	  size_type
 	    nLocallyOwnedSize(const std::string constraintsName) const  = 0;
 
+	  virtual
 	  size_type
 	    nGhostSize(const std::string constraintsName) const  = 0;
 
+	  virtual
 	  bool
-	    inLocallyOwnedRange(const global_size_type, const std::string constraintsName) const = 0;
+	    inLocallyOwnedRange(const global_size_type globalId, const std::string constraintsName) const = 0;
 
+	  virtual
 	  bool
-	    isGhostEntry(const global_size_type, const std::string constraintsName) const = 0;
+	    isGhostEntry(const global_size_type ghostId, const std::string constraintsName) const = 0;
 
+	  virtual
 	  size_type
-	    globalToLocal(const global_size_type, const std::string constraintsName) const = 0;
+	    globalToLocalIndex(const global_size_type globalId, const std::string constraintsName) const = 0;
 
+	  virtual
 	  global_size_type
-	    localToGlobal(const size_type, const std::string constraintsName) const = 0;
+	    localToGlobalIndex(const size_type localId, const std::string constraintsName) const = 0;
 
 	  //
 	  // FE specific functions
 	  //
-	  const SizeTypeVector &
+	  virtual
+	  const GlobalSizeTypeVector &
 	    getLocallyOwnedCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 
+	  virtual
 	  const SizeTypeVector &
 	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 	  
-	  const SizeTypeVector &
-	    getLocallyActiveCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+	  virtual
+	  const GlobalSizeTypeVector &
+	    getLocalCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 
+	  virtual
 	  const SizeTypeVector &
-	    getLocallyActiveCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+	    getLocalCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
       };
 
   } // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeFEBasisPartitioner_h
+#endif // dftefeFEBasisHandler_h

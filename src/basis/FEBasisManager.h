@@ -66,7 +66,7 @@ namespace dftefe
       virtual size_type
       nLocallyActiveCells() const = 0;
       virtual size_type
-      nOwnedCells() const = 0;
+      nLocallyOwnedCells() const = 0;
       virtual size_type
       nGloballyActiveCells() const = 0;
       virtual size_type
@@ -75,6 +75,10 @@ namespace dftefe
       nCellDofs(size_type cellId) const = 0;
       virtual bool
       isHPRefined() const = 0;
+      
+      std::pair<global_size_type, global_size_type>
+	getLocallyOwnedRange() const = 0;
+      
       virtual size_type
       nLocalNodes() const = 0;
       virtual global_size_type

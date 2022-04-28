@@ -64,48 +64,72 @@ namespace dftefe
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
              const size_type                          feOrder) override;
+      
       size_type
       nLocallyActiveCells() const override;
+      
       size_type
-      nOwnedCells() const override;
+      nLocallyOwnedCells() const override;
+      
       size_type
       nGloballyActiveCells() const override;
+      
       size_type
       getFEOrder(size_type cellId) const;
+      
       size_type
       nCellDofs(size_type cellId) const;
+      
       bool
       isHPRefined() const;
+      
       size_type
       nLocalNodes() const;
+      
+      std::pair<global_size_type, global_size_type>
+	getLocallyOwnedRange() const;
+      
       global_size_type
       nGlobalNodes() const;
+      
       std::vector<size_type>
       getLocalNodeIds(size_type cellId) const;
+      
       std::vector<size_type>
       getGlobalNodeIds() const;
+      
       void
       getCellDofsGlobalIds(
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const;
+      
       std::vector<size_type>
       getBoundaryIds() const;
+      
       FECellIterator
       beginLocallyOwnedCells();
+      
       FECellIterator
       endLocallyOwnedCells();
+      
       const_FECellIterator
       beginLocallyOwnedCells() const;
+      
       const_FECellIterator
       endLocallyOwnedCells() const;
+      
       FECellIterator
       beginLocallyActiveCells();
+      
       FECellIterator
       endLocallyActiveCells();
+      
       const_FECellIterator
       beginLocallyActiveCells() const;
+      
       const_FECellIterator
       endLocallyActiveCells() const;
+      
       unsigned int
       getDim() const;
 

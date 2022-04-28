@@ -158,7 +158,7 @@ namespace dftefe
 
     template <size_type dim>
     size_type
-    FEBasisManagerDealii<dim>::nOwnedCells() const
+    FEBasisManagerDealii<dim>::nLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.size();
     }
