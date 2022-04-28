@@ -64,11 +64,11 @@ namespace dftefe
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
              const size_type                          feOrder) = 0;
       virtual size_type
-      nLocallyActiveCells() const = 0;
+      nLocalCells() const = 0;
       virtual size_type
       nLocallyOwnedCells() const = 0;
       virtual size_type
-      nGloballyActiveCells() const = 0;
+      nGlobalCells() const = 0;
       virtual size_type
       getFEOrder(size_type cellId) const = 0;
       virtual size_type
@@ -102,13 +102,13 @@ namespace dftefe
       virtual const_FECellIterator
       endLocallyOwnedCells() const = 0;
       virtual FECellIterator
-      beginLocallyActiveCells() = 0;
+      beginLocalCells() = 0;
       virtual FECellIterator
-      endLocallyActiveCells() = 0;
+      endLocalCells() = 0;
       virtual const_FECellIterator
-      beginLocallyActiveCells() const = 0;
+      beginLocalCells() const = 0;
       virtual const_FECellIterator
-      endLocallyActiveCells() const = 0;
+      endLocalCells() const = 0;
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

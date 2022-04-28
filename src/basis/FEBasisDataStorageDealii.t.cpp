@@ -114,7 +114,7 @@ namespace dftefe
         dealii::FEValues<dim> dealiiFEValues(feBM->getReferenceFE(cellId),
                                              dealiiQuadratureRule,
                                              dealiiUpdateFlags);
-        const size_type numLocallyOwnedCells = feBM->nLocallyActiveCells();
+        const size_type numLocallyOwnedCells = feBM->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBM->nCellDofs(cellId);
         const size_type numQuadPointsPerCell =
@@ -370,7 +370,7 @@ namespace dftefe
         // this function
         const size_type cellId               = 0;
         const size_type feOrder              = feBM->getFEOrder(cellId);
-        const size_type numLocallyOwnedCells = feBM->nLocallyActiveCells();
+        const size_type numLocallyOwnedCells = feBM->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBM->nCellDofs(cellId);
 
@@ -642,7 +642,7 @@ namespace dftefe
       const size_type numQuadRuleType = quadratureRuleAttribuesVec.size();
       std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler =
         d_feBM->getDoFHandler();
-      const size_type numLocallyOwnedCells = d_feBM->nLocallyActiveCells();
+      const size_type numLocallyOwnedCells = d_feBM->nLocallyOwnedCells();
       d_dofsInCell.resize(numLocallyOwnedCells, 0);
       d_cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
       size_type cumulativeBasisOverlapId = 0;

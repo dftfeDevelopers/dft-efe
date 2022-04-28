@@ -97,13 +97,12 @@ namespace dftefe
 	  const SizeTypeVector &
 	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 	  
-	  virtual
-	  const GlobalSizeTypeVector &
-	    getLocalCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+	  const SizeTypeVector &
+	    getLocallyOwnedCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
 
 	  virtual
 	  const SizeTypeVector &
-	    getLocalCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
       };
 
   } // end of namespace basis

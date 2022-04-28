@@ -66,14 +66,12 @@ namespace dftefe
              const size_type                          feOrder) override;
       
       size_type
-      nLocallyActiveCells() const override;
-      
+      nLocalCells() const override;
       size_type
       nLocallyOwnedCells() const override;
       
       size_type
-      nGloballyActiveCells() const override;
-      
+      nGlobalCells() const override;
       size_type
       getFEOrder(size_type cellId) const;
       
@@ -119,17 +117,13 @@ namespace dftefe
       endLocallyOwnedCells() const;
       
       FECellIterator
-      beginLocallyActiveCells();
-      
+      beginLocalCells();
       FECellIterator
-      endLocallyActiveCells();
-      
+      endLocalCells();
       const_FECellIterator
-      beginLocallyActiveCells() const;
-      
+      beginLocalCells() const;
       const_FECellIterator
-      endLocallyActiveCells() const;
-      
+      endLocalCells() const;
       unsigned int
       getDim() const;
 
@@ -146,7 +140,7 @@ namespace dftefe
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
       bool                                     d_isHPRefined;
-      std::vector<std::shared_ptr<FECellBase>> d_locallyActiveCells;
+      std::vector<std::shared_ptr<FECellBase>> d_localCells;
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
 
     }; // end of FEBasisManagerDealii
