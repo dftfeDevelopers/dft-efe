@@ -60,9 +60,10 @@ namespace dftefe
                   bool &                 found) const;
 
     private:
-      std::set<T> d_set;
+     
+      /// Store the number of contiguous ranges in the input set of indices
       size_type                  d_numContiguousRanges;
-
+      
       /*
        * Vector of size 2*(d_numContiguousRanges in d_set).
        * The entries are arranged as:
