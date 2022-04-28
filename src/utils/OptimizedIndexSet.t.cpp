@@ -23,23 +23,27 @@
  * @author Bikash Kanungo
  */
 
-#include <utils/OptimizedIndexSet.h>
 #include <iterator>
 #include <algorithm>
+#include <type_traits>
+#include <utils/Exceptions.h>
 namespace dftefe
 {
   namespace utils
   {
-    OptimizedIndexSet::OptimizedIndexSet(
-      const std::set<global_size_type> &inputSet)
-      : d_set(inputSet)
-      , d_contiguousRanges(0)
+    template<typename T>
+    OptimizedIndexSet<T>::OptimizedIndexSet(
+      const std::set<T> &inputSet)
+      d_contiguousRanges(0)
     {
-      std::set<global_size_type>::const_iterator itLastRange = d_set.begin();
-      std::set<global_size_type>::const_iterator itPrev      = d_set.begin();
-      std::set<global_size_type>::const_iterator it          = itPrev;
+      bool isValid = std::is_base_of<size_type,T>::value || std::is_base_of<global_size_type,T>::value;
+      utils::throwException<utils::InvalidArgument>(isValid, 
+	  "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int."); 
+      std::set<T>::const_iterator itLastRange = inputSet.begin();
+      std::set<T>::const_iterator itPrev      = inputSet.begin();
+      std::set<T>::const_iterator it          = itPrev;
       it++;
-      for (; it != d_set.end(); ++it)
+      for (; it != inputSet.end(); ++it)
         {
           bool isContiguous = ((*it - 1) == *(itPrev));
           if (!isContiguous)
@@ -65,7 +69,8 @@ namespace dftefe
     }
 
     void
-    OptimizedIndexSet::getPosition(const global_size_type index,
+    template<typename T>
+    OptimizedIndexSet<T>::getPosition(const T & index,
                                    size_type &            pos,
                                    bool &                 found) const
     {
@@ -78,9 +83,9 @@ namespace dftefe
        *    upVal. The complexity of finding it is
        *    O(log(size of d_contiguousRanges))
        * 2. Since d_contiguousRanges stores pairs of startId and endId
-       *    (endId not inclusive) of contiguous ranges in d_set,
+       *    (endId not inclusive) of contiguous ranges in inputSet,
        *    any index for which upPos is even (i.e., it corresponds to a
-       * startId) cannot belong to d_set. Why? Consider two consequtive ranges
+       * startId) cannot belong to inputSet. Why? Consider two consequtive ranges
        * [k1,k2) and [k3,k4) where k1 < k2 < k3 < k4. If upVal for index
        * corresponds to k3 (i.e., startId of a range), then (a) index does not
        * lie in the [k3,k4) as index < upVal (=k3). (b) index cannot lie in
@@ -88,8 +93,8 @@ namespace dftefe
        * k3)
        *  3. If upPos is odd (i.e, it corresponds to an endId), we find the
        * relative position of index in that range. Subsequently, we determine
-       * the global position of index in d_set by adding the relative position
-       * to the number of entries in d_set prior to the range where index lies
+       * the global position of index in inputSet by adding the relative position
+       * to the number of entries in inputSet prior to the range where index lies
        */
 
       auto      up    = std::upper_bound(d_contiguousRanges.begin(),

@@ -43,20 +43,24 @@ namespace dftefe
      * That is, if the ratio of number of contiguous ranges to the size of index
      * set exceeds numRangesToSetSizeTol, it defaults to the behavior of STL
      * set. The default value for numRangesToSetSizeTol is 0.1
+     *
+     * @tparam ValueType The data type of the indices (e.g., unsigned int, unsigned long int)
      */
+   
+    template<typename T>
     class OptimizedIndexSet
     {
     public:
-      OptimizedIndexSet(const std::set<global_size_type> &inputSet);
+      OptimizedIndexSet(const std::set<T> &inputSet);
       ~OptimizedIndexSet() = default;
 
       void
-      getPosition(const global_size_type index,
+      getPosition(const T & index,
                   size_type &            pos,
                   bool &                 found) const;
 
     private:
-      std::set<global_size_type> d_set;
+      std::set<T> d_set;
       size_type                  d_numContiguousRanges;
 
       /*
@@ -66,7 +70,7 @@ namespace dftefe
        * range2 startId> <continguous range2 endId> ... NOTE: The endId is one
        * past the lastId in the continguous range
        */
-      std::vector<global_size_type> d_contiguousRanges;
+      std::vector<T> d_contiguousRanges;
 
       /// Vector of size d_numContiguousRanges which stores the accumulated
       /// number of elements in d_set prior to the i-th contiguous range
@@ -76,5 +80,5 @@ namespace dftefe
   } // end of namespace utils
 
 } // end of namespace dftefe
-
+#include <utils/OptimizedIndexSet.t.cpp>
 #endif // dftefeOptimizedSet_h
