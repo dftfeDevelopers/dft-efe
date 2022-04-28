@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Sambit Das
  */
 #include <iomanip>
 #include <algorithm>
@@ -77,7 +77,7 @@ main()
 
   std::unique_ptr<MemoryStorageDoubleDevice> memStorage2 
      = std::make_unique<MemoryStorageDoubleDevice>(vSize);
-  memStorage2->copyFrom<Device>(dVecStd2.data());
+  memStorage2->copyFrom<Host>(dVecStd2.data());
   std::shared_ptr<VectorDoubleDevice> dVec2
     = std::make_shared<SerialVectorDoubleDevice>(vSize, 0,queue);
   dVec2->setStorage(memStorage2);
@@ -86,17 +86,17 @@ main()
     = std::make_shared<SerialVectorDoubleDevice>(vSize, 0,queue);
   linearAlgebra::add<double,Device>(1.0, *dVec1, 1.0, *dVec2, *dVec3);
   const MemoryStorageDoubleDevice & dVec3Storage = dVec3->getValues();
-  std::vector<double> dVec3DeviceCopy(vSize);
-  dVec3Storage.copyTo<Host>(dVec3DeviceCopy.data()); 
+  std::vector<double> dVec3HostCopy(vSize);
+  dVec3Storage.copyTo<Host>(dVec3HostCopy.data()); 
 
   for(dftefe::size_type i = 0; i < vSize; ++i)
   {
-    if(std::fabs(dVecStd3[i]-dVec3DeviceCopy[i]) > tol)
+    if(std::fabs(dVecStd3[i]-dVec3HostCopy[i]) > tol)
     { 
       std::string msg = "At index " + std::to_string(i) + 
 	" mismatch of entries after adding two vectors norm of std::vector and dftefe::linearAlgebra::SerialVector. "
 	"std::vector value: " + std::to_string(dVecStd3[i]) + 
-	" dftefe::linearAlgebra::SerialVector values: " + std::to_string(dVec3DeviceCopy[i]);
+	" dftefe::linearAlgebra::SerialVector values: " + std::to_string(dVec3HostCopy[i]);
       throw std::runtime_error(msg);
     }
   }
