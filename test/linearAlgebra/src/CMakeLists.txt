@@ -103,6 +103,13 @@ add_executable(TestSerialDenseMatrixDoubleInPlaceSubtractHost TestSerialDenseMat
 target_link_libraries(TestSerialDenseMatrixDoubleInPlaceSubtractHost PUBLIC dft-efe-linalg)
 set_target_properties(TestSerialDenseMatrixDoubleInPlaceSubtractHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
+if (ENABLE_CUDA)
+  add_executable(TestSerialVectorDoubleAddDevice TestSerialVectorDoubleAddDevice.cpp)
+  target_link_libraries(TestSerialVectorDoubleAddDevice PUBLIC dft-efe-linalg)
+  set_target_properties(TestSerialVectorDoubleAddDevice PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleAddDevice" SUFFIX ".x")
+endif()
+
+
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
 #target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)

@@ -70,6 +70,14 @@ site_configuration = {
                             'name': 'cpu',
                             'options': ['']
                         },
+                    ]
+                },
+                {
+                    'name': 'interactive-gpu',
+                    'scheduler': 'local',
+                    'launcher': 'local',
+                    'environs': ['builtin'],
+                    'resources': [
                         {
                             'name': 'gpu',
                             'options': ['']
