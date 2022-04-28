@@ -34,6 +34,7 @@
 #include <basis/BasisManager.h>
 #include <basis/FEBasisManagerDealii.h>
 #include <basis/Constraints.h>
+#include <utils/MPIPatternP2P.h>
 #include <memory>
 namespace dftefe
 {
@@ -53,15 +54,15 @@ namespace dftefe
 	//
 	public:
 	  using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
-	  using GlobalSizeTypeVector = BasisParitioner<memorySpace>::SizeTypeVector;
+	  using GlobalSizeTypeVector = BasisHandler<memorySpace>::GlobalSizeTypeVector;
 
 	public:
 #ifdef DFTEFE_WITH_MPI
-	  FEBasisHandlerDealii(const BasisManager & basisManager,
-	      const std::map<std::string, Constraints> & constraintsMap,
+	  FEBasisHandlerDealii(std::shared_ptr<const BasisManager> basisManager,
+	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap,
               const MPI_Comm &                                    mpiComm);
-	  reinit(const BasisManager & basisManager,
-	      const std::map<std::string, Constraints> & constraintsMap,
+	  reinit(std::shared_ptr<const BasisManager> basisManager,
+	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap,
               const MPI_Comm &                                    mpiComm);
 #else
 	  FEBasisHandlerDealii(std::shared_ptr<const BasisManager> basisManager,
@@ -127,12 +128,9 @@ namespace dftefe
 	  GlobalSizeTypeVector d_locallyOwnedCellGlobalIndices;
 
 	  //constraints dependent data
-	  std::map<std::string, GlobalSizeTypeVector> d_ghostIndices;
-	  std::map<std::string, std::shared_ptr<utils::MPICommunicatorP2P<ValueType, memorySpace>> d_mpiCommunicatorP2P;
-	  std::map<std::string, SizeTypeVector> d_locallyOwnedCellLocalIndicesMap;
-
-	  // dealii specific data
-          std::shared_ptr<dealii::MatrixFree<dim, ValueType>> d_dealiiMatrixFree;
+	  std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>> d_ghostIndicesMap;
+	  std::map<std::string, std::shared_ptr<utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2PMap;
+	  std::map<std::string, std::shared_ptr<SizeTypeVector>> d_locallyOwnedCellLocalIndicesMap;
     };
 
   } // end of namespace basis

@@ -23,6 +23,10 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 #include<utils/Exceptions.h>
+#include <deal.II/base/quadrature.h>
+#include <deal.II/base/quadrature_lib.h>
+#include <deal.II/fe/fe_values.h>
+#include <deal.II/base/partitioner.h>
 namespace dftefe 
 {
 
@@ -47,15 +51,17 @@ namespace dftefe
 	    d_feBMDealii = std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(basisManager);
 	    utils::throwException(d_feBMDealii != nullptr, 
 		"Error in casting the input basis manager in FEBasisHandlerDealii to FEBasisParitionerDealii");
+	    const size_type numConstraints = constraintsMap.size();
 	    for(auto it = constraintsMap.begin(), it != constraintsMap.end(); ++it)
 	    {
 	      std::string constraintsName = it->first;
-	     std::shared_ptr<const FEBasisConstraintsDealii<dim, ValueType>> feBasisConstraintsDealii = 
-	     std::dynamic_pointer_cast<const FEBasisConstraintsDealii<dim, ValueType>>(it->second);
-	     utils::throwException(feBasisConstraintsDealii != nullptr,
-		 "Error in casting the input constraints to FEBasisConstraintsDealii in FEBasisHandlerDealii");
-	     d_feConstraintsDealiiMap[constraintsName] = feBasisConstraintsDealii;
+	      std::shared_ptr<const FEBasisConstraintsDealii<dim, ValueType>> feBasisConstraintsDealii = 
+		std::dynamic_pointer_cast<const FEBasisConstraintsDealii<dim, ValueType>>(it->second);
+	      utils::throwException(feBasisConstraintsDealii != nullptr,
+		  "Error in casting the input constraints to FEBasisConstraintsDealii in FEBasisHandlerDealii");
+	      d_feConstraintsDealiiMap[constraintsName] = feBasisConstraintsDealii;
 	    }
+
 	    d_locallyOwnedRange	= d_feBMDealii->getLocallyOwnedRange();
 
 	    size_type numLocallyOwnedCells = d_feBMDealii->nLocallyOwnedCells();
@@ -76,31 +82,120 @@ namespace dftefe
 		locallyOwnedCellStartAndEndIdsTmp[2*iCell+1] = locallyOwnedCellStartAndEndIdsTmp[2*iCell] + numCellDofs; 
 	      }
 	    }
+	    
+	    d_locallyOwnedCellStartAndEndIds.resize(2*numLocallyOwnedCells);
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+                  2*numLocallyOwnedCells,
+                  d_locallyOwnedCellStartAndEndIds.data(),
+                  locallyOwnedCellStartAndEndIdsTmp.begin());
 
+	    
 	    std::vector<global_size_type> locallyOwnedCellGlobalIndicesTmp(cumulativeCellDofs,0);
 	    for(size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
 	    {
 	      const size_type numCellDofs = d_feBMDealii->nCellDofs(iCell);
 	      locallyOwnedCellGlobalIndicesTmp
-	      std::vector<global_size_type> cellGlobalIds(numCellDofs);
+		std::vector<global_size_type> cellGlobalIds(numCellDofs);
 	      d_feBMDealii->getCellDofsGlobalIds(iCell, cellGlobalIds);
 	      std::copy(cellGlobalIds.begin(), cellGlobalIds.end(),
 		  locallyOwnedCellGlobalIndicesTmp.begin()+locallyOwnedCellStartAndEndIdsTmp[2*iCell]);
 	    }
+
+	    //
+	    // NOTE: Since our purpose is to create the dealii MatrixFree object 
+	    // only to access the partitioning of DoFs for each constraint 
+	    // (i.e., the ghost indices for each constraint), we need not create
+	    // the MatrixFree object with its full glory (i.e., with all the relevant
+	    // quadrature rule and with all the relevant update flags). Instead for 
+	    // cheap construction of the MatrixFree object, we can just create it 
+	    // the MatrixFree object for a dummy quadrature rule
+	    // and with default update flags
+	    //
+	    typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
+	    dealiiAdditionalData.tasks_parallel_scheme =
+	      dealii::MatrixFree<dim>::AdditionalData::partition_partition;
+	    dealii::UpdateFlags dealiiUpdateFlags = dealii::update_default;
+	    dealiiAdditionalData.mapping_update_flags = dealiiUpdateFlags;
+
+	    std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler = d_feBMDealii->getDoFHandler();
+	    std::vector<const dealii::DoFHandler<dim> *> dofHandlerVec(numConstraints, dofHandler.get());
+	    std::vector<const dealii::AffineConstraints<ValueType> *>
+	      dealiiAffineConstraintsVec(numConstraints, nullptr);
+	    size_type iConstraint = 0;
+	    for(auto it = d_feConstraintsDealiiMap.begin(); it != d_feConstraintsDealiiMap.end(); ++it)
+	    {
+	      dealiiAffineConstraintsVec[iConstraint] =
+		&((it->second)->getAffineConstraints());
+	      iConstraint++;
+	    }
+
+	    std::vector<dealii::Quadrature<dim>> dealiiQuadratureTypeVec(1,dealii::QGauss<dim>(1));
+	    dealii::MatrixFree<dim, ValueType>> dealiiMatrixFree;
+	    dealiiMatrixFree.clear();
+	    dealiiMatrixFree.reinit(dofHandlerVec,
+		dealiiAffineConstraintsVec,
+		dealiiQuadratureTypeVec,
+		dealiiAdditionalData);
+
+	    iConstraint = 0;
+	    for(auto it = d_feConstraintsDealiiMap.begin(); it != d_feConstraintsDealiiMap.end(); ++it)
+	    {
+	      const std::string constraintName = it->first;
+	      const dealii::Utilities::MPI::Partitioner & dealiiPartitioner =  
+		dealiiMatrixFree.get_vector_partitioner(iConstraint);
+	      dealii::IndexSet & ghostIndexSet = dealiiPartitioner.ghost_indices();
+	      const size_type numGhostIndices = ghostIndexSet.n_elements();
+	      std::vector<global_size_type> ghostIndicesTmp(numGhostIndices);
+	      ghostIndexSet.fill_index_vector(ghostIndicesTmp);
+     
+	      auto globalSizeVector = std::make_shared<typename BasisHandler<memorySpace>::GlobalSizeTypeVector>(numGhostIndices);
+	      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        	numGhostIndices,
+        	globalSizeVector->data(),
+                ghostIndicesTmp.begin());	
+	      
+	      d_ghostIndicesMap[constraintName] = globalSizeVector;
+      
+	      auto mpiPatternP2P = std::make_shared<utils::MPIPatternP2P<memorySpace>>(d_locallyOwnedRange, ghostIndicesTmp, d_mpiComm);
+	      d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
+	      iConstraint++;
+	    }
+	    
+	    iConstraint = 0;
+	    for(auto it = d_feConstraintsDealiiMap.begin(); it != d_feConstraintsDealiiMap.end(); ++it)
+	    {
+	      const std::string constraintName = it->first;
+	      auto mpiPatternP2P = d_mpiPatternP2PMap[constraintName];
+	      std::vector<size_type> locallyOwnedCellLocalIndicesTmp(cumulativeCellDofs,0);
+	      for(size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+	      {
+	        const size_type numCellDofs = d_feBMDealii->nCellDofs(iCell);
+
+		//
+		// TODO: After MPIPatternP2P localToGlobal() and globalToLocal() are implemented
+		//
+
+	      }
+
+	      iConstraint++;
+	    }
+	
+	    // TODO: Populate d_locallyOwnedCellGlobalIndices
+	
 	  }
 #else
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
-	  FEBasisHandlerDealii<ValueType, memorySpace, dim>::FEBasisHandlerDealii(std::shared_ptr<const BasisManager> basisManager,
-	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap)
-	  {
-	    reinit(basisManager,constraintsMap);
-	  }
+      FEBasisHandlerDealii<ValueType, memorySpace, dim>::FEBasisHandlerDealii(std::shared_ptr<const BasisManager> basisManager,
+	  std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap)
+      {
+	reinit(basisManager,constraintsMap);
+      }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
-	  FEBasisHandlerDealii<ValueType, memorySpace, dim>::reinit(std::shared_ptr<const BasisManager> basisManager,
-	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap)
-	  {
-	  }
+      FEBasisHandlerDealii<ValueType, memorySpace, dim>::reinit(std::shared_ptr<const BasisManager> basisManager,
+	  std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap)
+      {
+      }
 #endif // DFTEFE_WITH_MPI
 
   } // end of namespace basis

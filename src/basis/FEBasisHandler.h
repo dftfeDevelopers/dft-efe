@@ -45,7 +45,7 @@ namespace dftefe
 	//
 	public:
 	  using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
-	  using GlobalSizeTypeVector = BasisParitioner<memorySpace>::SizeTypeVector;
+	  using GlobalSizeTypeVector = BasisParitioner<memorySpace>::GlobalSizeTypeVector;
 
 	public:
 	  ~FEBasisHandler() = default;
