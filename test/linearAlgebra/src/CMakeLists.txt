@@ -108,6 +108,10 @@ if (ENABLE_CUDA)
     target_link_libraries(TestSerialVectorDoubleAddDevice PUBLIC dft-efe-linalg)
     set_target_properties(TestSerialVectorDoubleAddDevice PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleAddDevice" SUFFIX ".x")
 
+    add_executable(TestSerialVectorComplexDoubleAddDevice TestSerialVectorComplexDoubleAddDevice.cpp)
+    target_link_libraries(TestSerialVectorComplexDoubleAddDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestSerialVectorComplexDoubleAddDevice PROPERTIES OUTPUT_NAME "TestSerialVectorComplexDoubleAddDevice" SUFFIX ".x")
+
     add_executable(TestBlasLapackDoubleGemmDevice TestBlasLapackDoubleGemmDevice.cpp)
     target_link_libraries(TestBlasLapackDoubleGemmDevice PUBLIC dft-efe-linalg)
     set_target_properties(TestBlasLapackDoubleGemmDevice PROPERTIES OUTPUT_NAME "TestBlasLapackDoubleGemmDevice" SUFFIX ".x")
@@ -116,19 +120,3 @@ if (ENABLE_CUDA)
     target_link_libraries(TestBlasLapackComplexDoubleGemmDevice PUBLIC dft-efe-linalg)
     set_target_properties(TestBlasLapackComplexDoubleGemmDevice PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmDevice" SUFFIX ".x")
 endif ()
-## CPU: testing +=, -=, add, copy constructor
-#add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
-#target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)
-#set_target_properties(TestVectorAggregate1 PROPERTIES OUTPUT_NAME "TestVectorAggregate1" SUFFIX ".x")
-#
-## CPU: testing l2Norm, lInfNorm
-#add_executable(TestVectorNorms TestVectorNorms.cpp)
-#target_link_libraries(TestVectorNorms PUBLIC dft-efe-linalg)
-#set_target_properties(TestVectorNorms PROPERTIES OUTPUT_NAME "TestVectorNorms" SUFFIX ".x")
-#
-## GPU: testing +=, -=, add, copy constructor
-#if (ENABLE_CUDA)
-#    add_executable(TestVectorAggregate2 TestVectorAggregate2.cpp)
-#    target_link_libraries(TestVectorAggregate2 PUBLIC dft-efe-linalg)
-#    set_target_properties(TestVectorAggregate2 PROPERTIES OUTPUT_NAME "TestVectorAggregate2" SUFFIX ".x")
-#endif()
