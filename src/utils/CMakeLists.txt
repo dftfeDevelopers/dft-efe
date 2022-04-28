@@ -22,7 +22,8 @@ set(DFT-EFE-UTILS-SOURCES
 	OptimizedIndexSet.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
-  MPICommunicatorP2PKernels.cpp)
+  MPICommunicatorP2PKernels.cpp
+  MPICommunicatorP2PKernels.cu)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
