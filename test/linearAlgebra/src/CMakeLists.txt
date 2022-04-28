@@ -9,7 +9,7 @@ if (ENABLE_CUDA)
     enable_language(CUDA)
     add_compile_definitions(DFTEFE_WITH_DEVICE)
     add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
-endif()
+endif ()
 
 add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
 include_directories(${MAIN_PROJECT_DIR}/src)
@@ -104,12 +104,18 @@ target_link_libraries(TestSerialDenseMatrixDoubleInPlaceSubtractHost PUBLIC dft-
 set_target_properties(TestSerialDenseMatrixDoubleInPlaceSubtractHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
 if (ENABLE_CUDA)
-  add_executable(TestSerialVectorDoubleAddDevice TestSerialVectorDoubleAddDevice.cpp)
-  target_link_libraries(TestSerialVectorDoubleAddDevice PUBLIC dft-efe-linalg)
-  set_target_properties(TestSerialVectorDoubleAddDevice PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleAddDevice" SUFFIX ".x")
-endif()
+    add_executable(TestSerialVectorDoubleAddDevice TestSerialVectorDoubleAddDevice.cpp)
+    target_link_libraries(TestSerialVectorDoubleAddDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestSerialVectorDoubleAddDevice PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleAddDevice" SUFFIX ".x")
 
+    add_executable(TestBlasLapackDoubleGemmDevice TestBlasLapackDoubleGemmDevice.cpp)
+    target_link_libraries(TestBlasLapackDoubleGemmDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestBlasLapackDoubleGemmDevice PROPERTIES OUTPUT_NAME "TestBlasLapackDoubleGemmDevice" SUFFIX ".x")
 
+    add_executable(TestBlasLapackComplexDoubleGemmDevice TestBlasLapackComplexDoubleGemmDevice.cpp)
+    target_link_libraries(TestBlasLapackComplexDoubleGemmDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestBlasLapackComplexDoubleGemmDevice PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmDevice" SUFFIX ".x")
+endif ()
 ## CPU: testing +=, -=, add, copy constructor
 #add_executable(TestVectorAggregate1 TestVectorAggregate1.cpp)
 #target_link_libraries(TestVectorAggregate1 PUBLIC dft-efe-linalg)
