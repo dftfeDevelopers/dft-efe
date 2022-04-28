@@ -69,6 +69,10 @@ site_configuration = {
                         {
                             'name': 'cpu',
                             'options': ['']
+                        },
+                        {
+                            'name': 'gpu',
+                            'options': ['']
                         }
                     ]
                 }
