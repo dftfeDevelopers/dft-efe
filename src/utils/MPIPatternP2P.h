@@ -32,6 +32,7 @@
 
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
+#include <utils/OptimizedIndexSet.h>
 #include <vector>
 namespace dftefe
 {
@@ -173,8 +174,12 @@ namespace dftefe
       GlobalSizeTypeVector d_allOwnedRanges;
 
       /**
+       * Number of locally owned indices in the current processor
+       */
+      size_type d_numLocallyOwnedIndices;
+      
+      /**
        * Number of ghost indices in the current processor
-       *
        */
       size_type d_numGhostIndices;
 
@@ -183,6 +188,19 @@ namespace dftefe
        * (ordered in increasing order and non-repeating)
        */
       GlobalSizeTypeVector d_ghostIndices;
+      
+      /**
+       * A copy of the above d_ghostIndices stored as an STL set 
+       */
+      std::set<global_size_type> d_ghostIndicesSetSTL;
+
+      /**
+       * An OptimizedIndexSet object to store the ghost indices for
+       * efficient operations. The OptimizedIndexSet internally creates
+       * contiguous sub-ranges within the set of indices and hence can
+       * optimize the finding of an index
+       */
+      OptimizedIndexSet<global_size_type> d_ghostIndicesOptimizedIndexSet;
 
       /**
        * Number of ghost processors for the current processor. A ghost processor
@@ -215,7 +233,7 @@ namespace dftefe
        * @note \f$L_i\f$ has to be an increasing set.
 
        * @note We store only the ghost index local to this processor, i.e.,
-       * position of the ghost index in d_ghostIndicesSet or d_ghostIndices.
+       * position of the ghost index in d_ghostIndicesSetSTL or d_ghostIndices.
        * This is done to use size_type which is unsigned int instead of
        * global_size_type which is long unsigned it. This helps in reducing the
        * volume of data transfered during MPI calls.
@@ -247,9 +265,9 @@ namespace dftefe
        * included.
        *
        * @note Given the fact that the locally owned indices of each processor
-       * contiguous and the global ghost indices (i.e., d_ghostIndices) is
+       * are contiguous and the global ghost indices (i.e., d_ghostIndices) is
        * ordered, it is sufficient to just store the range of local ghost
-       * indicces for each ghost procId. The actual global ghost indices
+       * indices for each ghost procId. The actual global ghost indices
        * belonging to the \f$i\f$-th ghost processor can be fetched from
        * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
        *  d_ghostIndices[a_i] and d_ghostIndices[b_i].

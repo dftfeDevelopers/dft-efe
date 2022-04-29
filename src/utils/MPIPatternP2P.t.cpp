@@ -242,7 +242,9 @@ namespace dftefe
       , d_mpiComm(mpiComm)
       , d_allOwnedRanges(0)
       , d_ghostIndices(0)
+      , d_numLocallyOwnedIndices(0)
       , d_numGhostIndices(0)
+      , d_ghostIndicesSetSTL(0)
       , d_numGhostProcs(0)
       , d_ghostProcIds(0)
       , d_numGhostIndicesInGhostProcs(0)
@@ -268,11 +270,25 @@ namespace dftefe
                std::to_string(err);
       throwException(err == MPI_SUCCESS, errMsg);
 
+      d_numLocallyOwnedIndices = d_locallyOwnedRange.second - d_locallyOwnedRange.first; 
       ///////////////////////////////////////////////////
       //////////// Ghost Data Evaluation Begin //////////
       ///////////////////////////////////////////////////
-      std::set<global_size_type> ghostIndicesSet(ghostIndices.begin(),
-                                                 ghostIndices.end());
+
+      //
+      // check if the ghostIndices is strictly increasing or nor
+      //
+      bool isStrictlyIncreasing = std::is_sorted(ghostIndices.begin(), 
+	  					ghostIndices.end(), 
+						std::less_equal<>());
+      throwException(isStrictlyIncreasing, "In processor " + std::to_string(d_myRank) + 
+	  ", the ghost indices passed to MPIPatternP2P is not a strictly increasing set.");
+      
+      // copy the ghostIndices to d_ghostIndicesSetSTL
+      d_ghostIndicesSetSTL.clear();
+      std::copy(ghostIndices.begin(), ghostIndices.end(), 
+	  std::inserter(d_ghostIndicesSetSTL, d_ghostIndicesSetSTL.end()));
+      d_ghostIndicesOptimizedIndexSet = OptimizedIndexSet(d_ghostIndicesSetSTL); 
 
       d_numGhostIndices = ghostIndices.size();
       MemoryTransfer<memorySpace, MemorySpace::HOST> memoryTransfer;
@@ -751,7 +767,7 @@ namespace dftefe
     size_type
     MPIPatternP2P<memorySpace>::localOwnedSize() const
     {
-      return (d_locallyOwnedRange.second - d_locallyOwnedRange.first);
+      return d_numLocallyOwnedIndices;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
@@ -766,20 +782,67 @@ namespace dftefe
     global_size_type
     MPIPatternP2P<memorySpace>::localToGlobal(const size_type localId) const
     {
-      std::string msg =
-        "localId larger than number of locally owned plus ghost ids ";
-      throwException<InvalidArgument>(localId < (d_locallyOwnedRange.second -
-                                                 d_locallyOwnedRange.first) +
-                                                  d_numGhostIndices,
-                                      msg);
+      if(localId < d_numLocallyOwnedIndices)
+      {
+	return d_locallyOwnedRange.first + localId;
+      }
+      else if(localId < d_numLocallyOwnedIndices + d_numGhostIndices)
+      {
+	auto it = d_ghostIndicesSetSTL.begin() + (localId - d_numLocallyOwnedIndices);
+	return *it;
+      }
+      else
+      {
+        std::string msg =
+          "In processor " + std::to_string(d_myRank) + 
+	  ", the local index " + std::to_string(localId) + 
+	  " passed to localToGlobal() in MPIPatternP2P is"
+	  " larger than number of locally owned plus ghost indices.";
+        throwException<InvalidArgument>(false,msg);
+      }
+    }
+    
+    template <dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MPIPatternP2P<memorySpace>::globalToLocal(const global_size_type globalId) const
+    {
+      size_type returnValue = 0;
+      if(globalId >= d_locallyOwnedRange.first && globalId < d_locallyOwnedRange.second)
+      {
+	returnValue = globalId - d_locallyOwnedRange.first;
+      }
+      else 
+      {
+	bool found = false;
+	d_ghostIndicesOptimizedIndexSet(globalId, returnValue, found);
+	std::string msg =
+          "In processor " + std::to_string(d_myRank) + 
+	  ", the global index " + std::to_string(localId) + 
+	  " passed to globalToLocal() in MPIPatternP2P is"
+	  " neither present in its locally owned range nor in its "
+	  " ghost indices.";
+        throwException<InvalidArgument>(found,msg);
+      }
 
-      const global_size_type globalId =
-        (localId < (d_locallyOwnedRange.second - d_locallyOwnedRange.first)) ?
-          (d_locallyOwnedRange.first + localId) :
-          d_ghostIndices.data()[localId - (d_locallyOwnedRange.second -
-                                           d_locallyOwnedRange.first)];
-      return globalId;
+      return returnValue;
+    }
+    
+    template <dftefe::utils::MemorySpace memorySpace>
+    bool
+    MPIPatternP2P<memorySpace>::inLocallyOwnedRange(const global_size_type globalId) const
+    {
+
+      return (globalId >= d_locallyOwnedRange.first && globalId < d_locallyOwnedRange.second);
     }
 
+    template <dftefe::utils::MemorySpace memorySpace>
+    bool
+    MPIPatternP2P<memorySpace>::isGhostEntry(const global_size_type globalId) const
+    {
+      bool found = false;
+      size_type localId;
+      d_ghostIndicesOptimizedIndexSet(globalId, returnValue, found);
+      return found;
+    }
   } // end of namespace utils
 } // end of namespace dftefe
