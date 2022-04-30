@@ -124,7 +124,7 @@ namespace dftefe
 	  MPI_Comm d_mpiComm;
 #endif // DFTEFE_WITH_MPI
 	  std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
-	  SizeTypeVector d_locallyOwnedCellStartAndEndIds;
+	  SizeTypeVector d_locallyOwnedCellStartIds;
 	  GlobalSizeTypeVector d_locallyOwnedCellGlobalIndices;
 
 	  //constraints dependent data
