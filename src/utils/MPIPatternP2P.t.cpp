@@ -232,10 +232,12 @@ namespace dftefe
     } // namespace
 
 #ifdef DFTEFE_WITH_MPI
-
+    ///
+    /// Constructor with MPI
+    ///
     template <dftefe::utils::MemorySpace memorySpace>
     MPIPatternP2P<memorySpace>::MPIPatternP2P(
-      const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+      const std::pair<global_size_type, global_size_type>  &locallyOwnedRange,
       const std::vector<dftefe::global_size_type> &       ghostIndices,
       const MPI_Comm &                                    mpiComm)
       : d_locallyOwnedRange(locallyOwnedRange)
@@ -270,6 +272,10 @@ namespace dftefe
                std::to_string(err);
       throwException(err == MPI_SUCCESS, errMsg);
 
+      throwException(d_locallyOwnedRange.second >= d_locallyOwnedRange.first,
+	  "In processor " + std::to_string(d_myRank) + 
+	  ", invalid locally owned range found " 
+	  "(i.e., the second value in the range is less than the first value).");
       d_numLocallyOwnedIndices = d_locallyOwnedRange.second - d_locallyOwnedRange.first; 
       ///////////////////////////////////////////////////
       //////////// Ghost Data Evaluation Begin //////////
@@ -554,6 +560,48 @@ namespace dftefe
       //////////// Target Data Evaluation End ////////
       ///////////////////////////////////////////////////
     }
+
+#else
+    ///
+    /// Constructor without MPI
+    ///
+    template <dftefe::utils::MemorySpace memorySpace>
+    MPIPatternP2P<memorySpace>::MPIPatternP2P(
+      const std::pair<global_size_type, global_size_type> & locallyOwnedRange)
+      : d_locallyOwnedRange(locallyOwnedRange)
+      , d_allOwnedRanges(0)
+      , d_ghostIndices(0)
+      , d_numLocallyOwnedIndices(0)
+      , d_numGhostIndices(0)
+      , d_ghostIndicesSetSTL(0)
+      , d_numGhostProcs(0)
+      , d_ghostProcIds(0)
+      , d_numGhostIndicesInGhostProcs(0)
+      , d_localGhostIndicesRanges(0)
+      , d_numTargetProcs(0)
+      , d_flattenedLocalGhostIndices(0)
+      , d_targetProcIds(0)
+      , d_numOwnedIndicesForTargetProcs(0)
+      , d_flattenedLocalTargetIndices(0)
+      , d_nGlobalIndices(0)
+    {
+      d_myRank           = 0;
+      d_nprocs           = 1;
+      throwException(d_locallyOwnedRange.second >= d_locallyOwnedRange.first,
+	  "In processor " + std::to_string(d_myRank) + 
+	  ", invalid locally owned range found " 
+	  "(i.e., the second value in the range is less than the first value).");
+      d_numLocallyOwnedIndices = d_locallyOwnedRange.second - d_locallyOwnedRange.first; 
+      std::vector<global_size_type> allOwnedRanges = {d_locallyOwnedRange.first, d_locallyOwnedRange.second};
+      for (unsigned int i = 0; i < d_nprocs; ++i)
+        d_nGlobalIndices += allOwnedRanges[2 * i + 1] - allOwnedRanges[2 * i];
+
+      d_allOwnedRanges.resize(2 * d_nprocs);
+      memoryTransfer.copy(2 * d_nprocs,
+                          d_allOwnedRanges.begin(),
+                          &allOwnedRanges[0]);
+    }
+
 #endif
 
     template <dftefe::utils::MemorySpace memorySpace>

@@ -42,8 +42,6 @@ namespace dftefe
      * (i.e., which entries/nodes to receive from which processor and
      * which entries/nodes to send to which processor).
      *
-     * The template parameter memorySpace defines the MemorySpace (i.e., HOST or
-     * DEVICE) in which the various data members of this object must reside.
      *
      * + <b>Assumptions</b>
      *    1. It assumes that a a sparse communication pattern. That is,
@@ -55,13 +53,16 @@ namespace dftefe
      *       no index is owned by more than one processor). In other words,
      *       the different sets of owning indices across all the processors
      *       are disjoint.
+     *
+     * @tparam memorySpace Defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the various data members of this object must reside.
      */
     template <dftefe::utils::MemorySpace memorySpace>
     class MPIPatternP2P
     {
-      //
-      // typedefs
-      //
+      ///
+      /// typedefs
+      ///
     public:
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
@@ -70,8 +71,31 @@ namespace dftefe
     public:
       virtual ~MPIPatternP2P() = default;
 #ifdef DFTEFE_WITH_MPI
+      /**
+       * @brief Constructor. This constructor is the typical way of 
+       * creation of an MPI pattern. 
+       *
+       * @param[in] locallyOwnedRange A pair of non-negtive integers 
+       * \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor.
+       * @note It is an open interval where \f$a\f$ is included,
+       * but \f$b\f$ is not included.
+       *
+       * @param[in] ghostIndices An ordered set of non-negtive indices specifyin 
+       * the ghost indices for the current processor.
+       * @note the vector must be ordered 
+       * (i.e., ordered in increasing order and non-repeating)
+       *
+       * @param[in] mpiComm The MPI communicator object which defines the
+       * set of processors for which the MPI pattern needs to be created.
+       *
+       * @throw Throws exception if \p mpiComm is in an invalid state, if
+       * the \p locallyOwnedRange across all the processors are not disjoint,
+       * if \p ghostIndices are not ordered (if it is not strictly increasing),
+       * or if some sanity checks with respect to MPI sends and receives fail. 
+       */
       MPIPatternP2P(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const std::pair<global_size_type, global_size_type> & locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm);
 
@@ -81,7 +105,21 @@ namespace dftefe
       //  const std::vector<dftefe::global_size_type> &       ghostIndices,
       //  MPI_Comm &                                          mpiComm);
 #else
-      MPIPatternP2P() = default;
+      /**
+       * @brief Constructor. This constructor is provided to create a dummy MPI 
+       * pattern while not using MPI. This is provided for applications to 
+       * interface with this class even while not using MPI. As a result, 
+       * a piece of application code that is written to be used with MPI
+       * can seamlessly be used without MPI as well.
+       * 
+       * @param[in] locallyOwnedRange A pair of non-negtive integers 
+       * \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor.
+       * @note It is an open interval where \f$a\f$ is included,
+       * but \f$b\f$ is not included.
+       */
+      MPIPatternP2P(
+	const std::pair<global_size_type, global_size_type> & locallyOwnedRange);
 
       // void
       // reinit(){};
