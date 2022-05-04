@@ -22,18 +22,16 @@
 /*
  * @author Bikash Kanungo
  */
-
-#ifndef dftefeMathConstants_h
-#define dftefeMathConstants_h
+#include <utils/MathConstants.h>
+#include <cmath>
 namespace dftefe
 {
   namespace utils
   {
     namespace mathConstants
     {
-      extern const double e;
-      extern const double pi;
+      extern const double e{std::exp(1.0)};
+      extern const double pi{M_PI};
     } // namespace mathConstants
   }   // namespace utils
 } // namespace dftefe
-#endif // dftefeMathConstants_h

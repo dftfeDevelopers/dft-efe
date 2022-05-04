@@ -72,18 +72,18 @@ namespace dftefe
       virtual ~MPIPatternP2P() = default;
 #ifdef DFTEFE_WITH_MPI
       /**
-       * @brief Constructor. This constructor is the typical way of 
-       * creation of an MPI pattern. 
+       * @brief Constructor. This constructor is the typical way of
+       * creation of an MPI pattern.
        *
-       * @param[in] locallyOwnedRange A pair of non-negtive integers 
+       * @param[in] locallyOwnedRange A pair of non-negtive integers
        * \f$(a,b)\f$ which defines a range of indices (continuous)
        * that are owned by the current processor.
        * @note It is an open interval where \f$a\f$ is included,
        * but \f$b\f$ is not included.
        *
-       * @param[in] ghostIndices An ordered set of non-negtive indices specifyin 
+       * @param[in] ghostIndices An ordered set of non-negtive indices specifyin
        * the ghost indices for the current processor.
-       * @note the vector must be ordered 
+       * @note the vector must be ordered
        * (i.e., ordered in increasing order and non-repeating)
        *
        * @param[in] mpiComm The MPI communicator object which defines the
@@ -92,12 +92,12 @@ namespace dftefe
        * @throw Throws exception if \p mpiComm is in an invalid state, if
        * the \p locallyOwnedRange across all the processors are not disjoint,
        * if \p ghostIndices are not ordered (if it is not strictly increasing),
-       * or if some sanity checks with respect to MPI sends and receives fail. 
+       * or if some sanity checks with respect to MPI sends and receives fail.
        */
       MPIPatternP2P(
-        const std::pair<global_size_type, global_size_type> & locallyOwnedRange,
-        const std::vector<dftefe::global_size_type> &       ghostIndices,
-        const MPI_Comm &                                    mpiComm);
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRange,
+        const std::vector<dftefe::global_size_type> &        ghostIndices,
+        const MPI_Comm &                                     mpiComm);
 
       // void
       // reinit(
@@ -106,20 +106,20 @@ namespace dftefe
       //  MPI_Comm &                                          mpiComm);
 #else
       /**
-       * @brief Constructor. This constructor is provided to create a dummy MPI 
-       * pattern while not using MPI. This is provided for applications to 
-       * interface with this class even while not using MPI. As a result, 
+       * @brief Constructor. This constructor is provided to create a dummy MPI
+       * pattern while not using MPI. This is provided for applications to
+       * interface with this class even while not using MPI. As a result,
        * a piece of application code that is written to be used with MPI
        * can seamlessly be used without MPI as well.
-       * 
-       * @param[in] locallyOwnedRange A pair of non-negtive integers 
+       *
+       * @param[in] locallyOwnedRange A pair of non-negtive integers
        * \f$(a,b)\f$ which defines a range of indices (continuous)
        * that are owned by the current processor.
        * @note It is an open interval where \f$a\f$ is included,
        * but \f$b\f$ is not included.
        */
       MPIPatternP2P(
-	const std::pair<global_size_type, global_size_type> & locallyOwnedRange);
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRange);
 
       // void
       // reinit(){};
@@ -215,7 +215,7 @@ namespace dftefe
        * Number of locally owned indices in the current processor
        */
       size_type d_numLocallyOwnedIndices;
-      
+
       /**
        * Number of ghost indices in the current processor
        */
@@ -226,9 +226,9 @@ namespace dftefe
        * (ordered in increasing order and non-repeating)
        */
       GlobalSizeTypeVector d_ghostIndices;
-      
+
       /**
-       * A copy of the above d_ghostIndices stored as an STL set 
+       * A copy of the above d_ghostIndices stored as an STL set
        */
       std::set<global_size_type> d_ghostIndicesSetSTL;
 
