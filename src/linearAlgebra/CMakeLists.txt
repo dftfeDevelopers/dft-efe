@@ -56,5 +56,5 @@ if (NOT TARGET dft-efe-linalg)
     endif ()
 
 
-    target_link_libraries(dft-efe-linalg PUBLIC blaspp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES} ${DFTEFE_SCALAPACK_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC blaspp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES})
 endif ()

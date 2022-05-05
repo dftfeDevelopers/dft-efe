@@ -12,13 +12,13 @@ mkdir build
 
 For greatlakes:
 
-python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --CMAKE_C_FLAGS="-march=native" --CMAKE_CXX_FLAGS="-march=native"  --DFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  --DFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-arch=sm_70"
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --CMAKE_C_FLAGS="-march=native" --CMAKE_CXX_FLAGS="-march=native"  --DFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-arch=sm_70"
 
 python install.py
 
 For cori gpu:
 
-cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DMPI_C_COMPILER=mpicc -DMPI_CXX_COMPILER=mpic++  -DDFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  -DDFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" -DBUILD_DOCS=OFF -DDEALII_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealiiDevCustomized/installGcc8.3CUDA11.1.1Mklscalapack" -DENABLE_CUDA=ON -DCMAKE_CUDA_FLAGS="-arch=sm_70"
+cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DMPI_C_COMPILER=mpicc -DMPI_CXX_COMPILER=mpic++  -DDFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  -DBUILD_DOCS=OFF -DDEALII_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealiiDevCustomized/installGcc8.3CUDA11.1.1Mklscalapack" -DENABLE_CUDA=ON -DCMAKE_CUDA_FLAGS="-arch=sm_70"
 
 make
 
