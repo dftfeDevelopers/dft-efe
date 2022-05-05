@@ -39,7 +39,7 @@ namespace dftefe
       d_nGlobalCols = u.d_nGlobalCols;
       d_nLocalRows  = u.d_nLocalRows;
       d_nLocalCols  = u.d_nLocalCols;
-      d_blasQueue   = u.d_blasQueue;
+      d_BlasQueue   = u.d_BlasQueue;
       d_property    = u.d_property;
       d_uplo        = u.d_uplo;
       d_layout      = u.d_layout;
@@ -62,7 +62,7 @@ namespace dftefe
       d_nGlobalCols = std::move(u.d_nGlobalCols);
       d_nLocalRows  = std::move(u.d_nLocalRows);
       d_nLocalCols  = std::move(u.d_nLocalCols);
-      d_blasQueue   = std::move(u.d_blasQueue);
+      d_BlasQueue   = std::move(u.d_BlasQueue);
       d_property    = std::move(u.d_property);
       d_uplo        = std::move(u.d_uplo);
       d_layout      = std::move(u.d_layout);
@@ -93,7 +93,7 @@ namespace dftefe
       d_nGlobalCols = u.d_nGlobalCols;
       d_nLocalRows  = u.d_nLocalRows;
       d_nLocalCols  = u.d_nLocalCols;
-      d_blasQueue   = u.d_blasQueue;
+      d_BlasQueue   = u.d_BlasQueue;
       d_property    = u.d_property;
       d_uplo        = u.d_uplo;
       d_layout      = u.d_layout;
@@ -123,7 +123,7 @@ namespace dftefe
       d_nGlobalCols = std::move(u.d_nGlobalCols);
       d_nLocalRows  = std::move(u.d_nLocalRows);
       d_nLocalCols  = std::move(u.d_nLocalCols);
-      d_blasQueue   = std::move(u.d_blasQueue);
+      d_BlasQueue   = std::move(u.d_BlasQueue);
       d_property    = std::move(u.d_property);
       d_uplo        = std::move(u.d_uplo);
       d_layout      = std::move(u.d_layout);
@@ -143,7 +143,7 @@ namespace dftefe
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
       size_type                                               rows,
       size_type                                               cols,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueueInput,
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueueInput,
       ValueType                                               initVal,
       typename Matrix<ValueType, memorySpace>::Property       property,
       typename Matrix<ValueType, memorySpace>::Uplo           uplo,
@@ -153,7 +153,7 @@ namespace dftefe
       d_nGlobalCols = cols;
       d_nLocalRows  = rows;
       d_nLocalCols  = cols;
-      d_blasQueue   = blasQueueInput;
+      d_BlasQueue   = BlasQueueInput;
       d_property    = property;
       d_uplo        = uplo;
       d_layout      = layout;
@@ -172,7 +172,7 @@ namespace dftefe
     {
       double value = 0;
       value        = blasLapack::nrm2<ValueType, memorySpace>(
-        d_nLocalCols * d_nLocalRows, this->data(), 1, *d_blasQueue);
+        d_nLocalCols * d_nLocalRows, this->data(), 1, *d_BlasQueue);
 
       return value;
     }

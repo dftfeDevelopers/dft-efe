@@ -99,7 +99,7 @@ namespace dftefe
         size_type                                          vecSize,
         size_type                                          numVec,
         ValueType const *                                  multiVecData,
-        blasQueueType<dftefe::utils::MemorySpace::DEVICE> &blasQueue)
+        BlasQueueType<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
       {
         std::vector<double> nrms2(numVec, 0);
 
@@ -132,7 +132,7 @@ namespace dftefe
                    1.0,
                    nrmsSqVecDevice.data(),
                    1,
-                   blasQueue);
+                   BlasQueue);
 
 
         nrmsSqVecDevice.copyTo<dftefe::utils::MemorySpace::HOST>(&nrms2[0]);

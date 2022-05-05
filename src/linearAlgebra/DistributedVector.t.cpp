@@ -39,7 +39,7 @@ namespace dftefe
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                       mpiCommunicatorP2P,
       const ValueType initVal,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
@@ -52,7 +52,7 @@ namespace dftefe
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
-      d_blasQueue = blasQueue;
+      d_BlasQueue = BlasQueue;
     }
 
     //
@@ -65,12 +65,12 @@ namespace dftefe
         &storage,
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
         mpiCommunicatorP2P,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
       d_storage   = std::move(storage);
-      d_blasQueue = std::move(blasQueue);
+      d_BlasQueue = std::move(BlasQueue);
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -90,7 +90,7 @@ namespace dftefe
       const std::vector<dftefe::global_size_type> &           ghostIndices,
       const MPI_Comm &                                        mpiComm,
       const ValueType                                         initVal,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -129,7 +129,7 @@ namespace dftefe
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
-      d_blasQueue = blasQueue;
+      d_BlasQueue = BlasQueue;
     }
 
     /**
@@ -144,7 +144,7 @@ namespace dftefe
       const std::pair<global_size_type, global_size_type>     locallyOwnedRange,
       const MPI_Comm &                                        mpiComm,
       const ValueType                                         initVal,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -185,7 +185,7 @@ namespace dftefe
       d_storage =
         std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
-      d_blasQueue = blasQueue;
+      d_BlasQueue = BlasQueue;
     }
 
 
@@ -202,7 +202,7 @@ namespace dftefe
       const global_size_type                                  totalGlobalDofs,
       const MPI_Comm &                                        mpiComm,
       const ValueType                                         initVal,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -270,7 +270,7 @@ namespace dftefe
       d_storage =
         std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           d_localSize, initVal);
-      d_blasQueue = blasQueue;
+      d_BlasQueue = BlasQueue;
     }
 
 #endif // DFTEFE_WITH_MPI
@@ -286,7 +286,7 @@ namespace dftefe
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage           = *(u.d_storage);
-      d_blasQueue          = u.d_blasQueue;
+      d_BlasQueue          = u.d_BlasQueue;
       d_vectorAttributes   = u.d_vectorAttributes;
       d_localSize          = u.d_localSize;
       d_locallyOwnedSize   = u.d_locallyOwnedSize;
@@ -306,7 +306,7 @@ namespace dftefe
       d_storage =
         std::make_shared<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size(), initVal);
-      d_blasQueue          = u.d_blasQueue;
+      d_BlasQueue          = u.d_BlasQueue;
       d_vectorAttributes   = u.d_vectorAttributes;
       d_localSize          = u.d_localSize;
       d_locallyOwnedSize   = u.d_locallyOwnedSize;
@@ -326,7 +326,7 @@ namespace dftefe
       DistributedVector &&u) noexcept
     {
       d_storage            = std::move(u.d_storage);
-      d_blasQueue          = std::move(u.d_blasQueue);
+      d_BlasQueue          = std::move(u.d_BlasQueue);
       d_vectorAttributes   = std::move(u.d_vectorAttributes);
       d_localSize          = std::move(u.d_localSize);
       d_locallyOwnedSize   = std::move(u.d_locallyOwnedSize);
@@ -350,7 +350,7 @@ namespace dftefe
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage           = *(u.d_storage);
-      d_blasQueue          = u.d_blasQueue;
+      d_BlasQueue          = u.d_BlasQueue;
       d_vectorAttributes   = u.d_vectorAttributes;
       d_localSize          = u.d_localSize;
       d_locallyOwnedSize   = u.d_locallyOwnedSize;
@@ -371,7 +371,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::operator=(DistributedVector &&u)
     {
       d_storage            = std::move(u.d_storage);
-      d_blasQueue          = std::move(u.d_blasQueue);
+      d_BlasQueue          = std::move(u.d_BlasQueue);
       d_vectorAttributes   = std::move(u.d_vectorAttributes);
       d_localSize          = std::move(u.d_localSize);
       d_locallyOwnedSize   = std::move(u.d_locallyOwnedSize);
@@ -393,7 +393,7 @@ namespace dftefe
         blasLapack::nrm2<ValueType, memorySpace>(d_locallyOwnedSize,
                                                  this->data(),
                                                  1,
-                                                 *d_blasQueue);
+                                                 *d_BlasQueue);
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
@@ -419,7 +419,7 @@ namespace dftefe
         blasLapack::amax<ValueType, memorySpace>(d_locallyOwnedSize,
                                                  this->data(),
                                                  1,
-                                                 *d_blasQueue);
+                                                 *d_BlasQueue);
       double returnValue = lInfNormLocallyOwned;
 #ifdef DFTEFE_WITH_MPI
       MPI_Allreduce(&lInfNormLocallyOwned,

@@ -51,7 +51,7 @@ main()
   dVecStdL2Norm = std::sqrt(dVecStdL2Norm);
   double dVecStdLInfNorm = *std::max_element(dVecStd.begin(), dVecStd.end());
 
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>>();
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>>();
 
   std::shared_ptr<dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::HOST>> dVec
     = std::make_shared<dftefe::linearAlgebra::SerialVector<double, dftefe::utils::MemorySpace::HOST>>(vSize, 0,queue);
