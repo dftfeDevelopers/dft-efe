@@ -10,13 +10,6 @@ cmake_dict = {'DFTEFE_BLAS_LIBRARIES':['', 'Path to blas libraries',
                                        -lmkl_gnu_thread -lmkl_core
                                        -lgomp -lpthread
                                        -lm -ldl"'''],
-              'DFTEFE_SCALAPACK_LIBRARIES':['','Path to scalapack libraries',
-                                            '''--DFTEFE_SCALAPACK_LIBRARIES=
-                                            "-L/path/to/scalapack/lib/intel64
-                                            -lmkl_scalapack_lp64 -Wl,--no-as-needed 
-                                            -lmkl_intel_lp64 -lmkl_gnu_thread 
-                                            -lmkl_core -lmkl_blacs_intelmpi_lp64
-                                            -lgomp -lpthread -lm -ldl"'''],
               'DEALII_PATH':['','Path to the deal.ii installation',
                                    '--DEALII_PATH=/path/to/deal.ii/installation'],
               'CMAKE_BUILD_TYPE':['', 'Build type Debug/Release',

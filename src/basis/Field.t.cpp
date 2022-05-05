@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2022.                                                        *
+ * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,40 +20,41 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin.
+ * @author Bikash Kanungo, Vishal Subramanian
  */
-
-#include <stdexcept>
-#include <linearAlgebra/SerialDenseMatrix.h>
-
-int
-main()
+namespace dftefe
 {
-  double tol = 1.0e-12;
-
-  const auto HOST = dftefe::utils::MemorySpace::HOST;
-  typedef dftefe::linearAlgebra::blasLapack::BlasQueueType<HOST> QUEUE;
-  typedef dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> MATRIX;
-
-  dftefe::size_type   nRows = 5, nCols = 3;
-  QUEUE  queue;
-  MATRIX A(nRows, nCols, std::make_shared<QUEUE>(queue), 0);
-
-  if ((A.getGlobalRows() != nRows) || (A.getGlobalCols() != nCols))
+  namespace basis
+  {
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    Field<ValueType, memorySpace>::Field(
+      std::shared_ptr<const BasisHandler> basisHandler,
+      const std::string                   constraintsName)
+      : d_basisHandler(basisHandler)
+      , d_constraintsName(constraintsName)
+      , d_constraints(basisHandler->getConstraints(constraintsName))
     {
-      std::string msg =
-        "globalRows and globalCols do not match for dftefe::linearAlgebra::SerialDenseMatrix::copyTo for double on Host. given dimensions: (" + std::to_string(nRows) + ", " + std::to_string(nCols) + "), matrix dimension: (" +
-        std::to_string(A.getGlobalRows()) + ", " + std::to_string(A.getGlobalCols()) + ")";
-      throw std::runtime_error(msg);
+      reinit(basisHandler, constraintsName);
     }
 
-  dftefe::size_type nRow_t = 0, nCol_t = 0;
-  A.getGlobalSize(nRow_t, nCol_t);
-  if ((nRow_t != nRows) || (nCol_t != nCols))
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    Field<ValueType, memorySpace>::reinit(
+      std::shared_ptr<const BasisHandler> basisHandler,
+      const std::string                   constraintsName)
     {
-      std::string msg =
-        "getGlobalSize function does not match for dftefe::linearAlgebra::SerialDenseMatrix::copyTo for double on Host. given dimensions: (" + std::to_string(nRows) + ", " + std::to_string(nCols) + "), matrix dimension: (" +
-        std::to_string(nRow_t) + ", " + std::to_string(nCol_t) + ")";
-      throw std::runtime_error(msg);
+      d_basisHandler     = basisHandler;
+      d_constraintsName  = constraintsName;
+      d_constraints      = &(basisHandler->getConstraints(constraintsName));
+      auto mpiPatternP2P = basisHandler->getMPIPatternP2P(constraintsName);
+      //
+      // Since it is a field with a single component, block size for
+      // MPICommunicatorP2P is set to 1
+      //
+      const size_type blockSize = 1;
+      d_mpiCommunicatorP2P =
+        std::make_shared<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+          mpiPatternP2P, blockSize);
     }
-}
+
+  } // end of namespace basis
+} // end of namespace dftefe

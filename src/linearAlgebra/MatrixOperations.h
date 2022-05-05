@@ -55,7 +55,7 @@ namespace dftefe
         ValueType                                               beta,
         ValueType *                                             dC,
         size_type                                               lddc,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
     };
   } // namespace linearAlgebra
 

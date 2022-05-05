@@ -24,6 +24,7 @@
  */
 #include <utils/MPIErrorCodeHandler.h>
 #include <utils/Exceptions.h>
+#include <map>
 namespace dftefe
 {
   namespace utils
@@ -52,7 +53,7 @@ namespace dftefe
       const int ErrInStatus             = MPI_ERR_IN_STATUS;
       const int ErrPending              = MPI_ERR_PENDING;
       const int ErrKeyVal               = MPI_ERR_KEYVAL;
-      const int ErrErrNonMem            = MPI_ERR_NO_MEM;
+      const int ErrNoMem                = MPI_ERR_NO_MEM;
       const int ErrBase                 = MPI_ERR_BASE;
       const int ErrInfoKey              = MPI_ERR_INFO_KEY;
       const int ErrInfoValue            = MPI_ERR_INFO_VALUE;
@@ -122,7 +123,7 @@ namespace dftefe
         {ErrInfoNoKey,
          "MPI_ERR_INFO_NOKEY: Invalid key passed to "
          "MPI_INFO_DELETE"},
-        {ErrInfoErrSpawn, "MPI_ERR_SPAWN: Error in spawning processes"},
+        {ErrSpawn, "MPI_ERR_SPAWN: Error in spawning processes"},
         {ErrPort, "MPI_ERR_PORT: Invalid port name passed to MPI_COMM_CONNECT"},
         {ErrService,
          "MPI_ERR_SERVICE: Invalid service name passed to "
@@ -162,7 +163,7 @@ namespace dftefe
          "(e.g., path name too long)"},
         {ErrAccess, "MPI_ERR_ACCESS: Permission denied"},
         {ErrNoSpace, "MPI_ERR_NO_SPACE: Not enough space"},
-        {ErrErrQuota, "MPI_ERR_QUOTA: Quota exceeded"},
+        {ErrQuota, "MPI_ERR_QUOTA: Quota exceeded"},
         {ErrReadOnly, "MPI_ERR_READ_ONLY: Read-only file or file system"},
         {ErrFileInUse,
          "MPI_ERR_FILE_IN_USE: File operation could not be "
@@ -182,33 +183,34 @@ namespace dftefe
       const std::map<int, std::string> mpiErrorCodeToMsgMap = {
         {Success, "MPI Success"}};
 #endif // DFTEFE_WITH_MPI
+    }  // namespace
+    bool
+    MPIErrorCodeHandler::isSuccess(const int errCode)
+    {
+      return (errCode == Success);
+    }
 
-      bool
-      MPIErrorCodeHandler::isSuccess(const int &errCode) const
-      {
-        return (errCode == Success);
-      }
+    std::string
+    MPIErrorCodeHandler::getErrMsg(const int errCode)
+    {
+      std::string returnValue = "";
+      auto        it          = mpiErrorCodeToMsgMap.find(errCode);
+      if (it != mpiErrorCodeToMsgMap.end())
+        returnValue = it->second;
+      else
+        throwException<InvalidArgument>(false,
+                                        "Invalid error code " +
+                                          std::to_string(errCode) +
+                                          " provided.");
+      return returnValue;
+    }
 
-      std::string
-      MPIErrorCodeHandler::getErrMsg(const int &errCode) const
-      {
-        std::string returnValue = "";
-        auto        it          = mpiErrorCodeToMsgMap.find(errCode);
-        if (it != mpiErrorCodeToMsgMap.end())
-          returnValue = it->second;
-        else
-          throwException<InvalidArgument>(
-            "Invalid error code " + std::to_string(errCode) + " provided.");
-        return returnValue;
-      }
-
-      std::pair<bool, std::string>
-      MPIErrorCodeHandler::getIsSuccessAndMessage(const int &errCode) const
-      {
-        const bool        successFlag = isSuccess(errCode);
-        const std::string msg         = getErrMsg(errCode);
-        return std::make_pair(successFlag, msg);
-      }
-    } // namespace
-  }   // end of namespace utils
+    std::pair<bool, std::string>
+    MPIErrorCodeHandler::getIsSuccessAndMessage(const int errCode)
+    {
+      const bool        successFlag = isSuccess(errCode);
+      const std::string msg         = getErrMsg(errCode);
+      return std::make_pair(successFlag, msg);
+    }
+  } // end of namespace utils
 } // end of namespace dftefe

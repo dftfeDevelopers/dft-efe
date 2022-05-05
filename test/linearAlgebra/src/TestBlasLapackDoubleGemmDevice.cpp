@@ -79,7 +79,7 @@ main(int argc, char **argv)
 
  int device;
  dftefe::utils::deviceGetDevice(&device);
- blasQueueType<Device> queue(device, 0);
+ BlasQueueType<Device> queue(device, 0);
 
  dftefe::utils::MemoryStorage<double, Device> dA(colMajA.size(), 0);
  dftefe::utils::MemoryStorage<double, Device> dB(colMajB.size(), 0);

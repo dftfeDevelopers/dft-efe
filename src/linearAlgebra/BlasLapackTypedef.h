@@ -47,32 +47,32 @@ namespace dftefe
       template <typename ValueType1, typename ValueType2>
       using scalar_type = blas::scalar_type<ValueType1, ValueType2>;
       template <dftefe::utils::MemorySpace memorySpace>
-      struct blasQueueTypedef
+      struct BlasQueueTypedef
       {
         typedef void TYPE; //  default
       };
 
       // template specified mapping
       template <>
-      struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST>
+      struct BlasQueueTypedef<dftefe::utils::MemorySpace::HOST>
       {
         typedef int TYPE;
       };
 
       template <>
-      struct blasQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
+      struct BlasQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
       {
         typedef int TYPE;
       };
 
       template <>
-      struct blasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
+      struct BlasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
       {
         typedef blas::Queue TYPE;
       };
 
       template <dftefe::utils::MemorySpace memorySpace>
-      using blasQueueType = typename blasQueueTypedef<memorySpace>::TYPE;
+      using BlasQueueType = typename BlasQueueTypedef<memorySpace>::TYPE;
 
 
     } // namespace blasLapack

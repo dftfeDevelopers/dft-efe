@@ -226,7 +226,7 @@ namespace dftefe
        *
        * @return shared pointer to BlasQueue.
        */
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
       getBlasQueue() const;
 
       /**
@@ -323,7 +323,7 @@ namespace dftefe
        * @param[in] ghostSize size of the part of the vector that is owned by
        * the other processors but required by the current processor. For a
        * SerialVector, the ghostSize is 0.
-       * @param[in] blasQueue handle for linear algebra operations on
+       * @param[in] BlasQueue handle for linear algebra operations on
        * HOST/DEVICE.
        *
        * @note Since we are passing the ownership of the input storage to the Vector, the
@@ -334,7 +334,7 @@ namespace dftefe
              const global_size_type    globalSize,
              const size_type           locallyOwnedSize,
              const size_type           ghostSize,
-             std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+             std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Default Constructor
@@ -343,7 +343,7 @@ namespace dftefe
 
     protected:
       std::unique_ptr<Storage>                                d_storage;
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> d_blasQueue;
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> d_BlasQueue;
       VectorAttributes d_vectorAttributes;
       size_type        d_localSize;
       global_size_type d_globalSize;

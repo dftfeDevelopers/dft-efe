@@ -33,33 +33,38 @@ main()
   double tol = 1.0e-12;
 
   const auto HOST = dftefe::utils::MemorySpace::HOST;
-  typedef dftefe::linearAlgebra::blasLapack::BlasQueueType<HOST> QUEUE;
-  typedef dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> MATRIX;
+  const auto DEVICE = dftefe::utils::MemorySpace::DEVICE;
+  typedef dftefe::linearAlgebra::blasLapack::blasQueueType<DEVICE> QUEUE;
+  typedef dftefe::linearAlgebra::SerialDenseMatrix<double, DEVICE> MATRIX;
 
   int    nRows = 5, nCols = 3;
-  QUEUE  queue;
-  MATRIX A(nRows, nCols, std::make_shared<QUEUE>(queue), 0);
+  int device;
+  dftefe::utils::deviceGetDevice(&device);
+  std::shared_ptr<QUEUE>  queue = std::make_shared<QUEUE>(device, 0);
+  MATRIX A(nRows, nCols, queue, 0);
 
   double              lo = -10.0, hi = 10.0;
   std::vector<double> AData(nRows * nCols, 0.0);
   for (int i = 0; i < AData.size(); ++i)
     {
       AData[i]        = lo + (hi - lo) * std::rand() / RAND_MAX;
-      *(A.data() + i) = AData[i];
     }
+  dftefe::utils::MemoryTransfer<DEVICE, HOST>::copy(nRows*nCols, A.data(), AData.data());
 
+  std::vector<double> resutBuffer(nRows*nCols, 0.0);
   MATRIX B(A);
+  dftefe::utils::MemoryTransfer<HOST, DEVICE>::copy(nRows*nCols, resutBuffer.data(), B.data());
 
   for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
-      if (std::fabs(AData[i] - *(B.data() + i)) > tol)
+      if (std::fabs(AData[i] - *(resutBuffer.data() + i)) > tol)
         {
           std::string msg =
             "At index " + std::to_string(i) + ": (" +
             std::to_string(i % nRows) + ", " + std::to_string(i / nCols) + ")" +
-            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix copy constructor for double at Host. "
+            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix copy constructor for double at Device. "
             " dftefe::linearAlgebra::SerialDenseMatrix value: (" +
-            std::to_string(*(B.data() + i)) + "), reference value: (" +
+            std::to_string(*(resutBuffer.data() + i)) + "), reference value: (" +
             std::to_string(AData[i]) + ")";
           throw std::runtime_error(msg);
         }
@@ -67,16 +72,18 @@ main()
 
   MATRIX C;
   C = A;
+  resutBuffer.assign(nRows*nCols, 0.0);
+  dftefe::utils::MemoryTransfer<HOST, DEVICE>::copy(nRows*nCols, resutBuffer.data(), C.data());
   for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
-      if (std::fabs(AData[i] - *(C.data() + i)) > tol)
+      if (std::fabs(AData[i] - *(resutBuffer.data() + i)) > tol)
         {
           std::string msg =
             "At index " + std::to_string(i) + ": (" +
             std::to_string(i % nRows) + ", " + std::to_string(i / nCols) + ")" +
-            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix assignment operator for double at Host. "
+            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix assignment operator for double at Device. "
             " dftefe::linearAlgebra::SerialDenseMatrix value: (" +
-            std::to_string(*(C.data() + i)) + "), reference value: (" +
+            std::to_string(*(resutBuffer.data() + i)) + "), reference value: (" +
             std::to_string(AData[i]) + ")";
           throw std::runtime_error(msg);
         }
@@ -84,17 +91,18 @@ main()
 
   MATRIX D;
   D = std::move(A);
-
+  resutBuffer.assign(nRows*nCols, 0.0);
+  dftefe::utils::MemoryTransfer<HOST, DEVICE>::copy(nRows*nCols, resutBuffer.data(), D.data());
   for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
-      if (std::fabs(AData[i] - *(D.data() + i)) > tol)
+      if (std::fabs(AData[i] - *(resutBuffer.data() + i)) > tol)
         {
           std::string msg =
             "At index " + std::to_string(i) + ": (" +
             std::to_string(i % nRows) + ", " + std::to_string(i / nCols) + ")" +
-            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix move assignment operator for double at Host. "
+            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix move assignment operator for double at Device. "
             " dftefe::linearAlgebra::SerialDenseMatrix value: (" +
-            std::to_string(*(D.data() + i)) + "), reference value: (" +
+            std::to_string(*(resutBuffer.data() + i)) + "), reference value: (" +
             std::to_string(AData[i]) + ")";
           throw std::runtime_error(msg);
         }
@@ -102,17 +110,18 @@ main()
 
 
   MATRIX E = std::move(D);
-
+  resutBuffer.assign(nRows*nCols, 0.0);
+  dftefe::utils::MemoryTransfer<HOST, DEVICE>::copy(nRows*nCols, resutBuffer.data(), E.data());
   for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
-      if (std::fabs(AData[i] - *(E.data() + i)) > tol)
+      if (std::fabs(AData[i] - *(resutBuffer.data() + i)) > tol)
         {
           std::string msg =
             "At index " + std::to_string(i) + ": (" +
             std::to_string(i % nRows) + ", " + std::to_string(i / nCols) + ")" +
-            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix move constructor operator for double at Host. "
+            " mismatch of entries after doing dftefe::linearAlgebra::SerialDenseMatrix move constructor operator for double at Device. "
             " dftefe::linearAlgebra::SerialDenseMatrix value: (" +
-            std::to_string(*(E.data() + i)) + "), reference value: (" +
+            std::to_string(*(resutBuffer.data() + i)) + "), reference value: (" +
             std::to_string(AData[i]) + ")";
           throw std::runtime_error(msg);
         }

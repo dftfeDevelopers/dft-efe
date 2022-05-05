@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2022.                                                        *
+ * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,40 +20,27 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin.
+ * @author Bikash Kanungo
  */
 
-#include <stdexcept>
-#include <linearAlgebra/SerialDenseMatrix.h>
+#ifndef dftefeLinearAlgebraContext_h
+#define dftefeLinearAlgebraContext_h
 
-int
-main()
+#include <utils/MemorySpaceType.h>
+#include <utils/BlasLapackTypedef.h>
+namespace dftefe
 {
-  double tol = 1.0e-12;
-
-  const auto HOST = dftefe::utils::MemorySpace::HOST;
-  typedef dftefe::linearAlgebra::blasLapack::BlasQueueType<HOST> QUEUE;
-  typedef dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> MATRIX;
-
-  dftefe::size_type   nRows = 5, nCols = 3;
-  QUEUE  queue;
-  MATRIX A(nRows, nCols, std::make_shared<QUEUE>(queue), 0);
-
-  if ((A.getGlobalRows() != nRows) || (A.getGlobalCols() != nCols))
+  namespace linearAlgebra
+  {
+    template <utils::MemorySpace memorySpace>
+    class LinearAlgebraContext
     {
-      std::string msg =
-        "globalRows and globalCols do not match for dftefe::linearAlgebra::SerialDenseMatrix::copyTo for double on Host. given dimensions: (" + std::to_string(nRows) + ", " + std::to_string(nCols) + "), matrix dimension: (" +
-        std::to_string(A.getGlobalRows()) + ", " + std::to_string(A.getGlobalCols()) + ")";
-      throw std::runtime_error(msg);
-    }
+    public:
+      LinearAlgebraContext(const);
 
-  dftefe::size_type nRow_t = 0, nCol_t = 0;
-  A.getGlobalSize(nRow_t, nCol_t);
-  if ((nRow_t != nRows) || (nCol_t != nCols))
-    {
-      std::string msg =
-        "getGlobalSize function does not match for dftefe::linearAlgebra::SerialDenseMatrix::copyTo for double on Host. given dimensions: (" + std::to_string(nRows) + ", " + std::to_string(nCols) + "), matrix dimension: (" +
-        std::to_string(nRow_t) + ", " + std::to_string(nCol_t) + ")";
-      throw std::runtime_error(msg);
-    }
-}
+    }; // end of LinearAlgebraContext
+
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe
+
+#endif // end of dftefeLinearAlgebraContext_h

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
+ * Copyright (c) 2021-2022.                                                   *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -30,21 +30,24 @@
 #include <linearAlgebra/SerialDenseMatrix.h>
 
 using namespace dftefe;
-using MemoryStorageDoubleHost =
-  dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>;
-using MatrixDoubleHost =
-  dftefe::linearAlgebra::Matrix<double, dftefe::utils::MemorySpace::HOST>;
-using SerialDenseMatrixDoubleHost =
+using MemoryStorageDoubleDevice =
+  dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>;
+using MatrixDoubleDevice =
+  dftefe::linearAlgebra::Matrix<double, dftefe::utils::MemorySpace::DEVICE>;
+using SerialDenseMatrixDoubleDevice =
   dftefe::linearAlgebra::SerialDenseMatrix<double,
-                                           dftefe::utils::MemorySpace::HOST>;
+                                           dftefe::utils::MemorySpace::DEVICE>;
 
 int
 main()
 {
+  const utils::MemorySpace Device = dftefe::utils::MemorySpace::DEVICE;
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>>
+  int device;
+  dftefe::utils::deviceGetDevice(&device);
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::blasQueueType<Device>>
     queue = std::make_shared<
-      dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>>();
+      dftefe::linearAlgebra::blasLapack::blasQueueType<Device>>(device, 0);
   const double lo    = -10.0;
   const double hi    = 10.0;
   size_type nRows = 5, nCols = 3;
@@ -64,22 +67,22 @@ main()
   for (size_type i = 0; i < vSize; ++i)
     dVecStd3[i] = dVecStd1[i] + dVecStd2[i];
 
-  std::unique_ptr<MemoryStorageDoubleHost> memStorage1 =
-    std::make_unique<MemoryStorageDoubleHost>(vSize);
+  std::unique_ptr<MemoryStorageDoubleDevice> memStorage1 =
+    std::make_unique<MemoryStorageDoubleDevice>(vSize);
   memStorage1->copyFrom<Host>(dVecStd1.data());
-  std::shared_ptr<MatrixDoubleHost> dMat1 =
-    std::make_shared<SerialDenseMatrixDoubleHost>(nRows, nCols, queue);
+  std::shared_ptr<MatrixDoubleDevice> dMat1 =
+    std::make_shared<SerialDenseMatrixDoubleDevice>(nRows, nCols, queue);
   dMat1->setStorage(memStorage1);
 
-  std::unique_ptr<MemoryStorageDoubleHost> memStorage2 =
-    std::make_unique<MemoryStorageDoubleHost>(vSize);
+  std::unique_ptr<MemoryStorageDoubleDevice> memStorage2 =
+    std::make_unique<MemoryStorageDoubleDevice>(vSize);
   memStorage2->copyFrom<Host>(dVecStd2.data());
-  std::shared_ptr<MatrixDoubleHost> dMat2 =
-    std::make_shared<SerialDenseMatrixDoubleHost>(nRows, nCols, queue);
+  std::shared_ptr<MatrixDoubleDevice> dMat2 =
+    std::make_shared<SerialDenseMatrixDoubleDevice>(nRows, nCols, queue);
   dMat2->setStorage(memStorage2);
 
   *dMat1 += *dMat2;
-  const MemoryStorageDoubleHost &dVec3Storage = dMat1->getValues();
+  const MemoryStorageDoubleDevice &dVec3Storage = dMat1->getValues();
   std::vector<double>            dVec3HostCopy(vSize);
   dVec3Storage.copyTo<Host>(dVec3HostCopy.data());
 

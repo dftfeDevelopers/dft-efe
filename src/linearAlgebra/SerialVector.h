@@ -58,7 +58,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Vector<ValueType, memorySpace>::d_storage;
-      using Vector<ValueType, memorySpace>::d_blasQueue;
+      using Vector<ValueType, memorySpace>::d_BlasQueue;
       using Vector<ValueType, memorySpace>::d_vectorAttributes;
       using Vector<ValueType, memorySpace>::d_globalSize;
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -107,7 +107,7 @@ namespace dftefe
       explicit SerialVector(
         size_type                                               size,
         ValueType                                               initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage).
@@ -129,7 +129,7 @@ namespace dftefe
       SerialVector(
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
                                                                 storage,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector

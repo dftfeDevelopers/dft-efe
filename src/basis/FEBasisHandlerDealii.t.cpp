@@ -468,6 +468,45 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
+    const Constraints<ValueType> &
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getConstraints(
+      const std::string constraintsName) const
+    {
+      auto it = d_feConstraintsDealiiMap.find(constraintsName);
+      if (it == d_feConstraintsDealiiMap.end())
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false,
+            "FEBasisHandlerDealii does not contain the constraints "
+            "corresponding to " +
+              constraintsName);
+        }
+
+      return *(it->second);
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    std::shared_ptr<const MPIPatternP2P<memorySpace>>
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getMPIPatternP2P(
+      const std::string constraintsName) const
+    {
+      auto it = d_mpiPatternP2PMap.find(constraintsName);
+      if (it == d_mpiPatternP2PMap.end())
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false,
+            "The MPIPatternP2P in FEBasisHandlerDealii is not created for "
+            "the constraint " +
+              constraintName);
+        }
+      return it->second;
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::pair<global_size_type, global_size_type>
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::getLocallyOwnedRange(
       const std::string constraintsName) const
@@ -496,7 +535,7 @@ namespace dftefe
       const size_type numGhost = (*(it->second)).size();
       return (numLocallyOwned + numGhost);
     }
-    
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>

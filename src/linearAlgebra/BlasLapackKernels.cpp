@@ -58,7 +58,7 @@ namespace dftefe
         const size_type             vecSize,
         const size_type             numVec,
         const ValueType *           multiVecData,
-        blasQueueType<memorySpace> &blasQueue)
+        BlasQueueType<memorySpace> &BlasQueue)
       {
         std::vector<double> nrms2(numVec, 0);
 

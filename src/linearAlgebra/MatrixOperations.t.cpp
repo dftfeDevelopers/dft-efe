@@ -21,7 +21,7 @@ namespace dftefe
       ValueType                                               beta,
       ValueType *                                             dC,
       size_type                                               lddc,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
     {
       dftefe::linearAlgebra::blasLapack::gemm(layout,
                                               transA,
@@ -37,7 +37,7 @@ namespace dftefe
                                               beta,
                                               dC,
                                               lddc,
-                                              *blasQueue);
+                                              *BlasQueue);
     }
 
   } // namespace linearAlgebra
