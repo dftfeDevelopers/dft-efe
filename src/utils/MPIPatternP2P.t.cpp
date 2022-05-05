@@ -28,6 +28,7 @@
 #include <utils/MPITags.h>
 #include <utils/MPIRequestersBase.h>
 #include <utils/MPIRequestersNBX.h>
+#include <utils/MPIErrorCodeHandler.h>
 #include <string>
 #include <map>
 #include <set>

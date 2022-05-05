@@ -26,6 +26,7 @@
 #include <utils/MPICommunicatorP2P.h>
 #include <utils/MPICommunicatorP2PKernels.h>
 #include <utils/Exceptions.h>
+#include <utils/MPIErrorCodeHandler.h>
 
 
 namespace dftefe
@@ -93,11 +94,9 @@ namespace dftefe
             &d_requestsUpdateGhostValues[i]);
 
 
-          std::string errMsg = "Error occured while using MPI_Irecv. "
-                               "Error code: " +
-                               std::to_string(err);
-
-          throwException(err == MPI_SUCCESS, errMsg);
+          const std::pair<bool, std::string> isSuccessAndMessage =
+            MPIErrorCodeHandler::getIsSuccessAndMessage(err);
+          throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
 
 
           recvArrayStartPtr +=
@@ -133,9 +132,9 @@ namespace dftefe
               [d_mpiPatternP2P->getGhostProcIds().size() + i]);
 
 
-          std::string errMsg = "Error occured while using MPI_Isend. "
-                               "Error code: " +
-                               std::to_string(err);
+          const std::pair<bool, std::string> isSuccessAndMessage =
+            MPIErrorCodeHandler::getIsSuccessAndMessage(err);
+          throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
 
           sendArrayStartPtr +=
             d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -154,13 +153,12 @@ namespace dftefe
       // wait for all send and recv requests to be completed
       if (d_requestsUpdateGhostValues.size() > 0)
         {
-          const int   err    = MPI_Waitall(d_requestsUpdateGhostValues.size(),
+          const int err = MPI_Waitall(d_requestsUpdateGhostValues.size(),
                                       d_requestsUpdateGhostValues.data(),
                                       MPI_STATUSES_IGNORE);
-          std::string errMsg = "Error occured while using MPI_Waitall. "
-                               "Error code: " +
-                               std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
+          const std::pair<bool, std::string> isSuccessAndMessage =
+            MPIErrorCodeHandler::getIsSuccessAndMessage(err);
+          throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
         }
 #endif
     }
@@ -199,10 +197,9 @@ namespace dftefe
             d_mpiCommunicator,
             &d_requestsAccumulateAddLocallyOwned[i]);
 
-          std::string errMsg = "Error occured while using MPI_Irecv. "
-                               "Error code: " +
-                               std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
+          const std::pair<bool, std::string> isSuccessAndMessage =
+            MPIErrorCodeHandler::getIsSuccessAndMessage(err);
+          throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
 
           recvArrayStartPtr +=
             d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -230,10 +227,9 @@ namespace dftefe
             &d_requestsAccumulateAddLocallyOwned
               [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
 
-          std::string errMsg = "Error occured while using MPI_Isend. "
-                               "Error code: " +
-                               std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
+          const std::pair<bool, std::string> isSuccessAndMessage =
+            MPIErrorCodeHandler::getIsSuccessAndMessage(err);
+          throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
 
           sendArrayStartPtr +=
             (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
@@ -261,10 +257,9 @@ namespace dftefe
                         d_requestsAccumulateAddLocallyOwned.data(),
                         MPI_STATUSES_IGNORE);
 
-          std::string errMsg = "Error occured while using MPI_Waitall. "
-                               "Error code: " +
-                               std::to_string(err);
-          throwException(err == MPI_SUCCESS, errMsg);
+          const std::pair<bool, std::string> isSuccessAndMessage =
+            MPIErrorCodeHandler::getIsSuccessAndMessage(err);
+          throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
         }
 
       // accumulate add into locally owned entries from recv buffer

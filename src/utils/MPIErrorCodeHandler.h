@@ -40,11 +40,11 @@ namespace dftefe
       MPIErrorCodeHandler()  = default;
       ~MPIErrorCodeHandler() = default;
       static bool
-      isSuccess(const int &errCode) const;
+      isSuccess(const int errCode);
       static std::string
-      getErrMsg(const int &errCode) const;
+      getErrMsg(const int errCode);
       static std::pair<bool, std::string>
-      getIsSuccessAndMessage(const int &errCode) const;
+      getIsSuccessAndMessage(const int errCode);
     }; // end of mpiErrorCodes
   }    // end of namespace utils
 } // end of namespace dftefe
