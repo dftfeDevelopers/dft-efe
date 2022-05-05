@@ -31,25 +31,24 @@ namespace dftefe
 {
   namespace utils
   {
-    template<typename T>
-    OptimizedIndexSet<T>::OptimizedIndexSet():
-      d_numContiguousRanges(0),
-      d_contiguousRanges(0),
-      d_numEntriesBefore(0)
-    {
+    template <typename T>
+    OptimizedIndexSet<T>::OptimizedIndexSet()
+      : d_numContiguousRanges(0)
+      , d_contiguousRanges(0)
+      , d_numEntriesBefore(0)
+    {}
 
-    }
-    
-    template<typename T>
-    OptimizedIndexSet<T>::OptimizedIndexSet(
-      const std::set<T> &inputSet):
-      d_numContiguousRanges(0),
-      d_contiguousRanges(0),
-      d_numEntriesBefore(0)
+    template <typename T>
+    OptimizedIndexSet<T>::OptimizedIndexSet(const std::set<T> &inputSet)
+      : d_numContiguousRanges(0)
+      , d_contiguousRanges(0)
+      , d_numEntriesBefore(0)
     {
-      bool isValid = std::is_base_of<size_type,T>::value || std::is_base_of<global_size_type,T>::value;
-      utils::throwException<utils::InvalidArgument>(isValid, 
-	  "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int."); 
+      bool isValid = std::is_base_of<size_type, T>::value ||
+                     std::is_base_of<global_size_type, T>::value;
+      utils::throwException<utils::InvalidArgument>(
+        isValid,
+        "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int.");
       std::set<T>::const_iterator itLastRange = inputSet.begin();
       std::set<T>::const_iterator itPrev      = inputSet.begin();
       std::set<T>::const_iterator it          = itPrev;
@@ -79,11 +78,10 @@ namespace dftefe
         }
     }
 
-    void
-    template<typename T>
-    OptimizedIndexSet<T>::getPosition(const T & index,
-                                   size_type &            pos,
-                                   bool &                 found) const
+    void template <typename T>
+    OptimizedIndexSet<T>::getPosition(const T &  index,
+                                      size_type &pos,
+                                      bool &     found) const
     {
       found = false;
       /*
@@ -96,16 +94,17 @@ namespace dftefe
        * 2. Since d_contiguousRanges stores pairs of startId and endId
        *    (endId not inclusive) of contiguous ranges in inputSet,
        *    any index for which upPos is even (i.e., it corresponds to a
-       * startId) cannot belong to inputSet. Why? Consider two consequtive ranges
-       * [k1,k2) and [k3,k4) where k1 < k2 < k3 < k4. If upVal for index
+       * startId) cannot belong to inputSet. Why? Consider two consequtive
+       * ranges [k1,k2) and [k3,k4) where k1 < k2 < k3 < k4. If upVal for index
        * corresponds to k3 (i.e., startId of a range), then (a) index does not
        * lie in the [k3,k4) as index < upVal (=k3). (b) index cannot lie in
        * [k1,k2), because if index lies in [k1,k2), then upVal should be k2 (not
        * k3)
        *  3. If upPos is odd (i.e, it corresponds to an endId), we find the
        * relative position of index in that range. Subsequently, we determine
-       * the global position of index in inputSet by adding the relative position
-       * to the number of entries in inputSet prior to the range where index lies
+       * the global position of index in inputSet by adding the relative
+       * position to the number of entries in inputSet prior to the range where
+       * index lies
        */
 
       auto      up    = std::upper_bound(d_contiguousRanges.begin(),

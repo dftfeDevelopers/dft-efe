@@ -12,6 +12,7 @@ endif()
 
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
+	MathConstants.cpp
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
 	MemoryManager.cpp
@@ -20,6 +21,7 @@ set(DFT-EFE-UTILS-SOURCES
 	ExpModX.cpp
 	LogModX.cpp
 	OptimizedIndexSet.cpp
+	MPIErrorCodeHandler.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
   MPICommunicatorP2PKernels.cpp

@@ -23,17 +23,29 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeMathConstants_h
-#define dftefeMathConstants_h
+#ifndef dftefeMPIErrorCodeHandler_h
+#define dftefeMPIErrorCodeHandler_h
+
+#ifdef DFTEFE_WITH_MPI
+#  include <mpi.h>
+#endif // DFTEFE_WITH_MPI
+#include <string>
 namespace dftefe
 {
   namespace utils
   {
-    namespace mathConstants
+    class MPIErrorCodeHandler
     {
-      extern const double e;
-      extern const double pi;
-    } // namespace mathConstants
-  }   // namespace utils
-} // namespace dftefe
-#endif // dftefeMathConstants_h
+    public:
+      MPIErrorCodeHandler()  = default;
+      ~MPIErrorCodeHandler() = default;
+      static bool
+      isSuccess(const int &errCode) const;
+      static std::string
+      getErrMsg(const int &errCode) const;
+      static std::pair<bool, std::string>
+      getIsSuccessAndMessage(const int &errCode) const;
+    }; // end of mpiErrorCodes
+  }    // end of namespace utils
+} // end of namespace dftefe
+#endif // dftefeMPIErrorCodeHandler_h

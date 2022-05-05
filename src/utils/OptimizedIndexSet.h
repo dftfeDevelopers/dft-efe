@@ -46,8 +46,8 @@ namespace dftefe
      *
      * @tparam ValueType The data type of the indices (e.g., unsigned int, unsigned long int)
      */
-   
-    template<typename T>
+
+    template <typename T>
     class OptimizedIndexSet
     {
     public:
@@ -56,15 +56,12 @@ namespace dftefe
       ~OptimizedIndexSet() = default;
 
       void
-      getPosition(const T & index,
-                  size_type &            pos,
-                  bool &                 found) const;
+      getPosition(const T &index, size_type &pos, bool &found) const;
 
     private:
-     
       /// Store the number of contiguous ranges in the input set of indices
-      size_type                  d_numContiguousRanges;
-      
+      size_type d_numContiguousRanges;
+
       /*
        * Vector of size 2*(d_numContiguousRanges in d_set).
        * The entries are arranged as:
