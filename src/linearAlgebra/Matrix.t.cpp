@@ -140,10 +140,10 @@ namespace dftefe
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+    std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
     Matrix<ValueType, memorySpace>::getQueue()
     {
-      return d_blasQueue;
+      return d_BlasQueue;
     }
 
 
@@ -165,14 +165,13 @@ namespace dftefe
         d_data->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      blasLapack::axpy<ValueType, ValueType, memorySpace>(this->d_data->size(),
-                                                          1.0,
-                                                          rhs.data(),
-                                                          1,
-                                                          this->data(),
-                                                          1,
-                                                          *d_blasQueue);
-
+      blasLapack::axpby<ValueType, memorySpace>(this->d_data->size(),
+                                                1.0,
+                                                rhs.data(),
+                                                1,
+                                                this->data(),
+                                                this->data(),
+                                                *d_BlasQueue);
       return *this;
     }
 
@@ -195,13 +194,13 @@ namespace dftefe
         d_data->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      blasLapack::axpy<ValueType, ValueType, memorySpace>(this->d_data->size(),
-                                                          -1.0,
-                                                          rhs.data(),
-                                                          1,
-                                                          this->data(),
-                                                          1,
-                                                          *d_blasQueue);
+      blasLapack::axpby<ValueType, memorySpace>(this->d_data->size(),
+                                                -1.0,
+                                                rhs.data(),
+                                                1,
+                                                this->data(),
+                                                this->data(),
+                                                *d_BlasQueue);
       return *this;
     }
 

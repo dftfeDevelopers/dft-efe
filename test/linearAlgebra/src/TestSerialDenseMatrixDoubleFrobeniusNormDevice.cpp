@@ -23,37 +23,58 @@
  * @author Ian C. Lin.
  */
 
+#include <cstdlib>
 #include <stdexcept>
+#include <cmath>
 #include <linearAlgebra/SerialDenseMatrix.h>
+#include <linearAlgebra/SerialVector.h>
+
+/**
+ * @brief Frobenius norm has not yet been implemented for GPU
+ */
 
 int
 main()
 {
   double tol = 1.0e-12;
 
+  const auto DEVICE = dftefe::utils::MemorySpace::DEVICE;
   const auto HOST = dftefe::utils::MemorySpace::HOST;
-  typedef dftefe::linearAlgebra::blasLapack::BlasQueueType<HOST> QUEUE;
-  typedef dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> MATRIX;
 
-  dftefe::size_type   nRows = 5, nCols = 3;
-  QUEUE  queue;
-  MATRIX A(nRows, nCols, std::make_shared<QUEUE>(queue), 0);
+  typedef dftefe::linearAlgebra::blasLapack::blasQueueType<DEVICE> QUEUE;
+  dftefe::size_type nRows = 5, nCols = 3;
+  int               device;
+  dftefe::utils::deviceGetDevice(&device);
+  std::shared_ptr<QUEUE> queue = std::make_shared<QUEUE>(device, 0);
+  dftefe::linearAlgebra::SerialDenseMatrix<double, DEVICE> A(nRows,
+                                                             nCols,
+                                                             queue);
 
-  if ((A.getGlobalRows() != nRows) || (A.getGlobalCols() != nCols))
+  double              lo = -10.0, hi = 10.0;
+  std::vector<double> AData(nRows * nCols, 0.0);
+  for (dftefe::size_type i = 0; i < AData.size(); ++i)
     {
-      std::string msg =
-        "globalRows and globalCols do not match for dftefe::linearAlgebra::SerialDenseMatrix::copyTo for double on Host. given dimensions: (" + std::to_string(nRows) + ", " + std::to_string(nCols) + "), matrix dimension: (" +
-        std::to_string(A.getGlobalRows()) + ", " + std::to_string(A.getGlobalCols()) + ")";
-      throw std::runtime_error(msg);
+      AData[i]        = lo + (hi - lo) * std::rand() / RAND_MAX;
     }
+  dftefe::utils::MemoryTransfer<DEVICE, HOST>::copy(AData.size(), A.data(), AData.data());
 
-  dftefe::size_type nRow_t = 0, nCol_t = 0;
-  A.getGlobalSize(nRow_t, nCol_t);
-  if ((nRow_t != nRows) || (nCol_t != nCols))
+  double vFrob = 0.0;
+  for (const double &i : AData)
+    {
+      vFrob += i * i;
+    }
+  vFrob = std::sqrt(vFrob);
+
+  double mFrob = A.frobeniusNorm();
+
+  if (std::fabs(mFrob - vFrob) > tol)
     {
       std::string msg =
-        "getGlobalSize function does not match for dftefe::linearAlgebra::SerialDenseMatrix::copyTo for double on Host. given dimensions: (" + std::to_string(nRows) + ", " + std::to_string(nCols) + "), matrix dimension: (" +
-        std::to_string(nRow_t) + ", " + std::to_string(nCol_t) + ")";
+        "Mismatch of Frobenius norm of std::vector and dftefe::linearAlgebra::SerialDenseMatrix. "
+        "std::vector Frobenius norm: " +
+        std::to_string(vFrob) +
+        " dftefe::linearAlgebra::SerialDenseMatrix Frobenius norm: " +
+        std::to_string(mFrob);
       throw std::runtime_error(msg);
     }
 }

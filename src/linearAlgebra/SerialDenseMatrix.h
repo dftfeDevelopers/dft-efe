@@ -63,7 +63,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Matrix<ValueType, memorySpace>::d_data;
-      using Matrix<ValueType, memorySpace>::d_blasQueue;
+      using Matrix<ValueType, memorySpace>::d_BlasQueue;
       using Matrix<ValueType, memorySpace>::d_nGlobalRows;
       using Matrix<ValueType, memorySpace>::d_nGlobalCols;
       using Matrix<ValueType, memorySpace>::d_nLocalRows;
@@ -108,7 +108,7 @@ namespace dftefe
        * and initial value arguments
        * @param[in] rows Number of rows of the matrix
        * @param[in] cols Number of cols of the matrix
-       * @param[in] blasQueueInput Queue handle. For Matrix objects stored in
+       * @param[in] BlasQueueInput Queue handle. For Matrix objects stored in
        * HOST this is same as int. For matrix object stored in Device this is
        * blas::Queue
        * @param[in] initVal initial value of elements of the Vector
@@ -116,7 +116,7 @@ namespace dftefe
       SerialDenseMatrix(
         size_type                                               rows,
         size_type                                               cols,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueueInput,
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueueInput,
         ValueType                                               initVal = 0,
         typename Matrix<ValueType, memorySpace>::Property       property =
           Matrix<ValueType, memorySpace>::Property::GENERAL,

@@ -65,7 +65,7 @@ namespace dftefe
         nrms2MultiVector(size_type                   vecSize,
                          size_type                   numVec,
                          const ValueType *           multiVecData,
-                         blasQueueType<memorySpace> &blasQueue);
+                         BlasQueueType<memorySpace> &BlasQueue);
       };
 
 
@@ -93,7 +93,7 @@ namespace dftefe
           size_type                                          vecSize,
           size_type                                          numVec,
           const ValueType *                                  multiVecData,
-          blasQueueType<dftefe::utils::MemorySpace::DEVICE> &blasQueue);
+          BlasQueueType<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
       };
 #endif
     } // namespace blasLapack

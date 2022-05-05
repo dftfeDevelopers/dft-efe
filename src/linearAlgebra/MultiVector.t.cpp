@@ -39,9 +39,9 @@ namespace dftefe
       const size_type                                         locallyOwnedSize,
       const size_type                                         ghostSize,
       const size_type                                         numVectors,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
       : d_storage(storage)
-      , d_blasQueue(blasQueue)
+      , d_BlasQueue(BlasQueue)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
@@ -58,7 +58,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector()
       : d_storage(nullptr)
-      , d_blasQueue(nullptr)
+      , d_BlasQueue(nullptr)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
@@ -225,10 +225,10 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+    std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
     MultiVector<ValueType, memorySpace>::getBlasQueue() const
     {
-      return d_blasQueue;
+      return d_BlasQueue;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
