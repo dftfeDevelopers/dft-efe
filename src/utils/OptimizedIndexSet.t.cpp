@@ -33,15 +33,17 @@ namespace dftefe
   {
     template<typename T>
     OptimizedIndexSet<T>::OptimizedIndexSet(
-      const std::set<T> &inputSet)
+      const std::set<T> &inputSet):
       d_contiguousRanges(0)
     {
-      bool isValid = std::is_base_of<size_type,T>::value || std::is_base_of<global_size_type,T>::value;
-      utils::throwException<utils::InvalidArgument>(isValid, 
-	  "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int."); 
-      std::set<T>::const_iterator itLastRange = inputSet.begin();
-      std::set<T>::const_iterator itPrev      = inputSet.begin();
-      std::set<T>::const_iterator it          = itPrev;
+      bool isValid = std::is_same<size_type,T>::value || std::is_same<global_size_type,T>::value;
+      utils::throwException<utils::InvalidArgument>(isValid,
+	  "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int.");
+      utils::throwException<utils::InvalidArgument>(!inputSet.empty(),
+      "inputSet passed to OptimizedIndexSet is empty.");
+      typename std::set<T>::const_iterator itLastRange = inputSet.begin();
+      typename std::set<T>::const_iterator itPrev      = inputSet.begin();
+      typename std::set<T>::const_iterator it          = itPrev;
       it++;
       for (; it != inputSet.end(); ++it)
         {
@@ -68,8 +70,8 @@ namespace dftefe
         }
     }
 
-    void
     template<typename T>
+    void
     OptimizedIndexSet<T>::getPosition(const T & index,
                                    size_type &            pos,
                                    bool &                 found) const

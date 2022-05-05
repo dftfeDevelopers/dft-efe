@@ -12,6 +12,10 @@ add_executable(TestCubicSplineTK TestCubicSplineTK.cpp)
 target_link_libraries(TestCubicSplineTK PUBLIC dft-efe-utils)
 set_target_properties(TestCubicSplineTK PROPERTIES OUTPUT_NAME "TestCubicSplineTK" SUFFIX ".x")
 
+add_executable(TestOptimizedIndexSet TestOptimizedIndexSet.cpp)
+target_link_libraries(TestOptimizedIndexSet PUBLIC dft-efe-utils)
+set_target_properties(TestOptimizedIndexSet PROPERTIES OUTPUT_NAME "TestOptimizedIndexSet" SUFFIX ".x")
+
 ###### Add all the MPI dependent tests below #######
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
