@@ -12,7 +12,6 @@ endif()
 
 # Add source files here
 set(DFT-EFE-UTILS-SOURCES
-	MathConstants.cpp
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
 	MemoryManager.cpp
@@ -20,12 +19,9 @@ set(DFT-EFE-UTILS-SOURCES
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
-	OptimizedIndexSet.cpp
-	MPIErrorCodeHandler.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
-  MPICommunicatorP2PKernels.cpp
-  MPICommunicatorP2PKernels.cu)
+  MPICommunicatorP2PKernels.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
