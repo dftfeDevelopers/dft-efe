@@ -51,6 +51,7 @@ namespace dftefe
     class OptimizedIndexSet
     {
     public:
+      OptimizedIndexSet();
       OptimizedIndexSet(const std::set<T> &inputSet);
       ~OptimizedIndexSet() = default;
 

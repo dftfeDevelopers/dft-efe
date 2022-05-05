@@ -246,7 +246,6 @@ namespace dftefe
       , d_ghostIndices(0)
       , d_numLocallyOwnedIndices(0)
       , d_numGhostIndices(0)
-      , d_ghostIndicesSetSTL(0)
       , d_numGhostProcs(0)
       , d_ghostProcIds(0)
       , d_numGhostIndicesInGhostProcs(0)
