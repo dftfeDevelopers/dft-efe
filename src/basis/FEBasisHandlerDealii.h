@@ -73,18 +73,22 @@ namespace dftefe
         std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
                         constraintsMap,
         const MPI_Comm &mpiComm);
-      void reinit(std::shared_ptr<const BasisManager> basisManager,
-             std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
-                             constraintsMap,
-             const MPI_Comm &mpiComm);
+      void
+      reinit(
+        std::shared_ptr<const BasisManager> basisManager,
+        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
+                        constraintsMap,
+        const MPI_Comm &mpiComm);
 #else
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
           constraintsMap);
-      void reinit(std::shared_ptr<const BasisManager> basisManager,
-             std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
-               constraintsMap);
+      void
+      reinit(
+        std::shared_ptr<const BasisManager> basisManager,
+        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
+          constraintsMap);
 #endif // DFTEFE_WITH_MPI
 
       ~FEBasisHandlerDealii() = default;
@@ -182,8 +186,8 @@ namespace dftefe
       // constraints dependent data
       std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>>
         d_ghostIndicesMap;
-      std::map < std::string,
-        std::shared_ptr<utils::MPIPatternP2P<memorySpace>>> d_mpiPatternP2PMap;
+      std::map<std::string, std::shared_ptr<utils::MPIPatternP2P<memorySpace>>>
+        d_mpiPatternP2PMap;
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;
     };
