@@ -214,7 +214,7 @@ namespace dftefe
        *
        * @note \f$a\f$ is included but \f$b\f$ is not included.
        */
-      GlobalSizeTypeVector d_allOwnedRanges;
+      GlobalSizeTypeVectorHost d_allOwnedRanges;
 
       /**
        * Number of locally owned indices in the current processor
