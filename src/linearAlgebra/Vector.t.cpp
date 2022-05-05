@@ -20,10 +20,9 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Sambit Das
  */
 
-#include <linearAlgebra/VectorKernels.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe
@@ -35,13 +34,15 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      std::unique_ptr<Storage> &storage,
-      const VectorAttributes &  vectorAttributes,
-      const global_size_type    globalSize,
-      const size_type           locallyOwnedSize,
-      const size_type           ghostSize)
+      std::unique_ptr<Storage> &                              storage,
+      const global_size_type                                  globalSize,
+      const size_type                                         locallyOwnedSize,
+      const size_type                                         ghostSize,
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
       : d_storage(storage)
-      , d_vectorAttributes(vectorAttributes)
+      , d_blasQueue(blasQueue)
+      , d_vectorAttributes(
+          VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
       , d_locallyOwnedSize(locallyOwnedSize)
       , d_ghostSize(ghostSize)
@@ -55,7 +56,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector()
       : d_storage(nullptr)
-      , d_vectorAttributes(VectorAttributes())
+      , d_blasQueue(nullptr)
+      , d_vectorAttributes(
+          VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
       , d_locallyOwnedSize(0)
       , d_ghostSize(0)
@@ -144,18 +147,19 @@ namespace dftefe
         "Trying to add incompatible Vectors. One is a serial Vector and the "
         " other a distributed Vector.");
       utils::throwException<utils::LengthError>(
-        rhs.size() == this->size(),
+        rhs.size() == this->size() && rhs.localSize() == this->localSize(),
         "Mismatch of sizes of the two Vectors that are being added.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         d_storage->size() == rhsStorageSize,
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
-      VectorKernels<ValueType, memorySpace>::add(d_storage->size(),
-                                                 rhs.data(),
-                                                 this->data());
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
+        this->localSize(), 1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
+
       return *this;
     }
+
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace> &
@@ -166,20 +170,42 @@ namespace dftefe
         d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
       utils::throwException<utils::LogicError>(
         areCompatible,
-        "Trying to add incompatible Vectors. "
+        "Trying to subtract incompatible Vectors. "
         "One is a serial vector and the other a distributed Vector.");
       utils::throwException<utils::LengthError>(
-        rhs.size() == this->size(),
+        rhs.size() == this->size() && rhs.localSize() == this->localSize(),
         "Mismatch of sizes of the two Vectors that are being subtracted.");
       const size_type rhsStorageSize = (rhs.getValues()).size();
       utils::throwException<utils::LengthError>(
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
-      VectorKernels<ValueType, memorySpace>::sub(d_storage->size(),
-                                                 rhs.data(),
-                                                 this->data());
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
+        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
       return *this;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    Vector<ValueType, memorySpace>::subLocal(
+      const Vector<ValueType, memorySpace> &rhs)
+    {
+      bool areCompatible =
+        d_vectorAttributes.areDistributionCompatible(rhs.getVectorAttributes());
+      utils::throwException<utils::LogicError>(
+        areCompatible,
+        "Trying to subtract incompatible Vectors. "
+        "One is a serial vector and the other a distributed Vector.");
+      utils::throwException<utils::LengthError>(
+        rhs.size() == this->size() && rhs.localSize() == this->localSize(),
+        "Mismatch of sizes of the two Vectors that are being subtracted.");
+      const size_type rhsStorageSize = (rhs.getValues()).size();
+      utils::throwException<utils::LengthError>(
+        (d_localSize <= rhsStorageSize),
+        "Mismatch of sizes of the underlying"
+        "storage of the two Vectors that are being subtracted.");
+      blasLapack::axpy<ValueType, ValueType, memorySpace>(
+        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -194,6 +220,13 @@ namespace dftefe
     Vector<ValueType, memorySpace>::getValues()
     {
       return *d_storage;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+    Vector<ValueType, memorySpace>::getBlasQueue() const
+    {
+      return d_blasQueue;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -248,7 +281,8 @@ namespace dftefe
         areCompatible,
         "Trying to add incompatible vectors. One is a serialVector and the other a DistributedVector.");
       utils::throwException<utils::LengthError>(
-        ((u.size() == v.size()) && (v.size() == w.size())),
+        (u.size() == v.size()) && (v.size() == w.size()) &&
+          (u.localSize() == v.localSize()) && (v.localSize() == w.localSize()),
         "Mismatch of sizes of the Vectors that are added.");
       const size_type uStorageSize = (u.getValues()).size();
       const size_type vStorageSize = (v.getValues()).size();
@@ -257,8 +291,9 @@ namespace dftefe
         (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
         "Mismatch of sizes of the underlying storages"
         "of the Vectors that are added.");
-      VectorKernels<ValueType, memorySpace>::add(
-        uStorageSize, a, u.data(), b, v.data(), w.data());
+
+      blasLapack::axpby<ValueType, memorySpace>(
+        u.localSize(), a, u.data(), b, v.data(), w.data(), *(w.getBlasQueue()));
     }
   } // namespace linearAlgebra
 } // namespace dftefe

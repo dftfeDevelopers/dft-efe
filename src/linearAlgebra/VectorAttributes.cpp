@@ -29,18 +29,15 @@ namespace dftefe
   namespace linearAlgebra
   {
     VectorAttributes::VectorAttributes(
-      const VectorAttributes::Distribution distribution,
-      const size_type                      numComponents /*=1*/)
+      const VectorAttributes::Distribution distribution)
       : d_distribution(distribution)
-      , d_numComponents(numComponents)
     {}
 
     bool
     VectorAttributes::areAttributesCompatible(
       const VectorAttributes &vecAttributes) const
     {
-      return (d_distribution == vecAttributes.d_distribution) &&
-             (d_numComponents == vecAttributes.d_numComponents);
+      return (d_distribution == vecAttributes.d_distribution);
     }
 
     bool

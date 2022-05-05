@@ -20,13 +20,14 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Sambit Das
  */
 
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
 #include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 #include <memory>
@@ -194,6 +195,15 @@ namespace dftefe
       operator-=(const Vector &rhs);
 
       /**
+       * @brief subtraction of elements owned locally in the processor
+       * @param[in] rhs the Vector to subtract
+       * @throws exception if the sizes and type (SerialVector or
+       * DistributedVector) are incompatible
+       */
+      void
+      subLocal(const Vector &rhs);
+
+      /**
        * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
        * of the Vector.
        *
@@ -210,6 +220,14 @@ namespace dftefe
        */
       const Storage &
       getValues() const;
+
+      /**
+       * @brief Returns a shared pointer to underlyign BlasQueue.
+       *
+       * @return shared pointer to BlasQueue.
+       */
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+      getBlasQueue() const;
 
       /**
        * @brief Set values in the Vector using a user provided Vector::Storage object (i.e., MemoryStorage object).
@@ -246,7 +264,7 @@ namespace dftefe
 
       /**
        * @brief Returns a VectorAttributes object that stores various attributes
-       * (e.g., Serial or Distributed, number of components, etc)
+       * (e.g., Serial or Distributed etc)
        *
        * @return const reference to the VectorAttributes
        */
@@ -296,9 +314,6 @@ namespace dftefe
        *
        * @param[in] storage reference to unique_ptr to Vector::Storage (i.e.,
        * MemoryStorage) from which the Vector to transfer ownership.
-       * @param[in] vectorAttributes const reference to VectorAttributes object
-       * that contains certain properties of the Vector (e.g., serial or
-       * distributed, number of components etc.).
        * @param[in] globalSize global size of the vector (i.e., the number of
        * unique indices across all processors).
        * @param[in] locallyOwnedSize size of the part of the vector for which
@@ -308,16 +323,18 @@ namespace dftefe
        * @param[in] ghostSize size of the part of the vector that is owned by
        * the other processors but required by the current processor. For a
        * SerialVector, the ghostSize is 0.
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
        *
        * @note Since we are passing the ownership of the input storage to the Vector, the
        * storage will point to NULL after a call to this Constructor. Accessing
        * the input storage pointer will lead to undefined behavior.
        */
       Vector(std::unique_ptr<Storage> &storage,
-             const VectorAttributes &  vectorAttributes,
              const global_size_type    globalSize,
              const size_type           locallyOwnedSize,
-             const size_type           ghostSize);
+             const size_type           ghostSize,
+             std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Default Constructor
@@ -325,12 +342,13 @@ namespace dftefe
       Vector();
 
     protected:
-      std::unique_ptr<Storage> d_storage;
-      VectorAttributes         d_vectorAttributes;
-      size_type                d_localSize;
-      global_size_type         d_globalSize;
-      size_type                d_locallyOwnedSize;
-      size_type                d_ghostSize;
+      std::unique_ptr<Storage>                                d_storage;
+      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> d_blasQueue;
+      VectorAttributes d_vectorAttributes;
+      size_type        d_localSize;
+      global_size_type d_globalSize;
+      size_type        d_locallyOwnedSize;
+      size_type        d_ghostSize;
     };
 
     // helper functions

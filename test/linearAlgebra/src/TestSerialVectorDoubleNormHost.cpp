@@ -33,9 +33,10 @@
 int
 main()
 {
+  const dftefe::utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
   const double lo = -10.0;
   const double hi = 10.0;
-  unsigned int vSize = 3;
+  dftefe::size_type vSize = 3;
   const double tol = 1e-13;
   
   // test double
@@ -50,8 +51,10 @@ main()
   dVecStdL2Norm = std::sqrt(dVecStdL2Norm);
   double dVecStdLInfNorm = *std::max_element(dVecStd.begin(), dVecStd.end());
 
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::blasQueueType<Host>>();
+
   std::shared_ptr<dftefe::linearAlgebra::Vector<double, dftefe::utils::MemorySpace::HOST>> dVec
-    = std::make_shared<dftefe::linearAlgebra::SerialVector<double, dftefe::utils::MemorySpace::HOST>>(vSize, 0);
+    = std::make_shared<dftefe::linearAlgebra::SerialVector<double, dftefe::utils::MemorySpace::HOST>>(vSize, 0,queue);
 
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,

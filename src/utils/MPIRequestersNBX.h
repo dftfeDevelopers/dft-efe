@@ -129,7 +129,7 @@ namespace dftefe
        * their message. But this is only job half-done. How do we tell the
        * current processor to stop probing for incoming message? And how do
        * inform all the processors involved that all the incoming messages
-       * across all the processors have been received. This kind of problem
+       * across all the processors have been received? This kind of problem
        * is what is called a Consensus Problem
        * (https://en.wikipedia.org/wiki/Consensus_(computer_science)).
        * The way to reach the consensus in NBX is a two-step process:
@@ -137,7 +137,7 @@ namespace dftefe
        *     (see #1 above) has been received or not.
        *     That is, if the status handle of all its MPI_ISsend have turned
        *     to completed or not. If all the local"local-send" have been
-       *     completed, we initiate a non-blocking arrier (i.e., MPI_IBarrier)
+       *     completed, we initiate a non-blocking barrier (i.e., MPI_IBarrier)
        *     on the current processor. This informs the network that the
        *     current processor has witnessed its part of an event
        *     (in this case the event is the completion
@@ -159,7 +159,7 @@ namespace dftefe
        *
        *
        * @note: Since we are only interested in knowing the requesting
-       * processors for the current processor, we only need to token
+       * processors for the current processor, we only need token
        * MPI sends and receives (e.g., just an integer across) instead
        * of large chunks of data. To that end, we harcode all the send
        * and receive buffers to be of integer type

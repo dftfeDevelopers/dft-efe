@@ -79,24 +79,23 @@ namespace dftefe
                                     dftefe::utils::MemorySpace::DEVICE>
     {
     public:
-      using SizeTypeVector =
-        utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>;
-
       static void
       gatherLocallyOwnedEntriesSendBufferToTargetProcs(
         const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
-          &                   dataArray,
-        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
-        const size_type       blockSize,
+          &dataArray,
+        const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
+          &             ownedLocalIndicesForTargetProcs,
+        const size_type blockSize,
         MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &sendBuffer);
 
       static void
       accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
-          &                   recvBuffer,
-        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
-        const size_type       blockSize,
+          &recvBuffer,
+        const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
+          &             ownedLocalIndicesForTargetProcs,
+        const size_type blockSize,
         MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &dataArray);
     };

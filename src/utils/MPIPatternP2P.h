@@ -32,6 +32,7 @@
 
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
+#include <utils/OptimizedIndexSet.h>
 #include <vector>
 namespace dftefe
 {
@@ -41,8 +42,6 @@ namespace dftefe
      * (i.e., which entries/nodes to receive from which processor and
      * which entries/nodes to send to which processor).
      *
-     * The template parameter memorySpace defines the MemorySpace (i.e., HOST or
-     * DEVICE) in which the various data members of this object must reside.
      *
      * + <b>Assumptions</b>
      *    1. It assumes that a a sparse communication pattern. That is,
@@ -54,25 +53,56 @@ namespace dftefe
      *       no index is owned by more than one processor). In other words,
      *       the different sets of owning indices across all the processors
      *       are disjoint.
+     *
+     * @tparam memorySpace Defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the various data members of this object must reside.
      */
     template <dftefe::utils::MemorySpace memorySpace>
     class MPIPatternP2P
     {
-      //
-      // typedefs
-      //
+      ///
+      /// typedefs
+      ///
     public:
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
+      using SizeTypeVectorHost =
+        utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::HOST>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
+      using GlobalSizeTypeVectorHost =
+        utils::MemoryStorage<global_size_type,
+                             dftefe::utils::MemorySpace::HOST>;
 
     public:
       virtual ~MPIPatternP2P() = default;
 #ifdef DFTEFE_WITH_MPI
+      /**
+       * @brief Constructor. This constructor is the typical way of
+       * creation of an MPI pattern.
+       *
+       * @param[in] locallyOwnedRange A pair of non-negtive integers
+       * \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor.
+       * @note It is an open interval where \f$a\f$ is included,
+       * but \f$b\f$ is not included.
+       *
+       * @param[in] ghostIndices An ordered set of non-negtive indices specifyin
+       * the ghost indices for the current processor.
+       * @note the vector must be ordered
+       * (i.e., ordered in increasing order and non-repeating)
+       *
+       * @param[in] mpiComm The MPI communicator object which defines the
+       * set of processors for which the MPI pattern needs to be created.
+       *
+       * @throw Throws exception if \p mpiComm is in an invalid state, if
+       * the \p locallyOwnedRange across all the processors are not disjoint,
+       * if \p ghostIndices are not ordered (if it is not strictly increasing),
+       * or if some sanity checks with respect to MPI sends and receives fail.
+       */
       MPIPatternP2P(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<dftefe::global_size_type> &       ghostIndices,
-        const MPI_Comm &                                    mpiComm);
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRange,
+        const std::vector<dftefe::global_size_type> &        ghostIndices,
+        const MPI_Comm &                                     mpiComm);
 
       // void
       // reinit(
@@ -80,7 +110,21 @@ namespace dftefe
       //  const std::vector<dftefe::global_size_type> &       ghostIndices,
       //  MPI_Comm &                                          mpiComm);
 #else
-      MPIPatternP2P() = default;
+      /**
+       * @brief Constructor. This constructor is provided to create a dummy MPI
+       * pattern while not using MPI. This is provided for applications to
+       * interface with this class even while not using MPI. As a result,
+       * a piece of application code that is written to be used with MPI
+       * can seamlessly be used without MPI as well.
+       *
+       * @param[in] locallyOwnedRange A pair of non-negtive integers
+       * \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor.
+       * @note It is an open interval where \f$a\f$ is included,
+       * but \f$b\f$ is not included.
+       */
+      MPIPatternP2P(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRange);
 
       // void
       // reinit(){};
@@ -93,21 +137,21 @@ namespace dftefe
       localGhostSize() const;
 
       bool
-      inLocallyOwnedRange(const global_size_type) const;
+      inLocallyOwnedRange(const global_size_type globalId) const;
 
       bool
-      isGhostEntry(const global_size_type) const;
+      isGhostEntry(const global_size_type globalId) const;
 
       size_type
-      globalToLocal(const global_size_type) const;
+      globalToLocal(const global_size_type globalId) const;
 
       global_size_type
-      localToGlobal(const size_type) const;
+      localToGlobal(const size_type localId) const;
 
-      const GlobalSizeTypeVector &
+      const GlobalSizeTypeVectorHost &
       getGhostIndices() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getGhostProcIds() const;
 
       const SizeTypeVector &
@@ -119,13 +163,13 @@ namespace dftefe
       SizeTypeVector
       getGhostLocalIndices(const size_type procId) const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getGhostLocalIndicesRanges() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getTargetProcIds() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getNumOwnedIndicesForTargetProcs() const;
 
       size_type
@@ -173,8 +217,12 @@ namespace dftefe
       GlobalSizeTypeVector d_allOwnedRanges;
 
       /**
+       * Number of locally owned indices in the current processor
+       */
+      size_type d_numLocallyOwnedIndices;
+
+      /**
        * Number of ghost indices in the current processor
-       *
        */
       size_type d_numGhostIndices;
 
@@ -182,7 +230,20 @@ namespace dftefe
        * Vector to store an ordered set of ghost indices
        * (ordered in increasing order and non-repeating)
        */
-      GlobalSizeTypeVector d_ghostIndices;
+      GlobalSizeTypeVectorHost d_ghostIndices;
+
+      /**
+       * A copy of the above d_ghostIndices stored as an STL set
+       */
+      std::set<global_size_type> d_ghostIndicesSetSTL;
+
+      /**
+       * An OptimizedIndexSet object to store the ghost indices for
+       * efficient operations. The OptimizedIndexSet internally creates
+       * contiguous sub-ranges within the set of indices and hence can
+       * optimize the finding of an index
+       */
+      OptimizedIndexSet<global_size_type> d_ghostIndicesOptimizedIndexSet;
 
       /**
        * Number of ghost processors for the current processor. A ghost processor
@@ -194,7 +255,7 @@ namespace dftefe
        * Vector to store the ghost processor Ids. A ghost processor is
        * one which owns at least one of the ghost indices of this processor.
        */
-      SizeTypeVector d_ghostProcIds;
+      SizeTypeVectorHost d_ghostProcIds;
 
       /** Vector of size number of ghost processors to store how many ghost
        * indices
@@ -215,7 +276,7 @@ namespace dftefe
        * @note \f$L_i\f$ has to be an increasing set.
 
        * @note We store only the ghost index local to this processor, i.e.,
-       * position of the ghost index in d_ghostIndicesSet or d_ghostIndices.
+       * position of the ghost index in d_ghostIndicesSetSTL or d_ghostIndices.
        * This is done to use size_type which is unsigned int instead of
        * global_size_type which is long unsigned it. This helps in reducing the
        * volume of data transfered during MPI calls.
@@ -247,14 +308,14 @@ namespace dftefe
        * included.
        *
        * @note Given the fact that the locally owned indices of each processor
-       * contiguous and the global ghost indices (i.e., d_ghostIndices) is
+       * are contiguous and the global ghost indices (i.e., d_ghostIndices) is
        * ordered, it is sufficient to just store the range of local ghost
-       * indicces for each ghost procId. The actual global ghost indices
+       * indices for each ghost procId. The actual global ghost indices
        * belonging to the \f$i\f$-th ghost processor can be fetched from
        * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
        *  d_ghostIndices[a_i] and d_ghostIndices[b_i].
        */
-      SizeTypeVector d_localGhostIndicesRanges;
+      SizeTypeVectorHost d_localGhostIndicesRanges;
 
       /**
        * Number of target processors for the current processor. A
@@ -268,7 +329,7 @@ namespace dftefe
        * one which contains at least one of the locally owned indices of this
        * processor as its ghost index.
        */
-      SizeTypeVector d_targetProcIds;
+      SizeTypeVectorHost d_targetProcIds;
 
       /**
        * Vector of size number of target processors to store how many locally
@@ -276,7 +337,7 @@ namespace dftefe
        * of this current processor are need ghost in each of the target
        *  processors.
        */
-      SizeTypeVector d_numOwnedIndicesForTargetProcs;
+      SizeTypeVectorHost d_numOwnedIndicesForTargetProcs;
 
       /** Vector of size \f$\sum_i\f$ d_numOwnedIndicesForTargetProcs[i]
        * to store all thelocally owned indices

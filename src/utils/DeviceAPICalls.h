@@ -13,7 +13,10 @@ namespace dftefe
     deviceGetDeviceCount(int *count);
 
     void
-    deviceSetDevice(int count);
+    deviceGetDevice(int *deviceId);
+
+    void
+    deviceSetDevice(int deviceId);
 
     void
     deviceMalloc(void **devPtr, size_type size);

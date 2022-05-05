@@ -74,6 +74,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Vector<ValueType, memorySpace>::d_storage;
+      using Vector<ValueType, memorySpace>::d_blasQueue;
       using Vector<ValueType, memorySpace>::d_vectorAttributes;
       using Vector<ValueType, memorySpace>::d_globalSize;
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -94,12 +95,15 @@ namespace dftefe
        * based on which the DistributedVector will be created.
        * @param[in] initVal value with which the DistributedVector shoud be
        * initialized
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
        *
        */
       DistributedVector(
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
-        const ValueType initVal = ValueType());
+        const ValueType initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -112,6 +116,8 @@ namespace dftefe
        * is to be transfered to the DistributedVector
        * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
        * based on which the DistributedVector will be created.
+       * @param[in] blasQueue handle for linear algebra operations on
+       * HOST/DEVICE.
        *
        * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector.
        * Thus, after the function call \p storage will point to NULL and any
@@ -122,7 +128,8 @@ namespace dftefe
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-          mpiCommunicatorP2P);
+          mpiCommunicatorP2P,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -141,7 +148,49 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
-        const ValueType initVal = ValueType());
+        const ValueType                                     initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+
+      /**
+       * @brief Constructor based on locally owned indices. This does not contain
+       * any ghost indices. This is to store the locally owned part of a
+       * distributed Vector
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPICommunicatorP2P as far as possible.
+       *
+       * @param locallyOwnedRange a pair \f$(a,b)\f$ which defines a range of indices (continuous)
+       * that are owned by the current processor.
+       *
+       * @note The locallyOwnedRange should be an open interval where the start index included,
+       * but the end index is not included.
+       */
+      DistributedVector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const MPI_Comm &                                    mpiComm,
+        const ValueType                                     initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+
+
+      /**
+       * @brief Constructor based on total number of global indices.
+       * This does not contain any ghost indices. This is to store the locally
+       * owned part of a distributed Vector. The vector is divided to ensure
+       * equitability as much as possible.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPICommunicatorP2P as far as possible.
+       * Further, the decomposotion is not compatible with other ways of
+       * distributed vector construction.
+       *
+       * @param totalGlobalDofs Total number of global indices that is distributed
+       * over the processors.
+       *
+       */
+      DistributedVector(
+        const global_size_type                                  totalGlobalDofs,
+        const MPI_Comm &                                        mpiComm,
+        const ValueType                                         initVal,
+        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+
 #endif // DFTEFE_WITH_MPI
 
       /**
@@ -149,6 +198,13 @@ namespace dftefe
        * @param[in] u DistributedVector object to copy from
        */
       DistributedVector(const DistributedVector &u);
+
+      /**
+       * @brief Copy constructor with reinitialisation
+       * @param[in] u DistributedVector object to copy from
+       * @param[in] initVal Initial value of the vector
+       */
+      DistributedVector(const DistributedVector &u, ValueType initVal);
 
       /**
        * @brief Move constructor

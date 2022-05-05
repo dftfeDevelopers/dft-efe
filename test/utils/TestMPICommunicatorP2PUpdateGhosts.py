@@ -33,6 +33,7 @@ else:
 parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
 cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
+bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py")
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
@@ -80,7 +81,8 @@ class BuildOnlyTestMPICommunicatorP2PUpdateGhosts(rfm.CompileOnlyRegressionTest)
 
         else:
             msg = ""
-            return sn.assert_true(hasTestPassed, msg=msg)
+            bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
+        return sn.assert_true(hasTestPassed, msg=msg)
 
 
 
@@ -88,7 +90,7 @@ class BuildOnlyTestMPICommunicatorP2PUpdateGhosts(rfm.CompileOnlyRegressionTest)
 @rfm.simple_test
 class BuildAndRunTestMPICommunicatorP2PUpdateGhosts1Node4Procs(rfm.RegressionTest):
     target_name = 'TestMPICommunicatorP2PUpdateGhosts'
-    descr = '''A run only test to verify the ghost data in MPICommunicatorP2P on 1
+    descr = '''A build and run test to verify the ghost data in MPICommunicatorP2P on 1
     node with 4 processors'''
     build_system = 'CMake'
     make_opts = [target_name]
