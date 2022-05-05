@@ -32,11 +32,6 @@ namespace dftefe
   namespace utils
   {
     template <typename T>
-    OptimizedIndexSet<T>::OptimizedIndexSet()
-    {}
-
-
-    template <typename T>
     OptimizedIndexSet<T>::OptimizedIndexSet(const std::set<T> &inputSet)
       : d_contiguousRanges(0)
     {
