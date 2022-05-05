@@ -103,9 +103,9 @@ namespace dftefe
        */
       DistributedMultiVector(
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                        mpiCommunicatorP2P,
-        const ValueType initVal,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+                                                            mpiCommunicatorP2P,
+        const ValueType                                     initVal,
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -128,8 +128,8 @@ namespace dftefe
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-          mpiCommunicatorP2P,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+                                                            mpiCommunicatorP2P,
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -150,7 +150,7 @@ namespace dftefe
         const MPI_Comm &                                    mpiComm,
         size_type                                           numVectors,
         ValueType                                           initVal,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 #endif // DFTEFE_WITH_MPI
 
       /**

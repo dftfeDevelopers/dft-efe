@@ -293,7 +293,7 @@ namespace dftefe
        * @brief Returns the Queue associated with this Matrix object
        * @returns MemoryStorage object of this class
        */
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
       getQueue();
 
 
@@ -309,7 +309,7 @@ namespace dftefe
       size_type d_nGlobalRows = 0, d_nGlobalCols = 0;
       size_type d_nLocalRows = 0, d_nLocalCols = 0;
 
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> d_BlasQueue;
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> d_BlasQueue;
 
       Property d_property;
       Uplo     d_uplo;

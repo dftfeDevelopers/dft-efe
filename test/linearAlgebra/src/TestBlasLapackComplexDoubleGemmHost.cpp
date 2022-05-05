@@ -72,7 +72,7 @@ main(int argc, char **argv)
 
   std::complex<double> alpha = 1.0+0.0i, beta = 0.0+0.0i;
 
-  BlasQueueType<Host> queue;
+  BlasQueue<Host> queue;
 
   gemm(Layout::ColMajor,
        Op::NoTrans,

@@ -40,7 +40,7 @@ main()
 {
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
   dftefe::size_type vSize = 3;
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>>();  
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>>();  
   std::shared_ptr<VectorDoubleHost> dVec
     = std::make_shared<SerialVectorDoubleHost>(vSize, 0,queue);
 

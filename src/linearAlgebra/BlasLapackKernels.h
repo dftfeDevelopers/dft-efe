@@ -62,10 +62,10 @@ namespace dftefe
          * @return \f$ l_2 \f$  norms of all the vectors
          */
         static std::vector<double>
-        nrms2MultiVector(size_type                   vecSize,
-                         size_type                   numVec,
-                         const ValueType *           multiVecData,
-                         BlasQueueType<memorySpace> &BlasQueue);
+        nrms2MultiVector(size_type               vecSize,
+                         size_type               numVec,
+                         const ValueType *       multiVecData,
+                         BlasQueue<memorySpace> &BlasQueue);
       };
 
 
@@ -90,10 +90,10 @@ namespace dftefe
 
         static std::vector<double>
         nrms2MultiVector(
-          size_type                                          vecSize,
-          size_type                                          numVec,
-          const ValueType *                                  multiVecData,
-          BlasQueueType<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
+          size_type                                      vecSize,
+          size_type                                      numVec,
+          const ValueType *                              multiVecData,
+          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
       };
 #endif
     } // namespace blasLapack

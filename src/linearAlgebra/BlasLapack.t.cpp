@@ -11,10 +11,10 @@ namespace dftefe
     {
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
-      asum(const size_type             n,
-           ValueType const *           x,
-           const size_type             incx,
-           BlasQueueType<memorySpace> &BlasQueue)
+      asum(const size_type         n,
+           ValueType const *       x,
+           const size_type         incx,
+           BlasQueue<memorySpace> &BlasQueue)
       {
         //      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
         utils::throwException(
@@ -27,10 +27,10 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
-      amax(const size_type             n,
-           ValueType const *           x,
-           const size_type             incx,
-           BlasQueueType<memorySpace> &BlasQueue)
+      amax(const size_type         n,
+           ValueType const *       x,
+           const size_type         incx,
+           BlasQueue<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -43,10 +43,10 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      amaxsMultiVector(const size_type             vecSize,
-                       const size_type             numVec,
-                       const ValueType *           multiVecData,
-                       BlasQueueType<memorySpace> &BlasQueue)
+      amaxsMultiVector(const size_type         vecSize,
+                       const size_type         numVec,
+                       const ValueType *       multiVecData,
+                       BlasQueue<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -68,7 +68,7 @@ namespace dftefe
            const size_type                           incx,
            ValueType2 *                              y,
            const size_type                           incy,
-           BlasQueueType<memorySpace> &              BlasQueue)
+           BlasQueue<memorySpace> &                  BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -79,13 +79,13 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      axpby(const size_type             n,
-            const ValueType             alpha,
-            const ValueType *           x,
-            const ValueType             beta,
-            const ValueType *           y,
-            ValueType *                 z,
-            BlasQueueType<memorySpace> &BlasQueue)
+      axpby(const size_type         n,
+            const ValueType         alpha,
+            const ValueType *       x,
+            const ValueType         beta,
+            const ValueType *       y,
+            ValueType *             z,
+            BlasQueue<memorySpace> &BlasQueue)
       {
         Kernels<ValueType, memorySpace>::axpby(n, alpha, x, beta, y, z);
       }
@@ -93,14 +93,14 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      axpbyMultiVector(const size_type             vecSize,
-                       const size_type             numVec,
-                       const ValueType             alpha,
-                       const ValueType *           x,
-                       const ValueType             beta,
-                       const ValueType *           y,
-                       ValueType *                 z,
-                       BlasQueueType<memorySpace> &BlasQueue)
+      axpbyMultiVector(const size_type         vecSize,
+                       const size_type         numVec,
+                       const ValueType         alpha,
+                       const ValueType *       x,
+                       const ValueType         beta,
+                       const ValueType *       y,
+                       ValueType *             z,
+                       BlasQueue<memorySpace> &BlasQueue)
       {
         Kernels<ValueType, memorySpace>::axpbyMultiVector(
           vecSize, numVec, alpha, x, beta, y, z);
@@ -111,12 +111,12 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       scalar_type<ValueType1, ValueType2>
-      dot(const size_type             n,
-          ValueType1 const *          x,
-          const size_type             incx,
-          ValueType2 const *          y,
-          const size_type             incy,
-          BlasQueueType<memorySpace> &BlasQueue)
+      dot(const size_type         n,
+          ValueType1 const *      x,
+          const size_type         incx,
+          ValueType2 const *      y,
+          const size_type         incy,
+          BlasQueue<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -129,10 +129,10 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
-      nrm2(const size_type             n,
-           ValueType const *           x,
-           const size_type             incx,
-           BlasQueueType<memorySpace> &BlasQueue)
+      nrm2(const size_type         n,
+           ValueType const *       x,
+           const size_type         incx,
+           BlasQueue<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -145,10 +145,10 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      nrms2MultiVector(const size_type             vecSize,
-                       const size_type             numVec,
-                       const ValueType *           multiVecData,
-                       BlasQueueType<memorySpace> &BlasQueue)
+      nrms2MultiVector(const size_type         vecSize,
+                       const size_type         numVec,
+                       const ValueType *       multiVecData,
+                       BlasQueue<memorySpace> &BlasQueue)
       {
         return Kernels<ValueType, memorySpace>::nrms2MultiVector(vecSize,
                                                                  numVec,
@@ -159,21 +159,21 @@ namespace dftefe
 
       template <typename ValueType>
       void
-      gemm(const Layout                                     layout,
-           const Op                                         transA,
-           const Op                                         transB,
-           const size_type                                  m,
-           const size_type                                  n,
-           const size_type                                  k,
-           const ValueType                                  alpha,
-           ValueType const *                                dA,
-           const size_type                                  ldda,
-           ValueType const *                                dB,
-           const size_type                                  lddb,
-           const ValueType                                  beta,
-           ValueType *                                      dC,
-           const size_type                                  lddc,
-           BlasQueueType<dftefe::utils::MemorySpace::HOST> &BlasQueue)
+      gemm(const Layout                                 layout,
+           const Op                                     transA,
+           const Op                                     transB,
+           const size_type                              m,
+           const size_type                              n,
+           const size_type                              k,
+           const ValueType                              alpha,
+           ValueType const *                            dA,
+           const size_type                              ldda,
+           ValueType const *                            dB,
+           const size_type                              lddb,
+           const ValueType                              beta,
+           ValueType *                                  dC,
+           const size_type                              lddc,
+           BlasQueue<dftefe::utils::MemorySpace::HOST> &BlasQueue)
       {
         blas::gemm(layout,
                    transA,
@@ -193,21 +193,21 @@ namespace dftefe
 
       template <typename ValueType>
       void
-      gemm(const Layout                                       layout,
-           const Op                                           transA,
-           const Op                                           transB,
-           const size_type                                    m,
-           const size_type                                    n,
-           const size_type                                    k,
-           const ValueType                                    alpha,
-           ValueType const *                                  dA,
-           const size_type                                    ldda,
-           ValueType const *                                  dB,
-           const size_type                                    lddb,
-           const ValueType                                    beta,
-           ValueType *                                        dC,
-           const size_type                                    lddc,
-           BlasQueueType<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+      gemm(const Layout                                   layout,
+           const Op                                       transA,
+           const Op                                       transB,
+           const size_type                                m,
+           const size_type                                n,
+           const size_type                                k,
+           const ValueType                                alpha,
+           ValueType const *                              dA,
+           const size_type                                ldda,
+           ValueType const *                              dB,
+           const size_type                                lddb,
+           const ValueType                                beta,
+           ValueType *                                    dC,
+           const size_type                                lddc,
+           BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
       {
         blas::gemm(layout,
                    transA,

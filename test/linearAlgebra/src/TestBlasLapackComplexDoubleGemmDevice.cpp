@@ -82,7 +82,7 @@ main(int argc, char **argv)
 
   int device;
   dftefe::utils::deviceGetDevice(&device);
-  BlasQueueType<Device> queue(device, 0);
+  BlasQueue<Device> queue(device, 0);
 
   gemm(Layout::ColMajor,
        Op::NoTrans,

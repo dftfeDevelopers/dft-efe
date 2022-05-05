@@ -233,7 +233,7 @@ namespace dftefe
        *
        * @return shared pointer to BlasQueue.
        */
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
       getBlasQueue() const;
 
       /**
@@ -340,12 +340,12 @@ namespace dftefe
        * the input storage pointer will lead to undefined behavior.
        */
       MultiVector(
-        std::unique_ptr<Storage> &storage,
-        const global_size_type    globalSize,
-        const size_type           locallyOwnedSize,
-        const size_type           ghostSize,
-        const size_type           numVectors,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+        std::unique_ptr<Storage> &                          storage,
+        const global_size_type                              globalSize,
+        const size_type                                     locallyOwnedSize,
+        const size_type                                     ghostSize,
+        const size_type                                     numVectors,
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 
       /**
        * @brief Default Constructor
@@ -353,14 +353,14 @@ namespace dftefe
       MultiVector();
 
     protected:
-      std::unique_ptr<Storage>                                d_storage;
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> d_BlasQueue;
-      VectorAttributes d_vectorAttributes;
-      size_type        d_localSize;
-      global_size_type d_globalSize;
-      size_type        d_locallyOwnedSize;
-      size_type        d_ghostSize;
-      size_type        d_numVectors;
+      std::unique_ptr<Storage>                            d_storage;
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> d_BlasQueue;
+      VectorAttributes                                    d_vectorAttributes;
+      size_type                                           d_localSize;
+      global_size_type                                    d_globalSize;
+      size_type                                           d_locallyOwnedSize;
+      size_type                                           d_ghostSize;
+      size_type                                           d_numVectors;
     };
 
     // helper functions

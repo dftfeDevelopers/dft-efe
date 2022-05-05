@@ -55,10 +55,10 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
       Kernels<ValueType, memorySpace>::nrms2MultiVector(
-        const size_type             vecSize,
-        const size_type             numVec,
-        const ValueType *           multiVecData,
-        BlasQueueType<memorySpace> &BlasQueue)
+        const size_type         vecSize,
+        const size_type         numVec,
+        const ValueType *       multiVecData,
+        BlasQueue<memorySpace> &BlasQueue)
       {
         std::vector<double> nrms2(numVec, 0);
 

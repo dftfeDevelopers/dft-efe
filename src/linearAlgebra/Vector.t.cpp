@@ -34,11 +34,11 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      std::unique_ptr<Storage> &                              storage,
-      const global_size_type                                  globalSize,
-      const size_type                                         locallyOwnedSize,
-      const size_type                                         ghostSize,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
+      std::unique_ptr<Storage> &                          storage,
+      const global_size_type                              globalSize,
+      const size_type                                     locallyOwnedSize,
+      const size_type                                     ghostSize,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
       : d_storage(storage)
       , d_BlasQueue(BlasQueue)
       , d_vectorAttributes(
@@ -223,7 +223,7 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
+    std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
     Vector<ValueType, memorySpace>::getBlasQueue() const
     {
       return d_BlasQueue;

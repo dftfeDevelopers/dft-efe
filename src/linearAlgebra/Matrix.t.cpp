@@ -140,7 +140,7 @@ namespace dftefe
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
+    std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
     Matrix<ValueType, memorySpace>::getQueue()
     {
       return d_BlasQueue;
