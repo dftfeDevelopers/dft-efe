@@ -154,7 +154,7 @@ namespace dftefe
       const SizeTypeVectorHost &
       getGhostProcIds() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getNumGhostIndicesInProcs() const;
 
       size_type
@@ -261,7 +261,7 @@ namespace dftefe
        * indices
        *  of this current processor are owned by a ghost processor.
        */
-      SizeTypeVector d_numGhostIndicesInGhostProcs;
+      SizeTypeVectorHost d_numGhostIndicesInGhostProcs;
 
       /**
        * A flattened vector of size number of ghosts containing the ghost

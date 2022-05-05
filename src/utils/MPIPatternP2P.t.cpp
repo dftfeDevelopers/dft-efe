@@ -628,7 +628,7 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getNumGhostIndicesInProcs() const
     {
       return d_numGhostIndicesInGhostProcs;
