@@ -840,15 +840,16 @@ namespace dftefe
     global_size_type
     MPIPatternP2P<memorySpace>::localToGlobal(const size_type localId) const
     {
+      global_size_type returnValue = 0;
       if (localId < d_numLocallyOwnedIndices)
         {
-          return d_locallyOwnedRange.first + localId;
+          returnValue = d_locallyOwnedRange.first + localId;
         }
       else if (localId < (d_numLocallyOwnedIndices + d_numGhostIndices))
         {
           auto it =
             d_ghostIndices.begin() + (localId - d_numLocallyOwnedIndices);
-          return *it;
+          returnValue = *it;
         }
       else
         {
@@ -859,6 +860,7 @@ namespace dftefe
             " larger than number of locally owned plus ghost indices.";
           throwException<InvalidArgument>(false, msg);
         }
+      return returnValue;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>

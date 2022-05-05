@@ -5,6 +5,12 @@ set(CMAKE_CXX_STANDARD 14)
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})
 
+if (ENABLE_CUDA)
+    enable_language(CUDA)
+    add_compile_definitions(DFTEFE_WITH_DEVICE)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+endif ()
+
 add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/utils/lib/buildUtils)
 include_directories(${MAIN_PROJECT_DIR}/src)
 
@@ -34,4 +40,11 @@ if(ENABLE_MPI)
 	add_executable(TestMPICommunicatorP2PAccumulateAdd TestMPICommunicatorP2PAccumulateAdd.cpp)
 	target_link_libraries(TestMPICommunicatorP2PAccumulateAdd PUBLIC dft-efe-utils)
 	set_target_properties(TestMPICommunicatorP2PAccumulateAdd PROPERTIES OUTPUT_NAME "TestMPICommunicatorP2PAccumulateAdd" SUFFIX ".x")
+
+if (ENABLE_CUDA)
+	add_executable(TestMPICommunicatorP2PUpdateGhostsDevice TestMPICommunicatorP2PUpdateGhostsDevice.cpp)
+	target_link_libraries(TestMPICommunicatorP2PUpdateGhostsDevice PUBLIC dft-efe-utils)
+	set_target_properties(TestMPICommunicatorP2PUpdateGhostsDevice PROPERTIES OUTPUT_NAME "TestMPICommunicatorP2PUpdateGhostsDevice" SUFFIX ".x")
+endif()
+
 endif()
