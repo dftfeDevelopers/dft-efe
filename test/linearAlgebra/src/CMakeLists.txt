@@ -119,4 +119,20 @@ if (ENABLE_CUDA)
     add_executable(TestBlasLapackComplexDoubleGemmDevice TestBlasLapackComplexDoubleGemmDevice.cpp)
     target_link_libraries(TestBlasLapackComplexDoubleGemmDevice PUBLIC dft-efe-linalg)
     set_target_properties(TestBlasLapackComplexDoubleGemmDevice PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmDevice" SUFFIX ".x")
+
+    add_executable(TestSerialDenseMatrixDoubleConstructorDevice TestSerialDenseMatrixDoubleConstructorDevice.cpp)
+    target_link_libraries(TestSerialDenseMatrixDoubleConstructorDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestSerialDenseMatrixDoubleConstructorDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleConstructorDevice" SUFFIX ".x")
+
+    add_executable(TestSerialDenseMatrixDoubleCopyDevice TestSerialDenseMatrixDoubleCopyDevice.cpp)
+    target_link_libraries(TestSerialDenseMatrixDoubleCopyDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestSerialDenseMatrixDoubleCopyDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleCopyDevice" SUFFIX ".x")
+
+    add_executable(TestSerialDenseMatrixDoubleInPlaceAddDevice TestSerialDenseMatrixDoubleInPlaceAddDevice.cpp)
+    target_link_libraries(TestSerialDenseMatrixDoubleInPlaceAddDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestSerialDenseMatrixDoubleInPlaceAddDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleInPlaceAddDevice" SUFFIX ".x")
+
+    add_executable(TestSerialDenseMatrixDoubleInPlaceSubtractDevice TestSerialDenseMatrixDoubleInPlaceSubtractDevice.cpp)
+    target_link_libraries(TestSerialDenseMatrixDoubleInPlaceSubtractDevice PUBLIC dft-efe-linalg)
+    set_target_properties(TestSerialDenseMatrixDoubleInPlaceSubtractDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleInPlaceSubtractDevice" SUFFIX ".x")
 endif ()
