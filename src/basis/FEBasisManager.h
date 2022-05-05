@@ -76,7 +76,7 @@ namespace dftefe
       virtual bool
       isHPRefined() const = 0;
 
-      std::pair<global_size_type, global_size_type>
+      virtual std::pair<global_size_type, global_size_type>
       getLocallyOwnedRange() const = 0;
 
       virtual size_type

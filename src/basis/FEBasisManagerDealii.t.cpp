@@ -294,7 +294,7 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    FEBasisManagerDealii<dim>::endLocaleCells() const
+    FEBasisManagerDealii<dim>::endLocalCells() const
     {
       return d_localCells.end();
     }

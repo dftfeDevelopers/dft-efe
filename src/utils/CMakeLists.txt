@@ -19,7 +19,6 @@ set(DFT-EFE-UTILS-SOURCES
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
-	OptimizedIndexSet.cpp
 	MathFunctions.cpp
 	StringOperations.cpp
 	MPIRequestersNBX.cpp
