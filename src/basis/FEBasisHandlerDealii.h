@@ -56,9 +56,9 @@ namespace dftefe
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
-      using LocalIndexIter = SizeTypeVector::iterator;
-      using const_LocalIndexIter = SizeTypeVector::const_iterator;
-      using GlobalIndexIter = GlobalSizeTypeVector::iterator;
+      using LocalIndexIter        = SizeTypeVector::iterator;
+      using const_LocalIndexIter  = SizeTypeVector::const_iterator;
+      using GlobalIndexIter       = GlobalSizeTypeVector::iterator;
       using const_GlobalIndexIter = GlobalSizeTypeVector::const_iterator;
 
     public:
@@ -84,11 +84,15 @@ namespace dftefe
 
       ~FEBasisHandlerDealii() = default;
 
+      const Constraints<ValueType> &
+      getConstraints(const std::string constraintsName) const override;
+
       std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange() const override;
+      getLocallyOwnedRange(const std::string constraintsName) const override;
 
       size_type
-      nLocallyOwned() const override;
+      nLocallyOwned(const std::string constraintsName) const override;
+
 
       const GlobalSizeTypeVector &
       getGhostIndices(const std::string constraintsName) const override;
@@ -120,29 +124,35 @@ namespace dftefe
       // FE specific functions
       //
       size_type
-	numLocallyOwnedCellDofs(const size_type cellId) const override;
-      
-      const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(const std::string constraintsName) const override;
+      numLocallyOwnedCellDofs(const size_type cellId) const override;
 
       const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(const size_type   cellId,
-	  const std::string constraintsName) const override;
-      
+      locallyOwnedCellGlobalDofIdsBegin(
+        const std::string constraintsName) const override;
+
       const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsEnd(const size_type   cellId,
-	  const std::string constraintsName) const override;
-      
+      locallyOwnedCellGlobalDofIdsBegin(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
+
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsEnd(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
+
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(const std::string constraintsName) const override;
-      
+      locallyOwnedCellLocalDofIdsBegin(
+        const std::string constraintsName) const override;
+
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(const size_type   cellId,
-	  const std::string constraintsName) const override;
-      
+      locallyOwnedCellLocalDofIdsBegin(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
+
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsEnd(const size_type   cellId,
-	  const std::string constraintsName) const override;
+      locallyOwnedCellLocalDofIdsEnd(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
 
       //
       // dealii specific functions
@@ -158,7 +168,7 @@ namespace dftefe
 #endif // DFTEFE_WITH_MPI
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
       SizeTypeVector                                d_locallyOwnedCellStartIds;
-      GlobalSizeTypeVector d_locallyOwnedCellGlobalIndices;
+      GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
       // constraints dependent data
