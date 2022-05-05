@@ -38,10 +38,11 @@ namespace dftefe
      * @brief An abstract class to encapsulate the partitioning
      * of a basis across multiple processors
      *
+     * @tparam ValueType the datatype for the constraints
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the data must reside.
      */
-    template <dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class BasisHandler
     {
       //

@@ -37,6 +37,8 @@
 #include <basis/FEConstraintsDealii.h>
 #include <utils/MPIPatternP2P.h>
 #include <memory>
+#include <map>
+#include <deal.II/matrix_free/matrix_free.h>
 namespace dftefe
 {
   namespace basis
@@ -68,20 +70,20 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string, std::shared_ptr<const Constraints>>
+        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
                         constraintsMap,
         const MPI_Comm &mpiComm);
-      reinit(std::shared_ptr<const BasisManager> basisManager,
-             std::map<std::string, std::shared_ptr<const Constraints>>
+      void reinit(std::shared_ptr<const BasisManager> basisManager,
+             std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
                              constraintsMap,
              const MPI_Comm &mpiComm);
 #else
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string, std::shared_ptr<const Constraints>>
+        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
           constraintsMap);
-      reinit(std::shared_ptr<const BasisManager> basisManager,
-             std::map<std::string, std::shared_ptr<const Constraints>>
+      void reinit(std::shared_ptr<const BasisManager> basisManager,
+             std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
                constraintsMap);
 #endif // DFTEFE_WITH_MPI
 
@@ -164,7 +166,7 @@ namespace dftefe
     private:
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
       std::map<std::string,
-               std::shared_ptr<const FEBasisConstraintsDealii<dim, ValueType>>>
+               std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>>
         d_feConstraintsDealiiMap;
 #ifdef DFTEFE_WITH_MPI
       MPI_Comm d_mpiComm;
@@ -178,7 +180,7 @@ namespace dftefe
       std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>>
         d_ghostIndicesMap;
       std::map < std::string,
-        std::shared_ptr<utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2PMap;
+        std::shared_ptr<utils::MPIPatternP2P<memorySpace>>> d_mpiPatternP2PMap;
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;
     };

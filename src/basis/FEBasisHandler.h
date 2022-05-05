@@ -38,15 +38,15 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class FEBasisHandler : public BasisHandler<memorySpace>
+    class FEBasisHandler : public BasisHandler<ValueType,memorySpace>
     {
       //
       // typedefs
       //
     public:
-      using SizeTypeVector = typename BasisHandler<memorySpace>::SizeTypeVector;
+      using SizeTypeVector = typename BasisHandler<ValueType,memorySpace>::SizeTypeVector;
       using GlobalSizeTypeVector =
-        typename BasisHandler<memorySpace>::GlobalSizeTypeVector;
+        typename BasisHandler<ValueType,memorySpace>::GlobalSizeTypeVector;
       using LocalIndexIter       = typename SizeTypeVector::iterator;
       using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
       using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
