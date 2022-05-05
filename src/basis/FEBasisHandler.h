@@ -58,13 +58,13 @@ namespace dftefe
       getGhostIndices(const std::string constraintsName) const = 0;
 
       virtual size_type
-      nLocalSize(const std::string constraintsName) const = 0;
+      nLocal(const std::string constraintsName) const = 0;
 
       virtual size_type
-      nLocallyOwnedSize(const std::string constraintsName) const = 0;
+      nLocallyOwned(const std::string constraintsName) const = 0;
 
       virtual size_type
-      nGhostSize(const std::string constraintsName) const = 0;
+      nGhost(const std::string constraintsName) const = 0;
 
       virtual bool
       inLocallyOwnedRange(const global_size_type globalId,
@@ -85,25 +85,30 @@ namespace dftefe
       //
       // FE specific functions
       //
-      virtual const GlobalSizeTypeVector &
-      getLocallyOwnedCellGlobalDoFIds(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
+      size_type
+	numLocallyOwnedCellDofs(const size_type cellId) const = 0;
+      
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsBegin(const std::string constraintsName) const = 0;
 
-      virtual const SizeTypeVector &
-      getLocallyOwnedCellLocalDoFIds(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
-
-      const SizeTypeVector &
-      getLocallyOwnedCellGlobalDoFIds(const size_type   cellId,
-                                      const std::string constraintsName) const =
-        0;
-
-      virtual const SizeTypeVector &
-      getLocallyOwnedCellLocalDoFIds(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsBegin(const size_type   cellId,
+	  const std::string constraintsName) const = 0;
+      
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsEnd(const size_type   cellId,
+	  const std::string constraintsName) const = 0;
+      
+      const_LocalIndexIter
+      locallyOwnedCellLocalDofIdsBegin(const std::string constraintsName) const = 0;
+      
+      const_LocalIndexIter
+      locallyOwnedCellLocalDofIdsBegin(const size_type   cellId,
+	  const std::string constraintsName) const = 0;
+      
+      const_LocalIndexIter
+      locallyOwnedCellLocalDofIdsEnd(const size_type   cellId,
+	  const std::string constraintsName) const = 0;
     };
 
   } // end of namespace basis

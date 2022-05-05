@@ -50,6 +50,10 @@ namespace dftefe
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
+      using LocalIndexIter = SizeTypeVector::iterator;
+      using const_LocalIndexIter = SizeTypeVector::const_iterator;
+      using GlobalIndexIter = GlobalSizeTypeVector::iterator;
+      using const_GlobalIndexIter = GlobalSizeTypeVector::const_iterator;
 
     public:
       ~BasisHandler() = default;
@@ -61,13 +65,13 @@ namespace dftefe
       getGhostIndices(const std::string constraintsName) const = 0;
 
       virtual size_type
-      nLocalSize(const std::string constraintsName) const = 0;
+      nLocal(const std::string constraintsName) const = 0;
 
       virtual size_type
-      nLocallyOwnedSize(const std::string constraintsName) const = 0;
+      nLocallyOwned(const std::string constraintsName) const = 0;
 
       virtual size_type
-      nGhostSize(const std::string constraintsName) const = 0;
+      nGhost(const std::string constraintsName) const = 0;
 
       virtual bool
       inLocallyOwnedRange(const global_size_type globalId,
