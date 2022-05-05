@@ -51,10 +51,11 @@ namespace dftefe
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
-      using LocalIndexIter        = SizeTypeVector::iterator;
-      using const_LocalIndexIter  = SizeTypeVector::const_iterator;
-      using GlobalIndexIter       = GlobalSizeTypeVector::iterator;
-      using const_GlobalIndexIter = GlobalSizeTypeVector::const_iterator;
+      using LocalIndexIter       = typename SizeTypeVector::iterator;
+      using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
+      using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
+      using const_GlobalIndexIter =
+        typename GlobalSizeTypeVector::const_iterator;
 
     public:
       ~BasisHandler() = default;

@@ -13,7 +13,8 @@ set(DFT-EFE-BASIS-SOURCES
         TriangulationDealiiParallel.cpp
         FEConstraintsDealii.cpp
         FEConstraintsBase.cpp
-        FEBasisDataStorageDealii.cpp)
+        FEBasisDataStorageDealii.cpp
+        FEBasisHandlerDealii.cpp)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 

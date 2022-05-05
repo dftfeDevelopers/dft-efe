@@ -34,6 +34,7 @@
 #include <basis/BasisManager.h>
 #include <basis/FEBasisManagerDealii.h>
 #include <basis/Constraints.h>
+#include <basis/FEConstraintsDealii.h>
 #include <utils/MPIPatternP2P.h>
 #include <memory>
 namespace dftefe
@@ -47,7 +48,8 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class FEBasisHandlerDealii : public FEBasisHandler<memorySpace>
+    class FEBasisHandlerDealii
+      : public FEBasisHandler<ValueType, memorySpace, dim>
     {
       //
       // typedefs
@@ -56,10 +58,11 @@ namespace dftefe
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
-      using LocalIndexIter        = SizeTypeVector::iterator;
-      using const_LocalIndexIter  = SizeTypeVector::const_iterator;
-      using GlobalIndexIter       = GlobalSizeTypeVector::iterator;
-      using const_GlobalIndexIter = GlobalSizeTypeVector::const_iterator;
+      using LocalIndexIter       = typename SizeTypeVector::iterator;
+      using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
+      using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
+      using const_GlobalIndexIter =
+        typename GlobalSizeTypeVector::const_iterator;
 
     public:
 #ifdef DFTEFE_WITH_MPI

@@ -13,5 +13,7 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/linearAl
 
 #add_executable(TestTriangulationDealiiSerial TestTriangulationDealiiSerial.cpp )
 #target_link_libraries(TestTriangulationDealiiSerial PUBLIC dft-efe-basis dft-efe-utils)
-add_executable(TestBasisStorageSerialTria TestBasisStorageSerialTria.cpp )
-target_link_libraries(TestBasisStorageSerialTria PUBLIC dft-efe-basis dft-efe-utils)
+#add_executable(TestBasisStorageSerialTria TestBasisStorageSerialTria.cpp )
+#target_link_libraries(TestBasisStorageSerialTria PUBLIC dft-efe-basis dft-efe-utils)
+add_executable(TestBasisHandler TestBasisHandler.cpp )
+target_link_libraries(TestBasisHandler PUBLIC dft-efe-basis dft-efe-utils)
