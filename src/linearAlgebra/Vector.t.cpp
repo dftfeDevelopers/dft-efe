@@ -38,9 +38,9 @@ namespace dftefe
       const global_size_type                                  globalSize,
       const size_type                                         locallyOwnedSize,
       const size_type                                         ghostSize,
-      std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue)
+      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
       : d_storage(storage)
-      , d_blasQueue(blasQueue)
+      , d_BlasQueue(BlasQueue)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
@@ -56,7 +56,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector()
       : d_storage(nullptr)
-      , d_blasQueue(nullptr)
+      , d_BlasQueue(nullptr)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
@@ -155,7 +155,7 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
       blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        this->localSize(), 1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
+        this->localSize(), 1.0, rhs.data(), 1, this->data(), 1, *d_BlasQueue);
 
       return *this;
     }
@@ -181,7 +181,7 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
       blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
+        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_BlasQueue);
       return *this;
     }
 
@@ -205,7 +205,7 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
       blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_blasQueue);
+        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_BlasQueue);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -223,10 +223,10 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+    std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
     Vector<ValueType, memorySpace>::getBlasQueue() const
     {
-      return d_blasQueue;
+      return d_BlasQueue;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

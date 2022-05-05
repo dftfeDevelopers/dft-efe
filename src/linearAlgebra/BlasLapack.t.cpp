@@ -14,7 +14,7 @@ namespace dftefe
       asum(const size_type             n,
            ValueType const *           x,
            const size_type             incx,
-           blasQueueType<memorySpace> &blasQueue)
+           BlasQueueType<memorySpace> &BlasQueue)
       {
         //      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
         utils::throwException(
@@ -30,7 +30,7 @@ namespace dftefe
       amax(const size_type             n,
            ValueType const *           x,
            const size_type             incx,
-           blasQueueType<memorySpace> &blasQueue)
+           BlasQueueType<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -46,7 +46,7 @@ namespace dftefe
       amaxsMultiVector(const size_type             vecSize,
                        const size_type             numVec,
                        const ValueType *           multiVecData,
-                       blasQueueType<memorySpace> &blasQueue)
+                       BlasQueueType<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -68,7 +68,7 @@ namespace dftefe
            const size_type                           incx,
            ValueType2 *                              y,
            const size_type                           incy,
-           blasQueueType<memorySpace> &              blasQueue)
+           BlasQueueType<memorySpace> &              BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -85,7 +85,7 @@ namespace dftefe
             const ValueType             beta,
             const ValueType *           y,
             ValueType *                 z,
-            blasQueueType<memorySpace> &blasQueue)
+            BlasQueueType<memorySpace> &BlasQueue)
       {
         Kernels<ValueType, memorySpace>::axpby(n, alpha, x, beta, y, z);
       }
@@ -100,7 +100,7 @@ namespace dftefe
                        const ValueType             beta,
                        const ValueType *           y,
                        ValueType *                 z,
-                       blasQueueType<memorySpace> &blasQueue)
+                       BlasQueueType<memorySpace> &BlasQueue)
       {
         Kernels<ValueType, memorySpace>::axpbyMultiVector(
           vecSize, numVec, alpha, x, beta, y, z);
@@ -116,7 +116,7 @@ namespace dftefe
           const size_type             incx,
           ValueType2 const *          y,
           const size_type             incy,
-          blasQueueType<memorySpace> &blasQueue)
+          BlasQueueType<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -132,7 +132,7 @@ namespace dftefe
       nrm2(const size_type             n,
            ValueType const *           x,
            const size_type             incx,
-           blasQueueType<memorySpace> &blasQueue)
+           BlasQueueType<memorySpace> &BlasQueue)
       {
         utils::throwException(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
@@ -148,12 +148,12 @@ namespace dftefe
       nrms2MultiVector(const size_type             vecSize,
                        const size_type             numVec,
                        const ValueType *           multiVecData,
-                       blasQueueType<memorySpace> &blasQueue)
+                       BlasQueueType<memorySpace> &BlasQueue)
       {
         return Kernels<ValueType, memorySpace>::nrms2MultiVector(vecSize,
                                                                  numVec,
                                                                  multiVecData,
-                                                                 blasQueue);
+                                                                 BlasQueue);
       }
 
 
@@ -173,7 +173,7 @@ namespace dftefe
            const ValueType                                  beta,
            ValueType *                                      dC,
            const size_type                                  lddc,
-           blasQueueType<dftefe::utils::MemorySpace::HOST> &blasQueue)
+           BlasQueueType<dftefe::utils::MemorySpace::HOST> &BlasQueue)
       {
         blas::gemm(layout,
                    transA,
@@ -207,7 +207,7 @@ namespace dftefe
            const ValueType                                    beta,
            ValueType *                                        dC,
            const size_type                                    lddc,
-           blasQueueType<dftefe::utils::MemorySpace::DEVICE> &blasQueue)
+           BlasQueueType<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
       {
         blas::gemm(layout,
                    transA,
@@ -223,7 +223,7 @@ namespace dftefe
                    beta,
                    dC,
                    lddc,
-                   blasQueue);
+                   BlasQueue);
       }
     } // namespace blasLapack
   }   // namespace linearAlgebra

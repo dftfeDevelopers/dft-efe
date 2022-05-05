@@ -76,7 +76,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using MultiVector<ValueType, memorySpace>::d_storage;
-      using MultiVector<ValueType, memorySpace>::d_blasQueue;
+      using MultiVector<ValueType, memorySpace>::d_BlasQueue;
       using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
       using MultiVector<ValueType, memorySpace>::d_globalSize;
       using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -98,14 +98,14 @@ namespace dftefe
        * based on which the DistributedMultiVector will be created.
        * @param[in] initVal value with which the DistributedMultiVector shoud be
        * initialized
-       * @param[in] blasQueue handle for linear algebra operations on
+       * @param[in] BlasQueue handle for linear algebra operations on
        * HOST or DEVICE.
        */
       DistributedMultiVector(
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
         const ValueType initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -129,7 +129,7 @@ namespace dftefe
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
           mpiCommunicatorP2P,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -150,7 +150,7 @@ namespace dftefe
         const MPI_Comm &                                    mpiComm,
         size_type                                           numVectors,
         ValueType                                           initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 #endif // DFTEFE_WITH_MPI
 
       /**

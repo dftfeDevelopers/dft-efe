@@ -74,7 +74,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Vector<ValueType, memorySpace>::d_storage;
-      using Vector<ValueType, memorySpace>::d_blasQueue;
+      using Vector<ValueType, memorySpace>::d_BlasQueue;
       using Vector<ValueType, memorySpace>::d_vectorAttributes;
       using Vector<ValueType, memorySpace>::d_globalSize;
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -95,7 +95,7 @@ namespace dftefe
        * based on which the DistributedVector will be created.
        * @param[in] initVal value with which the DistributedVector shoud be
        * initialized
-       * @param[in] blasQueue handle for linear algebra operations on
+       * @param[in] BlasQueue handle for linear algebra operations on
        * HOST/DEVICE.
        *
        */
@@ -103,7 +103,7 @@ namespace dftefe
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
                         mpiCommunicatorP2P,
         const ValueType initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -116,7 +116,7 @@ namespace dftefe
        * is to be transfered to the DistributedVector
        * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
        * based on which the DistributedVector will be created.
-       * @param[in] blasQueue handle for linear algebra operations on
+       * @param[in] BlasQueue handle for linear algebra operations on
        * HOST/DEVICE.
        *
        * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedVector.
@@ -129,7 +129,7 @@ namespace dftefe
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
           mpiCommunicatorP2P,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -149,7 +149,7 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
         const ValueType                                     initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor based on locally owned indices. This does not contain
@@ -168,7 +168,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const MPI_Comm &                                    mpiComm,
         const ValueType                                     initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
 
       /**
@@ -189,7 +189,7 @@ namespace dftefe
         const global_size_type                                  totalGlobalDofs,
         const MPI_Comm &                                        mpiComm,
         const ValueType                                         initVal,
-        std::shared_ptr<blasLapack::blasQueueType<memorySpace>> blasQueue);
+        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
 
 #endif // DFTEFE_WITH_MPI
 

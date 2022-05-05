@@ -140,10 +140,10 @@ namespace dftefe
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::blasQueueType<memorySpace>>
+    std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
     Matrix<ValueType, memorySpace>::getQueue()
     {
-      return d_blasQueue;
+      return d_BlasQueue;
     }
 
 
@@ -171,7 +171,7 @@ namespace dftefe
                                                 1,
                                                 this->data(),
                                                 this->data(),
-                                                *d_blasQueue);
+                                                *d_BlasQueue);
       return *this;
     }
 
@@ -200,7 +200,7 @@ namespace dftefe
                                                 1,
                                                 this->data(),
                                                 this->data(),
-                                                *d_blasQueue);
+                                                *d_BlasQueue);
       return *this;
     }
 
