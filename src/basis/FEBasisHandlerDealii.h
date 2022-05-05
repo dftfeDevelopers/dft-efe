@@ -27,7 +27,7 @@
 #define dftefeFEBasisHandlerDealii_h
 
 #ifdef DFTEFE_WITH_MPI
-#include <mpi.h>
+#  include <mpi.h>
 #endif // DFTEFE_WITH_MPI
 
 #include <basis/FEBasisHandler.h>
@@ -40,97 +40,119 @@ namespace dftefe
 {
   namespace basis
   {
-
     /**
-     * @brief An abstract class to encapsulate the partitioning 
+     * @brief An abstract class to encapsulate the partitioning
      * of a finite element basis across multiple processors
      */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
-      class FEBasisHandler : public FEBasisHandler<memorySpace>
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class FEBasisHandler : public FEBasisHandler<memorySpace>
     {
+      //
+      // typedefs
+      //
+    public:
+      using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
+      using GlobalSizeTypeVector =
+        BasisHandler<memorySpace>::GlobalSizeTypeVector;
 
-	//
-	// typedefs
-	//
-	public:
-	  using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
-	  using GlobalSizeTypeVector = BasisHandler<memorySpace>::GlobalSizeTypeVector;
-
-	public:
+    public:
 #ifdef DFTEFE_WITH_MPI
-	  FEBasisHandlerDealii(std::shared_ptr<const BasisManager> basisManager,
-	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap,
-              const MPI_Comm &                                    mpiComm);
-	  reinit(std::shared_ptr<const BasisManager> basisManager,
-	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap,
-              const MPI_Comm &                                    mpiComm);
+      FEBasisHandlerDealii(
+        std::shared_ptr<const BasisManager> basisManager,
+        std::map<std::string, std::shared_ptr<const Constraints>>
+                        constraintsMap,
+        const MPI_Comm &mpiComm);
+      reinit(std::shared_ptr<const BasisManager> basisManager,
+             std::map<std::string, std::shared_ptr<const Constraints>>
+                             constraintsMap,
+             const MPI_Comm &mpiComm);
 #else
-	  FEBasisHandlerDealii(std::shared_ptr<const BasisManager> basisManager,
-	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap);
-	  reinit(std::shared_ptr<const BasisManager> basisManager,
-	      std::map<std::string, std::shared_ptr<const Constraints>> constraintsMap);
+      FEBasisHandlerDealii(
+        std::shared_ptr<const BasisManager> basisManager,
+        std::map<std::string, std::shared_ptr<const Constraints>>
+          constraintsMap);
+      reinit(std::shared_ptr<const BasisManager> basisManager,
+             std::map<std::string, std::shared_ptr<const Constraints>>
+               constraintsMap);
 #endif // DFTEFE_WITH_MPI
-	  
-	  ~FEBasisHandlerDealii() = default;
-	  
-	  std::pair<global_size_type, global_size_type>
-	    getLocallyOwnedRange() const override;
-	  
-	  size_type
-	    nLocallyOwnedSize() const  override;
 
-	  const GlobalSizeTypeVector & 
-	    getGhostIndices(const std::string constraintsName) const override;
+      ~FEBasisHandlerDealii() = default;
 
-	  size_type
-	    nLocalSize(const std::string constraintsName) const  override;
+      std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange() const override;
+
+      size_type
+      nLocallyOwnedSize() const override;
+
+      const GlobalSizeTypeVector &
+      getGhostIndices(const std::string constraintsName) const override;
+
+      size_type
+      nLocalSize(const std::string constraintsName) const override;
 
 
-	  size_type
-	    nGhostSize(const std::string constraintsName) const  override;
+      size_type
+      nGhostSize(const std::string constraintsName) const override;
 
-	  bool
-	    inLocallyOwnedRange(const global_size_type globalId, const std::string constraintsName) const override;
+      bool
+      inLocallyOwnedRange(const global_size_type globalId,
+                          const std::string constraintsName) const override;
 
-	  bool
-	    isGhostEntry(const global_size_type ghostId, const std::string constraintsName) const override;
+      bool
+      isGhostEntry(const global_size_type ghostId,
+                   const std::string      constraintsName) const override;
 
-	  size_type
-	    globalToLocalIndex(const global_size_type globalId, const std::string constraintsName) const override;
+      size_type
+      globalToLocalIndex(const global_size_type globalId,
+                         const std::string      constraintsName) const override;
 
-	  global_size_type
-	    localToGlobalIndex(const size_type localId, const std::string constraintsName) const override;
+      global_size_type
+      localToGlobalIndex(const size_type   localId,
+                         const std::string constraintsName) const override;
 
-	  //
-	  // FE specific functions
-	  //
-	  const GlobalSizeTypeVector &
-	    getLocallyOwnedCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const override;
+      //
+      // FE specific functions
+      //
+      const GlobalSizeTypeVector &
+      getLocallyOwnedCellGlobalDoFIds(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
 
-	  const SizeTypeVector &
-	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const override;
-	  
-	  const GlobalSizeTypeVector &
-	    getLocalCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const override;
+      const SizeTypeVector &
+      getLocallyOwnedCellLocalDoFIds(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
 
-	  //
-	  // dealii specific functions
-	  //
+      const GlobalSizeTypeVector &
+      getLocalCellGlobalDoFIds(
+        const size_type   cellId,
+        const std::string constraintsName) const override;
 
-	private:
-	  std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
-	  std::map<std::string, std::shared_ptr<const FEBasisConstraintsDealii<dim, ValueType>>> d_feConstraintsDealiiMap; 
+      //
+      // dealii specific functions
+      //
+
+    private:
+      std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
+      std::map<std::string,
+               std::shared_ptr<const FEBasisConstraintsDealii<dim, ValueType>>>
+        d_feConstraintsDealiiMap;
 #ifdef DFTEFE_WITH_MPI
-	  MPI_Comm d_mpiComm;
+      MPI_Comm d_mpiComm;
 #endif // DFTEFE_WITH_MPI
-	  std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
-	  SizeTypeVector d_locallyOwnedCellStartIds;
-	  GlobalSizeTypeVector d_locallyOwnedCellGlobalIndices;
+      std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
+      SizeTypeVector                                d_locallyOwnedCellStartIds;
+      GlobalSizeTypeVector d_locallyOwnedCellGlobalIndices;
 
-	  //constraints dependent data
-	  std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>> d_ghostIndicesMap;
-	  std::map<std::string, std::shared_ptr<utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2PMap;
-	  std::map<std::string, std::shared_ptr<SizeTypeVector>> d_locallyOwnedCellLocalIndicesMap;
+      // constraints dependent data
+      std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>>
+        d_ghostIndicesMap;
+      std::map < std::string,
+        std::shared_ptr<utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2PMap;
+      std::map<std::string, std::shared_ptr<SizeTypeVector>>
+        d_locallyOwnedCellLocalIndicesMap;
     };
 
   } // end of namespace basis

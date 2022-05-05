@@ -114,7 +114,7 @@ namespace dftefe
         dealii::FEValues<dim> dealiiFEValues(feBM->getReferenceFE(cellId),
                                              dealiiQuadratureRule,
                                              dealiiUpdateFlags);
-        const size_type numLocallyOwnedCells = feBM->nLocallyOwnedCells();
+        const size_type       numLocallyOwnedCells = feBM->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBM->nCellDofs(cellId);
         const size_type numQuadPointsPerCell =

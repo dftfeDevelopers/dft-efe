@@ -31,79 +31,80 @@ namespace dftefe
 {
   namespace basis
   {
-
     /**
-     * @brief An abstract class to encapsulate the partitioning 
+     * @brief An abstract class to encapsulate the partitioning
      * of a finite element basis across multiple processors
      */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
-      class FEBasisHandler : public BasisHandler<memorySpace>
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class FEBasisHandler : public BasisHandler<memorySpace>
     {
+      //
+      // typedefs
+      //
+    public:
+      using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
+      using GlobalSizeTypeVector =
+        BasisParitioner<memorySpace>::GlobalSizeTypeVector;
 
-	//
-	// typedefs
-	//
-	public:
-	  using SizeTypeVector = BasisHandler<memorySpace>::SizeTypeVector;
-	  using GlobalSizeTypeVector = BasisParitioner<memorySpace>::GlobalSizeTypeVector;
+    public:
+      ~FEBasisHandler() = default;
 
-	public:
-	  ~FEBasisHandler() = default;
+      virtual std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange(const std::string constraintsName) const = 0;
 
-	  virtual
-	  std::pair<global_size_type, global_size_type>
-	    getLocallyOwnedRange(const std::string constraintsName) const  = 0;
+      virtual const GlobalSizeTypeVector &
+      getGhostIndices(const std::string constraintsName) const = 0;
 
-	  virtual
-	  const GlobalSizeTypeVector & 
-	    getGhostIndices(const std::string constraintsName) const = 0;
+      virtual size_type
+      nLocalSize(const std::string constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    nLocalSize(const std::string constraintsName) const  = 0;
+      virtual size_type
+      nLocallyOwnedSize(const std::string constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    nLocallyOwnedSize(const std::string constraintsName) const  = 0;
+      virtual size_type
+      nGhostSize(const std::string constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    nGhostSize(const std::string constraintsName) const  = 0;
+      virtual bool
+      inLocallyOwnedRange(const global_size_type globalId,
+                          const std::string      constraintsName) const = 0;
 
-	  virtual
-	  bool
-	    inLocallyOwnedRange(const global_size_type globalId, const std::string constraintsName) const = 0;
+      virtual bool
+      isGhostEntry(const global_size_type ghostId,
+                   const std::string      constraintsName) const = 0;
 
-	  virtual
-	  bool
-	    isGhostEntry(const global_size_type ghostId, const std::string constraintsName) const = 0;
+      virtual size_type
+      globalToLocalIndex(const global_size_type globalId,
+                         const std::string      constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    globalToLocalIndex(const global_size_type globalId, const std::string constraintsName) const = 0;
+      virtual global_size_type
+      localToGlobalIndex(const size_type   localId,
+                         const std::string constraintsName) const = 0;
 
-	  virtual
-	  global_size_type
-	    localToGlobalIndex(const size_type localId, const std::string constraintsName) const = 0;
+      //
+      // FE specific functions
+      //
+      virtual const GlobalSizeTypeVector &
+      getLocallyOwnedCellGlobalDoFIds(
+        const size_type   cellId,
+        const std::string constraintsName) const = 0;
 
-	  //
-	  // FE specific functions
-	  //
-	  virtual
-	  const GlobalSizeTypeVector &
-	    getLocallyOwnedCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+      virtual const SizeTypeVector &
+      getLocallyOwnedCellLocalDoFIds(
+        const size_type   cellId,
+        const std::string constraintsName) const = 0;
 
-	  virtual
-	  const SizeTypeVector &
-	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
-	  
-	  const SizeTypeVector &
-	    getLocallyOwnedCellGlobalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
+      const SizeTypeVector &
+      getLocallyOwnedCellGlobalDoFIds(const size_type   cellId,
+                                      const std::string constraintsName) const =
+        0;
 
-	  virtual
-	  const SizeTypeVector &
-	    getLocallyOwnedCellLocalDoFIds(const size_type cellId, const std::string constraintsName) const = 0;
-      };
+      virtual const SizeTypeVector &
+      getLocallyOwnedCellLocalDoFIds(
+        const size_type   cellId,
+        const std::string constraintsName) const = 0;
+    };
 
   } // end of namespace basis
 } // end of namespace dftefe

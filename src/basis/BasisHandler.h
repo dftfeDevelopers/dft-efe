@@ -33,64 +33,58 @@ namespace dftefe
 {
   namespace basis
   {
-
     /**
-     * @brief An abstract class to encapsulate the partitioning 
+     * @brief An abstract class to encapsulate the partitioning
      * of a basis across multiple processors
-     * 
+     *
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the data must reside.
      */
     template <dftefe::utils::MemorySpace memorySpace>
-      class BasisHandler {
+    class BasisHandler
+    {
+      //
+      // typedefs
+      //
+    public:
+      using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
+      using GlobalSizeTypeVector =
+        utils::MemoryStorage<global_size_type, memorySpace>;
 
-	//
-	// typedefs
-	//
-	public:
-	  using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
-	  using GlobalSizeTypeVector =
-	    utils::MemoryStorage<global_size_type, memorySpace>;
+    public:
+      ~BasisHandler() = default;
 
-	public:
-	  ~BasisHandler() = default;
+      virtual std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange(const std::string constraintsName) const = 0;
 
-	  virtual
-	  std::pair<global_size_type, global_size_type>
-	    getLocallyOwnedRange(const std::string constraintsName) const  = 0;
+      virtual const GlobalSizeTypeVector &
+      getGhostIndices(const std::string constraintsName) const = 0;
 
-	  virtual
-	  const GlobalSizeTypeVector & 
-	    getGhostIndices(const std::string constraintsName) const = 0;
+      virtual size_type
+      nLocalSize(const std::string constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    nLocalSize(const std::string constraintsName) const  = 0;
+      virtual size_type
+      nLocallyOwnedSize(const std::string constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    nLocallyOwnedSize(const std::string constraintsName) const  = 0;
+      virtual size_type
+      nGhostSize(const std::string constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    nGhostSize(const std::string constraintsName) const  = 0;
+      virtual bool
+      inLocallyOwnedRange(const global_size_type globalId,
+                          const std::string      constraintsName) const = 0;
 
-	  virtual
-	  bool
-	    inLocallyOwnedRange(const global_size_type globalId, const std::string constraintsName) const = 0;
+      virtual bool
+      isGhostEntry(const global_size_type ghostId,
+                   const std::string      constraintsName) const = 0;
 
-	  virtual
-	  bool
-	    isGhostEntry(const global_size_type ghostId, const std::string constraintsName) const = 0;
+      virtual size_type
+      globalToLocalIndex(const global_size_type globalId,
+                         const std::string      constraintsName) const = 0;
 
-	  virtual
-	  size_type
-	    globalToLocalIndex(const global_size_type globalId, const std::string constraintsName) const = 0;
-
-	  virtual
-	  global_size_type
-	    localToGlobalIndex(const size_type localId, const std::string constraintsName) const = 0;
-      };
+      virtual global_size_type
+      localToGlobalIndex(const size_type   localId,
+                         const std::string constraintsName) const = 0;
+    };
 
   } // end of namespace basis
 } // end of namespace dftefe
