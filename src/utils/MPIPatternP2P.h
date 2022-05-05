@@ -65,6 +65,7 @@ namespace dftefe
       ///
     public:
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
+      using SizeTypeVectorHost = utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::HOST>;      
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
 
@@ -310,7 +311,7 @@ namespace dftefe
        * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
        *  d_ghostIndices[a_i] and d_ghostIndices[b_i].
        */
-      SizeTypeVector d_localGhostIndicesRanges;
+      SizeTypeVectorHost d_localGhostIndicesRanges;
 
       /**
        * Number of target processors for the current processor. A
@@ -332,7 +333,7 @@ namespace dftefe
        * of this current processor are need ghost in each of the target
        *  processors.
        */
-      SizeTypeVector d_numOwnedIndicesForTargetProcs;
+      SizeTypeVectorHost d_numOwnedIndicesForTargetProcs;
 
       /** Vector of size \f$\sum_i\f$ d_numOwnedIndicesForTargetProcs[i]
        * to store all thelocally owned indices

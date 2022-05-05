@@ -627,7 +627,7 @@ namespace dftefe
 
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
     {
       return d_localGhostIndicesRanges;
@@ -703,7 +703,7 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getNumOwnedIndicesForTargetProcs() const
     {
       return d_numOwnedIndicesForTargetProcs;
