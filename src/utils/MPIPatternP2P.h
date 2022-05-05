@@ -65,8 +65,13 @@ namespace dftefe
       ///
     public:
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
+      using SizeTypeVectorHost =
+        utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::HOST>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
+      using GlobalSizeTypeVectorHost =
+        utils::MemoryStorage<global_size_type,
+                             dftefe::utils::MemorySpace::HOST>;
 
     public:
       virtual ~MPIPatternP2P() = default;
@@ -143,13 +148,13 @@ namespace dftefe
       global_size_type
       localToGlobal(const size_type localId) const;
 
-      const GlobalSizeTypeVector &
+      const GlobalSizeTypeVectorHost &
       getGhostIndices() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getGhostProcIds() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getNumGhostIndicesInProcs() const;
 
       size_type
@@ -158,13 +163,13 @@ namespace dftefe
       SizeTypeVector
       getGhostLocalIndices(const size_type procId) const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getGhostLocalIndicesRanges() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getTargetProcIds() const;
 
-      const SizeTypeVector &
+      const SizeTypeVectorHost &
       getNumOwnedIndicesForTargetProcs() const;
 
       size_type
@@ -209,7 +214,7 @@ namespace dftefe
        *
        * @note \f$a\f$ is included but \f$b\f$ is not included.
        */
-      GlobalSizeTypeVector d_allOwnedRanges;
+      GlobalSizeTypeVectorHost d_allOwnedRanges;
 
       /**
        * Number of locally owned indices in the current processor
@@ -225,7 +230,7 @@ namespace dftefe
        * Vector to store an ordered set of ghost indices
        * (ordered in increasing order and non-repeating)
        */
-      GlobalSizeTypeVector d_ghostIndices;
+      GlobalSizeTypeVectorHost d_ghostIndices;
 
       /**
        * A copy of the above d_ghostIndices stored as an STL set
@@ -250,13 +255,13 @@ namespace dftefe
        * Vector to store the ghost processor Ids. A ghost processor is
        * one which owns at least one of the ghost indices of this processor.
        */
-      SizeTypeVector d_ghostProcIds;
+      SizeTypeVectorHost d_ghostProcIds;
 
       /** Vector of size number of ghost processors to store how many ghost
        * indices
        *  of this current processor are owned by a ghost processor.
        */
-      SizeTypeVector d_numGhostIndicesInGhostProcs;
+      SizeTypeVectorHost d_numGhostIndicesInGhostProcs;
 
       /**
        * A flattened vector of size number of ghosts containing the ghost
@@ -310,7 +315,7 @@ namespace dftefe
        * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying bewteen
        *  d_ghostIndices[a_i] and d_ghostIndices[b_i].
        */
-      SizeTypeVector d_localGhostIndicesRanges;
+      SizeTypeVectorHost d_localGhostIndicesRanges;
 
       /**
        * Number of target processors for the current processor. A
@@ -324,7 +329,7 @@ namespace dftefe
        * one which contains at least one of the locally owned indices of this
        * processor as its ghost index.
        */
-      SizeTypeVector d_targetProcIds;
+      SizeTypeVectorHost d_targetProcIds;
 
       /**
        * Vector of size number of target processors to store how many locally
@@ -332,7 +337,7 @@ namespace dftefe
        * of this current processor are need ghost in each of the target
        *  processors.
        */
-      SizeTypeVector d_numOwnedIndicesForTargetProcs;
+      SizeTypeVectorHost d_numOwnedIndicesForTargetProcs;
 
       /** Vector of size \f$\sum_i\f$ d_numOwnedIndicesForTargetProcs[i]
        * to store all thelocally owned indices

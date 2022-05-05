@@ -28,6 +28,7 @@
 #include <utils/MPITags.h>
 #include <utils/MPIRequestersBase.h>
 #include <utils/MPIRequestersNBX.h>
+#include <utils/MPIErrorCodeHandler.h>
 #include <string>
 #include <map>
 #include <set>
@@ -246,7 +247,6 @@ namespace dftefe
       , d_ghostIndices(0)
       , d_numLocallyOwnedIndices(0)
       , d_numGhostIndices(0)
-      , d_ghostIndicesSetSTL(0)
       , d_numGhostProcs(0)
       , d_ghostProcIds(0)
       , d_numGhostIndicesInGhostProcs(0)
@@ -300,7 +300,8 @@ namespace dftefe
                 ghostIndices.end(),
                 std::inserter(d_ghostIndicesSetSTL,
                               d_ghostIndicesSetSTL.end()));
-      d_ghostIndicesOptimizedIndexSet = OptimizedIndexSet(d_ghostIndicesSetSTL);
+      d_ghostIndicesOptimizedIndexSet =
+        OptimizedIndexSet<global_size_type>(d_ghostIndicesSetSTL);
 
       d_numGhostIndices = ghostIndices.size();
       MemoryTransfer<memorySpace, MemorySpace::HOST> memoryTransfer;
@@ -614,21 +615,21 @@ namespace dftefe
 #endif
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::GlobalSizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::GlobalSizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getGhostIndices() const
     {
       return d_ghostIndices;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getGhostProcIds() const
     {
       return d_ghostProcIds;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getNumGhostIndicesInProcs() const
     {
       return d_numGhostIndicesInGhostProcs;
@@ -636,7 +637,7 @@ namespace dftefe
 
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
     {
       return d_localGhostIndicesRanges;
@@ -705,14 +706,14 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getTargetProcIds() const
     {
       return d_targetProcIds;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVector &
+    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
     MPIPatternP2P<memorySpace>::getNumOwnedIndicesForTargetProcs() const
     {
       return d_numOwnedIndicesForTargetProcs;
@@ -843,10 +844,10 @@ namespace dftefe
         {
           return d_locallyOwnedRange.first + localId;
         }
-      else if (localId < d_numLocallyOwnedIndices + d_numGhostIndices)
+      else if (localId < (d_numLocallyOwnedIndices + d_numGhostIndices))
         {
           auto it =
-            d_ghostIndicesSetSTL.begin() + (localId - d_numLocallyOwnedIndices);
+            d_ghostIndices.begin() + (localId - d_numLocallyOwnedIndices);
           return *it;
         }
       else
@@ -874,10 +875,12 @@ namespace dftefe
       else
         {
           bool found = false;
-          d_ghostIndicesOptimizedIndexSet(globalId, returnValue, found);
+          d_ghostIndicesOptimizedIndexSet.getPosition(globalId,
+                                                      returnValue,
+                                                      found);
           std::string msg =
             "In processor " + std::to_string(d_myRank) + ", the global index " +
-            std::to_string(localId) +
+            std::to_string(globalId) +
             " passed to globalToLocal() in MPIPatternP2P is"
             " neither present in its locally owned range nor in its "
             " ghost indices.";
@@ -903,7 +906,7 @@ namespace dftefe
     {
       bool      found = false;
       size_type localId;
-      d_ghostIndicesOptimizedIndexSet(globalId, returnValue, found);
+      d_ghostIndicesOptimizedIndexSet.getPosition(globalId, localId, found);
       return found;
     }
   } // end of namespace utils

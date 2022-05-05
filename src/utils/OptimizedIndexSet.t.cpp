@@ -32,53 +32,49 @@ namespace dftefe
   namespace utils
   {
     template <typename T>
-    OptimizedIndexSet<T>::OptimizedIndexSet()
-      : d_numContiguousRanges(0)
-      , d_contiguousRanges(0)
-      , d_numEntriesBefore(0)
-    {}
-
-    template <typename T>
     OptimizedIndexSet<T>::OptimizedIndexSet(const std::set<T> &inputSet)
-      : d_numContiguousRanges(0)
-      , d_contiguousRanges(0)
-      , d_numEntriesBefore(0)
+      : d_contiguousRanges(0)
     {
-      bool isValid = std::is_base_of<size_type, T>::value ||
-                     std::is_base_of<global_size_type, T>::value;
+      bool isValid = std::is_same<size_type, T>::value ||
+                     std::is_same<global_size_type, T>::value;
       utils::throwException<utils::InvalidArgument>(
         isValid,
         "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int.");
-      std::set<T>::const_iterator itLastRange = inputSet.begin();
-      std::set<T>::const_iterator itPrev      = inputSet.begin();
-      std::set<T>::const_iterator it          = itPrev;
-      it++;
-      for (; it != inputSet.end(); ++it)
+      if (!inputSet.empty())
         {
-          bool isContiguous = ((*it - 1) == *(itPrev));
-          if (!isContiguous)
+          typename std::set<T>::const_iterator itLastRange = inputSet.begin();
+          typename std::set<T>::const_iterator itPrev      = inputSet.begin();
+          typename std::set<T>::const_iterator it          = itPrev;
+          it++;
+          for (; it != inputSet.end(); ++it)
             {
-              d_contiguousRanges.push_back(*itLastRange);
-              d_contiguousRanges.push_back(*(itPrev) + 1);
-              itLastRange = it;
+              bool isContiguous = ((*it - 1) == *(itPrev));
+              if (!isContiguous)
+                {
+                  d_contiguousRanges.push_back(*itLastRange);
+                  d_contiguousRanges.push_back(*(itPrev) + 1);
+                  itLastRange = it;
+                }
+              itPrev = it;
             }
-          itPrev = it;
-        }
-      d_contiguousRanges.push_back(*itLastRange);
-      d_contiguousRanges.push_back(*(itPrev) + 1);
 
-      d_numContiguousRanges = d_contiguousRanges.size() / 2;
-      d_numEntriesBefore.resize(d_numContiguousRanges, 0);
-      size_type cumulativeEntries = 0;
-      for (unsigned int i = 0; i < d_numContiguousRanges; ++i)
-        {
-          d_numEntriesBefore[i] = cumulativeEntries;
-          cumulativeEntries +=
-            d_contiguousRanges[2 * i + 1] - d_contiguousRanges[2 * i];
+          d_contiguousRanges.push_back(*itLastRange);
+          d_contiguousRanges.push_back(*(itPrev) + 1);
+
+          d_numContiguousRanges = d_contiguousRanges.size() / 2;
+          d_numEntriesBefore.resize(d_numContiguousRanges, 0);
+          size_type cumulativeEntries = 0;
+          for (unsigned int i = 0; i < d_numContiguousRanges; ++i)
+            {
+              d_numEntriesBefore[i] = cumulativeEntries;
+              cumulativeEntries +=
+                d_contiguousRanges[2 * i + 1] - d_contiguousRanges[2 * i];
+            }
         }
     }
 
-    void template <typename T>
+    template <typename T>
+    void
     OptimizedIndexSet<T>::getPosition(const T &  index,
                                       size_type &pos,
                                       bool &     found) const
