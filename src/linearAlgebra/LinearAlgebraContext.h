@@ -36,11 +36,9 @@ namespace dftefe
     class LinearAlgebraContext
     {
     public:
-      LinearAlgebraContext(const);
+      LinearAlgebraContext(const BlasQueue<memorySpace> *blasQueue);
 
     }; // end of LinearAlgebraContext
-
-  } // end of namespace linearAlgebra
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-
 #endif // end of dftefeLinearAlgebraContext_h
