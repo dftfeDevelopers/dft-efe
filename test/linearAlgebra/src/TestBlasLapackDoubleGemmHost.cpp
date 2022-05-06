@@ -77,7 +77,7 @@ main(int argc, char **argv)
 
  double alpha = 1.0, beta = 0.0;
 
- BlasQueueType<Host> queue;
+ BlasQueue<Host> queue;
 
  gemm(Layout::ColMajor,
       Op::NoTrans,

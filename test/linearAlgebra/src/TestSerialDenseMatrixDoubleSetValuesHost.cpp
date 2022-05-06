@@ -43,9 +43,9 @@ int
 main()
 {
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>>
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>>
     queue = std::make_shared<
-      dftefe::linearAlgebra::blasLapack::BlasQueueType<Host>>();
+      dftefe::linearAlgebra::blasLapack::BlasQueue<Host>>();
   const double lo    = -10.0;
   const double hi    = 10.0;
   size_type nRows = 5, nCols = 3, vSize = nRows*nCols;

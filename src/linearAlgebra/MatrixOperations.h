@@ -40,22 +40,21 @@ namespace dftefe
     class MatrixOperations
     {
       void
-      matMulc(
-        blasLapack::Layout                                      layout,
-        blasLapack::Op                                          transA,
-        blasLapack::Op                                          transB,
-        size_type                                               m,
-        size_type                                               n,
-        size_type                                               k,
-        ValueType                                               alpha,
-        ValueType const *                                       dA,
-        size_type                                               ldda,
-        ValueType const *                                       dB,
-        size_type                                               lddb,
-        ValueType                                               beta,
-        ValueType *                                             dC,
-        size_type                                               lddc,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+      matMulc(blasLapack::Layout                                  layout,
+              blasLapack::Op                                      transA,
+              blasLapack::Op                                      transB,
+              size_type                                           m,
+              size_type                                           n,
+              size_type                                           k,
+              ValueType                                           alpha,
+              ValueType const *                                   dA,
+              size_type                                           ldda,
+              ValueType const *                                   dB,
+              size_type                                           lddb,
+              ValueType                                           beta,
+              ValueType *                                         dC,
+              size_type                                           lddc,
+              std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
     };
   } // namespace linearAlgebra
 

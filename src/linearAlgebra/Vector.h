@@ -226,7 +226,7 @@ namespace dftefe
        *
        * @return shared pointer to BlasQueue.
        */
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>>
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
       getBlasQueue() const;
 
       /**
@@ -334,7 +334,7 @@ namespace dftefe
              const global_size_type    globalSize,
              const size_type           locallyOwnedSize,
              const size_type           ghostSize,
-             std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+             std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 
       /**
        * @brief Default Constructor
@@ -342,13 +342,13 @@ namespace dftefe
       Vector();
 
     protected:
-      std::unique_ptr<Storage>                                d_storage;
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> d_BlasQueue;
-      VectorAttributes d_vectorAttributes;
-      size_type        d_localSize;
-      global_size_type d_globalSize;
-      size_type        d_locallyOwnedSize;
-      size_type        d_ghostSize;
+      std::unique_ptr<Storage>                            d_storage;
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> d_BlasQueue;
+      VectorAttributes                                    d_vectorAttributes;
+      size_type                                           d_localSize;
+      global_size_type                                    d_globalSize;
+      size_type                                           d_locallyOwnedSize;
+      size_type                                           d_ghostSize;
     };
 
     // helper functions

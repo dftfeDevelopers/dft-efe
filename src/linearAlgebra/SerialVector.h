@@ -105,9 +105,9 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the SerialVector
        */
       explicit SerialVector(
-        size_type                                               size,
-        ValueType                                               initVal,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+        size_type                                           size,
+        ValueType                                           initVal,
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage).
@@ -128,8 +128,8 @@ namespace dftefe
        */
       SerialVector(
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-                                                                storage,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue);
+                                                            storage,
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector

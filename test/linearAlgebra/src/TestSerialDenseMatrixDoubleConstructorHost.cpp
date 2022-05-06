@@ -33,7 +33,7 @@ main()
   double tol = 1.0e-12;
 
   const auto HOST = dftefe::utils::MemorySpace::HOST;
-  typedef dftefe::linearAlgebra::blasLapack::BlasQueueType<HOST> QUEUE;
+  typedef dftefe::linearAlgebra::blasLapack::BlasQueue<HOST> QUEUE;
   typedef dftefe::linearAlgebra::SerialDenseMatrix<double, HOST> MATRIX;
 
   int    nRows = 5, nCols = 3;

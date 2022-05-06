@@ -37,9 +37,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                      mpiCommunicatorP2P,
-      const ValueType initVal,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
+                                                          mpiCommunicatorP2P,
+      const ValueType                                     initVal,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
@@ -64,8 +64,8 @@ namespace dftefe
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
         &storage,
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-        mpiCommunicatorP2P,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
+                                                          mpiCommunicatorP2P,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
@@ -86,11 +86,11 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
-      const std::pair<global_size_type, global_size_type>     locallyOwnedRange,
-      const std::vector<dftefe::global_size_type> &           ghostIndices,
-      const MPI_Comm &                                        mpiComm,
-      const ValueType                                         initVal,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
+      const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+      const std::vector<dftefe::global_size_type> &       ghostIndices,
+      const MPI_Comm &                                    mpiComm,
+      const ValueType                                     initVal,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -141,10 +141,10 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
-      const std::pair<global_size_type, global_size_type>     locallyOwnedRange,
-      const MPI_Comm &                                        mpiComm,
-      const ValueType                                         initVal,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
+      const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+      const MPI_Comm &                                    mpiComm,
+      const ValueType                                     initVal,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -199,10 +199,10 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
-      const global_size_type                                  totalGlobalDofs,
-      const MPI_Comm &                                        mpiComm,
-      const ValueType                                         initVal,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueue)
+      const global_size_type                              totalGlobalDofs,
+      const MPI_Comm &                                    mpiComm,
+      const ValueType                                     initVal,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);

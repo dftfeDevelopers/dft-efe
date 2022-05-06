@@ -48,7 +48,7 @@ main()
   utils::deviceGetDevice(&device);
   std::cout<<device<<std::endl;
 
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueueType<Device>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueueType<Device>>(device,0);
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Device>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueue<Device>>(device,0);
 
   const double lo = -10.0;
   const double hi = 10.0;

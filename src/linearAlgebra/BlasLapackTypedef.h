@@ -72,7 +72,7 @@ namespace dftefe
       };
 
       template <dftefe::utils::MemorySpace memorySpace>
-      using BlasQueueType = typename BlasQueueTypedef<memorySpace>::TYPE;
+      using BlasQueue = typename BlasQueueTypedef<memorySpace>::TYPE;
 
 
     } // namespace blasLapack

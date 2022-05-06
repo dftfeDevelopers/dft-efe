@@ -114,11 +114,11 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the Vector
        */
       SerialDenseMatrix(
-        size_type                                               rows,
-        size_type                                               cols,
-        std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueueInput,
-        ValueType                                               initVal = 0,
-        typename Matrix<ValueType, memorySpace>::Property       property =
+        size_type                                           rows,
+        size_type                                           cols,
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueueInput,
+        ValueType                                           initVal = 0,
+        typename Matrix<ValueType, memorySpace>::Property   property =
           Matrix<ValueType, memorySpace>::Property::GENERAL,
         typename Matrix<ValueType, memorySpace>::Uplo uplo =
           Matrix<ValueType, memorySpace>::Uplo::GENERAL,

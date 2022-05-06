@@ -141,13 +141,13 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialDenseMatrix<ValueType, memorySpace>::SerialDenseMatrix(
-      size_type                                               rows,
-      size_type                                               cols,
-      std::shared_ptr<blasLapack::BlasQueueType<memorySpace>> BlasQueueInput,
-      ValueType                                               initVal,
-      typename Matrix<ValueType, memorySpace>::Property       property,
-      typename Matrix<ValueType, memorySpace>::Uplo           uplo,
-      typename Matrix<ValueType, memorySpace>::Layout         layout)
+      size_type                                           rows,
+      size_type                                           cols,
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueueInput,
+      ValueType                                           initVal,
+      typename Matrix<ValueType, memorySpace>::Property   property,
+      typename Matrix<ValueType, memorySpace>::Uplo       uplo,
+      typename Matrix<ValueType, memorySpace>::Layout     layout)
     {
       d_nGlobalRows = rows;
       d_nGlobalCols = cols;

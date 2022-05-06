@@ -24,6 +24,7 @@ set(DFT-EFE-UTILS-SOURCES
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
   MPICommunicatorP2PKernels.cpp
+  MPICommunicatorP2PKernels.cu
   MPIErrorCodeHandler.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})

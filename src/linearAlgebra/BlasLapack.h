@@ -38,18 +38,18 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
-      asum(size_type                   n,
-           ValueType const *           x,
-           size_type                   incx,
-           BlasQueueType<memorySpace> &BlasQueue);
+      asum(size_type               n,
+           ValueType const *       x,
+           size_type               incx,
+           BlasQueue<memorySpace> &BlasQueue);
 
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
-      amax(size_type                   n,
-           ValueType const *           x,
-           size_type                   incx,
-           BlasQueueType<memorySpace> &BlasQueue);
+      amax(size_type               n,
+           ValueType const *       x,
+           size_type               incx,
+           BlasQueue<memorySpace> &BlasQueue);
 
       /**
        * @brief Template for computing \f$ l_{\inf} \f$ norms of all the numVec vectors in a multi Vector
@@ -63,10 +63,10 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      amaxsMultiVector(size_type                   vecSize,
-                       size_type                   numVec,
-                       ValueType const *           multiVecData,
-                       BlasQueueType<memorySpace> &BlasQueue);
+      amaxsMultiVector(size_type               vecSize,
+                       size_type               numVec,
+                       ValueType const *       multiVecData,
+                       BlasQueue<memorySpace> &BlasQueue);
 
 
       template <typename ValueType1,
@@ -79,7 +79,7 @@ namespace dftefe
            size_type                           incx,
            ValueType2 *                        y,
            size_type                           incy,
-           BlasQueueType<memorySpace> &        BlasQueue);
+           BlasQueue<memorySpace> &            BlasQueue);
 
 
       /**
@@ -94,13 +94,13 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      axpby(size_type                   n,
-            ValueType                   alpha,
-            ValueType const *           x,
-            ValueType                   beta,
-            const ValueType *           y,
-            ValueType *                 z,
-            BlasQueueType<memorySpace> &BlasQueue);
+      axpby(size_type               n,
+            ValueType               alpha,
+            ValueType const *       x,
+            ValueType               beta,
+            const ValueType *       y,
+            ValueType *             z,
+            BlasQueue<memorySpace> &BlasQueue);
 
 
 
@@ -108,21 +108,21 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       scalar_type<ValueType1, ValueType2>
-      dot(size_type                   n,
-          ValueType1 const *          x,
-          size_type                   incx,
-          ValueType2 const *          y,
-          size_type                   incy,
-          BlasQueueType<memorySpace> &BlasQueue);
+      dot(size_type               n,
+          ValueType1 const *      x,
+          size_type               incx,
+          ValueType2 const *      y,
+          size_type               incy,
+          BlasQueue<memorySpace> &BlasQueue);
 
 
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
-      nrm2(size_type                   n,
-           ValueType const *           x,
-           size_type                   incx,
-           BlasQueueType<memorySpace> &BlasQueue);
+      nrm2(size_type               n,
+           ValueType const *       x,
+           size_type               incx,
+           BlasQueue<memorySpace> &BlasQueue);
 
 
       /**
@@ -137,29 +137,29 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      nrms2MultiVector(size_type                   vecSize,
-                       size_type                   numVec,
-                       ValueType const *           multiVecData,
-                       BlasQueueType<memorySpace> &BlasQueue);
+      nrms2MultiVector(size_type               vecSize,
+                       size_type               numVec,
+                       ValueType const *       multiVecData,
+                       BlasQueue<memorySpace> &BlasQueue);
 
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      gemm(Layout                      layout,
-           Op                          transA,
-           Op                          transB,
-           size_type                   m,
-           size_type                   n,
-           size_type                   k,
-           ValueType                   alpha,
-           ValueType const *           dA,
-           size_type                   ldda,
-           ValueType const *           dB,
-           size_type                   lddb,
-           ValueType                   beta,
-           ValueType *                 dC,
-           size_type                   lddc,
-           BlasQueueType<memorySpace> &BlasQueue);
+      gemm(Layout                  layout,
+           Op                      transA,
+           Op                      transB,
+           size_type               m,
+           size_type               n,
+           size_type               k,
+           ValueType               alpha,
+           ValueType const *       dA,
+           size_type               ldda,
+           ValueType const *       dB,
+           size_type               lddb,
+           ValueType               beta,
+           ValueType *             dC,
+           size_type               lddc,
+           BlasQueue<memorySpace> &BlasQueue);
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe
