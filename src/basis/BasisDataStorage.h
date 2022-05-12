@@ -28,7 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <quadrature/CellQuadratureContainer.h>
+#include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/BasisManager.h>
 #include <memory>
@@ -61,7 +61,7 @@ namespace dftefe
       virtual ~BasisDataStorage() = default;
       virtual void
       evaluateBasisData(
-        std::shared_ptr<const quadrature::CellQuadratureContainer>
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const bool                      storeValues,
@@ -72,7 +72,7 @@ namespace dftefe
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
 
-      //      virtual std::shared_ptr<const quadrature::CellQuadratureContainer>
+      //      virtual std::shared_ptr<const quadrature::QuadratureRuleContainer>
       //      getCellQuadratureRuleContainer(
       //        const QuadratureRuleAttributes &quadratureRuleAttributes) const
       //        = 0;

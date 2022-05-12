@@ -42,9 +42,10 @@ namespace dftefe
     {
     public:
       virtual ~BasisOperations() = default;
+
       virtual void
       integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-                               const CellQuadratureContainer &         q,
+                               const QuadratureRuleContainer &         q,
                                Field<ValueType, memorySpace> &         field);
 
       virtual void
@@ -53,8 +54,9 @@ namespace dftefe
 
       virtual void
       integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
-                               const CellQuadratureContainer &      q,
+                               const QuadratureRuleContainer &      q,
                                Field<ValueType, memorySpace> &fieldOutput);
+
 
     }; // end of BasisOperations
   }    // end of namespace basis

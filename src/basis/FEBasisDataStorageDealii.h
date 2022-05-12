@@ -71,8 +71,8 @@ namespace dftefe
 
       void
       evaluateBasisData(
-        std::shared_ptr<const quadrature::CellQuadratureContainer>
-                                        quadratureContainer,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                                        quadratureRuleContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const bool                      storeValues,
         const bool                      storeGradient,
@@ -83,7 +83,7 @@ namespace dftefe
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) override;
 
-      //      std::shared_ptr<const quadrature::CellQuadratureContainer>
+      //      std::shared_ptr<const quadrature::QuadratureRuleContainer>
       //      getCellQuadratureRuleContainer(std::shared_ptr<Storage>>
       //        const QuadratureRuleAttributes &quadratureRuleAttributes) const
       //        override;

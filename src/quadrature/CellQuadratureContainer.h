@@ -1,7 +1,7 @@
-#ifndef dftefeCellQuadratureContainer_h
-#define dftefeCellQuadratureContainer_h
+#ifndef dftefeQuadratureRuleContainer_h
+#define dftefeQuadratureRuleContainer_h
 
-#include "QuadratureRule.h"
+#include <quadrature/QuadratureRule.h>
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
 #include <utils/ScalarSpatialFunction.h>
@@ -19,7 +19,7 @@ namespace dftefe
      * cell. This supports adaptive quadrature i.e each cell can have different
      * quadrature rules. Further each cell can have arbitrary quadrature rule.
      */
-    class CellQuadratureContainer
+    class QuadratureRuleContainer
     {
     public:
       /**
@@ -32,7 +32,7 @@ namespace dftefe
        * the cell in real space is mapped to its parametric coordinates.  This
        * is required to calculate the JxW values at each quad point
        */
-      CellQuadratureContainer(
+      QuadratureRuleContainer(
         std::shared_ptr<const QuadratureRule>           quadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,
         const basis::CellMappingBase &                  cellMapping);
@@ -47,7 +47,7 @@ namespace dftefe
        * the cell in real space is mapped to its parametric coordinates.  This
        * is required to calculate the JxW values at each quad point
        */
-      CellQuadratureContainer(
+      QuadratureRuleContainer(
         std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
         std::shared_ptr<const basis::TriangulationBase>    triangulation,
         const basis::CellMappingBase &                     cellMapping);
@@ -64,7 +64,7 @@ namespace dftefe
        * coordinates. This is required to calculate the JxW values at each quad
        * point
        */
-      CellQuadratureContainer(
+      QuadratureRuleContainer(
         std::shared_ptr<const QuadratureRule>           baseQuadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,
         const basis::CellMappingBase &                  cellMapping,
@@ -201,4 +201,4 @@ namespace dftefe
 
 } // end of namespace dftefe
 
-#endif // dftefeCellQuadratureContainer_h
+#endif // dftefeQuadratureRuleContainer_h

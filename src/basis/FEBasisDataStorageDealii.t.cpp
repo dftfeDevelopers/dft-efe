@@ -333,8 +333,8 @@ namespace dftefe
           typename BasisDataStorage<ValueType, memorySpace>::Storage>
           &                                         basisOverlap,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        std::shared_ptr<const quadrature::CellQuadratureContainer>
-                                quadratureContainer,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                                quadratureRuleContainer,
         std::vector<size_type> &nQuadPointsInCell,
         std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
@@ -381,7 +381,7 @@ namespace dftefe
         nQuadPointsInCell.resize(numLocallyOwnedCells, 0);
 
         const size_type nTotalQuadPoints =
-          quadratureContainer->nQuadraturePoints();
+          quadratureRuleContainer->nQuadraturePoints();
         if (storeValues)
           {
             basisQuadStorage = std::make_shared<
@@ -443,16 +443,16 @@ namespace dftefe
              ++locallyOwnedCellIter)
           {
             size_type nQuadPointInCell =
-              quadratureContainer->nCellQuadraturePoints(cellIndex);
+              quadratureRuleContainer->nCellQuadraturePoints(cellIndex);
             nQuadPointsInCell[cellIndex] = nQuadPointInCell;
             const std::vector<dftefe::utils::Point> &cellParametricQuadPoints =
-              quadratureContainer->getCellParametricPoints(cellIndex);
+              quadratureRuleContainer->getCellParametricPoints(cellIndex);
             std::vector<double> cellJxWValues =
-              quadratureContainer->getCellJxW(cellIndex);
+              quadratureRuleContainer->getCellJxW(cellIndex);
             std::vector<dealii::Point<dim, double>> dealiiParametricQuadPoints(
               0);
             const std::vector<double> &quadWeights =
-              quadratureContainer->getCellQuadratureWeights(cellIndex);
+              quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
             convertToDealiiPoint<dim>(cellParametricQuadPoints,
                                       dealiiParametricQuadPoints);
             dealii::Quadrature<dim> dealiiQuadratureRule(
@@ -783,8 +783,8 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     void
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::evaluateBasisData(
-      std::shared_ptr<const quadrature::CellQuadratureContainer>
-                                                  quadratureContainer,
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                                                  quadratureRuleContainer,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
       const bool                                  storeValues,
       const bool                                  storeGradient,
@@ -816,7 +816,7 @@ namespace dftefe
           basisHessianQuadStorage,
           basisOverlap,
           quadratureRuleAttributes,
-          quadratureContainer,
+          quadratureRuleContainer,
           nQuadPointsInCell,
           cellStartIdsBasisQuadStorage,
           cellStartIdsBasisGradientQuadStorage,
@@ -853,7 +853,7 @@ namespace dftefe
 
     //    template <typename ValueType, utils::MemorySpace memorySpace,
     //    size_type dim> std::shared_ptr<const
-    //    quadrature::CellQuadratureContainer>
+    //    quadrature::QuadratureRuleContainer>
     //    FEBasisDataStorageDealii<ValueType, memorySpace,
     //    dim>::getCellQuadratureRuleContainer(
     //      const QuadratureRuleAttributes &quadratureRuleAttributes) const
@@ -862,7 +862,7 @@ namespace dftefe
     //        false,
     //        "  getCellQuadratureRuleContainer is not implemented ");
     //
-    //      std::shared_ptr<const quadrature::CellQuadratureContainer> cellQuad;
+    //      std::shared_ptr<const quadrature::QuadratureRuleContainer> cellQuad;
     //      return ;
     //
     //    }
