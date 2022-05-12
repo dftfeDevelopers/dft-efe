@@ -307,7 +307,7 @@ namespace dftefe
       MemoryTransfer<memorySpace, MemorySpace::HOST> memoryTransfer;
       d_ghostIndices.resize(d_numGhostIndices);
       memoryTransfer.copy(d_numGhostIndices,
-                          d_ghostIndices.begin(),
+                          &d_ghostIndices[0],
                           &ghostIndices[0]);
 
       std::vector<global_size_type> allOwnedRanges(0);
@@ -328,7 +328,7 @@ namespace dftefe
 
       d_allOwnedRanges.resize(2 * d_nprocs);
       memoryTransfer.copy(2 * d_nprocs,
-                          d_allOwnedRanges.begin(),
+                          &d_allOwnedRanges[0],
                           &allOwnedRanges[0]);
 
       std::map<size_type, std::vector<size_type>>
@@ -387,15 +387,15 @@ namespace dftefe
                                     d_numGhostIndices,
                                   msg);
       memoryTransfer.copy(d_numGhostProcs,
-                          d_ghostProcIds.begin(),
+                          &d_ghostProcIds[0],
                           &ghostProcIdsTmp[0]);
 
       memoryTransfer.copy(d_numGhostProcs,
-                          d_numGhostIndicesInGhostProcs.begin(),
+                          &d_numGhostIndicesInGhostProcs[0],
                           &numGhostIndicesInGhostProcsTmp[0]);
 
       memoryTransfer.copy(2 * d_numGhostProcs,
-                          d_localGhostIndicesRanges.begin(),
+                          &d_localGhostIndicesRanges[0],
                           &localGhostIndicesRangesTmp[0]);
 
       d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
@@ -417,7 +417,7 @@ namespace dftefe
       d_numTargetProcs = targetProcIdsTmp.size();
       d_targetProcIds.resize(d_numTargetProcs);
       memoryTransfer.copy(d_numTargetProcs,
-                          d_targetProcIds.begin(),
+                          &d_targetProcIds[0],
                           &targetProcIdsTmp[0]);
       std::vector<size_type> numOwnedIndicesForTargetProcsTmp(d_numTargetProcs);
 
@@ -555,7 +555,7 @@ namespace dftefe
 
       d_numOwnedIndicesForTargetProcs.resize(d_numTargetProcs);
       memoryTransfer.copy(d_numTargetProcs,
-                          d_numOwnedIndicesForTargetProcs.begin(),
+                          &d_numOwnedIndicesForTargetProcs[0],
                           &numOwnedIndicesForTargetProcsTmp[0]);
 
       d_flattenedLocalTargetIndices.resize(totalOwnedIndicesForTargetProcs);
@@ -615,21 +615,21 @@ namespace dftefe
 #endif
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::GlobalSizeTypeVectorHost &
+    const std::vector<global_size_type> &
     MPIPatternP2P<memorySpace>::getGhostIndices() const
     {
       return d_ghostIndices;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getGhostProcIds() const
     {
       return d_ghostProcIds;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getNumGhostIndicesInProcs() const
     {
       return d_numGhostIndicesInGhostProcs;
@@ -637,7 +637,7 @@ namespace dftefe
 
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
     {
       return d_localGhostIndicesRanges;
@@ -706,14 +706,14 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getTargetProcIds() const
     {
       return d_targetProcIds;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getNumOwnedIndicesForTargetProcs() const
     {
       return d_numOwnedIndicesForTargetProcs;
