@@ -57,8 +57,9 @@ namespace dftefe
     public:
       ~FEBasisHandler() = default;
 
-      bool isDistributed() const = 0;
-      
+      bool
+      isDistributed() const = 0;
+
       virtual const Constraints<ValueType> &
       getConstraints(const std::string constraintsName) const = 0;
 

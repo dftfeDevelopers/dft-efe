@@ -64,14 +64,14 @@ namespace dftefe
 
       Field(std::shared_ptr<const BasisHandler<memorySpace>> basisHandler,
             const std::string                                constraintsName,
-	    const linearAlgebra::LinAlgOpContext & linAlgOpContext);
-      
+            const linearAlgebra::LinAlgOpContext &           linAlgOpContext);
+
       ~Field() = default;
-      
+
       reinit(std::shared_ptr<const BasisHandler<memorySpace>> basisHandler,
-            const std::string                                constraintsName,
-	    const linearAlgebra::LinAlgOpContext & linAlgOpContext);
-      
+             const std::string                                constraintsName,
+             const linearAlgebra::LinAlgOpContext &           linAlgOpContext);
+
       void
       applyConstraintsParentToChild();
 
@@ -98,11 +98,9 @@ namespace dftefe
 
     private:
       const std::string                                d_constraintsName;
-      linearAlgebra::LinAlgOpContext d_linAlgOpContext;
+      linearAlgebra::LinAlgOpContext                   d_linAlgOpContext;
       std::shared_ptr<const BasisHandler<memorySpace>> d_basisHandler;
-      std::shared_ptr<utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                             d_mpiCommunicatorP2P;
-      std::shared_ptr<linearAlgebra::Vector> d_vector;
+      std::shared_ptr<linearAlgebra::Vector<ValueType,memorySpace> d_vector;
     }; // end of Field
   }    // end of namespace basis
 } // end of namespace dftefe

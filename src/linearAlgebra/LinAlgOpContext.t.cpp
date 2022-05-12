@@ -20,41 +20,30 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
 namespace dftefe
 {
-  namespace basis
+  namespace linearAlgebra
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    Field<ValueType, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler>   basisHandler,
-      const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext &linAlgOpContext)
+    template <utils::MemorySpace memorySpace>
+    LinAlgOpContext<memorySpace>::LinAlgOpContext(
+      BlasQueue<memorySpace> *blasQueue)
+      : d_blasQueue(blasQueue)
+    {}
+    
+    template <utils::MemorySpace memorySpace>
+    void
+    LinAlgOpContext<memorySpace>::setBlasQueue(BlasQueue<memorySpace> *blasQueue) 
     {
-      reinit(basisHandler, constraintsName, linAlgOpContext);
+      d_blasQueue = blasQueue;
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    Field<ValueType, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler>   basisHandler,
-      const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext &linAlgOpContext)
+    template <utils::MemorySpace memorySpace>
+    BlasQueue<memorySpace> &blasQueue
+    LinAlgOpContext<memorySpace>::getBlasQueue() const
     {
-      d_basisHandler     = basisHandler;
-      d_constraintsName  = constraintsName;
-      d_linAlgOpContext  = linAlgOpContext;
-      auto mpiPatternP2P = basisHandler->getMPIPatternP2P(constraintsName);
-
-      //
-      // create the vector 
-      //
-      if(d_basisHandler->isDistributed())
-      {
-	d_vector = std::make_shared<linearAlgebra::DistributedVector<ValueType, memorySpace>>();
-
-      }
+      return *d_blasQueue;
     }
-
-  } // end of namespace basis
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe

@@ -20,41 +20,35 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
+
+#ifndef dftefeLinAlgOpContext_h
+#define dftefeLinAlgOpContext_h
+
+#include <utils/MemorySpaceType.h>
+#include <utils/BlasLapackTypedef.h>
 namespace dftefe
 {
-  namespace basis
+  namespace linearAlgebra
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    Field<ValueType, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler>   basisHandler,
-      const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext &linAlgOpContext)
+    template <utils::MemorySpace memorySpace>
+    class LinAlgOpContext
     {
-      reinit(basisHandler, constraintsName, linAlgOpContext);
-    }
+    public:
+      LinAlgOpContext(BlasQueue<memorySpace> *blasQueue);
+      
+      void
+      setBlasQueue(BlasQueue<memorySpace> *blasQueue);
+      
+      BlasQueue<memorySpace> &blasQueue
+      getBlasQueue() const;
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    Field<ValueType, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler>   basisHandler,
-      const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext &linAlgOpContext)
-    {
-      d_basisHandler     = basisHandler;
-      d_constraintsName  = constraintsName;
-      d_linAlgOpContext  = linAlgOpContext;
-      auto mpiPatternP2P = basisHandler->getMPIPatternP2P(constraintsName);
+    private:
+      BlasQueue<memorySpace> *d_blasQueue;
 
-      //
-      // create the vector 
-      //
-      if(d_basisHandler->isDistributed())
-      {
-	d_vector = std::make_shared<linearAlgebra::DistributedVector<ValueType, memorySpace>>();
-
-      }
-    }
-
-  } // end of namespace basis
+    }; // end of LinAlgOpContext
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
+#include <linearAlgebra/LinAlgOpContext.t.cpp>
+#endif // end of dftefeLinAlgOpContext_h
