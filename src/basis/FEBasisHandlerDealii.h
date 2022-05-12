@@ -99,7 +99,7 @@ namespace dftefe
       const Constraints<ValueType> &
       getConstraints(const std::string constraintsName) const override;
 
-      std::shared_ptr<const MPIPatternP2P<memorySpace>>
+      std::shared_ptr<const utils::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;
 
       std::pair<global_size_type, global_size_type>
