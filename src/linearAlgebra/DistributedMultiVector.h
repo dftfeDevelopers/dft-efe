@@ -49,16 +49,15 @@ namespace dftefe
      *
      * @note Broadly, there are two ways of constructing a DistributedMultiVector.
      *  1. [<b>Prefered and efficient approach</b>] The first approach takes a
-     * pointer to an MPICommunicatorP2P as an input argument. The
-     * MPICommunicatorP2P, in turn, contains all the information reagrding the
-     * locally owned and ghost part of the DistributedMultiVector as well as the
-     * number of vectors. This is the most efficient way of constructing a
-     * DistributedMultiVector as it allows for reusing of an already constructed
-     * MPICommunicator.
+     * pointer to an MPIPatternP2P as an input argument and the number of
+     * vectors as well. The MPIPatternP2P, in turn, contains all the information
+     * reagrding the locally owned and ghost part of the multi vector. This is
+     * the most efficient way of constructing a DistributedMultiVector as it
+     * allows for reusing of an already constructed MPIPatternP2P.
      *  2. [<b> Expensive approach</b>] The second approach takes in the locally
      * owned, ghost indices, and number of vectors and internally creates an
      * MPIPatternP2P object which, in turn, is used to create an
-     * MPICommunicatorP2P object. Given that the creation of an MPIPatternP2P is
+     * MPIPatternP2P object. Given that the creation of an MPIPatternP2P is
      * expensive, this route of constructing a DistributedMultiVector
      * <b>should</b> be avoided.
      */
@@ -76,7 +75,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using MultiVector<ValueType, memorySpace>::d_storage;
-      using MultiVector<ValueType, memorySpace>::d_BlasQueue;
+      using MultiVector<ValueType, memorySpace>::d_linAlgOpContext;
       using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
       using MultiVector<ValueType, memorySpace>::d_globalSize;
       using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -92,23 +91,25 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_MPI
       /**
-       * @brief Constructor based on an input mpiCommunicatorP2P.
+       * @brief Constructor based on an input mpiPatternP2P.
        *
-       * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
        * based on which the DistributedMultiVector will be created.
+       * @param[in] linAlgOpContext handle for linear algebra operations on
+       * HOST or DEVICE.
+       * @param[in] numVectors number of vectors
        * @param[in] initVal value with which the DistributedMultiVector shoud be
        * initialized
-       * @param[in] BlasQueue handle for linear algebra operations on
-       * HOST or DEVICE.
        */
       DistributedMultiVector(
-        std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                            mpiCommunicatorP2P,
-        const ValueType                     initVal,
-        blasLapack::BlasQueue<memorySpace> *BlasQueue);
+        std::shared_ptr<const utils::MPIPatternP2P<ValueType, memorySpace>>
+                                      mpiPatternP2P,
+        LinAlgOpContext<memorySpace> *linAlgOpContext,
+        const size_type               numVectors,
+        const ValueType               initVal);
 
       /**
-       * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
+       * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiPatternP2P.
        * This allows the DistributedMultiVector to take ownership of input
        * MultiVector::Storage (i.e., utils::MemoryStorage) This is useful when
        * one does not want to allocate new memory and instead use memory
@@ -116,8 +117,11 @@ namespace dftefe
        *
        * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
        * is to be transfered to the DistributedMultiVector
-       * @param[in] mpiCommunicatorP2P A shared_ptr to const MPICommunicatorP2P
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
        * based on which the DistributedMultiVector will be created.
+       * @param[in] linAlgOpContext handle for linear algebra operations on
+       * HOST or DEVICE.
+       * @param[in] numVectors number of vectors
        *
        * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the DistributedMultiVector.
        * Thus, after the function call \p storage will point to NULL and any
@@ -127,14 +131,15 @@ namespace dftefe
       DistributedMultiVector(
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
           &storage,
-        std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                            mpiCommunicatorP2P,
-        blasLapack::BlasQueue<memorySpace> *BlasQueue);
+        std::shared_ptr<const utils::MPIPatternP2P<ValueType, memorySpace>>
+                                      mpiPatternP2P,
+        LinAlgOpContext<memorySpace> *linAlgOpContext,
+        const size_type               numVectors);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
        * @note This way of construction is expensive. One should use the other
-       * constructor based on an input MPICommunicatorP2P as far as possible.
+       * constructor based on an input MPIPatternP2P as far as possible.
        *
        * @param locallyOwnedRange a pair \f$(a,b)\f$ which defines a range of indices (continuous)
        * that are owned by the current processor.
@@ -149,8 +154,9 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
         size_type                                           numVectors,
-        ValueType                                           initVal,
-        blasLapack::BlasQueue<memorySpace> *                BlasQueue);
+        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        const size_type                                     numVectors,
+        ValueType                                           initVal);
 #endif // DFTEFE_WITH_MPI
 
       /**
@@ -223,7 +229,7 @@ namespace dftefe
       accumulateAddLocallyOwnedEnd() override;
 
     private:
-      std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
+      std::unique_ptr<utils::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
       std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
     };

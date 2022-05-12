@@ -30,6 +30,7 @@
 #include <memory>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/SerialVector.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 
 using namespace dftefe;
 using MemoryStorageDoubleHost    = dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>;
@@ -40,7 +41,10 @@ using SerialVectorDoubleHost = dftefe::linearAlgebra::SerialVector<double, dftef
 main()
 {
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>>();  
+  dftefe::linearAlgebra::blasLapack::BlasQueue<Host> queue; 
+
+  dftefe::linearAlgebra::LinAlgOpContext<Host> linAlgContext(&queue);
+
   const double lo = -10.0;
   const double hi = 10.0;
   dftefe::size_type vSize = 3;
@@ -63,18 +67,18 @@ main()
     = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage1->copyFrom<Host>(dVecStd1.data());
   std::shared_ptr<VectorDoubleHost> dVec1
-    = std::make_shared<SerialVectorDoubleHost>(vSize, 0,queue);
+    = std::make_shared<SerialVectorDoubleHost>(vSize, &linAlgContext,0);
   dVec1->setStorage(memStorage1);
 
   std::unique_ptr<MemoryStorageDoubleHost> memStorage2 
      = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage2->copyFrom<Host>(dVecStd2.data());
   std::shared_ptr<VectorDoubleHost> dVec2
-    = std::make_shared<SerialVectorDoubleHost>(vSize, 0,queue);
+    = std::make_shared<SerialVectorDoubleHost>(vSize, &linAlgContext,0);
   dVec2->setStorage(memStorage2);
 
   std::shared_ptr<VectorDoubleHost> dVec3
-    = std::make_shared<SerialVectorDoubleHost>(vSize, 0,queue);
+    = std::make_shared<SerialVectorDoubleHost>(vSize, &linAlgContext,0);
   linearAlgebra::add<double,Host>(1.0, *dVec1, 1.0, *dVec2, *dVec3);
   const MemoryStorageDoubleHost & dVec3Storage = dVec3->getValues();
   std::vector<double> dVec3HostCopy(vSize);

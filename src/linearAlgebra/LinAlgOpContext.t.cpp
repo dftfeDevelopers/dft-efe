@@ -28,20 +28,21 @@ namespace dftefe
   {
     template <utils::MemorySpace memorySpace>
     LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      BlasQueue<memorySpace> *blasQueue)
+      blasLapack::BlasQueue<memorySpace> *blasQueue)
       : d_blasQueue(blasQueue)
     {}
-    
+
     template <utils::MemorySpace memorySpace>
     void
-    LinAlgOpContext<memorySpace>::setBlasQueue(BlasQueue<memorySpace> *blasQueue) 
+    LinAlgOpContext<memorySpace>::setBlasQueue(
+      blasLapack::BlasQueue<memorySpace> *blasQueue)
     {
       d_blasQueue = blasQueue;
     }
 
     template <utils::MemorySpace memorySpace>
-    BlasQueue<memorySpace> &blasQueue
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
+    blasLapack::BlasQueue<memorySpace> &
+    LinAlgOpContext<memorySpace>::getBlasQueue()
     {
       return *d_blasQueue;
     }

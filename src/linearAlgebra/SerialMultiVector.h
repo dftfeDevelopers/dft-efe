@@ -58,7 +58,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using MultiVector<ValueType, memorySpace>::d_storage;
-      using MultiVector<ValueType, memorySpace>::d_BlasQueue;
+      using MultiVector<ValueType, memorySpace>::d_linAlgOpContext;
       using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
       using MultiVector<ValueType, memorySpace>::d_globalSize;
       using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -105,14 +105,14 @@ namespace dftefe
        * @param[in] size size of each vector in the SerialMultiVector
        * @param[in] numVectors number of vectors in the SerialMultiVector
        * @param[in] initVal initial value of elements of the SerialMultiVector
-       * @param[in] BlasQueue handle for linear algebra operations on
+       * @param[in] linAlgOpContext handle for linear algebra operations on
        * HOST or DEVICE.
        *
        */
-      explicit SerialMultiVector(size_type                           size,
-                                 size_type                           numVectors,
-                                 ValueType                           initVal,
-                                 blasLapack::BlasQueue<memorySpace> *BlasQueue);
+      explicit SerialMultiVector(size_type                     size,
+                                 size_type                     numVectors,
+                                 ValueType                     initVal,
+                                 LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       /**
        * @brief Constructor with predefined MultiVector::Storage (i.e., utils::MemoryStorage).
@@ -133,9 +133,9 @@ namespace dftefe
        */
       SerialMultiVector(
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                            storage,
-        size_type                           numVectors,
-        blasLapack::BlasQueue<memorySpace> *BlasQueue);
+                                      storage,
+        size_type                     numVectors,
+        LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       /**
        * @brief Returns \f$ l_2 \f$ norms of all the \f$N\f$ vectors in the  MultiVector

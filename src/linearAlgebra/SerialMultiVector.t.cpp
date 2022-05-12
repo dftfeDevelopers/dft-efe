@@ -34,15 +34,15 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
-      const size_type                     size,
-      const size_type                     numVectors,
-      const ValueType                     initVal,
-      blasLapack::BlasQueue<memorySpace> *BlasQueue)
+      const size_type               size,
+      const size_type               numVectors,
+      const ValueType               initVal,
+      LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           size * numVectors, initVal);
-      d_BlasQueue = BlasQueue;
+      d_linAlgOpContext = linAlgOpContext;
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::SERIAL);
       d_globalSize       = size;
@@ -59,12 +59,12 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                          storage,
-      const size_type                     numVectors,
-      blasLapack::BlasQueue<memorySpace> *BlasQueue)
+                                    storage,
+      const size_type               numVectors,
+      LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
-      d_storage   = std::move(storage);
-      d_BlasQueue = BlasQueue;
+      d_storage         = std::move(storage);
+      d_linAlgOpContext = linAlgOpContext;
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::SERIAL);
       d_globalSize       = d_storage.size();
@@ -85,7 +85,7 @@ namespace dftefe
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
-      d_BlasQueue        = u.d_BlasQueue;
+      d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_globalSize       = u.d_globalSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
@@ -110,7 +110,7 @@ namespace dftefe
       SerialMultiVector<ValueType, memorySpace> &&u) noexcept
     {
       d_storage          = std::move(u.d_storage);
-      d_BlasQueue        = std::move(u.d_BlasQueue);
+      d_linAlgOpContext  = std::move(u.d_linAlgOpContext);
       d_vectorAttributes = std::move(u.d_vectorAttributes);
       d_globalSize       = std::move(u.d_globalSize);
       d_locallyOwnedSize = std::move(u.d_locallyOwnedSize);
@@ -139,7 +139,7 @@ namespace dftefe
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
       *d_storage         = *(u.d_storage);
-      d_BlasQueue        = u.d_BlasQueue;
+      d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_globalSize       = u.d_globalSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
@@ -166,7 +166,7 @@ namespace dftefe
       SerialMultiVector<ValueType, memorySpace> &&u)
     {
       d_storage          = std::move(u.d_storage);
-      d_BlasQueue        = std::move(u.d_BlasQueue);
+      d_linAlgOpContext  = std::move(u.d_linAlgOpContext);
       d_vectorAttributes = std::move(u.d_vectorAttributes);
       d_globalSize       = std::move(u.d_globalSize);
       d_locallyOwnedSize = std::move(u.d_locallyOwnedSize);
@@ -189,7 +189,7 @@ namespace dftefe
     SerialMultiVector<ValueType, memorySpace>::l2Norms() const
     {
       return blasLapack::nrms2MultiVector<ValueType, memorySpace>(
-        this->size(), this->numVectors(), this->data(), *d_BlasQueue);
+        this->size(), this->numVectors(), this->data(), *d_linAlgOpContext);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -197,7 +197,7 @@ namespace dftefe
     SerialMultiVector<ValueType, memorySpace>::lInfNorms() const
     {
       return blasLapack::amaxsMultiVector<ValueType, memorySpace>(
-        this->size(), this->numVectors(), this->data(), *d_BlasQueue);
+        this->size(), this->numVectors(), this->data(), *d_linAlgOpContext);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

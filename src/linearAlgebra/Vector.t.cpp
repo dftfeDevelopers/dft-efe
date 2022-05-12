@@ -34,13 +34,13 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      std::unique_ptr<Storage> &          storage,
-      const global_size_type              globalSize,
-      const size_type                     locallyOwnedSize,
-      const size_type                     ghostSize,
-      blasLapack::BlasQueue<memorySpace> *BlasQueue)
+      std::unique_ptr<Storage> &    storage,
+      const global_size_type        globalSize,
+      const size_type               locallyOwnedSize,
+      const size_type               ghostSize,
+      LinAlgOpContext<memorySpace> *linAlgOpContext)
       : d_storage(storage)
-      , d_BlasQueue(BlasQueue)
+      , d_linAlgOpContext(linAlgOpContext)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
@@ -56,7 +56,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector()
       : d_storage(nullptr)
-      , d_BlasQueue(nullptr)
+      , d_linAlgOpContext(nullptr)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
@@ -155,7 +155,13 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being added.");
       blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        this->localSize(), 1.0, rhs.data(), 1, this->data(), 1, *d_BlasQueue);
+        this->localSize(),
+        1.0,
+        rhs.data(),
+        1,
+        this->data(),
+        1,
+        d_linAlgOpContext->getBlasQueue());
 
       return *this;
     }
@@ -181,7 +187,13 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
       blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_BlasQueue);
+        this->localSize(),
+        -1.0,
+        rhs.data(),
+        1,
+        this->data(),
+        1,
+        d_linAlgOpContext->getBlasQueue());
       return *this;
     }
 
@@ -205,7 +217,13 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two Vectors that are being subtracted.");
       blasLapack::axpy<ValueType, ValueType, memorySpace>(
-        this->localSize(), -1.0, rhs.data(), 1, this->data(), 1, *d_BlasQueue);
+        this->localSize(),
+        -1.0,
+        rhs.data(),
+        1,
+        this->data(),
+        1,
+        d_linAlgOpContext->getBlasQueue());
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -223,10 +241,10 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> *
-    Vector<ValueType, memorySpace>::getBlasQueue() const
+    LinAlgOpContext<memorySpace> *
+    Vector<ValueType, memorySpace>::getLinAlgOpContext() const
     {
-      return d_BlasQueue;
+      return d_linAlgOpContext;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -293,7 +311,13 @@ namespace dftefe
         "of the Vectors that are added.");
 
       blasLapack::axpby<ValueType, memorySpace>(
-        u.localSize(), a, u.data(), b, v.data(), w.data(), *(w.getBlasQueue()));
+        u.localSize(),
+        a,
+        u.data(),
+        b,
+        v.data(),
+        w.data(),
+        (w.getLinAlgOpContext())->getBlasQueue());
     }
   } // namespace linearAlgebra
 } // namespace dftefe

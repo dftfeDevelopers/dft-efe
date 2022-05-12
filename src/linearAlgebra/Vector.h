@@ -28,6 +28,7 @@
 
 #include <linearAlgebra/VectorAttributes.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 #include <memory>
@@ -222,12 +223,12 @@ namespace dftefe
       getValues() const;
 
       /**
-       * @brief Returns a shared pointer to underlyign BlasQueue.
+       * @brief Returns a shared pointer to underlying LinAlgOpContext.
        *
-       * @return a pointer to BlasQueue.
+       * @return a pointer to LinAlgOpContext.
        */
-      blasLapack::BlasQueue<memorySpace> *
-      getBlasQueue() const;
+      LinAlgOpContext<memorySpace> *
+      getLinAlgOpContext() const;
 
       /**
        * @brief Set values in the Vector using a user provided Vector::Storage object (i.e., MemoryStorage object).
@@ -323,18 +324,18 @@ namespace dftefe
        * @param[in] ghostSize size of the part of the vector that is owned by
        * the other processors but required by the current processor. For a
        * SerialVector, the ghostSize is 0.
-       * @param[in] BlasQueue handle for linear algebra operations on
-       * HOST/DEVICE.
+       * @param[in] pointer to LinAlgOpContext object which stores hardware
+       * specific handles for linear algebra operations on HOST/DEVICE.
        *
        * @note Since we are passing the ownership of the input storage to the Vector, the
        * storage will point to NULL after a call to this Constructor. Accessing
        * the input storage pointer will lead to undefined behavior.
        */
-      Vector(std::unique_ptr<Storage> &          storage,
-             const global_size_type              globalSize,
-             const size_type                     locallyOwnedSize,
-             const size_type                     ghostSize,
-             blasLapack::BlasQueue<memorySpace> *BlasQueue);
+      Vector(std::unique_ptr<Storage> &    storage,
+             const global_size_type        globalSize,
+             const size_type               locallyOwnedSize,
+             const size_type               ghostSize,
+             LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       /**
        * @brief Default Constructor
@@ -342,13 +343,13 @@ namespace dftefe
       Vector();
 
     protected:
-      std::unique_ptr<Storage>            d_storage;
-      blasLapack::BlasQueue<memorySpace> *d_BlasQueue;
-      VectorAttributes                    d_vectorAttributes;
-      size_type                           d_localSize;
-      global_size_type                    d_globalSize;
-      size_type                           d_locallyOwnedSize;
-      size_type                           d_ghostSize;
+      std::unique_ptr<Storage>      d_storage;
+      LinAlgOpContext<memorySpace> *d_linAlgOpContext;
+      VectorAttributes              d_vectorAttributes;
+      size_type                     d_localSize;
+      global_size_type              d_globalSize;
+      size_type                     d_locallyOwnedSize;
+      size_type                     d_ghostSize;
     };
 
     // helper functions

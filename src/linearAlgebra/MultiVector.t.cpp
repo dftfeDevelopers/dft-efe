@@ -34,14 +34,14 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
-      std::unique_ptr<Storage> &                          storage,
-      const global_size_type                              globalSize,
-      const size_type                                     locallyOwnedSize,
-      const size_type                                     ghostSize,
-      const size_type                                     numVectors,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+      std::unique_ptr<Storage> &    storage,
+      const global_size_type        globalSize,
+      const size_type               locallyOwnedSize,
+      const size_type               ghostSize,
+      const size_type               numVectors,
+      LinAlgOpContext<memorySpace> *linAlgOptContext)
       : d_storage(storage)
-      , d_BlasQueue(BlasQueue)
+      , d_linAlgOptContext(linAlgOptContext)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(globalSize)
@@ -58,7 +58,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector()
       : d_storage(nullptr)
-      , d_BlasQueue(nullptr)
+      , d_linAlgOptContext(nullptr)
       , d_vectorAttributes(
           VectorAttributes(VectorAttributes::Distribution::SERIAL))
       , d_globalSize(0)
@@ -168,14 +168,14 @@ namespace dftefe
         "Mismatch of sizes of the underlying"
         "storage of the two MultiVectors that are being added.");
 
-      blasLapack::axpby<ValueType, memorySpace>(this->localSize() *
-                                                  this->numVectors(),
-                                                1.0,
-                                                this->data(),
-                                                1.0,
-                                                rhs.data(),
-                                                this->data(),
-                                                *(this->getBlasQueue()));
+      blasLapack::axpby<ValueType, memorySpace>(
+        this->localSize() * this->numVectors(),
+        1.0,
+        this->data(),
+        1.0,
+        rhs.data(),
+        this->data(),
+        this->getLinAlgOptContext()->getBlasQueue());
       return *this;
     }
 
@@ -199,14 +199,14 @@ namespace dftefe
         (d_storage->size() == rhsStorageSize),
         "Mismatch of sizes of the underlying"
         "storage of the two MultiVectors that are being subtracted.");
-      blasLapack::axpby<ValueType, memorySpace>(this->localSize() *
-                                                  this->numVectors(),
-                                                1.0,
-                                                this->data(),
-                                                -1.0,
-                                                rhs.data(),
-                                                this->data(),
-                                                *(this->getBlasQueue()));
+      blasLapack::axpby<ValueType, memorySpace>(
+        this->localSize() * this->numVectors(),
+        1.0,
+        this->data(),
+        -1.0,
+        rhs.data(),
+        this->data(),
+        this->getLinAlgOptContext()->getBlasQueue());
       return *this;
     }
 
@@ -225,10 +225,10 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
-    MultiVector<ValueType, memorySpace>::getBlasQueue() const
+    blasLapack::linAlgOptContext<memorySpace> *
+    MultiVector<ValueType, memorySpace>::getLinAlgOptContext() const
     {
-      return d_BlasQueue;
+      return d_linAlgOptContext;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -294,13 +294,14 @@ namespace dftefe
         "Mismatch of sizes of the underlying storages"
         "of the MultiVectors that are added.");
 
-      blasLapack::axpby<ValueType, memorySpace>(u.localSize() * u.numVectors(),
-                                                a,
-                                                u.data(),
-                                                b,
-                                                v.data(),
-                                                w.data(),
-                                                *(w.getBlasQueue()));
+      blasLapack::axpby<ValueType, memorySpace>(
+        u.localSize() * u.numVectors(),
+        a,
+        u.data(),
+        b,
+        v.data(),
+        w.data(),
+        w.getLinAlgOptContext()->getBlasQueue());
     }
   } // namespace linearAlgebra
 } // namespace dftefe

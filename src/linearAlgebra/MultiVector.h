@@ -28,6 +28,7 @@
 
 #include <linearAlgebra/VectorAttributes.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
 #include <memory>
@@ -229,12 +230,12 @@ namespace dftefe
       getValues() const;
 
       /**
-       * @brief Returns a shared pointer to underlyign BlasQueue.
+       * @brief Returns a shared pointer to underlying linAlgOptContext.
        *
-       * @return a pointer to BlasQueue.
+       * @return a pointer to linAlgOptContext.
        */
-      blasLapack::BlasQueue<memorySpace> *
-      getBlasQueue() const;
+      LinAlgOpContext<memorySpace> *
+      getLinAlgOptContext() const;
 
       /**
        * @brief Set values in the MultiVector using a user provided MultiVector::Storage object (i.e., MemoryStorage object).
@@ -331,7 +332,7 @@ namespace dftefe
        * the other processors but required by the current processor. For a
        * SerialMultiVector, the ghostSize is 0.
        * @param[in] numVectors number of vectors in the MultiVector
-       * @param[in] BlasQueue handle for linear algebra operations on
+       * @param[in] linAlgOptContext handle for linear algebra operations on
        * HOST/DEVICE.
        *
        *
@@ -339,12 +340,12 @@ namespace dftefe
        * storage will point to NULL after a call to this Constructor. Accessing
        * the input storage pointer will lead to undefined behavior.
        */
-      MultiVector(std::unique_ptr<Storage> &          storage,
-                  const global_size_type              globalSize,
-                  const size_type                     locallyOwnedSize,
-                  const size_type                     ghostSize,
-                  const size_type                     numVectors,
-                  blasLapack::BlasQueue<memorySpace> *BlasQueue);
+      MultiVector(std::unique_ptr<Storage> &    storage,
+                  const global_size_type        globalSize,
+                  const size_type               locallyOwnedSize,
+                  const size_type               ghostSize,
+                  const size_type               numVectors,
+                  LinAlgOpContext<memorySpace> *linAlgOptContext);
 
       /**
        * @brief Default Constructor
@@ -352,14 +353,14 @@ namespace dftefe
       MultiVector();
 
     protected:
-      std::unique_ptr<Storage>            d_storage;
-      blasLapack::BlasQueue<memorySpace> *d_BlasQueue;
-      VectorAttributes                    d_vectorAttributes;
-      size_type                           d_localSize;
-      global_size_type                    d_globalSize;
-      size_type                           d_locallyOwnedSize;
-      size_type                           d_ghostSize;
-      size_type                           d_numVectors;
+      std::unique_ptr<Storage>      d_storage;
+      LinAlgOpContext<memorySpace> *d_linAlgOpContext;
+      VectorAttributes              d_vectorAttributes;
+      size_type                     d_localSize;
+      global_size_type              d_globalSize;
+      size_type                     d_locallyOwnedSize;
+      size_type                     d_ghostSize;
+      size_type                     d_numVectors;
     };
 
     // helper functions
