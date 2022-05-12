@@ -125,6 +125,9 @@ namespace dftefe
       // reinit(){};
 #endif
 
+      std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange() const;
+
       size_type
       localOwnedSize() const;
 

@@ -615,6 +615,13 @@ namespace dftefe
 #endif
 
     template <dftefe::utils::MemorySpace memorySpace>
+    std::pair<global_size_type, global_size_type>
+    MPIPatternP2P<memorySpace>::getLocallyOwnedRange() const
+    {
+      return d_locallyOwnedRange;
+    }
+
+    template <dftefe::utils::MemorySpace memorySpace>
     const std::vector<global_size_type> &
     MPIPatternP2P<memorySpace>::getGhostIndices() const
     {
