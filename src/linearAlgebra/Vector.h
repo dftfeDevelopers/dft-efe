@@ -224,9 +224,9 @@ namespace dftefe
       /**
        * @brief Returns a shared pointer to underlyign BlasQueue.
        *
-       * @return shared pointer to BlasQueue.
+       * @return a pointer to BlasQueue.
        */
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
+      blasLapack::BlasQueue<memorySpace> *
       getBlasQueue() const;
 
       /**
@@ -330,11 +330,11 @@ namespace dftefe
        * storage will point to NULL after a call to this Constructor. Accessing
        * the input storage pointer will lead to undefined behavior.
        */
-      Vector(std::unique_ptr<Storage> &storage,
-             const global_size_type    globalSize,
-             const size_type           locallyOwnedSize,
-             const size_type           ghostSize,
-             std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+      Vector(std::unique_ptr<Storage> &          storage,
+             const global_size_type              globalSize,
+             const size_type                     locallyOwnedSize,
+             const size_type                     ghostSize,
+             blasLapack::BlasQueue<memorySpace> *BlasQueue);
 
       /**
        * @brief Default Constructor
@@ -342,13 +342,13 @@ namespace dftefe
       Vector();
 
     protected:
-      std::unique_ptr<Storage>                            d_storage;
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> d_BlasQueue;
-      VectorAttributes                                    d_vectorAttributes;
-      size_type                                           d_localSize;
-      global_size_type                                    d_globalSize;
-      size_type                                           d_locallyOwnedSize;
-      size_type                                           d_ghostSize;
+      std::unique_ptr<Storage>            d_storage;
+      blasLapack::BlasQueue<memorySpace> *d_BlasQueue;
+      VectorAttributes                    d_vectorAttributes;
+      size_type                           d_localSize;
+      global_size_type                    d_globalSize;
+      size_type                           d_locallyOwnedSize;
+      size_type                           d_ghostSize;
     };
 
     // helper functions

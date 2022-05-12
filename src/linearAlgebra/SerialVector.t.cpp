@@ -35,9 +35,9 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
-      const size_type                                     size,
-      const ValueType                                     initVal,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+      const size_type                     size,
+      const ValueType                     initVal,
+      blasLapack::BlasQueue<memorySpace> *BlasQueue)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -58,7 +58,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialVector<ValueType, memorySpace>::SerialVector(
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+      blasLapack::BlasQueue<memorySpace> *BlasQueue)
     {
       d_storage   = std::move(storage);
       d_BlasQueue = BlasQueue;

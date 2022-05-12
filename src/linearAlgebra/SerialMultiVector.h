@@ -109,11 +109,10 @@ namespace dftefe
        * HOST or DEVICE.
        *
        */
-      explicit SerialMultiVector(
-        size_type                                           size,
-        size_type                                           numVectors,
-        ValueType                                           initVal,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+      explicit SerialMultiVector(size_type                           size,
+                                 size_type                           numVectors,
+                                 ValueType                           initVal,
+                                 blasLapack::BlasQueue<memorySpace> *BlasQueue);
 
       /**
        * @brief Constructor with predefined MultiVector::Storage (i.e., utils::MemoryStorage).
@@ -134,9 +133,9 @@ namespace dftefe
        */
       SerialMultiVector(
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                                            storage,
-        size_type                                           numVectors,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+                                            storage,
+        size_type                           numVectors,
+        blasLapack::BlasQueue<memorySpace> *BlasQueue);
 
       /**
        * @brief Returns \f$ l_2 \f$ norms of all the \f$N\f$ vectors in the  MultiVector

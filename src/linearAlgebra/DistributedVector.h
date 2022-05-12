@@ -101,9 +101,9 @@ namespace dftefe
        */
       DistributedVector(
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                                            mpiCommunicatorP2P,
-        const ValueType                                     initVal,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+                                            mpiCommunicatorP2P,
+        const ValueType                     initVal,
+        blasLapack::BlasQueue<memorySpace> *BlasQueue);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage) and mpiCommunicatorP2P.
@@ -128,8 +128,8 @@ namespace dftefe
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                                            mpiCommunicatorP2P,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+                                            mpiCommunicatorP2P,
+        blasLapack::BlasQueue<memorySpace> *BlasQueue);
 
       /**
        * @brief Constructor based on locally owned and ghost indices.
@@ -149,7 +149,7 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const MPI_Comm &                                    mpiComm,
         const ValueType                                     initVal,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+        blasLapack::BlasQueue<memorySpace> *                BlasQueue);
 
       /**
        * @brief Constructor based on locally owned indices. This does not contain
@@ -168,7 +168,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const MPI_Comm &                                    mpiComm,
         const ValueType                                     initVal,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+        blasLapack::BlasQueue<memorySpace> *                BlasQueue);
 
 
       /**
@@ -185,11 +185,10 @@ namespace dftefe
        * over the processors.
        *
        */
-      DistributedVector(
-        const global_size_type                              totalGlobalDofs,
-        const MPI_Comm &                                    mpiComm,
-        const ValueType                                     initVal,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+      DistributedVector(const global_size_type              totalGlobalDofs,
+                        const MPI_Comm &                    mpiComm,
+                        const ValueType                     initVal,
+                        blasLapack::BlasQueue<memorySpace> *BlasQueue);
 
 #endif // DFTEFE_WITH_MPI
 

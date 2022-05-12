@@ -36,9 +36,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedMultiVector<ValueType, memorySpace>::DistributedMultiVector(
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                                          mpiCommunicatorP2P,
-      const ValueType                                     initVal,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+                                          mpiCommunicatorP2P,
+      const ValueType                     initVal,
+      blasLapack::BlasQueue<memorySpace> *BlasQueue)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
@@ -64,8 +64,8 @@ namespace dftefe
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
         &storage,
       std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                                          mpiCommunicatorP2P,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+                                          mpiCommunicatorP2P,
+      blasLapack::BlasQueue<memorySpace> *BlasQueue)
       : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
       , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
     {
@@ -92,7 +92,7 @@ namespace dftefe
       const MPI_Comm &                                    mpiComm,
       const sizeType                                      numVectors,
       const ValueType                                     initVal,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+      blasLapack::BlasQueue<memorySpace> *                BlasQueue)
     {
       //
       // TODO Move the warning message to a Logger class

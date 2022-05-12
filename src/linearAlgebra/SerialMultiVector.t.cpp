@@ -34,10 +34,10 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
-      const size_type                                     size,
-      const size_type                                     numVectors,
-      const ValueType                                     initVal,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+      const size_type                     size,
+      const size_type                     numVectors,
+      const ValueType                     initVal,
+      blasLapack::BlasQueue<memorySpace> *BlasQueue)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
@@ -59,9 +59,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     SerialMultiVector<ValueType, memorySpace>::SerialMultiVector(
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                                          storage,
-      const size_type                                     numVectors,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+                                          storage,
+      const size_type                     numVectors,
+      blasLapack::BlasQueue<memorySpace> *BlasQueue)
     {
       d_storage   = std::move(storage);
       d_BlasQueue = BlasQueue;
