@@ -93,6 +93,8 @@ namespace dftefe
 
       ~FEBasisHandlerDealii() = default;
 
+      bool isDistributed() const override;
+      
       const Constraints<ValueType> &
       getConstraints(const std::string constraintsName) const override;
 
@@ -178,6 +180,7 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       MPI_Comm d_mpiComm;
 #endif // DFTEFE_WITH_MPI
+      bool d_isDistributed;
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
       SizeTypeVector                                d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;

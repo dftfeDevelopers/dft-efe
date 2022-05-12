@@ -210,6 +210,7 @@ namespace dftefe
                       constraintsMap,
       const MPI_Comm &mpiComm)
     {
+      d_isDistributed = true;
       d_mpiComm    = mpiComm;
       d_feBMDealii = std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(
         basisManager);
@@ -354,6 +355,8 @@ namespace dftefe
       std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
         constraintsMap)
     {
+      
+      d_isDistributed = false;
       d_feBMDealii = std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(
         basisManager);
       utils::throwException(
@@ -474,6 +477,14 @@ namespace dftefe
         }
     }
 #endif // DFTEFE_WITH_MPI
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    const Constraints<ValueType> &
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::isDistributed() const
+    {
+      return d_isDistributed;
+    }
 
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,

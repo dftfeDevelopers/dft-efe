@@ -29,22 +29,21 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     Field<ValueType, memorySpace>::Field(
       std::shared_ptr<const BasisHandler> basisHandler,
-      const std::string                   constraintsName)
-      : d_basisHandler(basisHandler)
-      , d_constraintsName(constraintsName)
-      , d_constraints(basisHandler->getConstraints(constraintsName))
+      const std::string                   constraintsName,
+      const linearAlgebra::LinAlgOpContext & linAlgOpContext)
     {
-      reinit(basisHandler, constraintsName);
+      reinit(basisHandler, constraintsName, linAlgOpContext);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     Field<ValueType, memorySpace>::reinit(
       std::shared_ptr<const BasisHandler> basisHandler,
-      const std::string                   constraintsName)
+      const std::string                   constraintsName,
+      const linearAlgebra::LinAlgOpContext & linAlgOpContext)
     {
       d_basisHandler     = basisHandler;
       d_constraintsName  = constraintsName;
-      d_constraints      = &(basisHandler->getConstraints(constraintsName));
+      d_linAlgOpContext = linAlgOpContext;
       auto mpiPatternP2P = basisHandler->getMPIPatternP2P(constraintsName);
       //
       // Since it is a field with a single component, block size for
@@ -54,6 +53,7 @@ namespace dftefe
       d_mpiCommunicatorP2P =
         std::make_shared<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
           mpiPatternP2P, blockSize);
+
     }
 
   } // end of namespace basis

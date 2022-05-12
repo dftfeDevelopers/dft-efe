@@ -29,6 +29,7 @@
 #include <basis/BasisHandler.h>
 #include <basis/Constraints.h>
 #include <linearAlgebra/Vector.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MPICommunicatorP2P.h>
 #include <string>
@@ -62,11 +63,15 @@ namespace dftefe
         typename linearAlgebra::Vector<ValueType, memorySpace>::const_iterator;
 
       Field(std::shared_ptr<const BasisHandler<memorySpace>> basisHandler,
-            const std::string                                constraintsName);
+            const std::string                                constraintsName,
+	    const linearAlgebra::LinAlgOpContext & linAlgOpContext);
+      
       ~Field() = default;
-
+      
       reinit(std::shared_ptr<const BasisHandler<memorySpace>> basisHandler,
-             const std::string                                constraintsName);
+            const std::string                                constraintsName,
+	    const linearAlgebra::LinAlgOpContext & linAlgOpContext);
+      
       void
       applyConstraintsParentToChild();
 
@@ -93,10 +98,10 @@ namespace dftefe
 
     private:
       const std::string                                d_constraintsName;
+      linearAlgebra::LinAlgOpContext d_linAlgOpContext;
       std::shared_ptr<const BasisHandler<memorySpace>> d_basisHandler;
       std::shared_ptr<utils::MPICommunicatorP2P<ValueType, memorySpace>>
                                              d_mpiCommunicatorP2P;
-      const Constraints *                    d_constraints;
       std::shared_ptr<linearAlgebra::Vector> d_vector;
     }; // end of Field
   }    // end of namespace basis
