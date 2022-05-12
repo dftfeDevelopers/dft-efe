@@ -31,10 +31,11 @@ namespace dftefe
       BlasQueue<memorySpace> *blasQueue)
       : d_blasQueue(blasQueue)
     {}
-    
+
     template <utils::MemorySpace memorySpace>
     void
-    LinAlgOpContext<memorySpace>::setBlasQueue(BlasQueue<memorySpace> *blasQueue) 
+    LinAlgOpContext<memorySpace>::setBlasQueue(
+      BlasQueue<memorySpace> *blasQueue)
     {
       d_blasQueue = blasQueue;
     }

@@ -100,7 +100,7 @@ namespace dftefe
       const std::string                                d_constraintsName;
       linearAlgebra::LinAlgOpContext                   d_linAlgOpContext;
       std::shared_ptr<const BasisHandler<memorySpace>> d_basisHandler;
-      std::shared_ptr<linearAlgebra::Vector<ValueType,memorySpace> d_vector;
+      std::shared_ptr < linearAlgebra::Vector<ValueType, memorySpace> d_vector;
     }; // end of Field
   }    // end of namespace basis
 } // end of namespace dftefe

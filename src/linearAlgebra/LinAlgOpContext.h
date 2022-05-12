@@ -37,10 +37,10 @@ namespace dftefe
     {
     public:
       LinAlgOpContext(BlasQueue<memorySpace> *blasQueue);
-      
+
       void
       setBlasQueue(BlasQueue<memorySpace> *blasQueue);
-      
+
       BlasQueue<memorySpace> &blasQueue
       getBlasQueue() const;
 

@@ -47,14 +47,83 @@ namespace dftefe
       auto mpiPatternP2P = basisHandler->getMPIPatternP2P(constraintsName);
 
       //
-      // create the vector 
+      // create the vector
       //
-      if(d_basisHandler->isDistributed())
-      {
-	d_vector = std::make_shared<linearAlgebra::DistributedVector<ValueType, memorySpace>>();
-
-      }
+      if (d_basisHandler->isDistributed())
+        {
+          d_vector = std::make_shared<
+            linearAlgebra::DistributedVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, d_linAlgOpContext, ValueType());
+        }
+      else
+        {
+          auto locallyOwnedRange = d_basisHandler->getLocallyOwnedRange();
+          const size_type size =
+            locallyOwnedRange.second - locallyOwnedRange.first;
+          d_vector = std::make_shared<
+            linearAlgebra::SerialVector<ValueType, memorySpace>>(
+            size, d_linAlgOpContext, ValueType());
+        }
     }
 
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    Field<ValueType, memorySpace>::applyConstraintsParentToChild()
+    {
+      const Constraints<ValueType> &constraints =
+        d_basisHandler.getConstraints(d_constraintsName);
+      constraints.applyConstraintsParentToChild(*d_vector);
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    Field<ValueType, memorySpace>::applyConstraintsChildToParent()
+    {
+      const Constraints<ValueType> &constraints =
+        d_basisHandler.getConstraints(d_constraintsName);
+      constraints.applyConstraintsChildToParent(*d_vector);
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    const Vector<ValueType, memorySpace> &
+    Field<ValueType, memorySpace>::getVector()
+    {
+      return *d_vector;
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    const BasisHandler<memorySpace> &
+    Field<ValueType, memorySpace>::getBasisHandler() const
+    {
+      return *d_basisHandler;
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    typename Field<ValueType, memorySpace>::iterator
+    Field<ValueType, memorySpace>::begin()
+    {
+      return d_vector->begin();
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    typename Field<ValueType, memorySpace>::const_iterator
+    Field<ValueType, memorySpace>::begin() const
+    {
+      return d_vector->begin();
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    typename Field<ValueType, memorySpace>::iterator
+    Field<ValueType, memorySpace>::end()
+    {
+      return d_vector->end();
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    typename Field<ValueType, memorySpace>::const_iterator
+    Field<ValueType, memorySpace>::end() const
+    {
+      return d_vector->end();
+    }
   } // end of namespace basis
 } // end of namespace dftefe
