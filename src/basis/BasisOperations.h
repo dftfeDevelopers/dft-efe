@@ -29,6 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/ScalarSpatialFunction.h>
+#include <quadrature/QuadratureValuesContainer.h>
 namespace dftefe
 {
   namespace basis
@@ -44,19 +45,32 @@ namespace dftefe
       virtual ~BasisOperations() = default;
 
       virtual void
-      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-                               const QuadratureRuleContainer &         q,
-                               Field<ValueType, memorySpace> &         field);
+      interpolate(
+        const Field<ValueType, memorySpace> &       field,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
+          &quadValuesContainer) const = 0;
+
+      // virtual void
+      // integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
+      //    const quadrature::QuadratureRuleAttributes &
+      //    quadratureRuleAttributes,
+      //                         Field<ValueType, memorySpace> &         field)
+      //                         const = 0;
+
+      // virtual void
+      // integrateWithBasisValues(const QuadratureValuesContainer<ValueType,
+      // memorySpace> &f,
+      //    const quadrature::QuadratureRuleAttributes &
+      //    quadratureRuleAttributes,
+      //                         Field<ValueType, memorySpace> &field) const =
+      //                         0;
 
       virtual void
-      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
-                               Field<ValueType, memorySpace> &field);
-
-      virtual void
-      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
-                               const QuadratureRuleContainer &      q,
-                               Field<ValueType, memorySpace> &fieldOutput);
-
+      integrateWithBasisValues(
+        const Field<ValueType, memorySpace> &       fieldInput,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        Field<ValueType, memorySpace> &             fieldOutput) const = 0;
 
     }; // end of BasisOperations
   }    // end of namespace basis

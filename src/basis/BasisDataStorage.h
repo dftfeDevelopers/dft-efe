@@ -152,6 +152,10 @@ namespace dftefe
       getBasisOverlapInAllCells(
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
+      virtual const quadrature::QuadratureRuleContainer &
+      getQuadratureRuleContainer(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+
     }; // end of BasisDataStorage
   }    // end of namespace basis
 } // end of namespace dftefe

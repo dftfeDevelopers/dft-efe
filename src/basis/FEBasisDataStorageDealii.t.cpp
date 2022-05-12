@@ -622,8 +622,8 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManager>                   feBM,
-        std::vector<std::shared_ptr<FEConstraintsBase<double>>> constraintsVec,
+        std::shared_ptr<const BasisManager>               feBM,
+        std::vector<std::shared_ptr<Constraints<double>>> constraintsVec,
         const std::vector<quadrature::QuadratureRuleAttributes>
           &        quadratureRuleAttribuesVec,
         const bool storeValues,
@@ -671,6 +671,12 @@ namespace dftefe
         }
 
       std::vector<dealii::Quadrature<dim>> dealiiQuadratureTypeVec(0);
+
+      /**
+       * @note We assume a linear mapping from the reference cell
+       * to the real cell.
+       */
+      LinearCellMappingDealii linearCellMappingDealii;
       for (size_type i = 0; i < numQuadRuleType; ++i)
         {
           size_type num1DQuadPoints =
@@ -678,11 +684,33 @@ namespace dftefe
           quadrature::QuadratureFamily quadFamily =
             quadratureRuleAttribuesVec[i].getQuadratureFamily();
           if (quadFamily == quadrature::QuadratureFamily::GAUSS)
-            dealiiQuadratureTypeVec.push_back(
-              dealii::QGauss<dim>(num1DQuadPoints));
+            {
+              dealiiQuadratureTypeVec.push_back(
+                dealii::QGauss<dim>(num1DQuadPoints));
+
+              std::shared_ptr<quadrature::QuadratureRuleGauss> quadratureRule =
+                std::make_shared<quadrature::QuadratureRuleGauss>(
+                  dim, num1DQuadPoints);
+              d_quadratureRuleContainer[quadratureRuleAttribuesVec[i]] =
+                std::make_shared<quadrature::QuadratureRuleContainer>(
+                  quadratureRule,
+                  d_feBM->getTriangulation,
+                  linearCellMappingDealii);
+            }
           else if (quadFamily == quadrature::QuadratureFamily::GLL)
-            dealiiQuadratureTypeVec.push_back(
-              dealii::QGaussLobatto<dim>(num1DQuadPoints));
+            {
+              dealiiQuadratureTypeVec.push_back(
+                dealii::QGaussLobatto<dim>(num1DQuadPoints));
+
+              std::shared_ptr<quadrature::QuadratureRuleGLL> quadratureRule =
+                std::make_shared<quadrature::QuadratureRuleGLL>(
+                  dim, num1DQuadPoints);
+              d_quadratureRuleContainer[quadratureRuleAttribuesVec[i]] =
+                std::make_shared<quadrature::QuadratureRuleContainer>(
+                  quadratureRule,
+                  d_feBM->getTriangulation,
+                  linearCellMappingDealii);
+            }
           else
             utils::throwException<utils::InvalidArgument>(
               false,
@@ -710,6 +738,12 @@ namespace dftefe
       d_dealiiMatrixFree =
         std::make_shared<dealii::MatrixFree<dim, ValueType>>();
       d_dealiiMatrixFree->clear();
+
+      /**
+       * @note We assume a linear mapping from the reference cell
+       * to the real cell and hence we do not require to pass
+       * a dealii mapping object to the  MatrixFree reinit function
+       */
       d_dealiiMatrixFree->reinit(dofHandlerVec,
                                  dealiiAffineConstraintsVec,
                                  dealiiQuadratureTypeVec,
@@ -824,6 +858,9 @@ namespace dftefe
           storeValues,
           storeGradient,
           storeHessian);
+
+      d_quadratureRuleContainer[quadratureRuleAttributes] =
+        quadratureRuleContainer;
 
       if (storeValues)
         {
@@ -1315,6 +1352,18 @@ namespace dftefe
       utils::throwException(
         false,
         "getBasisHessianDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    const quadrature::QuadratureRuleContainer &
+    getQuadratureRuleContainer(
+      const QuadratureRuleAttributes &quadratureRuleAttributes)
+    {
+      auto it = d_quadratureRuleContainer.find(quadratureRuleAttributes);
+      utils::throwException(
+        it != d_quadratureRuleContainer.end(),
+        "QuadratureRuleContainer is not provided for the given QuadratureRuleAttributes.");
+      return *(it->second);
     }
 
   } // end of namespace basis

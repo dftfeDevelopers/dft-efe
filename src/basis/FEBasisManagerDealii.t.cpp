@@ -140,6 +140,13 @@ namespace dftefe
     }
 
     template <size_type dim>
+    std::shared_ptr<const TriangulationBase>
+    FEBasisManagerDealii<dim>::getTriangulation()
+    {
+      return d_triangulation;
+    }
+
+    template <size_type dim>
     size_type
     FEBasisManagerDealii<dim>::nLocalCells() const
     {
