@@ -27,6 +27,7 @@
 #define dftefeConstraints_h
 
 #include <utils/TypeConfig.h>
+#include <utils/MPIPatternP2P.h>
 namespace dftefe
 {
   namespace basis
@@ -34,7 +35,7 @@ namespace dftefe
     /**
      * An abstract class to handle the constraints related to a basis
      */
-    template <typename ValueType>
+    template <typename ValueType , dftefe::utils::MemorySpace memorySpace>
     class Constraints
     {
     public:
@@ -51,6 +52,21 @@ namespace dftefe
       setHomogeneousDirichletBC() = 0;
       virtual bool
       isConstrained(size_type basisId) = 0;
+
+      virtual std::pair<global_size_type, ValueType>> * getConstraintEntries(const global_size_type lineDof) = 0 ;
+
+      virtual bool isInhomogeneouslyConstrained (const size_type index)  = 0 ;
+
+      virtual ValueType get_inhomogeneity (const size_type lineDof)  = 0 ;
+
+      virtual void copyConstraintsData( const FEConstraintsBase<ValueType> &constraintsDataIn,
+                          const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0 ;
+      virtual void populateConstraintsData(const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0 ;
+
+      virtual void distributeChildToParent(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0 ;
+      virtual void distributeParentToChild(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0 ;
+      virtual void setConstrainedNodesToZero(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0;
+
     };
 
   } // namespace basis

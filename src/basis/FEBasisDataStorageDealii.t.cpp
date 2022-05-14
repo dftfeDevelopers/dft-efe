@@ -660,9 +660,9 @@ namespace dftefe
         dealiiAffineConstraintsVec(numConstraints, nullptr);
       for (size_type i = 0; i < numConstraints; ++i)
         {
-          std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>
+          std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>
             constraintsDealii = std::dynamic_pointer_cast<
-              const FEConstraintsDealii<dim, ValueType>>(constraintsVec[i]);
+              const FEConstraintsDealii<dim, memorySpace, ValueType>>(constraintsVec[i]);
           utils::throwException(
             constraintsDealii != nullptr,
             " Could not cast the FEConstraintsBase to FEConstraintsDealii in FEBasisDataStorageDealii");

@@ -8,120 +8,118 @@ namespace dftefe
 {
   namespace basis
   {
+
     // default constructor
-    template <size_type dim, typename ValueType>
-    FEConstraintsDealii<dim, ValueType>::FEConstraintsDealii()
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    FEConstraintsDealii<dim, memorySpace, ValueType>::FEConstraintsDealii()
       : d_isCleared(false)
       , d_isClosed(false)
     {
-      d_constraintMatrix =
-        std::make_shared<dealii::AffineConstraints<ValueType>>();
+//      d_constraintMatrix = dealii::AffineConstraints<ValueType>();
     }
 
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     void
-    FEConstraintsDealii<dim, ValueType>::clear()
+    FEConstraintsDealii<dim, memorySpace, ValueType>::clear()
     {
-      d_constraintMatrix->clear();
+      d_constraintMatrix.clear();
       d_isCleared = true;
       d_isClosed  = false;
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     void
-    FEConstraintsDealii<dim, ValueType>::close()
+    FEConstraintsDealii<dim, memorySpace, ValueType>::close()
     {
-      d_constraintMatrix->close();
+      d_constraintMatrix.close();
       d_isCleared = false;
       d_isClosed  = true;
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     void
-    FEConstraintsDealii<dim, ValueType>::makeHangingNodeConstraint(
+    FEConstraintsDealii<dim, memorySpace, ValueType>::makeHangingNodeConstraint(
       std::shared_ptr<FEBasisManager> feBasis)
     {
       utils::throwException(
         d_isCleared && !d_isClosed,
         " Clear the constraint matrix before making hanging node constraints");
 
-      std::shared_ptr<const FEBasisManagerDealii<dim>> dealiiDoFHandler =
+      d_feBasisManager =
         std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(feBasis);
 
       utils::throwException(
-        dealiiDoFHandler != nullptr,
+        d_feBasisManager != nullptr,
         " Could not cast the FEBasisManager to FEBasisManagerDealii in make hanging node constraints");
 
-      // check if this will work
-      d_dofHandler =
-        std::dynamic_pointer_cast<const FEBasisManagerDealii<dim>>(feBasis);
+
       dealii::IndexSet locally_relevant_dofs;
       locally_relevant_dofs.clear();
       dealii::DoFTools::extract_locally_relevant_dofs(
-        *(dealiiDoFHandler->getDoFHandler()), locally_relevant_dofs);
-      d_constraintMatrix->reinit(locally_relevant_dofs);
+        *(d_feBasisManager->getDoFHandler()), locally_relevant_dofs);
+      d_constraintMatrix.reinit(locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
-        *(dealiiDoFHandler->getDoFHandler()), *d_constraintMatrix);
+        *(d_feBasisManager->getDoFHandler()), d_constraintMatrix);
       d_isCleared = false;
       d_isClosed  = false;
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     void
-    FEConstraintsDealii<dim, ValueType>::setInhomogeneity(
+    FEConstraintsDealii<dim, memorySpace, ValueType>::setInhomogeneity(
       size_type basisId,
       ValueType constraintValue)
     {
       utils::throwException(
         !d_isClosed,
         " Clear the constraint matrix before setting inhomogeneities");
-      if (this->isConstrained(basisId) == false)
-        {
-          d_constraintMatrix->add_line(basisId);
-        }
-      d_constraintMatrix->set_inhomogeneity(basisId, constraintValue);
+
+      // If condition is removed
+      // add_line does not do anything if the basisId already exists.
+      addLine(basisId);
+      d_constraintMatrixset_inhomogeneity(basisId, constraintValue);
       d_isCleared = false;
       d_isClosed  = false;
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     bool
-    FEConstraintsDealii<dim, ValueType>::isClosed()
+    FEConstraintsDealii<dim, memorySpace, ValueType>::isClosed()
     {
       return d_isClosed;
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     bool
-    FEConstraintsDealii<dim, ValueType>::isConstrained(size_type basisId)
+    FEConstraintsDealii<dim, memorySpace, ValueType>::isConstrained(size_type basisId)
     {
-      return d_constraintMatrix->is_constrained(basisId);
+      return d_constraintMatrix.is_constrained(basisId);
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     void
-    FEConstraintsDealii<dim, ValueType>::setHomogeneousDirichletBC()
+    FEConstraintsDealii<dim, memorySpace, ValueType>::setHomogeneousDirichletBC()
     {
       dealii::IndexSet locallyRelevantDofs;
       dealii::DoFTools::extract_locally_relevant_dofs(
-        *(d_dofHandler->getDoFHandler()), locallyRelevantDofs);
+        *(d_feBasisManager->getDoFHandler()), locallyRelevantDofs);
 
       const unsigned int vertices_per_cell =
         dealii::GeometryInfo<dim>::vertices_per_cell;
       const unsigned int dofs_per_cell =
-        d_dofHandler->getDoFHandler()->get_fe().dofs_per_cell;
+        d_feBasisManager->getDoFHandler()->get_fe().dofs_per_cell;
       const unsigned int faces_per_cell =
         dealii::GeometryInfo<dim>::faces_per_cell;
       const unsigned int dofs_per_face =
-        d_dofHandler->getDoFHandler()->get_fe().dofs_per_face;
+        d_feBasisManager->getDoFHandler()->get_fe().dofs_per_face;
 
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
-      std::vector<bool> dofs_touched(d_dofHandler->nGlobalNodes(), false);
-      auto              cell = d_dofHandler->beginLocallyOwnedCells(),
-           endc              = d_dofHandler->endLocallyOwnedCells();
+      std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(), false);
+      auto              cell = d_feBasisManager->beginLocallyOwnedCells(),
+           endc              = d_feBasisManager->endLocallyOwnedCells();
       for (; cell != endc; ++cell)
         {
           (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
@@ -145,11 +143,310 @@ namespace dftefe
         }             // cell locally owned
     }
 
-    template <size_type dim, typename ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
     const dealii::AffineConstraints<ValueType> &
-    FEConstraintsDealii<dim, ValueType>::getAffineConstraints() const
+    FEConstraintsDealii<dim, memorySpace, ValueType>::getAffineConstraints() const
     {
-      return *d_constraintMatrix;
+      return d_constraintMatrix;
     }
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    std::pair<global_size_type, ValueType>> * FEConstraintsDealii<dim, memorySpace, ValueType>::getConstraintEntries(const global_size_type lineDof)
+    {
+
+      return d_constraintMatrix.get_constraint_entries(lineDof);
+
+    }
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    bool FEConstraintsDealii<dim, memorySpace, ValueType>::isInhomogeneouslyConstrained(const global_size_type lineDof)
+    {
+      return (d_constraintMatrix.is_inhomogeneously_constrained(lineDof));
+
+    }
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    ValueType FEConstraintsDealii<dim, memorySpace, ValueType>::getInhomogeneity(const global_size_type lineDof)
+    {
+      return (d_constraintMatrix.get_inhomogeneity(lineDof));
+
+    }
+
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    void FEConstraintsDealii<dim, memorySpace, ValueType>::copyConstraintsData( const FEConstraintsBase<ValueType> &constraintsDataIn,
+                                                             const utils::MPIPatternP2P<memorySpace> &mpiPattern)
+    {
+      this->clear();
+      auto locallyOwnedIndices = mpiPattern.getLocallyOwnedIndices();
+
+      bool printWarning = false;
+      for (auto locallyOwnedIter = locallyOwnedIndices.begin();
+           locallyOwnedIter != locallyOwnedIndices.end();
+           locallyOwnedIter++)
+        {
+          if (constraintsDataIn.isConstrained(*locallyOwnedIter))
+            {
+              const global_size_type lineDof = *locallyOwnedIter;
+              this->addLine(lineDof);
+              if (constraintsDataIn.isInhomogeneouslyConstrained(lineDof))
+                {
+                  this->setInhomogeneity(lineDof,
+                                   constraintsDataIn.getInhomogeneity(lineDof));
+                }
+              const std::vector<std::pair<global_size_type, ValueType>>
+                *rowData = constraintsDataIn.getConstraintEntries(lineDof);
+
+              bool isConstraintRhsExpandingOutOfIndexSet = false;
+              for (unsigned int j = 0; j < rowData->size(); ++j)
+                {
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
+                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                    {
+                      isConstraintRhsExpandingOutOfIndexSet = true;
+                      printWarning = true;
+                      break;
+                    }
+                }
+
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
+
+              this->addEntries(lineDof, rowData);
+            }
+        }
+
+      auto ghostIndices = mpiPattern.getGhostIndices();
+
+      for (auto ghostIter = ghostIndices.begin();
+           ghostIter != ghostIndices.end();
+           ghostIter++)
+        {
+          if (constraintsDataIn.isConstrained(*ghostIter))
+            {
+              const global_size_type lineDof = *ghostIter;
+              this->addLine(lineDof);
+              if (constraintsDataIn.isInhomogeneouslyConstrained(lineDof))
+                {
+                  this->setInhomogeneity(lineDof,
+                                   constraintsDataIn.getInhomogeneity(lineDof));
+                }
+              const std::vector<std::pair<global_size_type, ValueType>>
+                *rowData = constraintsDataIn.getConstraintEntries(lineDof);
+
+              bool isConstraintRhsExpandingOutOfIndexSet = false;
+              for (unsigned int j = 0; j < rowData->size(); ++j)
+                {
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
+                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                    {
+                      isConstraintRhsExpandingOutOfIndexSet = true;
+                      printWarning = true;
+                      break;
+                    }
+                }
+
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
+              this->addEntries(lineDof, rowData);
+            }
+        }
+
+      if(printWarning)
+        {
+          std::cout<<"DFT-EFE Warning : the ghost indices provided is not complete....Check if the ghost indices are sufficient\n";
+        }
+    }
+
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    void FEConstraintsDealii<dim, memorySpace, ValueType>::populateConstraintsData(
+      const utils::MPIPatternP2P<memorySpace> &mpiPattern)
+    {
+
+      bool printWarning = false;
+      bool isComplex = std::is_same<std::complex<float>, ValueType>::value ||
+                     std::is_same<std::complex<double>, ValueType>::value;
+
+
+      std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
+      std::vector<global_size_type> rowConstraintsIdsLocalTmp;
+      std::vector<global_size_type> columnConstraintsIdsLocalTmp;
+      std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
+
+      std::vector<double> columnConstraintsValuesTmp;
+      std::vector<ValueType> constraintsInhomogenitiesTmp;
+
+      std::vector<global_size_type> rowConstraintsSizesTmp;
+      std::vector<global_size_type> localIndexMapUnflattenedToFlattenedTmp;
+
+      auto locallyOwnedIndices = mpiPattern.getLocallyOwnedIndices();
+
+      for (auto locallyOwnedIter = locallyOwnedIndices.begin();
+           locallyOwnedIter != locallyOwnedIndices.end();
+           locallyOwnedIter++)
+        {
+          if (this->isConstrained(*locallyOwnedIter))
+            {
+              const dealii::types::global_dof_index lineDof = *locallyOwnedIter;
+              const std::vector<std::pair<dealii::types::global_dof_index,
+                                          ValueType>> *rowData =
+                this->getConstraintEntries(lineDof);
+
+              bool isConstraintRhsExpandingOutOfIndexSet = false;
+              for (unsigned int j = 0; j < rowData->size(); ++j)
+                {
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
+                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                    {
+                      isConstraintRhsExpandingOutOfIndexSet = true;
+                      printWarning = true;
+                      break;
+                    }
+                }
+
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
+
+              rowConstraintsIdsLocalTmp.push_back(
+                mpiPattern.globalToLocal(lineDof));
+              rowConstraintsIdsGlobalTmp.push_back(lineDof);
+              constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
+              rowConstraintsSizesTmp.push_back(rowData->size());
+              for (unsigned int j = 0; j < rowData->size(); ++j)
+                {
+                  columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
+                  columnConstraintsIdsLocalTmp.push_back(
+                    mpiPattern.globalToLocal((*rowData)[j].first));
+                  if (isComplex)
+                    {
+                      columnConstraintsValuesTmp.push_back((*rowData)[j].second.real);
+                    }
+                  else
+                    {
+                      columnConstraintsValuesTmp.push_back((*rowData)[j].second);
+                    }
+                }
+            }
+        }
+
+      auto ghostIndices = mpiPattern.getGhostIndices();
+
+      for (auto ghostIter = ghostIndices.begin();
+           ghostIter != ghostIndices.end();
+           ghostIter++)
+            {
+              if (this->isConstrained(*ghostIter))
+                {
+                  const global_size_type lineDof = *ghostIter;
+
+                  const std::vector<std::pair<dealii::types::global_dof_index,
+                                              ValueType>> *rowData =
+                    this->getConstraintEntries(lineDof);
+
+                  bool isConstraintRhsExpandingOutOfIndexSet = false;
+                  for (unsigned int j = 0; j < rowData->size(); ++j)
+                    {
+                      if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
+                            mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                        {
+                          isConstraintRhsExpandingOutOfIndexSet = true;
+                          printWarning = true;
+                          break;
+                        }
+                    }
+
+                  if (isConstraintRhsExpandingOutOfIndexSet)
+                    continue;
+
+                  rowConstraintsIdsLocalTmp.push_back(
+                    mpiPattern.globalToLocal(lineDof));
+                  rowConstraintsIdsGlobalTmp.push_back(lineDof);
+                  constraintsInhomogenitiesTmp.push_back(
+                    getInhomogeneity(lineDof));
+                  rowConstraintsSizesTmp.push_back(rowData->size());
+                  for (unsigned int j = 0; j < rowData->size(); ++j)
+                    {
+                      columnConstraintsIdsGlobalTmp.push_back(
+                        (*rowData)[j].first);
+                      columnConstraintsIdsLocalTmp.push_back(
+                        mpiPattern.globalToLocal((*rowData)[j].first));
+                      if (isComplex)
+                        {
+                          columnConstraintsValuesTmp.push_back((*rowData)[j].second.real);
+                        }
+                      else
+                        {
+                          columnConstraintsValuesTmp.push_back((*rowData)[j].second);
+                        }
+                    }
+                }
+            }
+
+      if(printWarning)
+        {
+          std::cout<<"DFT-EFE Warning : the ghost indices provided is not complete....Check if the ghost indices\n";
+        }
+
+
+          d_rowConstraintsIdsGlobal.resize(rowConstraintsIdsGlobalTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            rowConstraintsIdsGlobalTmp.size(),
+            d_rowConstraintsIdsGlobal.data(),
+            rowConstraintsIdsGlobalTmp.begin());
+
+          d_rowConstraintsIdsLocal.resize(rowConstraintsIdsLocalTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            rowConstraintsIdsLocalTmp.size(),
+            d_rowConstraintsIdsLocal.data(),
+            rowConstraintsIdsLocalTmp.begin());
+
+          d_columnConstraintsIdsLocal.resize(
+            columnConstraintsIdsLocalTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            columnConstraintsIdsLocalTmp.size(),
+            d_columnConstraintsIdsLocal.data(),
+            columnConstraintsIdsLocalTmp.begin());
+
+          d_columnConstraintsIdsGlobal.resize(
+            columnConstraintsIdsGlobalTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            columnConstraintsIdsGlobalTmp.size(),
+            d_columnConstraintsIdsGlobal.data(),
+            columnConstraintsIdsGlobalTmp.begin());
+
+          d_columnConstraintsValues.resize(columnConstraintsValuesTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            columnConstraintsValuesTmp.size(),
+            d_columnConstraintsValues.data(),
+            columnConstraintsValuesTmp.begin());
+
+          d_constraintsInhomogenities.resize(
+            constraintsInhomogenitiesTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            constraintsInhomogenitiesTmp.size(),
+            d_constraintsInhomogenities.data(),
+            constraintsInhomogenitiesTmp.begin());
+
+          d_rowConstraintsSizes.resize(rowConstraintsSizestTmp.size());
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            rowConstraintsSizesTmp.size(),
+            d_rowConstraintsSizes.data(),
+            rowConstraintsSizesTmp.begin());
+        }
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    void FEConstraintsDealii<dim, memorySpace, ValueType>::addEntries(const global_size_type constrainedDofIndex,
+               const std::vector< std::pair< global_size_type, ValueType > > & 	colWeightPairs )
+    {
+      d_constraintMatrix.add_entries (lineDof, colWeightPairs);
+    }
+
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    void FEConstraintsDealii<dim, memorySpace, ValueType>::addLine(const global_size_type lineDof)
+    {
+      d_constraintMatrix.add_line(lineDof);
+    }
+
   } // namespace basis
 } // namespace dftefe

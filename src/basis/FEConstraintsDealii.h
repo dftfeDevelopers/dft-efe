@@ -31,14 +31,18 @@
 #include <utils/TypeConfig.h>
 #include <deal.II/lac/affine_constraints.h>
 #include "FEBasisManagerDealii.h"
+#include <utils/MemoryStorage.h>
+#include <utils/MPIPatternP2P.h>
 namespace dftefe
 {
   namespace basis
   {
-    template <size_type dim, typename ValueType>
-    class FEConstraintsDealii : public FEConstraintsBase<ValueType>
+    template<typename ValueType, dftefe::utils::MemorySpace memorySpace, size_type dim>
+    class FEConstraintsDealii : public FEConstraintsBase<ValueType, memorySpace>
     {
     public:
+      using GlobalSizeTypeVector =
+        utils::MemoryStorage<global_size_type, memorySpace>;
       FEConstraintsDealii();
       ~FEConstraintsDealii() = default;
       void
@@ -54,6 +58,21 @@ namespace dftefe
       void
       setHomogeneousDirichletBC() override;
 
+      std::pair<global_size_type, ValueType>> * getConstraintEntries(const global_size_type lineDof) override;
+
+      bool isInhomogeneouslyConstrained (const size_type index) override ;
+
+      ValueType getInhomogeneity (const size_type lineDof)  override ;
+
+      void copyConstraintsData( const FEConstraintsBase<ValueType> &constraintsDataIn,
+                                const utils::MPIPatternP2P<memorySpace> &mpiPattern) override ;
+      void populateConstraintsData(const utils::MPIPatternP2P<memorySpace> &mpiPattern) override ;
+
+
+      void distributeChildToParent(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) override ;
+      void distributeParentToChild(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) override ;
+      void setConstrainedNodesToZero(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) override;
+
       //
       // FE related functions
       //
@@ -68,10 +87,29 @@ namespace dftefe
       getAffineConstraints() const;
 
     private:
-      std::shared_ptr<dealii::AffineConstraints<ValueType>> d_constraintMatrix;
-      std::shared_ptr<const FEBasisManagerDealii<dim>>      d_dofHandler;
+
+      void addEntries(const global_size_type constrainedDofIndex,
+                 const std::vector< std::pair< global_size_type, ValueType > > & 	colWeightPairs );
+
+      void addLine(const global_size_type lineDof);
+
+      dealii::AffineConstraints<ValueType> d_constraintMatrix;
+      std::shared_ptr<const FEBasisManagerDealii<dim>>      d_feBasisManager;
       bool                                                  d_isCleared;
       bool                                                  d_isClosed;
+
+      GlobalSizeTypeVector d_rowConstraintsIdsGlobal;
+      GlobalSizeTypeVector d_rowConstraintsIdsLocal;
+      GlobalSizeTypeVector d_columnConstraintsIdsLocal;
+      GlobalSizeTypeVector d_columnConstraintsIdsGlobal;
+
+      utils::MemoryStorage<double, memorySpace> d_columnConstraintsValues;
+      utils::MemoryStorage<ValueType, memorySpace> d_constraintsInhomogenities;
+
+      GlobalSizeTypeVector d_rowConstraintsSizes;
+      GlobalSizeTypeVector d_localIndexMapUnflattenedToFlattened;
+
+
     };
 
   } // namespace basis

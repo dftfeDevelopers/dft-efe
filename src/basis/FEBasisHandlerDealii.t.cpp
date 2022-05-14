@@ -107,7 +107,7 @@ namespace dftefe
         const FEBasisManagerDealii<dim> *feBMDealii,
         const std::map<
           std::string,
-          std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>>
+          std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>>
           &                                 feConstraintsDealiiMap,
         dealii::MatrixFree<dim, ValueType> &dealiiMatrixFree)
       {
@@ -218,16 +218,19 @@ namespace dftefe
         d_feBMDealii != nullptr,
         "Error in casting the input basis manager in FEBasisHandlerDealii to FEBasisParitionerDealii");
       const size_type numConstraints = constraintsMap.size();
+      std::map<std::string,
+               std::shared_ptr<constFEConstraintsDealii<dim, memorySpace, ValueType>>>
+        feConstraintsDealiiMap;
       for (auto it = constraintsMap.begin(); it != constraintsMap.end(); ++it)
         {
           std::string constraintsName = it->first;
-          std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>
+          std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>
             feBasisConstraintsDealii = std::dynamic_pointer_cast<
-              const FEConstraintsDealii<dim, ValueType>>(it->second);
+              const FEConstraintsDealii<dim, memorySpace, ValueType>>(it->second);
           utils::throwException(
             feBasisConstraintsDealii != nullptr,
             "Error in casting the input constraints to FEConstraintsDealii in FEBasisHandlerDealii");
-          d_feConstraintsDealiiMap[constraintsName] = feBasisConstraintsDealii;
+          feConstraintsDealiiMap[constraintsName] = feBasisConstraintsDealii;
         }
 
       d_locallyOwnedRange = d_feBMDealii->getLocallyOwnedRange();
@@ -276,11 +279,11 @@ namespace dftefe
       //
       dealii::MatrixFree<dim, ValueType> dealiiMatrixFree;
       FEBasisHandlerDealiiInternal::setDealiiMatrixFreeLight<ValueType, dim>(
-        d_feBMDealii.get(), d_feConstraintsDealiiMap, dealiiMatrixFree);
+        d_feBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
       size_type iConstraint = 0;
-      for (auto it = d_feConstraintsDealiiMap.begin();
-           it != d_feConstraintsDealiiMap.end();
+      for (auto it = feConstraintsDealiiMap.begin();
+           it != feConstraintsDealiiMap.end();
            ++it)
         {
           const std::string constraintName = it->first;
@@ -308,6 +311,13 @@ namespace dftefe
             std::make_shared<utils::MPIPatternP2P<memorySpace>>(
               d_locallyOwnedRange, ghostIndicesTmp, d_mpiComm);
           d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
+
+          std::shared_ptr<FEConstraintsDealii<dim, memorySpace, ValueType>>
+            feBasisConstraintsDealiiOpt = std::make_shared<FEConstraintsDealii<dim, memorySpace, ValueType>>();
+          feBasisConstraintsDealiiOpt->copyConstraintsData( it->second.get(),
+                                                        mpiPatternP2P.get());
+          feBasisConstraintsDealiiOpt->populateConstraintsData(mpiPatternP2P.get());
+          d_feConstraintsDealiiOptMap[constraintsName] = feBasisConstraintsDealiiOpt;
 
           //
           // populate d_locallyOwnedCellLocalIndices
@@ -362,16 +372,19 @@ namespace dftefe
         d_feBMDealii != nullptr,
         "Error in casting the input basis manager in FEBasisHandlerDealii to FEBasisParitionerDealii");
       const size_type numConstraints = constraintsMap.size();
+      std::map<std::string,
+               std::shared_ptr<constFEConstraintsDealii<dim, memorySpace, ValueType>>>
+        feConstraintsDealiiMap;
       for (auto it = constraintsMap.begin(); it != constraintsMap.end(); ++it)
         {
           std::string constraintsName = it->first;
-          std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>
+          std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>
             feBasisConstraintsDealii = std::dynamic_pointer_cast<
-              const FEConstraintsDealii<dim, ValueType>>(it->second);
+              const FEConstraintsDealii<dim, memorySpace, ValueType>>(it->second);
           utils::throwException(
             feBasisConstraintsDealii != nullptr,
             "Error in casting the input constraints to FEConstraintsDealii in FEBasisHandlerDealii");
-          d_feConstraintsDealiiMap[constraintsName] = feBasisConstraintsDealii;
+          feConstraintsDealiiMap[constraintsName] = feBasisConstraintsDealii;
         }
 
       d_locallyOwnedRange = d_feBMDealii->getLocallyOwnedRange();
@@ -420,11 +433,11 @@ namespace dftefe
       //
       dealii::MatrixFree<dim, ValueType> dealiiMatrixFree;
       FEBasisHandlerDealiiInternal::setDealiiMatrixFreeLight<ValueType, dim>(
-        d_feBMDealii.get(), d_feConstraintsDealiiMap, dealiiMatrixFree);
+        d_feBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
       iConstraint = 0;
-      for (auto it = d_feConstraintsDealiiMap.begin();
-           it != d_feConstraintsDealiiMap.end();
+      for (auto it = feConstraintsDealiiMap.begin();
+           it != feConstraintsDealiiMap.end();
            ++it)
         {
           const std::string constraintName = it->first;
@@ -472,6 +485,13 @@ namespace dftefe
 
           d_locallyOwnedCellLocalIndicesMap[constraintName] = globalSizeVector;
 
+          std::shared_ptr<FEConstraintsDealii<dim, memorySpace, ValueType>>
+            feBasisConstraintsDealiiOpt = std::make_shared<FEConstraintsDealii<dim, memorySpace, ValueType>>();
+          feBasisConstraintsDealiiOpt->copyConstraintsData( it->second.get(),
+                                                           mpiPatternP2P.get());
+          feBasisConstraintsDealiiOpt->populateConstraintsData(mpiPatternP2P.get());
+          d_feConstraintsDealiiOptMap[constraintsName] = feBasisConstraintsDealiiOpt;
+
           iConstraint++;
         }
     }
@@ -492,8 +512,8 @@ namespace dftefe
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::getConstraints(
       const std::string constraintsName) const
     {
-      auto it = d_feConstraintsDealiiMap.find(constraintsName);
-      if (it == d_feConstraintsDealiiMap.end())
+      auto it = d_feConstraintsDealiiOptMap.find(constraintsName);
+      if (it == d_feConstraintsDealiiOptMap.end())
         {
           utils::throwException<utils::InvalidArgument>(
             false,

@@ -29,6 +29,8 @@
 #include <basis/FEBasisManager.h>
 #include <basis/Constraints.h>
 #include <utils/TypeConfig.h>
+#include <utils/MPIPatternP2P.h>
+#include <linearAlgebra/Vector.h>
 namespace dftefe
 {
   namespace basis
@@ -38,8 +40,8 @@ namespace dftefe
      * An abstract class to handle the constraints related to FE basis, such as
      * hanging nodes and boundary condition constraints
      */
-    template <typename ValueType>
-    class FEConstraintsBase : public Constraints<ValueType>
+    template <typename ValueType , dftefe::utils::MemorySpace memorySpace>
+    class FEConstraintsBase : public Constraints<ValueType , memorySpace>
     {
     public:
       ~FEConstraintsBase() = default;
@@ -60,7 +62,20 @@ namespace dftefe
       virtual bool
       isConstrained(size_type basisId) = 0;
 
-      //
+      virtual std::pair<global_size_type, ValueType>> * getConstraintEntries(const global_size_type lineDof) = 0 ;
+
+      virtual bool isInhomogeneouslyConstrained (const size_type index)  = 0 ;
+
+      virtual ValueType getInhomogeneity (const size_type lineDof)  = 0 ;
+
+      virtual void copyConstraintsData( const FEConstraintsBase<ValueType> &constraintsDataIn,
+                          const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0 ;
+      virtual void populateConstraintsData(const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0 ;
+
+      virtual void distributeChildToParent(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0 ;
+      virtual void distributeParentToChild(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0 ;
+      virtual void setConstrainedNodesToZero(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0;
+        //
       // FE related functions
       //
       virtual void

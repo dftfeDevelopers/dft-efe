@@ -176,8 +176,8 @@ namespace dftefe
     private:
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
       std::map<std::string,
-               std::shared_ptr<const FEConstraintsDealii<dim, ValueType>>>
-        d_feConstraintsDealiiMap;
+               std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>>
+        d_feConstraintsDealiiOptMap;
 #ifdef DFTEFE_WITH_MPI
       MPI_Comm d_mpiComm;
 #endif // DFTEFE_WITH_MPI
