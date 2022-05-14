@@ -63,6 +63,10 @@ namespace dftefe
       virtual void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
              const size_type                          feOrder) = 0;
+
+      virtual std::shared_ptr<const TriangulationBase>
+      getTriangulation() const = 0;
+
       virtual size_type
       nLocalCells() const = 0;
       virtual size_type

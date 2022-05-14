@@ -57,8 +57,8 @@ namespace dftefe
         typename BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(
-        std::shared_ptr<const FEBasisManager>                   feBM,
-        std::vector<std::shared_ptr<FEConstraintsBase<double>>> constraintsVec,
+        std::shared_ptr<const BasisManager>               feBM,
+        std::vector<std::shared_ptr<Constraints<double>>> constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
         const bool storeValues,
@@ -71,8 +71,8 @@ namespace dftefe
 
       void
       evaluateBasisData(
-        std::shared_ptr<const quadrature::CellQuadratureContainer>
-                                        quadratureContainer,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                                        quadratureRuleContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const bool                      storeValues,
         const bool                      storeGradient,
@@ -83,7 +83,7 @@ namespace dftefe
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) override;
 
-      //      std::shared_ptr<const quadrature::CellQuadratureContainer>
+      //      std::shared_ptr<const quadrature::QuadratureRuleContainer>
       //      getCellQuadratureRuleContainer(std::shared_ptr<Storage>>
       //        const QuadratureRuleAttributes &quadratureRuleAttributes) const
       //        override;
@@ -161,8 +161,15 @@ namespace dftefe
       getBasisOverlapInAllCells(const QuadratureRuleAttributes
                                   &quadratureRuleAttributes) const override;
 
+      const quadrature::QuadratureRuleContainer &
+      getQuadratureRuleContainer(const QuadratureRuleAttributes
+                                   &quadratureRuleAttributes) const override;
+
     private:
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBM;
+      std::map<QuadratureRuleAttributes,
+               std::shared_ptr<const quadrature::QuadratureRuleContainer>>
+        d_quadratureRuleContainer;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
         d_basisQuadStorage;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>

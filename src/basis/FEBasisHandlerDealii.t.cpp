@@ -499,7 +499,7 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const Constraints<ValueType> &
+    bool
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::isDistributed() const
     {
       return d_isDistributed;
@@ -528,7 +528,7 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::shared_ptr<const MPIPatternP2P<memorySpace>>
+    std::shared_ptr<const utils::MPIPatternP2P<memorySpace>>
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::getMPIPatternP2P(
       const std::string constraintsName) const
     {
@@ -539,7 +539,7 @@ namespace dftefe
             false,
             "The MPIPatternP2P in FEBasisHandlerDealii is not created for "
             "the constraint " +
-              constraintName);
+              constraintsName);
         }
       return it->second;
     }

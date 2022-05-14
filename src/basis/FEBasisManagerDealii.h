@@ -65,6 +65,9 @@ namespace dftefe
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
              const size_type                          feOrder) override;
 
+      std::shared_ptr<const TriangulationBase>
+      getTriangulation() const override;
+
       size_type
       nLocalCells() const override;
       size_type

@@ -1,4 +1,4 @@
-#include "CellQuadratureContainer.h"
+#include "QuadratureRuleContainer.h"
 #include "QuadratureRuleAdaptive.h"
 #include <utils/Exceptions.h>
 
@@ -69,7 +69,7 @@ namespace dftefe
     } // namespace
 
 
-    CellQuadratureContainer::CellQuadratureContainer(
+    QuadratureRuleContainer::QuadratureRuleContainer(
       std::shared_ptr<const QuadratureRule>           quadratureRule,
       std::shared_ptr<const basis::TriangulationBase> triangulation,
       const basis::CellMappingBase &                  cellMapping)
@@ -97,7 +97,7 @@ namespace dftefe
                  d_numQuadPoints);
     }
 
-    CellQuadratureContainer::CellQuadratureContainer(
+    QuadratureRuleContainer::QuadratureRuleContainer(
       std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
       std::shared_ptr<const basis::TriangulationBase>    triangulation,
       const basis::CellMappingBase &                     cellMapping)
@@ -132,7 +132,7 @@ namespace dftefe
     }
 
 
-    CellQuadratureContainer::CellQuadratureContainer(
+    QuadratureRuleContainer::QuadratureRuleContainer(
       std::shared_ptr<const QuadratureRule>           baseQuadratureRule,
       std::shared_ptr<const basis::TriangulationBase> triangulation,
       const basis::CellMappingBase &                  cellMapping,
@@ -221,19 +221,19 @@ namespace dftefe
 
 
     size_type
-    CellQuadratureContainer::nCells() const
+    QuadratureRuleContainer::nCells() const
     {
       return d_numCells;
     }
 
     const std::vector<dftefe::utils::Point> &
-    CellQuadratureContainer::getRealPoints() const
+    QuadratureRuleContainer::getRealPoints() const
     {
       return d_realPoints;
     }
 
     std::vector<dftefe::utils::Point>
-    CellQuadratureContainer::getCellRealPoints(const unsigned int cellId) const
+    QuadratureRuleContainer::getCellRealPoints(const unsigned int cellId) const
     {
       const size_type numCellQuadPoints = d_numCellQuadPoints[cellId];
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
@@ -250,27 +250,27 @@ namespace dftefe
     }
 
     const std::vector<dftefe::utils::Point> &
-    CellQuadratureContainer::getCellParametricPoints(
+    QuadratureRuleContainer::getCellParametricPoints(
       const unsigned int cellId) const
     {
       return d_quadratureRuleVec[cellId]->getPoints();
     }
 
     const std::vector<double> &
-    CellQuadratureContainer::getCellQuadratureWeights(
+    QuadratureRuleContainer::getCellQuadratureWeights(
       const unsigned int cellId) const
     {
       return d_quadratureRuleVec[cellId]->getWeights();
     }
 
     const std::vector<double> &
-    CellQuadratureContainer::getJxW() const
+    QuadratureRuleContainer::getJxW() const
     {
       return d_JxW;
     }
 
     std::vector<double>
-    CellQuadratureContainer::getCellJxW(const unsigned int cellId) const
+    QuadratureRuleContainer::getCellJxW(const unsigned int cellId) const
     {
       const size_type numCellQuadPoints = d_numCellQuadPoints[cellId];
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
@@ -284,32 +284,32 @@ namespace dftefe
     }
 
     const QuadratureRule &
-    CellQuadratureContainer::getQuadratureRule(const unsigned int cellId) const
+    QuadratureRuleContainer::getQuadratureRule(const unsigned int cellId) const
     {
       return *d_quadratureRuleVec[cellId];
     }
 
     size_type
-    CellQuadratureContainer::nQuadraturePoints() const
+    QuadratureRuleContainer::nQuadraturePoints() const
     {
       return d_numQuadPoints;
     }
 
     size_type
-    CellQuadratureContainer::nCellQuadraturePoints(
+    QuadratureRuleContainer::nCellQuadraturePoints(
       const unsigned int cellId) const
     {
       return d_numCellQuadPoints[cellId];
     }
 
     const std::vector<size_type> &
-    CellQuadratureContainer::getCellQuadStartIds() const
+    QuadratureRuleContainer::getCellQuadStartIds() const
     {
       return d_cellQuadStartIds;
     }
 
     size_type
-    CellQuadratureContainer::getCellQuadStartId(const size_type cellId) const
+    QuadratureRuleContainer::getCellQuadStartId(const size_type cellId) const
     {
       return d_cellQuadStartIds[cellId];
     }

@@ -21,7 +21,7 @@ endif()
 set(DFT-EFE-QUADRATURE-SOURCES
 	QuadratureAttributes.cpp
 	QuadratureRule.cpp
-	CellQuadratureContainer.cpp
+	QuadratureRuleContainer.cpp
         QuadratureRuleGauss.cpp
 	QuadratureRuleAdaptive.cpp
 	Integrate.cpp)
