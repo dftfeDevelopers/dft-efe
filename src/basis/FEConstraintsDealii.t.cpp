@@ -2,6 +2,7 @@
 #include <deal.II/dofs/dof_tools.h>
 #include "FECellBase.h"
 #include <memory>
+#include "ConstraintsInternal.h"
 
 
 namespace dftefe
@@ -490,6 +491,56 @@ namespace dftefe
     {
       d_constraintMatrix.add_line(lineDof);
     }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueType, memorySpace, dim>::distributeParentToChild(
+      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+      size_type blockSize ) const
+    {
+      ConstraintsInternal<ValueType, memorySpace>::constraintsDistributeParentToChild(
+        vectorData,
+        blockSize,
+        d_rowConstraintsIdsLocal,
+        d_rowConstraintsSizes,
+        d_columnConstraintsIdsLocal,
+        d_columnConstraintsValues,
+        d_constraintsInhomogenities);
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueType, memorySpace, dim>::distributeChildToParent(
+      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+      size_type blockSize ) const
+    {
+      ConstraintsInternal<ValueType, memorySpace>::constraintsDistributeChildToParent(
+        vectorData,
+        blockSize,
+        d_rowConstraintsIdsLocal,
+        d_rowConstraintsSizes,
+        d_columnConstraintsIdsLocal,
+        d_columnConstraintsValues);
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueType, memorySpace, dim>::setConstrainedNodesToZero(
+      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+      size_type blockSize) const
+    {
+      ConstraintsInternal<ValueType, memorySpace>::constraintsSetConstrainedNodesToZero(
+        vectorData,
+        blockSize,
+        d_rowConstraintsIdsLocal);
+    }
+
 
   } // namespace basis
 } // namespace dftefe

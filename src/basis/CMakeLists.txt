@@ -11,6 +11,8 @@ set(DFT-EFE-BASIS-SOURCES
 	LinearCellMappingDealii.cpp
 	ParentToChildCellsManagerDealii.cpp
         TriangulationDealiiParallel.cpp
+		ConstraintsInternal.cpp
+#		ConstraintsInternal.cu
         FEConstraintsDealii.cpp
         FEConstraintsBase.cpp
         FEBasisDataStorageDealii.cpp

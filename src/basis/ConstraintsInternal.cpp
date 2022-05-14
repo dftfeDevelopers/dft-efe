@@ -35,53 +35,92 @@ namespace dftefe
     void
     ConstraintsInternal<ValueType, memorySpace>::
       constraintsDistributeParentToChild(
-        Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
         size_type                       blockSize,
         utils::MemoryStorage<global_size_type, memorySpace>
           &rowConstraintsIdsLocal,
+        utils::MemoryStorage<global_size_type, memorySpace>
+          &rowConstraintsSizes,
         utils::MemoryStorage<global_size_type, memorySpace>
           &                                           columnConstraintsIdsLocal,
         utils::MemoryStorage<double, memorySpace> &   columnConstraintsValues,
         utils::MemoryStorage<ValueType, memorySpace> &constraintsInhomogenities)
     {
       size_type              count = 0;
-      const size_type        inc   = 1;
       std::vector<ValueType> newValuesBlock(blockSize, 0.0);
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
           std::fill(newValuesBlock.begin(),
                     newValuesBlock.end(),
-                    *(constraintsInhomogenities.data() + i));
+                    *(constraintsInhomogenities.begin() + i));
 
-          const global_size_type startingLocalDofIndexRow =
-            d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+          const global_size_type startingLocalDofIndexRow = (*(rowConstraintsIdsLocal.begin() + i))*blockSize;
 
-          for (unsigned int j = 0; j < d_rowSizes[i]; ++j)
+          for (size_type j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
-              Assert(
-                count < d_columnIdsGlobal.size(),
-                dealii::ExcMessage(
-                  "Overloaded distribute for flattened array has indices out of bounds"));
+              utils::throwException(
+                count < columnConstraintsValues.size(),
+                "Array out of bounds in ConstraintsInternal::constraintsDistributeParentToChild");
 
-              const dealii::types::global_dof_index
-                startingLocalDofIndexColumn =
-                  d_localIndexMapUnflattenedToFlattened
-                    [d_columnIdsLocal[count]];
+              const global_size_type
+                startingLocalDofIndexColumn = *(columnConstraintsIdsLocal.begin() + count*blockSize);
 
-              T alpha = d_columnValues[count];
+              ValueType alpha = *(columnConstraintsValues.begin()  + count);
 
-              callaxpy(&blockSize,
-                       &alpha,
-                       fieldVector.begin() + startingLocalDofIndexColumn,
-                       &inc,
-                       &newValuesBlock[0],
-                       &inc);
+              //TODO check if this performance efficient
+              for (size_type iBlock = 0; iBlock < blockSize ; iBlock++)
+                {
+                  newValuesBlock[iBlock] += (*(vectorData.begin() + startingLocalDofIndexColumn + iBlock))*alpha;
+                }
               count++;
             }
 
           std::copy(&newValuesBlock[0],
                     &newValuesBlock[0] + blockSize,
-                    fieldVector.begin() + startingLocalDofIndexRow);
+                    vectorData.begin() + startingLocalDofIndexRow);
+        }
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+      ConstraintsInternal<ValueType, memorySpace>::constraintsDistributeChildToParent(
+      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+      size_type                       blockSize,
+      utils::MemoryStorage<global_size_type, memorySpace>
+        &rowConstraintsIdsLocal,
+      utils::MemoryStorage<global_size_type, memorySpace>
+        &rowConstraintsSizes,
+      utils::MemoryStorage<global_size_type, memorySpace>
+                                                &                                        columnConstraintsIdsLocal,
+      utils::MemoryStorage<double, memorySpace> &columnConstraintsValues)
+    {
+      size_type       count = 0;
+      for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
+        {
+          const global_size_type startingLocalDofIndexRow = (*(rowConstraintsIdsLocal.begin() + i ))*blockSize;
+
+          for (unsigned int j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
+            {
+              const global_size_type
+                startingLocalDofIndexColumn = (*(columnConstraintsIdsLocal.begin() + count))*blockSize;
+
+              ValueType alpha = (*(columnConstraintsValues.begin() + count));
+              for (size_type iBlock = 0; iBlock < blockSize ; iBlock++)
+                {
+                  *(vectorData.begin() + startingLocalDofIndexColumn + iBlock)
+                    = (*(vectorData.begin() + startingLocalDofIndexRow + iBlock))*alpha;
+                }
+
+
+              count++;
+            }
+
+          //
+          // set constraint nodes to zero
+          //
+          std::fill(vectorData.begin() + startingLocalDofIndexRow,
+                    vectorData.begin() + startingLocalDofIndexRow + blockSize,
+                    0.0);
         }
     }
 
@@ -89,7 +128,7 @@ namespace dftefe
     void
     ConstraintsInternal<ValueType, memorySpace>::
       constraintsSetConstrainedNodesToZero(
-        Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
         size_type                       blockSize,
         utils::MemoryStorage<global_size_type, memorySpace>
           &rowConstraintsIdsLocal)
@@ -97,7 +136,7 @@ namespace dftefe
       for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
           const global_size_type startingLocalDofIndexRow =
-            *(rowConstraintsIdsLocal.data() + i) * blockSize;
+            *(rowConstraintsIdsLocal.begin() + i) * blockSize;
 
           // set constrained nodes to zero
           std::fill(vectorData.begin() + startingLocalDofIndexRow,
@@ -106,52 +145,21 @@ namespace dftefe
         }
     }
 
+    template class ConstraintsInternal<double, dftefe::utils::MemorySpace::HOST>;
+    template class ConstraintsInternal<float, dftefe::utils::MemorySpace::HOST>;
+    template class ConstraintsInternal<std::complex<double>,
+                           dftefe::utils::MemorySpace::HOST>;
+    template class ConstraintsInternal<std::complex<float>,
+                           dftefe::utils::MemorySpace::HOST>;
 
-    template <typename ValueType>
-    void
-    ConstraintsInternal<ValueType, dftefe::utils::MemorySpace::DEVICE>::
-      constraintsSetConstrainedNodesToZero(
-        Vector<ValueType, dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        size_type                                              blockSize,
-        utils::MemoryStorage<global_size_type,
-                             dftefe::utils::MemorySpace::DEVICE>
-          &rowConstraintsIdsLocal)
-    {
-      const unsigned int numConstrainedDofs = rowConstraintsIdsLocal.size();
-
-      if (numConstrainedDofs == 0)
-        return;
-
-      setzeroKernel<<<min((blockSize + 255) / 256 * numConstrainedDofs, 30000),
-                      256>>>(blockSize,
-                             vectorData.begin(),
-                             d_rowIdsLocalDevice.begin(),
-                             numConstrainedDofs,
-                             blockSize);
-    }
-
-    template <typename ValueType>
-    __global__ void
-    setzeroKernel(const size_type  contiguousBlockSize,
-                  ValueType *      xVec,
-                  const size_type *constraintLocalRowIdsUnflattened,
-                  const size_type  numConstraints,
-                  const size_type  blockSize)
-    {
-      const global_size_type globalThreadId =
-        blockIdx.x * blockDim.x + threadIdx.x;
-      const global_size_type numberEntries =
-        numConstraints * contiguousBlockSize;
-
-      for (global_size_type index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const unsigned int blockIndex      = index / contiguousBlockSize;
-          const unsigned int intraBlockIndex = index % contiguousBlockSize;
-          xVec[constraintLocalRowIdsUnflattened[blockIndex] * blockSize +
-               intraBlockIndex]              = 0;
-        }
-    }
+#ifdef DFTEFE_WITH_DEVICE
+    template class ConstraintsInternal<double, dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class ConstraintsInternal<float, dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class ConstraintsInternal<std::complex<double>,
+                           dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class ConstraintsInternal<std::complex<float>,
+                           dftefe::utils::MemorySpace::HOST_PINNED>;
+#endif
 
   } // namespace basis
 } // namespace dftefe
