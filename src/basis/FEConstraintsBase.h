@@ -40,8 +40,8 @@ namespace dftefe
      * An abstract class to handle the constraints related to FE basis, such as
      * hanging nodes and boundary condition constraints
      */
-    template <typename ValueType , dftefe::utils::MemorySpace memorySpace>
-    class FEConstraintsBase : public Constraints<ValueType , memorySpace>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    class FEConstraintsBase : public Constraints<ValueType, memorySpace>
     {
     public:
       ~FEConstraintsBase() = default;
@@ -49,33 +49,49 @@ namespace dftefe
       clear() = 0;
 
       virtual void
-      setInhomogeneity(size_type basisId, ValueType constraintValue) = 0;
+      setInhomogeneity(global_size_type basisId, ValueType constraintValue) = 0;
       virtual void
       close() = 0;
 
       virtual bool
-      isClosed() = 0;
+      isClosed() const = 0;
 
       virtual void
       setHomogeneousDirichletBC() = 0;
 
       virtual bool
-      isConstrained(size_type basisId) = 0;
+      isConstrained(global_size_type basisId) const = 0;
 
-      virtual std::pair<global_size_type, ValueType>> * getConstraintEntries(const global_size_type lineDof) = 0 ;
+      virtual std::pair<global_size_type, ValueType> *
+      getConstraintEntries(const global_size_type lineDof) const = 0;
 
-      virtual bool isInhomogeneouslyConstrained (const size_type index)  = 0 ;
+      virtual bool
+      isInhomogeneouslyConstrained(const global_size_type index) const = 0;
 
-      virtual ValueType getInhomogeneity (const size_type lineDof)  = 0 ;
+      virtual ValueType
+      getInhomogeneity(const global_size_type lineDof) const = 0;
 
-      virtual void copyConstraintsData( const FEConstraintsBase<ValueType> &constraintsDataIn,
-                          const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0 ;
-      virtual void populateConstraintsData(const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0 ;
+      virtual void
+      copyConstraintsData(
+        const Constraints<ValueType, memorySpace> &constraintsDataIn,
+        const utils::MPIPatternP2P<memorySpace> &  mpiPattern) = 0;
+      virtual void
+      populateConstraintsData(
+        const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
 
-      virtual void distributeChildToParent(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0 ;
-      virtual void distributeParentToChild(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0 ;
-      virtual void setConstrainedNodesToZero(Vector<ValueType, memorySpace> &vectorData, size_type blockSize = 1) const = 0;
-        //
+      virtual void
+      distributeChildToParent(
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        size_type                                      blockSize = 1) const = 0;
+      virtual void
+      distributeParentToChild(
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        size_type                                      blockSize = 1) const = 0;
+      virtual void
+      setConstrainedNodesToZero(
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        size_type                                      blockSize = 1) const = 0;
+      //
       // FE related functions
       //
       virtual void

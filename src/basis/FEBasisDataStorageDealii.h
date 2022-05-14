@@ -33,6 +33,9 @@
 #include <basis/FEBasisManagerDealii.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEConstraintsDealii.h>
+#include <basis/LinearCellMappingDealii.h>
+#include <quadrature/QuadratureRuleGauss.h>
+#include <quadrature/QuadratureRuleGLL.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <memory>
 #include <map>
@@ -57,8 +60,9 @@ namespace dftefe
         typename BasisDataStorage<ValueType, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(
-        std::shared_ptr<const BasisManager>               feBM,
-        std::vector<std::shared_ptr<Constraints<double>>> constraintsVec,
+        std::shared_ptr<const BasisManager> feBM,
+        std::vector<std::shared_ptr<Constraints<ValueType, memorySpace>>>
+          constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
         const bool storeValues,

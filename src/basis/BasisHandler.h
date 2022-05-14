@@ -65,7 +65,7 @@ namespace dftefe
       bool
       isDistributed() const = 0;
 
-      virtual const Constraints<ValueType> &
+      virtual const Constraints<ValueType, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
       virtual std::shared_ptr<const utils::MPIPatternP2P<memorySpace>>

@@ -80,7 +80,7 @@ namespace dftefe
     protected:
       QuadratureRule();
 
-      size_typ                  d_dim;
+      size_type                 d_dim;
       size_type                 d_numPoints;
       size_type                 d_num1DPoints;
       std::vector<utils::Point> d_points;

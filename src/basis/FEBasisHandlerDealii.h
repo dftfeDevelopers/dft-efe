@@ -70,24 +70,28 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
+        std::map<std::string,
+                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                         constraintsMap,
         const MPI_Comm &mpiComm);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
+        std::map<std::string,
+                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                         constraintsMap,
         const MPI_Comm &mpiComm);
 #else
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
+        std::map<std::string,
+                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
           constraintsMap);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string, std::shared_ptr<const Constraints<ValueType>>>
+        std::map<std::string,
+                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
           constraintsMap);
 #endif // DFTEFE_WITH_MPI
 
@@ -96,7 +100,7 @@ namespace dftefe
       bool
       isDistributed() const override;
 
-      const Constraints<ValueType> &
+      const Constraints<ValueType, memorySpace> &
       getConstraints(const std::string constraintsName) const override;
 
       std::shared_ptr<const utils::MPIPatternP2P<memorySpace>>
@@ -175,8 +179,9 @@ namespace dftefe
 
     private:
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
-      std::map<std::string,
-               std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>>
+      std::map<
+        std::string,
+        std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
         d_feConstraintsDealiiOptMap;
 #ifdef DFTEFE_WITH_MPI
       MPI_Comm d_mpiComm;

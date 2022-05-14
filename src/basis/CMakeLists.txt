@@ -46,5 +46,9 @@ if (NOT TARGET dft-efe-quadrature)
   add_subdirectory(../quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
 endif()
 
-target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature ${DFTEFE_MPI_LIBRARIES})
+if (NOT TARGET dft-efe-linalg)
+  add_subdirectory(../linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
+endif()
+
+target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg  ${DFTEFE_MPI_LIBRARIES})
 endif()

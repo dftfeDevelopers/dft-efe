@@ -622,8 +622,9 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
       FEBasisDataStorageDealii(
-        std::shared_ptr<const BasisManager>               feBM,
-        std::vector<std::shared_ptr<Constraints<double>>> constraintsVec,
+        std::shared_ptr<const BasisManager> feBM,
+        std::vector<std::shared_ptr<Constraints<ValueType, memorySpace>>>
+          constraintsVec,
         const std::vector<quadrature::QuadratureRuleAttributes>
           &        quadratureRuleAttribuesVec,
         const bool storeValues,
@@ -660,9 +661,11 @@ namespace dftefe
         dealiiAffineConstraintsVec(numConstraints, nullptr);
       for (size_type i = 0; i < numConstraints; ++i)
         {
-          std::shared_ptr<const FEConstraintsDealii<dim, memorySpace, ValueType>>
+          std::shared_ptr<
+            const FEConstraintsDealii<ValueType, memorySpace, dim>>
             constraintsDealii = std::dynamic_pointer_cast<
-              const FEConstraintsDealii<dim, memorySpace, ValueType>>(constraintsVec[i]);
+              const FEConstraintsDealii<ValueType, memorySpace, dim>>(
+              constraintsVec[i]);
           utils::throwException(
             constraintsDealii != nullptr,
             " Could not cast the FEConstraintsBase to FEConstraintsDealii in FEBasisDataStorageDealii");
@@ -676,7 +679,7 @@ namespace dftefe
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
        */
-      LinearCellMappingDealii linearCellMappingDealii;
+      LinearCellMappingDealii<dim> linearCellMappingDealii;
       for (size_type i = 0; i < numQuadRuleType; ++i)
         {
           size_type num1DQuadPoints =
@@ -1356,8 +1359,9 @@ namespace dftefe
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     const quadrature::QuadratureRuleContainer &
-    getQuadratureRuleContainer(
-      const QuadratureRuleAttributes &quadratureRuleAttributes)
+    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::
+      getQuadratureRuleContainer(const quadrature::QuadratureRuleAttributes
+                                   &quadratureRuleAttributes) const
     {
       auto it = d_quadratureRuleContainer.find(quadratureRuleAttributes);
       utils::throwException(
