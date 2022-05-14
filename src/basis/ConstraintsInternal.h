@@ -44,7 +44,7 @@ namespace dftefe
       static void
       constraintsDistributeParentToChild(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        size_type                       blockSize,
+        size_type                                      blockSize,
         utils::MemoryStorage<global_size_type, memorySpace>
           &rowConstraintsIdsLocal,
         utils::MemoryStorage<global_size_type, memorySpace>
@@ -58,7 +58,7 @@ namespace dftefe
       static void
       constraintsDistributeChildToParent(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        size_type                       blockSize,
+        size_type                                      blockSize,
         utils::MemoryStorage<global_size_type, memorySpace>
           &rowConstraintsIdsLocal,
         utils::MemoryStorage<global_size_type, memorySpace>
@@ -70,7 +70,7 @@ namespace dftefe
       static void
       constraintsSetConstrainedNodesToZero(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        size_type                       blockSize,
+        size_type                                      blockSize,
         utils::MemoryStorage<global_size_type, memorySpace>
           &rowConstraintsIdsLocal);
     };
@@ -83,12 +83,14 @@ namespace dftefe
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        size_type                                              blockSize,
+        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &       vectorData,
+        size_type blockSize,
         utils::MemoryStorage<global_size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
-        utils::MemoryStorage<global_size_type, dftefe::utils::MemorySpace::DEVICE>
+        utils::MemoryStorage<global_size_type,
+                             dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsSizes,
         utils::MemoryStorage<global_size_type,
                              dftefe::utils::MemorySpace::DEVICE>
@@ -100,12 +102,14 @@ namespace dftefe
 
       static void
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        size_type                                              blockSize,
+        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &       vectorData,
+        size_type blockSize,
         utils::MemoryStorage<global_size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
-        utils::MemoryStorage<global_size_type, dftefe::utils::MemorySpace::DEVICE>
+        utils::MemoryStorage<global_size_type,
+                             dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsSizes,
         utils::MemoryStorage<global_size_type,
                              dftefe::utils::MemorySpace::DEVICE>
@@ -115,8 +119,9 @@ namespace dftefe
 
       static void
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        size_type                                              blockSize,
+        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &       vectorData,
+        size_type blockSize,
         utils::MemoryStorage<global_size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal);

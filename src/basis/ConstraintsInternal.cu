@@ -8,7 +8,6 @@ namespace dftefe
 {
   namespace basis
   {
-
     template <typename ValueType>
     __global__ void
     setzeroKernel(const size_type  contiguousBlockSize,
@@ -37,8 +36,9 @@ namespace dftefe
     void
     ConstraintsInternal<ValueType, dftefe::utils::MemorySpace::DEVICE>::
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        size_type                                              blockSize,
+        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &       vectorData,
+        size_type blockSize,
         utils::MemoryStorage<global_size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal)
@@ -50,22 +50,26 @@ namespace dftefe
 
       setzeroKernel<<<min((blockSize + 255) / 256 * numConstrainedDofs, 30000),
                       256>>>(blockSize,
-                             dftefe::utils::makeDataTypeDeviceCompatible(vectorData.begin()),
-                             dftefe::utils::makeDataTypeDeviceCompatible(rowConstraintsIdsLocal.begin()),
+                             dftefe::utils::makeDataTypeDeviceCompatible(
+                               vectorData.begin()),
+                             dftefe::utils::makeDataTypeDeviceCompatible(
+                               rowConstraintsIdsLocal.begin()),
                              numConstrainedDofs,
                              blockSize);
     }
 
 
-    template class ConstraintsInternal<double, dftefe::utils::MemorySpace::DEVICE>;
-    template class ConstraintsInternal<float, dftefe::utils::MemorySpace::DEVICE>;
+    template class ConstraintsInternal<double,
+                                       dftefe::utils::MemorySpace::DEVICE>;
+    template class ConstraintsInternal<float,
+                                       dftefe::utils::MemorySpace::DEVICE>;
     template class ConstraintsInternal<std::complex<double>,
-                           dftefe::utils::MemorySpace::DEVICE>;
+                                       dftefe::utils::MemorySpace::DEVICE>;
     template class ConstraintsInternal<std::complex<float>,
-                           dftefe::utils::MemorySpace::DEVICE>;
+                                       dftefe::utils::MemorySpace::DEVICE>;
 
 
-  }
-}
+  } // namespace basis
+} // namespace dftefe
 
 #endif
