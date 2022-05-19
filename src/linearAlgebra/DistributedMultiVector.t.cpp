@@ -35,12 +35,12 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedMultiVector<ValueType, memorySpace>::DistributedMultiVector(
-      std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                                          mpiCommunicatorP2P,
-      const ValueType                                     initVal,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
-      : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
-      , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
+      std::shared_ptr<const utils::MPIPatternP2P<ValueType, memorySpace>>
+                                    mpiPatternP2P,
+      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      const size_type               numVectors,
+      const ValueType               initVal)
+      : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
@@ -48,11 +48,15 @@ namespace dftefe
       d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize        = d_mpiPatternP2P->localGhostSize();
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
-      d_numVectors       = d_mpiPatternP2P->getBlockSize();
+      d_numVectors       = numVectors;
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * d_numVectors, initVal);
-      d_BlasQueue = BlasQueue;
+      d_linAlgOpContext = linAlgOpContext;
+
+      d_mpiCommunicatorP2P =
+        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+          mpiPatternP2P, numVectors);
     }
 
     //
@@ -63,21 +67,24 @@ namespace dftefe
     DistributedMultiVector<ValueType, memorySpace>::DistributedMultiVector(
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
         &storage,
-      std::shared_ptr<const utils::MPICommunicatorP2P<ValueType, memorySpace>>
-                                                          mpiCommunicatorP2P,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
-      : d_mpiCommunicatorP2P(mpiCommunicatorP2P)
-      , d_mpiPatternP2P(mpiCommunicatorP2P.getMPIPatternP2P())
+      std::shared_ptr<const utils::MPIPatternP2P<ValueType, memorySpace>>
+                                    mpiPatternP2P,
+      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      const size_type               numVectors)
+      : d_mpiPatternP2P(mpiPatternP2P)
     {
-      d_storage   = std::move(storage);
-      d_BlasQueue = std::move(BlasQueue);
+      d_storage         = std::move(storage);
+      d_linAlgOpContext = std::move(linAlgOpContext);
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
       d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize        = d_mpiPatternP2P->localGhostSize();
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
-      d_numVectors       = d_mpiPatternP2P->getBlockSize();
+      d_numVectors       = numVectors;
+      d_mpiCommunicatorP2P =
+        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+          mpiPatternP2P, numVectors);
     }
 
     /**
@@ -92,7 +99,7 @@ namespace dftefe
       const MPI_Comm &                                    mpiComm,
       const sizeType                                      numVectors,
       const ValueType                                     initVal,
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue)
+      LinAlgOpContext<memorySpace> *                      linAlgOpContext)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -117,7 +124,7 @@ namespace dftefe
         std::make_shared<const utils::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
-      d_mpiCommunicatorP2P = std::make_shared<
+      d_mpiCommunicatorP2P = std::make_unique<
         const utils::MPICommunicatorP2P<ValueType, memorySpace>>(
         d_mpiPatternP2P, numVectors);
 
@@ -130,7 +137,7 @@ namespace dftefe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           d_localSize * numVectors, initVal);
-      d_BlasQueue = BlasQueue;
+      d_linAlgOpContext = linAlgOpContext;
     }
 #endif // DFTEFE_WITH_MPI
 
@@ -144,16 +151,18 @@ namespace dftefe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
-      d_BlasQueue          = u.d_BlasQueue;
-      *d_storage           = *(u.d_storage);
-      d_vectorAttributes   = u.d_vectorAttributes;
-      d_localSize          = u.d_localSize;
-      d_locallyOwnedSize   = u.d_locallyOwnedSize;
-      d_ghostSize          = u.d_ghostSize;
-      d_globalSize         = u.d_globalSize;
-      d_numVectors         = u.d_numVectors;
-      d_mpiCommunicatorP2P = u.d_mpiCommunicatorP2P;
-      d_mpiPatternP2P      = u.d_mpiPatternP2P;
+      d_mpiCommunicatorP2P =
+        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+          u.d_mpiPatternP2P, u.d_numVectors);
+      d_linAlgOpContext  = u.d_linAlgOpContext;
+      *d_storage         = *(u.d_storage);
+      d_vectorAttributes = u.d_vectorAttributes;
+      d_localSize        = u.d_localSize;
+      d_locallyOwnedSize = u.d_locallyOwnedSize;
+      d_ghostSize        = u.d_ghostSize;
+      d_globalSize       = u.d_globalSize;
+      d_numVectors       = u.d_numVectors;
+      d_mpiPatternP2P    = u.d_mpiPatternP2P;
       VectorAttributes vectorAttributesDistributed(
         VectorAttributes::Distribution::DISTRIBUTED);
       bool areCompatible = d_vectorAttributes.areDistributionCompatible(
@@ -172,7 +181,7 @@ namespace dftefe
       DistributedMultiVector &&u) noexcept
     {
       d_storage            = std::move(u.d_storage);
-      d_BlasQueue          = std::move(u.d_BlasQueue);
+      d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
       d_vectorAttributes   = std::move(u.d_vectorAttributes);
       d_localSize          = std::move(u.d_localSize);
       d_locallyOwnedSize   = std::move(u.d_locallyOwnedSize);
@@ -202,8 +211,11 @@ namespace dftefe
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
-      *d_storage           = *(u.d_storage);
-      d_BlasQueue          = u.d_BlasQueue;
+      *d_storage = *(u.d_storage);
+      d_mpiCommunicatorP2P =
+        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
+          u.d_mpiPatternP2P, u.d_numVectors);
+      d_linAlgOpContext    = u.d_linAlgOpContext;
       d_vectorAttributes   = u.d_vectorAttributes;
       d_localSize          = u.d_localSize;
       d_locallyOwnedSize   = u.d_locallyOwnedSize;
@@ -232,7 +244,7 @@ namespace dftefe
       DistributedMultiVector &&u)
     {
       d_storage            = std::move(u.d_storage);
-      d_BlasQueue          = std::move(u.d_BlasQueue);
+      d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
       d_vectorAttributes   = std::move(u.d_vectorAttributes);
       d_localSize          = std::move(u.d_localSize);
       d_locallyOwnedSize   = std::move(u.d_locallyOwnedSize);
@@ -260,7 +272,7 @@ namespace dftefe
           this->locallyOwnedSize(),
           this->numVectors(),
           this->data(),
-          *d_BlasQueue);
+          d_linAlgOpContext->getBlasQueue());
 
       std::vector<double> l2NormsLocallyOwnedSquare(d_numVectors, 0.0);
       for (size_type i = 0; i < d_numVectors; ++i)
@@ -292,7 +304,7 @@ namespace dftefe
           this->locallyOwnedSize(),
           this->numVectors(),
           this->data(),
-          *d_BlasQueue);
+          d_linAlgOpContext->getBlasQueue());
 
       std::vector<double> returnValues(d_numVectors, 0.0);
 #ifdef DFTEFE_WITH_MPI
