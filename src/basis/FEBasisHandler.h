@@ -59,6 +59,9 @@ namespace dftefe
 
       bool
       isDistributed() const = 0;
+      
+      virtual const BasisManager &
+	getBasisManager() const = 0;
 
       virtual const Constraints<ValueType, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;

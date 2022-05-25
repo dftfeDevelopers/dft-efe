@@ -23,14 +23,16 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeBasisOperations_h
-#define dftefeBasisOperations_h
+#ifndef dftefeFEBasisOperations_h
+#define dftefeFEBasisOperations_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <utils/ScalarSpatialFunction.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/Field.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <memory>
 namespace dftefe
 {
   namespace basis
@@ -39,41 +41,33 @@ namespace dftefe
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class BasisOperations
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    class FEBasisOperations: public BasisOperations<ValueType, memorySpace>
     {
     public:
-      virtual ~BasisOperations() = default;
+	
+      FEBasisOperations(std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>> basisDataStorage);
 
-      virtual void
+      ~FEBasisOperations() = default;
+
+      void
       interpolate(
         const Field<ValueType, memorySpace> &       field,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
-          &quadValuesContainer) const = 0;
-
-      // virtual void
-      // integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-      //    const quadrature::QuadratureRuleAttributes &
-      //    quadratureRuleAttributes,
-      //                         Field<ValueType, memorySpace> &         field)
-      //                         const = 0;
-
-      // virtual void
-      // integrateWithBasisValues(const QuadratureValuesContainer<ValueType,
-      // memorySpace> &f,
-      //    const quadrature::QuadratureRuleAttributes &
-      //    quadratureRuleAttributes,
-      //                         Field<ValueType, memorySpace> &field) const =
-      //                         0;
+          &quadValuesContainer) const override;
 
       virtual void
       integrateWithBasisValues(
         const Field<ValueType, memorySpace> &       fieldInput,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueType, memorySpace> &             fieldOutput) const = 0;
+        Field<ValueType, memorySpace> &             fieldOutput) const override;
 
-    }; // end of BasisOperations
+    private:
+      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace, dim>> d_feBasisDataStorage; 
+
+    }; // end of FEBasisOperations
   }    // end of namespace basis
 } // end of namespace dftefe
+#include <basis/FEBasisOperations.t.cpp>
 #endif // dftefeBasisOperations_h

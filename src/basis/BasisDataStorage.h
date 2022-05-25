@@ -59,6 +59,10 @@ namespace dftefe
 
     public:
       virtual ~BasisDataStorage() = default;
+      
+      virtual const BasisManager &
+	getBasisManager() const = 0;
+      
       virtual void
       evaluateBasisData(
         std::shared_ptr<const quadrature::QuadratureRuleContainer>

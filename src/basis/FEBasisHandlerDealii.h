@@ -97,6 +97,9 @@ namespace dftefe
 
       ~FEBasisHandlerDealii() = default;
 
+      const BasisManager &
+	getBasisManager() const override;
+
       bool
       isDistributed() const override;
 

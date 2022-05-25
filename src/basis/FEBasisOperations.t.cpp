@@ -22,58 +22,40 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
-
-#ifndef dftefeBasisOperations_h
-#define dftefeBasisOperations_h
-
-#include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
-#include <utils/ScalarSpatialFunction.h>
-#include <quadrature/QuadratureAttributes.h>
-#include <quadrature/QuadratureValuesContainer.h>
-namespace dftefe
+#include <utils/Exceptions.h>
+namespace dftefe 
 {
   namespace basis
   {
-    /**
-     * An abstract class to handle interactions between a basis and a
-     * field (e.g., integration of field with basis).
-     */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class BasisOperations
-    {
-    public:
-      virtual ~BasisOperations() = default;
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+      FEBasisOperations<ValueType, memorySpace, dim>::FEBasisOperations(
+	  std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>> basisDataStorage):
+      {
+	d_feBasisDataStorage = std::dynamic_pointer_cast<const FEBasisDataStorage<ValueType, memorySpace, dim>>(basisDataStorage);
+	utils::throwException(d_feBasisDataStorage != nullptr, 
+	    "Could not cast BasisDataStorage to FEBasisDataStorage in the constructor of FEBasisOperations");
+      }
 
-      virtual void
-      interpolate(
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+      void
+      FEBasisOperations<ValueType, memorySpace, dim>::interpolate(
         const Field<ValueType, memorySpace> &       field,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
-          &quadValuesContainer) const = 0;
+          &quadValuesContainer) const
+      {
+	const BasisHandler<memorySpace> & basisHandler = field.getBasisHandler();
+	const BasisManager & basisManagerField = basisHandler.getBasisManager();
+	const BasisManager & basisManagerDataStorage = d_feBasisDataStorage->getBasisManager();
+	utils::throwException(&basisManagerField == &basisManagerDataStorage,
+	    "Mismatch in BasisManager used in Field and BasisDataStorage.");
+	const FEBasisManager & feBasisManager = dynamic_cast<const FEBasisManageri &>(basisManagerField);
+	utils::throwException(&feBasisManager != nullptr,
+	    "Could not cast BasisManager to FEBasisManager in FEBasisOperations.interpolate()");
+	const size_type numLocallyOwnedCells = feBasisManagerField.nLocallyOwnedCells();
+        	
 
-      // virtual void
-      // integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-      //    const quadrature::QuadratureRuleAttributes &
-      //    quadratureRuleAttributes,
-      //                         Field<ValueType, memorySpace> &         field)
-      //                         const = 0;
+      }
 
-      // virtual void
-      // integrateWithBasisValues(const QuadratureValuesContainer<ValueType,
-      // memorySpace> &f,
-      //    const quadrature::QuadratureRuleAttributes &
-      //    quadratureRuleAttributes,
-      //                         Field<ValueType, memorySpace> &field) const =
-      //                         0;
-
-      virtual void
-      integrateWithBasisValues(
-        const Field<ValueType, memorySpace> &       fieldInput,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueType, memorySpace> &             fieldOutput) const = 0;
-
-    }; // end of BasisOperations
-  }    // end of namespace basis
-} // end of namespace dftefe
-#endif // dftefeBasisOperations_h
+  } // end of namespace 
+}//

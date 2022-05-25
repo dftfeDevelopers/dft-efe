@@ -854,5 +854,13 @@ namespace dftefe
       return (*(it->second)).begin() + d_locallyOwnedCellStartIds[cellId] +
              d_numLocallyOwnedCellDofs[cellId];
     }
+    
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisManager() const
+    {
+      return *d_feBMDealii;
+    }
   } // end of namespace basis
 } // end of namespace dftefe

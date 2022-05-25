@@ -70,18 +70,18 @@ namespace dftefe
     void
     Field<ValueType, memorySpace>::applyConstraintsParentToChild()
     {
-      const Constraints<ValueType> &constraints =
+      const Constraints<ValueType, memorySpace> &constraints =
         d_basisHandler.getConstraints(d_constraintsName);
-      constraints.applyConstraintsParentToChild(*d_vector);
+      constraints.distributeParentToChild(*d_vector);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
     Field<ValueType, memorySpace>::applyConstraintsChildToParent()
     {
-      const Constraints<ValueType> &constraints =
+      const Constraints<ValueType, memorySpace> &constraints =
         d_basisHandler.getConstraints(d_constraintsName);
-      constraints.applyConstraintsChildToParent(*d_vector);
+      constraints.distributeChildToParent(*d_vector);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
@@ -125,5 +125,56 @@ namespace dftefe
     {
       return d_vector->end();
     }
+      
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    Field<ValueType, memorySpace>::updateGhostValues(const size_type communicationChannel /*= 0*/)
+    {
+
+      d_vector->updateGhostValues(communicationChannel);
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+      void
+     Field<ValueType, memorySpace>::accumulateAddLocallyOwned(const size_type communicationChannel /*= 0*/)
+     {
+       d_vector->accumulateAddLocallyOwned(communicationChannel);
+     }
+      
+    template <typename ValueType, utils::MemorySpace memorySpace>
+      void
+      Field<ValueType, memorySpace>::updateGhostValuesBegin(const size_type communicationChannel /*= 0*/)
+      {
+	d_vector->updateGhostValuesBegin(communicationChannel);
+      }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+      void
+      Field<ValueType, memorySpace>::updateGhostValuesEnd()
+      {
+	d_vector->updateGhostValuesEnd();
+      }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+      void
+      Field<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
+        const size_type communicationChannel /*= 0*/)
+      {
+	d_vector->accumulateAddLocallyOwnedBegin();
+      }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+      void
+      Field<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
+      {
+	d_vector->accumulateAddLocallyOwnedEnd();
+      }
+    
+    template <typename ValueType, utils::MemorySpace memorySpace>
+      std::string0
+      Field<ValueType, memorySpace>::getConstraintsName()
+      {
+	return d_constraintsName;
+      }
   } // end of namespace basis
 } // end of namespace dftefe
