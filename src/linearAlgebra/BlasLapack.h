@@ -160,6 +160,34 @@ namespace dftefe
            ValueType *             dC,
            size_type               lddc,
            BlasQueue<memorySpace> &BlasQueue);
+
+      /**
+       * @brief Variable Strided Batch GEMMM
+       *
+       * @note: Assumes the same alpha and beta coefficients
+       * for all the matrices
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      gemmStridedVarBatched(Layout                  layout,
+                            size_type               numMats,
+                            const Op *              transA,
+                            const Op *              transB,
+                            const size_type *       stridea,
+                            const size_type *       strideb,
+                            const size_type *       m,
+                            const size_type *       n,
+                            const size_type *       k,
+                            ValueType               alpha,
+                            const ValueType *       dA,
+                            const size_type *       ldda,
+                            const ValueType *       dB,
+                            const size_type *       lddb,
+                            ValueType               beta,
+                            ValueType *             dC,
+                            const size_type *       lddc,
+                            BlasQueue<memorySpace> &BlasQueue);
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe
