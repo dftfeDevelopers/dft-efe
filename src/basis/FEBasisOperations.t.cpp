@@ -23,6 +23,7 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 #include <utils/Exceptions.h>
+#include <basis/FEBasisOperationsInternal.h>
 namespace dftefe 
 {
   namespace basis
@@ -45,15 +46,35 @@ namespace dftefe
           &quadValuesContainer) const
       {
 	const BasisHandler<memorySpace> & basisHandler = field.getBasisHandler();
+	const FEBasisHandler<ValueType, memorySpace, dim> & feBasisHandler = 
+	  dynamic_cast<FEBasisHandler<ValueType, memorySpace, dim> &>(basisHandler);
+	utils::throwException(&feBasisHandler != nullptr,
+	    "Could not cast BasisHandler to FEBasisHandler in FEBasisOperations.interpolate()");
 	const BasisManager & basisManagerField = basisHandler.getBasisManager();
 	const BasisManager & basisManagerDataStorage = d_feBasisDataStorage->getBasisManager();
 	utils::throwException(&basisManagerField == &basisManagerDataStorage,
 	    "Mismatch in BasisManager used in Field and BasisDataStorage.");
-	const FEBasisManager & feBasisManager = dynamic_cast<const FEBasisManageri &>(basisManagerField);
+	const FEBasisManager & feBasisManager = dynamic_cast<const FEBasisManager &>(basisManagerField);
 	utils::throwException(&feBasisManager != nullptr,
 	    "Could not cast BasisManager to FEBasisManager in FEBasisOperations.interpolate()");
-	const size_type numLocallyOwnedCells = feBasisManagerField.nLocallyOwnedCells();
-        	
+
+	const size_type numComponents = 1;
+	const std::string constraintsName = field.getConstraintsName();
+	const size_type numLocallyOwnedCells = feBasisHandler.nLocallyOwnedCells();
+	const size_type numCumulativeLocallyOwnedCellDofs = feBasisHandler.nCumulativeLocallyOwnedCellDofs();
+	utils::MemoryStorage<ValueType,memorySpace> fieldCellValues(numCumulativeLocallyOwnedCellDofs);
+        auto itCellLocalIdsBegin = feBasisHandler.locallyOwnedCellLocalDofIdsBegin(constraintsName);
+	std::vector<size_type> numCellDofs(numLocallyOwnedCells,0);
+	for(size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+	  numCellDofs = feBasisHandler.nLocallyOwnedCellDofs(iCell);
+
+	FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(field.begin(),
+	    numComponents,
+	    itCellLocalIdsBegin,
+	    numCellDofs,
+	    fieldCellValues);
+	
+	    
 
       }
 

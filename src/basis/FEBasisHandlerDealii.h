@@ -146,7 +146,13 @@ namespace dftefe
       // FE specific functions
       //
       size_type
-      numLocallyOwnedCellDofs(const size_type cellId) const override;
+	nLocallyOwnedCells() const override;
+
+      size_type
+      nLocallyOwnedCellDofs(const size_type cellId) const override;
+      
+      size_type 
+	nCumulativeLocallyOwnedCellDofs() const override;
 
       const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(

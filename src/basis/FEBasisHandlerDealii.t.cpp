@@ -626,17 +626,35 @@ namespace dftefe
       const size_type numGhost = (*(it->second)).size();
       return numGhost;
     }
-
+    
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::numLocallyOwnedCellDofs(
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCells() const
+    {
+       return feBMDealii->nLocallyOwnedCells();
+    }
+      
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    size_type 
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nCumulativeLocallyOwnedCellDofs() const
+    {
+      return d_feBM->nCumulativeLocallyOwnedCellDofs();
+    }
+    
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    size_type
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCellDofs(
       const size_type cellId) const
     {
       DFTEFE_AssertWithMsg(
         cellId < d_numLocallyOwnedCellDofs.size(),
-        "Cell Id provided to numLocallyOwnedCellDofs is greater than or "
+        "Cell Id provided to nLocallyOwnedCellDofs is greater than or "
         " equal to the number of locally owned cells.");
       return d_numLocallyOwnedCellDofs[cellId];
     }

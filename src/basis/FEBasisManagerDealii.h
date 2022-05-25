@@ -50,7 +50,8 @@ namespace dftefe
       using const_FECellIterator = FEBasisManager::const_FECellIterator;
 
       FEBasisManagerDealii(
-        std::shared_ptr<const TriangulationBase> triangulation);
+        std::shared_ptr<const TriangulationBase> triangulation,
+	const size_type feOrder);
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;
@@ -129,6 +130,12 @@ namespace dftefe
       endLocalCells() const;
       unsigned int
       getDim() const;
+      
+      virtual size_type
+	nCumulativeLocallyOwnedCellDofs() const override;
+      
+      virtual size_type
+	nCumulativeLocalCellDofs() const  override;
 
       //
       // dealii specific functions
@@ -145,6 +152,8 @@ namespace dftefe
       bool                                     d_isHPRefined;
       std::vector<std::shared_ptr<FECellBase>> d_localCells;
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
+      size_type d_numCumulativeLocallyOwnedCellDofs;
+      size_type d_numCumulativeLocalCellDofs;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis

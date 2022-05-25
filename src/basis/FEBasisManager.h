@@ -113,6 +113,13 @@ namespace dftefe
       beginLocalCells() const = 0;
       virtual const_FECellIterator
       endLocalCells() const = 0;
+
+      virtual size_type
+	nCumulativeLocallyOwnedCellDofs() const  = 0;
+      
+      virtual size_type
+	nCumulativeLocalCellDofs() const  = 0;
+      
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

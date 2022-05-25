@@ -103,8 +103,15 @@ namespace dftefe
       //
       // FE specific functions
       //
+      
       virtual size_type
-      numLocallyOwnedCellDofs(const size_type cellId) const = 0;
+	nLocallyOwnedCells() const = 0;
+
+      virtual size_type
+      nLocallyOwnedCellDofs(const size_type cellId) const = 0;
+      
+      virtual size_type 
+	nCumulativeLocallyOwnedCellDofs() const = 0;
 
       virtual const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(
