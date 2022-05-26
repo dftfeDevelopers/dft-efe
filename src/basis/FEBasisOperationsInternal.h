@@ -34,18 +34,19 @@ namespace dftefe
 {
   namespace basis
   {
-    template<typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     class FEBasisOperationsInternal
     {
-      public:
-	static void
-	  copyFieldToCellWiseData(const ValueType * data,
-	      const size_type numComponents,
-	      const size_type * cellLocalIdsStartPtr,
-	      const std::vector<size_type> & numCellDofs,
-	      MemoryStorage<ValueType, memorySpace> & cellWiseStorage);
+    public:
+      static void
+      copyFieldToCellWiseData(
+        const ValueType *                      data,
+        const size_type                        numComponents,
+        const size_type *                      cellLocalIdsStartPtr,
+        const std::vector<size_type> &         numCellDofs,
+        MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
     }; // end of class FEBasisOperationsInternal
-  } // end of namespace basis
-}// end of namespace dftefe
-#endif //dftefeFEBasisOperationsInternal_h
+  }    // end of namespace basis
+} // end of namespace dftefe
+#endif // dftefeFEBasisOperationsInternal_h

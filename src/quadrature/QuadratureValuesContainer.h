@@ -51,17 +51,15 @@ namespace dftefe
         dftefe::utils::MemoryStorage<ValueType, memorySpace>::const_iterator;
 
     public:
-      
       QuadratureValuesContainer();
       QuadratureValuesContainer(
         const QuadratureRuleContainer &quadratureRuleContainer,
         const size_type                numberComponents,
         const ValueType                initVal = ValueType());
-      
-       reinit(
-        const QuadratureRuleContainer &quadratureRuleContainer,
-        const size_type                numberComponents,
-        const ValueType                initVal = ValueType());
+
+      reinit(const QuadratureRuleContainer &quadratureRuleContainer,
+             const size_type                numberComponents,
+             const ValueType                initVal = ValueType());
 
       QuadratureValuesContainer(const QuadratureValuesContainer &u);
       QuadratureValuesContainer(QuadratureValuesContainer &&u);
@@ -179,7 +177,7 @@ namespace dftefe
      * @return Resulting QuadratureValuesContainer w
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    QuadratureValuesContainer<ValueType, memorySpace> 
+    QuadratureValuesContainer<ValueType, memorySpace>
     add(ValueType                                                a,
         const QuadratureValuesContainer<ValueType, memorySpace> &u,
         ValueType                                                b,

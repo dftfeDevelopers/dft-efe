@@ -626,25 +626,27 @@ namespace dftefe
       const size_type numGhost = (*(it->second)).size();
       return numGhost;
     }
-    
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCells() const
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCells()
+      const
     {
-       return feBMDealii->nLocallyOwnedCells();
+      return feBMDealii->nLocallyOwnedCells();
     }
-      
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    size_type 
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nCumulativeLocallyOwnedCellDofs() const
+    size_type
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+      nCumulativeLocallyOwnedCellDofs() const
     {
       return d_feBM->nCumulativeLocallyOwnedCellDofs();
     }
-    
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -872,11 +874,12 @@ namespace dftefe
       return (*(it->second)).begin() + d_locallyOwnedCellStartIds[cellId] +
              d_numLocallyOwnedCellDofs[cellId];
     }
-    
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisManager() const
+    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+      getBasisManager() const
     {
       return *d_feBMDealii;
     }

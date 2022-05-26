@@ -42,11 +42,12 @@ namespace dftefe
      * field (e.g., integration of field with basis).
      */
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
-    class FEBasisOperations: public BasisOperations<ValueType, memorySpace>
+    class FEBasisOperations : public BasisOperations<ValueType, memorySpace>
     {
     public:
-	
-      FEBasisOperations(std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>> basisDataStorage);
+      FEBasisOperations(
+        std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>>
+          basisDataStorage);
 
       ~FEBasisOperations() = default;
 
@@ -64,7 +65,8 @@ namespace dftefe
         Field<ValueType, memorySpace> &             fieldOutput) const override;
 
     private:
-      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace, dim>> d_feBasisDataStorage; 
+      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace, dim>>
+        d_feBasisDataStorage;
 
     }; // end of FEBasisOperations
   }    // end of namespace basis

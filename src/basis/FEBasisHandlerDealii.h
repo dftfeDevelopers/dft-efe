@@ -98,7 +98,7 @@ namespace dftefe
       ~FEBasisHandlerDealii() = default;
 
       const BasisManager &
-	getBasisManager() const override;
+      getBasisManager() const override;
 
       bool
       isDistributed() const override;
@@ -146,13 +146,13 @@ namespace dftefe
       // FE specific functions
       //
       size_type
-	nLocallyOwnedCells() const override;
+      nLocallyOwnedCells() const override;
 
       size_type
       nLocallyOwnedCellDofs(const size_type cellId) const override;
-      
-      size_type 
-	nCumulativeLocallyOwnedCellDofs() const override;
+
+      size_type
+      nCumulativeLocallyOwnedCellDofs() const override;
 
       const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(

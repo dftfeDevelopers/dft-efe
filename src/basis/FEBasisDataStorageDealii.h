@@ -72,9 +72,9 @@ namespace dftefe
         const bool storeQuadRealPoints);
 
       ~FEBasisDataStorageDealii() = default;
-      
+
       const BasisManager &
-	getBasisManager() const override;
+      getBasisManager() const override;
 
       void
       evaluateBasisData(

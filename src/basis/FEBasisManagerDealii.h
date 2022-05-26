@@ -51,7 +51,7 @@ namespace dftefe
 
       FEBasisManagerDealii(
         std::shared_ptr<const TriangulationBase> triangulation,
-	const size_type feOrder);
+        const size_type                          feOrder);
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;
@@ -130,12 +130,12 @@ namespace dftefe
       endLocalCells() const;
       unsigned int
       getDim() const;
-      
+
       virtual size_type
-	nCumulativeLocallyOwnedCellDofs() const override;
-      
+      nCumulativeLocallyOwnedCellDofs() const override;
+
       virtual size_type
-	nCumulativeLocalCellDofs() const  override;
+      nCumulativeLocalCellDofs() const override;
 
       //
       // dealii specific functions

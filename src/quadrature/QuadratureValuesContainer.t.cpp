@@ -77,16 +77,14 @@ namespace dftefe
     // Default Constructor
     //
     template <typename ValueType, utils::MemorySpace memorySpace>
-    QuadratureValuesContainer<ValueType, memorySpace>::
-      QuadratureValuesContainer()
+    QuadratureValuesContainer<ValueType,
+                              memorySpace>::QuadratureValuesContainer()
       : d_quadratureRuleContainer(nullptr)
       , d_numberComponents(0)
       , d_cellStartIds(0)
       , d_numCellEntries(0)
       , d_storage(0)
-      {
-
-      }
+    {}
 
 
     //
@@ -111,13 +109,12 @@ namespace dftefe
                                                     d_numCellEntries,
                                                     d_storage);
     }
-    
+
     template <typename ValueType, utils::MemorySpace memorySpace>
-    QuadratureValuesContainer<ValueType, memorySpace>::
-      reinit(
-        const quadrature::QuadratureRuleContainer *quadratureRuleContainer,
-        const size_type                            numberComponents,
-        const ValueType                            initVal /*= ValueType()*/)
+    QuadratureValuesContainer<ValueType, memorySpace>::reinit(
+      const quadrature::QuadratureRuleContainer *quadratureRuleContainer,
+      const size_type                            numberComponents,
+      const ValueType                            initVal /*= ValueType()*/)
     {
       QuadratureValuesContainerInternal::initialize(d_quadratureRuleContainer,
                                                     d_numberComponents,
@@ -413,7 +410,7 @@ namespace dftefe
     // u = a*u + b*v
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    QuadratureValuesContainer<ValueType, memorySpace> 
+    QuadratureValuesContainer<ValueType, memorySpace>
     add(ValueType                                                a,
         const QuadratureValuesContainer<ValueType, memorySpace> &u,
         ValueType                                                b,

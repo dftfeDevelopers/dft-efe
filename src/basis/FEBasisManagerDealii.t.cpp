@@ -35,10 +35,10 @@ namespace dftefe
     template <size_type dim>
     FEBasisManagerDealii<dim>::FEBasisManagerDealii(
       std::shared_ptr<const TriangulationBase> triangulation,
-      const size_type feOrder)
+      const size_type                          feOrder)
       : d_isHPRefined(false)
     {
-      d_dofHandler    = std::make_shared<dealii::DoFHandler<dim>>();
+      d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       reinit(triangulation, feOrder);
     }
 
@@ -140,13 +140,12 @@ namespace dftefe
           }
 
       d_numCumulativeLocallyOwnedCellDofs = 0;
-      d_numCumulativeLocalCellDofs = 0;
-      for(size_type iCell = 0; iCell < d_locallyOwnedCells.size(); ++iCell)
-	d_numCumulativeLocallyOwnedCellDofs += nCellDofs(iCell);
+      d_numCumulativeLocalCellDofs        = 0;
+      for (size_type iCell = 0; iCell < d_locallyOwnedCells.size(); ++iCell)
+        d_numCumulativeLocallyOwnedCellDofs += nCellDofs(iCell);
 
-      for(size_type iCell = 0; iCell < d_localCells.size(); ++iCell)
-	d_numCumulativeLocalCellDofs += nCellDofs(iCell);
-
+      for (size_type iCell = 0; iCell < d_localCells.size(); ++iCell)
+        d_numCumulativeLocalCellDofs += nCellDofs(iCell);
     }
 
     template <size_type dim>
@@ -352,14 +351,14 @@ namespace dftefe
 
       return d_dofHandler->get_fe(0);
     }
-      
+
     template <size_type dim>
     size_type
     FEBasisManagerDealii<dim>::nCumulativeLocallyOwnedCellDofs() const
     {
       return d_numCumulativeLocallyOwnedCellDofs;
     }
-    
+
     template <size_type dim>
     size_type
     FEBasisManagerDealii<dim>::nCumulativeLocalCellDofs() const
