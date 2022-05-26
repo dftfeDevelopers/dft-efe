@@ -47,7 +47,8 @@ namespace dftefe
     public:
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>>
-          basisDataStorage);
+                        basisDataStorage,
+        const size_type cellBlockSize);
 
       ~FEBasisOperations() = default;
 
@@ -66,7 +67,8 @@ namespace dftefe
 
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace, dim>>
-        d_feBasisDataStorage;
+                d_feBasisDataStorage;
+      size_type d_cellBlockSize;
 
     }; // end of FEBasisOperations
   }    // end of namespace basis
