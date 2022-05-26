@@ -171,10 +171,17 @@ namespace dftefe
       }
     
     template <typename ValueType, utils::MemorySpace memorySpace>
-      std::string0
+      std::string
       Field<ValueType, memorySpace>::getConstraintsName()
       {
 	return d_constraintsName;
       }
+      
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    const linearAlgebra::LinAlgOpContext &
+    Field<ValueType, memorySpace>::getLinAlgContext() const
+    {
+      return d_linAlgOpContext;
+    }
   } // end of namespace basis
 } // end of namespace dftefe

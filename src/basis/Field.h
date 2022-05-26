@@ -115,6 +115,8 @@ namespace dftefe
       void
       accumulateAddLocallyOwnedEnd();
 
+      const linearAlgebra::LinAlgOpContext &
+	getLinAlgContext() const;
     private:
       const std::string                                d_constraintsName;
       linearAlgebra::LinAlgOpContext                   d_linAlgOpContext;
