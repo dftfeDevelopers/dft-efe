@@ -306,15 +306,14 @@ namespace dftefe
 
 
       std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
-      std::vector<global_size_type> rowConstraintsIdsLocalTmp;
-      std::vector<global_size_type> columnConstraintsIdsLocalTmp;
+      std::vector<size_type> rowConstraintsIdsLocalTmp;
+      std::vector<size_type> columnConstraintsIdsLocalTmp;
       std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
 
       std::vector<double>    columnConstraintsValuesTmp;
       std::vector<ValueType> constraintsInhomogenitiesTmp;
 
-      std::vector<global_size_type> rowConstraintsSizesTmp;
-      std::vector<global_size_type> localIndexMapUnflattenedToFlattenedTmp;
+      std::vector<size_type> rowConstraintsSizesTmp;
 
       auto locallyOwnedIndices = mpiPattern.getLocallyOwnedIndices();
 
@@ -324,8 +323,8 @@ namespace dftefe
         {
           if (this->isConstrained(*locallyOwnedIter))
             {
-              const dealii::types::global_dof_index lineDof = *locallyOwnedIter;
-              const std::vector<std::pair<dealii::types::global_dof_index,
+              const global_size_type lineDof = *locallyOwnedIter;
+              const std::vector<std::pair<global_size_type,
                                           ValueType>> *rowData =
                 this->getConstraintEntries(lineDof);
 
@@ -378,7 +377,7 @@ namespace dftefe
             {
               const global_size_type lineDof = *ghostIter;
 
-              const std::vector<std::pair<dealii::types::global_dof_index,
+              const std::vector<std::pair<global_size_type,
                                           ValueType>> *rowData =
                 this->getConstraintEntries(lineDof);
 

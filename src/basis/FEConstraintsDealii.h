@@ -47,6 +47,8 @@ namespace dftefe
     public:
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
+      using SizeTypeVector =
+        utils::MemoryStorage<size_type, memorySpace>;
       FEConstraintsDealii();
       ~FEConstraintsDealii() = default;
       void
@@ -122,15 +124,14 @@ namespace dftefe
       bool                                             d_isClosed;
 
       GlobalSizeTypeVector d_rowConstraintsIdsGlobal;
-      GlobalSizeTypeVector d_rowConstraintsIdsLocal;
-      GlobalSizeTypeVector d_columnConstraintsIdsLocal;
+      SizeTypeVector d_rowConstraintsIdsLocal;
+      SizeTypeVector d_columnConstraintsIdsLocal;
       GlobalSizeTypeVector d_columnConstraintsIdsGlobal;
 
       utils::MemoryStorage<double, memorySpace>    d_columnConstraintsValues;
       utils::MemoryStorage<ValueType, memorySpace> d_constraintsInhomogenities;
 
-      GlobalSizeTypeVector d_rowConstraintsSizes;
-      GlobalSizeTypeVector d_localIndexMapUnflattenedToFlattened;
+      SizeTypeVector d_rowConstraintsSizes;
     };
 
   } // namespace basis

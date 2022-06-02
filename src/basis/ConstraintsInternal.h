@@ -44,34 +44,34 @@ namespace dftefe
       static void
       constraintsDistributeParentToChild(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        size_type                                      blockSize,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const size_type                                      blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsSizes,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const utils::MemoryStorage<size_type, memorySpace>
           &                                        columnConstraintsIdsLocal,
-        utils::MemoryStorage<double, memorySpace> &columnConstraintsValues,
-        utils::MemoryStorage<ValueType, memorySpace>
+        const utils::MemoryStorage<double, memorySpace> &columnConstraintsValues,
+        const utils::MemoryStorage<ValueType, memorySpace>
           &constraintsInhomogenities);
 
       static void
       constraintsDistributeChildToParent(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        size_type                                      blockSize,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const size_type                                      blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsSizes,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const utils::MemoryStorage<size_type, memorySpace>
           &                                        columnConstraintsIdsLocal,
-        utils::MemoryStorage<double, memorySpace> &columnConstraintsValues);
+        const utils::MemoryStorage<double, memorySpace> &columnConstraintsValues);
 
       static void
       constraintsSetConstrainedNodesToZero(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        size_type                                      blockSize,
-        utils::MemoryStorage<global_size_type, memorySpace>
+        const size_type                                      blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal);
     };
 
@@ -85,44 +85,44 @@ namespace dftefe
       constraintsDistributeParentToChild(
         linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &       vectorData,
-        size_type blockSize,
-        utils::MemoryStorage<global_size_type,
+        const size_type blockSize,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
-        utils::MemoryStorage<global_size_type,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsSizes,
-        utils::MemoryStorage<global_size_type,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsIdsLocal,
-        utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+        const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues,
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+        const utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &constraintsInhomogenities);
 
       static void
       constraintsDistributeChildToParent(
         linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &       vectorData,
-        size_type blockSize,
-        utils::MemoryStorage<global_size_type,
+        const size_type blockSize,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
-        utils::MemoryStorage<global_size_type,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsSizes,
-        utils::MemoryStorage<global_size_type,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsIdsLocal,
-        utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+        const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues);
 
       static void
       constraintsSetConstrainedNodesToZero(
         linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &       vectorData,
-        size_type blockSize,
-        utils::MemoryStorage<global_size_type,
+        const size_type blockSize,
+        const utils::MemoryStorage<size_type,
                              dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal);
     };

@@ -12,7 +12,7 @@ set(DFT-EFE-BASIS-SOURCES
 	ParentToChildCellsManagerDealii.cpp
         TriangulationDealiiParallel.cpp
 		ConstraintsInternal.cpp
-#		ConstraintsInternal.cu
+		ConstraintsInternal.cu
         FEConstraintsDealii.cpp
         FEConstraintsBase.cpp
         FEBasisDataStorageDealii.cpp
