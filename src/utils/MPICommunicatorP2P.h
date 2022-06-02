@@ -42,8 +42,7 @@ namespace dftefe
     public:
       MPICommunicatorP2P(
         std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
-        const size_type                                   blockSize,
-        const bool useDeviceAwareMPI = false);
+        const size_type                                   blockSize);
 
       void
       updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
@@ -78,8 +77,6 @@ namespace dftefe
       getBlockSize() const;
 
     private:
-      const bool d_useDeviceAwareMPI;
-
       std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
       size_type d_blockSize;

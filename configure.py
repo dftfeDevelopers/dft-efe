@@ -18,8 +18,12 @@ cmake_dict = {'SLATE_DIR':['', 'Path to SLATE installation',
               'CMAKE_CXX_FLAGS':['','C++ compiler flags',
                                  '--CMAKE_CXX_FLAGS="-g -O2"'], 
               'ENABLE_MPI':['ON','''ON or OFF based on whether to use MPI '''\
-                           '''or not. Default=OFF''',
+                           '''or not. Default=ON''',
                              '--ENABLE_MPI=ON'],
+              'ENABLE_MPI_DEVICE_AWARE':['ON','''ON or OFF based on whether '''\
+                           '''the MPI library is device or cuda aware. Must have '''\
+                           '''--ENABLE_MPI=ON for it to make sense. Default=OFF''',
+                             '--ENABLE_MPI_DEVICE_AWARE=OFF'],                             
               'MPI_C_COMPILER':['', '''MPI C compiler to use. Must have
                                 --ENABLE_MPI=ON for it to make sense.''',
                                   '--MPI_C_COMPILER=mpicc'],
@@ -87,7 +91,7 @@ if __name__ == "__main__":
 
         for key in cmake_dict:
             value = cmake_dict[key][0]
-            if key not in ['ENABLE_MPI', 'ENABLE_CUDA', 'CMAKE_BUILD_TYPE', 'CMAKE_C_COMPILER',
+            if key not in ['ENABLE_MPI', 'ENABLE_MPI_DEVICE_AWARE', 'ENABLE_CUDA', 'CMAKE_BUILD_TYPE', 'CMAKE_C_COMPILER',
                            'CMAKE_CXX_COMPILER', 'MPI_C_COMPILER',
                            'MPI_CXX_COMPILER']:
                 value = wrapInDoubleQuotes(value)

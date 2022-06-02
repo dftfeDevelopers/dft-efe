@@ -36,11 +36,9 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MPICommunicatorP2P<ValueType, memorySpace>::MPICommunicatorP2P(
       std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
-      const size_type                                   blockSize,
-      const bool                                        useDeviceAwareMPI)
+      const size_type                                   blockSize)
       : d_mpiPatternP2P(mpiPatternP2P)
       , d_blockSize(blockSize)
-      , d_useDeviceAwareMPI(useDeviceAwareMPI)
     {
 #ifdef DFTEFE_WITH_MPI
       d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
@@ -55,8 +53,8 @@ namespace dftefe
         d_mpiPatternP2P->getGhostProcIds().size() +
         d_mpiPatternP2P->getTargetProcIds().size());
 
-#  ifdef DFTEFE_WITH_DEVICE
-      if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
         {
           d_ghostDataCopyHostPinned.resize(d_mpiPatternP2P->localGhostSize() *
                                              blockSize,
@@ -95,8 +93,8 @@ namespace dftefe
       ValueType *recvArrayStartPtr =
         dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
-#  ifdef DFTEFE_WITH_DEVICE
-      if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
         recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
 #  endif
 
@@ -138,8 +136,8 @@ namespace dftefe
       // initiate non-blocking sends to target processors
       ValueType *sendArrayStartPtr = d_sendRecvBuffer.begin();
 
-#  ifdef DFTEFE_WITH_DEVICE
-      if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
         {
           MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace> memoryTransfer;
           memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
@@ -196,8 +194,8 @@ namespace dftefe
             MPIErrorCodeHandler::getIsSuccessAndMessage(err);
           throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
 
-#  ifdef DFTEFE_WITH_DEVICE
-          if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+          if (memorySpace == MemorySpace::DEVICE)
             {
               MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                 memoryTransfer;
@@ -232,8 +230,8 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       // initiate non-blocking receives from target processors
       ValueType *recvArrayStartPtr = d_sendRecvBuffer.begin();
-#  ifdef DFTEFE_WITH_DEVICE
-      if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
         recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
 #  endif
 
@@ -266,8 +264,8 @@ namespace dftefe
       ValueType *sendArrayStartPtr =
         dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
-#  ifdef DFTEFE_WITH_DEVICE
-      if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
         {
           MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace> memoryTransfer;
           memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
@@ -327,8 +325,8 @@ namespace dftefe
             MPIErrorCodeHandler::getIsSuccessAndMessage(err);
           throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
 
-#  ifdef DFTEFE_WITH_DEVICE
-          if (memorySpace == MemorySpace::DEVICE && !d_useDeviceAwareMPI)
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+          if (memorySpace == MemorySpace::DEVICE)
             {
               MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                 memoryTransfer;
