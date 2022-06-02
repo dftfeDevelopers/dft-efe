@@ -82,13 +82,13 @@ namespace dftefe
 
       template <utils::MemorySpace memorySpaceDst>
       void
-      getCellValues(const size_type cellId, const ValueType *values);
+      getCellValues(const size_type cellId, ValueType *values) const;
 
       template <utils::MemorySpace memorySpaceDst>
       void
-      getCellQuadValues(const size_type  cellId,
-                        const size_type  quadId,
-                        const ValueType *values);
+      getCellQuadValues(const size_type cellId,
+                        const size_type quadId,
+                        ValueType *     values) const;
 
       const QuadratureRuleContainer &
       getQuadratureRuleContainer() const;

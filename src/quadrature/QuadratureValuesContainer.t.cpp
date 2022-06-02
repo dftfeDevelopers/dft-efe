@@ -131,10 +131,11 @@ namespace dftefe
     QuadratureValuesContainer<ValueType, memorySpace>::
       QuadratureValuesContainer(
         const QuadratureValuesContainer<ValueType, memorySpace> &u)
-        d_quadratureRuleContainer(u.d_quadratureRuleContainer),
-      d_numberComponents(u.d_numberComponents),
-      d_cellStartIds(u.d_cellStartIds), d_numCellEntries(u.d_numCellEntries),
-      d_storage(u.d_storage)
+      : d_quadratureRuleContainer(u.d_quadratureRuleContainer)
+      , d_numberComponents(u.d_numberComponents)
+      , d_cellStartIds(u.d_cellStartIds)
+      , d_numCellEntries(u.d_numCellEntries)
+      , d_storage(u.d_storage)
     {}
 
     //
@@ -144,11 +145,11 @@ namespace dftefe
     QuadratureValuesContainer<ValueType, memorySpace>::
       QuadratureValuesContainer(
         QuadratureValuesContainer<ValueType, memorySpace> &&u)
-        d_quadratureRuleContainer(std::move(u.d_quadratureRuleContainer)),
-      d_numberComponents(std::move(u.d_numberComponents)),
-      d_cellStartIds(std::move(u.d_cellStartIds)),
-      d_numCellEntries(std::move(u.d_numCellEntries)),
-      d_storage(std::move(u.d_storage))
+      : d_quadratureRuleContainer(std::move(u.d_quadratureRuleContainer))
+      , d_numberComponents(std::move(u.d_numberComponents))
+      , d_cellStartIds(std::move(u.d_cellStartIds))
+      , d_numCellEntries(std::move(u.d_numCellEntries))
+      , d_storage(std::move(u.d_storage))
     {}
 
     //
@@ -212,8 +213,8 @@ namespace dftefe
     template <utils::MemorySpace memorySpaceDst>
     void
     QuadratureValuesContainer<ValueType, memorySpace>::getCellValues(
-      const size_type  cellId,
-      const ValueType *values)
+      const size_type cellId,
+      ValueType *     values) const
     {
       size_type size   = nCellQuadraturePoints(cellId) * d_numberComponents;
       size_type offset = cellStartId(cellId);
@@ -224,9 +225,9 @@ namespace dftefe
     template <utils::MemorySpace memorySpaceDst>
     void
     QuadratureValuesContainer<ValueType, memorySpace>::getCellQuadValues(
-      const size_type  cellId,
-      const size_type  quadId,
-      const ValueType *values)
+      const size_type cellId,
+      const size_type quadId,
+      ValueType *     values) const
     {
       size_type size   = d_numberComponents;
       size_type offset = cellStartId(cellId) + quadId * d_numberComponents;
@@ -431,6 +432,9 @@ namespace dftefe
       return w;
     }
 
+    //
+    // w = a*u
+    //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     scale(ValueType                                                a,
@@ -445,6 +449,9 @@ namespace dftefe
                                         linAlgOpContext.getBlasQueue());
     }
 
+    //
+    // u = a*u
+    //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     scale(ValueType                                          a,
