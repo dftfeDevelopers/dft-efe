@@ -143,9 +143,9 @@ namespace dftefe
                          const std::string constraintsName) const override;
 
       void
-        getBasisCenters(const size_type localId,
-                      const std::string constraintsName,
-                      dftefe::utils::Point & basisCenter ) const override;
+      getBasisCenters(const size_type       localId,
+                      const std::string     constraintsName,
+                      dftefe::utils::Point &basisCenter) const override;
 
       //
       // FE specific functions
@@ -214,7 +214,7 @@ namespace dftefe
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;
 
-      std::vector< dealii::Point< dim > d_supportPoints;
+      std::vector < dealii::Point<dim> d_supportPoints;
     };
 
   } // end of namespace basis

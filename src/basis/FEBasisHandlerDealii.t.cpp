@@ -517,9 +517,9 @@ namespace dftefe
         }
 
       // not compatible with hp refinement
-      dealii::MappingQ1<dim> mappingDealii (d_feBMDealii->getFEOrder(0));
-      dealii::DoFTools::map_dofs_to_support_points<dim,dim>(mappingDealii,d_feBMDealii.get()->getDoFHandler(),d_supportPoints);
-
+      dealii::MappingQ1<dim> mappingDealii(d_feBMDealii->getFEOrder(0));
+      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
+        mappingDealii, d_feBMDealii.get()->getDoFHandler(), d_supportPoints);
     }
 #endif // DFTEFE_WITH_MPI
     template <typename ValueType,
@@ -635,13 +635,15 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    void FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisCenters
-                    (const size_type localId,
-                    const std::string constraintsName,
-                    dftefe::utils::Point & basisCenter ) const
+    void
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisCenters(
+      const size_type       localId,
+      const std::string     constraintsName,
+      dftefe::utils::Point &basisCenter) const
     {
-      global_size_type globalId = localToGlobalIndex(localId,constraintsName);
-      dftefe::utils::convertToDftefePoint<dim>( d_supportPoints[globalId],basisCenter);
+      global_size_type globalId = localToGlobalIndex(localId, constraintsName);
+      dftefe::utils::convertToDftefePoint<dim>(d_supportPoints[globalId],
+                                               basisCenter);
     }
 
     template <typename ValueType,

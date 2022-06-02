@@ -101,9 +101,9 @@ namespace dftefe
                          const std::string constraintsName) const = 0;
 
       virtual void
-      getBasisCenters(const size_type localId,
-                      const std::string constraintsName,
-                      dftefe::utils::Point & basisCenter ) const = 0 ;
+      getBasisCenters(const size_type       localId,
+                      const std::string     constraintsName,
+                      dftefe::utils::Point &basisCenter) const = 0;
 
       //
       // FE specific functions

@@ -24,10 +24,11 @@ namespace dftefe
       for (global_size_type index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const unsigned int blockIndex      = index / contiguousBlockSize;
-          const unsigned int intraBlockIndex =  index - blockIndex*contiguousBlockSize;
+          const unsigned int blockIndex = index / contiguousBlockSize;
+          const unsigned int intraBlockIndex =
+            index - blockIndex * contiguousBlockSize;
           xVec[constraintLocalRowIdsUnflattened[blockIndex] * blockSize +
-               intraBlockIndex]              = 0;
+               intraBlockIndex] = 0;
         }
     }
 
@@ -48,14 +49,15 @@ namespace dftefe
       if (numConstrainedDofs == 0)
         return;
 
-      setzeroKernel<<< numConstrainedDofs*blockSize / dftefe::utils::BLOCK_SIZE + 1,
-                      dftefe::utils::BLOCK_SIZE >>>(blockSize,
-                             dftefe::utils::makeDataTypeDeviceCompatible(
-                               vectorData.begin()),
-                             dftefe::utils::makeDataTypeDeviceCompatible(
-                               rowConstraintsIdsLocal.begin()),
-                             numConstrainedDofs,
-                             blockSize);
+      setzeroKernel<<<
+        numConstrainedDofs * blockSize / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(vectorData.begin()),
+        dftefe::utils::makeDataTypeDeviceCompatible(
+          rowConstraintsIdsLocal.begin()),
+        numConstrainedDofs,
+        blockSize);
     }
 
 
