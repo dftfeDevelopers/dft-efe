@@ -3,13 +3,8 @@ import os
 import textwrap
 import traceback
 
-cmake_dict = {'DFTEFE_BLAS_LIBRARIES':['', 'Path to blas libraries',
-                                       '''--DFTEFE_BLAS_LIBRARIES=
-                                       "-L/path/to/blas/lib/intel64
-                                       -Wl,--no-as-needed -lmkl_intel_lp64 
-                                       -lmkl_gnu_thread -lmkl_core
-                                       -lgomp -lpthread
-                                       -lm -ldl"'''],
+cmake_dict = {'SLATE_DIR':['', 'Path to SLATE installation',
+                                       '--SLATE_DIR=/path/to/SLATE/installation'],
               'DEALII_PATH':['','Path to the deal.ii installation',
                                    '--DEALII_PATH=/path/to/deal.ii/installation'],
               'CMAKE_BUILD_TYPE':['', 'Build type Debug/Release',
