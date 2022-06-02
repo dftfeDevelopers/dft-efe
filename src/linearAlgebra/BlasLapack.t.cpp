@@ -241,8 +241,8 @@ namespace dftefe
       template <typename ValueType>
       void
       gemmStridedVarBatched(
-        Layout                                       layout,
-        size_type                                    numMats,
+        const Layout                                 layout,
+        const size_type                              numMats,
         const Op *                                   transA,
         const Op *                                   transB,
         const size_type *                            stridea,
@@ -251,12 +251,12 @@ namespace dftefe
         const size_type *                            m,
         const size_type *                            n,
         const size_type *                            k,
-        ValueType                                    alpha,
+        const ValueType                              alpha,
         const ValueType *                            dA,
         const size_type *                            ldda,
         const ValueType *                            dB,
         const size_type *                            lddb,
-        ValueType                                    beta,
+        const ValueType                              beta,
         ValueType *                                  dC,
         const size_type *                            lddc,
         BlasQueue<dftefe::utils::MemorySpace::HOST> &BlasQueue)
@@ -291,8 +291,8 @@ namespace dftefe
       template <typename ValueType>
       void
       gemmStridedVarBatched(
-        Layout                                         layout,
-        size_type                                      numMats,
+        const Layout                                   layout,
+        const size_type                                numMats,
         const Op *                                     transA,
         const Op *                                     transB,
         const size_type *                              stridea,
@@ -301,12 +301,12 @@ namespace dftefe
         const size_type *                              m,
         const size_type *                              n,
         const size_type *                              k,
-        ValueType                                      alpha,
+        const ValueType                                alpha,
         const ValueType *                              dA,
         const size_type *                              ldda,
         const ValueType *                              dB,
         const size_type *                              lddb,
-        ValueType                                      beta,
+        const ValueType                                beta,
         ValueType *                                    dC,
         const size_type *                              lddc,
         BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
