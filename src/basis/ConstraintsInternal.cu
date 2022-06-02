@@ -25,7 +25,7 @@ namespace dftefe
            index += blockDim.x * gridDim.x)
         {
           const unsigned int blockIndex      = index / contiguousBlockSize;
-          const unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const unsigned int intraBlockIndex =  index - blockIndex*contiguousBlockSize;
           xVec[constraintLocalRowIdsUnflattened[blockIndex] * blockSize +
                intraBlockIndex]              = 0;
         }
@@ -48,8 +48,8 @@ namespace dftefe
       if (numConstrainedDofs == 0)
         return;
 
-      setzeroKernel<<<min((blockSize + 255) / 256 * numConstrainedDofs, 30000),
-                      256>>>(blockSize,
+      setzeroKernel<<< numConstrainedDofs*blockSize / dftefe::utils::BLOCK_SIZE + 1,
+                      dftefe::utils::BLOCK_SIZE >>>(blockSize,
                              dftefe::utils::makeDataTypeDeviceCompatible(
                                vectorData.begin()),
                              dftefe::utils::makeDataTypeDeviceCompatible(
