@@ -21,6 +21,19 @@ namespace dftefe
       {
       public:
         /**
+         * @brief Template for performing \f$ z = \alpha x$
+         * @param[in] size size of the array
+         * @param[in] \f$ alpha \f$ scalar
+         * @param[in] x array
+         * @param[out] z array
+         */
+        static void
+        ascale(size_type        size,
+               ValueType        alpha,
+               const ValueType *x,
+               ValueType *      z);
+
+        /**
          * @brief Template for performing \f$ z = \alpha x + \beta y \f$
          * @param[in] size size of the array
          * @param[in] \f$ alpha \f$ scalar
@@ -74,6 +87,12 @@ namespace dftefe
       class Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>
       {
       public:
+        static void
+        ascale(size_type        size,
+               ValueType        alpha,
+               const ValueType *x,
+               ValueType *      z);
+
         static void
         axpby(size_type        size,
               ValueType        alpha,

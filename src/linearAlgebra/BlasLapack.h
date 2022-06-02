@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian.
+ * @author Vishal Subramanian
  */
 
 #ifndef dftefeBlasWrappers_h
@@ -80,6 +80,24 @@ namespace dftefe
            ValueType2 *                        y,
            size_type                           incy,
            BlasQueue<memorySpace> &            BlasQueue);
+
+
+
+      /**
+       * @brief Template for performing \f$ z = \alpha x$
+       * @param[in] size size of the array
+       * @param[in] \f$ alpha \f$ scalar
+       * @param[in] x array
+       * @param[out] z array
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      ascale(size_type               n,
+             ValueType               alpha,
+             const ValueType         x,
+             ValueType *             z,
+             BlasQueue<memorySpace> &BlasQueue);
 
 
       /**
@@ -176,6 +194,7 @@ namespace dftefe
                             const Op *              transB,
                             const size_type *       stridea,
                             const size_type *       strideb,
+                            const size_type *       stridec,
                             const size_type *       m,
                             const size_type *       n,
                             const size_type *       k,

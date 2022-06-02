@@ -79,6 +79,18 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
+      ascale(const size_type         n,
+             const ValueType         alpha,
+             const ValueType *       x,
+             ValueType *             z,
+             BlasQueue<memorySpace> &BlasQueue)
+      {
+        Kernels<ValueType, memorySpace>::ascale(n, alpha, x, z);
+      }
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
       axpby(const size_type         n,
             const ValueType         alpha,
             const ValueType *       x,
@@ -235,6 +247,7 @@ namespace dftefe
         const Op *                                   transB,
         const size_type *                            stridea,
         const size_type *                            strideb,
+        const size_type *                            stridec,
         const size_type *                            m,
         const size_type *                            n,
         const size_type *                            k,
@@ -268,26 +281,10 @@ namespace dftefe
                        dC + cumulativeC,
                        *(lddc + ibatch));
 
-            if (layout == Layout::ColMajor)
-              {
-                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
-                                 (*(ldda + ibatch)) * (*k) :
-                                 (*(ldda + ibatch)) * (*m);
-                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
-                                 (*(lddb + ibatch)) * (*n) :
-                                 (*(lddb + ibatch)) * (*k);
-                cumulativeC += (*(lddc + ibatch)) * (*n);
-              }
-            else if (layout == Layout::RowMajor)
-              {
-                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
-                                 (*(ldda + ibatch)) * (*m) :
-                                 (*(ldda + ibatch)) * (*k);
-                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
-                                 (*(lddb + ibatch)) * (*k) :
-                                 (*(lddb + ibatch)) * (*n);
-                cumulativeC += (*(lddc + ibatch)) * (*m);
-              }
+
+            cumulativeA += *(stridea);
+            cumulativeB += *(strideb);
+            cumulativeC += *(stridec);
           }
       }
 
@@ -300,6 +297,7 @@ namespace dftefe
         const Op *                                     transB,
         const size_type *                              stridea,
         const size_type *                              strideb,
+        const size_type *                              stridec,
         const size_type *                              m,
         const size_type *                              n,
         const size_type *                              k,
@@ -334,26 +332,10 @@ namespace dftefe
                        *(lddc + ibatch),
                        BlasQueue);
 
-            if (layout == Layout::ColMajor)
-              {
-                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
-                                 (*(ldda + ibatch)) * (*k) :
-                                 (*(ldda + ibatch)) * (*m);
-                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
-                                 (*(lddb + ibatch)) * (*n) :
-                                 (*(lddb + ibatch)) * (*k);
-                cumulativeC += (*(lddc + ibatch)) * (*n);
-              }
-            else if (layout == Layout::RowMajor)
-              {
-                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
-                                 (*(ldda + ibatch)) * (*m) :
-                                 (*(ldda + ibatch)) * (*k);
-                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
-                                 (*(lddb + ibatch)) * (*k) :
-                                 (*(lddb + ibatch)) * (*n);
-                cumulativeC += (*(lddc + ibatch)) * (*m);
-              }
+
+            cumulativeA += *(stridea);
+            cumulativeB += *(strideb);
+            cumulativeC += *(stridec);
           }
       }
     } // namespace blasLapack
