@@ -225,6 +225,137 @@ namespace dftefe
                    lddc,
                    BlasQueue);
       }
+
+      template <typename ValueType>
+      void
+      gemmStridedVarBatched(
+        Layout                                       layout,
+        size_type                                    numMats,
+        const Op *                                   transA,
+        const Op *                                   transB,
+        const size_type *                            stridea,
+        const size_type *                            strideb,
+        const size_type *                            m,
+        const size_type *                            n,
+        const size_type *                            k,
+        ValueType                                    alpha,
+        const ValueType *                            dA,
+        const size_type *                            ldda,
+        const ValueType *                            dB,
+        const size_type *                            lddb,
+        ValueType                                    beta,
+        ValueType *                                  dC,
+        const size_type *                            lddc,
+        BlasQueue<dftefe::utils::MemorySpace::HOST> &BlasQueue)
+      {
+        size_type cumulativeA = 0;
+        size_type cumulativeB = 0;
+        size_type cumulativeC = 0;
+        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+          {
+            blas::gemm(layout,
+                       *(transA + ibatch),
+                       *(transB + ibatch),
+                       *(m + ibatch),
+                       *(n + ibatch),
+                       *(k + ibatch),
+                       alpha,
+                       dA + cumulativeA,
+                       *(ldda + ibatch),
+                       dB + cumulativeB,
+                       *(lddb + ibatch),
+                       beta,
+                       dC + cumulativeC,
+                       *(lddc + ibatch));
+
+            if (layout == Layout::ColMajor)
+              {
+                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
+                                 (*(ldda + ibatch)) * (*k) :
+                                 (*(ldda + ibatch)) * (*m);
+                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
+                                 (*(lddb + ibatch)) * (*n) :
+                                 (*(lddb + ibatch)) * (*k);
+                cumulativeC += (*(lddc + ibatch)) * (*n);
+              }
+            else if (layout == Layout::RowMajor)
+              {
+                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
+                                 (*(ldda + ibatch)) * (*m) :
+                                 (*(ldda + ibatch)) * (*k);
+                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
+                                 (*(lddb + ibatch)) * (*k) :
+                                 (*(lddb + ibatch)) * (*n);
+                cumulativeC += (*(lddc + ibatch)) * (*m);
+              }
+          }
+      }
+
+      template <typename ValueType>
+      void
+      gemmStridedVarBatched(
+        Layout                                         layout,
+        size_type                                      numMats,
+        const Op *                                     transA,
+        const Op *                                     transB,
+        const size_type *                              stridea,
+        const size_type *                              strideb,
+        const size_type *                              m,
+        const size_type *                              n,
+        const size_type *                              k,
+        ValueType                                      alpha,
+        const ValueType *                              dA,
+        const size_type *                              ldda,
+        const ValueType *                              dB,
+        const size_type *                              lddb,
+        ValueType                                      beta,
+        ValueType *                                    dC,
+        const size_type *                              lddc,
+        BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+      {
+        size_type cumulativeA = 0;
+        size_type cumulativeB = 0;
+        size_type cumulativeC = 0;
+        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+          {
+            blas::gemm(layout,
+                       *(transA + ibatch),
+                       *(transB + ibatch),
+                       *(m + ibatch),
+                       *(n + ibatch),
+                       *(k + ibatch),
+                       alpha,
+                       dA + cumulativeA,
+                       *(ldda + ibatch),
+                       dB + cumulativeB,
+                       *(lddb + ibatch),
+                       beta,
+                       dC + cumulativeC,
+                       *(lddc + ibatch),
+                       BlasQueue);
+
+            if (layout == Layout::ColMajor)
+              {
+                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
+                                 (*(ldda + ibatch)) * (*k) :
+                                 (*(ldda + ibatch)) * (*m);
+                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
+                                 (*(lddb + ibatch)) * (*n) :
+                                 (*(lddb + ibatch)) * (*k);
+                cumulativeC += (*(lddc + ibatch)) * (*n);
+              }
+            else if (layout == Layout::RowMajor)
+              {
+                cumulativeA += (*(transA + ibatch) == Op::NoTrans) ?
+                                 (*(ldda + ibatch)) * (*m) :
+                                 (*(ldda + ibatch)) * (*k);
+                cumulativeB += (*(transB + ibatch) == Op::NoTrans) ?
+                                 (*(lddb + ibatch)) * (*k) :
+                                 (*(lddb + ibatch)) * (*n);
+                cumulativeC += (*(lddc + ibatch)) * (*m);
+              }
+          }
+      }
     } // namespace blasLapack
   }   // namespace linearAlgebra
 
