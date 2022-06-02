@@ -96,6 +96,27 @@ namespace dftefe
       const_iterator
       end() const;
 
+      void
+      updateGhostValues(const size_type communicationChannel = 0);
+
+      void
+      accumulateAddLocallyOwned(const size_type communicationChannel = 0);
+
+      void
+      updateGhostValuesBegin(const size_type communicationChannel = 0);
+
+      void
+      updateGhostValuesEnd();
+
+      void
+      accumulateAddLocallyOwnedBegin(const size_type communicationChannel = 0);
+
+      void
+      accumulateAddLocallyOwnedEnd();
+
+      const linearAlgebra::LinAlgOpContext &
+      getLinAlgContext() const;
+
     private:
       const std::string                                d_constraintsName;
       linearAlgebra::LinAlgOpContext                   d_linAlgOpContext;

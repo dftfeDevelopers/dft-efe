@@ -294,6 +294,8 @@ namespace dftefe
         "In processor " + std::to_string(d_myRank) +
           ", the ghost indices passed to MPIPatternP2P is not a strictly increasing set.");
 
+      d_ghostIndices = ghostIndices;
+
       // copy the ghostIndices to d_ghostIndicesSetSTL
       d_ghostIndicesSetSTL.clear();
       std::copy(ghostIndices.begin(),
@@ -304,37 +306,30 @@ namespace dftefe
         OptimizedIndexSet<global_size_type>(d_ghostIndicesSetSTL);
 
       d_numGhostIndices = ghostIndices.size();
-      MemoryTransfer<memorySpace, MemorySpace::HOST> memoryTransfer;
-      d_ghostIndices.resize(d_numGhostIndices);
-      memoryTransfer.copy(d_numGhostIndices,
-                          d_ghostIndices.begin(),
-                          &ghostIndices[0]);
 
-      std::vector<global_size_type> allOwnedRanges(0);
+      MemoryTransfer<memorySpace, MemorySpace::HOST> memoryTransfer;
+
+      d_allOwnedRanges.clear();
       getAllOwnedRanges(d_locallyOwnedRange.first,
                         d_locallyOwnedRange.second,
-                        allOwnedRanges,
+                        d_allOwnedRanges,
                         d_mpiComm);
 
       std::vector<size_type> overlappingRangeIds =
-        getOverlappingRangeIds(allOwnedRanges);
+        getOverlappingRangeIds(d_allOwnedRanges);
       throwException<LogicError>(
         overlappingRangeIds.size() == 0,
         "Detected overlapping ranges among the locallyOwnedRanges passed "
         "to MPIPatternP2P");
 
       for (unsigned int i = 0; i < d_nprocs; ++i)
-        d_nGlobalIndices += allOwnedRanges[2 * i + 1] - allOwnedRanges[2 * i];
-
-      d_allOwnedRanges.resize(2 * d_nprocs);
-      memoryTransfer.copy(2 * d_nprocs,
-                          d_allOwnedRanges.begin(),
-                          &allOwnedRanges[0]);
+        d_nGlobalIndices +=
+          d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
 
       std::map<size_type, std::vector<size_type>>
         ghostProcIdToLocalGhostIndices;
       getGhostProcIdToLocalGhostIndicesMap(ghostIndices,
-                                           allOwnedRanges,
+                                           d_allOwnedRanges,
                                            ghostProcIdToLocalGhostIndices,
                                            d_mpiComm);
 
@@ -343,30 +338,27 @@ namespace dftefe
       d_numGhostIndicesInGhostProcs.resize(d_numGhostProcs);
       d_localGhostIndicesRanges.resize(2 * d_numGhostProcs);
 
-      std::vector<size_type> ghostProcIdsTmp(d_numGhostProcs);
-      std::vector<size_type> numGhostIndicesInGhostProcsTmp(d_numGhostProcs);
       std::vector<size_type> flattenedLocalGhostIndicesTmp(0);
-      std::vector<size_type> localGhostIndicesRangesTmp(2 * d_numGhostProcs);
       auto                   it = ghostProcIdToLocalGhostIndices.begin();
       unsigned int           iGhostProc = 0;
       for (; it != ghostProcIdToLocalGhostIndices.end(); ++it)
         {
-          ghostProcIdsTmp[iGhostProc] = it->first;
+          d_ghostProcIds[iGhostProc] = it->first;
           const std::vector<size_type> localGhostIndicesInGhostProc =
             it->second;
           bool isContiguous = checkContiguity(localGhostIndicesInGhostProc);
           std::string msg   = "In rank " + std::to_string(d_myRank) +
                             ", the local ghost indices that are owned"
                             " by rank " +
-                            std::to_string(ghostProcIdsTmp[iGhostProc]) +
+                            std::to_string(d_ghostProcIds[iGhostProc]) +
                             " does not form a contiguous set.";
           throwException<LogicError>(isContiguous, msg);
-          numGhostIndicesInGhostProcsTmp[iGhostProc] =
+          d_numGhostIndicesInGhostProcs[iGhostProc] =
             localGhostIndicesInGhostProc.size();
 
-          localGhostIndicesRangesTmp[2 * iGhostProc] =
+          d_localGhostIndicesRanges[2 * iGhostProc] =
             *(localGhostIndicesInGhostProc.begin());
-          localGhostIndicesRangesTmp[2 * iGhostProc + 1] =
+          d_localGhostIndicesRanges[2 * iGhostProc + 1] =
             *(localGhostIndicesInGhostProc.end() - 1) + 1;
           //
           // Append localGhostIndicesInGhostProc to
@@ -386,17 +378,7 @@ namespace dftefe
       throwException<DomainError>(flattenedLocalGhostIndicesTmp.size() ==
                                     d_numGhostIndices,
                                   msg);
-      memoryTransfer.copy(d_numGhostProcs,
-                          d_ghostProcIds.begin(),
-                          &ghostProcIdsTmp[0]);
 
-      memoryTransfer.copy(d_numGhostProcs,
-                          d_numGhostIndicesInGhostProcs.begin(),
-                          &numGhostIndicesInGhostProcsTmp[0]);
-
-      memoryTransfer.copy(2 * d_numGhostProcs,
-                          d_localGhostIndicesRanges.begin(),
-                          &localGhostIndicesRangesTmp[0]);
 
       d_flattenedLocalGhostIndices.resize(d_numGhostIndices);
       memoryTransfer.copy(d_numGhostIndices,
@@ -411,15 +393,10 @@ namespace dftefe
       //////////// Target Data Evaluation Begin ////////
       ///////////////////////////////////////////////////
       std::shared_ptr<utils::MPIRequestersBase> mpirequesters =
-        std::make_shared<utils::MPIRequestersNBX>(ghostProcIdsTmp, d_mpiComm);
-      const std::vector<size_type> targetProcIdsTmp =
-        mpirequesters->getRequestingRankIds();
-      d_numTargetProcs = targetProcIdsTmp.size();
-      d_targetProcIds.resize(d_numTargetProcs);
-      memoryTransfer.copy(d_numTargetProcs,
-                          d_targetProcIds.begin(),
-                          &targetProcIdsTmp[0]);
-      std::vector<size_type> numOwnedIndicesForTargetProcsTmp(d_numTargetProcs);
+        std::make_shared<utils::MPIRequestersNBX>(d_ghostProcIds, d_mpiComm);
+      d_targetProcIds  = mpirequesters->getRequestingRankIds();
+      d_numTargetProcs = d_targetProcIds.size();
+      d_numOwnedIndicesForTargetProcs.resize(d_numTargetProcs);
 
       std::vector<MPI_Request> sendRequests(d_numGhostProcs);
       std::vector<MPI_Status>  sendStatuses(d_numGhostProcs);
@@ -429,8 +406,8 @@ namespace dftefe
       for (unsigned int iGhost = 0; iGhost < d_numGhostProcs; ++iGhost)
         {
           const size_type numGhostIndicesInProc =
-            numGhostIndicesInGhostProcsTmp[iGhost];
-          const int   ghostProcId = ghostProcIdsTmp[iGhost];
+            d_numGhostIndicesInGhostProcs[iGhost];
+          const int   ghostProcId = d_ghostProcIds[iGhost];
           int         err         = MPI_Isend(&numGhostIndicesInProc,
                               1,
                               MPI_UNSIGNED,
@@ -446,8 +423,8 @@ namespace dftefe
 
       for (unsigned int iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
         {
-          const int targetProcId = targetProcIdsTmp[iTarget];
-          int       err = MPI_Irecv(&numOwnedIndicesForTargetProcsTmp[iTarget],
+          const int   targetProcId = d_targetProcIds[iTarget];
+          int         err = MPI_Irecv(&d_numOwnedIndicesForTargetProcs[iTarget],
                               1,
                               MPI_UNSIGNED,
                               targetProcId,
@@ -475,8 +452,8 @@ namespace dftefe
       throwException(err == MPI_SUCCESS, errMsg);
 
       size_type totalOwnedIndicesForTargetProcs =
-        std::accumulate(numOwnedIndicesForTargetProcsTmp.begin(),
-                        numOwnedIndicesForTargetProcsTmp.end(),
+        std::accumulate(d_numOwnedIndicesForTargetProcs.begin(),
+                        d_numOwnedIndicesForTargetProcs.end(),
                         0);
       std::vector<size_type> flattenedLocalTargetIndicesTmp(
         totalOwnedIndicesForTargetProcs);
@@ -485,8 +462,8 @@ namespace dftefe
       for (unsigned int iGhost = 0; iGhost < d_numGhostProcs; ++iGhost)
         {
           const int numGhostIndicesInProc =
-            numGhostIndicesInGhostProcsTmp[iGhost];
-          const int ghostProcId = ghostProcIdsTmp[iGhost];
+            d_numGhostIndicesInGhostProcs[iGhost];
+          const int ghostProcId = d_ghostProcIds[iGhost];
 
           // We need to send what is the local index in the ghost processor
           // (i.e., the processor that owns the current processor's ghost
@@ -500,7 +477,7 @@ namespace dftefe
               const global_size_type ghostGlobalIndex =
                 ghostIndices[ghostLocalIndex];
               const global_size_type ghostProcOwnedIndicesStart =
-                allOwnedRanges[2 * ghostProcId];
+                d_allOwnedRanges[2 * ghostProcId];
               localIndicesForGhostProc[iIndex] =
                 (size_type)(ghostGlobalIndex - ghostProcOwnedIndicesStart);
             }
@@ -522,9 +499,9 @@ namespace dftefe
       startIndex = 0;
       for (unsigned int iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
         {
-          const int targetProcId = targetProcIdsTmp[iTarget];
+          const int targetProcId = d_targetProcIds[iTarget];
           const int numOwnedIndicesForTarget =
-            numOwnedIndicesForTargetProcsTmp[iTarget];
+            d_numOwnedIndicesForTargetProcs[iTarget];
           int err = MPI_Irecv(&flattenedLocalTargetIndicesTmp[startIndex],
                               numOwnedIndicesForTarget,
                               MPI_UNSIGNED,
@@ -553,10 +530,6 @@ namespace dftefe
                std::to_string(err);
       throwException(err == MPI_SUCCESS, errMsg);
 
-      d_numOwnedIndicesForTargetProcs.resize(d_numTargetProcs);
-      memoryTransfer.copy(d_numTargetProcs,
-                          d_numOwnedIndicesForTargetProcs.begin(),
-                          &numOwnedIndicesForTargetProcsTmp[0]);
 
       d_flattenedLocalTargetIndices.resize(totalOwnedIndicesForTargetProcs);
       memoryTransfer.copy(totalOwnedIndicesForTargetProcs,
@@ -580,7 +553,7 @@ namespace dftefe
       , d_ghostIndices(0)
       , d_numLocallyOwnedIndices(0)
       , d_numGhostIndices(0)
-      , d_ghostIndicesSetSTL(0)
+      , d_ghostIndices(0)
       , d_numGhostProcs(0)
       , d_ghostProcIds(0)
       , d_numGhostIndicesInGhostProcs(0)
@@ -601,35 +574,38 @@ namespace dftefe
           "(i.e., the second value in the range is less than the first value).");
       d_numLocallyOwnedIndices =
         d_locallyOwnedRange.second - d_locallyOwnedRange.first;
-      std::vector<global_size_type> allOwnedRanges = {
+      std::vector<global_size_type> d_allOwnedRanges = {
         d_locallyOwnedRange.first, d_locallyOwnedRange.second};
       for (unsigned int i = 0; i < d_nprocs; ++i)
-        d_nGlobalIndices += allOwnedRanges[2 * i + 1] - allOwnedRanges[2 * i];
-
-      d_allOwnedRanges.resize(2 * d_nprocs);
-      memoryTransfer.copy(2 * d_nprocs,
-                          d_allOwnedRanges.begin(),
-                          &allOwnedRanges[0]);
+        d_nGlobalIndices +=
+          d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
     }
 
 #endif
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::GlobalSizeTypeVectorHost &
+    std::pair<global_size_type, global_size_type>
+    MPIPatternP2P<memorySpace>::getLocallyOwnedRange() const
+    {
+      return d_locallyOwnedRange;
+    }
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    const std::vector<global_size_type> &
     MPIPatternP2P<memorySpace>::getGhostIndices() const
     {
       return d_ghostIndices;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getGhostProcIds() const
     {
       return d_ghostProcIds;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getNumGhostIndicesInProcs() const
     {
       return d_numGhostIndicesInGhostProcs;
@@ -637,7 +613,7 @@ namespace dftefe
 
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
     {
       return d_localGhostIndicesRanges;
@@ -706,14 +682,14 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getTargetProcIds() const
     {
       return d_targetProcIds;
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    const typename utils::MPIPatternP2P<memorySpace>::SizeTypeVectorHost &
+    const std::vector<size_type> &
     MPIPatternP2P<memorySpace>::getNumOwnedIndicesForTargetProcs() const
     {
       return d_numOwnedIndicesForTargetProcs;

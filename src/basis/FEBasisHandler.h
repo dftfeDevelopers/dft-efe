@@ -60,6 +60,9 @@ namespace dftefe
       bool
       isDistributed() const = 0;
 
+      virtual const BasisManager &
+      getBasisManager() const = 0;
+
       virtual const Constraints<ValueType, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
@@ -97,11 +100,23 @@ namespace dftefe
       localToGlobalIndex(const size_type   localId,
                          const std::string constraintsName) const = 0;
 
+      virtual void
+      getBasisCenters(const size_type       localId,
+                      const std::string     constraintsName,
+                      dftefe::utils::Point &basisCenter) const = 0;
+
       //
       // FE specific functions
       //
+
       virtual size_type
-      numLocallyOwnedCellDofs(const size_type cellId) const = 0;
+      nLocallyOwnedCells() const = 0;
+
+      virtual size_type
+      nLocallyOwnedCellDofs(const size_type cellId) const = 0;
+
+      virtual size_type
+      nCumulativeLocallyOwnedCellDofs() const = 0;
 
       virtual const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(

@@ -65,6 +65,9 @@ namespace dftefe
       bool
       isDistributed() const = 0;
 
+      virtual const BasisManager &
+      getBasisManager() const = 0;
+
       virtual const Constraints<ValueType, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
@@ -101,6 +104,11 @@ namespace dftefe
       virtual global_size_type
       localToGlobalIndex(const size_type   localId,
                          const std::string constraintsName) const = 0;
+
+      virtual void
+      getBasisCenters(const size_type       localId,
+                      const std::string     constraintsName,
+                      dftefe::utils::Point &basisCenter) const = 0;
     };
 
   } // end of namespace basis

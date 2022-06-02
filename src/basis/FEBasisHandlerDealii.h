@@ -97,6 +97,9 @@ namespace dftefe
 
       ~FEBasisHandlerDealii() = default;
 
+      const BasisManager &
+      getBasisManager() const override;
+
       bool
       isDistributed() const override;
 
@@ -139,11 +142,22 @@ namespace dftefe
       localToGlobalIndex(const size_type   localId,
                          const std::string constraintsName) const override;
 
+      void
+      getBasisCenters(const size_type       localId,
+                      const std::string     constraintsName,
+                      dftefe::utils::Point &basisCenter) const override;
+
       //
       // FE specific functions
       //
       size_type
-      numLocallyOwnedCellDofs(const size_type cellId) const override;
+      nLocallyOwnedCells() const override;
+
+      size_type
+      nLocallyOwnedCellDofs(const size_type cellId) const override;
+
+      size_type
+      nCumulativeLocallyOwnedCellDofs() const override;
 
       const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(
@@ -199,6 +213,8 @@ namespace dftefe
         d_mpiPatternP2PMap;
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;
+
+      std::vector < dealii::Point<dim> d_supportPoints;
     };
 
   } // end of namespace basis

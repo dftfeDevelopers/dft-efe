@@ -73,6 +73,9 @@ namespace dftefe
 
       ~FEBasisDataStorageDealii() = default;
 
+      const BasisManager &
+      getBasisManager() const override;
+
       void
       evaluateBasisData(
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -86,6 +89,8 @@ namespace dftefe
       void
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) override;
+
+
 
       //      std::shared_ptr<const quadrature::QuadratureRuleContainer>
       //      getCellQuadratureRuleContainer(std::shared_ptr<Storage>>

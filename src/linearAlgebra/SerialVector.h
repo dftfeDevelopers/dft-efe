@@ -58,7 +58,7 @@ namespace dftefe
       // dependent names are not considered)
       //
       using Vector<ValueType, memorySpace>::d_storage;
-      using Vector<ValueType, memorySpace>::d_BlasQueue;
+      using Vector<ValueType, memorySpace>::d_linAlgOpContext;
       using Vector<ValueType, memorySpace>::d_vectorAttributes;
       using Vector<ValueType, memorySpace>::d_globalSize;
       using Vector<ValueType, memorySpace>::d_locallyOwnedSize;
@@ -102,12 +102,12 @@ namespace dftefe
       /**
        * @brief Constructor for SerialVector with size and initial value arguments
        * @param[in] size size of the SerialVector
+       * @param[in] pointer to LinAlgOpContext object
        * @param[in] initVal initial value of elements of the SerialVector
        */
-      explicit SerialVector(
-        size_type                                           size,
-        ValueType                                           initVal,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+      explicit SerialVector(size_type                     size,
+                            LinAlgOpContext<memorySpace> *linAlgOpContext,
+                            ValueType                     initVal);
 
       /**
        * @brief Constructor with predefined Vector::Storage (i.e., utils::MemoryStorage).
@@ -120,16 +120,16 @@ namespace dftefe
        *
        * @param[in] storage unique_ptr to Vector::Storage whose ownership
        * is to be transfered to the SerialVector
+       * @param[in] pointer to LinAlgOpContext object
        *
        * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the SerialVector.
        * Thus, after the function call \p storage will point to NULL and any
        * access through \p storage will lead to <b>undefined behavior</b>.
        *
        */
-      SerialVector(
-        std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-                                                            storage,
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
+      SerialVector(std::unique_ptr<
+                     typename Vector<ValueType, memorySpace>::Storage> storage,
+                   LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the SerialVector

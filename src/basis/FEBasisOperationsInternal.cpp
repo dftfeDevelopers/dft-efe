@@ -20,35 +20,40 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
-
-#ifndef dftefeLinAlgOpContext_h
-#define dftefeLinAlgOpContext_h
-
-#include <utils/MemorySpaceType.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
+#include <basis/FEBasisOperationsInternal.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace basis
   {
-    template <utils::MemorySpace memorySpace>
-    class LinAlgOpContext
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    FEBasisOperationsInternal::copyFieldToCellWiseData(
+      const ValueType *                      data,
+      const size_type                        numComponents,
+      const size_type *                      cellLocalIdsStartPtr,
+      const std::vector<size_type> &         numCellDofs,
+      MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
     {
-    public:
-      LinAlgOpContext(blasLapack::BlasQueue<memorySpace> *blasQueue);
+      auto            itCellWiseStorageBegin = cellWiseStorage.begin();
+      const size_type numCells               = numCellDofs.size();
+      size_type       cumulativeCellDofs     = 0;
+      for (size_type iCell = 0; iCell < numCells; ++iCell)
+        {
+          const size_type cellDofs = numCellDofs[iCell];
+          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
+            {
+              const size_type localId =
+                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
+              auto srcPtr = data + localId * numComponents;
+              auto dstPtr = itCellWiseStorageBegin +
+                            (cumulativeCellDofs + iDof) * numComponents;
+              std::copy(srcPtr, srcPtr + numComponents, dstPtr);
+            }
+          cumulativeCellDofs += cellDofs;
+        }
+    }
 
-      void
-      setBlasQueue(blasLapack::BlasQueue<memorySpace> *blasQueue);
-
-      blasLapack::BlasQueue<memorySpace> &
-      getBlasQueue();
-
-    private:
-      blasLapack::BlasQueue<memorySpace> *d_blasQueue;
-
-    }; // end of LinAlgOpContext
-  }    // end of namespace linearAlgebra
+  } // end of namespace basis
 } // end of namespace dftefe
-#include <linearAlgebra/LinAlgOpContext.t.cpp>
-#endif // end of dftefeLinAlgOpContext_h

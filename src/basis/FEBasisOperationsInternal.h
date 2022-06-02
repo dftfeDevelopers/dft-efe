@@ -20,35 +20,33 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeLinAlgOpContext_h
-#define dftefeLinAlgOpContext_h
+#ifndef dftefeFEBasisOperationsInternal_h
+#define dftefeFEBasisOperationsInternal_h
 
+#include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
+#include <utils/MemoryStorage.h>
+#include <basis/Field.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace basis
   {
-    template <utils::MemorySpace memorySpace>
-    class LinAlgOpContext
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    class FEBasisOperationsInternal
     {
     public:
-      LinAlgOpContext(blasLapack::BlasQueue<memorySpace> *blasQueue);
+      static void
+      copyFieldToCellWiseData(
+        const ValueType *                      data,
+        const size_type                        numComponents,
+        const size_type *                      cellLocalIdsStartPtr,
+        const std::vector<size_type> &         numCellDofs,
+        MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
-      void
-      setBlasQueue(blasLapack::BlasQueue<memorySpace> *blasQueue);
-
-      blasLapack::BlasQueue<memorySpace> &
-      getBlasQueue();
-
-    private:
-      blasLapack::BlasQueue<memorySpace> *d_blasQueue;
-
-    }; // end of LinAlgOpContext
-  }    // end of namespace linearAlgebra
+    }; // end of class FEBasisOperationsInternal
+  }    // end of namespace basis
 } // end of namespace dftefe
-#include <linearAlgebra/LinAlgOpContext.t.cpp>
-#endif // end of dftefeLinAlgOpContext_h
+#endif // dftefeFEBasisOperationsInternal_h

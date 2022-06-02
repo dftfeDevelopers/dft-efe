@@ -182,7 +182,7 @@ class RunOnlyTestMPICommunicatorP2PUpdateGhostsDevice1Node2Procs(rfm.RunOnlyRegr
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
     tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
-        'unit','slowOrFast': 'fast', 'arch': 'cpu',
+        'unit','slowOrFast': 'fast', 'arch': 'gpu',
                 'serialOrParallel': 'parallel'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 

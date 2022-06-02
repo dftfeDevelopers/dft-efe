@@ -12,6 +12,7 @@ namespace dftefe
 
     namespace constraintsInternal
     {
+<<<<<<< HEAD
       template <typename ValueType>
       __global__ void
       setZeroKernel(ValueType *      xVec,
@@ -88,9 +89,6 @@ namespace dftefe
           }
 
     } // end of namespace constraintsInternal
-
-
-
 
 
     template <typename ValueType>

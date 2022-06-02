@@ -29,6 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/ScalarSpatialFunction.h>
+#include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
 namespace dftefe
 {

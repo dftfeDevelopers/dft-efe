@@ -20,35 +20,58 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeLinAlgOpContext_h
-#define dftefeLinAlgOpContext_h
+#ifndef dftefeFEBasisOperations_h
+#define dftefeFEBasisOperations_h
 
+#include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/Field.h>
+#include <quadrature/QuadratureAttributes.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <memory>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace basis
   {
-    template <utils::MemorySpace memorySpace>
-    class LinAlgOpContext
+    /**
+     * An abstract class to handle interactions between a basis and a
+     * field (e.g., integration of field with basis).
+     */
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    class FEBasisOperations : public BasisOperations<ValueType, memorySpace>
     {
     public:
-      LinAlgOpContext(blasLapack::BlasQueue<memorySpace> *blasQueue);
+      FEBasisOperations(
+        std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>>
+                        basisDataStorage,
+        const size_type maxCellTimesFieldBlock);
+
+      ~FEBasisOperations() = default;
 
       void
-      setBlasQueue(blasLapack::BlasQueue<memorySpace> *blasQueue);
+      interpolate(
+        const Field<ValueType, memorySpace> &       field,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
+          &quadValuesContainer) const override;
 
-      blasLapack::BlasQueue<memorySpace> &
-      getBlasQueue();
+      virtual void
+      integrateWithBasisValues(
+        const Field<ValueType, memorySpace> &       fieldInput,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        Field<ValueType, memorySpace> &             fieldOutput) const override;
 
     private:
-      blasLapack::BlasQueue<memorySpace> *d_blasQueue;
+      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace, dim>>
+                d_feBasisDataStorage;
+      size_type d_maxCellTimesFieldBlock;
 
-    }; // end of LinAlgOpContext
-  }    // end of namespace linearAlgebra
+    }; // end of FEBasisOperations
+  }    // end of namespace basis
 } // end of namespace dftefe
-#include <linearAlgebra/LinAlgOpContext.t.cpp>
-#endif // end of dftefeLinAlgOpContext_h
+#include <basis/FEBasisOperations.t.cpp>
+#endif // dftefeBasisOperations_h

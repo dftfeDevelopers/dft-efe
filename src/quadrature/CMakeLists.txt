@@ -24,6 +24,7 @@ set(DFT-EFE-QUADRATURE-SOURCES
 	QuadratureRuleContainer.cpp
         QuadratureRuleGauss.cpp
 	QuadratureRuleAdaptive.cpp
+	QuadratureValuesContainer.cpp
 	Integrate.cpp)
 
 add_library(dft-efe-quadrature SHARED ${DFT-EFE-QUADRATURE-SOURCES})
@@ -33,5 +34,5 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 include_directories(../)
-target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
+target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils dft-efe-linalg ${DFTEFE_MPI_LIBRARIES})
 endif()

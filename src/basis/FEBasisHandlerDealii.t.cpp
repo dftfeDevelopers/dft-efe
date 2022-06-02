@@ -515,6 +515,11 @@ namespace dftefe
 
           iConstraint++;
         }
+
+      // not compatible with hp refinement
+      dealii::MappingQ1<dim> mappingDealii(d_feBMDealii->getFEOrder(0));
+      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
+        mappingDealii, d_feBMDealii.get()->getDoFHandler(), d_supportPoints);
     }
 #endif // DFTEFE_WITH_MPI
     template <typename ValueType,
@@ -630,13 +635,47 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
+    void
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisCenters(
+      const size_type       localId,
+      const std::string     constraintsName,
+      dftefe::utils::Point &basisCenter) const
+    {
+      global_size_type globalId = localToGlobalIndex(localId, constraintsName);
+      dftefe::utils::convertToDftefePoint<dim>(d_supportPoints[globalId],
+                                               basisCenter);
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::numLocallyOwnedCellDofs(
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCells()
+      const
+    {
+      return feBMDealii->nLocallyOwnedCells();
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    size_type
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+      nCumulativeLocallyOwnedCellDofs() const
+    {
+      return d_feBM->nCumulativeLocallyOwnedCellDofs();
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    size_type
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCellDofs(
       const size_type cellId) const
     {
       DFTEFE_AssertWithMsg(
         cellId < d_numLocallyOwnedCellDofs.size(),
-        "Cell Id provided to numLocallyOwnedCellDofs is greater than or "
+        "Cell Id provided to nLocallyOwnedCellDofs is greater than or "
         " equal to the number of locally owned cells.");
       return d_numLocallyOwnedCellDofs[cellId];
     }
@@ -853,6 +892,15 @@ namespace dftefe
         "The cell local indices for the given constraintsName is not created");
       return (*(it->second)).begin() + d_locallyOwnedCellStartIds[cellId] +
              d_numLocallyOwnedCellDofs[cellId];
+    }
+
+    template <typename ValueType,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+      getBasisManager() const
+    {
+      return *d_feBMDealii;
     }
   } // end of namespace basis
 } // end of namespace dftefe

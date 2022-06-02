@@ -1370,5 +1370,13 @@ namespace dftefe
       return *(it->second);
     }
 
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    const BasisManager &
+    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisManager()
+      const
+    {
+      retufn *d_feBM;
+    }
+
   } // end of namespace basis
 } // end of namespace dftefe
