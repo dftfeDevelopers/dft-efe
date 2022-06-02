@@ -37,8 +37,8 @@ namespace dftefe
     FEBasisOperations<ValueType, memorySpace, dim>::FEBasisOperations(
       std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>>
                       basisDataStorage,
-      const size_type cellBlockSize)
-      : d_cellBlockSize(cellBlockSize)
+      const size_type maxCellTimesFieldBlock)
+      : d_maxCellTimesFieldBlock(maxCellTimesFieldBlock)
     {
       d_feBasisDataStorage = std::dynamic_pointer_cast<
         const FEBasisDataStorage<ValueType, memorySpace, dim>>(
@@ -117,14 +117,15 @@ namespace dftefe
       const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
-      size_type cellLocalIdsOffset = 0;
-      size_type BStartOffset       = 0;
-      size_type CStartOffset       = 0;
+      size_type       cellLocalIdsOffset = 0;
+      size_type       BStartOffset       = 0;
+      size_type       CStartOffset       = 0;
+      const size_type cellBlockSize = d_maxCellTimesFieldBlock / numComponents;
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-           cellStartId += d_cellBlockSize)
+           cellStartId += cellBlockSize)
         {
           const size_type cellEndId =
-            std::min(cellStartId + d_cellBlockSize, numLocallyOwnedCells);
+            std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
           const size_type        numCellsInBlock = cellEndId - cellStartId;
           std::vector<size_type> numCellsInBlockDofs(numCellsInBlock, 0);
           std::copy(numCellDofs.begin() + cellStartId,
