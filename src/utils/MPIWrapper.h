@@ -23,8 +23,8 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPIWrapper_h
-#define dftefeMPIWrapper_h
+#ifndef dftefeMPIWrapperh
+#define dftefeMPIWrapperh
 
 #include <utils/MPITypes.h>
 #include <utils/TypeConfig.h>
@@ -35,213 +35,209 @@ namespace dftefe
     namespace mpi
     {
       int
-      MPI_Type_contiguous(int           count,
-                          MPI_Datatype  oldtype,
-                          MPI_Datatype *newtype);
+      MPITypeContiguous(int count, MPIDatatype oldtype, MPIDatatype *newtype);
 
       int
-      MPI_Allreduce(const void * sendbuf,
-                    void *       recvbuf,
-                    int          count,
-                    MPI_Datatype datatype,
-                    MPI_Op       op,
-                    MPI_Comm     comm);
+      MPIAllreduce(const void *sendbuf,
+                   void *      recvbuf,
+                   int         count,
+                   MPIDatatype datatype,
+                   MPIOp       op,
+                   MPIComm     comm);
 
       int
-      MPI_Allgather(const void * sendbuf,
-                    int          sendcount,
-                    MPI_Datatype sendtype,
-                    void *       recvbuf,
-                    int          recvcount,
-                    MPI_Datatype recvtype,
-                    MPI_Comm     comm);
+      MPIAllgather(const void *sendbuf,
+                   int         sendcount,
+                   MPIDatatype sendtype,
+                   void *      recvbuf,
+                   int         recvcount,
+                   MPIDatatype recvtype,
+                   MPIComm     comm);
 
       int
-      MPI_Allgatherv(const void * sendbuf,
-                     int          sendcount,
-                     MPI_Datatype sendtype,
-                     void *       recvbuf,
-                     const int *  recvcounts,
-                     const int *  displs,
-                     MPI_Datatype recvtype,
-                     MPI_Comm     comm);
+      MPIAllgatherv(const void *sendbuf,
+                    int         sendcount,
+                    MPIDatatype sendtype,
+                    void *      recvbuf,
+                    const int * recvcounts,
+                    const int * displs,
+                    MPIDatatype recvtype,
+                    MPIComm     comm);
 
       int
-      MPI_Barrier(MPI_Comm comm);
+      MPIBarrier(MPIComm comm);
       int
-      MPI_Ibarrier(MPI_Comm comm, MPI_Request *request);
+      MPIIbarrier(MPIComm comm, MPIRequest *request);
 
       int
-      MPI_Bcast(void *       buffer,
-                int          count,
-                MPI_Datatype datatype,
-                int          root,
-                MPI_Comm     comm);
+      MPIBcast(void *      buffer,
+               int         count,
+               MPIDatatype datatype,
+               int         root,
+               MPIComm     comm);
 
       int
-      MPI_Comm_create_group(MPI_Comm  comm,
-                            MPI_Group group,
-                            int       tag,
-                            MPI_Comm *newcomm);
+      MPICommCreateGroup(MPIComm  comm,
+                         MPIGroup group,
+                         int      tag,
+                         MPIComm *newcomm);
 
       int
-      MPI_Comm_free(MPI_Comm *comm);
+      MPICommFree(MPIComm *comm);
       int
-      MPI_Comm_group(MPI_Comm comm, MPI_Group *group);
+      MPICommGroup(MPIComm comm, MPIGroup *group);
       int
-      MPI_Comm_rank(MPI_Comm comm, int *rank);
+      MPICommRank(MPIComm comm, int *rank);
       int
-      MPI_Comm_size(MPI_Comm comm, int *size);
-      MPI_Fint
-      MPI_Comm_f2c(MPI_Comm comm);
+      MPICommSize(MPIComm comm, int *size);
 
       int
-      MPI_Group_free(MPI_Group *group);
+      MPIGroupFree(MPIGroup *group);
 
       int
-      MPI_Group_incl(MPI_Group  group,
-                     int        n,
-                     const int  ranks[],
-                     MPI_Group *newgroup);
+      MPIGroupIncl(MPIGroup  group,
+                   int       n,
+                   const int ranks[],
+                   MPIGroup *newgroup);
 
       int
-      MPI_Group_translate_ranks(MPI_Group group1,
-                                int       n,
-                                const int ranks1[],
-                                MPI_Group group2,
-                                int       ranks2[]);
+      MPIGroupTranslateRanks(MPIGroup  group1,
+                             int       n,
+                             const int ranks1[],
+                             MPIGroup  group2,
+                             int       ranks2[]);
 
       int
-      MPI_Init(int *argc, char ***argv);
+      MPIInit(int *argc, char ***argv);
 
       int
-      MPI_Init_thread(int *argc, char ***argv, int required, int *provided);
+      MPIInitThread(int *argc, char ***argv, int required, int *provided);
 
       int
-      MPI_Initialized(int *flag);
+      MPIInitialized(int *flag);
 
       int
-      MPI_Iprobe(int         source,
-                 int         tag,
-                 MPI_Comm    comm,
+      MPIIprobe(int        source,
+                int        tag,
+                MPIComm    comm,
+                int *      flag,
+                MPIStatus *status);
+
+      int
+      MPITest(MPIRequest *request, int *flag, MPIStatus *status);
+      int
+      MPITestall(int         count,
+                 MPIRequest *requests,
                  int *       flag,
-                 MPI_Status *status);
+                 MPIStatus * statuses);
 
       int
-      MPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
-      int
-      MPI_Testall(int          count,
-                  MPI_Request *requests,
-                  int *        flag,
-                  MPI_Status * statuses);
+      MPIIrecv(void *      buf,
+               int         count,
+               MPIDatatype datatype,
+               int         source,
+               int         tag,
+               MPIComm     comm,
+               MPIRequest *request);
 
       int
-      MPI_Irecv(void *       buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          source,
-                int          tag,
-                MPI_Comm     comm,
-                MPI_Request *request);
+      MPIIsend(const void *buf,
+               int         count,
+               MPIDatatype datatype,
+               int         dest,
+               int         tag,
+               MPIComm     comm,
+               MPIRequest *request);
 
       int
-      MPI_Isend(const void * buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          dest,
-                int          tag,
-                MPI_Comm     comm,
-                MPI_Request *request);
+      MPIRecv(void *      buf,
+              int         count,
+              MPIDatatype datatype,
+              int         source,
+              int         tag,
+              MPIComm     comm,
+              MPIStatus * status);
 
       int
-      MPI_Recv(void *       buf,
-               int          count,
-               MPI_Datatype datatype,
-               int          source,
-               int          tag,
-               MPI_Comm     comm,
-               MPI_Status * status);
+      MPIOpCreate(MPIUserFunction *userfn, int commute, MPIOp *op);
 
       int
-      MPI_Op_create(MPI_User_function *user_fn, int commute, MPI_Op *op);
+      MPIOpFree(MPIOp *op);
 
       int
-      MPI_Op_free(MPI_Op *op);
+      MPIReduce(void *      sendbuf,
+                void *      recvbuf,
+                int         count,
+                MPIDatatype datatype,
+                MPIOp       op,
+                int         root,
+                MPIComm     comm);
 
       int
-      MPI_Reduce(void *       sendbuf,
-                 void *       recvbuf,
-                 int          count,
-                 MPI_Datatype datatype,
-                 MPI_Op       op,
-                 int          root,
-                 MPI_Comm     comm);
+      MPIRequestFree(MPIRequest *request);
 
       int
-      MPI_Request_free(MPI_Request *request);
+      MPISend(const void *buf,
+              int         count,
+              MPIDatatype datatype,
+              int         dest,
+              int         tag,
+              MPIComm     comm);
 
       int
-      MPI_Send(const void * buf,
-               int          count,
-               MPI_Datatype datatype,
-               int          dest,
-               int          tag,
-               MPI_Comm     comm);
+      MPISendrecv(const void *sendbuf,
+                  int         sendcount,
+                  MPIDatatype sendtype,
+                  int         dest,
+                  int         sendtag,
+                  void *      recvbuf,
+                  int         recvcount,
+                  MPIDatatype recvtype,
+                  int         source,
+                  int         recvtag,
+                  MPIComm     comm,
+                  MPIStatus * status);
 
       int
-      MPI_Sendrecv(const void * sendbuf,
-                   int          sendcount,
-                   MPI_Datatype sendtype,
-                   int          dest,
-                   int          sendtag,
-                   void *       recvbuf,
-                   int          recvcount,
-                   MPI_Datatype recvtype,
-                   int          source,
-                   int          recvtag,
-                   MPI_Comm     comm,
-                   MPI_Status * status);
+      MPIIssend(const void *buf,
+                int         count,
+                MPIDatatype datatype,
+                int         dest,
+                int         tag,
+                MPIComm     comm,
+                MPIRequest *request);
 
       int
-      MPI_Issend(const void * buf,
-                 int          count,
-                 MPI_Datatype datatype,
-                 int          dest,
-                 int          tag,
-                 MPI_Comm     comm,
-                 MPI_Request *request);
+      MPISsend(const void *buf,
+               int         count,
+               MPIDatatype datatype,
+               int         dest,
+               int         tag,
+               MPIComm     comm);
 
       int
-      MPI_Ssend(const void * buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          dest,
-                int          tag,
-                MPI_Comm     comm);
+      MPITypeCommit(MPIDatatype *datatype);
 
       int
-      MPI_Type_commit(MPI_Datatype *datatype);
+      MPITypeFree(MPIDatatype *datatype);
 
       int
-      MPI_Type_free(MPI_Datatype *datatype);
+      MPITypeVector(int          count,
+                    int          blocklength,
+                    int          stride,
+                    MPIDatatype  oldtype,
+                    MPIDatatype *newtype);
 
       int
-      MPI_Type_vector(int           count,
-                      int           blocklength,
-                      int           stride,
-                      MPI_Datatype  oldtype,
-                      MPI_Datatype *newtype);
+      MPIWait(MPIRequest *request, MPIStatus *status);
 
       int
-      MPI_Wait(MPI_Request *request, MPI_Status *status);
+      MPIWaitall(int count, MPIRequest requests[], MPIStatus statuses[]);
 
       int
-      MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[]);
-
-      int
-      MPI_Error_string(int errorcode, char *string, int *resultlen);
+      MPIErrorString(int errorcode, char *string, int *resultlen);
 
     } // end of namespace mpi
   }   // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeMPIWrapper_h
+#endif // dftefeMPIWrapperh

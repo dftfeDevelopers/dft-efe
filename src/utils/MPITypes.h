@@ -43,30 +43,29 @@ namespace dftefe
        * code in terms of the following typedefs, and as a result,
        * compile the code successfully both with and without MPI.
        * The idea is that while not using an MPI library, we uses
-       * aliases (typedefs) for the MPI datatypes (e.g.m MPI_FLOAT, MPI_BYTE,
+       * aliases (typedefs) for the MPI datatypes (e.g.m MPIFloat, MPIByte,
        * etc.) On the other hand, while not using an MPI library, the same
        * aliases are equated to int (integer). The choice of int is arbitrary,
        * one can use any other low-memory datatype (e.e., char, unsigned cha,
        * etc)
        *
        * There are several useful and widely used macros that are defined in
-       * mpi.h (e.g., MPI_ANY_TAG, MPI_STATUS_IGNORE, etc.). Thus, for the case
+       * mpi.h (e.g., MPIAnyTag, MPIStatusIgnore, etc.). Thus, for the case
        * where an MPI library is not used, we define those macros with default
        * integral values. As as result, one can use those macros in an
        * application code, irrespective of the use of an MPI library.
        */
       using ErrorCode = int;
 #ifdef DFTEFE_WITH_MPI
-      using MPI_Info       = MPI_Info;
-      using MPI_Datatype   = MPI_Datatype;
-      using MPI_Comm       = MPI_Comm;
-      using MPI_Request    = MPI_Request;
-      using MPI_Status     = MPI_Status;
-      using MPI_Group      = MPI_Group;
-      using MPI_Op         = MPI_Op;
-      using MPI_Fint       = MPI_Fint;
-      using MPI_Tag        = MPI_Tag;
-      using MPI_Errhandler = MPI_Errhandler;
+      using MPIInfo         = MPI_Info;
+      using MPIDatatype     = MPI_Datatype;
+      using MPIComm         = MPI_Comm;
+      using MPIRequest      = MPI_Request;
+      using MPIStatus       = MPI_Status;
+      using MPIGroup        = MPI_Group;
+      using MPIOp           = MPI_Op;
+      using MPIErrhandler   = MPI_Errhandler;
+      using MPIUserFunction = MPI_User_function;
 #else  // DFTEFE_WITH_MPI
       using MPI_Status = struct
       {
@@ -77,16 +76,15 @@ namespace dftefe
         int MPI_ERROR  = 0;
       };
 
-      using MPI_Info       = int;
-      using MPI_Datatype   = int;
-      using MPI_Comm       = int;
-      using MPI_Request    = int;
-      using MPI_Status     = int;
-      using MPI_Group      = int;
-      using MPI_Op         = int;
-      using MPI_Fint       = int;
-      using MPI_Tag        = int;
-      using MPI_Errhandler = int;
+      using MPIInfo         = int;
+      using MPIDatatype     = int;
+      using MPIComm         = int;
+      using MPIRequest      = int;
+      using MPIStatus       = int;
+      using MPIGroup        = int;
+      using MPIOp           = int;
+      using MPIErrhandler   = int;
+      using MPIUserFunction = void(void *, void *, int *, MPIDatatype *);
 #endif // DFTEFE_WITH_MPI
       /**
        * @note There are special MPI related macros that are usually
@@ -96,60 +94,60 @@ namespace dftefe
        * that the user side code can seamlessly use these
        * macros both the cases (i.e., with and without MPI)
        */
-      extern int         MPI_SUCCESS;
-      extern int         MPI_ANY_TAG;
-      extern int         MPI_ANY_SOURCE;
-      extern MPI_Status *MPI_STATUS_IGNORE;
-      extern MPI_Status *MPI_STATUSES_IGNORE;
-      extern int *       MPI_ERRCODES_IGNORE;
+      extern int        MPISuccess;
+      extern int        MPIAnyTag;
+      extern int        MPIAnySource;
+      extern MPIStatus *MPIStatusIgnore;
+      extern MPIStatus *MPIStatusesIgnore;
+      extern int *      MPIErrCodesIgnore;
 
-      extern MPI_Datatype MPI_CHAR;
-      extern MPI_Datatype MPI_SIGNED_CHAR;
-      extern MPI_Datatype MPI_UNSIGNED_CHAR;
-      extern MPI_Datatype MPI_BYTE;
-      extern MPI_Datatype MPI_WCHAR;
-      extern MPI_Datatype MPI_SHORT;
-      extern MPI_Datatype MPI_UNSIGNED_SHORT;
-      extern MPI_Datatype MPI_INT;
-      extern MPI_Datatype MPI_UNSIGNED;
-      extern MPI_Datatype MPI_LONG;
-      extern MPI_Datatype MPI_UNSIGNED_LONG;
-      extern MPI_Datatype MPI_FLOAT;
-      extern MPI_Datatype MPI_DOUBLE;
-      extern MPI_Datatype MPI_LONG_DOUBLE;
-      extern MPI_Datatype MPI_LONG_LONG_INT;
-      extern MPI_Datatype MPI_UNSIGNED_LONG_LONG;
-      extern MPI_Datatype MPI_LONG_LONG;
-      extern MPI_Datatype MPI_COMPLEX;
-      extern MPI_Datatype MPI_DOUBLE_COMPLEX;
+      extern MPIDatatype MPIChar;
+      extern MPIDatatype MPISignedChar;
+      extern MPIDatatype MPIUnsignedChar;
+      extern MPIDatatype MPIByte;
+      extern MPIDatatype MPIWChar;
+      extern MPIDatatype MPIShort;
+      extern MPIDatatype MPIUnsignedShort;
+      extern MPIDatatype MPIInt;
+      extern MPIDatatype MPIUnsigned;
+      extern MPIDatatype MPILong;
+      extern MPIDatatype MPIUnsignedLong;
+      extern MPIDatatype MPIFloat;
+      extern MPIDatatype MPIDouble;
+      extern MPIDatatype MPILongDouble;
+      extern MPIDatatype MPILongLongInt;
+      extern MPIDatatype MPIUnsignedLongLong;
+      extern MPIDatatype MPILongLong;
+      extern MPIDatatype MPIComplex;
+      extern MPIDatatype MPIDoubleComplex;
 
-      extern MPI_Comm MPI_COMM_WORLD;
-      extern MPI_Comm MPI_COMM_SELF;
+      extern MPIComm MPICommWorld;
+      extern MPIComm MPICommSelf;
 
-      extern MPI_Comm       MPI_COMM_NULL;
-      extern MPI_Group      MPI_GROUP_NULL;
-      extern MPI_Datatype   MPI_DATATYPE_NULL;
-      extern MPI_Request    MPI_REQUEST_NULL;
-      extern MPI_Errhandler MPI_ERRHANDLER_NULL;
-      extern MPI_Op         MPI_OP_NULL;
-      extern MPI_Op         MPI_MAX;
-      extern MPI_Op         MPI_MIN;
-      extern MPI_Op         MPI_SUM;
-      extern MPI_Op         MPI_PROD;
-      extern MPI_Op         MPI_LAND;
-      extern MPI_Op         MPI_BAND;
-      extern MPI_Op         MPI_LOR;
-      extern MPI_Op         MPI_BOR;
-      extern MPI_Op         MPI_LXOR;
-      extern MPI_Op         MPI_BXOR;
-      extern MPI_Op         MPI_MINLOC;
-      extern MPI_Op         MPI_MAXLOC;
-      extern MPI_Op         MPI_REPLACE;
+      extern MPIComm       MPICommNull;
+      extern MPIGroup      MPIGroupNull;
+      extern MPIDatatype   MPIDatatypeNull;
+      extern MPIRequest    MPIRequestNull;
+      extern MPIErrhandler MPIErrHandlerNull;
+      extern MPIOp         MPIOpNull;
+      extern MPIOp         MPIMax;
+      extern MPIOp         MPIMin;
+      extern MPIOp         MPISum;
+      extern MPIOp         MPIProd;
+      extern MPIOp         MPILAnd;
+      extern MPIOp         MPIBAnd;
+      extern MPIOp         MPILOr;
+      extern MPIOp         MPIBOr;
+      extern MPIOp         MPILXOr;
+      extern MPIOp         MPIBXOr;
+      extern MPIOp         MPIMinLoc;
+      extern MPIOp         MPIMaxLoc;
+      extern MPIOp         MPIReplace;
 
-      extern int MPI_THREAD_SINGLE;
-      extern int MPI_THREAD_FUNNELED;
-      extern int MPI_THREAD_MULTIPLE;
-      extern int MPI_THREAD_SERIALIZED;
+      extern int MPIThreadSingle;
+      extern int MPIThreadFunneled;
+      extern int MPIThreadMultiple;
+      extern int MPIThreadSerialized;
     } // end of namespace mpi
   }   // end of namespace utils
 } // end of namespace dftefe

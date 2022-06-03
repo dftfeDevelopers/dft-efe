@@ -34,26 +34,26 @@ namespace dftefe
       namespace
       {
         void
-        copyBuffer(const void * sendbuf,
-                   void *       recvbuf,
-                   int          count,
-                   MPI_Datatype datatype)
+        copyBuffer(const void *sendbuf,
+                   void *      recvbuf,
+                   int         count,
+                   MPIDatatype datatype)
         {
-          if (datatype == MPI_CHAR)
+          if (datatype == MPIChar)
             {
               char *      r = static_cast<char *>(recvbuf);
               const char *s = static_cast<const char *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_SIGNED_CHAR)
+          else if (datatype == MPISignedChar)
             {
               signed char *      r = static_cast<signed char *>(recvbuf);
               const signed char *s = static_cast<const signed char *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_UNSIGNED_CHAR)
+          else if (datatype == MPIUnsignedChar)
             {
               unsigned char *      r = static_cast<unsigned char *>(recvbuf);
               const unsigned char *s =
@@ -61,21 +61,21 @@ namespace dftefe
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_WCHAR)
+          else if (datatype == MPIWChar)
             {
               wchar_t *      r = static_cast<wchar_t *>(recvbuf);
               const wchar_t *s = static_cast<const wchar_t *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_SHORT)
+          else if (datatype == MPIShort)
             {
               short int *      r = static_cast<short int *>(recvbuf);
               const short int *s = static_cast<const short int *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_UNSIGNED_SHORT)
+          else if (datatype == MPIUnsignedShort)
             {
               short unsigned int *r =
                 static_cast<unsigned short int *>(recvbuf);
@@ -84,14 +84,14 @@ namespace dftefe
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_INT)
+          else if (datatype == MPIInt)
             {
               int *      r = static_cast<int *>(recvbuf);
               const int *s = static_cast<const int *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_UNSIGNED)
+          else if (datatype == MPIUnsigned)
             {
               unsigned int *      r = static_cast<unsigned int *>(recvbuf);
               const unsigned int *s =
@@ -99,14 +99,14 @@ namespace dftefe
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_LONG)
+          else if (datatype == MPILong)
             {
               long int *      r = static_cast<long int *>(recvbuf);
               const long int *s = static_cast<const long int *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_UNSIGNED_LONG)
+          else if (datatype == MPIUnsignedLong)
             {
               unsigned long int *r = static_cast<unsigned long int *>(recvbuf);
               const unsigned long int *s =
@@ -114,35 +114,28 @@ namespace dftefe
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_FLOAT)
+          else if (datatype == MPIFloat)
             {
               float *      r = static_cast<float *>(recvbuf);
               const float *s = static_cast<const float *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_DOUBLE)
+          else if (datatype == MPIDouble)
             {
               double *      r = static_cast<double *>(recvbuf);
               const double *s = static_cast<const double *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_LONG_DOUBLE)
+          else if (datatype == MPILongDouble)
             {
               long double *      r = static_cast<long double *>(recvbuf);
               const long double *s = static_cast<const long double *>(sendbuf);
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_LONG_DOUBLE)
-            {
-              long double *      r = static_cast<long double *>(recvbuf);
-              const long double *s = static_cast<const long double *>(sendbuf);
-              std::copy(s, s + count, r);
-            }
-
-          else if (datatype == MPI_LONG_LONG_INT || datatype == MPI_LONG_LONG)
+          else if (datatype == MPILongLongInt || datatype == MPILongLong)
             {
               long long int *      r = static_cast<long long int *>(recvbuf);
               const long long int *s =
@@ -150,7 +143,7 @@ namespace dftefe
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_UNSIGNED_LONG_LONG)
+          else if (datatype == MPIUnsignedLongLong)
             {
               unsigned long long int *r =
                 static_cast<unsigned long long int *>(recvbuf);
@@ -159,7 +152,7 @@ namespace dftefe
               std::copy(s, s + count, r);
             }
 
-          else if (datatype == MPI_COMPLEX)
+          else if (datatype == MPIComplex)
             {
               std::complex<float> *r =
                 static_cast<std::complex<float> *>(recvbuf);
@@ -167,7 +160,7 @@ namespace dftefe
                 static_cast<const std::complex<float> *>(sendbuf);
               std::copy(s, s + count, r);
             }
-          else if (datatype == MPI_DOUBLE_COMPLEX)
+          else if (datatype == MPIDoubleComplex)
             {
               std::complex<double> *r =
                 static_cast<std::complex<double> *>(recvbuf);
@@ -180,8 +173,8 @@ namespace dftefe
             {
               DFTEFE_AssertWithMsg(
                 false,
-                "Copying from send to receive buffer for the given MPI_Datatype is not"
-                " implemented while not linking with an MPI library");
+                "Copying from send to receive buffer for the given dftefe::utils::mpi::MPIDatatype is not"
+                " implemented when not linking with an MPI library");
             }
         }
 
@@ -189,46 +182,44 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_MPI
       int
-      MPI_Type_contiguous(int           count,
-                          MPI_Datatype  oldtype,
-                          MPI_Datatype *newtype)
+      MPITypeContiguous(int count, MPIDatatype oldtype, MPIDatatype *newtype)
       {
-        return MPI_Type_contiguous(count, oldtype, newtype);
+        return ::MPI_Type_contiguous(count, oldtype, newtype);
       }
 
       int
-      MPI_Allreduce(const void * sendbuf,
-                    void *       recvbuf,
-                    int          count,
-                    MPI_Datatype datatype,
-                    MPI_Op       op,
-                    MPI_Comm     comm)
+      MPIAllreduce(const void *sendbuf,
+                   void *      recvbuf,
+                   int         count,
+                   MPIDatatype datatype,
+                   MPIOp       op,
+                   MPIComm     comm)
       {
-        return ::MPI_Allreduce();
+        return ::MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
       }
 
       int
-      MPI_Allgather(const void * sendbuf,
-                    int          sendcount,
-                    MPI_Datatype sendtype,
-                    void *       recvbuf,
-                    int          recvcount,
-                    MPI_Datatype recvtype,
-                    MPI_Comm     comm)
+      MPIAllgather(const void *sendbuf,
+                   int         sendcount,
+                   MPIDatatype sendtype,
+                   void *      recvbuf,
+                   int         recvcount,
+                   MPIDatatype recvtype,
+                   MPIComm     comm)
       {
         return ::MPI_Allgather(
           sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
       }
 
       int
-      MPI_Allgatherv(const void * sendbuf,
-                     int          sendcount,
-                     MPI_Datatype sendtype,
-                     void *       recvbuf,
-                     const int *  recvcounts,
-                     const int *  displs,
-                     MPI_Datatype recvtype,
-                     MPI_Comm     comm)
+      MPIAllgatherv(const void *sendbuf,
+                    int         sendcount,
+                    MPIDatatype sendtype,
+                    void *      recvbuf,
+                    const int * recvcounts,
+                    const int * displs,
+                    MPIDatatype recvtype,
+                    MPIComm     comm)
       {
         return ::MPI_Allgatherv(sendbuf,
                                 sendcount,
@@ -241,213 +232,199 @@ namespace dftefe
       }
 
       int
-      MPI_Barrier(MPI_Comm comm)
+      MPIBarrier(MPIComm comm)
       {
         return ::MPI_Barrier(comm);
-        ;
       }
 
       int
-      MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
+      MPIIbarrier(MPIComm comm, MPIRequest *request)
       {
-        return ::MPI_Barrier(comm, request);
+        return ::MPI_Ibarrier(comm, request);
       }
 
       int
-      MPI_Bcast(void *       buffer,
-                int          count,
-                MPI_Datatype datatype,
-                int          root,
-                MPI_Comm     comm)
+      MPIBcast(void *      buffer,
+               int         count,
+               MPIDatatype datatype,
+               int         root,
+               MPIComm     comm)
       {
         return ::MPI_Bcast(buffer, count, datatype, root, comm);
       }
 
       int
-      MPI_Comm_create_group(MPI_Comm  comm,
-                            MPI_Group group,
-                            int       tag,
-                            MPI_Comm *newcomm)
+      MPICommCreateGroup(MPIComm  comm,
+                         MPIGroup group,
+                         int      tag,
+                         MPIComm *newcomm)
       {
         return ::MPI_Comm_create_group(comm, group, tag, newcomm);
       }
 
       int
-      MPI_Comm_free(MPI_Comm *comm)
+      MPICommFree(MPIComm *comm)
       {
         return ::MPI_Comm_free(comm);
       }
 
       int
-      MPI_Comm_group(MPI_Comm comm, MPI_Group *group)
+      MPICommGroup(MPIComm comm, MPIGroup *group)
       {
         return ::MPI_Comm_group(comm, group);
       }
 
       int
-      MPI_Comm_rank(MPI_Comm comm, int *rank)
+      MPICommRank(MPIComm comm, int *rank)
       {
         return ::MPI_Comm_rank(comm, rank);
       }
 
       int
-      MPI_Comm_size(MPI_Comm comm, int *size)
+      MPICommSize(MPIComm comm, int *size)
       {
         return ::MPI_Comm_size(comm, size);
       }
 
-      MPI_Fint
-      MPI_Comm_f2c(MPI_Comm comm)
-      {
-        return ::MPI_Comm_f2c(comm);
-      }
-
       int
-      MPI_Group_free(MPI_Group *group)
+      MPIGroupFree(MPIGroup *group)
       {
         return ::MPI_Group_free(group);
       }
 
       int
-      MPI_Group_incl(MPI_Group  group,
-                     int        n,
-                     const int  ranks[],
-                     MPI_Group *newgroup)
+      MPIGroupIncl(MPIGroup group, int n, const int ranks[], MPIGroup *newgroup)
       {
         return ::MPI_Group_incl(group, n, ranks, newgroup);
       }
 
       int
-      MPI_Group_translate_ranks(MPI_Group group1,
-                                int       n,
-                                const int ranks1[],
-                                MPI_Group group2,
-                                int       ranks2[])
+      MPIGroupTranslateRanks(MPIGroup  group1,
+                             int       n,
+                             const int ranks1[],
+                             MPIGroup  group2,
+                             int       ranks2[])
       {
         return ::MPI_Group_translate_ranks(group1, n, ranks1, group2, ranks2);
       }
 
       int
-      MPI_Init(int *argc, char ***argv)
+      MPIInit(int *argc, char ***argv)
       {
-        return ::MPI_int(argc, argv);
+        return ::MPI_Init(argc, argv);
       }
 
       int
-      MPI_Initialized(int *flag)
+      MPIInitialized(int *flag)
       {
         return ::MPI_Initialized(flag);
       }
 
       int
-      MPI_Iprobe(int         source,
-                 int         tag,
-                 MPI_Comm    comm,
-                 int *       flag,
-                 MPI_Status *status)
+      MPIIprobe(int source, int tag, MPIComm comm, int *flag, MPIStatus *status)
       {
         return ::MPI_Iprobe(source, tag, comm, flag, status);
       }
 
       int
-      MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
+      MPITest(MPIRequest *request, int *flag, MPIStatus *status)
       {
         return ::MPI_Test(request, flag, status);
       }
 
       int
-      MPI_Testall(int          count,
-                  MPI_Request *requests,
-                  int *        flag,
-                  MPI_Status * statuses)
+      MPITestall(int         count,
+                 MPIRequest *requests,
+                 int *       flag,
+                 MPIStatus * statuses)
       {
         return ::MPI_Testall(count, requests, flag, statuses);
       }
 
       int
-      MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
+      MPIInitThread(int *argc, char ***argv, int required, int *provided)
       {
-        return ::MPI_init_thread(argc, argv, required, provided);
+        return ::MPI_Init_thread(argc, argv, required, provided);
       }
 
       int
-      MPI_Irecv(void *       buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          source,
-                int          tag,
-                MPI_Comm     comm,
-                MPI_Request *request)
+      MPIIrecv(void *      buf,
+               int         count,
+               MPIDatatype datatype,
+               int         source,
+               int         tag,
+               MPIComm     comm,
+               MPIRequest *request)
       {
         return ::MPI_Irecv(buf, count, datatype, source, tag, comm, request);
       }
 
       int
-      MPI_Recv(void *       buf,
-               int          count,
-               MPI_Datatype datatype,
-               int          source,
-               int          tag,
-               MPI_Comm     comm,
-               MPI_Status * status)
+      MPIRecv(void *      buf,
+              int         count,
+              MPIDatatype datatype,
+              int         source,
+              int         tag,
+              MPIComm     comm,
+              MPIStatus * status)
       {
         return ::MPI_Recv(buf, count, datatype, source, tag, comm, status);
       }
 
       int
-      MPI_Op_create(MPI_User_function *user_fn, int commute, MPI_Op *op)
+      MPIOpCreate(MPIUserFunction *user_fn, int commute, MPI_Op *op)
       {
         return ::MPI_Op_create(user_fn, commute, op);
       }
 
       int
-      MPI_Op_free(MPI_Op *op)
+      MPIOpFree(MPIOp *op)
       {
-        return ::MPI_Op(op);
+        return ::MPI_Op_free(op);
       }
 
       int
-      MPI_Reduce(void *       sendbuf,
-                 void *       recvbuf,
-                 int          count,
-                 MPI_Datatype datatype,
-                 MPI_Op       op,
-                 int          root,
-                 MPI_Comm     comm)
+      MPIReduce(void *      sendbuf,
+                void *      recvbuf,
+                int         count,
+                MPIDatatype datatype,
+                MPIOp       op,
+                int         root,
+                MPIComm     comm)
       {
         return ::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
       }
 
       int
-      MPI_Request_free(MPI_Request *request)
+      MPIRequestFree(MPIRequest *request)
       {
         return ::MPI_Request_free(request);
       }
 
       int
-      MPI_Send(const void * buf,
-               int          count,
-               MPI_Datatype datatype,
-               int          dest,
-               int          tag,
-               MPI_Comm     comm)
+      MPISend(const void *buf,
+              int         count,
+              MPIDatatype datatype,
+              int         dest,
+              int         tag,
+              MPIComm     comm)
       {
         return ::MPI_Send(buf, count, datatype, dest, tag, comm);
       }
 
       int
-      MPI_Sendrecv(const void * sendbuf,
-                   int          sendcount,
-                   MPI_Datatype sendtype,
-                   int          dest,
-                   int          sendtag,
-                   void *       recvbuf,
-                   int          recvcount,
-                   MPI_Datatype recvtype,
-                   int          source,
-                   int          recvtag,
-                   MPI_Comm     comm,
-                   MPI_Status * status)
+      MPISendrecv(const void *sendbuf,
+                  int         sendcount,
+                  MPIDatatype sendtype,
+                  int         dest,
+                  int         sendtag,
+                  void *      recvbuf,
+                  int         recvcount,
+                  MPIDatatype recvtype,
+                  int         source,
+                  int         recvtag,
+                  MPIComm     comm,
+                  MPIStatus * status)
       {
         return ::MPI_Sendrecv(sendbuf,
                               sendcount,
@@ -464,515 +441,497 @@ namespace dftefe
       }
 
       int
-      MPI_Isend(const void * buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          dest,
-                int          tag,
-                MPI_Comm     comm,
-                MPI_Request *request)
+      MPIIsend(const void *buf,
+               int         count,
+               MPIDatatype datatype,
+               int         dest,
+               int         tag,
+               MPIComm     comm,
+               MPIRequest *request)
       {
         return ::MPI_Isend(buf, count, datatype, dest, tag, comm, request);
       }
 
       int
-      MPI_Ssend(const void * buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          dest,
-                int          tag,
-                MPI_Comm     comm)
+      MPISsend(const void *buf,
+               int         count,
+               MPIDatatype datatype,
+               int         dest,
+               int         tag,
+               MPIComm     comm)
       {
         return ::MPI_Ssend(buf, count, datatype, dest, tag, comm);
       }
 
       int
-      MPI_Issend(const void * buf,
-                 int          count,
-                 MPI_Datatype datatype,
-                 int          dest,
-                 int          tag,
-                 MPI_Comm     comm,
-                 MPI_Request *request)
+      MPIIssend(const void *buf,
+                int         count,
+                MPIDatatype datatype,
+                int         dest,
+                int         tag,
+                MPIComm     comm,
+                MPIRequest *request)
       {
         return ::MPI_Issend(buf, count, datatype, dest, tag, comm, request);
       }
 
       int
-      MPI_Type_commit(MPI_Datatype *datatype)
+      MPITypecommit(MPIDatatype *datatype)
       {
         return ::MPI_Type_commit(datatype);
       }
 
       int
-      MPI_Type_free(MPI_Datatype *datatype)
+      MPITypeFree(MPIDatatype *datatype)
       {
         return ::MPI_Type_free(datatype);
       }
 
       int
-      MPI_Type_vector(int           count,
-                      int           blocklength,
-                      int           stride,
-                      MPI_Datatype  oldtype,
-                      MPI_Datatype *newtype)
+      MPITypeVector(int          count,
+                    int          blocklength,
+                    int          stride,
+                    MPIDatatype  oldtype,
+                    MPIDatatype *newtype)
       {
         return ::MPI_Type_vector(count, blocklength, stride, oldtype, newtype);
       }
 
       int
-      MPI_Wait(MPI_Request *request, MPI_Status *status)
+      MPIWait(MPIRequest *request, MPIStatus *status)
       {
         return ::MPI_Wait(request, status);
       }
 
       int
-      MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
+      MPIWaitall(int count, MPIRequest requests[], MPIStatus statuses[])
       {
         return ::MPI_Waitall(count, requests, statuses);
       }
 
       int
-      MPI_Error_string(int errorcode, char *string, int *resultlen)
+      MPIErrorString(int errorcode, char *string, int *resultlen)
       {
         return ::MPI_Error_string(errorcode, string, resultlen);
       }
 
       int
-      MPI_Finalize(void)
+      MPIFinalize(void)
       {
-        return ::MPI_Finalize(void);
+        return ::MPI_Finalize();
       }
 
 #else  // DFTEFE_WITH_MPI
       int
-      MPI_Type_contiguous(int           count,
-                          MPI_Datatype  oldtype,
-                          MPI_Datatype *newtype)
+      MPITypeContiguous(int count, MPIDatatype oldtype, MPIDatatype *newtype)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "Use of MPI_Type_contiguous() is not allowed when not linking to an MPI library");
+          "Use of MPITypeContiguous() is not allowed when not linking to an MPI library");
       }
 
       int
-      MPI_Allreduce(const void * sendbuf,
-                    void *       recvbuf,
-                    int          count,
-                    MPI_Datatype datatype,
-                    MPI_Op       op,
-                    MPI_Comm     comm)
+      MPIAllreduce(const void *sendbuf,
+                   void *      recvbuf,
+                   int         count,
+                   MPIDatatype datatype,
+                   MPIOp       op,
+                   MPIComm     comm)
       {
         DFTEFE_AssertWithMsg(
-          op == MPI_SUM || op == MPI_MAX || op == MPI_MIN,
-          "Use of MPI_Op other than MPI_SUM, MPI_MX, and MPI_MIN is MPI_Allreduce is "
+          op == MPISum || op == MPIMax || op == MPIMin,
+          "Use of MPIOp other than MPISum, MPIMax, and MPIMin in MPIAllreduce is "
           "not implemented when not using an MPI library");
         copyBuffer(sendbuf, recvbuf, count, datatype);
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Allgather(const void * sendbuf,
-                    int          sendcount,
-                    MPI_Datatype sendtype,
-                    void *       recvbuf,
-                    int          recvcount,
-                    MPI_Datatype recvtype,
-                    MPI_Comm     comm)
+      MPIAllgather(const void *sendbuf,
+                   int         sendcount,
+                   MPIDatatype sendtype,
+                   void *      recvbuf,
+                   int         recvcount,
+                   MPIDatatype recvtype,
+                   MPIComm     comm)
       {
         DFTEFE_AssertWithMsg(
           sendcount == recvcount,
-          "Use MPI_Allgather with different send and receive count is not allowed when not linking to an MPI library");
+          "Use MPIAllgather with different send and receive count is not allowed when not linking to an MPI library");
         DFTEFE_AssertWithMsg(
           sendtype == recvtype,
-          "Use MPI_Allgather with different send and receive datatypes is not allowed when not linking to an MPI library");
+          "Use MPIAllgather with different send and receive datatypes is not allowed when not linking to an MPI library");
         copyBuffer(sendbuf, recvbuf, sendcount, sendtype);
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Allgatherv(const void * sendbuf,
-                     int          sendcount,
-                     MPI_Datatype sendtype,
-                     void *       recvbuf,
-                     const int *  recvcounts,
-                     const int *  displs,
-                     MPI_Datatype recvtype,
-                     MPI_Comm     comm)
+      MPIAllgatherv(const void *sendbuf,
+                    int         sendcount,
+                    MPIDatatype sendtype,
+                    void *      recvbuf,
+                    const int * recvcounts,
+                    const int * displs,
+                    MPIDatatype recvtype,
+                    MPIComm     comm)
       {
         DFTEFE_AssertWithMsg(
           sendcount == recvcounts[0],
-          "Use MPI_Allgatherv with different send and receive count is not allowed when not linking to an MPI library");
+          "Use MPIAllgatherv with different send and receive count is not allowed when not linking to an MPI library");
         DFTEFE_AssertWithMsg(
           sendtype == recvtype,
-          "Use MPI_Allgatherv with different send and receive datatypes is not allowed when not linking to an MPI library");
+          "Use MPIAllgatherv with different send and receive datatypes is not allowed when not linking to an MPI library");
         copyBuffer(sendbuf, recvbuf, sendcount, sendtype);
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Barrier(MPI_Comm comm)
+      MPIBarrier(MPIComm comm)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
+      MPIIbarrier(MPIComm comm, MPIRequest *request)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Bcast(void *       buffer,
-                int          count,
-                MPI_Datatype datatype,
-                int          root,
-                MPI_Comm     comm)
+      MPIBcast(void *      buffer,
+               int         count,
+               MPIDatatype datatype,
+               int         root,
+               MPIComm     comm)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Comm_create_group(MPI_Comm  comm,
-                            MPI_Group group,
-                            int       tag,
-                            MPI_Comm *newcomm)
+      MPICommCreateGroup(MPIComm  comm,
+                         MPIGroup group,
+                         int      tag,
+                         MPIComm *newcomm)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Comm_free(MPI_Comm *comm)
+      MPICommFree(MPIComm *comm)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Comm_group(MPI_Comm comm, MPI_Group *group)
+      MPICommGroup(MPIComm comm, MPIGroup *group)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Comm_rank(MPI_Comm comm, int *rank)
+      MPICommRank(MPIComm comm, int *rank)
       {
         *rank = 0;
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Comm_size(MPI_Comm comm, int *size)
+      MPICommSize(MPIComm comm, int *size)
       {
         *size = 1;
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
-      MPI_Fint
-      MPI_Comm_f2c(MPI_Comm comm)
+      int
+      MPIGroupFree(MPIGroup *group)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Comm_f2c is not implemented when not linking with an MPI library.");
-        return 0;
+          "MPIGroup_free is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Group_free(MPI_Group *group)
+      MPIGroupIncl(MPIGroup group, int n, const int ranks[], MPIGroup *newgroup)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Group_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIGroupIncl is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Group_incl(MPI_Group  group,
-                     int        n,
-                     const int  ranks[],
-                     MPI_Group *newgroup)
+      MPIGroupTranslateRanks(MPIGroup  group1,
+                             int       n,
+                             const int ranks1[],
+                             MPIGroup  group2,
+                             int       ranks2[])
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Group_incl is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIGroup_translate_ranks is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Group_translate_ranks(MPI_Group group1,
-                                int       n,
-                                const int ranks1[],
-                                MPI_Group group2,
-                                int       ranks2[])
+      MPIInit(int *argc, char ***argv)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Group_translate_ranks is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Init(int *argc, char ***argv)
-      {
-        return MPI_SUCCESS;
-      }
-
-      int
-      MPI_Initialized(int *flag)
+      MPIInitialized(int *flag)
       {
         *flag = 1;
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Iprobe(int         source,
-                 int         tag,
-                 MPI_Comm    comm,
+      MPIIprobe(int source, int tag, MPIComm comm, int *flag, MPIStatus *status)
+      {
+        *flag = 1;
+        return MPISuccess;
+      }
+
+      int
+      MPITest(MPIRequest *request, int *flag, MPIStatus *status)
+      {
+        *flag = 1;
+        return MPISuccess;
+      }
+
+      int
+      MPITestall(int         count,
+                 MPIRequest *requests,
                  int *       flag,
-                 MPI_Status *status)
+                 MPIStatus * statuses)
       {
         *flag = 1;
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
+      MPIInitThread(int *argc, char ***argv, int required, int *provided)
       {
-        *flag = 1;
-        return MPI_SUCCESS;
+        *provided = MPITHREAD_MULTIPLE;
+        return MPISuccess;
       }
 
       int
-      MPI_Testall(int          count,
-                  MPI_Request *requests,
-                  int *        flag,
-                  MPI_Status * statuses)
-      {
-        *flag = 1;
-        return MPI_SUCCESS;
-      }
-
-      int
-      MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
-      {
-        *provided = MPI_THREAD_MULTIPLE;
-        return MPI_SUCCESS;
-      }
-
-      int
-      MPI_Irecv(void *       buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          source,
-                int          tag,
-                MPI_Comm     comm,
-                MPI_Request *request)
+      MPIIrecv(void *      buf,
+               int         count,
+               MPIDatatype datatype,
+               int         source,
+               int         tag,
+               MPIComm     comm,
+               MPIRequest *request)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Irecv is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIIrecv is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
 
       int
-      MPI_Recv(void *       buf,
-               int          count,
-               MPI_Datatype datatype,
-               int          source,
-               int          tag,
-               MPI_Comm     comm,
-               MPI_Status * status)
+      MPIRecv(void *      buf,
+              int         count,
+              MPIDatatype datatype,
+              int         source,
+              int         tag,
+              MPIComm     comm,
+              MPIStatus * status)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Recv is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIRecv is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Op_create(MPI_User_function *user_fn, int commute, MPI_Op *op)
+      MPIOpCreate(MPIUserFunction *user_fn, int commute, MPIOp *op)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Op_create is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIOp_create is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Op_free(MPI_Op *op)
+      MPIOpFree(MPIOp *op)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Op_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIOp_free is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Reduce(void *       sendbuf,
-                 void *       recvbuf,
-                 int          count,
-                 MPI_Datatype datatype,
-                 MPI_Op       op,
-                 int          root,
-                 MPI_Comm     comm)
+      MPIReduce(void *      sendbuf,
+                void *      recvbuf,
+                int         count,
+                MPIDatatype datatype,
+                MPIOp       op,
+                int         root,
+                MPIComm     comm)
       {
         DFTEFE_AssertWithMsg(
-          op == MPI_SUM || op == MPI_MAX || op == MPI_MIN,
-          "Use of MPI_Op other than MPI_SUM, MPI_MX, and MPI_MIN is MPI_Reduce is "
+          op == MPISum || op == MPIMax || op == MPIMin,
+          "Use of MPIOp other than MPISum, MPIMax, and MPIMin is MPIReduce is "
           "not implemented when not using an MPI library");
         copyBuffer(sendbuf, recvbuf, count, datatype);
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 
       int
-      MPI_Request_free(MPI_Request *request)
+      MPIRequestFree(MPIRequest *request)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Request_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIRequest_free is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Send(const void * buf,
-               int          count,
-               MPI_Datatype datatype,
-               int          dest,
-               int          tag,
-               MPI_Comm     comm)
+      MPISend(const void *buf,
+              int         count,
+              MPIDatatype datatype,
+              int         dest,
+              int         tag,
+              MPIComm     comm)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Send is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPISend is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Sendrecv(const void * sendbuf,
-                   int          sendcount,
-                   MPI_Datatype sendtype,
-                   int          dest,
-                   int          sendtag,
-                   void *       recvbuf,
-                   int          recvcount,
-                   MPI_Datatype recvtype,
-                   int          source,
-                   int          recvtag,
-                   MPI_Comm     comm,
-                   MPI_Status * status)
+      MPISendrecv(const void *sendbuf,
+                  int         sendcount,
+                  MPIDatatype sendtype,
+                  int         dest,
+                  int         sendtag,
+                  void *      recvbuf,
+                  int         recvcount,
+                  MPIDatatype recvtype,
+                  int         source,
+                  int         recvtag,
+                  MPIComm     comm,
+                  MPIStatus * status)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Sendrecv is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPISendrecv is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Isend(const void * buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          dest,
-                int          tag,
-                MPI_Comm     comm,
-                MPI_Request *request)
+      MPIIsend(const void *buf,
+               int         count,
+               MPIDatatype datatype,
+               int         dest,
+               int         tag,
+               MPIComm     comm,
+               MPIRequest *request)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Isend is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIIsend is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Ssend(const void * buf,
-                int          count,
-                MPI_Datatype datatype,
-                int          dest,
-                int          tag,
-                MPI_Comm     comm)
+      MPISsend(const void *buf,
+               int         count,
+               MPIDatatype datatype,
+               int         dest,
+               int         tag,
+               MPIComm     comm)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Ssend is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPISsend is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Issend(const void * buf,
-                 int          count,
-                 MPI_Datatype datatype,
-                 int          dest,
-                 int          tag,
-                 MPI_Comm     comm,
-                 MPI_Request *request)
+      MPIIssend(const void *buf,
+                int         count,
+                MPIDatatype datatype,
+                int         dest,
+                int         tag,
+                MPIComm     comm,
+                MPIRequest *request)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Issend is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIIssend is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Type_commit(MPI_Datatype *datatype)
+      MPITypeCommit(MPIDatatype *datatype)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Type_commit is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIType_commit is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Type_free(MPI_Datatype *datatype)
+      MPITypeFree(MPIDatatype *datatype)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Type_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIType_free is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Type_vector(int           count,
-                      int           blocklength,
-                      int           stride,
-                      MPI_Datatype  oldtype,
-                      MPI_Datatype *newtype)
+      MPITypeVector(int          count,
+                    int          blocklength,
+                    int          stride,
+                    MPIDatatype  oldtype,
+                    MPIDatatype *newtype)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Type_vector is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIType_vector is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Wait(MPI_Request *request, MPI_Status *status)
+      MPIWait(MPIRequest *request, MPIStatus *status)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Wait is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIWait is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
+      MPIWaitall(int count, MPIRequest requests[], MPIStatus statuses[])
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Wait_All is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIWait_All is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Error_string(int errorcode, char *string, int *resultlen)
+      MPIErrorString(int errorcode, char *string, int *resultlen)
       {
         DFTEFE_AssertWithMsg(
           false,
-          "MPI_Error_string is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+          "MPIError_string is not implemented when not linking with an MPI library.");
+        return MPISuccess;
       }
 
       int
-      MPI_Finalize(void)
+      MPIFinalize(void)
       {
-        return MPI_SUCCESS;
+        return MPISuccess;
       }
 #endif // DFTEFE_WITH_MPI
     }  // end of namespace mpi

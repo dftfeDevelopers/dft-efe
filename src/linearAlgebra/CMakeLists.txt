@@ -30,8 +30,6 @@ if (NOT TARGET dft-efe-linalg)
         endif ()
     endif ()
 
-    target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
-    target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
     if (ENABLE_CUDA)
         enable_language(CUDA)
@@ -42,12 +40,17 @@ if (NOT TARGET dft-efe-linalg)
                 CUDA_STANDARD_REQUIRED ON)
         find_package(CUDAToolkit REQUIRED)
         target_link_libraries(dft-efe-linalg PUBLIC CUDA::cublas)
+	set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/gpu/gcc8.2.0_openmpi4.0.6_nvcc11.4.0")
+    else()
+        set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/cpu/gcc8.2.0_openmpi4.0.6")
     endif ()
 
     if (NOT TARGET dft-efe-utils)
         add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
     endif ()
 
+    target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
+    target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
     target_link_libraries(dft-efe-linalg PUBLIC blaspp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()

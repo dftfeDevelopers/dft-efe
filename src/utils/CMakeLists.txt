@@ -19,6 +19,8 @@ set(DFT-EFE-UTILS-SOURCES
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
+	MPITypes.cpp
+	MPIWrapper.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
   MPICommunicatorP2PKernels.cpp
