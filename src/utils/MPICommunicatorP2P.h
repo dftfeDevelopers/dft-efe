@@ -27,6 +27,7 @@
 #define dftefeMPICommunicatorP2P_h
 
 #include <utils/MemorySpaceType.h>
+#include <utils/MPITypes.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemoryStorage.h>
@@ -36,71 +37,70 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename ValueType, MemorySpace memorySpace>
-    class MPICommunicatorP2P
+    namespace mpi
     {
-    public:
-      MPICommunicatorP2P(
-        std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
-        const size_type                                   blockSize);
+      template <typename ValueType, MemorySpace memorySpace>
+      class MPICommunicatorP2P
+      {
+      public:
+        MPICommunicatorP2P(
+          std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
+          const size_type                                   blockSize);
 
-      void
-      updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
-                        const size_type communicationChannel = 0);
+        void
+        updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
+                          const size_type communicationChannel = 0);
 
-      void
-      accumulateAddLocallyOwned(
-        MemoryStorage<ValueType, memorySpace> &dataArray,
-        const size_type                        communicationChannel = 0);
+        void
+        accumulateAddLocallyOwned(
+          MemoryStorage<ValueType, memorySpace> &dataArray,
+          const size_type                        communicationChannel = 0);
 
 
-      void
-      updateGhostValuesBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
-                             const size_type communicationChannel = 0);
+        void
+        updateGhostValuesBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
+                               const size_type communicationChannel = 0);
 
-      void
-      updateGhostValuesEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
+        void
+        updateGhostValuesEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
 
-      void
-      accumulateAddLocallyOwnedBegin(
-        MemoryStorage<ValueType, memorySpace> &dataArray,
-        const size_type                        communicationChannel = 0);
+        void
+        accumulateAddLocallyOwnedBegin(
+          MemoryStorage<ValueType, memorySpace> &dataArray,
+          const size_type                        communicationChannel = 0);
 
-      void
-      accumulateAddLocallyOwnedEnd(
-        MemoryStorage<ValueType, memorySpace> &dataArray);
+        void
+        accumulateAddLocallyOwnedEnd(
+          MemoryStorage<ValueType, memorySpace> &dataArray);
 
-      std::shared_ptr<const MPIPatternP2P<memorySpace>>
-      getMPIPatternP2P() const;
+        std::shared_ptr<const MPIPatternP2P<memorySpace>>
+        getMPIPatternP2P() const;
 
-      int
-      getBlockSize() const;
+        int
+        getBlockSize() const;
 
-    private:
-      std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      private:
+        std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
-      size_type d_blockSize;
+        size_type d_blockSize;
 
-      MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
+        MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
 #ifdef DFTEFE_WITH_DEVICE
-      MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
-        d_ghostDataCopyHostPinned;
+        MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
+          d_ghostDataCopyHostPinned;
 
-      MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
-        d_sendRecvBufferHostPinned;
-#endif
+        MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
+          d_sendRecvBufferHostPinned;
+#endif // DFTEFE_WITH_DEVICE
 
-#ifdef DFTEFE_WITH_MPI
-      std::vector<MPI_Request> d_requestsUpdateGhostValues;
-      std::vector<MPI_Request> d_requestsAccumulateAddLocallyOwned;
-      MPI_Comm                 d_mpiCommunicator;
-#endif
-    };
+        std::vector<MPIRequest> d_requestsUpdateGhostValues;
+        std::vector<MPIRequest> d_requestsAccumulateAddLocallyOwned;
+        MPIComm                 d_mpiCommunicator;
+      };
 
-  } // namespace utils
+    } // namespace mpi
+  }   // namespace utils
 } // namespace dftefe
-
 #include "MPICommunicatorP2P.t.cpp"
-
-#endif
+#endif // dftefeMPICommunicatorP2P_h

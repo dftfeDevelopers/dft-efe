@@ -23,9 +23,10 @@
  * @author Bikash Kanungo
  */
 #include <utils/Exceptions.h>
-#include <cmath>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 #include <linearAlgebra/BlasLapack.h>
-
+#include <cmath>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -36,9 +37,10 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
-      std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *                           linAlgOpContext,
-      const ValueType                                          initVal)
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                    mpiPatternP2P,
+      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      const ValueType               initVal)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_vectorAttributes =
@@ -54,9 +56,9 @@ namespace dftefe
 
       // block size set to 1 as it is a single vector
       const size_type blockSize = 1;
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          mpiPatternP2P, blockSize);
+      d_mpiCommunicatorP2P      = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
+                                                                blockSize);
     }
 
     //
@@ -66,9 +68,10 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-        &                                                      storage,
-      std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *                           linAlgOpContext)
+        &storage,
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                    mpiPatternP2P,
+      LinAlgOpContext<memorySpace> *linAlgOpContext)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_storage         = std::move(storage);
@@ -81,9 +84,9 @@ namespace dftefe
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
       // block size set to 1 as it is a single vector
       const size_type blockSize = 1;
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          mpiPatternP2P, blockSize);
+      d_mpiCommunicatorP2P      = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
+                                                                blockSize);
     }
 
     /**
@@ -95,7 +98,7 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::DistributedVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<dftefe::global_size_type> &       ghostIndices,
-      const MPI_Comm &                                    mpiComm,
+      const utils::mpi::MPIComm &                         mpiComm,
       LinAlgOpContext<memorySpace> *                      linAlgOpContext,
       const ValueType                                     initVal)
     {
@@ -103,11 +106,11 @@ namespace dftefe
       // TODO Move the warning message to a Logger class
       //
       int         mpiRank;
-      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
+      int         err = utils::mpi::MPICommRank(mpiComm, &mpiRank);
       std::string msg = "Error occured while using MPI_Comm_rank. "
                         "Error code: " +
                         std::to_string(err);
-      utils::throwException(err == MPI_SUCCESS, msg);
+      utils::throwException(err == utils::mpi::MPISuccess, msg);
       if (mpiRank == 0)
         {
           msg =
@@ -119,14 +122,14 @@ namespace dftefe
       ////////////
 
       d_mpiPatternP2P =
-        std::make_shared<const utils::MPIPatternP2P<memorySpace>>(
+        std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
       // block size set to 1 as it is a single vector
       const size_type blockSize = 1;
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          d_mpiPatternP2P, blockSize);
+      d_mpiCommunicatorP2P      = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
+                                                                blockSize);
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -149,7 +152,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-      const MPI_Comm &                                    mpiComm,
+      const utils::mpi::MPIComm &                         mpiComm,
       LinAlgOpContext<memorySpace> *                      linAlgOpContext,
       const ValueType                                     initVal)
     {
@@ -159,11 +162,11 @@ namespace dftefe
       // TODO Move the warning message to a Logger class
       //
       int         mpiRank;
-      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
+      int         err = utils::mpi::MPICommRank(mpiComm, &mpiRank);
       std::string msg = "Error occured while using MPI_Comm_rank. "
                         "Error code: " +
                         std::to_string(err);
-      utils::throwException(err == MPI_SUCCESS, msg);
+      utils::throwException(err == utils::mpi::MPISuccess, msg);
       if (mpiRank == 0)
         {
           msg =
@@ -175,14 +178,14 @@ namespace dftefe
       ////////////
 
       d_mpiPatternP2P =
-        std::make_shared<const utils::MPIPatternP2P<memorySpace>>(
+        std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
       // block size set to 1 as it is a single vector
       const size_type blockSize = 1;
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          d_mpiPatternP2P, blockSize);
+      d_mpiCommunicatorP2P      = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
+                                                                blockSize);
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -207,7 +210,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     DistributedVector<ValueType, memorySpace>::DistributedVector(
       const global_size_type        totalGlobalDofs,
-      const MPI_Comm &              mpiComm,
+      const utils::mpi::MPIComm &   mpiComm,
       LinAlgOpContext<memorySpace> *linAlgOpContext,
       const ValueType               initVal)
     {
@@ -220,11 +223,11 @@ namespace dftefe
       // TODO Move the warning message to a Logger class
       //
       int         mpiRank;
-      int         err = MPI_Comm_rank(mpiComm, &mpiRank);
+      int         err = utils::mpi::MPICommRank(mpiComm, &mpiRank);
       std::string msg = "Error occured while using MPI_Comm_rank. "
                         "Error code: " +
                         std::to_string(err);
-      utils::throwException(err == MPI_SUCCESS, msg);
+      utils::throwException(err == utils::mpi::MPISuccess, msg);
       if (mpiRank == 0)
         {
           msg =
@@ -236,11 +239,11 @@ namespace dftefe
 
       int mpiProcess;
 
-      int         errProc = MPI_Comm_size(mpiComm, &mpiProcess);
+      int         errProc = utils::mpi::MPICommSize(mpiComm, &mpiProcess);
       std::string msgProc = "Error occured while using MPI_Comm_size. "
                             "Error code: " +
                             std::to_string(errProc);
-      utils::throwException(errProc == MPI_SUCCESS, msgProc);
+      utils::throwException(errProc == utils::mpi::MPISuccess, msgProc);
 
       dftefe::global_size_type locallyOwnedSize = totalGlobalDofs / mpiProcess;
       if (mpiRank < totalGlobalDofs % mpiProcess)
@@ -260,14 +263,14 @@ namespace dftefe
       ////////////
 
       d_mpiPatternP2P =
-        std::make_shared<const utils::MPIPatternP2P<memorySpace>>(
+        std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
       // block size set to 1 as it is a single vector
       const size_type blockSize = 1;
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          d_mpiPatternP2P, blockSize);
+      d_mpiCommunicatorP2P      = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
+                                                                blockSize);
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -292,10 +295,10 @@ namespace dftefe
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
-      *d_storage = *(u.d_storage);
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+      *d_storage           = *(u.d_storage);
+      d_mpiCommunicatorP2P = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -315,9 +318,9 @@ namespace dftefe
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size(), initVal);
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+      d_mpiCommunicatorP2P = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -360,10 +363,10 @@ namespace dftefe
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
           (u.d_storage)->size());
-      *d_storage = *(u.d_storage);
-      d_mpiCommunicatorP2P =
-        std::make_unique<utils::MPICommunicatorP2P<ValueType, memorySpace>>(
-          u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+      *d_storage           = *(u.d_storage);
+      d_mpiCommunicatorP2P = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -411,16 +414,12 @@ namespace dftefe
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
-#ifdef DFTEFE_WITH_MPI
-      MPI_Allreduce(&l2NormLocallyOwnedSquare,
-                    &returnValue,
-                    1,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    d_mpiPatternP2P->mpiCommunicator());
-#else
-      returnValue = l2NormLocallyOwnedSquare;
-#endif // DFTEFE_WITH_MPI
+      utils::mpi::MPIAllreduce(&l2NormLocallyOwnedSquare,
+                               &returnValue,
+                               1,
+                               utils::mpi::MPIDouble,
+                               utils::mpi::MPISum,
+                               d_mpiPatternP2P->mpiCommunicator());
       returnValue = std::sqrt(returnValue);
       return returnValue;
     }
@@ -436,14 +435,12 @@ namespace dftefe
           1,
           d_linAlgOpContext->getBlasQueue());
       double returnValue = lInfNormLocallyOwned;
-#ifdef DFTEFE_WITH_MPI
-      MPI_Allreduce(&lInfNormLocallyOwned,
-                    &returnValue,
-                    1,
-                    MPI_DOUBLE,
-                    MPI_MAX,
-                    d_mpiPatternP2P->mpiCommunicator());
-#endif // DFTEFE_WITH_MPI
+      utils::mpi::MPIAllreduce(&lInfNormLocallyOwned,
+                               &returnValue,
+                               1,
+                               utils::mpi::MPIDouble,
+                               utils::mpi::MPIMax,
+                               d_mpiPatternP2P->mpiCommunicator());
       return returnValue;
     }
 

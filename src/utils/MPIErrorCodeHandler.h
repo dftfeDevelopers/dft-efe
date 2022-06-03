@@ -34,18 +34,21 @@ namespace dftefe
 {
   namespace utils
   {
-    class MPIErrorCodeHandler
+    namespace mpi
     {
-    public:
-      MPIErrorCodeHandler()  = default;
-      ~MPIErrorCodeHandler() = default;
-      static bool
-      isSuccess(const int errCode);
-      static std::string
-      getErrMsg(const int errCode);
-      static std::pair<bool, std::string>
-      getIsSuccessAndMessage(const int errCode);
-    }; // end of mpiErrorCodes
-  }    // end of namespace utils
+      class MPIErrorCodeHandler
+      {
+      public:
+        MPIErrorCodeHandler()  = default;
+        ~MPIErrorCodeHandler() = default;
+        static bool
+        isSuccess(const int errCode);
+        static std::string
+        getErrMsg(const int errCode);
+        static std::pair<bool, std::string>
+        getIsSuccessAndMessage(const int errCode);
+      }; // end of MPIErrorCodeHandler
+    }    // end of namespace mpi
+  }      // end of namespace utils
 } // end of namespace dftefe
 #endif // dftefeMPIErrorCodeHandler_h
