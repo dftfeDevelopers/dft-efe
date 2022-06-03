@@ -346,15 +346,13 @@ namespace dftefe
                  int *       flag,
                  MPI_Status *status)
       {
-        *flag = 1;
-        return MPI_SUCCESS;
+        return ::MPI_Iprobe(source, tag, comm, flag, status);
       }
 
       int
       MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
       {
-        *flag = 1;
-        return MPI_SUCCESS;
+        return ::MPI_Test(request, flag, status);
       }
 
       int
@@ -363,15 +361,13 @@ namespace dftefe
                   int *        flag,
                   MPI_Status * statuses)
       {
-        *flag = 1;
-        return MPI_SUCCESS;
+        return ::MPI_Testall(count, requests, flag, statuses);
       }
 
       int
       MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
       {
-        *provided = MPI_THREAD_MULTIPLE;
-        return MPI_SUCCESS;
+        return ::MPI_init_thread(argc, argv, required, provided);
       }
 
       int
@@ -383,12 +379,8 @@ namespace dftefe
                 MPI_Comm     comm,
                 MPI_Request *request)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Irecv is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Irecv(buf, count, datatype, source, tag, comm, request);
       }
-
 
       int
       MPI_Recv(void *       buf,
@@ -399,28 +391,19 @@ namespace dftefe
                MPI_Comm     comm,
                MPI_Status * status)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Recv is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Recv(buf, count, datatype, source, tag, comm, status);
       }
 
       int
       MPI_Op_create(MPI_User_function *user_fn, int commute, MPI_Op *op)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Op_create is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Op_create(user_fn, commute, op);
       }
 
       int
       MPI_Op_free(MPI_Op *op)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Op_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Op(op);
       }
 
       int
@@ -432,21 +415,13 @@ namespace dftefe
                  int          root,
                  MPI_Comm     comm)
       {
-        DFTEFE_AssertWithMsg(
-          op == MPI_SUM || op == MPI_MAX || op == MPI_MIN,
-          "Use of MPI_Op other than MPI_SUM, MPI_MX, and MPI_MIN is MPI_Reduce is "
-          "not implemented when not using an MPI library");
-        copyBuffer(sendbuf, recvbuf, count, datatype);
-        return MPI_SUCCESS;
+        return ::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
       }
 
       int
       MPI_Request_free(MPI_Request *request)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Request_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Request_free(request);
       }
 
       int
@@ -457,10 +432,7 @@ namespace dftefe
                int          tag,
                MPI_Comm     comm)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Send is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Send(buf, count, datatype, dest, tag, comm);
       }
 
       int
@@ -477,10 +449,18 @@ namespace dftefe
                    MPI_Comm     comm,
                    MPI_Status * status)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Sendrecv is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Sendrecv(sendbuf,
+                              sendcount,
+                              sendtype,
+                              dest,
+                              sendtag,
+                              recvbuf,
+                              recvcount,
+                              recvtype,
+                              source,
+                              recvtag,
+                              comm,
+                              status);
       }
 
       int
@@ -492,10 +472,7 @@ namespace dftefe
                 MPI_Comm     comm,
                 MPI_Request *request)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Isend is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Isend(buf, count, datatype, dest, tag, comm, request);
       }
 
       int
@@ -506,10 +483,7 @@ namespace dftefe
                 int          tag,
                 MPI_Comm     comm)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Ssend is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Ssend(buf, count, datatype, dest, tag, comm);
       }
 
       int
@@ -521,28 +495,19 @@ namespace dftefe
                  MPI_Comm     comm,
                  MPI_Request *request)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Issend is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Issend(buf, count, datatype, dest, tag, comm, request);
       }
 
       int
       MPI_Type_commit(MPI_Datatype *datatype)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Type_commit is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Type_commit(datatype);
       }
 
       int
       MPI_Type_free(MPI_Datatype *datatype)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Type_free is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Type_free(datatype);
       }
 
       int
@@ -552,43 +517,31 @@ namespace dftefe
                       MPI_Datatype  oldtype,
                       MPI_Datatype *newtype)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Type_vector is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Type_vector(count, blocklength, stride, oldtype, newtype);
       }
 
       int
       MPI_Wait(MPI_Request *request, MPI_Status *status)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Wait is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Wait(request, status);
       }
 
       int
       MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Wait_All is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Waitall(count, requests, statuses);
       }
 
       int
       MPI_Error_string(int errorcode, char *string, int *resultlen)
       {
-        DFTEFE_AssertWithMsg(
-          false,
-          "MPI_Error_string is not implemented when not linking with an MPI library.");
-        return MPI_SUCCESS;
+        return ::MPI_Error_string(errorcode, string, resultlen);
       }
 
       int
       MPI_Finalize(void)
       {
-        return MPI_SUCCESS;
+        return ::MPI_Finalize(void);
       }
 
 #else  // DFTEFE_WITH_MPI
