@@ -1,6 +1,6 @@
 if (NOT TARGET dft-efe-utils)
 if(${CMAKE_CXX_STANDARD})
-	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
@@ -32,6 +32,9 @@ if(ENABLE_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
 	endif()
+  if (ENABLE_MPI_DEVICE_AWARE)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_AWARE_MPI)
+  endif()
 	target_include_directories(dft-efe-utils PUBLIC ${MPI_CXX_INCLUDE_PATH})
 	set(DFTEFE_UTILS_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 

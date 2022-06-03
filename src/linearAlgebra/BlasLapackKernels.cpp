@@ -11,6 +11,20 @@ namespace dftefe
     {
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
+      Kernels<ValueType, memorySpace>::ascale(const size_type  size,
+                                              const ValueType  alpha,
+                                              const ValueType *x,
+                                              ValueType *      z)
+      {
+        for (size_type i = 0; i < size; ++i)
+          {
+            z[i] = alpha * x[i];
+          }
+      }
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
       Kernels<ValueType, memorySpace>::axpby(const size_type  size,
                                              const ValueType  alpha,
                                              const ValueType *x,

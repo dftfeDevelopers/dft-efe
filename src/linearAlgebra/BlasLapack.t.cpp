@@ -79,6 +79,18 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
+      ascale(const size_type         n,
+             const ValueType         alpha,
+             const ValueType *       x,
+             ValueType *             z,
+             BlasQueue<memorySpace> &BlasQueue)
+      {
+        Kernels<ValueType, memorySpace>::ascale(n, alpha, x, z);
+      }
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
       axpby(const size_type         n,
             const ValueType         alpha,
             const ValueType *       x,
@@ -224,6 +236,107 @@ namespace dftefe
                    dC,
                    lddc,
                    BlasQueue);
+      }
+
+      template <typename ValueType>
+      void
+      gemmStridedVarBatched(
+        const Layout                                 layout,
+        const size_type                              numMats,
+        const Op *                                   transA,
+        const Op *                                   transB,
+        const size_type *                            stridea,
+        const size_type *                            strideb,
+        const size_type *                            stridec,
+        const size_type *                            m,
+        const size_type *                            n,
+        const size_type *                            k,
+        const ValueType                              alpha,
+        const ValueType *                            dA,
+        const size_type *                            ldda,
+        const ValueType *                            dB,
+        const size_type *                            lddb,
+        const ValueType                              beta,
+        ValueType *                                  dC,
+        const size_type *                            lddc,
+        BlasQueue<dftefe::utils::MemorySpace::HOST> &BlasQueue)
+      {
+        size_type cumulativeA = 0;
+        size_type cumulativeB = 0;
+        size_type cumulativeC = 0;
+        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+          {
+            blas::gemm(layout,
+                       *(transA + ibatch),
+                       *(transB + ibatch),
+                       *(m + ibatch),
+                       *(n + ibatch),
+                       *(k + ibatch),
+                       alpha,
+                       dA + cumulativeA,
+                       *(ldda + ibatch),
+                       dB + cumulativeB,
+                       *(lddb + ibatch),
+                       beta,
+                       dC + cumulativeC,
+                       *(lddc + ibatch));
+
+
+            cumulativeA += *(stridea);
+            cumulativeB += *(strideb);
+            cumulativeC += *(stridec);
+          }
+      }
+
+      template <typename ValueType>
+      void
+      gemmStridedVarBatched(
+        const Layout                                   layout,
+        const size_type                                numMats,
+        const Op *                                     transA,
+        const Op *                                     transB,
+        const size_type *                              stridea,
+        const size_type *                              strideb,
+        const size_type *                              stridec,
+        const size_type *                              m,
+        const size_type *                              n,
+        const size_type *                              k,
+        const ValueType                                alpha,
+        const ValueType *                              dA,
+        const size_type *                              ldda,
+        const ValueType *                              dB,
+        const size_type *                              lddb,
+        const ValueType                                beta,
+        ValueType *                                    dC,
+        const size_type *                              lddc,
+        BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+      {
+        size_type cumulativeA = 0;
+        size_type cumulativeB = 0;
+        size_type cumulativeC = 0;
+        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+          {
+            blas::gemm(layout,
+                       *(transA + ibatch),
+                       *(transB + ibatch),
+                       *(m + ibatch),
+                       *(n + ibatch),
+                       *(k + ibatch),
+                       alpha,
+                       dA + cumulativeA,
+                       *(ldda + ibatch),
+                       dB + cumulativeB,
+                       *(lddb + ibatch),
+                       beta,
+                       dC + cumulativeC,
+                       *(lddc + ibatch),
+                       BlasQueue);
+
+
+            cumulativeA += *(stridea);
+            cumulativeB += *(strideb);
+            cumulativeC += *(stridec);
+          }
       }
     } // namespace blasLapack
   }   // namespace linearAlgebra

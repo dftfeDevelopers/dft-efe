@@ -36,7 +36,7 @@ namespace dftefe
 {
   namespace utils
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType, MemorySpace memorySpace>
     class MPICommunicatorP2P
     {
     public:
@@ -59,7 +59,7 @@ namespace dftefe
                              const size_type communicationChannel = 0);
 
       void
-      updateGhostValuesEnd();
+      updateGhostValuesEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
 
       void
       accumulateAddLocallyOwnedBegin(
@@ -82,6 +82,14 @@ namespace dftefe
       size_type d_blockSize;
 
       MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
+
+#ifdef DFTEFE_WITH_DEVICE
+      MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
+        d_ghostDataCopyHostPinned;
+
+      MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
+        d_sendRecvBufferHostPinned;
+#endif
 
 #ifdef DFTEFE_WITH_MPI
       std::vector<MPI_Request> d_requestsUpdateGhostValues;

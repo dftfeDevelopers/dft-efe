@@ -52,6 +52,20 @@ namespace dftefe
       d_requestsAccumulateAddLocallyOwned.resize(
         d_mpiPatternP2P->getGhostProcIds().size() +
         d_mpiPatternP2P->getTargetProcIds().size());
+
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
+        {
+          d_ghostDataCopyHostPinned.resize(d_mpiPatternP2P->localGhostSize() *
+                                             blockSize,
+                                           0.0);
+          d_sendRecvBufferHostPinned.resize(
+            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+              blockSize,
+            0.0);
+        }
+#  endif
+
 #endif
     }
 
@@ -64,7 +78,7 @@ namespace dftefe
     {
 #ifdef DFTEFE_WITH_MPI
       updateGhostValuesBegin(dataArray, communicationChannel);
-      updateGhostValuesEnd();
+      updateGhostValuesEnd(dataArray);
 #endif
     }
 
@@ -78,6 +92,12 @@ namespace dftefe
       // initiate non-blocking receives from ghost processors
       ValueType *recvArrayStartPtr =
         dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
+        recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
+#  endif
+
       for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
            ++i)
         {
@@ -115,6 +135,19 @@ namespace dftefe
 
       // initiate non-blocking sends to target processors
       ValueType *sendArrayStartPtr = d_sendRecvBuffer.begin();
+
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
+        {
+          MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace> memoryTransfer;
+          memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
+                              d_sendRecvBufferHostPinned.begin(),
+                              d_sendRecvBuffer.begin());
+
+          sendArrayStartPtr = d_sendRecvBufferHostPinned.begin();
+        }
+#  endif
+
       for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
            ++i)
         {
@@ -147,7 +180,8 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValuesEnd()
+    MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValuesEnd(
+      MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
       // wait for all send and recv requests to be completed
@@ -159,6 +193,19 @@ namespace dftefe
           const std::pair<bool, std::string> isSuccessAndMessage =
             MPIErrorCodeHandler::getIsSuccessAndMessage(err);
           throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
+
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+          if (memorySpace == MemorySpace::DEVICE)
+            {
+              MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
+                memoryTransfer;
+              memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                                  dataArray.begin() +
+                                    d_mpiPatternP2P->localOwnedSize() *
+                                      d_blockSize,
+                                  d_ghostDataCopyHostPinned.data());
+            }
+#  endif
         }
 #endif
     }
@@ -183,6 +230,11 @@ namespace dftefe
 #ifdef DFTEFE_WITH_MPI
       // initiate non-blocking receives from target processors
       ValueType *recvArrayStartPtr = d_sendRecvBuffer.begin();
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
+        recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
+#  endif
+
       for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
            ++i)
         {
@@ -211,6 +263,21 @@ namespace dftefe
       // initiate non-blocking sends to ghost processors
       ValueType *sendArrayStartPtr =
         dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+      if (memorySpace == MemorySpace::DEVICE)
+        {
+          MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace> memoryTransfer;
+          memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                              d_ghostDataCopyHostPinned.begin(),
+                              dataArray.begin() +
+                                d_mpiPatternP2P->localOwnedSize() *
+                                  d_blockSize);
+
+          sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
+        }
+#  endif
+
       for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
            ++i)
         {
@@ -236,8 +303,6 @@ namespace dftefe
              d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
             d_blockSize;
         }
-
-
 #endif
     }
 
@@ -248,7 +313,6 @@ namespace dftefe
       MemoryStorage<ValueType, memorySpace> &dataArray)
     {
 #ifdef DFTEFE_WITH_MPI
-
       // wait for all send and recv requests to be completed
       if (d_requestsAccumulateAddLocallyOwned.size() > 0)
         {
@@ -260,6 +324,17 @@ namespace dftefe
           const std::pair<bool, std::string> isSuccessAndMessage =
             MPIErrorCodeHandler::getIsSuccessAndMessage(err);
           throwException(isSuccessAndMessage.first, isSuccessAndMessage.second);
+
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+          if (memorySpace == MemorySpace::DEVICE)
+            {
+              MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
+                memoryTransfer;
+              memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
+                                  d_sendRecvBufferHostPinned.data(),
+                                  d_sendRecvBuffer.data());
+            }
+#  endif
         }
 
       // accumulate add into locally owned entries from recv buffer

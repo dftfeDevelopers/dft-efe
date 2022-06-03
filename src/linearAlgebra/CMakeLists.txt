@@ -1,14 +1,7 @@
 if (NOT TARGET dft-efe-linalg)
     if (${CMAKE_CXX_STANDARD})
-        set(CMAKE_CXX_STANDARD 14)
+        set(CMAKE_CXX_STANDARD 17)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    endif ()
-
-    # this part should be removed in the future and move the SLATE_DIR definition to be configured by install.py automatically
-    if (ENABLE_CUDA)
-        set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/gpu/gcc8.2.0_openmpi4.0.6_nvcc11.4.0")
-    else ()
-        set(SLATE_DIR "/home/vikramg/DFT-FE-softwares/slate/cpu/gcc8.2.0_openmpi4.0.6")
     endif ()
 
     # Add source files here
@@ -56,5 +49,5 @@ if (NOT TARGET dft-efe-linalg)
     endif ()
 
 
-    target_link_libraries(dft-efe-linalg PUBLIC blaspp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES} ${DFTEFE_BLAS_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC blaspp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()
