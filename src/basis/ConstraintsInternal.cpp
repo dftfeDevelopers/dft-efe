@@ -36,15 +36,16 @@ namespace dftefe
     ConstraintsInternal<ValueType, memorySpace>::
       constraintsDistributeParentToChild(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        const size_type                                      blockSize,
+        const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
-          &rowConstraintsSizes,
-        const utils::MemoryStorage<size_type, memorySpace>
-          &                                           columnConstraintsIdsLocal,
-        const utils::MemoryStorage<double, memorySpace> &   columnConstraintsValues,
-        const utils::MemoryStorage<ValueType, memorySpace> &constraintsInhomogenities)
+          &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<double, memorySpace>
+          &columnConstraintsValues,
+        const utils::MemoryStorage<ValueType, memorySpace>
+          &constraintsInhomogenities)
     {
       size_type              count = 0;
       std::vector<ValueType> newValuesBlock(blockSize, 0.0);
@@ -90,14 +91,14 @@ namespace dftefe
     ConstraintsInternal<ValueType, memorySpace>::
       constraintsDistributeChildToParent(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        const size_type                                      blockSize,
+        const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
-          &rowConstraintsSizes,
-        const utils::MemoryStorage<size_type, memorySpace>
-          &                                        columnConstraintsIdsLocal,
-        const utils::MemoryStorage<double, memorySpace> &columnConstraintsValues)
+          &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<double, memorySpace>
+          &columnConstraintsValues)
     {
       size_type count = 0;
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
@@ -137,7 +138,7 @@ namespace dftefe
     ConstraintsInternal<ValueType, memorySpace>::
       constraintsSetConstrainedNodesToZero(
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
-        const size_type                                      blockSize,
+        const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal)
     {

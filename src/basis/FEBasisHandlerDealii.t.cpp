@@ -642,8 +642,7 @@ namespace dftefe
       dftefe::utils::Point &basisCenter) const
     {
       global_size_type globalId = localToGlobalIndex(localId, constraintsName);
-      dftefe::utils::convertToDftefePoint<dim>(d_supportPoints[globalId],
-                                               basisCenter);
+      convertToDftefePoint<dim>(d_supportPoints[globalId], basisCenter);
     }
 
     template <typename ValueType,
@@ -653,7 +652,7 @@ namespace dftefe
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCells()
       const
     {
-      return feBMDealii->nLocallyOwnedCells();
+      return d_feBMDealii->nLocallyOwnedCells();
     }
 
     template <typename ValueType,
@@ -663,7 +662,7 @@ namespace dftefe
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::
       nCumulativeLocallyOwnedCellDofs() const
     {
-      return d_feBM->nCumulativeLocallyOwnedCellDofs();
+      return d_feBMDealii->nCumulativeLocallyOwnedCellDofs();
     }
 
     template <typename ValueType,
@@ -897,8 +896,8 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::
-      getBasisManager() const
+    const BasisManager &
+    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisManager() const
     {
       return *d_feBMDealii;
     }

@@ -23,6 +23,7 @@
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/base/quadrature_lib.h>
 
+#include <iostream>
 
 double interpolatePolynomial (unsigned int feOrder, double x_coord, double y_coord, double z_coord, double xmin, double ymin, double zmin)
 {
@@ -41,6 +42,8 @@ double interpolatePolynomial (unsigned int feOrder, double x_coord, double y_coo
 
 int main()
 {
+
+  std::cout<<" Entering test constraint matrix\n";
   // Set up linAlgcontext
 
   int blasQueue = 0;

@@ -306,8 +306,8 @@ namespace dftefe
 
 
       std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
-      std::vector<size_type> rowConstraintsIdsLocalTmp;
-      std::vector<size_type> columnConstraintsIdsLocalTmp;
+      std::vector<size_type>        rowConstraintsIdsLocalTmp;
+      std::vector<size_type>        columnConstraintsIdsLocalTmp;
       std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
 
       std::vector<double>    columnConstraintsValuesTmp;
@@ -324,9 +324,8 @@ namespace dftefe
           if (this->isConstrained(*locallyOwnedIter))
             {
               const global_size_type lineDof = *locallyOwnedIter;
-              const std::vector<std::pair<global_size_type,
-                                          ValueType>> *rowData =
-                this->getConstraintEntries(lineDof);
+              const std::vector<std::pair<global_size_type, ValueType>>
+                *rowData = this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
@@ -377,9 +376,8 @@ namespace dftefe
             {
               const global_size_type lineDof = *ghostIter;
 
-              const std::vector<std::pair<global_size_type,
-                                          ValueType>> *rowData =
-                this->getConstraintEntries(lineDof);
+              const std::vector<std::pair<global_size_type, ValueType>>
+                *rowData = this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)

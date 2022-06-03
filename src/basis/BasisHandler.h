@@ -27,6 +27,9 @@
 #define dftefeBasisHandler_h
 
 #include <basis/Constraints.h>
+#include <basis/BasisManager.h>
+#include <utils/Point.h>
+#include "DealiiConversions.h"
 #include <utils/TypeConfig.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MPIPatternP2P.h>

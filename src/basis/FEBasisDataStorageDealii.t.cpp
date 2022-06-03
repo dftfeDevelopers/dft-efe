@@ -26,6 +26,7 @@
 
 #include <utils/Exceptions.h>
 #include <utils/MathFunctions.h>
+#include "DealiiConversions.h"
 #include <basis/TriangulationCellDealii.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/quadrature_lib.h>
@@ -1375,7 +1376,7 @@ namespace dftefe
     FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisManager()
       const
     {
-      retufn *d_feBM;
+      return *d_feBM;
     }
 
   } // end of namespace basis

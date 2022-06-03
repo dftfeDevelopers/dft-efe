@@ -308,29 +308,28 @@ namespace dftefe
     }
 
     __inline__ __device__ void
-    setRealValue(cuFloatComplex *a, double value )
+    setRealValue(cuFloatComplex *a, double value)
     {
-      *a =  make_cuFloatComplex(value, 0.0);
+      *a = make_cuFloatComplex(value, 0.0);
     }
 
     __inline__ __device__ void
-    setRealValue(cuDoubleComplex *a, double value )
+    setRealValue(cuDoubleComplex *a, double value)
     {
-      *a =  make_cuDoubleComplex(value, 0.0);
+      *a = make_cuDoubleComplex(value, 0.0);
     }
 
     __inline__ __device__ void
-    setRealValue(float *a, double value )
+    setRealValue(float *a, double value)
     {
-      *a =  value;
+      *a = value;
     }
 
     __inline__ __device__ void
-    setRealValue(double *a, double value )
+    setRealValue(double *a, double value)
     {
-      *a =  value;
+      *a = value;
     }
-
 
 
 
