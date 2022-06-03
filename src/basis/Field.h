@@ -62,15 +62,15 @@ namespace dftefe
       using const_iterator =
         typename linearAlgebra::Vector<ValueType, memorySpace>::const_iterator;
 
-      Field(std::shared_ptr<const BasisHandler<memorySpace>> basisHandler,
+      Field(std::shared_ptr<const BasisHandler<ValueType,memorySpace>> basishandler,
             const std::string                                constraintsName,
-            const linearAlgebra::LinAlgOpContext &           linAlgOpContext);
+            const linearAlgebra::LinAlgOpContext<memorySpace> & linAlgOpContext);
 
       ~Field() = default;
 
-      reinit(std::shared_ptr<const BasisHandler<memorySpace>> basisHandler,
+      void reinit(std::shared_ptr<const BasisHandler<ValueType,memorySpace>> basisHandler,
              const std::string                                constraintsName,
-             const linearAlgebra::LinAlgOpContext &           linAlgOpContext);
+             const linearAlgebra::LinAlgOpContext<memorySpace> & linAlgOpContext);
 
       void
       applyConstraintsParentToChild();
@@ -78,10 +78,10 @@ namespace dftefe
       void
       applyConstraintsChildToParent();
 
-      const Vector<ValueType, memorySpace> &
+      const linearAlgebra::Vector<ValueType, memorySpace> &
       getVector();
 
-      const BasisHandler<memorySpace> &
+      const BasisHandler<ValueType,memorySpace> &
       getBasisHandler() const;
 
       iterator
@@ -114,14 +114,16 @@ namespace dftefe
       void
       accumulateAddLocallyOwnedEnd();
 
-      const linearAlgebra::LinAlgOpContext &
-      getLinAlgContext() const;
+      const linearAlgebra::LinAlgOpContext<memorySpace> &
+      getLinAlgOpContext() const;
+
+      std::string getConstraintsName() const;
 
     private:
       const std::string                                d_constraintsName;
-      linearAlgebra::LinAlgOpContext                   d_linAlgOpContext;
-      std::shared_ptr<const BasisHandler<memorySpace>> d_basisHandler;
-      std::shared_ptr < linearAlgebra::Vector<ValueType, memorySpace> d_vector;
+      linearAlgebra::LinAlgOpContext<memorySpace>      d_linAlgOpContext;
+      std::shared_ptr<const BasisHandler<ValueType,memorySpace>> d_basisHandler;
+      std::shared_ptr < linearAlgebra::Vector<ValueType, memorySpace>> d_vector;
     }; // end of Field
   }    // end of namespace basis
 } // end of namespace dftefe

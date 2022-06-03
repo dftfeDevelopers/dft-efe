@@ -30,6 +30,9 @@
 #include <utils/MemorySpaceType.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/Field.h>
+#include <basis/BasisOperations.h>
+#include <basis/BasisDataStorage.h>
+#include <basis/FEBasisHandler.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <memory>
@@ -46,7 +49,7 @@ namespace dftefe
     {
     public:
       FEBasisOperations(
-        std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>>
+        std::shared_ptr<const BasisDataStorage<ValueType, memorySpace>>
                         basisDataStorage,
         const size_type maxCellTimesFieldBlock);
 
@@ -56,7 +59,7 @@ namespace dftefe
       interpolate(
         const Field<ValueType, memorySpace> &       field,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &quadValuesContainer) const override;
 
       virtual void
@@ -66,7 +69,7 @@ namespace dftefe
         Field<ValueType, memorySpace> &             fieldOutput) const override;
 
     private:
-      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace, dim>>
+      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace>>
                 d_feBasisDataStorage;
       size_type d_maxCellTimesFieldBlock;
 

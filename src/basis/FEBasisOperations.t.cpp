@@ -25,6 +25,7 @@
 #include <utils/Exceptions.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FEBasisOperationsInternal.h>
 namespace dftefe
 {
@@ -35,13 +36,13 @@ namespace dftefe
     //
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     FEBasisOperations<ValueType, memorySpace, dim>::FEBasisOperations(
-      std::shared_ptr<const BasisDataStorgae<ValueType, memorySpace>>
+      std::shared_ptr<const BasisDataStorage<ValueType, memorySpace>>
                       basisDataStorage,
       const size_type maxCellTimesFieldBlock)
       : d_maxCellTimesFieldBlock(maxCellTimesFieldBlock)
     {
       d_feBasisDataStorage = std::dynamic_pointer_cast<
-        const FEBasisDataStorage<ValueType, memorySpace, dim>>(
+        const FEBasisDataStorage<ValueType, memorySpace>>(
         basisDataStorage);
       utils::throwException(
         d_feBasisDataStorage != nullptr,
@@ -53,12 +54,12 @@ namespace dftefe
     FEBasisOperations<ValueType, memorySpace, dim>::interpolate(
       const Field<ValueType, memorySpace> &       field,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         &quadValuesContainer) const
     {
-      const BasisHandler<memorySpace> &basisHandler = field.getBasisHandler();
+      const BasisHandler<ValueType,memorySpace> &basisHandler = field.getBasisHandler();
       const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
-        dynamic_cast<FEBasisHandler<ValueType, memorySpace, dim> &>(
+        dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
           basisHandler);
       utils::throwException(
         &feBasisHandler != nullptr,
@@ -210,15 +211,15 @@ namespace dftefe
 
           ValueType                           alpha = 1.0;
           ValueType                           beta  = 0.0;
-          const linearAlgebra::LinAlgContext &linAlgContext =
-            field.getLinAlgContext();
+          const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
+            field.getLinAlgOpContext();
 
           const ValueType *B =
-            (d_feBasisDataStorage->getBasisInAllCells(quadratureRuleAttributes))
+            (d_feBasisDataStorage->getBasisDataInAllCells(quadratureRuleAttributes))
               .data() +
             BStartOffset;
-          const ValuType *C = quadValuesContainer.begin() + CStartOffset;
-          linearAlgebra::gemmStridedVarBatched(layout,
+          ValueType *C = quadValuesContainer.begin() + CStartOffset;
+          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,memorySpace>(layout,
                                                numLocallyOwnedCells,
                                                transA.data(),
                                                transB.data(),
@@ -235,7 +236,7 @@ namespace dftefe
                                                beta,
                                                C,
                                                ldcSizes.data(),
-                                               linAlgContext.getBlasQueue());
+                                               linAlgOpContext.getBlasQueue());
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {

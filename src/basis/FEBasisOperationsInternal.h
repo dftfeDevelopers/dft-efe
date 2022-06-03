@@ -30,6 +30,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <basis/Field.h>
+#include <basis/BasisDataStorage.h>
 namespace dftefe
 {
   namespace basis
@@ -44,7 +45,7 @@ namespace dftefe
         const size_type                        numComponents,
         const size_type *                      cellLocalIdsStartPtr,
         const std::vector<size_type> &         numCellDofs,
-        MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
+        dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
     }; // end of class FEBasisOperationsInternal
   }    // end of namespace basis

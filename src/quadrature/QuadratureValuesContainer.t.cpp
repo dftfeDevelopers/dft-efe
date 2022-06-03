@@ -107,7 +107,7 @@ namespace dftefe
       , d_numCellEntries(0)
       , d_storage(0)
     {
-      QuadratureValuesContainerInternal::initialize(d_quadratureRuleContainer,
+      QuadratureValuesContainerInternal::initialize<ValueType, memorySpace>(d_quadratureRuleContainer,
                                                     d_numberComponents,
                                                     initVal,
                                                     d_cellStartIds,
@@ -123,7 +123,7 @@ namespace dftefe
       const ValueType                            initVal /*= ValueType()*/)
     {
       d_quadratureRuleContainer = &quadratureRuleContainer;
-      QuadratureValuesContainerInternal::initialize(d_quadratureRuleContainer,
+      QuadratureValuesContainerInternal::initialize<ValueType, memorySpace>(d_quadratureRuleContainer,
                                                     d_numberComponents,
                                                     initVal,
                                                     d_cellStartIds,

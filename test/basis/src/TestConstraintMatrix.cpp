@@ -7,6 +7,7 @@
 #include <basis/FEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/FEConstraintsDealii.h>
+#include <basis/FEBasisHandlerDealii.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <utils/Point.h>
@@ -22,6 +23,8 @@
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/base/quadrature_lib.h>
+#include <deal.II/fe/mapping_q1.h>
+#include <deal.II/dofs/dof_tools.h>
 
 #include <iostream>
 
@@ -47,8 +50,8 @@ int main()
   // Set up linAlgcontext
 
   int blasQueue = 0;
-  blasLapack::BlasQueue<memorySpace> *blasQueuePtr = &blasQueue
-  linearAlgebra::LinAlgOpContext           linAlgOpContext(blasQueuePtr);
+  dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
+  dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>        linAlgOpContext(blasQueuePtr);
 
   // Set up Triangulation
   const unsigned int dim = 3;
@@ -95,7 +98,7 @@ int main()
   constraintsVec[0]->close();
 
   std::map<std::string,
-           std::shared_ptr<const Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
+           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
 
   constraintsMap[constraintName] = constraintsVec[0];
 
@@ -108,7 +111,7 @@ int main()
 
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<dftefe::basis::BasisDataStorgae<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
+  std::shared_ptr<dftefe::basis::BasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
     std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisManager,
      constraintsVec,
@@ -135,20 +138,20 @@ int main()
 
   //populate the value of the Field
 
-  size_type numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
+  dftefe::size_type numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
   auto itField  = fieldData.begin();
-  dftefe::Point nodeLoc;
-  for (size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
+  dftefe::utils::Point nodeLoc(dim,0.0);
+  for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
     {
-      std::vector<global_size_type> cellGlobalNodeIds;
+      std::vector<dftefe::global_size_type> cellGlobalNodeIds;
       basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
 
-      for ( size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+      for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
         {
-          global_size_type = globalId = cellGlobalNodeIds[iNode]
+          dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
           if( !constraintsVec[0]->isConstrained(globalId))
           {
-            size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
+            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
             basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
 
             *(itField + localId )  = interpolatePolynomial (feDegree, nodeLoc[0], nodeLoc[1], nodeLoc[2],xmin,ymin,zmin);
@@ -167,31 +170,31 @@ int main()
 
   // create the quadrature Value Container
 
-  std::shared_ptr<dftefe::quadrarture::QuadratureRule> quadRule =
-    std::make_shared<dftefe::quadrarture::QuadratureRuleGauss>(dim, num1DGaussSize);
+  std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
+    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
 
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  dftefe::quadrarture::QuadratureRuleContainer quadRuleContainer( quadRule, triangulationBase,
+  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadRule, triangulationBase,
                                                                  linearCellMappingDealii);
 
-  dftefe::quadrarture::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, 1);
+  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, 1);
 
 
   // Interpolate the nodal data to the quad points
   feBasisOp.interpolate( fieldData, quadAttr[0], quadValuesContainer);
 
 
-  std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
+  const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
 
   bool testPass = true;
   for( auto it  = quadValuesContainer.begin() ; it != quadValuesContainer.end() ; it++ )
     {
-      size_type jQuad = it->first;
+      dftefe::size_type jQuad = it->first;
       double xLoc = locQuadPoints[jQuad][0];
       double yLoc = locQuadPoints[jQuad][1];
       double zLoc = locQuadPoints[jQuad][2];
 
-      analyticValue = interpolatePolynomial (feDegree, xLoc, yLoc, zLoc,xmin,ymin,zmin);
+      double analyticValue = interpolatePolynomial (feDegree, xLoc, yLoc, zLoc,xmin,ymin,zmin);
 
       if ( std::abs((*it) - analyticValue) > 1e-8 )
         testPass = false;

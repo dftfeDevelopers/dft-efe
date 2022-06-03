@@ -10,7 +10,10 @@ message(${MAIN_PROJECT_DIR})
 include_directories(${MAIN_PROJECT_DIR}/src)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/basis/lib/buildUtils)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/lib/buildBasis)
-dd_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
+
+
 #add_executable(TestTriangulationDealiiSerial TestTriangulationDealiiSerial.cpp )
 #target_link_libraries(TestTriangulationDealiiSerial PUBLIC dft-efe-basis dft-efe-utils)
 #add_executable(TestBasisStorageSerialTria TestBasisStorageSerialTria.cpp )
@@ -19,4 +22,4 @@ dd_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basi
 #target_link_libraries(TestBasisHandler PUBLIC dft-efe-basis dft-efe-utils)
 
 add_executable(TestConstraintMatrix TestConstraintMatrix.cpp )
-target_link_libraries(TestConstraintMatrix PUBLIC dft-efe-quadrature dft-efe-basis dft-efe-utils)
+target_link_libraries(TestConstraintMatrix PUBLIC dft-efe-quadrature dft-efe-basis dft-efe-utils dft-efe-linalg)
