@@ -38,16 +38,19 @@ namespace dftefe
 {
   namespace utils
   {
-    enum class MPITags : std::uint16_t
+    namespace mpi
     {
-      DUMMY_MPI_TAG = 100,
-      MPI_REQUESTERS_NBX_TAG,
-      MPI_P2P_PATTERN_TAG,
+      enum class MPITags : std::uint16_t
+      {
+        DUMMY_MPI_TAG = 100,
+        MPI_REQUESTERS_NBX_TAG,
+        MPI_P2P_PATTERN_TAG,
 
-      MPI_P2P_COMMUNICATOR_SCATTER_TAG,
+        MPI_P2P_COMMUNICATOR_SCATTER_TAG,
 
-      MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
-    };
-  } // end of namespace utils
+        MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
+      };
+    } // end of namespace mpi
+  }   // end of namespace utils
 } // end of namespace dftefe
 #endif // dftefeMPITags_h

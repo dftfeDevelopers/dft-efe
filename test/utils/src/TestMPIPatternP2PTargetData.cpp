@@ -24,12 +24,10 @@
  * @author Bikash Kanungo
  */
 
-#ifdef DFTEFE_WITH_MPI
-#include <mpi.h>
-#endif
-
 #include <utils/TypeConfig.h>
 #include <utils/Exceptions.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 #include <utils/MPIPatternP2P.h>
 
 #include <iostream>
@@ -60,15 +58,15 @@ int main()
 #ifdef DFTEFE_WITH_MPI
   
   // initialize the MPI environment
-  MPI_Init(NULL, NULL);
+  dftefe::utils::mpi::MPIInit(NULL, NULL);
 
   // Get the number of processes
   int numProcs;
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+  dftefe::utils::mpi::MPICommSize(dftefe::utils::mpi::MPICommWorld, &numProcs);
 
   // Get the rank of the process
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  dftefe::utils::mpi::MPICommRank(dftefe::utils::mpi::MPICommWorld, &rank);
 
   size_type numOwnedIndices = 1000;
   size_type maxNumGhostIndices = 50;
@@ -111,7 +109,7 @@ int main()
     outfile << ghostIndices[i] << " ";
   
   outfile.close();
-  MPI_Barrier(MPI_COMM_WORLD);
+  dftefe::utils::mpi::MPIBarrier(dftefe::utils::mpi::MPICommWorld);
 
   std::map<size_type, std::vector<size_type>> procIdToOwnedLocalIndices;
   for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
@@ -146,10 +144,10 @@ int main()
     }
   }
 
-  dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::HOST> 
+  dftefe::utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::HOST> 
     mpiPatternP2P(locallyOwnedRange,
 	ghostIndices,
-	MPI_COMM_WORLD);
+	dftefe::utils::mpi::MPICommWorld);
 
   auto targetProcIds = mpiPatternP2P.getTargetProcIds();
   for(unsigned int iProc = 0; iProc < numProcs; ++iProc)
@@ -209,6 +207,7 @@ int main()
     }
 
   }
-  MPI_Finalize();
+
+  dftefe::utils::mpi::MPIFinalize();
 #endif  
 }

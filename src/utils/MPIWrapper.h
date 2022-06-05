@@ -237,6 +237,9 @@ namespace dftefe
       int
       MPIErrorString(int errorcode, char *string, int *resultlen);
 
+      int
+      MPIFinalize(void);
+
     } // end of namespace mpi
   }   // end of namespace utils
 } // end of namespace dftefe
