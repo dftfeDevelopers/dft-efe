@@ -19,6 +19,7 @@ set(DFT-EFE-UTILS-SOURCES
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
+	ConditionalOStream.cpp
 	MPITypes.cpp
 	MPIWrapper.cpp
 	MPIRequestersNBX.cpp

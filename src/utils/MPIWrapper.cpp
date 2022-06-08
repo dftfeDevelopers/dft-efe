@@ -713,7 +713,7 @@ namespace dftefe
       int
       MPIInitThread(int *argc, char ***argv, int required, int *provided)
       {
-        *provided = MPITHREAD_MULTIPLE;
+        *provided = MPIThreadMultiple;
         return MPISuccess;
       }
 
