@@ -185,7 +185,7 @@ namespace dftefe
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    const linearAlgebra::LinAlgOpContext<memorySpace> &
+    linearAlgebra::LinAlgOpContext<memorySpace> &
     Field<ValueType, memorySpace>::getLinAlgOpContext() const
     {
       return *d_linAlgOpContext;

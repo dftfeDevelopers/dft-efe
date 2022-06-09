@@ -117,7 +117,7 @@ namespace dftefe
       void
       accumulateAddLocallyOwnedEnd();
 
-      const linearAlgebra::LinAlgOpContext<memorySpace> &
+      linearAlgebra::LinAlgOpContext<memorySpace> &
       getLinAlgOpContext() const;
 
       std::string

@@ -220,7 +220,7 @@ namespace dftefe
 
           ValueType                                          alpha = 1.0;
           ValueType                                          beta  = 0.0;
-          const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
+          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             field.getLinAlgOpContext();
 
           const ValueType *B = (d_feBasisDataStorage->getBasisDataInAllCells(
