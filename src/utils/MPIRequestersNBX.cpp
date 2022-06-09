@@ -95,7 +95,7 @@ namespace dftefe
                 std::to_string(d_numProcessors) + ")");
 
             int &sendBuffer = d_sendBuffers[i];
-            auto err        = MPIIssend(
+            auto err        = MPIIssend<MemorySpace::HOST>(
               &sendBuffer, 1, MPIInt, rank, tag, d_comm, &d_sendRequests[i]);
 
             std::string errMsg = "Error occured while using MPI_ISsend. "
@@ -161,13 +161,13 @@ namespace dftefe
             MPIRequest request;
             d_recvRequests.push_back(request);
 
-            err    = MPIIrecv(&d_recvBuffers[N],
-                           1,
-                           MPIInt,
-                           sourceRank,
-                           tag,
-                           d_comm,
-                           &d_recvRequests[N]);
+            err    = MPIIrecv<MemorySpace::HOST>(&d_recvBuffers[N],
+                                              1,
+                                              MPIInt,
+                                              sourceRank,
+                                              tag,
+                                              d_comm,
+                                              &d_recvRequests[N]);
             errMsg = "Error occured while using MPI_Irecv. "
                      "Error code: " +
                      std::to_string(err);

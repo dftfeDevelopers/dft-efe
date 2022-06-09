@@ -65,14 +65,14 @@ namespace dftefe
 
           std::vector<global_size_type> ownedRanges = {ownedRangeStart,
                                                        ownedRangeEnd};
-          MPIAllgatherv(&ownedRanges[0],
-                        2,
-                        MPIUnsignedLong,
-                        &allOwnedRanges[0],
-                        &recvCounts[0],
-                        &displs[0],
-                        MPIUnsignedLong,
-                        mpiComm);
+          MPIAllgatherv<MemorySpace::HOST>(&ownedRanges[0],
+                                           2,
+                                           MPIUnsignedLong,
+                                           &allOwnedRanges[0],
+                                           &recvCounts[0],
+                                           &displs[0],
+                                           MPIUnsignedLong,
+                                           mpiComm);
         }
 
         void
@@ -411,15 +411,15 @@ namespace dftefe
           {
             const size_type numGhostIndicesInProc =
               d_numGhostIndicesInGhostProcs[iGhost];
-            const int   ghostProcId = d_ghostProcIds[iGhost];
-            int         err         = MPIIsend(&numGhostIndicesInProc,
-                               1,
-                               MPIUnsigned,
-                               ghostProcId,
-                               tag,
-                               d_mpiComm,
-                               &sendRequests[iGhost]);
-            std::string errMsg      = "Error occured while using MPI_Isend. "
+            const int ghostProcId = d_ghostProcIds[iGhost];
+            int       err = MPIIsend<MemorySpace::HOST>(&numGhostIndicesInProc,
+                                                  1,
+                                                  MPIUnsigned,
+                                                  ghostProcId,
+                                                  tag,
+                                                  d_mpiComm,
+                                                  &sendRequests[iGhost]);
+            std::string errMsg = "Error occured while using MPI_Isend. "
                                  "Error code: " +
                                  std::to_string(err);
             throwException(err == MPISuccess, errMsg);
@@ -428,13 +428,14 @@ namespace dftefe
         for (unsigned int iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
           {
             const int targetProcId = d_targetProcIds[iTarget];
-            int       err = MPIIrecv(&d_numOwnedIndicesForTargetProcs[iTarget],
-                               1,
-                               MPIUnsigned,
-                               targetProcId,
-                               tag,
-                               d_mpiComm,
-                               &recvRequests[iTarget]);
+            int       err          = MPIIrecv<MemorySpace::HOST>(
+              &d_numOwnedIndicesForTargetProcs[iTarget],
+              1,
+              MPIUnsigned,
+              targetProcId,
+              tag,
+              d_mpiComm,
+              &recvRequests[iTarget]);
             std::string errMsg = "Error occured while using MPI_Irecv. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -487,13 +488,13 @@ namespace dftefe
                   (size_type)(ghostGlobalIndex - ghostProcOwnedIndicesStart);
               }
 
-            int         err    = MPIIsend(&localIndicesForGhostProc[0],
-                               numGhostIndicesInProc,
-                               MPIUnsigned,
-                               ghostProcId,
-                               tag,
-                               d_mpiComm,
-                               &sendRequests[iGhost]);
+            int err = MPIIsend<MemorySpace::HOST>(&localIndicesForGhostProc[0],
+                                                  numGhostIndicesInProc,
+                                                  MPIUnsigned,
+                                                  ghostProcId,
+                                                  tag,
+                                                  d_mpiComm,
+                                                  &sendRequests[iGhost]);
             std::string errMsg = "Error occured while using MPI_Isend. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -507,13 +508,14 @@ namespace dftefe
             const int targetProcId = d_targetProcIds[iTarget];
             const int numOwnedIndicesForTarget =
               d_numOwnedIndicesForTargetProcs[iTarget];
-            int err = MPIIrecv(&flattenedLocalTargetIndicesTmp[startIndex],
-                               numOwnedIndicesForTarget,
-                               MPIUnsigned,
-                               targetProcId,
-                               tag,
-                               d_mpiComm,
-                               &recvRequests[iTarget]);
+            int err = MPIIrecv<MemorySpace::HOST>(
+              &flattenedLocalTargetIndicesTmp[startIndex],
+              numOwnedIndicesForTarget,
+              MPIUnsigned,
+              targetProcId,
+              tag,
+              d_mpiComm,
+              &recvRequests[iTarget]);
             std::string errMsg = "Error occured while using MPI_Irecv. "
                                  "Error code: " +
                                  std::to_string(err);

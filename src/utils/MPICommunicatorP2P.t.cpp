@@ -101,7 +101,8 @@ namespace dftefe
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
-            const int err = MPIIrecv(
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+            const int err = MPIIrecv<MemorySpace::HOST_PINNED>(
               recvArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
                d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
@@ -113,6 +114,20 @@ namespace dftefe
                 communicationChannel,
               d_mpiCommunicator,
               &d_requestsUpdateGhostValues[i]);
+#  else
+            const int err = MPIIrecv<memorySpace>(
+              recvArrayStartPtr,
+              (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+               d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
+                d_blockSize * sizeof(ValueType),
+              MPIByte,
+              d_mpiPatternP2P->getGhostProcIds().data()[i],
+              static_cast<size_type>(
+                MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
+                communicationChannel,
+              d_mpiCommunicator,
+              &d_requestsUpdateGhostValues[i]);
+#  endif
 
 
             const std::pair<bool, std::string> isSuccessAndMessage =
@@ -154,7 +169,8 @@ namespace dftefe
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
-            const int err = MPIIsend(
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+            const int err = MPIIsend<MemorySpace::HOST_PINNED>(
               sendArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
                 d_blockSize * sizeof(ValueType),
@@ -167,6 +183,21 @@ namespace dftefe
               d_mpiCommunicator,
               &d_requestsUpdateGhostValues
                 [d_mpiPatternP2P->getGhostProcIds().size() + i]);
+#  else
+            const int err = MPIIsend<memorySpace>(
+              sendArrayStartPtr,
+              d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
+                d_blockSize * sizeof(ValueType),
+              MPIByte,
+              d_mpiPatternP2P->getTargetProcIds().data()[i],
+              static_cast<size_type>(
+                MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
+                communicationChannel,
+
+              d_mpiCommunicator,
+              &d_requestsUpdateGhostValues
+                [d_mpiPatternP2P->getGhostProcIds().size() + i]);
+#  endif
 
 
             const std::pair<bool, std::string> isSuccessAndMessage =
@@ -246,7 +277,8 @@ namespace dftefe
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
           {
-            const int err = MPIIrecv(
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+            const int err = MPIIrecv<MemorySpace::HOST_PINNED>(
               recvArrayStartPtr,
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
                 d_blockSize * sizeof(ValueType),
@@ -256,11 +288,24 @@ namespace dftefe
                 communicationChannel,
               d_mpiCommunicator,
               &d_requestsAccumulateAddLocallyOwned[i]);
+#  else
+            const int err = MPIIrecv<memorySpace>(
+              recvArrayStartPtr,
+              d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
+                d_blockSize * sizeof(ValueType),
+              MPIByte,
+              d_mpiPatternP2P->getTargetProcIds().data()[i],
+              static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
+                communicationChannel,
+              d_mpiCommunicator,
+              &d_requestsAccumulateAddLocallyOwned[i]);
+#  endif
 
             const std::pair<bool, std::string> isSuccessAndMessage =
               MPIErrorCodeHandler::getIsSuccessAndMessage(err);
             throwException(isSuccessAndMessage.first,
                            isSuccessAndMessage.second);
+
 
             recvArrayStartPtr +=
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
@@ -292,7 +337,8 @@ namespace dftefe
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
           {
-            const int err = MPIIsend(
+#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+            const int err = MPIIsend<MemorySpace::HOST_PINNED>(
               sendArrayStartPtr,
               (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
                d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
@@ -304,6 +350,21 @@ namespace dftefe
               d_mpiCommunicator,
               &d_requestsAccumulateAddLocallyOwned
                 [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
+#  else
+            const int err = MPIIsend<memorySpace>(
+              sendArrayStartPtr,
+              (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+               d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
+                d_blockSize * sizeof(ValueType),
+              MPIByte,
+              d_mpiPatternP2P->getGhostProcIds().data()[i],
+              static_cast<size_type>(MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
+                communicationChannel,
+              d_mpiCommunicator,
+              &d_requestsAccumulateAddLocallyOwned
+                [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
+#  endif
+
 
             const std::pair<bool, std::string> isSuccessAndMessage =
               MPIErrorCodeHandler::getIsSuccessAndMessage(err);

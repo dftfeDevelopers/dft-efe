@@ -23,11 +23,13 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPIWrapperh
-#define dftefeMPIWrapperh
+#ifndef dftefeMPIWrapper_h
+#define dftefeMPIWrapper_h
 
 #include <utils/MPITypes.h>
 #include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
+
 namespace dftefe
 {
   namespace utils
@@ -37,6 +39,7 @@ namespace dftefe
       int
       MPITypeContiguous(int count, MPIDatatype oldtype, MPIDatatype *newtype);
 
+      template <MemorySpace memorySpace>
       int
       MPIAllreduce(const void *sendbuf,
                    void *      recvbuf,
@@ -45,6 +48,7 @@ namespace dftefe
                    MPIOp       op,
                    MPIComm     comm);
 
+      template <MemorySpace memorySpace>
       int
       MPIAllgather(const void *sendbuf,
                    int         sendcount,
@@ -54,6 +58,7 @@ namespace dftefe
                    MPIDatatype recvtype,
                    MPIComm     comm);
 
+      template <MemorySpace memorySpace>
       int
       MPIAllgatherv(const void *sendbuf,
                     int         sendcount,
@@ -69,6 +74,7 @@ namespace dftefe
       int
       MPIIbarrier(MPIComm comm, MPIRequest *request);
 
+      template <MemorySpace memorySpace>
       int
       MPIBcast(void *      buffer,
                int         count,
@@ -131,6 +137,7 @@ namespace dftefe
                  int *       flag,
                  MPIStatus * statuses);
 
+      template <MemorySpace memorySpace>
       int
       MPIIrecv(void *      buf,
                int         count,
@@ -140,6 +147,7 @@ namespace dftefe
                MPIComm     comm,
                MPIRequest *request);
 
+      template <MemorySpace memorySpace>
       int
       MPIIsend(const void *buf,
                int         count,
@@ -149,6 +157,7 @@ namespace dftefe
                MPIComm     comm,
                MPIRequest *request);
 
+      template <MemorySpace memorySpace>
       int
       MPIRecv(void *      buf,
               int         count,
@@ -164,6 +173,7 @@ namespace dftefe
       int
       MPIOpFree(MPIOp *op);
 
+      template <MemorySpace memorySpace>
       int
       MPIReduce(void *      sendbuf,
                 void *      recvbuf,
@@ -176,6 +186,7 @@ namespace dftefe
       int
       MPIRequestFree(MPIRequest *request);
 
+      template <MemorySpace memorySpace>
       int
       MPISend(const void *buf,
               int         count,
@@ -184,6 +195,7 @@ namespace dftefe
               int         tag,
               MPIComm     comm);
 
+      template <MemorySpace memorySpace>
       int
       MPISendrecv(const void *sendbuf,
                   int         sendcount,
@@ -198,6 +210,7 @@ namespace dftefe
                   MPIComm     comm,
                   MPIStatus * status);
 
+      template <MemorySpace memorySpace>
       int
       MPIIssend(const void *buf,
                 int         count,
@@ -207,6 +220,7 @@ namespace dftefe
                 MPIComm     comm,
                 MPIRequest *request);
 
+      template <MemorySpace memorySpace>
       int
       MPISsend(const void *buf,
                int         count,
@@ -243,4 +257,7 @@ namespace dftefe
     } // end of namespace mpi
   }   // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeMPIWrapperh
+
+#include "MPIWrapper.t.cpp"
+
+#endif // dftefeMPIWrapper_h
