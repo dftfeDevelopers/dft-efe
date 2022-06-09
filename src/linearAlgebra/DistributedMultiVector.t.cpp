@@ -342,15 +342,15 @@ namespace dftefe
     DistributedMultiVector<ValueType, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->scatterToGhostBegin(*d_storage,
-                                                communicationChannel);
+      d_mpiCommunicatorP2P->updateGhostValuesBegin(*d_storage,
+                                                   communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DistributedMultiVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {
-      d_mpiCommunicatorP2P->scatterToGhostEnd();
+      d_mpiCommunicatorP2P->updateGhostValuesEnd();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
