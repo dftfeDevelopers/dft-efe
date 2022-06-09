@@ -193,7 +193,6 @@ namespace dftefe
     } // end of namespace FEBasisHandlerDealiiInternal
 
 
-#ifdef DFTEFE_WITH_MPI
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -202,7 +201,7 @@ namespace dftefe
       std::map<std::string,
                std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                       constraintsMap,
-      const MPI_Comm &mpiComm)
+      const utils::mpi::MPIComm &mpiComm)
     {
       reinit(basisManager, constraintsMap, mpiComm);
     }
@@ -216,7 +215,7 @@ namespace dftefe
       std::map<std::string,
                std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                       constraintsMap,
-      const MPI_Comm &mpiComm)
+      const utils::mpi::MPIComm &mpiComm)
     {
       d_isDistributed = true;
       d_mpiComm       = mpiComm;
@@ -256,15 +255,10 @@ namespace dftefe
       //
       // populate d_locallyOwnedCellStartIds
       //
-      std::vector<size_type> locallyOwnedCellStartIdsTmp(numLocallyOwnedCells,
+      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells,
                                                          0);
       FEBasisHandlerDealiiInternal::getLocallyOwnedCellStartIds<dim>(
-        d_feBMDealii.get(), locallyOwnedCellStartIdsTmp);
-      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells);
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        numLocallyOwnedCells,
-        d_locallyOwnedCellStartIds.data(),
-        locallyOwnedCellStartIdsTmp.data());
+        d_feBMDealii.get(), d_locallyOwnedCellStartIds);
 
       //
       // populate d_locallyOwnedCellGlobalIndices
@@ -360,8 +354,6 @@ namespace dftefe
         }
     }
 
-#endif // DFTEFE_WITH_MPI
-
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -421,15 +413,10 @@ namespace dftefe
       //
       // populate d_locallyOwnedCellStartIds
       //
-      std::vector<size_type> locallyOwnedCellStartIdsTmp(numLocallyOwnedCells,
+      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells,
                                                          0);
       FEBasisHandlerDealiiInternal::getLocallyOwnedCellStartIds<dim>(
-        d_feBMDealii.get(), locallyOwnedCellStartIdsTmp);
-      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells);
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        numLocallyOwnedCells,
-        d_locallyOwnedCellStartIds.data(),
-        locallyOwnedCellStartIdsTmp.data());
+        d_feBMDealii.get(), d_locallyOwnedCellStartIds);
 
       //
       // populate d_locallyOwnedCellGlobalIndices

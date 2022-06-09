@@ -26,10 +26,6 @@
 #ifndef dftefeFEBasisHandlerDealii_h
 #define dftefeFEBasisHandlerDealii_h
 
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif // DFTEFE_WITH_MPI
-
 #include <basis/FEBasisHandler.h>
 #include <basis/BasisManager.h>
 #include <basis/FEBasisManagerDealii.h>
@@ -67,21 +63,19 @@ namespace dftefe
         typename GlobalSizeTypeVector::const_iterator;
 
     public:
-#ifdef DFTEFE_WITH_MPI
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
                  std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                         constraintsMap,
-        const MPI_Comm &mpiComm);
+        const utils::mpi::MPIComm &mpiComm);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
                  std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                         constraintsMap,
-        const MPI_Comm &mpiComm);
-#endif // DFTEFE_WITH_MPI
+        const utils::mpi::MPIComm &mpiComm);
 
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
@@ -197,12 +191,10 @@ namespace dftefe
         std::string,
         std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
         d_feConstraintsDealiiOptMap;
-#ifdef DFTEFE_WITH_MPI
-      MPI_Comm d_mpiComm;
-#endif // DFTEFE_WITH_MPI
+      utils::mpi::MPIComm d_mpiComm;
       bool                                          d_isDistributed;
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
-      SizeTypeVector                                d_locallyOwnedCellStartIds;
+      std::vector<size_type>                             d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
