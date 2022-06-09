@@ -180,16 +180,20 @@ namespace dftefe
     double
     SerialVector<ValueType, memorySpace>::l2Norm() const
     {
-      return blasLapack::nrm2<ValueType, memorySpace>(
-        this->size(), this->data(), 1, d_linAlgOpContext->getBlasQueue());
+      return blasLapack::nrm2<ValueType, memorySpace>(this->size(),
+                                                      this->data(),
+                                                      1,
+                                                      *d_linAlgOpContext);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     SerialVector<ValueType, memorySpace>::lInfNorm() const
     {
-      return blasLapack::amax<ValueType, memorySpace>(
-        this->size(), this->data(), 1, d_linAlgOpContext->getBlasQueue());
+      return blasLapack::amax<ValueType, memorySpace>(this->size(),
+                                                      this->data(),
+                                                      1,
+                                                      *d_linAlgOpContext);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

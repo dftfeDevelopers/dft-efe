@@ -272,7 +272,7 @@ namespace dftefe
           this->locallyOwnedSize(),
           this->numVectors(),
           this->data(),
-          d_linAlgOpContext->getBlasQueue());
+          *d_linAlgOpContext);
 
       std::vector<double> l2NormsLocallyOwnedSquare(d_numVectors, 0.0);
       for (size_type i = 0; i < d_numVectors; ++i)
@@ -304,7 +304,7 @@ namespace dftefe
           this->locallyOwnedSize(),
           this->numVectors(),
           this->data(),
-          d_linAlgOpContext->getBlasQueue());
+          *d_linAlgOpContext);
 
       std::vector<double> returnValues(d_numVectors, 0.0);
 #ifdef DFTEFE_WITH_MPI
