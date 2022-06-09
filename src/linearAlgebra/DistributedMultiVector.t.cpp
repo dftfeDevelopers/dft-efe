@@ -281,12 +281,12 @@ namespace dftefe
 
       std::vector<double> returnValues(d_numVectors, 0.0);
 #ifdef DFTEFE_WITH_MPI
-      MPI_Allreduce(&l2NormsLocallyOwnedSquare,
-                    &returnValues[0],
-                    d_numVectors,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&l2NormsLocallyOwnedSquare,
+                                            &returnValues[0],
+                                            d_numVectors,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPIMax,
+                                            d_mpiPatternP2P->mpiCommunicator());
 #else
       returnValues = l2NormLocallyOwnedSquare;
 #endif // DFTEFE_WITH_MPI
@@ -308,12 +308,12 @@ namespace dftefe
 
       std::vector<double> returnValues(d_numVectors, 0.0);
 #ifdef DFTEFE_WITH_MPI
-      MPI_Allreduce(&lInfNormsLocallyOwned,
-                    &returnValues[0],
-                    d_numVectors,
-                    MPI_DOUBLE,
-                    MPI_MAX,
-                    d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormsLocallyOwned,
+                                            &returnValues[0],
+                                            d_numVectors,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPIMax,
+                                            d_mpiPatternP2P->mpiCommunicator());
 #else
       returnValues = lInfNormsLocallyOwned;
 #endif // DFTEFE_WITH_MPI
@@ -350,7 +350,7 @@ namespace dftefe
     void
     DistributedMultiVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {
-      d_mpiCommunicatorP2P->updateGhostValuesEnd();
+      d_mpiCommunicatorP2P->updateGhostValuesEnd(*d_storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

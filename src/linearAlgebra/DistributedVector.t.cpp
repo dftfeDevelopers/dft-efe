@@ -413,12 +413,12 @@ namespace dftefe
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
-      utils::mpi::MPIAllreduce(&l2NormLocallyOwnedSquare,
-                               &returnValue,
-                               1,
-                               utils::mpi::MPIDouble,
-                               utils::mpi::MPISum,
-                               d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&l2NormLocallyOwnedSquare,
+                                            &returnValue,
+                                            1,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPISum,
+                                            d_mpiPatternP2P->mpiCommunicator());
       returnValue = std::sqrt(returnValue);
       return returnValue;
     }
@@ -433,12 +433,12 @@ namespace dftefe
                                                  1,
                                                  *d_linAlgOpContext);
       double returnValue = lInfNormLocallyOwned;
-      utils::mpi::MPIAllreduce(&lInfNormLocallyOwned,
-                               &returnValue,
-                               1,
-                               utils::mpi::MPIDouble,
-                               utils::mpi::MPIMax,
-                               d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormLocallyOwned,
+                                            &returnValue,
+                                            1,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPIMax,
+                                            d_mpiPatternP2P->mpiCommunicator());
       return returnValue;
     }
 
@@ -472,7 +472,7 @@ namespace dftefe
     void
     DistributedVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {
-      d_mpiCommunicatorP2P->updateGhostValuesEnd();
+      d_mpiCommunicatorP2P->updateGhostValuesEnd(*d_storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
