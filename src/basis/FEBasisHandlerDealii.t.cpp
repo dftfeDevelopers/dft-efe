@@ -692,7 +692,7 @@ namespace dftefe
             "the constraint " +
               constraintsName);
         }
-      return *(it->second());
+      return *(it->second);
     }
 
 
