@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.20)
 project(reframe_linear_algebra_test)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})

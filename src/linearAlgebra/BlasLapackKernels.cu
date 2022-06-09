@@ -17,6 +17,22 @@ namespace dftefe
       {
         template <typename ValueType>
         __global__ void
+        ascaleDeviceKernel(const size_type  size,
+                           const ValueType  alpha,
+                           const ValueType *x,
+                           ValueType *      z)
+        {
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              z[i] = dftefe::utils::mult(alpha, x[i]);
+            }
+        }
+
+        template <typename ValueType>
+        __global__ void
         axpbyDeviceKernel(const size_type  size,
                           const ValueType  alpha,
                           const ValueType *x,
@@ -53,6 +69,22 @@ namespace dftefe
 
       } // namespace
 
+
+      template <typename ValueType>
+      void
+      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::ascale(
+        const size_type  size,
+        const ValueType  alpha,
+        const ValueType *x,
+        ValueType *      z)
+      {
+        ascaleDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                             dftefe::utils::BLOCK_SIZE>>>(
+          size,
+          dftefe::utils::makeDataTypeDeviceCompatible(alpha),
+          dftefe::utils::makeDataTypeDeviceCompatible(x),
+          dftefe::utils::makeDataTypeDeviceCompatible(z));
+      }
 
 
       template <typename ValueType>

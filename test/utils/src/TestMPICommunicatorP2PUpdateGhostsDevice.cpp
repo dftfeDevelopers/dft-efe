@@ -24,12 +24,10 @@
  * @author Sambit Das
  */
 
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif
-
 #include <utils/TypeConfig.h>
 #include <utils/Exceptions.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/MPICommunicatorP2P.h>
 
@@ -69,15 +67,15 @@ main()
 #ifdef DFTEFE_WITH_MPI
 
   // initialize the MPI environment
-  MPI_Init(NULL, NULL);
+  dftefe::utils::mpi::MPIInit(NULL, NULL);
 
   // Get the number of processes
   int numProcs;
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+  dftefe::utils::mpi::MPICommSize(dftefe::utils::mpi::MPICommWorld, &numProcs);
 
   // Get the rank of the process
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  dftefe::utils::mpi::MPICommRank(dftefe::utils::mpi::MPICommWorld, &rank);
 
   size_type numOwnedIndices    = 1000;
   size_type maxNumGhostIndices = 50;
@@ -121,7 +119,7 @@ main()
     outfile << ghostIndices[i] << " ";
 
   outfile.close();
-  MPI_Barrier(MPI_COMM_WORLD);
+  dftefe::utils::mpi::MPIBarrier(dftefe::utils::mpi::MPICommWorld);
 
   std::map<size_type, std::vector<size_type>> procIdToOwnedLocalIndices;
   for (size_type iProc = 0; iProc < numProcs; ++iProc)
@@ -160,10 +158,10 @@ main()
     }
 
   std::shared_ptr<
-    const dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>
+    const dftefe::utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>
     mpiPatternP2PPtr = std::make_shared<
-      dftefe::utils::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>(
-      locallyOwnedRange, ghostIndices, MPI_COMM_WORLD);
+      dftefe::utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>(
+      locallyOwnedRange, ghostIndices, dftefe::utils::mpi::MPICommWorld);
 
   // test double and block size=1
   const size_type ownedSize = mpiPatternP2PPtr->localOwnedSize();
@@ -176,7 +174,7 @@ main()
   MemoryStorageDoubleDevice memStorage1(ownedPlusGhostSize);
   memStorage1.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd1.data());
 
-  dftefe::utils::MPICommunicatorP2P<double, dftefe::utils::MemorySpace::DEVICE>
+  dftefe::utils::mpi::MPICommunicatorP2P<double, dftefe::utils::MemorySpace::DEVICE>
     mpiCommunicatorP2P1(mpiPatternP2PPtr, 1);
 
   mpiCommunicatorP2P1.updateGhostValues(memStorage1);
@@ -268,6 +266,6 @@ main()
   msg);
   }
   */
-  MPI_Finalize();
+  dftefe::utils::mpi::MPIFinalize();
 #endif
 }

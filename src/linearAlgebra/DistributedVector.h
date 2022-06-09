@@ -99,7 +99,8 @@ namespace dftefe
        *
        */
       DistributedVector(
-        std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                      mpiPatternP2P,
         LinAlgOpContext<memorySpace> *linAlgOpContext,
         const ValueType               initVal);
 
@@ -123,8 +124,9 @@ namespace dftefe
        */
       DistributedVector(
         std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-          &                                                      storage,
-        std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+          &storage,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                      mpiPatternP2P,
         LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       /**
@@ -264,9 +266,10 @@ namespace dftefe
       accumulateAddLocallyOwnedEnd() override;
 
     private:
-      std::unique_ptr<utils::MPICommunicatorP2P<ValueType, memorySpace>>
+      std::unique_ptr<utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
-      std::shared_ptr<const utils::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2P;
     };
 
   } // end of namespace linearAlgebra

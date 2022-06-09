@@ -22,33 +22,47 @@
 /*
  * @author Bikash Kanungo
  */
+#include <utils/ConditionalOStream.h>
 
-#ifndef dftefeMPIErrorCodeHandler_h
-#define dftefeMPIErrorCodeHandler_h
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif // DFTEFE_WITH_MPI
-#include <string>
+//
+// ACKNOWLEDGEMENT: The implementation of this class is borrowed from deal.II
+//
 namespace dftefe
 {
   namespace utils
   {
-    namespace mpi
+    ConditionalOStream::ConditionalOStream(std::ostream &stream,
+                                           const bool    active)
+      : d_outputStream(stream)
+      , d_activeFlag(active)
+    {}
+
+    void
+    ConditionalOStream::setCondition(bool active)
     {
-      class MPIErrorCodeHandler
-      {
-      public:
-        MPIErrorCodeHandler()  = default;
-        ~MPIErrorCodeHandler() = default;
-        static bool
-        isSuccess(const int errCode);
-        static std::string
-        getErrMsg(const int errCode);
-        static std::pair<bool, std::string>
-        getIsSuccessAndMessage(const int errCode);
-      }; // end of MPIErrorCodeHandler
-    }    // end of namespace mpi
-  }      // end of namespace utils
+      d_activeFlag = active;
+    }
+
+    bool
+    ConditionalOStream::isActive() const
+    {
+      return d_activeFlag;
+    }
+
+    inline const ConditionalOStream &
+    ConditionalOStream::operator<<(std::ostream &(*p)(std::ostream &)) const
+    {
+      if (d_activeFlag == true)
+        d_outputStream << p;
+
+      return *this;
+    }
+
+    inline std::ostream &
+    ConditionalOStream::getOStream() const
+    {
+      return d_outputStream;
+    }
+
+  } // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeMPIErrorCodeHandler_h

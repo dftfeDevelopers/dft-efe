@@ -23,32 +23,21 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeMPIErrorCodeHandler_h
-#define dftefeMPIErrorCodeHandler_h
-
-#ifdef DFTEFE_WITH_MPI
-#  include <mpi.h>
-#endif // DFTEFE_WITH_MPI
-#include <string>
+//
+// ACKNOWLEDGEMENT: The implementation of this class is borrowed from deal.II
+//
 namespace dftefe
 {
   namespace utils
   {
-    namespace mpi
+    template <class T>
+    inline const ConditionalOStream &
+    ConditionalOStream::operator<<(const T &t) const
     {
-      class MPIErrorCodeHandler
-      {
-      public:
-        MPIErrorCodeHandler()  = default;
-        ~MPIErrorCodeHandler() = default;
-        static bool
-        isSuccess(const int errCode);
-        static std::string
-        getErrMsg(const int errCode);
-        static std::pair<bool, std::string>
-        getIsSuccessAndMessage(const int errCode);
-      }; // end of MPIErrorCodeHandler
-    }    // end of namespace mpi
-  }      // end of namespace utils
+      if (d_activeFlag == true)
+        d_outputStream << t;
+
+      return *this;
+    }
+  } // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeMPIErrorCodeHandler_h
