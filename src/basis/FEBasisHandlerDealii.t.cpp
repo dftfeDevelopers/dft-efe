@@ -171,7 +171,7 @@ namespace dftefe
       void
       getLocallyOwnedCellLocalIndices(
         const FEBasisManagerDealii<dim> *        feBMDealii,
-        const utils::MPIPatternP2P<memorySpace> *mpiPatternP2P,
+        const utils::mpi::MPIPatternP2P<memorySpace> *mpiPatternP2P,
         const std::vector<global_size_type> &    locallyOwnedCellGlobalIndices,
         std::vector<size_type> &                 locallyOwnedCellLocalIndices)
       {
@@ -320,7 +320,7 @@ namespace dftefe
           // populate d_mpiPatternP2PMap
           //
           auto mpiPatternP2P =
-            std::make_shared<utils::MPIPatternP2P<memorySpace>>(
+            std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
               d_locallyOwnedRange, ghostIndicesTmp, d_mpiComm);
           d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
 
@@ -483,7 +483,7 @@ namespace dftefe
           // populate d_mpiPatternP2PMap
           //
           auto mpiPatternP2P =
-            std::make_shared<utils::MPIPatternP2P<memorySpace>>(
+            std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
               d_locallyOwnedRange);
           d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
 
@@ -562,7 +562,7 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::shared_ptr<const utils::MPIPatternP2P<memorySpace>>
+    std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
     FEBasisHandlerDealii<ValueType, memorySpace, dim>::getMPIPatternP2P(
       const std::string constraintsName) const
     {

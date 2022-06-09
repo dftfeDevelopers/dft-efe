@@ -106,7 +106,7 @@ namespace dftefe
       const Constraints<ValueType, memorySpace> &
       getConstraints(const std::string constraintsName) const override;
 
-      std::shared_ptr<const utils::MPIPatternP2P<memorySpace>>
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;
 
       std::pair<global_size_type, global_size_type>
@@ -209,7 +209,7 @@ namespace dftefe
       // constraints dependent data
       std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>>
         d_ghostIndicesMap;
-      std::map<std::string, std::shared_ptr<utils::MPIPatternP2P<memorySpace>>>
+      std::map<std::string, std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>>>
         d_mpiPatternP2PMap;
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;

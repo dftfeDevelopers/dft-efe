@@ -209,7 +209,7 @@ namespace dftefe
     void
     FEConstraintsDealii<ValueType, memorySpace, dim>::copyConstraintsData(
       const Constraints<ValueType, memorySpace> &constraintsDataIn,
-      const utils::MPIPatternP2P<memorySpace> &  mpiPattern)
+      const utils::mpi::MPIPatternP2P<memorySpace> &  mpiPattern)
     {
       this->clear();
       auto locallyOwnedIndices = mpiPattern.getLocallyOwnedIndices();
@@ -299,7 +299,7 @@ namespace dftefe
               size_type                  dim>
     void
     FEConstraintsDealii<ValueType, memorySpace, dim>::populateConstraintsData(
-      const utils::MPIPatternP2P<memorySpace> &mpiPattern)
+      const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern)
     {
       bool printWarning = false;
 

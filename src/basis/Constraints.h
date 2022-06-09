@@ -67,10 +67,10 @@ namespace dftefe
       virtual void
       copyConstraintsData(
         const Constraints<ValueType, memorySpace> &constraintsDataIn,
-        const utils::MPIPatternP2P<memorySpace> &  mpiPattern) = 0;
+        const utils::mpi::MPIPatternP2P<memorySpace> &  mpiPattern) = 0;
       virtual void
       populateConstraintsData(
-        const utils::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
+        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
 
       virtual void
       distributeChildToParent(
