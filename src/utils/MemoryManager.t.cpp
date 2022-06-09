@@ -70,7 +70,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST_PINNED>::deallocate(
       ValueType *ptr)
     {
-      hostPinnedFree(ptr);
+      if (ptr != nullptr)
+        hostPinnedFree(ptr);
     }
 
     template <typename ValueType>
