@@ -13,7 +13,7 @@ if (NOT TARGET dft-efe-linalg)
             Matrix.cpp
             MatrixOperations.cpp
             QueueManager.cpp
-            SerialDenseMatrix.cpp
+            #SerialDenseMatrix.cpp
             SerialVector.cpp
             VectorAttributes.cpp)
 
@@ -49,5 +49,5 @@ if (NOT TARGET dft-efe-linalg)
     target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
     target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
-    target_link_libraries(dft-efe-linalg PUBLIC blaspp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC gomp blaspp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()
