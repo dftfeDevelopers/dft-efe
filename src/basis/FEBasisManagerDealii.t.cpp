@@ -22,7 +22,7 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
-
+#include <deal.II/base/index_set.h>
 #include "TriangulationDealiiParallel.h"
 #include "TriangulationDealiiSerial.h"
 #include "FECellDealii.h"
@@ -209,6 +209,18 @@ namespace dftefe
     FEBasisManagerDealii<dim>::nGlobalNodes() const
     {
       return d_dofHandler->n_dofs();
+    }
+
+    template <size_type dim>
+    std::pair<global_size_type, global_size_type>
+    FEBasisManagerDealii<dim>::getLocallyOwnedRange() const
+    {
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      std::pair<global_size_type, global_size_type> returnValue =
+        std::make_pair(startId, endId);
+      return returnValue;
     }
 
     template <size_type dim>

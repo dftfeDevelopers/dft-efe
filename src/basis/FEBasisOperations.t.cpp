@@ -171,12 +171,14 @@ namespace dftefe
               ldbSizesTmp[iCell] = nSizesTmp[iCell];
               ldcSizesTmp[iCell] = mSizesTmp[iCell];
               if (iCell > 0)
-	      {
-                strideATmp[iCell] = strideATmp[iCell - 1] +
-                                    mSizesTmp[iCell - 1] * kSizesTmp[iCell - 1];
-		strideCTmp[iCell] = strideCTmp[iCell - 1] + 
-		  mSizesTmp[iCell - 1] * nSizesTmp[iCell - 1];
-	      }
+                {
+                  strideATmp[iCell] =
+                    strideATmp[iCell - 1] +
+                    mSizesTmp[iCell - 1] * kSizesTmp[iCell - 1];
+                  strideCTmp[iCell] =
+                    strideCTmp[iCell - 1] +
+                    mSizesTmp[iCell - 1] * nSizesTmp[iCell - 1];
+                }
               if (!zeroStrideB && iCell > 0)
                 strideBTmp[iCell] = strideBTmp[iCell - 1] +
                                     kSizesTmp[iCell - 1] * nSizesTmp[iCell - 1];
@@ -218,8 +220,8 @@ namespace dftefe
                               strideC.data(),
                               strideCTmp.data());
 
-          ValueType                                          alpha = 1.0;
-          ValueType                                          beta  = 0.0;
+          ValueType                                    alpha = 1.0;
+          ValueType                                    beta  = 0.0;
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             field.getLinAlgOpContext();
 

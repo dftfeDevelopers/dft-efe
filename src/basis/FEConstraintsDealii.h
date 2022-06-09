@@ -64,7 +64,7 @@ namespace dftefe
       void
       setHomogeneousDirichletBC() override;
 
-      std::vector<std::pair<global_size_type, ValueType>> *
+      const std::vector<std::pair<global_size_type, ValueType>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 
       bool
@@ -75,8 +75,8 @@ namespace dftefe
 
       void
       copyConstraintsData(
-        const Constraints<ValueType, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &  mpiPattern) override;
+        const Constraints<ValueType, memorySpace> &   constraintsDataIn,
+        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) override;
       void
       populateConstraintsData(
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) override;

@@ -50,4 +50,5 @@ namespace dftefe
     }; // end of class FEBasisOperationsInternal
   }    // end of namespace basis
 } // end of namespace dftefe
+#include <basis/FEBasisOperationsInternal.t.cpp>
 #endif // dftefeFEBasisOperationsInternal_h

@@ -175,7 +175,7 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::pair<global_size_type, ValueType>> *
+    const std::vector<std::pair<global_size_type, ValueType>> *
     FEConstraintsDealii<ValueType, memorySpace, dim>::getConstraintEntries(
       const global_size_type lineDof) const
     {
@@ -208,8 +208,8 @@ namespace dftefe
               size_type                  dim>
     void
     FEConstraintsDealii<ValueType, memorySpace, dim>::copyConstraintsData(
-      const Constraints<ValueType, memorySpace> &constraintsDataIn,
-      const utils::mpi::MPIPatternP2P<memorySpace> &  mpiPattern)
+      const Constraints<ValueType, memorySpace> &   constraintsDataIn,
+      const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern)
     {
       this->clear();
       auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();

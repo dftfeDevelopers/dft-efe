@@ -170,10 +170,10 @@ namespace dftefe
                 size_type                  dim>
       void
       getLocallyOwnedCellLocalIndices(
-        const FEBasisManagerDealii<dim> *        feBMDealii,
+        const FEBasisManagerDealii<dim> *             feBMDealii,
         const utils::mpi::MPIPatternP2P<memorySpace> *mpiPatternP2P,
-        const std::vector<global_size_type> &    locallyOwnedCellGlobalIndices,
-        std::vector<size_type> &                 locallyOwnedCellLocalIndices)
+        const std::vector<global_size_type> &locallyOwnedCellGlobalIndices,
+        std::vector<size_type> &             locallyOwnedCellLocalIndices)
       {
         size_type numLocallyOwnedCells = feBMDealii->nLocallyOwnedCells();
         size_type cumulativeDofs       = 0;
@@ -200,7 +200,7 @@ namespace dftefe
       std::shared_ptr<const BasisManager> basisManager,
       std::map<std::string,
                std::shared_ptr<const Constraints<ValueType, memorySpace>>>
-                      constraintsMap,
+                                 constraintsMap,
       const utils::mpi::MPIComm &mpiComm)
     {
       reinit(basisManager, constraintsMap, mpiComm);
@@ -214,7 +214,7 @@ namespace dftefe
       std::shared_ptr<const BasisManager> basisManager,
       std::map<std::string,
                std::shared_ptr<const Constraints<ValueType, memorySpace>>>
-                      constraintsMap,
+                                 constraintsMap,
       const utils::mpi::MPIComm &mpiComm)
     {
       d_isDistributed = true;
@@ -255,8 +255,7 @@ namespace dftefe
       //
       // populate d_locallyOwnedCellStartIds
       //
-      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells,
-                                                         0);
+      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells, 0);
       FEBasisHandlerDealiiInternal::getLocallyOwnedCellStartIds<dim>(
         d_feBMDealii.get(), d_locallyOwnedCellStartIds);
 
@@ -413,8 +412,7 @@ namespace dftefe
       //
       // populate d_locallyOwnedCellStartIds
       //
-      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells,
-                                                         0);
+      d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells, 0);
       FEBasisHandlerDealiiInternal::getLocallyOwnedCellStartIds<dim>(
         d_feBMDealii.get(), d_locallyOwnedCellStartIds);
 

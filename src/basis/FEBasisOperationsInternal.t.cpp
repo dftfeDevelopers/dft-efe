@@ -22,19 +22,18 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
-#include <basis/FEBasisOperationsInternal.h>
 namespace dftefe
 {
   namespace basis
   {
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsInternal::copyFieldToCellWiseData(
-      const ValueType *                      data,
-      const size_type                        numComponents,
-      const size_type *                      cellLocalIdsStartPtr,
-      const std::vector<size_type> &         numCellDofs,
-      MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
+    FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(
+      const ValueType *                             data,
+      const size_type                               numComponents,
+      const size_type *                             cellLocalIdsStartPtr,
+      const std::vector<size_type> &                numCellDofs,
+      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
       const size_type numCells               = numCellDofs.size();

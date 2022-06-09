@@ -23,6 +23,7 @@ set(DFT-EFE-QUADRATURE-SOURCES
 	QuadratureRule.cpp
 	QuadratureRuleContainer.cpp
         QuadratureRuleGauss.cpp
+	QuadratureRuleGLL.cpp
 	QuadratureRuleAdaptive.cpp
 	QuadratureValuesContainer.cpp
 	Integrate.cpp)

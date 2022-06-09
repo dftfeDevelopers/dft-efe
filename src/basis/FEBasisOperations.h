@@ -62,11 +62,12 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &quadValuesContainer) const override;
 
-      virtual void
-      integrateWithBasisValues(
-        const Field<ValueType, memorySpace> &       fieldInput,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueType, memorySpace> &             fieldOutput) const override;
+      // virtual void
+      // integrateWithBasisValues(
+      //  const Field<ValueType, memorySpace> &       fieldInput,
+      //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+      //  Field<ValueType, memorySpace> &             fieldOutput) const
+      //  override;
 
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace>>

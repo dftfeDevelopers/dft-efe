@@ -67,14 +67,14 @@ namespace dftefe
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
                  std::shared_ptr<const Constraints<ValueType, memorySpace>>>
-                        constraintsMap,
+                                   constraintsMap,
         const utils::mpi::MPIComm &mpiComm);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
                  std::shared_ptr<const Constraints<ValueType, memorySpace>>>
-                        constraintsMap,
+                                   constraintsMap,
         const utils::mpi::MPIComm &mpiComm);
 
       FEBasisHandlerDealii(
@@ -190,18 +190,19 @@ namespace dftefe
       std::map<
         std::string,
         std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
-        d_feConstraintsDealiiOptMap;
-      utils::mpi::MPIComm d_mpiComm;
+                                                    d_feConstraintsDealiiOptMap;
+      utils::mpi::MPIComm                           d_mpiComm;
       bool                                          d_isDistributed;
       std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
-      std::vector<size_type>                             d_locallyOwnedCellStartIds;
+      std::vector<size_type>                        d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
       // constraints dependent data
       std::map<std::string, std::shared_ptr<GlobalSizeTypeVector>>
         d_ghostIndicesMap;
-      std::map<std::string, std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>>>
+      std::map<std::string,
+               std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>>>
         d_mpiPatternP2PMap;
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;

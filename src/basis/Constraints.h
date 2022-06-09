@@ -55,7 +55,7 @@ namespace dftefe
       virtual bool
       isConstrained(global_size_type basisId) const = 0;
 
-      virtual std::vector<std::pair<global_size_type, ValueType>> *
+      virtual const std::vector<std::pair<global_size_type, ValueType>> *
       getConstraintEntries(const global_size_type lineDof) const = 0;
 
       virtual bool
@@ -66,8 +66,8 @@ namespace dftefe
 
       virtual void
       copyConstraintsData(
-        const Constraints<ValueType, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &  mpiPattern) = 0;
+        const Constraints<ValueType, memorySpace> &   constraintsDataIn,
+        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
       virtual void
       populateConstraintsData(
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
