@@ -333,7 +333,8 @@ namespace dftefe
     DistributedMultiVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->gatherFromGhost(*d_storage, communicationChannel);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwned(*d_storage,
+                                                      communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -358,8 +359,8 @@ namespace dftefe
       accumulateAddLocallyOwnedBegin(
         const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->gatherFromGhostBegin(*d_storage,
-                                                 communicationChannel);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedBegin(
+        *d_storage, communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -367,7 +368,7 @@ namespace dftefe
     DistributedMultiVector<ValueType,
                            memorySpace>::accumulateAddLocallyOwnedEnd()
     {
-      d_mpiCommunicatorP2P->gatherFromGhostEnd(*d_storage);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedEnd(*d_storage);
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe
