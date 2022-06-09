@@ -41,8 +41,6 @@ namespace dftefe
     class Matrix
     {
     public:
-      
-
       using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
       using value_type = typename Storage::value_type;
       using pointer    = typename Storage::pointer;
@@ -291,9 +289,9 @@ namespace dftefe
 
       std::shared_ptr<blasLapack::BlasQueue<memorySpace>> d_BlasQueue;
 
-//      Property d_property;
-//      Uplo     d_uplo;
-//      Layout   d_layout;
+      //      Property d_property;
+      //      Uplo     d_uplo;
+      //      Layout   d_layout;
 
       std::unique_ptr<Storage> d_data;
     };
