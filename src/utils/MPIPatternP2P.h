@@ -98,6 +98,9 @@ namespace dftefe
                       const std::vector<dftefe::global_size_type> &ghostIndices,
                       const MPIComm &                              mpiComm);
 
+        MPIPatternP2P(const std::pair<global_size_type, global_size_type>
+                        &locallyOwnedRange);
+
         // void
         // reinit(){};
 
