@@ -41,27 +41,7 @@ namespace dftefe
     class Matrix
     {
     public:
-      enum class Property
-      {
-        GENERAL,
-        HERMITIAN,
-        DIAGONAL,
-        UPPER_TRIANGULAR,
-        LOWER_TRIANGULAR,
-      };
-
-      enum class Uplo : char
-      {
-        GENERAL = char(blas::Uplo::General),
-        UPPER   = char(blas::Uplo::Upper),
-        LOWER   = char(blas::Uplo::Lower)
-      };
-
-      enum class Layout : char
-      {
-        COLMAJ = char(blas::Layout::ColMajor),
-        ROWMAJ = char(blas::Layout::RowMajor),
-      };
+      
 
       using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
       using value_type = typename Storage::value_type;
@@ -311,9 +291,9 @@ namespace dftefe
 
       std::shared_ptr<blasLapack::BlasQueue<memorySpace>> d_BlasQueue;
 
-      Property d_property;
-      Uplo     d_uplo;
-      Layout   d_layout;
+//      Property d_property;
+//      Uplo     d_uplo;
+//      Layout   d_layout;
 
       std::unique_ptr<Storage> d_data;
     };

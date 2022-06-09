@@ -26,8 +26,8 @@
 #ifndef dftefeBlasWrappers_h
 #define dftefeBlasWrappers_h
 
-#include <blas.hh>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/TypeConfig.h>
 namespace dftefe
 {
@@ -41,7 +41,7 @@ namespace dftefe
       asum(size_type               n,
            ValueType const *       x,
            size_type               incx,
-           BlasQueue<memorySpace> &BlasQueue);
+           LinAlgOpContext<memorySpace> &context);
 
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
@@ -49,7 +49,7 @@ namespace dftefe
       amax(size_type               n,
            ValueType const *       x,
            size_type               incx,
-           BlasQueue<memorySpace> &BlasQueue);
+           LinAlgOpContext<memorySpace> &context);
 
       /**
        * @brief Template for computing \f$ l_{\inf} \f$ norms of all the numVec vectors in a multi Vector
@@ -66,7 +66,7 @@ namespace dftefe
       amaxsMultiVector(size_type               vecSize,
                        size_type               numVec,
                        ValueType const *       multiVecData,
-                       BlasQueue<memorySpace> &BlasQueue);
+                       LinAlgOpContext<memorySpace> &context);
 
 
       template <typename ValueType1,
@@ -79,7 +79,7 @@ namespace dftefe
            size_type                           incx,
            ValueType2 *                        y,
            size_type                           incy,
-           BlasQueue<memorySpace> &            BlasQueue);
+           LinAlgOpContext<memorySpace> &context);
 
 
 
@@ -118,7 +118,7 @@ namespace dftefe
             ValueType               beta,
             const ValueType *       y,
             ValueType *             z,
-            BlasQueue<memorySpace> &BlasQueue);
+            LinAlgOpContext<memorySpace> &context);
 
 
 
@@ -131,7 +131,7 @@ namespace dftefe
           size_type               incx,
           ValueType2 const *      y,
           size_type               incy,
-          BlasQueue<memorySpace> &BlasQueue);
+          LinAlgOpContext<memorySpace> &context);
 
 
       template <typename ValueType,
@@ -140,8 +140,7 @@ namespace dftefe
       nrm2(size_type               n,
            ValueType const *       x,
            size_type               incx,
-           BlasQueue<memorySpace> &BlasQueue);
-
+           LinAlgOpContext<memorySpace> &context);
 
       /**
        * @brief Template for computing \f$ l_2 \f$ norms of all the numVec vectors in a multi Vector
@@ -158,7 +157,7 @@ namespace dftefe
       nrms2MultiVector(size_type               vecSize,
                        size_type               numVec,
                        ValueType const *       multiVecData,
-                       BlasQueue<memorySpace> &BlasQueue);
+                       LinAlgOpContext<memorySpace> &context);
 
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
@@ -177,7 +176,7 @@ namespace dftefe
            ValueType               beta,
            ValueType *             dC,
            size_type               lddc,
-           BlasQueue<memorySpace> &BlasQueue);
+           LinAlgOpContext<memorySpace> &context);
 
       /**
        * @brief Variable Strided Batch GEMMM
@@ -206,7 +205,7 @@ namespace dftefe
                             ValueType               beta,
                             ValueType *             dC,
                             const size_type *       lddc,
-                            BlasQueue<memorySpace> &BlasQueue);
+                            LinAlgOpContext<memorySpace> &context);
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe
