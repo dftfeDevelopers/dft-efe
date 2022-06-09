@@ -212,16 +212,16 @@ namespace dftefe
       const utils::mpi::MPIPatternP2P<memorySpace> &  mpiPattern)
     {
       this->clear();
-      auto locallyOwnedIndices = mpiPattern.getLocallyOwnedIndices();
+      auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
       bool printWarning = false;
-      for (auto locallyOwnedIter = locallyOwnedIndices.begin();
-           locallyOwnedIter != locallyOwnedIndices.end();
-           locallyOwnedIter++)
+      for (auto locallyOwnedId = locallyOwnedRange.first;
+           locallyOwnedId < locallyOwnedRange.second;
+           locallyOwnedId++)
         {
-          if (constraintsDataIn.isConstrained(*locallyOwnedIter))
+          if (constraintsDataIn.isConstrained(locallyOwnedId))
             {
-              const global_size_type lineDof = *locallyOwnedIter;
+              const global_size_type lineDof = locallyOwnedId;
               this->addLine(lineDof);
               if (constraintsDataIn.isInhomogeneouslyConstrained(lineDof))
                 {
@@ -313,15 +313,15 @@ namespace dftefe
 
       std::vector<size_type> rowConstraintsSizesTmp;
 
-      auto locallyOwnedIndices = mpiPattern.getLocallyOwnedIndices();
+      auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
-      for (auto locallyOwnedIter = locallyOwnedIndices.begin();
-           locallyOwnedIter != locallyOwnedIndices.end();
-           locallyOwnedIter++)
+      for (auto locallyOwnedId = locallyOwnedRange.first;
+           locallyOwnedId < locallyOwnedRange.second;
+           locallyOwnedId++)
         {
-          if (this->isConstrained(*locallyOwnedIter))
+          if (this->isConstrained(locallyOwnedId))
             {
-              const global_size_type lineDof = *locallyOwnedIter;
+              const global_size_type lineDof = locallyOwnedId;
               const std::vector<std::pair<global_size_type, ValueType>>
                 *rowData = this->getConstraintEntries(lineDof);
 
