@@ -49,7 +49,7 @@ namespace dftefe
       interpolate(
         const Field<ValueType, memorySpace> &       field,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        quadrarture::QuadratureValuesContainer<ValueType, memorySpace>
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &quadValuesContainer) const = 0;
 
       // virtual void

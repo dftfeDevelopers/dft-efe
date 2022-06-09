@@ -22,24 +22,27 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
+
+#include <linearAlgebra/DistributedVector.h>
+#include <linearAlgebra/SerialVector.h>
 namespace dftefe
 {
   namespace basis
   {
     template <typename ValueType, utils::MemorySpace memorySpace>
     Field<ValueType, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler>   basisHandler,
+      std::shared_ptr<const BasisHandler<ValueType, memorySpace>>   basisHandler,
       const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext &linAlgOpContext)
+      const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       reinit(basisHandler, constraintsName, linAlgOpContext);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    Field<ValueType, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler>   basisHandler,
+    void Field<ValueType, memorySpace>::reinit(
+      std::shared_ptr<const BasisHandler<ValueType,memorySpace>>   basisHandler,
       const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext &linAlgOpContext)
+      const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       d_basisHandler     = basisHandler;
       d_constraintsName  = constraintsName;
@@ -53,7 +56,7 @@ namespace dftefe
         {
           d_vector = std::make_shared<
             linearAlgebra::DistributedVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P, d_linAlgOpContext, ValueType());
+            mpiPatternP2P, d_linAlgOpContext, ValueType());
         }
       else
         {
@@ -71,7 +74,7 @@ namespace dftefe
     Field<ValueType, memorySpace>::applyConstraintsParentToChild()
     {
       const Constraints<ValueType, memorySpace> &constraints =
-        d_basisHandler.getConstraints(d_constraintsName);
+        d_basisHandler->getConstraints(d_constraintsName);
       constraints.distributeParentToChild(*d_vector);
     }
 
@@ -80,19 +83,19 @@ namespace dftefe
     Field<ValueType, memorySpace>::applyConstraintsChildToParent()
     {
       const Constraints<ValueType, memorySpace> &constraints =
-        d_basisHandler.getConstraints(d_constraintsName);
+        d_basisHandler->getConstraints(d_constraintsName);
       constraints.distributeChildToParent(*d_vector);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    const Vector<ValueType, memorySpace> &
+    const linearAlgebra::Vector<ValueType, memorySpace> &
     Field<ValueType, memorySpace>::getVector()
     {
       return *d_vector;
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    const BasisHandler<memorySpace> &
+    const BasisHandler<ValueType,memorySpace> &
     Field<ValueType, memorySpace>::getBasisHandler() const
     {
       return *d_basisHandler;
@@ -174,14 +177,14 @@ namespace dftefe
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     std::string
-    Field<ValueType, memorySpace>::getConstraintsName()
+    Field<ValueType, memorySpace>::getConstraintsName() const
     {
       return d_constraintsName;
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    const linearAlgebra::LinAlgOpContext &
-    Field<ValueType, memorySpace>::getLinAlgContext() const
+    const linearAlgebra::LinAlgOpContext<memorySpace> &
+    Field<ValueType, memorySpace>::getLinAlgOpContext() const
     {
       return d_linAlgOpContext;
     }

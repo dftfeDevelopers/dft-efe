@@ -65,7 +65,7 @@ namespace dftefe
     public:
       ~BasisHandler() = default;
 
-      bool
+      virtual bool
       isDistributed() const = 0;
 
       virtual const BasisManager &

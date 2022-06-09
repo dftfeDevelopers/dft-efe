@@ -64,7 +64,7 @@ namespace dftefe
       void
       setHomogeneousDirichletBC() override;
 
-      std::pair<global_size_type, ValueType> *
+      std::vector<std::pair<global_size_type, ValueType>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 
       bool

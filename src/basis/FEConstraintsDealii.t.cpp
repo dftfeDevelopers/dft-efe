@@ -174,7 +174,7 @@ namespace dftefe
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::pair<global_size_type, ValueType> *
+    std::vector<std::pair<global_size_type, ValueType>> *
     FEConstraintsDealii<ValueType, memorySpace, dim>::getConstraintEntries(
       const global_size_type lineDof) const
     {
@@ -245,7 +245,7 @@ namespace dftefe
               if (isConstraintRhsExpandingOutOfIndexSet)
                 continue;
 
-              this->addEntries(lineDof, rowData);
+              this->addEntries(lineDof, *rowData);
             }
         }
 
@@ -281,7 +281,7 @@ namespace dftefe
 
               if (isConstraintRhsExpandingOutOfIndexSet)
                 continue;
-              this->addEntries(lineDof, rowData);
+              this->addEntries(lineDof, *rowData);
             }
         }
 
@@ -429,43 +429,43 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         rowConstraintsIdsGlobalTmp.size(),
         d_rowConstraintsIdsGlobal.data(),
-        rowConstraintsIdsGlobalTmp.begin());
+        rowConstraintsIdsGlobalTmp.data());
 
       d_rowConstraintsIdsLocal.resize(rowConstraintsIdsLocalTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         rowConstraintsIdsLocalTmp.size(),
         d_rowConstraintsIdsLocal.data(),
-        rowConstraintsIdsLocalTmp.begin());
+        rowConstraintsIdsLocalTmp.data());
 
       d_columnConstraintsIdsLocal.resize(columnConstraintsIdsLocalTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         columnConstraintsIdsLocalTmp.size(),
         d_columnConstraintsIdsLocal.data(),
-        columnConstraintsIdsLocalTmp.begin());
+        columnConstraintsIdsLocalTmp.data());
 
       d_columnConstraintsIdsGlobal.resize(columnConstraintsIdsGlobalTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         columnConstraintsIdsGlobalTmp.size(),
         d_columnConstraintsIdsGlobal.data(),
-        columnConstraintsIdsGlobalTmp.begin());
+        columnConstraintsIdsGlobalTmp.data());
 
       d_columnConstraintsValues.resize(columnConstraintsValuesTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         columnConstraintsValuesTmp.size(),
         d_columnConstraintsValues.data(),
-        columnConstraintsValuesTmp.begin());
+        columnConstraintsValuesTmp.data());
 
       d_constraintsInhomogenities.resize(constraintsInhomogenitiesTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         constraintsInhomogenitiesTmp.size(),
         d_constraintsInhomogenities.data(),
-        constraintsInhomogenitiesTmp.begin());
+        constraintsInhomogenitiesTmp.data());
 
       d_rowConstraintsSizes.resize(rowConstraintsSizesTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         rowConstraintsSizesTmp.size(),
         d_rowConstraintsSizes.data(),
-        rowConstraintsSizesTmp.begin());
+        rowConstraintsSizesTmp.data());
     }
 
     template <typename ValueType,

@@ -28,6 +28,8 @@
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/base/partitioner.h>
 #include <deal.II/matrix_free/matrix_free.h>
+#include <deal.II/fe/mapping_q1.h>
+#include <deal.II/dofs/dof_tools.h>
 namespace dftefe
 {
   namespace basis
@@ -156,7 +158,7 @@ namespace dftefe
       {
         const dealii::Utilities::MPI::Partitioner &dealiiPartitioner =
           dealiiMatrixFree.get_vector_partitioner(constraintId);
-        dealii::IndexSet &ghostIndexSet   = dealiiPartitioner.ghost_indices();
+        const dealii::IndexSet &ghostIndexSet   = dealiiPartitioner.ghost_indices();
         const size_type   numGhostIndices = ghostIndexSet.n_elements();
         ghostIndices.resize(numGhostIndices, 0);
         ghostIndexSet.fill_index_vector(ghostIndices);
@@ -261,7 +263,7 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         numLocallyOwnedCells,
         d_locallyOwnedCellStartIds.data(),
-        locallyOwnedCellStartIdsTmp.begin());
+        locallyOwnedCellStartIdsTmp.data());
 
       //
       // populate d_locallyOwnedCellGlobalIndices
@@ -273,7 +275,7 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         cumulativeCellDofs,
         d_locallyOwnedCellGlobalIndices.data(),
-        locallyOwnedCellGlobalIndicesTmp.begin());
+        locallyOwnedCellGlobalIndicesTmp.data());
 
       //
       // NOTE: Since our purpose is to create the dealii MatrixFree object
@@ -310,7 +312,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             numGhostIndices,
             globalSizeVectorGhostMap->data(),
-            ghostIndicesTmp.begin());
+            ghostIndicesTmp.data());
           d_ghostIndicesMap[constraintName] = globalSizeVectorGhostMap;
 
           //
@@ -348,7 +350,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             cumulativeCellDofs,
             globalSizeVectorLocalIndicies->data(),
-            locallyOwnedCellLocalIndicesTmp.begin());
+            locallyOwnedCellLocalIndicesTmp.data());
 
           d_locallyOwnedCellLocalIndicesMap[constraintName] =
             globalSizeVectorLocalIndicies;
@@ -388,7 +390,7 @@ namespace dftefe
       const size_type numConstraints = constraintsMap.size();
       std::map<
         std::string,
-        std::shared_ptr<constFEConstraintsDealii<ValueType, memorySpace, dim>>>
+        std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
         feConstraintsDealiiMap;
       for (auto it = constraintsMap.begin(); it != constraintsMap.end(); ++it)
         {
@@ -424,7 +426,7 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         numLocallyOwnedCells,
         d_locallyOwnedCellStartIds.data(),
-        locallyOwnedCellStartIdsTmp.begin());
+        locallyOwnedCellStartIdsTmp.data());
 
       //
       // populate d_locallyOwnedCellGlobalIndices
@@ -436,7 +438,7 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         cumulativeCellDofs,
         d_locallyOwnedCellGlobalIndices.data(),
-        locallyOwnedCellGlobalIndicesTmp.begin());
+        locallyOwnedCellGlobalIndicesTmp.data());
 
       //
       // NOTE: Since our purpose is to create the dealii MatrixFree object
@@ -453,7 +455,7 @@ namespace dftefe
         setDealiiMatrixFreeLight<ValueType, memorySpace, dim>(
           d_feBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
-      iConstraint = 0;
+      size_type iConstraint = 0;
       for (auto it = feConstraintsDealiiMap.begin();
            it != feConstraintsDealiiMap.end();
            ++it)
@@ -471,7 +473,7 @@ namespace dftefe
             std::make_shared<typename BasisHandler<ValueType, memorySpace>::
                                GlobalSizeTypeVector>(numGhostIndices);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-            numGhostIndices, globalSizeVector->data(), ghostIndicesTmp.begin());
+            numGhostIndices, globalSizeVector->data(), ghostIndicesTmp.data());
           d_ghostIndicesMap[constraintName] = globalSizeVector;
 
           //
@@ -493,15 +495,17 @@ namespace dftefe
               mpiPatternP2P.get(),
               locallyOwnedCellGlobalIndicesTmp,
               locallyOwnedCellLocalIndicesTmp);
-          auto globalSizeVector =
+          
+          size_type cumulativeDofs = nCumulativeLocallyOwnedCellDofs();
+          auto sizeTypeVectorPtr =
             std::make_shared<typename BasisHandler<ValueType, memorySpace>::
-                               GlobalSizeTypeVector>(cumulativeDofs, 0);
+                               SizeTypeVector>(cumulativeDofs, 0);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             cumulativeDofs,
-            globalSizeVector->data(),
-            locallyOwnedCellLocalIndicesTmp.begin());
+            sizeTypeVectorPtr->data(),
+            locallyOwnedCellLocalIndicesTmp.data());
 
-          d_locallyOwnedCellLocalIndicesMap[constraintName] = globalSizeVector;
+          d_locallyOwnedCellLocalIndicesMap[constraintName] = sizeTypeVectorPtr;
 
           std::shared_ptr<FEConstraintsDealii<ValueType, memorySpace, dim>>
             feBasisConstraintsDealiiOpt = std::make_shared<
@@ -510,7 +514,7 @@ namespace dftefe
                                                            mpiPatternP2P.get());
           feBasisConstraintsDealiiOpt->populateConstraintsData(
             mpiPatternP2P.get());
-          d_feConstraintsDealiiOptMap[constraintsName] =
+          d_feConstraintsDealiiOptMap[constraintName] =
             feBasisConstraintsDealiiOpt;
 
           iConstraint++;
