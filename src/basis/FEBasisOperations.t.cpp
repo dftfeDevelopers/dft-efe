@@ -158,6 +158,7 @@ namespace dftefe
           std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> strideATmp(numCellsInBlock, 0);
           std::vector<size_type> strideBTmp(numCellsInBlock, 0);
+          std::vector<size_type> strideCTmp(numCellsInBlock, 0);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
@@ -170,8 +171,12 @@ namespace dftefe
               ldbSizesTmp[iCell] = nSizesTmp[iCell];
               ldcSizesTmp[iCell] = mSizesTmp[iCell];
               if (iCell > 0)
+	      {
                 strideATmp[iCell] = strideATmp[iCell - 1] +
                                     mSizesTmp[iCell - 1] * kSizesTmp[iCell - 1];
+		strideCTmp[iCell] = strideCTmp[iCell - 1] + 
+		  mSizesTmp[iCell - 1] * nSizesTmp[iCell - 1];
+	      }
               if (!zeroStrideB && iCell > 0)
                 strideBTmp[iCell] = strideBTmp[iCell - 1] +
                                     kSizesTmp[iCell - 1] * nSizesTmp[iCell - 1];
@@ -188,6 +193,7 @@ namespace dftefe
             numCellsInBlock);
           utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
           utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
           memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
@@ -208,6 +214,9 @@ namespace dftefe
           memoryTransfer.copy(numCellsInBlock,
                               strideB.data(),
                               strideBTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideC.data(),
+                              strideCTmp.data());
 
           ValueType                                          alpha = 1.0;
           ValueType                                          beta  = 0.0;
@@ -227,6 +236,7 @@ namespace dftefe
             transB.data(),
             strideA.data(),
             strideB.data(),
+            strideC.data(),
             mSizes.data(),
             nSizes.data(),
             kSizes.data(),
@@ -238,7 +248,7 @@ namespace dftefe
             beta,
             C,
             ldcSizes.data(),
-            linAlgOpContext.getBlasQueue());
+            linAlgOpContext);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
