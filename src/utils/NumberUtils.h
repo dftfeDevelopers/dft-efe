@@ -23,31 +23,26 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeFEBasisOperationsInternal_h
-#define dftefeFEBasisOperationsInternal_h
+#ifndef dftefeNumberUtils_h
+#define dftefeNumberUtils_h
 
-#include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
-#include <utils/MemoryStorage.h>
-#include <basis/Field.h>
-#include <basis/BasisDataStorage.h>
 namespace dftefe
 {
-  namespace basis
+  namespace utils
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class FEBasisOperationsInternal
-    {
-    public:
-      static void
-      copyFieldToCellWiseData(
-        const ValueType *             data,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
-        const std::vector<size_type> &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
+    template <typename T>
+    double
+    getRealPart(const T &t);
 
-    }; // end of class FEBasisOperationsInternal
-  }    // end of namespace basis
+    template <typename T>
+    double
+    getImagPart(const T &t);
+
+    template <typename T>
+    double
+    getAbs(const T &t);
+
+  } // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeFEBasisOperationsInternal_h
+#include <utils/NumberUtils.t.cpp>
+#endif // dftefeNumberUtils_h

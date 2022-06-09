@@ -698,7 +698,7 @@ namespace dftefe
               d_quadratureRuleContainer[quadratureRuleAttribuesVec[i]] =
                 std::make_shared<quadrature::QuadratureRuleContainer>(
                   quadratureRule,
-                  d_feBM->getTriangulation,
+                  d_feBM->getTriangulation(),
                   linearCellMappingDealii);
             }
           else if (quadFamily == quadrature::QuadratureFamily::GLL)
@@ -712,7 +712,7 @@ namespace dftefe
               d_quadratureRuleContainer[quadratureRuleAttribuesVec[i]] =
                 std::make_shared<quadrature::QuadratureRuleContainer>(
                   quadratureRule,
-                  d_feBM->getTriangulation,
+                  d_feBM->getTriangulation(),
                   linearCellMappingDealii);
             }
           else

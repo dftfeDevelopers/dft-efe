@@ -50,8 +50,7 @@ namespace dftefe
      * matrix of the basis, etc.
      */
     template <typename ValueType, utils::MemorySpace memorySpace>
-    class FEBasisDataStorage
-      : public BasisDataStorage<ValueType, memorySpace>
+    class FEBasisDataStorage : public BasisDataStorage<ValueType, memorySpace>
     {
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
@@ -61,7 +60,7 @@ namespace dftefe
 
 
       virtual const BasisManager &
-      getBasisManager() const = 0 ;
+      getBasisManager() const = 0;
 
       virtual void
       evaluateBasisData(
@@ -71,11 +70,11 @@ namespace dftefe
         const bool                      storeValues,
         const bool                      storeGradient,
         const bool                      storeHessian,
-        const bool                      storeOverlap) = 0 ;
+        const bool                      storeOverlap) = 0;
 
       virtual void
       deleteBasisData(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) =0 ;
+        const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
 
 
 
@@ -90,10 +89,10 @@ namespace dftefe
                    const size_type                  basisId) const = 0;
       virtual Storage
       getBasisGradientData(const QuadraturePointAttributes &attributes,
-                           const size_type basisId) const = 0;
+                           const size_type                  basisId) const = 0;
       virtual Storage
       getBasisHessianData(const QuadraturePointAttributes &attributes,
-                          const size_type basisId) const = 0;
+                          const size_type                  basisId) const = 0;
 
       // functions to get data for a basis function on all quad points in a cell
       virtual Storage
@@ -114,7 +113,7 @@ namespace dftefe
 
       // functions to get data for all basis functions on all quad points in a
       // cell
-     virtual  Storage
+      virtual Storage
       getBasisDataInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
@@ -130,14 +129,14 @@ namespace dftefe
       // functions to get data for all basis functions on all quad points in all
       // cells
       virtual const Storage &
-      getBasisDataInAllCells(const QuadratureRuleAttributes
-                               &quadratureRuleAttributes) const = 0;
+      getBasisDataInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
       virtual const Storage &
-      getBasisGradientDataInAllCells(const QuadratureRuleAttributes &
-                                       quadratureRuleAttributes) const = 0;
+      getBasisGradientDataInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
       virtual const Storage &
-      getBasisHessianDataInAllCells(const QuadratureRuleAttributes
-                                      &quadratureRuleAttributes) const = 0;
+      getBasisHessianDataInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       // get overlap of two basis functions in a cell
       virtual Storage
@@ -154,12 +153,12 @@ namespace dftefe
 
       // get overlap of all the basis functions in all cells
       virtual const Storage &
-      getBasisOverlapInAllCells(const QuadratureRuleAttributes
-                                  &quadratureRuleAttributes) const = 0;
+      getBasisOverlapInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       virtual const quadrature::QuadratureRuleContainer &
-      getQuadratureRuleContainer(const QuadratureRuleAttributes
-                                   &quadratureRuleAttributes) const = 0;
+      getQuadratureRuleContainer(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
 
     }; // end of FEBasisDataStorage

@@ -42,8 +42,7 @@ namespace dftefe
       : d_maxCellTimesFieldBlock(maxCellTimesFieldBlock)
     {
       d_feBasisDataStorage = std::dynamic_pointer_cast<
-        const FEBasisDataStorage<ValueType, memorySpace>>(
-        basisDataStorage);
+        const FEBasisDataStorage<ValueType, memorySpace>>(basisDataStorage);
       utils::throwException(
         d_feBasisDataStorage != nullptr,
         "Could not cast BasisDataStorage to FEBasisDataStorage in the constructor of FEBasisOperations");
@@ -57,7 +56,8 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         &quadValuesContainer) const
     {
-      const BasisHandler<ValueType,memorySpace> &basisHandler = field.getBasisHandler();
+      const BasisHandler<ValueType, memorySpace> &basisHandler =
+        field.getBasisHandler();
       const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
         dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
           basisHandler);
@@ -209,34 +209,36 @@ namespace dftefe
                               strideB.data(),
                               strideBTmp.data());
 
-          ValueType                           alpha = 1.0;
-          ValueType                           beta  = 0.0;
+          ValueType                                          alpha = 1.0;
+          ValueType                                          beta  = 0.0;
           const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             field.getLinAlgOpContext();
 
-          const ValueType *B =
-            (d_feBasisDataStorage->getBasisDataInAllCells(quadratureRuleAttributes))
-              .data() +
-            BStartOffset;
+          const ValueType *B = (d_feBasisDataStorage->getBasisDataInAllCells(
+                                  quadratureRuleAttributes))
+                                 .data() +
+                               BStartOffset;
           ValueType *C = quadValuesContainer.begin() + CStartOffset;
-          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,memorySpace>(layout,
-                                               numLocallyOwnedCells,
-                                               transA.data(),
-                                               transB.data(),
-                                               strideA.data(),
-                                               strideB.data(),
-                                               mSizes.data(),
-                                               nSizes.data(),
-                                               kSizes.data(),
-                                               alpha,
-                                               fieldCellValues.data(),
-                                               ldaSizes.data(),
-                                               B,
-                                               ldbSizes.data(),
-                                               beta,
-                                               C,
-                                               ldcSizes.data(),
-                                               linAlgOpContext.getBlasQueue());
+          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
+                                                           memorySpace>(
+            layout,
+            numLocallyOwnedCells,
+            transA.data(),
+            transB.data(),
+            strideA.data(),
+            strideB.data(),
+            mSizes.data(),
+            nSizes.data(),
+            kSizes.data(),
+            alpha,
+            fieldCellValues.data(),
+            ldaSizes.data(),
+            B,
+            ldbSizes.data(),
+            beta,
+            C,
+            ldcSizes.data(),
+            linAlgOpContext.getBlasQueue());
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {

@@ -23,26 +23,27 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#include <linearAlgebra/DistributedVector.h>
 #include <linearAlgebra/SerialVector.h>
+#include <linearAlgebra/DistributedVector.h>
 namespace dftefe
 {
   namespace basis
   {
     template <typename ValueType, utils::MemorySpace memorySpace>
     Field<ValueType, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler<ValueType, memorySpace>>   basisHandler,
-      const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+      std::shared_ptr<const BasisHandler<ValueType, memorySpace>> basisHandler,
+      const std::string                            constraintsName,
+      linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
       reinit(basisHandler, constraintsName, linAlgOpContext);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    void Field<ValueType, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler<ValueType,memorySpace>>   basisHandler,
-      const std::string                     constraintsName,
-      const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+    void
+    Field<ValueType, memorySpace>::reinit(
+      std::shared_ptr<const BasisHandler<ValueType, memorySpace>> basisHandler,
+      const std::string                            constraintsName,
+      linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
       d_basisHandler     = basisHandler;
       d_constraintsName  = constraintsName;
@@ -60,7 +61,8 @@ namespace dftefe
         }
       else
         {
-          auto locallyOwnedRange = d_basisHandler->getLocallyOwnedRange();
+          auto locallyOwnedRange =
+            d_basisHandler->getLocallyOwnedRange(d_constraintsName);
           const size_type size =
             locallyOwnedRange.second - locallyOwnedRange.first;
           d_vector = std::make_shared<
@@ -95,7 +97,7 @@ namespace dftefe
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    const BasisHandler<ValueType,memorySpace> &
+    const BasisHandler<ValueType, memorySpace> &
     Field<ValueType, memorySpace>::getBasisHandler() const
     {
       return *d_basisHandler;
@@ -186,7 +188,7 @@ namespace dftefe
     const linearAlgebra::LinAlgOpContext<memorySpace> &
     Field<ValueType, memorySpace>::getLinAlgOpContext() const
     {
-      return d_linAlgOpContext;
+      return *d_linAlgOpContext;
     }
   } // end of namespace basis
 } // end of namespace dftefe

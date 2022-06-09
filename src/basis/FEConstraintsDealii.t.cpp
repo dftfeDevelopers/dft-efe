@@ -1,8 +1,9 @@
 
 #include <deal.II/dofs/dof_tools.h>
-#include "FECellBase.h"
+#include <utils/NumberUtils.h>
+#include <basis/FECellBase.h>
 #include <memory>
-#include "ConstraintsInternal.h"
+#include <basis/ConstraintsInternal.h>
 
 
 namespace dftefe
@@ -301,9 +302,6 @@ namespace dftefe
       const utils::MPIPatternP2P<memorySpace> &mpiPattern)
     {
       bool printWarning = false;
-      bool isComplex    = std::is_same<std::complex<float>, ValueType>::value ||
-                       std::is_same<std::complex<double>, ValueType>::value;
-
 
       std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
       std::vector<size_type>        rowConstraintsIdsLocalTmp;
@@ -352,16 +350,8 @@ namespace dftefe
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
                     mpiPattern.globalToLocal((*rowData)[j].first));
-                  if (isComplex)
-                    {
-                      columnConstraintsValuesTmp.push_back(
-                        (*rowData)[j].second.real);
-                    }
-                  else
-                    {
-                      columnConstraintsValuesTmp.push_back(
-                        (*rowData)[j].second);
-                    }
+                  double realPart = utils::getRealPart((*rowData)[j].second);
+                  columnConstraintsValuesTmp.push_back(realPart);
                 }
             }
         }
@@ -404,16 +394,8 @@ namespace dftefe
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
                     mpiPattern.globalToLocal((*rowData)[j].first));
-                  if (isComplex)
-                    {
-                      columnConstraintsValuesTmp.push_back(
-                        (*rowData)[j].second.real);
-                    }
-                  else
-                    {
-                      columnConstraintsValuesTmp.push_back(
-                        (*rowData)[j].second);
-                    }
+                  double realPart = utils::getRealPart((*rowData)[j].second);
+                  columnConstraintsValuesTmp.push_back(realPart);
                 }
             }
         }

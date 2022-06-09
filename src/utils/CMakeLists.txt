@@ -16,6 +16,7 @@ set(DFT-EFE-UTILS-SOURCES
 	DeviceUtils.cpp
 	MemoryManager.cpp
 	Exceptions.cpp
+	NumberUtils.cpp
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp

@@ -30,6 +30,7 @@ if (NOT TARGET dft-efe-linalg)
 
     if (ENABLE_MPI)
         add_compile_definitions(DFTEFE_WITH_MPI)
+	message("DFTEFE_WITH_MPI in linAlg")
         if (NOT MPI_FOUND)
             find_package(MPI REQUIRED)
             target_include_directories(dft-efe-linalg PUBLIC ${MPI_CXX_INCLUDE_PATH})

@@ -104,7 +104,7 @@ namespace dftefe
       //  const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       //  const std::vector<dftefe::global_size_type> &       ghostIndices,
       //  MPI_Comm &                                          mpiComm);
-#else
+#endif // DFTEFE_WITH_MPI
       /**
        * @brief Constructor. This constructor is provided to create a dummy MPI
        * pattern while not using MPI. This is provided for applications to
@@ -123,7 +123,6 @@ namespace dftefe
 
       // void
       // reinit(){};
-#endif
 
       std::pair<global_size_type, global_size_type>
       getLocallyOwnedRange() const;

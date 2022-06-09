@@ -81,7 +81,8 @@ namespace dftefe
                  std::shared_ptr<const Constraints<ValueType, memorySpace>>>
                         constraintsMap,
         const MPI_Comm &mpiComm);
-#else
+#endif // DFTEFE_WITH_MPI
+
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
@@ -93,7 +94,6 @@ namespace dftefe
         std::map<std::string,
                  std::shared_ptr<const Constraints<ValueType, memorySpace>>>
           constraintsMap);
-#endif // DFTEFE_WITH_MPI
 
       ~FEBasisHandlerDealii() = default;
 

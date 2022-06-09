@@ -89,13 +89,17 @@ int main()
 
   std::string constraintName = "HomogenousWithHangingPeriodic";
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec ;
+    constraintsVec;
   constraintsVec.resize(1, std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>());
 
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(basisManager);
   constraintsVec[0]->setHomogeneousDirichletBC();
   constraintsVec[0]->close();
+  
+  std::vector<std::shared_ptr<dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>>
+    constraintsBaseVec(constraintsVec.size(), nullptr);
+  std::copy(constraintsVec.begin(), constraintsVec.end(), constraintsBaseVec.begin()); 
 
   std::map<std::string,
            std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
@@ -114,7 +118,7 @@ int main()
   std::shared_ptr<dftefe::basis::BasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
     std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisManager,
-     constraintsVec,
+     constraintsBaseVec,
      quadAttr,
      true,
      false,
@@ -133,7 +137,7 @@ int main()
 
   // set up Field
 
-  dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData(basisHandler,constraintName,linAlgOpContext);
+  dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData(basisHandler,constraintName,&linAlgOpContext);
 
 
   //populate the value of the Field
@@ -187,18 +191,19 @@ int main()
   const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
 
   bool testPass = true;
+  dftefe::size_type count = 0;
   for( auto it  = quadValuesContainer.begin() ; it != quadValuesContainer.end() ; it++ )
     {
-      dftefe::size_type jQuad = it->first;
-      double xLoc = locQuadPoints[jQuad][0];
-      double yLoc = locQuadPoints[jQuad][1];
-      double zLoc = locQuadPoints[jQuad][2];
+      double xLoc = locQuadPoints[count][0];
+      double yLoc = locQuadPoints[count][1];
+      double zLoc = locQuadPoints[count][2];
 
       double analyticValue = interpolatePolynomial (feDegree, xLoc, yLoc, zLoc,xmin,ymin,zmin);
 
       if ( std::abs((*it) - analyticValue) > 1e-8 )
         testPass = false;
-
+	
+      count++;
     }
 
   std::cout<<" test status = "<<testPass<<"\n";

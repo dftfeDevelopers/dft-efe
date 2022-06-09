@@ -22,32 +22,39 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
-
-#ifndef dftefeFEBasisOperationsInternal_h
-#define dftefeFEBasisOperationsInternal_h
-
-#include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
-#include <utils/MemoryStorage.h>
-#include <basis/Field.h>
-#include <basis/BasisDataStorage.h>
+#include <complex>
+#include <cmath>
+#include <utils/NumberUtils.h>
 namespace dftefe
 {
-  namespace basis
+  namespace utils
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class FEBasisOperationsInternal
+    template <>
+    double
+    getRealPart(const std::complex<float> &t)
     {
-    public:
-      static void
-      copyFieldToCellWiseData(
-        const ValueType *             data,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
-        const std::vector<size_type> &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
+      return (double)t.real();
+    }
 
-    }; // end of class FEBasisOperationsInternal
-  }    // end of namespace basis
+    template <>
+    double
+    getRealPart(const std::complex<double> &t)
+    {
+      return t.real();
+    }
+
+    template <>
+    double
+    getImagPart(const std::complex<float> &t)
+    {
+      return (double)t.imag();
+    }
+
+    template <>
+    double
+    getImagPart(const std::complex<double> &t)
+    {
+      return t.imag();
+    }
+  } // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeFEBasisOperationsInternal_h

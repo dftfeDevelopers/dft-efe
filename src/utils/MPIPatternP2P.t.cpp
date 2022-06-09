@@ -541,7 +541,7 @@ namespace dftefe
       ///////////////////////////////////////////////////
     }
 
-#else
+#endif // DFTEFE_WITH_MPI
     ///
     /// Constructor without MPI
     ///
@@ -580,7 +580,6 @@ namespace dftefe
           d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
     }
 
-#endif
 
     template <dftefe::utils::MemorySpace memorySpace>
     std::pair<global_size_type, global_size_type>

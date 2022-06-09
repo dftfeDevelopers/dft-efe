@@ -157,9 +157,10 @@ namespace dftefe
         std::vector<global_size_type> &           ghostIndices)
       {
         const dealii::Utilities::MPI::Partitioner &dealiiPartitioner =
-          dealiiMatrixFree.get_vector_partitioner(constraintId);
-        const dealii::IndexSet &ghostIndexSet   = dealiiPartitioner.ghost_indices();
-        const size_type   numGhostIndices = ghostIndexSet.n_elements();
+          *(dealiiMatrixFree.get_vector_partitioner(constraintId));
+        const dealii::IndexSet &ghostIndexSet =
+          dealiiPartitioner.ghost_indices();
+        const size_type numGhostIndices = ghostIndexSet.n_elements();
         ghostIndices.resize(numGhostIndices, 0);
         ghostIndexSet.fill_index_vector(ghostIndices);
       }
@@ -358,7 +359,9 @@ namespace dftefe
           iConstraint++;
         }
     }
-#else
+
+#endif // DFTEFE_WITH_MPI
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -495,11 +498,11 @@ namespace dftefe
               mpiPatternP2P.get(),
               locallyOwnedCellGlobalIndicesTmp,
               locallyOwnedCellLocalIndicesTmp);
-          
-          size_type cumulativeDofs = nCumulativeLocallyOwnedCellDofs();
-          auto sizeTypeVectorPtr =
-            std::make_shared<typename BasisHandler<ValueType, memorySpace>::
-                               SizeTypeVector>(cumulativeDofs, 0);
+
+          size_type cumulativeDofs    = nCumulativeLocallyOwnedCellDofs();
+          auto      sizeTypeVectorPtr = std::make_shared<
+            typename BasisHandler<ValueType, memorySpace>::SizeTypeVector>(
+            cumulativeDofs, 0);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             cumulativeDofs,
             sizeTypeVectorPtr->data(),
@@ -510,22 +513,23 @@ namespace dftefe
           std::shared_ptr<FEConstraintsDealii<ValueType, memorySpace, dim>>
             feBasisConstraintsDealiiOpt = std::make_shared<
               FEConstraintsDealii<ValueType, memorySpace, dim>>();
-          feBasisConstraintsDealiiOpt->copyConstraintsData(it->second.get(),
-                                                           mpiPatternP2P.get());
-          feBasisConstraintsDealiiOpt->populateConstraintsData(
-            mpiPatternP2P.get());
+          feBasisConstraintsDealiiOpt->copyConstraintsData(*(it->second),
+                                                           *mpiPatternP2P);
+          feBasisConstraintsDealiiOpt->populateConstraintsData(*mpiPatternP2P);
           d_feConstraintsDealiiOptMap[constraintName] =
             feBasisConstraintsDealiiOpt;
 
           iConstraint++;
         }
 
-      // not compatible with hp refinement
-      dealii::MappingQ1<dim> mappingDealii(d_feBMDealii->getFEOrder(0));
+      //
+      // FIXME: Assumes linear mapping from reference cell to real cell
+      //
+      dealii::MappingQ1<dim> mappingDealii;
       dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
-        mappingDealii, d_feBMDealii.get()->getDoFHandler(), d_supportPoints);
+        mappingDealii, *(d_feBMDealii->getDoFHandler()), d_supportPoints);
     }
-#endif // DFTEFE_WITH_MPI
+
     template <typename ValueType,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>

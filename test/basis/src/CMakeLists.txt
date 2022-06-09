@@ -21,5 +21,8 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 #add_executable(TestBasisHandler TestBasisHandler.cpp )
 #target_link_libraries(TestBasisHandler PUBLIC dft-efe-basis dft-efe-utils)
 
+if(ENABLE_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
 add_executable(TestConstraintMatrix TestConstraintMatrix.cpp )
 target_link_libraries(TestConstraintMatrix PUBLIC dft-efe-quadrature dft-efe-basis dft-efe-utils dft-efe-linalg)
+endif()
