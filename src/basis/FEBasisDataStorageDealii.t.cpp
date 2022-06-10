@@ -914,16 +914,10 @@ namespace dftefe
                                &quadratureRuleAttributes) const
     {
       auto it = d_basisQuadStorage.find(quadratureRuleAttributes);
-      if (it != d_basisQuadStorage.end())
-        {
-          return *(it->second);
-        }
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false,
-            "Basis values are not evaluated for the given QuadratureRuleAttributes");
-        }
+      utils::throwException<utils::InvalidArgument>(
+        it != d_basisQuadStorage.end(),
+        "Basis values are not evaluated for the given QuadratureRuleAttributes");
+      return *(it->second);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
@@ -933,16 +927,10 @@ namespace dftefe
                                        &quadratureRuleAttributes) const
     {
       auto it = d_basisGradientQuadStorage.find(quadratureRuleAttributes);
-      if (it != d_basisGradientQuadStorage.end())
-        {
-          return *(it->second);
-        }
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false,
-            "Basis gradients are not evaluated for the given QuadratureRuleAttributes");
-        }
+      utils::throwException<utils::InvalidArgument>(
+        it != d_basisGradientQuadStorage.end(),
+        "Basis gradients are not evaluated for the given QuadratureRuleAttributes");
+      return *(it->second);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
@@ -952,16 +940,10 @@ namespace dftefe
                                       &quadratureRuleAttributes) const
     {
       auto it = d_basisHessianQuadStorage.find(quadratureRuleAttributes);
-      if (it != d_basisHessianQuadStorage.end())
-        {
-          return *(it->second);
-        }
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false,
-            "Basis hessians are not evaluated for the given QuadratureRuleAttributes");
-        }
+      utils::throwException<utils::InvalidArgument>(
+        it != d_basisHessianQuadStorage.end(),
+        "Basis hessians are not evaluated for the given QuadratureRuleAttributes");
+      return *(it->second);
     }
 
 
@@ -1211,16 +1193,10 @@ namespace dftefe
                                   &quadratureRuleAttributes) const
     {
       auto it = d_basisOverlap.find(quadratureRuleAttributes);
-      if (it != d_basisOverlap.end())
-        {
-          return *(it->second);
-        }
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false,
-            "Basis overlap is not evaluated for the given QuadratureRuleAttributes");
-        }
+      utils::throwException<utils::InvalidArgument>(
+        it != d_basisOverlap.end(),
+        "Basis overlap is not evaluated for the given QuadratureRuleAttributes");
+      return *(it->second);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
@@ -1330,6 +1306,8 @@ namespace dftefe
       utils::throwException(
         false,
         "getBasisDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+      typename BasisDataStorage<ValueType, memorySpace>::Storage dummy(0);
+      return dummy;
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
@@ -1343,6 +1321,8 @@ namespace dftefe
       utils::throwException(
         false,
         "getBasisGradientDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+      typename BasisDataStorage<ValueType, memorySpace>::Storage dummy(0);
+      return dummy;
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
@@ -1356,6 +1336,8 @@ namespace dftefe
       utils::throwException(
         false,
         "getBasisHessianDataInCell() for a given basisId is not implemented in FEBasisDataStorageDealii");
+      typename BasisDataStorage<ValueType, memorySpace>::Storage dummy(0);
+      return dummy;
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
