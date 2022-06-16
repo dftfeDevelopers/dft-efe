@@ -186,7 +186,13 @@ namespace dftefe
                   locallyOwnedCellGlobalIndices[cumulativeDofs + iDof];
                 locallyOwnedCellLocalIndices[cumulativeDofs + iDof] =
                   mpiPatternP2P->globalToLocal(globalId);
+                if (!locallyOwnedCellLocalIndices[cumulativeDofs + iDof] ==
+                    globalId)
+                  std::cout
+                    << " Error in mpiP2P global id to local not correct for id = "
+                    << globalId << std::endl;
               }
+
             cumulativeDofs += numCellDofs;
           }
       }
@@ -338,16 +344,16 @@ namespace dftefe
               mpiPatternP2P.get(),
               locallyOwnedCellGlobalIndicesTmp,
               locallyOwnedCellLocalIndicesTmp);
-          auto globalSizeVectorLocalIndicies =
-            std::make_shared<typename BasisHandler<ValueType, memorySpace>::
-                               GlobalSizeTypeVector>(cumulativeCellDofs, 0);
+          auto sizeVectorLocalIndicies = std::make_shared<
+            typename BasisHandler<ValueType, memorySpace>::SizeTypeVector>(
+            cumulativeCellDofs, 0);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             cumulativeCellDofs,
-            globalSizeVectorLocalIndicies->data(),
+            sizeVectorLocalIndicies->data(),
             locallyOwnedCellLocalIndicesTmp.data());
 
           d_locallyOwnedCellLocalIndicesMap[constraintName] =
-            globalSizeVectorLocalIndicies;
+            sizeVectorLocalIndicies;
 
           iConstraint++;
         }
@@ -421,6 +427,7 @@ namespace dftefe
       //
       std::vector<global_size_type> locallyOwnedCellGlobalIndicesTmp(
         cumulativeCellDofs, 0);
+      d_locallyOwnedCellGlobalIndices.resize(cumulativeCellDofs);
       FEBasisHandlerDealiiInternal::getLocallyOwnedCellGlobalIndices<dim>(
         d_feBMDealii.get(), locallyOwnedCellGlobalIndicesTmp);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -635,7 +642,17 @@ namespace dftefe
       dftefe::utils::Point &basisCenter) const
     {
       global_size_type globalId = localToGlobalIndex(localId, constraintsName);
-      convertToDftefePoint<dim>(d_supportPoints[globalId], basisCenter);
+
+      //  TODO MAke this mroe efficient
+      //     dealii::Point<dim,double> dealiiPoint;
+      //     for ( size_type iDim = 0; iDim < dim ; iDim++)
+      //     {
+      //        dealiiPoint[iDim] = d_supportPoints[globalId][iDim];
+      //     }
+      // convertToDftefePoint<dim>(d_supportPoints[globalId], basisCenter);
+      //   convertToDftefePoint<dim>(dealiiPoint, basisCenter);
+      convertToDftefePoint<dim>(d_supportPoints.find(globalId)->second,
+                                basisCenter);
     }
 
     template <typename ValueType,

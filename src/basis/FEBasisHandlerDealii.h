@@ -207,7 +207,7 @@ namespace dftefe
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;
 
-      std::vector<dealii::Point<dim>> d_supportPoints;
+      std::map<global_size_type, dealii::Point<dim>> d_supportPoints;
     };
 
   } // end of namespace basis

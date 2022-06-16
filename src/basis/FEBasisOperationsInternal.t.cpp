@@ -49,6 +49,10 @@ namespace dftefe
               auto dstPtr = itCellWiseStorageBegin +
                             (cumulativeCellDofs + iDof) * numComponents;
               std::copy(srcPtr, srcPtr + numComponents, dstPtr);
+              std::cout << " cell id = " << iCell << " iDof = " << iDof
+                        << " localId = " << localId
+                        << " inDataVal = " << *srcPtr
+                        << " outData = " << *dstPtr << std::endl;
             }
           cumulativeCellDofs += cellDofs;
         }
