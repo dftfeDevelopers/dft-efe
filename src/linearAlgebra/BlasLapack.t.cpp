@@ -280,9 +280,9 @@ namespace dftefe
                        dC + cumulativeC,
                        *(lddc + ibatch));
 
-            cumulativeA += *(stridea);
-            cumulativeB += *(strideb);
-            cumulativeC += *(stridec);
+            cumulativeA += *(stridea + ibatch);
+            cumulativeB += *(strideb + ibatch);
+            cumulativeC += *(stridec + ibatch);
           }
       }
 
@@ -331,9 +331,9 @@ namespace dftefe
                        context.getBlasQueue());
 
 
-            cumulativeA += *(stridea);
-            cumulativeB += *(strideb);
-            cumulativeC += *(stridec);
+            cumulativeA += *(stridea + ibatch);
+            cumulativeB += *(strideb + ibatch);
+            cumulativeC += *(stridec + ibatch);
           }
       }
 
