@@ -62,10 +62,12 @@ main()
   zVecStdL2Norm = std::sqrt(zVecStdL2Norm);
   double zVecStdLInfNorm = std::abs(*std::max_element(zVecStd.begin(), zVecStd.end(), absCompare));
 
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>>();
+  dftefe::linearAlgebra::blasLapack::BlasQueue<Host> queue; 
+
+  dftefe::linearAlgebra::LinAlgOpContext<Host> linAlgContext(&queue); 
 
   std::shared_ptr<dftefe::linearAlgebra::Vector<std::complex<double>, dftefe::utils::MemorySpace::HOST>> zVec
-    = std::make_shared<dftefe::linearAlgebra::SerialVector<std::complex<double>, dftefe::utils::MemorySpace::HOST>>(vSize, 0,queue);
+    = std::make_shared<dftefe::linearAlgebra::SerialVector<std::complex<double>, dftefe::utils::MemorySpace::HOST>>(vSize, &linAlgContext,0);
 
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,
