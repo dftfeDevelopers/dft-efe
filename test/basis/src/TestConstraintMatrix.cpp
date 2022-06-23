@@ -33,9 +33,9 @@ double interpolatePolynomial (unsigned int feOrder, double x_coord, double y_coo
   // The function should go to 0 at the boundaries for it to be compatible with the
   // homogenous boundary conditions
   double result = 1;
-  result = (x_coord - xmin)*(x_coord + xmin);
-  result *= ((y_coord - ymin)*(y_coord + ymin));
-  result *= ((z_coord - zmin)*(z_coord + zmin));
+  result = (x_coord - xmin)*(x_coord );
+  result *= ((y_coord - ymin)*(y_coord));
+  result *= ((z_coord - zmin)*(z_coord ));
 
   return result;
 
@@ -57,14 +57,15 @@ int main()
   const unsigned int dim = 3;
   std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
     std::make_shared<dftefe::basis::TriangulationDealiiSerial<dim>>();
-  std::vector<unsigned int>         subdivisions = {10, 10, 10};
+  std::vector<unsigned int>         subdivisions = {5, 5, 5};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
-  double xmin = 10.0;
-  double ymin = 10.0;
-  double zmin = 10.0;
+
+  double xmin = 5.0;
+  double ymin = 5.0;
+  double zmin = 5.0;
 
   domainVectors[0][0] = xmin;
   domainVectors[1][1] = ymin;
@@ -77,11 +78,32 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
+  auto triaCellIter = triangulationBase->beginLocal();
+  
+  for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
+  {
+    std::cout<<"Entering cell loop\n";
+    dftefe::utils::Point centerPoint(dim, 0.0); 
+    (*triaCellIter)->center(centerPoint);
+    double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);  
+    dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
+    dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
+    dist = std::sqrt(dist); 
+    if ( (centerPoint[0] < 1.0) || (dist < 1.0) )
+    {
+     std::cout<<" Refining mesh\n";
+     (*triaCellIter)->setRefineFlag();
+    }
+  }
+ 
+  triangulationBase->executeCoarseningAndRefinement();
+  triangulationBase->finalizeTriangulationConstruction();
+
   // initialize the basis Manager
 
   unsigned int feDegree = 3;
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =
+  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
     std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
 
 
@@ -145,6 +167,7 @@ int main()
   dftefe::size_type numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
   auto itField  = fieldData.begin();
   dftefe::utils::Point nodeLoc(dim,0.0);
+  dftefe::size_type nodeCount = 0; 
   for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
     {
       std::vector<dftefe::global_size_type> cellGlobalNodeIds;
@@ -153,14 +176,22 @@ int main()
       for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
         {
           dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
-          if( !constraintsVec[0]->isConstrained(globalId))
-          {
+         if( !constraintsVec[0]->isConstrained(globalId))
+         {
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
             basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
 
             *(itField + localId )  = interpolatePolynomial (feDegree, nodeLoc[0], nodeLoc[1], nodeLoc[2],xmin,ymin,zmin);
-          }
+           std::cout<<"id = "<<nodeCount<<" local = "<<localId<<" inVal = "<<*(itField + localId )<<"\n";
+         }
+         else
+         {
+           dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
+            basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
+           std::cout<<"id = "<<nodeCount<<" x = "<<nodeLoc[0]<<" y = "<<nodeLoc[1]<<" z = "<<nodeLoc[2]<<std::endl;
 
+         }
+          nodeCount++;
         }
     }
 
@@ -172,6 +203,26 @@ int main()
   fieldData.updateGhostValues();
   fieldData.applyConstraintsParentToChild();
 
+/*
+  for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
+    {
+      std::vector<dftefe::global_size_type> cellGlobalNodeIds;
+      basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+
+      for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+        {
+          dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
+          if( !constraintsVec[0]->isConstrained(globalId))
+          {
+            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
+
+           std::cout<<"id = "<<nodeCount<<" local = "<<localId<<" inConsVal = "<<*(itField + localId )<<"\n";
+          }
+          nodeCount++;
+        }
+    }
+
+*/
   // create the quadrature Value Container
 
   std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
@@ -201,8 +252,10 @@ int main()
       double analyticValue = interpolatePolynomial (feDegree, xLoc, yLoc, zLoc,xmin,ymin,zmin);
 
       if ( std::abs((*it) - analyticValue) > 1e-8 )
-        testPass = false;
-	
+        {
+         std::cout<<" id = "<<count <<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue<<" interValue = "<<(*it)<<"\n";
+         testPass = false;
+	} 
       count++;
     }
 

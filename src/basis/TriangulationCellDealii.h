@@ -52,7 +52,12 @@ namespace dftefe
 
       unsigned int
       getDim() const override;
+      
+      double diameter() const override;
 
+      void center(dftefe::utils::Point &centerPoint) const override;  
+      
+      void setRefineFlag() override;
       /*
        * \todo
        * TODO : Should implement the cellMapping before implementation

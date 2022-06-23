@@ -64,6 +64,10 @@ namespace dftefe
       bool
       isAtBoundary() const override;
 
+
+      double diameter() const override;
+
+      void center(dftefe::utils::Point &centerPoint) const override;
       void
       setRefineFlag() override;
 
