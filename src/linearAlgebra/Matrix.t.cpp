@@ -23,14 +23,20 @@
  * @author Vishal subramanian, Ian C. Lin.
  */
 
-
 #include <linearAlgebra/BlasLapack.h>
-
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
+
+
+ /*   template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Matrix<ValueType, memorySpace>::Matrix(size_type rows, size_type cols, MPI_Comm comm, int64_t p, int64_t q, int64_t nb) :
+    d_comm(comm), d_p(p), d_q(q), d_nb(nb), d_nGlobalRows(rows), d_nGlobalCols(cols) {
+
+    }
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename Matrix<ValueType, memorySpace>::iterator
     Matrix<ValueType, memorySpace>::begin()
@@ -235,7 +241,7 @@ namespace dftefe
         &storage)
     {
       d_data = std::move(storage);
-    }
+    }*/
 
 
   } // namespace linearAlgebra

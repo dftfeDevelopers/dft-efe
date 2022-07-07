@@ -14,7 +14,11 @@ if (NOT TARGET dft-efe-linalg)
             QueueManager.cpp
             #SerialDenseMatrix.cpp
             SerialVector.cpp
-            VectorAttributes.cpp)
+            VectorAttributes.cpp
+            #AbstractMatrix.cpp
+            #GeneralMatrix.cpp
+            MatrixKernels.cu
+            MatrixKernels.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
