@@ -32,32 +32,16 @@
 #include <utils/MemoryStorage.h>
 #include "QueueManager.h"
 #include <memory>
-#include <slate/slate.hh>
-
-int global_mb = 256, global_nb = 256;
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-//    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-//    class GeneralMatrix {
-//    public:
-//      GeneralMatrix(size_t m, size_t n, MPI_Comm comm, size_t p, size_t q,
-//                    size_t nb = global_nb, size_t mb = global_mb);
-//
-//    private:
-//      slate::Matrix<ValueType> d_matrix;
-//    };
-
-
-/*    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class Matrix
     {
     public:
-
-      enum class Property {GENERAL, TRIANGULAR, HERMITIAN, SYMMETRIC};
-      enum class Uplo {UPPER, LOWER};
+      
 
       using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
       using value_type = typename Storage::value_type;
@@ -70,62 +54,60 @@ namespace dftefe
 
       Matrix() = default;
 
-      Matrix(size_type rows, size_type cols, MPI_Comm comm, int64_t p, int64_t q, int64_t nb);
-
       virtual ~Matrix() = default;
 
-      *//**
+      /**
        * @brief Return iterator pointing to the beginning of Matrix
        * data.
        *
        * @returns Iterator pointing to the beginning of Matrix.
-       *//*
+       */
       iterator
       begin();
 
-      *//**
+      /**
        * @brief Return iterator pointing to the beginning of Matrix
        * data.
        *
        * @returns Constant iterator pointing to the beginning of
        * Matrix.
-       *//*
+       */
       const_iterator
       begin() const;
 
-      *//**
+      /**
        * @brief Return iterator pointing to the end of Matrix data.
        *
        * @returns Iterator pointing to the end of Matrix.
-       *//*
+       */
       iterator
       end();
 
-      *//**
+      /**
        * @brief Return iterator pointing to the end of Matrix data.
        *
        * @returns Constant iterator pointing to the end of
        * Matrix.
-       *//*
+       */
       const_iterator
       end() const;
 
-      *//**
+      /**
        * @brief Return the raw pointer to the Matrix
        * @return pointer to data
-       *//*
+       */
       ValueType *
       data();
 
-      *//**
+      /**
        * @brief Return the raw pointer to the Matrix without modifying
        * the values
        * @return pointer to const data
-       *//*
+       */
       const ValueType *
       data() const;
 
-      *//**
+      /**
        * @brief Copies the data to a Matrix object in a different memory space.
        * This provides a seamless interface to copy back and forth between
        * memory spaces , including between the same memory spaces.
@@ -136,12 +118,12 @@ namespace dftefe
        * @param[out] dstMatrix reference to the destination
        *  Matrix with the data copied into it. It must pre-allocated
        *  appropriately.
-       *//*
+       */
       template <dftefe::utils::MemorySpace memorySpaceDst>
       void
       copyTo(Matrix<ValueType, memorySpaceDst> &dstMatrix) const;
 
-      *//**
+      /**
        * @brief Copies data from a MemoryStorage object in a different memory space.
        * This provides a seamless interface to copy back and forth between
        * memory spaces, including between the same memory spaces.
@@ -152,33 +134,33 @@ namespace dftefe
        *  from which to copy
        * @param[in] srcMatrix reference to the source
        *  Matrix
-       *//*
+       */
       template <dftefe::utils::MemorySpace memorySpaceSrc>
       void
       copyFrom(const Matrix<ValueType, memorySpaceSrc> &srcMatrix);
 
-      *//**
+      /**
        * @brief Returns the Local number of rows of the Matrix
        * For A serial matrix this is same as the global number of rows
        * These functions are present to ensure compatibility with the
        * base class
        * @returns Local number of rows of the Matrix
-       *//*
+       */
       size_type
       getLocalRows() const;
 
-      *//**
+      /**
        * @brief Returns the Local number of cols of the Matrix
        * For A serial matrix this is same as the global number of cols
        * These functions are present to ensure compatibility with the
        * base class
        * @returns Local number of cols of the Matrix
-       *//*
+       */
       size_type
       getLocalCols() const;
 
 
-      *//**
+      /**
        * @brief Returns the Local number of (rows,cols) of the Matrix
        * For A serial matrix this is same as the global number of (rows,cols)
        * These functions are present to ensure compatibility with the
@@ -186,75 +168,75 @@ namespace dftefe
        * @param[out] rows Local number of rows of the Matrix.
        * @param[out] cols Local number of cols of the Matrix.
        *
-       *//*
+       */
       void
       getLocalSize(size_type &rows, size_type &cols) const;
 
-      *//**
+      /**
        * @brief Returns the Global number of (rows,cols) of the Matrix
        * @param[out] rows Global number of rows of the Matrix.
        * @param[out] cols Global number of cols of the Matrix.
        *
-       *//*
+       */
       void
       getGlobalSize(size_type &rows, size_type &cols) const;
 
 
-      *//**
+      /**
        * @brief Returns the Global number of rows of the Matrix
        * @returns Global number of rows of the Matrix
-       *//*
+       */
       size_type
       getGlobalRows() const;
 
-      *//**
+      /**
        * @brief Returns the Global number of cols of the Matrix
        * @returns Global number of cols of the Matrix
-       *//*
+       */
       size_type
       getGlobalCols() const;
 
-      *//**
+      /**
        * @brief Compound addition for elementwise addition lhs += rhs
        * @param[in] rhs the Matrix to add
        * @return the original Matrix
        * @throws exception if the sizes and type (SerialDenseMatrix or
        * DistributedDenseMatrix) are incompatible
-       *//*
+       */
       Matrix &
       operator+=(const Matrix &rhs);
 
 
-      *//**
+      /**
        * @brief Compound subtraction for elementwise addition lhs -= rhs
        * @param[in] rhs the Matrix to subtract
        * @return the original vector
        * @throws exception if the sizes and type (SerialDenseMatrix or
        * DistributedDenseMatrix) are incompatible
-       *//*
+       */
       Matrix &
       operator-=(const Matrix &rhs);
 
 
-      *//**
+      /**
        * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
        * of the Matrix.
        *
        * @return reference to the underlying MemoryStorage.
-       *//*
+       */
       Storage &
       getValues();
 
-      *//**
+      /**
        * @brief Returns a const reference to the underlying storage (i.e., MemoryStorage object)
        * of the Matrix.
        *
        * @return const reference to the underlying MemoryStorage.
-       *//*
+       */
       const Storage &
       getValues() const;
 
-      *//**
+      /**
        * @brief Set values in the Matrix using a user provided Matrix::Storage object (i.e., MemoryStorage object).
        * The MemoryStorage may lie in a different memoryspace (say memSpace2)
        * than the Matrix's memory space (memSpace). The function internally does
@@ -264,13 +246,13 @@ namespace dftefe
        * to set values into the Matrix.
        * @throws exception if the size of the input storage is smaller than the
        * \e localSize of the Matrix
-       *//*
+       */
       template <dftefe::utils::MemorySpace memorySpace2>
       void
       setValues(
         const typename Matrix<ValueType, memorySpace2>::Storage &storage);
 
-      *//**
+      /**
        * @brief Transfer ownership of a user provided Matrix::Storage object (i.e., MemoryStorage object)
        * to the Vector. This is useful when a MemoryStorage has been already
        * been allocated and we need the Matrix to claim its ownership. This
@@ -283,30 +265,27 @@ namespace dftefe
        * storage will point to NULL after a call to this function. Accessing the
        * input storage pointer will lead to undefined behavior.
        *
-       *//*
+       */
       void
       setStorage(std::unique_ptr<Storage> &storage);
 
-      *//**
+      /**
        * @brief Returns the Queue associated with this Matrix object
        * @returns MemoryStorage object of this class
-       *//*
+       */
       std::shared_ptr<blasLapack::BlasQueue<memorySpace>>
       getQueue();
 
 
-      *//**
+      /**
        * @brief Returns the Frobenius norm of the matrix
        * @returns Frobenius norm of the matrix.
-       *//*
+       */
       virtual double
       frobeniusNorm() const = 0;
 
 
     protected:
-      int d_nb, d_p, d_q;
-      MPI_Comm d_comm;
-      slate::BaseMatrix<ValueType> *d_matrix;
       size_type d_nGlobalRows = 0, d_nGlobalCols = 0;
       size_type d_nLocalRows = 0, d_nLocalCols = 0;
 
@@ -317,8 +296,7 @@ namespace dftefe
 //      Layout   d_layout;
 
       std::unique_ptr<Storage> d_data;
-
-    };*/
+    };
   } // namespace linearAlgebra
 } // namespace dftefe
 

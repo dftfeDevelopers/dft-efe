@@ -593,6 +593,45 @@ namespace dftefe
 
 #endif
 
+      ///
+      /// Constructor without MPI
+      ///
+      template <dftefe::utils::MemorySpace memorySpace>
+      MPIPatternP2P<memorySpace>::MPIPatternP2P(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRange)
+        : d_locallyOwnedRange(locallyOwnedRange)
+        , d_mpiComm(0)
+        , d_allOwnedRanges(0)
+        , d_numLocallyOwnedIndices(0)
+        , d_numGhostIndices(0)
+        , d_ghostIndices(0)
+        , d_numGhostProcs(0)
+        , d_ghostProcIds(0)
+        , d_numGhostIndicesInGhostProcs(0)
+        , d_localGhostIndicesRanges(0)
+        , d_numTargetProcs(0)
+        , d_flattenedLocalGhostIndices(0)
+        , d_targetProcIds(0)
+        , d_numOwnedIndicesForTargetProcs(0)
+        , d_flattenedLocalTargetIndices(0)
+        , d_nGlobalIndices(0)
+      {
+        d_myRank = 0;
+        d_nprocs = 1;
+        throwException(
+          d_locallyOwnedRange.second >= d_locallyOwnedRange.first,
+          "In processor " + std::to_string(d_myRank) +
+            ", invalid locally owned range found "
+            "(i.e., the second value in the range is less than the first value).");
+        d_numLocallyOwnedIndices =
+          d_locallyOwnedRange.second - d_locallyOwnedRange.first;
+        std::vector<global_size_type> d_allOwnedRanges = {
+          d_locallyOwnedRange.first, d_locallyOwnedRange.second};
+        for (unsigned int i = 0; i < d_nprocs; ++i)
+          d_nGlobalIndices +=
+            d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
+      }
+
       template <dftefe::utils::MemorySpace memorySpace>
       std::pair<global_size_type, global_size_type>
       MPIPatternP2P<memorySpace>::getLocallyOwnedRange() const

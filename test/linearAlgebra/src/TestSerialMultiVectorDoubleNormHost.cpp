@@ -63,10 +63,12 @@ main()
     dMultiVecStdLInfNorm[i] = *std::max_element(dMultiVecStd[i].begin(), dMultiVecStd[i].end(),utils::absCompare<double>);
   }
 
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueue<Host>>();
+  dftefe::linearAlgebra::blasLapack::BlasQueue<Host> queue; 
+
+  dftefe::linearAlgebra::LinAlgOpContext<Host> linAlgContext(&queue); 
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>> dMultiVec
-    = std::make_shared<dftefe::linearAlgebra::SerialMultiVector<double, dftefe::utils::MemorySpace::HOST>>(vSize,numVec, 0,queue);
+    = std::make_shared<dftefe::linearAlgebra::SerialMultiVector<double, dftefe::utils::MemorySpace::HOST>>(vSize,numVec, &linAlgContext, 0);
 
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,

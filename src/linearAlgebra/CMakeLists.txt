@@ -11,7 +11,6 @@ if (NOT TARGET dft-efe-linalg)
             BlasLapackKernels.cu
             DistributedVector.cpp
             Matrix.cpp
-            MatrixOperations.cpp
             QueueManager.cpp
             #SerialDenseMatrix.cpp
             SerialVector.cpp

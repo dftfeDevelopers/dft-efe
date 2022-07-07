@@ -272,7 +272,7 @@ namespace dftefe
           this->locallyOwnedSize(),
           this->numVectors(),
           this->data(),
-          d_linAlgOpContext->getBlasQueue());
+          *d_linAlgOpContext);
 
       std::vector<double> l2NormsLocallyOwnedSquare(d_numVectors, 0.0);
       for (size_type i = 0; i < d_numVectors; ++i)
@@ -281,12 +281,12 @@ namespace dftefe
 
       std::vector<double> returnValues(d_numVectors, 0.0);
 #ifdef DFTEFE_WITH_MPI
-      MPI_Allreduce(&l2NormsLocallyOwnedSquare,
-                    &returnValues[0],
-                    d_numVectors,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&l2NormsLocallyOwnedSquare,
+                                            &returnValues[0],
+                                            d_numVectors,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPIMax,
+                                            d_mpiPatternP2P->mpiCommunicator());
 #else
       returnValues = l2NormLocallyOwnedSquare;
 #endif // DFTEFE_WITH_MPI
@@ -304,16 +304,16 @@ namespace dftefe
           this->locallyOwnedSize(),
           this->numVectors(),
           this->data(),
-          d_linAlgOpContext->getBlasQueue());
+          *d_linAlgOpContext);
 
       std::vector<double> returnValues(d_numVectors, 0.0);
 #ifdef DFTEFE_WITH_MPI
-      MPI_Allreduce(&lInfNormsLocallyOwned,
-                    &returnValues[0],
-                    d_numVectors,
-                    MPI_DOUBLE,
-                    MPI_MAX,
-                    d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormsLocallyOwned,
+                                            &returnValues[0],
+                                            d_numVectors,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPIMax,
+                                            d_mpiPatternP2P->mpiCommunicator());
 #else
       returnValues = lInfNormsLocallyOwned;
 #endif // DFTEFE_WITH_MPI
@@ -333,7 +333,8 @@ namespace dftefe
     DistributedMultiVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->gatherFromGhost(*d_storage, communicationChannel);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwned(*d_storage,
+                                                      communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -341,15 +342,15 @@ namespace dftefe
     DistributedMultiVector<ValueType, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->scatterToGhostBegin(*d_storage,
-                                                communicationChannel);
+      d_mpiCommunicatorP2P->updateGhostValuesBegin(*d_storage,
+                                                   communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DistributedMultiVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {
-      d_mpiCommunicatorP2P->scatterToGhostEnd();
+      d_mpiCommunicatorP2P->updateGhostValuesEnd(*d_storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -358,8 +359,8 @@ namespace dftefe
       accumulateAddLocallyOwnedBegin(
         const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->gatherFromGhostBegin(*d_storage,
-                                                 communicationChannel);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedBegin(
+        *d_storage, communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -367,7 +368,7 @@ namespace dftefe
     DistributedMultiVector<ValueType,
                            memorySpace>::accumulateAddLocallyOwnedEnd()
     {
-      d_mpiCommunicatorP2P->gatherFromGhostEnd(*d_storage);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedEnd(*d_storage);
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

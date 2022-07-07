@@ -48,7 +48,9 @@ main()
   utils::deviceGetDevice(&device);
   std::cout<<device<<std::endl;
 
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue<Device>> queue=std::make_shared<dftefe::linearAlgebra::blasLapack::BlasQueue<Device>>(device,0);
+  dftefe::linearAlgebra::blasLapack::BlasQueue<Device> queue; 
+
+  dftefe::linearAlgebra::LinAlgOpContext<Device> linAlgContext(&queue);
 
   const double lo = -10.0;
   const double hi = 10.0;
@@ -72,18 +74,18 @@ main()
     = std::make_unique<MemoryStorageDoubleDevice>(vSize);
   memStorage1->copyFrom<Host>(dVecStd1.data());
   std::shared_ptr<VectorDoubleDevice> dVec1
-    = std::make_shared<SerialVectorDoubleDevice>(vSize, 0,queue);
+    = std::make_shared<SerialVectorDoubleDevice>(vSize, &linAlgContext,0);
   dVec1->setStorage(memStorage1);
 
   std::unique_ptr<MemoryStorageDoubleDevice> memStorage2 
      = std::make_unique<MemoryStorageDoubleDevice>(vSize);
   memStorage2->copyFrom<Host>(dVecStd2.data());
   std::shared_ptr<VectorDoubleDevice> dVec2
-    = std::make_shared<SerialVectorDoubleDevice>(vSize, 0,queue);
+    = std::make_shared<SerialVectorDoubleDevice>(vSize, &linAlgContext,0);
   dVec2->setStorage(memStorage2);
 
   std::shared_ptr<VectorDoubleDevice> dVec3
-    = std::make_shared<SerialVectorDoubleDevice>(vSize, 0,queue);
+    = std::make_shared<SerialVectorDoubleDevice>(vSize, &linAlgContext,0);
   linearAlgebra::add<double,Device>(1.0, *dVec1, 1.0, *dVec2, *dVec3);
   const MemoryStorageDoubleDevice & dVec3Storage = dVec3->getValues();
   std::vector<double> dVec3HostCopy(vSize);

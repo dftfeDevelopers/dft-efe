@@ -20,42 +20,33 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian.
+ * @author Sambit Das
  */
 
-#ifndef dftefeMatrixOperations_h
-#define dftefeMatrixOperations_h
+#ifndef dftefeDenseMatrixOperations_h
+#define dftefeDenseMatrixOperations_h
 
 #include <memory>
 #include <blas.hh>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/DenseMatrix.h>
 #include <utils/MemorySpaceType.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MatrixOperations
+    namespace DenseMatrixOperations
     {
-      void
-      matMulc(blasLapack::Layout                                  layout,
-              blasLapack::Op                                      transA,
-              blasLapack::Op                                      transB,
-              size_type                                           m,
-              size_type                                           n,
-              size_type                                           k,
-              ValueType                                           alpha,
-              ValueType const *                                   dA,
-              size_type                                           ldda,
-              ValueType const *                                   dB,
-              size_type                                           lddb,
-              ValueType                                           beta,
-              ValueType *                                         dC,
-              size_type                                           lddc,
-              std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
-    };
+        template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+        void
+        gemm(ValueType alpha,
+             DenseMatrix<ValueType,memorySpace> & A,
+             DenseMatrix<ValueType,memorySpace> & B,
+             ValueType beta,
+             DenseMatrix<ValueType,memorySpace> & C);
+    }
   } // namespace linearAlgebra
 
 } // namespace dftefe

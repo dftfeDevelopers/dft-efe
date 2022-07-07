@@ -406,20 +406,19 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::l2Norm() const
     {
       const double l2NormLocallyOwned =
-        blasLapack::nrm2<ValueType, memorySpace>(
-          d_locallyOwnedSize,
-          this->data(),
-          1,
-          d_linAlgOpContext->getBlasQueue());
+        blasLapack::nrm2<ValueType, memorySpace>(d_locallyOwnedSize,
+                                                 this->data(),
+                                                 1,
+                                                 *d_linAlgOpContext);
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
-      utils::mpi::MPIAllreduce(&l2NormLocallyOwnedSquare,
-                               &returnValue,
-                               1,
-                               utils::mpi::MPIDouble,
-                               utils::mpi::MPISum,
-                               d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&l2NormLocallyOwnedSquare,
+                                            &returnValue,
+                                            1,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPISum,
+                                            d_mpiPatternP2P->mpiCommunicator());
       returnValue = std::sqrt(returnValue);
       return returnValue;
     }
@@ -429,18 +428,17 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::lInfNorm() const
     {
       const double lInfNormLocallyOwned =
-        blasLapack::amax<ValueType, memorySpace>(
-          d_locallyOwnedSize,
-          this->data(),
-          1,
-          d_linAlgOpContext->getBlasQueue());
+        blasLapack::amax<ValueType, memorySpace>(d_locallyOwnedSize,
+                                                 this->data(),
+                                                 1,
+                                                 *d_linAlgOpContext);
       double returnValue = lInfNormLocallyOwned;
-      utils::mpi::MPIAllreduce(&lInfNormLocallyOwned,
-                               &returnValue,
-                               1,
-                               utils::mpi::MPIDouble,
-                               utils::mpi::MPIMax,
-                               d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormLocallyOwned,
+                                            &returnValue,
+                                            1,
+                                            utils::mpi::MPIDouble,
+                                            utils::mpi::MPIMax,
+                                            d_mpiPatternP2P->mpiCommunicator());
       return returnValue;
     }
 
@@ -457,7 +455,8 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->gatherFromGhost(*d_storage, communicationChannel);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwned(*d_storage,
+                                                      communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -465,15 +464,15 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->scatterToGhostBegin(*d_storage,
-                                                communicationChannel);
+      d_mpiCommunicatorP2P->updateGhostValuesBegin(*d_storage,
+                                                   communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DistributedVector<ValueType, memorySpace>::updateGhostValuesEnd()
     {
-      d_mpiCommunicatorP2P->scatterToGhostEnd();
+      d_mpiCommunicatorP2P->updateGhostValuesEnd(*d_storage);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -481,15 +480,15 @@ namespace dftefe
     DistributedVector<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
       const size_type communicationChannel /*= 0*/)
     {
-      d_mpiCommunicatorP2P->gatherFromGhostBegin(*d_storage,
-                                                 communicationChannel);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedBegin(
+        *d_storage, communicationChannel);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DistributedVector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
     {
-      d_mpiCommunicatorP2P->gatherFromGhostEnd(*d_storage);
+      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedEnd(*d_storage);
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe
