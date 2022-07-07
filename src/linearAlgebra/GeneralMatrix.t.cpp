@@ -30,12 +30,17 @@ namespace dftefe
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    GeneralMatrix<ValueType, memorySpace>::GeneralMatrix(size_t m, size_t n, MPI_Comm comm, size_t p, size_t q, size_t nb, size_t mb) :
-      AbstractMatrix<ValueType, memorySpace>(m, n, comm, p, q, nb, mb)
+    GeneralMatrix<ValueType, memorySpace>::GeneralMatrix(size_t   m,
+                                                         size_t   n,
+                                                         MPI_Comm comm,
+                                                         size_t   p,
+                                                         size_t   q,
+                                                         size_t   nb,
+                                                         size_t   mb)
+      : AbstractMatrix<ValueType, memorySpace>(m, n, comm, p, q, nb, mb)
     {
-      d_matrix = new slate::Matrix<ValueType>(m, n, mb, nb, p, q, comm);
+      d_matrix     = new slate::Matrix<ValueType>(m, n, mb, nb, p, q, comm);
       d_baseMatrix = d_matrix;
-
     }
   } // namespace linearAlgebra
 } // namespace dftefe

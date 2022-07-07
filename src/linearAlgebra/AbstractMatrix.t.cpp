@@ -42,9 +42,7 @@ namespace dftefe
       , d_q(q)
       , d_nb(nb)
       , d_mb(mb)
-    {
-
-    }
+    {}
 
 
   } // namespace linearAlgebra

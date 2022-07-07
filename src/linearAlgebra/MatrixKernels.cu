@@ -25,24 +25,27 @@
 
 #ifdef DFTEFE_WITH_DEVICE_CUDA
 
-#include <linearAlgebra/MatrixKernels.h>
+#  include <linearAlgebra/MatrixKernels.h>
 
 namespace dftefe
 {
-
   namespace linearAlgebra
   {
-//    template <typename ValueType>
-//    void MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::GeneralMatrixAllocation()
-//    {
-//      // matrix.insertLocalTiles(slate::Target::Devices);
-//    }
+    //    template <typename ValueType>
+    //    void MatrixKernels<ValueType,
+    //    dftefe::utils::MemorySpace::DEVICE>::GeneralMatrixAllocation()
+    //    {
+    //      // matrix.insertLocalTiles(slate::Target::Devices);
+    //    }
 
-//    template class MatrixKernels<double, dftefe::utils::MemorySpace::DEVICE>;
-//    template class MatrixKernels<float, dftefe::utils::MemorySpace::DEVICE>;
-//    template class MatrixKernels<std::complex<double>, dftefe::utils::MemorySpace::DEVICE>;
-//    template class MatrixKernels<std::complex<float>, dftefe::utils::MemorySpace::DEVICE>;
-//
+    //    template class MatrixKernels<double,
+    //    dftefe::utils::MemorySpace::DEVICE>; template class
+    //    MatrixKernels<float, dftefe::utils::MemorySpace::DEVICE>; template
+    //    class MatrixKernels<std::complex<double>,
+    //    dftefe::utils::MemorySpace::DEVICE>; template class
+    //    MatrixKernels<std::complex<float>,
+    //    dftefe::utils::MemorySpace::DEVICE>;
+    //
   } // namespace linearAlgebra
 } // namespace dftefe
 

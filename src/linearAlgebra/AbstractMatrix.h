@@ -33,19 +33,22 @@ static int global_nb = 256, global_mb = 256;
 
 namespace dftefe
 {
-
   namespace linearAlgebra
   {
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class AbstractMatrix
     {
-
     protected:
-      AbstractMatrix(size_t m, size_t n, MPI_Comm comm, size_t p, size_t q, size_t nb = global_nb, size_t mb = global_mb);
-      size_t d_m, d_n;
-      size_t d_mb, d_nb, d_p, d_q;
-      MPI_Comm d_comm;
+      AbstractMatrix(size_t   m,
+                     size_t   n,
+                     MPI_Comm comm,
+                     size_t   p,
+                     size_t   q,
+                     size_t   nb = global_nb,
+                     size_t   mb = global_mb);
+      size_t                        d_m, d_n;
+      size_t                        d_mb, d_nb, d_p, d_q;
+      MPI_Comm                      d_comm;
       slate::BaseMatrix<ValueType> *d_baseMatrix = nullptr;
     };
 

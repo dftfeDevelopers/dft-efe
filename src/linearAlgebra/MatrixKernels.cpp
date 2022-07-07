@@ -27,25 +27,32 @@
 
 namespace dftefe
 {
-
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void MatrixKernels<ValueType, memorySpace>::GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix)
+    void
+    MatrixKernels<ValueType, memorySpace>::GeneralMatrixAllocation(
+      slate::Matrix<ValueType> &matrix)
     {
       matrix.insertLocalTiles(slate::Target::Host);
     }
 
     template class MatrixKernels<double, dftefe::utils::MemorySpace::HOST>;
     template class MatrixKernels<float, dftefe::utils::MemorySpace::HOST>;
-    template class MatrixKernels<std::complex<double>, dftefe::utils::MemorySpace::HOST>;
-    template class MatrixKernels<std::complex<float>, dftefe::utils::MemorySpace::HOST>;
+    template class MatrixKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::HOST>;
+    template class MatrixKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::HOST>;
 
 #ifdef DFTEFE_WITH_DEVICE_CUDA
-    template class MatrixKernels<double, dftefe::utils::MemorySpace::HOST_PINNED>;
-    template class MatrixKernels<float, dftefe::utils::MemorySpace::HOST_PINNED>;
-    template class MatrixKernels<std::complex<double>, dftefe::utils::MemorySpace::HOST_PINNED>;
-    template class MatrixKernels<std::complex<float>, dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MatrixKernels<double,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MatrixKernels<float,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MatrixKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
+    template class MatrixKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::HOST_PINNED>;
 #endif
 
   } // namespace linearAlgebra

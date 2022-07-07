@@ -32,22 +32,23 @@
 
 namespace dftefe
 {
-
   namespace linearAlgebra
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MatrixKernels {
+    class MatrixKernels
+    {
     public:
-      void GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix);
+      void
+      GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix);
     };
 
-//#ifdef DFTEFE_WITH_DEVICE
-//    template <typename ValueType>
-//    class MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE> {
-//    public:
-//      void GeneralMatrixAllocation();
-//    };
-//#endif
+    //#ifdef DFTEFE_WITH_DEVICE
+    //    template <typename ValueType>
+    //    class MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE> {
+    //    public:
+    //      void GeneralMatrixAllocation();
+    //    };
+    //#endif
   } // namespace linearAlgebra
 
 } // namespace dftefe
