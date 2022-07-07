@@ -41,6 +41,14 @@ namespace dftefe
     {
       d_matrix     = new slate::Matrix<ValueType>(m, n, mb, nb, p, q, comm);
       d_baseMatrix = d_matrix;
+      if (memorySpace == dftefe::utils::MemorySpace::DEVICE)
+        {
+          d_matrix->insertLocalTiles(slate::Target::Devices);
+        }
+      else
+        {
+          d_matrix->insertLocalTiles(slate::Target::Host);
+        }
     }
   } // namespace linearAlgebra
 } // namespace dftefe

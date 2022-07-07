@@ -37,6 +37,15 @@ namespace dftefe
       matrix.insertLocalTiles(slate::Target::Host);
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    MatrixKernels<ValueType, memorySpace>::HermitianMatrixAllocation(
+      slate::HermitianMatrix<ValueType> &matrix)
+    {
+      matrix.insertLocalTiles(slate::Target::Host);
+    }
+
+
     template class MatrixKernels<double, dftefe::utils::MemorySpace::HOST>;
     template class MatrixKernels<float, dftefe::utils::MemorySpace::HOST>;
     template class MatrixKernels<std::complex<double>,

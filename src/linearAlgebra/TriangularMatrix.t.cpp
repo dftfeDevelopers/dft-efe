@@ -23,41 +23,32 @@
  * @author Ian C. Lin.
  */
 
-#ifndef dftefeAbstractMatrix_h
-#define dftefeAbstractMatrix_h
-
-#include <slate/slate.hh>
-#include "utils/MemorySpaceType.h"
-
-static int global_nb = 256, global_mb = 256;
+#include "TriangularMatrix.h"
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    typedef slate::Uplo Uplo;
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class AbstractMatrix
+    TriangularMatrix<ValueType, memorySpace>::TriangularMatrix(Uplo     uplo,
+                                                               size_t   n,
+                                                               MPI_Comm comm,
+                                                               size_t   p,
+                                                               size_t   q,
+                                                               size_t   nb)
+      : AbstractMatrix<ValueType, memorySpace>(n, n, comm, p, q, nb, nb)
     {
-    protected:
-      AbstractMatrix(size_t   m,
-                     size_t   n,
-                     MPI_Comm comm,
-                     size_t   p,
-                     size_t   q,
-                     size_t   nb = global_nb,
-                     size_t   mb = global_mb);
-      size_t                        d_m, d_n;
-      size_t                        d_mb, d_nb, d_p, d_q;
-      MPI_Comm                      d_comm;
-      slate::BaseMatrix<ValueType> *d_baseMatrix = nullptr;
-    };
-
+      d_matrix =
+        new slate::TriangularMatrix<ValueType>(uplo, n, nb, p, q, comm);
+      d_baseMatrix = d_matrix;
+      if (memorySpace == dftefe::utils::MemorySpace::DEVICE)
+        {
+          d_matrix->insertLocalTiles(slate::Target::Devices);
+        }
+      else
+        {
+          d_matrix->insertLocalTiles(slate::Target::Host);
+        }
+    }
   } // namespace linearAlgebra
-
 } // namespace dftefe
-
-
-#include "AbstractMatrix.t.cpp"
-#endif // dftefeAbstractMatrix_h

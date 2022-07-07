@@ -23,41 +23,33 @@
  * @author Ian C. Lin.
  */
 
-#ifndef dftefeAbstractMatrix_h
-#define dftefeAbstractMatrix_h
+#ifndef dftefeTriangularMatrix_h
+#define dftefeTriangularMatrix_h
 
-#include <slate/slate.hh>
-#include "utils/MemorySpaceType.h"
-
-static int global_nb = 256, global_mb = 256;
+#include <linearAlgebra/AbstractMatrix.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    typedef slate::Uplo Uplo;
-
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class AbstractMatrix
+    class TriangularMatrix : public AbstractMatrix<ValueType, memorySpace>
     {
+    public:
+      TriangularMatrix(Uplo     uplo,
+                       size_t   n,
+                       MPI_Comm comm,
+                       size_t   p,
+                       size_t   q,
+                       size_t   nb = global_nb);
+
     protected:
-      AbstractMatrix(size_t   m,
-                     size_t   n,
-                     MPI_Comm comm,
-                     size_t   p,
-                     size_t   q,
-                     size_t   nb = global_nb,
-                     size_t   mb = global_mb);
-      size_t                        d_m, d_n;
-      size_t                        d_mb, d_nb, d_p, d_q;
-      MPI_Comm                      d_comm;
-      slate::BaseMatrix<ValueType> *d_baseMatrix = nullptr;
+      Uplo d_uplo;
+      using AbstractMatrix<ValueType, memorySpace>::d_baseMatrix;
+      slate::TriangularMatrix<ValueType> *d_matrix;
     };
-
   } // namespace linearAlgebra
-
 } // namespace dftefe
 
-
-#include "AbstractMatrix.t.cpp"
-#endif // dftefeAbstractMatrix_h
+#include "TriangularMatrix.t.cpp"
+#endif // dftefeTriangularMatrix_h

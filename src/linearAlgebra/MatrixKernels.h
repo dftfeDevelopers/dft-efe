@@ -28,7 +28,8 @@
 
 #include <complex>
 #include <slate/slate.hh>
-#include "utils/MemorySpaceType.h"
+#include <slate/slate.hh>
+#include <utils/MemorySpaceType.h>
 
 namespace dftefe
 {
@@ -40,15 +41,21 @@ namespace dftefe
     public:
       void
       GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix);
+      void
+      HermitianMatrixAllocation(slate::HermitianMatrix<ValueType> &matrix);
     };
 
-    //#ifdef DFTEFE_WITH_DEVICE
-    //    template <typename ValueType>
-    //    class MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE> {
-    //    public:
-    //      void GeneralMatrixAllocation();
-    //    };
-    //#endif
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueType>
+    class MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>
+    {
+    public:
+      void
+      GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix);
+      void
+      HermitianMatrixAllocation(slate::HermitianMatrix<ValueType> &matrix);
+    };
+#endif
   } // namespace linearAlgebra
 
 } // namespace dftefe

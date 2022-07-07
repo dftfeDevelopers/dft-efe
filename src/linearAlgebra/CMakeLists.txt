@@ -15,8 +15,10 @@ if (NOT TARGET dft-efe-linalg)
             #SerialDenseMatrix.cpp
             SerialVector.cpp
             VectorAttributes.cpp
-            #AbstractMatrix.cpp
-            #GeneralMatrix.cpp
+            AbstractMatrix.cpp
+            GeneralMatrix.cpp
+            HermitianMatrix.cpp
+            TriangularMatrix.cpp
             MatrixKernels.cu
             MatrixKernels.cpp)
 
