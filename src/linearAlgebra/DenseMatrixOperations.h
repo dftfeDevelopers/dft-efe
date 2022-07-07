@@ -41,7 +41,7 @@ namespace dftefe
     {
         template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
         void
-        gemm(ValueType alpha,
+        multiply(ValueType alpha,
              DenseMatrix<ValueType,memorySpace> & A,
              DenseMatrix<ValueType,memorySpace> & B,
              ValueType beta,

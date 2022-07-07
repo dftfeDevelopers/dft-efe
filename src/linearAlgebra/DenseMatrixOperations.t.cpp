@@ -6,15 +6,17 @@ namespace dftefe
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    DenseMatrixOperations::gemm(ValueType alpha,
+    DenseMatrixOperations::multiply(ValueType alpha,
            DenseMatrix<ValueType,memorySpace> & A,
            DenseMatrix<ValueType,memorySpace> & B,
            ValueType beta,
            DenseMatrix<ValueType,memorySpace> & C);
     {
-       auto AT = slate::transpose( A );
-       auto BT = slate::conjTranspose( B );
-       slate::gemm( alpha, AT, BT, beta, C );
+
+       if (memorySpace==dftefe::utils::MemorySpace::DEVICE)
+       {
+          slate::gemm( alpha, A.getSlateMatrix(), B.getSlateMatrix(), beta, {slate::Option::Target, slate::Target::Devices});
+       }
     }
 
   } // namespace linearAlgebra
