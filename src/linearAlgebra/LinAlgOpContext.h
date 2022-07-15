@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Ian C. Lin, Sambit Das
  */
 
 #ifndef dftefeLinAlgOpContext_h

@@ -12,7 +12,7 @@ if (NOT TARGET dft-efe-linalg)
             DistributedVector.cpp
             Matrix.cpp
             QueueManager.cpp
-            #SerialDenseMatrix.cpp
+            LinAlgOpContext.cpp
             SerialVector.cpp
             VectorAttributes.cpp
             AbstractMatrix.cpp
