@@ -8,6 +8,26 @@ namespace dftefe
 {
   namespace utils
   {
+    // abs obverloads
+
+    __inline__ __device__ double
+    abs(double a)
+    {
+      return fabs(a);
+    }
+
+    __inline__ __device__ double
+    abs(cuDoubleComplex a)
+    {
+      return cuCabs(a);
+    }
+
+    __inline__ __device__ double
+    abs(cuFloatComplex a)
+    {
+      return cuCabsf(a);
+    }
+
     // mult for homogeneous types e.g. (double, double)
     __inline__ __device__ size_type
     mult(size_type a, size_type b)

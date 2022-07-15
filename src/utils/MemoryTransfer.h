@@ -26,8 +26,8 @@
 #ifndef dftefeMemoryTransfer_h
 #define dftefeMemoryTransfer_h
 
-#include "MemorySpaceType.h"
-#include "TypeConfig.h"
+#include <utils/MemorySpaceType.h>
+#include <utils/TypeConfig.h>
 
 namespace dftefe
 {

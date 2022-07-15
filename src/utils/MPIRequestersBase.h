@@ -31,38 +31,41 @@ namespace dftefe
 {
   namespace utils
   {
-    class MPIRequestersBase
+    namespace mpi
     {
-      /*
-       *
-       * @brief A pure virtual class to evaluate the list of rank Ids that the
-       * current processor needs to send data.
-       *
-       * In a typical case of distributed data (a vector or array), a processor
-       * needs to communicate part of its part of the data to a requesting
-       * processor. It is useful for the current processor to know apriori
-       * which processors it has to send its part of the distributed data.
-       * This base class provides an interface to indentify the Ids of the
-       * processors (also known as ranks) that it has to send data to.
-       * In MPI parlance, the other processors to which this processor
-       * needs to send data are termed as requesting processors/ranks.
-       *
-       * The actual process of identifying the list of requesting processors
-       * is  implemented in the derived classes. There are various different
-       * algorithms with varying computational/communication complexity. Some
-       * use cases are trivial, for example, (a) a serial case where
-       * there are no requesting processors, (b) an all-to-all communication
-       * case where all the other processors are requesting from the
-       * current proccesor.
-       *
-       */
+      class MPIRequestersBase
+      {
+        /*
+         *
+         * @brief A pure virtual class to evaluate the list of rank Ids that the
+         * current processor needs to send data.
+         *
+         * In a typical case of distributed data (a vector or array), a
+         * processor needs to communicate part of its part of the data to a
+         * requesting processor. It is useful for the current processor to know
+         * apriori which processors it has to send its part of the distributed
+         * data. This base class provides an interface to indentify the Ids of
+         * the processors (also known as ranks) that it has to send data to. In
+         * MPI parlance, the other processors to which this processor needs to
+         * send data are termed as requesting processors/ranks.
+         *
+         * The actual process of identifying the list of requesting processors
+         * is  implemented in the derived classes. There are various different
+         * algorithms with varying computational/communication complexity. Some
+         * use cases are trivial, for example, (a) a serial case where
+         * there are no requesting processors, (b) an all-to-all communication
+         * case where all the other processors are requesting from the
+         * current proccesor.
+         *
+         */
 
-    public:
-      virtual ~MPIRequestersBase() = default;
-      virtual std::vector<size_type>
-      getRequestingRankIds() = 0;
-    };
+      public:
+        virtual ~MPIRequestersBase() = default;
+        virtual std::vector<size_type>
+        getRequestingRankIds() = 0;
+      };
 
-  } // end of namespace utils
+    } // end of namespace mpi
+  }   // end of namespace utils
 } // end of namespace dftefe
 #endif // dftefeMPIRequestersBase_h

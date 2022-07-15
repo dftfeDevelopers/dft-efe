@@ -13,6 +13,7 @@ else:
 parser = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/Parser.py")
 cu = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/CompareUtil.py")
 ss = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/SetupSystems.py")
+bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py")
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 """
 Types of tags
@@ -31,58 +32,27 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class TestMPIRequestersNBXBuildOnly(rfm.CompileOnlyRegressionTest):
+class BuildOnlyTestMPIRequestersNBX(rfm.CompileOnlyRegressionTest):
     descr = 'Compile only test for TestMPIRequestersNBX using CMake'
     build_system = 'CMake'
     make_opts = ['TestMPIRequestersNBX']
     sourcesdir = './src'
-    # As a standard convention, we use 4 categories of tags that can help 
-    # us run only tests matching certain tag(s). See the top of this file 
-    # for the description on types. A user should populate the tagsDict with 
-    # the appropriate values for each of the four keys: 'compileOrRun',
-    # 'unitOrAggregate', 'arch', 'serialOrParallel'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'parallel'}
     tags = {x.lower() for x in tagsDict.values()}
-
-    #Define valid_systems as a list of strings of the format
-    #'system:partiion'. Over here, based on the 'arch' 
-    #(i.e,,'cpu', 'gpu', or 'both'), we filter out
-    #the system:partitions from a list named system_partition_list
-    #in setupSystems.py. The convention is for 'arch'='cpu', we
-    #select only those system:partitions that do not contain the string 'gpu' 
-    #in it. Conversely, for 'arch'='gpu', only those system:partitions are
-    #included which contains the string 'gpu'. For 'arch'='both', all the
-    #system:partiions are selected.
     #NOTE: For any new systems:partition added to the config file, 
     # they must also be added to the system_partition_in setupSystems.py
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
     keep_files = []
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
+
 
     @run_before('compile')
     def set_compiler_flags(self):
         self.build_system.make_opts = self.make_opts
         self.build_system.config_opts = self.config_opts
-        ''' Set any compilation flag, configuration, environment variables, etc'''
-        #NOTE: In most cases, setting the following attribues within a test should be avoided, 
-        #it should be set within the config file. 
-        #+ `self.build_system.cc` string to specify the C compiler
-	    #+ `self.build_system.cflags` list of string to specify the C compiler flags
-	    #+ `self.build_system.cxx` string to specify the C++ compiler
-	    #+ `self.build_system.cxxflags` list of string to specify the C++ compiler flags
-	    #+ `self.build_system.cppflags` list of string to specify the preprocessor flags
-	    #+ `self.build_system.ldflags` list of string to specify the linker flags
-	    #+ `self.build_system.nvcc` string to specify the CUDA compiler
-        #+ `self.variables` a dictionary to set environment variables. e.g, 
-        #  self.variables = {'DFT_EFE_LINKER': '"-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"'}
-        # Any special configuration that needs to be done externally can be done
-        # using the prebuild_cmds attribute 
-        # e.g., self.prebuild_cmds = ['./custom_configure -with-mylib']
-        # Avoid using it as far as possible, in most cases one can invoke the
-        # same configuration through CMake
 
 
     @sanity_function
@@ -110,15 +80,16 @@ class TestMPIRequestersNBXBuildOnly(rfm.CompileOnlyRegressionTest):
 
         else:
             msg = ""
-            return sn.assert_true(hasTestPassed, msg=msg)
+            bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
+        return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class TestMPIRequestersNBXNode1Tasks10BuildAndRun(rfm.RegressionTest):
+class BuildAndRunTestMPIRequestersNBXNode1Tasks4(rfm.RegressionTest):
     descr = '''Compile and run test for NBX algorithm for determining'''\
-            ''' communication pattern using 1 node and 10 tasks'''
+            ''' communication pattern using 1 node and 4 tasks'''
     build_system = 'CMake'
     make_opts = ['TestMPIRequestersNBX']
-    executable = './TestMPIRequestersNBX'
+    executable = './TestMPIRequestersNBX.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -127,7 +98,7 @@ class TestMPIRequestersNBXNode1Tasks10BuildAndRun(rfm.RegressionTest):
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
     keep_files = []
-    config_opts = cmflags.getConfig(tagsDict['arch'])
+    config_opts = cmflags.getConfig()
 
     @run_before('compile')
     def set_compiler_flags(self):
@@ -140,11 +111,253 @@ class TestMPIRequestersNBXNode1Tasks10BuildAndRun(rfm.RegressionTest):
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 10']
+            self.job.launcher.options = ['-n 4']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
                                                    time_limit = "00:05:00", 
                                                    num_nodes = 1, 
-                                                   num_tasks_per_node = 10,
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 4,
+                                                   mem_per_cpu = '2gb')
+
+    @sanity_function
+    def validate_test(self):
+        '''
+        A user-defined function which decides whether the test passed or not as
+        well as define an error message to display if the test fails.
+        '''
+        # This test does not generate any output. It throws an exception
+        # if the logic of NBX algorithm for finding the communication pattern
+        # fails 
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = "Found error(s) in TestMPIRequestersNBX."
+        msgThrownException = "Found exceptions in TestMPIRequestersNBX."
+        msgAssertFail = "Found assert fail(s) in TestMPIRequestersNBX."
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)
+
+@rfm.simple_test
+class RunOnlyTestMPIRequestersNBXNode1Tasks4(rfm.RunOnlyRegressionTest):
+    descr = '''Run only test for NBX algorithm for determining'''\
+            ''' communication pattern using 1 node and 4 tasks'''
+    target_name = 'TestMPIRequestersNBX'
+    build_system = 'CMake'
+    make_opts = [target_name]
+    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
+    sourcesdir = './src'
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+                'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'parallel'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    keep_files = []
+    config_opts = cmflags.getConfig()
+
+    
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 4']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 1, 
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 4,
+                                                   mem_per_cpu = '2gb')
+
+    @sanity_function
+    def validate_test(self):
+        '''
+        A user-defined function which decides whether the test passed or not as
+        well as define an error message to display if the test fails.
+        '''
+        # This test does not generate any output. It throws an exception
+        # if the logic of NBX algorithm for finding the communication pattern
+        # fails 
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = "Found error(s) in TestMPIRequestersNBX."
+        msgThrownException = "Found exceptions in TestMPIRequestersNBX."
+        msgAssertFail = "Found assert fail(s) in TestMPIRequestersNBX."
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)
+
+
+@rfm.simple_test
+class BuildAndRunTestMPIRequestersNBXNode2Tasks4(rfm.RegressionTest):
+    descr = '''Compile and run test for NBX algorithm for determining'''\
+            ''' communication pattern using 2 nodes and 4 tasks each'''
+    build_system = 'CMake'
+    make_opts = ['TestMPIRequestersNBX']
+    executable = './TestMPIRequestersNBX'
+    sourcesdir = './src'
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+                'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'parallel'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    keep_files = []
+    config_opts = cmflags.getConfig()
+
+    @run_before('compile')
+    def set_compiler_flags(self):
+        self.build_system.make_opts = self.make_opts
+        self.build_system.config_opts = self.config_opts
+    
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 8']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 2, 
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 8,
+                                                   mem_per_cpu = '2gb')
+
+    @sanity_function
+    def validate_test(self):
+        # This test does not generate any output. It throws an exception
+        # if the logic of NBX algorithm for finding the communication pattern
+        # fails 
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = "Found error(s) in TestMPIRequestersNBX."
+        msgThrownException = "Found exceptions in TestMPIRequestersNBX."
+        msgAssertFail = "Found assert fail(s) in TestMPIRequestersNBX."
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)
+
+
+@rfm.simple_test
+class RunOnlyTestMPIRequestersNBXNode2Tasks4(rfm.RunOnlyRegressionTest):
+    descr = '''Run only test for NBX algorithm for determining'''\
+            ''' communication pattern using 2 node and 4 tasks'''
+    target_name = 'TestMPIRequestersNBX'
+    build_system = 'CMake'
+    make_opts = [target_name]
+    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
+    sourcesdir = './src'
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+                'aggregate', 'slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'parallel'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    keep_files = []
+    config_opts = cmflags.getConfig()
+
+    
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 8']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 2, 
+                                                   num_tasks_per_node = 4,
+                                                   ntasks = 8,
                                                    mem_per_cpu = '2gb')
 
     @sanity_function

@@ -23,12 +23,10 @@
  * @author Bikash Kanungo
  */
 
-#ifdef DFTEFE_WITH_MPI
-#include <mpi.h>
-#endif
-
 #include <utils/TypeConfig.h>
 #include <utils/Exceptions.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 #include <utils/MPIRequestersNBX.h>
 
 #include <iostream>
@@ -88,15 +86,15 @@ int main()
 #ifdef DFTEFE_WITH_MPI
   
   // initialize the MPI environment
-  MPI_Init(NULL, NULL);
+  dftefe::utils::mpi::MPIInit(NULL, NULL);
 
   // Get the number of processes
   int numProcs;
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+  dftefe::utils::mpi::MPICommSize(dftefe::utils::mpi::MPICommWorld, &numProcs);
 
   // Get the rank of the process
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  dftefe::utils::mpi::MPICommRank(dftefe::utils::mpi::MPICommWorld, &rank);
 
   // for rank 0 write an NxN (N=numProcs) matrix
   // where the entries are either 0 or 1
@@ -124,7 +122,7 @@ int main()
   // Let all processors wait so that the MPIInteractionMatrix 
   // file is available for all to read
   //
-  MPI_Barrier(MPI_COMM_WORLD);
+  dftefe::utils::mpi::MPIBarrier(dftefe::utils::mpi::MPICommWorld);
 
   // read the matrix from file MPIInteractionMatrix 
   std::vector<std::vector<int>> A(0);
@@ -171,7 +169,7 @@ int main()
   }
   int numRequestingIDs = requestingIDs.size();
 
-  dftefe::utils::MPIRequestersNBX mpiRequestersNBX(targetIDs, MPI_COMM_WORLD);
+  dftefe::utils::mpi::MPIRequestersNBX mpiRequestersNBX(targetIDs, dftefe::utils::mpi::MPICommWorld);
   std::vector<dftefe::size_type> requestingIDsFromNBX = 
     mpiRequestersNBX.getRequestingRankIds();
   int numRequestingIDsNBX = requestingIDsFromNBX.size();
@@ -203,6 +201,6 @@ int main()
   dftefe::utils::throwException(match, errMsg);
 
   // Finalize the MPI environment 
-  MPI_Finalize();
+  dftefe::utils::mpi::MPIFinalize();
 #endif
 }

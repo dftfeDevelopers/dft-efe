@@ -1,3 +1,27 @@
+/******************************************************************************
+ * Copyright (c) 2021.                                                        *
+ * The Regents of the University of Michigan and DFT-EFE developers.          *
+ *                                                                            *
+ * This file is part of the DFT-EFE code.                                     *
+ *                                                                            *
+ * DFT-EFE is free software: you can redistribute it and/or modify            *
+ *   it under the terms of the Lesser GNU General Public License as           *
+ *   published by the Free Software Foundation, either version 3 of           *
+ *   the License, or (at your option) any later version.                      *
+ *                                                                            *
+ * DFT-EFE is distributed in the hope that it will be useful, but             *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty                  *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
+ *   See the Lesser GNU General Public License for more details.              *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public           *
+ *   License at the top level of DFT-EFE distribution.  If not, see           *
+ *   <https://www.gnu.org/licenses/>.                                         *
+ ******************************************************************************/
+
+/*
+ * @author Bikash Kanungo
+ */
 #ifndef dftefeExceptions_h
 #define dftefeExceptions_h
 
@@ -25,13 +49,16 @@ through compiler options).
 For example, if in a file you have
 #define DFTEFE_DISABLE_ASSERT
 #include "Exceptions.h"
-then it would disable all any calls to Assert or AssertWithMsg in that file,
+then it would disable all calls to Assert or AssertWithMsg in that file,
 regardless of whether NDEBUG is defined. Also, it has no bearing on
 std::assert (i.e., any calls to std::assert in that file will still be
-governed by NDEBUG) Similarly, if in a file you have #define
-DFTEFE_ENABLE_ASSERT #include "Exceptions.h" then it would enable all calls
-to Assert or AssertWithMsg regardless in that file, regardless of whether
-NDEBUG is defined. Also, it has no bearning on std::assert (i.e., any calls
+governed by NDEBUG). Similarly, if in a file you have
+#define
+DFTEFE_ENABLE_ASSERT
+#include "Exceptions.h"
+then it would enable all calls to Assert or AssertWithMsg in that file,
+regardless of whether NDEBUG is defined.
+Also, it has no bearning on std::assert (i.e., any calls
 to std::assert in that file will still be governed by NDEBUG)
 
 It also provides two wrappers on std::exception and its derived classes

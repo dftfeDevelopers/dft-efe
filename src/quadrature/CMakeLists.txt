@@ -3,7 +3,7 @@ find_package(deal.II 9.3.0 REQUIRED)
 include_directories(${DEAL_II_INCLUDE_DIRS})
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
