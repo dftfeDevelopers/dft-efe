@@ -43,6 +43,9 @@ namespace dftefe
                        size_t   q,
                        size_t   nb = global_nb);
 
+      slate::TriangularMatrix<ValueType> &
+      getSlateMatrix() const;
+
     protected:
       Uplo d_uplo;
       using AbstractMatrix<ValueType, memorySpace>::d_baseMatrix;

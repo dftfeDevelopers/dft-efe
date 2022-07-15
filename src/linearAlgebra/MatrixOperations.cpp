@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2022.                                                        *
+ * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,15 +20,13 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Vishal subramanian.
+ * @author Ian C. Lin, Sambit Das
  */
 
-#ifndef dftefeMatrix_h
-#define dftefeMatrix_h
+#include <linearAlgebra/MatrixOperations.h>
 
-#include <linearAlgebra/AbstractMatrix.h>
-#include <linearAlgebra/HermitianMatrix.h>
-#include <linearAlgebra/GeneralMatrix.h>
-#include <linearAlgebra/TriangularMatrix.h>
-
-#endif // dftefeMatrix_h
+namespace dftefe
+{
+  namespace linearAlgebra
+  {} // namespace linearAlgebra
+} // namespace dftefe

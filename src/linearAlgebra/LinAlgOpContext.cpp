@@ -28,6 +28,5 @@
 namespace dftefe
 {
   namespace linearAlgebra
-  {
-  } // end of namespace linearAlgebra
+  {} // end of namespace linearAlgebra
 } // end of namespace dftefe

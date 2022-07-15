@@ -45,7 +45,7 @@ namespace dftefe
                     size_t   mb = global_mb);
 
       slate::Matrix<ValueType> &
-      getMatrix() const;
+      getSlateMatrix() const;
 
     protected:
       using AbstractMatrix<ValueType, memorySpace>::d_baseMatrix;

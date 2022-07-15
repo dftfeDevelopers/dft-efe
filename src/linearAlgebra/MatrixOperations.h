@@ -30,7 +30,7 @@
 #include <blas.hh>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
-#include <linearAlgebra/AbstractMatrix.h>
+#include <linearAlgebra/Matrix.h>
 #include <utils/MemorySpaceType.h>
 
 namespace dftefe
@@ -67,22 +67,22 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
       triangular_multiply(TriangularMatrix<ValueType, memorySpace> &A,
-                          Matrix<ValueType, memorySpace> &          B);
+                          GeneralMatrix<ValueType, memorySpace> &   B);
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      triangular_multiply(Matrix<ValueType, memorySpace> &          A,
+      triangular_multiply(GeneralMatrix<ValueType, memorySpace> &   A,
                           TriangularMatrix<ValueType, memorySpace> &B);
 
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
       triangular_solve(TriangularMatrix<ValueType, memorySpace> &A,
-                       Matrix<ValueType, memorySpace> &          B);
+                       GeneralMatrix<ValueType, memorySpace> &   B);
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      triangular_solve(Matrix<ValueType, memorySpace> &          A,
+      triangular_solve(GeneralMatrix<ValueType, memorySpace> &   A,
                        TriangularMatrix<ValueType, memorySpace> &B);
 
 

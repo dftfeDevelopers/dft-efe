@@ -52,7 +52,7 @@ namespace dftefe
     }
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     slate::Matrix<ValueType> &
-    GeneralMatrix<ValueType, memorySpace>::getMatrix() const
+    GeneralMatrix<ValueType, memorySpace>::getSlateMatrix() const
     {
       return d_matrix;
     }

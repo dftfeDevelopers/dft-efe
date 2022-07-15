@@ -23,7 +23,7 @@
  * @author Ian C. Lin.
  */
 
-#include "GeneralMatrix.h"
+#include <linearAlgebra/GeneralMatrix.h>
 namespace dftefe
 {
   namespace linearAlgebra

@@ -20,7 +20,8 @@ if (NOT TARGET dft-efe-linalg)
             HermitianMatrix.cpp
             TriangularMatrix.cpp
             MatrixKernels.cu
-            MatrixKernels.cpp)
+            MatrixKernels.cpp
+            MatrixOperations.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

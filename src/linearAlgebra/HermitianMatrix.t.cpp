@@ -49,5 +49,11 @@ namespace dftefe
           d_matrix->insertLocalTiles(slate::Target::Host);
         }
     }
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    slate::HermitianMatrix<ValueType> &
+    HermitianMatrix<ValueType, memorySpace>::getSlateMatrix() const
+    {
+      return d_matrix;
+    }
   } // namespace linearAlgebra
 } // namespace dftefe
