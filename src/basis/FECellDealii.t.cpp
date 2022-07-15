@@ -105,20 +105,21 @@ namespace dftefe
     {
       return d_dealiiFECellIter->at_boundary();
     }
-     template <unsigned int dim>
-     double FECellDealii<dim>::diameter() const
-     {
+    template <unsigned int dim>
+    double
+    FECellDealii<dim>::diameter() const
+    {
       return d_dealiiFECellIter->diameter();
-  
-     }
+    }
 
-     template <unsigned int dim>
-      void FECellDealii<dim>::center(dftefe::utils::Point &centerPoint) const
-     {
-        dealii::Point<dim,double> dealiiPoint;
-        dealiiPoint = d_dealiiFECellIter->center();
-        convertToDftefePoint<dim>(dealiiPoint, centerPoint);
-     }
+    template <unsigned int dim>
+    void
+    FECellDealii<dim>::center(dftefe::utils::Point &centerPoint) const
+    {
+      dealii::Point<dim, double> dealiiPoint;
+      dealiiPoint = d_dealiiFECellIter->center();
+      convertToDftefePoint<dim>(dealiiPoint, centerPoint);
+    }
 
 
     template <unsigned int dim>
