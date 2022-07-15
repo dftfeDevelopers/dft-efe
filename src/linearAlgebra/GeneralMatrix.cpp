@@ -24,9 +24,9 @@
  */
 
 #include "GeneralMatrix.h"
-
 namespace dftefe
 {
   namespace linearAlgebra
-  {} // namespace linearAlgebra
+  {
+  } // namespace linearAlgebra
 } // namespace dftefe

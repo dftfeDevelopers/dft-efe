@@ -50,5 +50,11 @@ namespace dftefe
           d_matrix->insertLocalTiles(slate::Target::Host);
         }
     }
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    slate::Matrix<ValueType> &
+    GeneralMatrix<ValueType, memorySpace>::getMatrix() const
+    {
+      return d_matrix;
+    }
   } // namespace linearAlgebra
 } // namespace dftefe
