@@ -24,35 +24,38 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeLinearSolver_h
-#define dftefeLinearSolver_h
+#ifndef dftefeSolverTypes_h
+#define dftefeSolverTypes_h
 
-#include <linearAlgebra/SolverTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
-#include <utils/MemorySpaceType.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    /**
-     * @brief An abstract class for a linear solver. The concrete implementation
-     * will be provided in the derived class (e.g. CGLinearSolver,
-     * GMRESLinearSolver, etc)
-     *
-     * @tparam ValueType datatype (float, double, complex<float>, complex<double>, etc) of the underlying matrix and vector
-     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
-     * DEVICE) in which the underlying matrix and vector must reside.
-     */
-
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class LinearSolver
+    enum class LinearSolverType
     {
-    public:
-      virtual ~LinearSolver() = default;
-      virtual LinearSolverReturnType
-      solve(LinearSolverFunction &function) = 0;
+      CG
+      // For future: GMRES, MINRES, BICG, etc
+      //
     };
 
+    enum class PCType
+    {
+      NONE,
+      JACOBI
+      // Add more sophisticated ones later
+    };
+
+    enum class LinearSolverReturnType
+    {
+      SUCCESS,          // The linear solve was successful
+      FAILURE,          // generic, no reason known
+      MAX_ITER_REACHED, // Max. iteration provided by the user reached before
+                        // convergence
+      INDEFINITE_PC,    // the preconditioner is usually assumed to be positive
+                        // definite
+      NAN_RES, // NaN or infinite values found in the evaluation of residual
+               // norm
+    };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearSolver_h
+#endif // dftefeSolverTypes_h
