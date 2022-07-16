@@ -33,6 +33,22 @@ namespace dftefe
 
         template <typename ValueType>
         __global__ void
+        hadamardProductDeviceKernel(const size_type  size,
+                                    const ValueType *x,
+                                    const ValueType *y,
+                                    ValueType *      z)
+        {
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              z[i] = dftefe::utils::mult(x[i], y[i]);
+            }
+        }
+
+        template <typename ValueType>
+        __global__ void
         axpbyDeviceKernel(const size_type  size,
                           const ValueType  alpha,
                           const ValueType *x,
@@ -86,6 +102,21 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
 
+      template <typename ValueType>
+      void
+      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::hadamardProduct(
+        const size_type  size,
+        const ValueType *x,
+        const ValueType *y,
+        ValueType *      z)
+      {
+        hadamardProductDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                                      dftefe::utils::BLOCK_SIZE>>>(
+          size,
+          dftefe::utils::makeDataTypeDeviceCompatible(x),
+          dftefe::utils::makeDataTypeDeviceCompatible(y),
+          dftefe::utils::makeDataTypeDeviceCompatible(z));
+      }
 
       template <typename ValueType>
       void

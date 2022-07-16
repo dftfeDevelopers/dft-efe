@@ -34,6 +34,19 @@ namespace dftefe
                ValueType *      z);
 
         /**
+         * @brief Template for performing \f$ z_i = x_i * y_i$
+         * @param[in] size size of the array
+         * @param[in] x array
+         * @param[in] y array
+         * @param[out] z array
+         */
+        static void
+        hadamardProduct(size_type        size,
+                        const ValueType *x,
+                        const ValueType *y,
+                        ValueType *      z);
+
+        /**
          * @brief Template for performing \f$ z = \alpha x + \beta y \f$
          * @param[in] size size of the array
          * @param[in] \f$ alpha \f$ scalar
@@ -92,6 +105,12 @@ namespace dftefe
                ValueType        alpha,
                const ValueType *x,
                ValueType *      z);
+
+        static void
+        hadamardProduct(size_type        size,
+                        const ValueType *x,
+                        const ValueType *y,
+                        ValueType *      z);
 
         static void
         axpby(size_type        size,
