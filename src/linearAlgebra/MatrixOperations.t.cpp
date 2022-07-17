@@ -51,7 +51,7 @@ namespace dftefe
                           A.getSlateMatrix(),
                           B.getSlateMatrix(),
                           beta,
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -78,7 +78,7 @@ namespace dftefe
                           A.getSlateMatrix(),
                           B.getSlateMatrix(),
                           beta,
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -106,7 +106,7 @@ namespace dftefe
                           A.getSlateMatrix(),
                           B.getSlateMatrix(),
                           beta,
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -127,7 +127,7 @@ namespace dftefe
         {
           slate::multiply(A.getSlateMatrix(),
                           B.getSlateMatrix(),
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -149,7 +149,7 @@ namespace dftefe
         {
           slate::multiply(A.getSlateMatrix(),
                           B.getSlateMatrix(),
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -172,7 +172,7 @@ namespace dftefe
           slate::triangular_solve(A.getSlateMatrix(),
                                   B.getSlateMatrix(),
                                   {slate::Option::Target,
-                                   slate::Target::HostTask});
+                                   slate::Target::Host});
         }
     }
 
@@ -196,7 +196,7 @@ namespace dftefe
           slate::triangular_solve(A.getSlateMatrix(),
                                   B.getSlateMatrix(),
                                   {slate::Option::Target,
-                                   slate::Target::HostTask});
+                                   slate::Target::Host});
         }
     }
 
