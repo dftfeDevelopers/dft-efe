@@ -42,7 +42,8 @@ namespace dftefe
     /**
      * @brief A class that encapsulates a vector.
      * This is a vector in the mathematical sense and not in the sense of an
-     * array or STL container. This class handles both serial and distributed
+     * array or STL container.
+     * This class handles both serial and distributed
      * vector in a unfied way. There are different constructors provided for the
      * serial and distributed case.
      *
@@ -78,6 +79,35 @@ namespace dftefe
      * functions while not linking to an MPI library. This allows the user of
      * this class to seamlessly switch between linking and de-linking to an MPI
      * library without any change in the code and with the expected behavior.
+     *
+     * @note Note that the case of not linking to an MPI library and the case of
+     * creating a serial mult-Vector are two independent things. One can still
+     * create a serial Vector while linking to an MPI library and
+     * running the code across multipe processors. That is, one can create a
+     * serial Vector in one or more than one of the set of processors used when
+     * running in parallel. Internally, we handle this by using MPI_COMM_SELF
+     * as our MPI_Comm for the serial Vector (i.e., the processor does self
+     * communication). However, while not linking to an MPI library (which by
+     * definition means running on a single processor), there is no notion of
+     * communication (neither with self nor with other processors). In such
+     * case, both serial and distributed mult-Vector mean the same thing and the
+     * MPI wrappers ensure the expected behavior (i.e., the behavior of a Vector
+     * while using just one processor)
+     *
+     * @note Broadly, there are two ways of constructing a distributed Vector.
+     *  1. [<b>Prefered and efficient approach</b>] The first approach takes a
+     *     pointer to an MPIPatternP2P as an input argument (along with other
+     * arguments). The MPIPatternP2P, in turn, contains all the information
+     *     regarding the locally owned and ghost part of the Vector as well as
+     * the interaction map between processors. This is the most efficient way of
+     *     constructing a distributed Vector as it allows for reusing of an
+     *     already constructed MPIPatternP2P.
+     *  2. [<b> Expensive approach</b>] The second approach takes in the
+     *     locally owned, ghost indices or the total number of indices
+     *     across all the processors and internally creates an
+     *     MPIPatternP2P object. Given that the creation of an MPIPatternP2P is
+     *     expensive, this route of constructing a distributed Vector
+     *     <b>should</b> be avoided.
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
      *  in the vector (i.e., int, double, complex<double>, etc.)
@@ -241,17 +271,17 @@ namespace dftefe
        * constructor based on an input MPIPatternP2P as far as possible.
        * Further, the decomposition is not compatible with other ways of
        * distributed vector construction.
+       * @param[in] globalSize Total number of global indices that is
+       * distributed over the processors.
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
        * of processors across which the Vector is to be distributed
        * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
        * @param[in] initVal value with which the Vector shoud be
        * initialized
        *
-       * @param[in] totalGlobalDofs Total number of global indices that is
-       * distributed over the processors.
        *
        */
-      Vector(const global_size_type        totalGlobalDofs,
+      Vector(const global_size_type        globalSize,
              const utils::mpi::MPIComm &   mpiComm,
              LinAlgOpContext<memorySpace> *linAlgOpContext,
              const ValueType               initVal = ValueType());

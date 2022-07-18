@@ -14,6 +14,7 @@ if (NOT TARGET dft-efe-linalg)
             LinAlgOpContext.cpp
             VectorAttributes.cpp
 	    Vector.cpp
+	    MultiVector.cpp
             AbstractMatrix.cpp
             GeneralMatrix.cpp
             HermitianMatrix.cpp
