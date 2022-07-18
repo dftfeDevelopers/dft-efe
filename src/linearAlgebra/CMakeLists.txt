@@ -9,12 +9,12 @@ if (NOT TARGET dft-efe-linalg)
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu
-            DistributedVector.cpp
             Matrix.cpp
             QueueManager.cpp
             LinAlgOpContext.cpp
-            SerialVector.cpp
             VectorAttributes.cpp
+	    Vector.cpp
+	    MultiVector.cpp
             AbstractMatrix.cpp
             GeneralMatrix.cpp
             HermitianMatrix.cpp
