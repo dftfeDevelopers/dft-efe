@@ -594,13 +594,12 @@ namespace dftefe
 #endif
 
       ///
-      /// Constructor without MPI
+      /// Constructor for a serial case
       ///
       template <dftefe::utils::MemorySpace memorySpace>
-      MPIPatternP2P<memorySpace>::MPIPatternP2P(
-        const std::pair<global_size_type, global_size_type> &locallyOwnedRange)
-        : d_locallyOwnedRange(locallyOwnedRange)
-        , d_mpiComm(0)
+      MPIPatternP2P<memorySpace>::MPIPatternP2P(const size_type size)
+        : d_locallyOwnedRange(std::make_pair(0, (global_size_type)size))
+        , d_mpiComm(utils::mpi::MPICommSelf)
         , d_allOwnedRanges(0)
         , d_numLocallyOwnedIndices(0)
         , d_numGhostIndices(0)
@@ -618,11 +617,6 @@ namespace dftefe
       {
         d_myRank = 0;
         d_nprocs = 1;
-        throwException(
-          d_locallyOwnedRange.second >= d_locallyOwnedRange.first,
-          "In processor " + std::to_string(d_myRank) +
-            ", invalid locally owned range found "
-            "(i.e., the second value in the range is less than the first value).");
         d_numLocallyOwnedIndices =
           d_locallyOwnedRange.second - d_locallyOwnedRange.first;
         std::vector<global_size_type> d_allOwnedRanges = {

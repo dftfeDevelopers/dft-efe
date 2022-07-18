@@ -69,6 +69,7 @@ namespace dftefe
 
       public:
         virtual ~MPIPatternP2P() = default;
+
         /**
          * @brief Constructor. This constructor is the typical way of
          * creation of an MPI pattern.
@@ -92,14 +93,35 @@ namespace dftefe
          * if \p ghostIndices are not ordered (if it is not strictly
          * increasing), or if some sanity checks with respect to MPI sends and
          * receives fail.
+         *
+         * @note Care is taken to create a dummy MPIPatternP2P while not linking
+         * to an MPI library. This allows the user code to seamlessly link and
+         * delink an MPI library.
          */
         MPIPatternP2P(const std::pair<global_size_type, global_size_type>
                         &locallyOwnedRange,
                       const std::vector<dftefe::global_size_type> &ghostIndices,
                       const MPIComm &                              mpiComm);
+        /**
+         * @brief Constructor. This constructor is to create an MPI Pattern for
+         * a serial case. This is provided so that one can seamlessly use
+         * has to be used even for a serial case. In this case, all the indices
+         * are owned by the current processor.
+         *
+         * @param[in] size Total number of indices.
+         * @note This is an explicitly serial construction (i.e., it uses
+         * MPI_COMM_SELF), which is different from the dummy MPIPatternP2P
+         * created while not linking to an MPI library. For examples,
+         * within a parallel run, one might have the need to create a serial
+         * MPIPatternP2P. A typical case is creation of a serial vector as a
+         * special case of distributed vector.
+         * @note Similar to the previous
+         * constructor, care is taken to create a dummy MPIPatternP2P while not
+         * linking to an MPI library.
+         */
+        MPIPatternP2P(const size_type size);
 
-        MPIPatternP2P(const std::pair<global_size_type, global_size_type>
-                        &locallyOwnedRange);
+
 
         // void
         // reinit(){};

@@ -213,7 +213,29 @@ namespace dftefe
         return ::MPI_Finalize();
       }
 
-#else  // DFTEFE_WITH_MPI
+      bool
+      MPIErrIsSuccess(int errCode)
+      {
+        return (errCode == MPISuccess);
+      }
+
+      std::string
+      MPIErrMsg(int errCode)
+      {
+        char errString[MPI_MAX_ERROR_STRING];
+        int  N;
+        ::MPI_Error_string(errCode, errString, &N);
+        std::string returnValue(errString, 0, N);
+        return returnValue;
+      }
+
+      std::pair<bool, std::string>
+      MPIErrIsSuccessAndMsg(int errCode)
+      {
+        return std::make_pair(MPIErrIsSuccess(errCode), MPIErrMsg(errCode));
+      }
+
+#else // DFTEFE_WITH_MPI
       int
       MPITypeContiguous(int count, MPIDatatype oldtype, MPIDatatype *newtype)
       {
@@ -439,6 +461,28 @@ namespace dftefe
       {
         return MPISuccess;
       }
+
+      bool
+      MPIErrIsSuccess(int errCode)
+      {
+        return (errCode == MPISuccess);
+      }
+
+      std::string
+      MPIErrMsg(int errCode)
+      {
+        std::string returnValue =
+          MPIErrIsSuccess(errCode) ? "MPI Success" : "MPI Failure";
+        return returnValue;
+      }
+
+      std::pair<bool, std::string>
+      MPIErrIsSuccessAndMsg(int errCode)
+      {
+        return std::make_pair(MPIErrIsSuccess(errCode), MPIErrMsg(errCode));
+      }
+
+
 #endif // DFTEFE_WITH_MPI
     }  // end of namespace mpi
   }    // end of namespace utils
