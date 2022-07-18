@@ -79,15 +79,25 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      ascale(const size_type         n,
-             const ValueType         alpha,
-             const ValueType *       x,
-             ValueType *             z,
-             BlasQueue<memorySpace> &BlasQueue)
+      ascale(const size_type               n,
+             const ValueType               alpha,
+             const ValueType *             x,
+             ValueType *                   z,
+             LinAlgOpContext<memorySpace> &context)
       {
         Kernels<ValueType, memorySpace>::ascale(n, alpha, x, z);
       }
 
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(const size_type               n,
+                      const ValueType *             x,
+                      const ValueType *             y,
+                      ValueType *                   z,
+                      LinAlgOpContext<memorySpace> &context)
+      {
+        Kernels<ValueType, memorySpace>::hadamardProduct(n, x, y, z);
+      }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
