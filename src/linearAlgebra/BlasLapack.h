@@ -111,7 +111,7 @@ namespace dftefe
                 typename dftefe::utils::MemorySpace memorySpace>
       void
       hadamardProduct(size_type                     n,
-                      const ValueType               x,
+                      const ValueType *             x,
                       const ValueType *             y,
                       ValueType *                   z,
                       LinAlgOpContext<memorySpace> &context);
