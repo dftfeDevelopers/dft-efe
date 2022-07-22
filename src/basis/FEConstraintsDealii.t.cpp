@@ -146,25 +146,24 @@ namespace dftefe
             {
               (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
               const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
-              if ( boundaryId == 0 ) 
-              {
-                for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
-                   ++iFaceDof)
+              if (boundaryId == 0)
                 {
-                  const dealii::types::global_dof_index nodeId =
-                    iFaceGlobalDofIndices[iFaceDof];
-                  if (dofs_touched[nodeId])
-                    continue;
-                  dofs_touched[nodeId] = true;
-                  if (!isConstrained(nodeId))
+                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                       ++iFaceDof)
                     {
-                      setInhomogeneity(nodeId, 0);
-                    } // non-hanging node check
-                }     // Face dof loop
-
-              }
-            }         // Face loop
-        }             // cell locally owned
+                      const dealii::types::global_dof_index nodeId =
+                        iFaceGlobalDofIndices[iFaceDof];
+                      if (dofs_touched[nodeId])
+                        continue;
+                      dofs_touched[nodeId] = true;
+                      if (!isConstrained(nodeId))
+                        {
+                          setInhomogeneity(nodeId, 0);
+                        } // non-hanging node check
+                    }     // Face dof loop
+                }
+            } // Face loop
+        }     // cell locally owned
     }
 
     template <typename ValueType,

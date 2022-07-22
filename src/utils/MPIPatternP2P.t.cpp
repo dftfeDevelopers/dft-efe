@@ -600,7 +600,7 @@ namespace dftefe
       MPIPatternP2P<memorySpace>::MPIPatternP2P(
         const std::pair<global_size_type, global_size_type> &locallyOwnedRange)
         : d_locallyOwnedRange(locallyOwnedRange)
-        , d_mpiComm(0)
+        , d_mpiComm(mpi::MPICommSelf)
         , d_allOwnedRanges(0)
         , d_numLocallyOwnedIndices(0)
         , d_numGhostIndices(0)

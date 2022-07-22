@@ -172,61 +172,58 @@ namespace dftefe
               ldaSizesTmp[iCell] = mSizesTmp[iCell];
               ldbSizesTmp[iCell] = nSizesTmp[iCell];
               ldcSizesTmp[iCell] = mSizesTmp[iCell];
-		      strideATmp[iCell] =
-			      mSizesTmp[iCell] * kSizesTmp[iCell];
-		      strideCTmp[iCell] =
-			      mSizesTmp[iCell] * nSizesTmp[iCell];
-		      if (!zeroStrideB)
-			      strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
-	    }
+              strideATmp[iCell]  = mSizesTmp[iCell] * kSizesTmp[iCell];
+              strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
+              if (!zeroStrideB)
+                strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
+            }
 
-	  utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-			  numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-			  numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-			  numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
-	  utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
-	  utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-		  memoryTransfer;
-	  memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
-	  memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
-	  memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
-	  memoryTransfer.copy(numCellsInBlock,
-			  ldaSizes.data(),
-			  ldaSizesTmp.data());
-	  memoryTransfer.copy(numCellsInBlock,
-			  ldbSizes.data(),
-			  ldbSizesTmp.data());
-	  memoryTransfer.copy(numCellsInBlock,
-			  ldcSizes.data(),
-			  ldcSizesTmp.data());
-	  memoryTransfer.copy(numCellsInBlock,
-			  strideA.data(),
-			  strideATmp.data());
-	  memoryTransfer.copy(numCellsInBlock,
-			  strideB.data(),
-			  strideBTmp.data());
-	  memoryTransfer.copy(numCellsInBlock,
-			  strideC.data(),
-			  strideCTmp.data());
+          utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> ldaSizes(
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> ldbSizes(
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> ldcSizes(
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+            memoryTransfer;
+          memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              ldaSizes.data(),
+                              ldaSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              ldbSizes.data(),
+                              ldbSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              ldcSizes.data(),
+                              ldcSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideA.data(),
+                              strideATmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideB.data(),
+                              strideBTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideC.data(),
+                              strideCTmp.data());
 
-	  ValueType                                    alpha = 1.0;
-	  ValueType                                    beta  = 0.0;
-	  linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-		  field.getLinAlgOpContext();
+          ValueType                                    alpha = 1.0;
+          ValueType                                    beta  = 0.0;
+          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
+            field.getLinAlgOpContext();
 
-	  const ValueType *B = (d_feBasisDataStorage->getBasisDataInAllCells(
-				  quadratureRuleAttributes))
-		  .data() +
-		  BStartOffset;
+          const ValueType *B = (d_feBasisDataStorage->getBasisDataInAllCells(
+                                  quadratureRuleAttributes))
+                                 .data() +
+                               BStartOffset;
 
-	  size_type aOffset = 0;
 	  ValueType *C = quadValuesContainer.begin() + CStartOffset;
 	  linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
 		  memorySpace>(
@@ -250,18 +247,17 @@ namespace dftefe
 				  ldcSizes.data(),
 				  linAlgOpContext);
 
-	  size_type cOffset = 0;
 
-	  for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-	  {
-		  if (!zeroStrideB)
-		  {
-			  BStartOffset += kSizesTmp[iCell] * nSizesTmp[iCell];
-		  }
-		  CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
-		  cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
-	  }
-	}
+          for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+            {
+              if (!zeroStrideB)
+                {
+                  BStartOffset += kSizesTmp[iCell] * nSizesTmp[iCell];
+                }
+              CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
+              cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
+            }
+        }
     }
 
   } // namespace basis
