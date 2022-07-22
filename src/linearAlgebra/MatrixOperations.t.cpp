@@ -171,8 +171,7 @@ namespace dftefe
         {
           slate::triangular_solve(A.getSlateMatrix(),
                                   B.getSlateMatrix(),
-                                  {slate::Option::Target,
-                                   slate::Target::Host});
+                                  {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -195,8 +194,7 @@ namespace dftefe
         {
           slate::triangular_solve(A.getSlateMatrix(),
                                   B.getSlateMatrix(),
-                                  {slate::Option::Target,
-                                   slate::Target::Host});
+                                  {slate::Option::Target, slate::Target::Host});
         }
     }
 
