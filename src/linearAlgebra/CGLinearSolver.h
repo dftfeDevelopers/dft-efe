@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
@@ -20,39 +21,48 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
+
+#ifndef dftefeCGLinearSolver_h
+#  define dftefeLinearSolver_h
+
+#  include <linearAlgebra/LinearSolverFunction.h>
+#  include <linearAlgebra/LinearSolver.h>
+#  include <utils/MemorySpaceType.h>
+#  include <utils/TypeConfig.h>
 namespace dftefe
 {
-  namespace basis
+  namespace linearAlgebra
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    void
-    FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(
-      const ValueType *                             data,
-      const size_type                               numComponents,
-      const size_type *                             cellLocalIdsStartPtr,
-      const std::vector<size_type> &                numCellDofs,
-      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
-    {
-      auto            itCellWiseStorageBegin = cellWiseStorage.begin();
-      const size_type numCells               = numCellDofs.size();
-      size_type       cumulativeCellDofs     = 0;
-      for (size_type iCell = 0; iCell < numCells; ++iCell)
-        {
-          const size_type cellDofs = numCellDofs[iCell];
-          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
-            {
-              const size_type localId =
-                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
-              auto srcPtr = data + localId * numComponents;
-              auto dstPtr = itCellWiseStorageBegin +
-                            (cumulativeCellDofs + iDof) * numComponents;
-              std::copy(srcPtr, srcPtr + numComponents, dstPtr);
-            }
-          cumulativeCellDofs += cellDofs;
-        }
-    }
+    /**
+     * @brief An class encapsulating the linear Conjugate-Gradient (CG) solver.
+     *
+     * @tparam ValueType datatype (float, double, complex<float>, complex<double>, etc) of the underlying matrix and vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the underlying matrix and vector must reside.
+     */
 
-  } // end of namespace basis
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    class CGLinearSolver : public LinearSolver<ValueType, memorySpace>
+    {
+    public:
+      CGLinearSolver(const double               relTol,
+                     const size_type            maxIterations,
+                     const LinearSolver::PCType pcType,
+                     const size_type            debugLevel)
+
+        ~CGLinearSolver() = default;
+      virtual LinearSolver::ReturnType
+      solve(LinearSolverFunction &function) = 0;
+
+    private:
+      double               d_relTol;
+      size_type            d_maxIterations;
+      LinearSolver::PCType d_pcType;
+      size_type            d_debugLevel;
+    };
+
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
+#endif // dftefeLinearSolver_h

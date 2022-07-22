@@ -82,7 +82,6 @@ int main()
   
   for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
   {
-    std::cout<<"Entering cell loop\n";
     dftefe::utils::Point centerPoint(dim, 0.0); 
     (*triaCellIter)->center(centerPoint);
     double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);  
@@ -91,7 +90,6 @@ int main()
     dist = std::sqrt(dist); 
     if ( (centerPoint[0] < 1.0) || (dist < 1.0) )
     {
-     std::cout<<" Refining mesh\n";
      (*triaCellIter)->setRefineFlag();
     }
   }

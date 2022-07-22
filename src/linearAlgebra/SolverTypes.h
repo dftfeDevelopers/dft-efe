@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
@@ -20,39 +21,41 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
+
+#ifndef dftefeSolverTypes_h
+#define dftefeSolverTypes_h
+
 namespace dftefe
 {
-  namespace basis
+  namespace linearAlgebra
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    void
-    FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(
-      const ValueType *                             data,
-      const size_type                               numComponents,
-      const size_type *                             cellLocalIdsStartPtr,
-      const std::vector<size_type> &                numCellDofs,
-      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
+    enum class LinearSolverType
     {
-      auto            itCellWiseStorageBegin = cellWiseStorage.begin();
-      const size_type numCells               = numCellDofs.size();
-      size_type       cumulativeCellDofs     = 0;
-      for (size_type iCell = 0; iCell < numCells; ++iCell)
-        {
-          const size_type cellDofs = numCellDofs[iCell];
-          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
-            {
-              const size_type localId =
-                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
-              auto srcPtr = data + localId * numComponents;
-              auto dstPtr = itCellWiseStorageBegin +
-                            (cumulativeCellDofs + iDof) * numComponents;
-              std::copy(srcPtr, srcPtr + numComponents, dstPtr);
-            }
-          cumulativeCellDofs += cellDofs;
-        }
-    }
+      CG
+      // For future: GMRES, MINRES, BICG, etc
+      //
+    };
 
-  } // end of namespace basis
+    enum class PCType
+    {
+      NONE,
+      JACOBI
+      // Add more sophisticated ones later
+    };
+
+    enum class LinearSolverReturnType
+    {
+      SUCCESS,          // The linear solve was successful
+      FAILURE,          // generic, no reason known
+      MAX_ITER_REACHED, // Max. iteration provided by the user reached before
+                        // convergence
+      INDEFINITE_PC,    // the preconditioner is usually assumed to be positive
+                        // definite
+      NAN_RES, // NaN or infinite values found in the evaluation of residual
+               // norm
+    };
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
+#endif // dftefeSolverTypes_h

@@ -20,39 +20,54 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
+
+#ifndef dftefePreconditioner_h
+#define dftefePreconditioner_h
+
+#include <linearAlgebra/Vector.h>
+#include <utils/MemorySpaceType.h>
 namespace dftefe
 {
-  namespace basis
+  namespace linearAlgebra
   {
+    /**
+     * @brief An abstract class for a preconditioner in a linear or non-linear solve. The concrete implementation
+     * will be provided in the derived class (e.g. JacobiPreconditioner,...)
+     *
+     * @tparam ValueType datatype (float, double, complex<float>, complex<double>, etc) of the underlying matrix and vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the underlying matrix and vector must reside.
+     */
     template <typename ValueType, utils::MemorySpace memorySpace>
-    void
-    FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(
-      const ValueType *                             data,
-      const size_type                               numComponents,
-      const size_type *                             cellLocalIdsStartPtr,
-      const std::vector<size_type> &                numCellDofs,
-      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
+    class Preconditioner
     {
-      auto            itCellWiseStorageBegin = cellWiseStorage.begin();
-      const size_type numCells               = numCellDofs.size();
-      size_type       cumulativeCellDofs     = 0;
-      for (size_type iCell = 0; iCell < numCells; ++iCell)
-        {
-          const size_type cellDofs = numCellDofs[iCell];
-          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
-            {
-              const size_type localId =
-                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
-              auto srcPtr = data + localId * numComponents;
-              auto dstPtr = itCellWiseStorageBegin +
-                            (cumulativeCellDofs + iDof) * numComponents;
-              std::copy(srcPtr, srcPtr + numComponents, dstPtr);
-            }
-          cumulativeCellDofs += cellDofs;
-        }
-    }
+    public:
+      /**
+       * @brief Default destructor
+       */
+      virtual ~Preconditioner() = default;
 
-  } // end of namespace basis
+      /**
+       * @brief In-place apply the preconditioner on a given Vector
+       * (i.e., the input vector is modified to store the output)
+       *
+       * @param[in] x the given input vector
+       * @param[out] x the input vector is modified in-place to store the output
+       */
+      virtual void
+      apply(Vector<ValueType, memorySpace> &x) const = 0;
+
+      /**
+       * @brief Apply the preconditioner on a given vector and return the output vector
+       *
+       * @param[in] x the given input vector
+       * @return the vector resulting from the application of the preconditioner on the input vector x
+       */
+      virtual Vector<ValueType, memorySpace>
+      apply(const Vector<ValueType, memorySpace> &x) const = 0;
+    };
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
+#endif // dftefePreconditioner_h
