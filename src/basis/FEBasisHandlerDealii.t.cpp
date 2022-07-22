@@ -186,11 +186,13 @@ namespace dftefe
                   locallyOwnedCellGlobalIndices[cumulativeDofs + iDof];
                 locallyOwnedCellLocalIndices[cumulativeDofs + iDof] =
                   mpiPatternP2P->globalToLocal(globalId);
+                /*
                 if (!locallyOwnedCellLocalIndices[cumulativeDofs + iDof] ==
                     globalId)
                   std::cout
                     << " Error in mpiP2P global id to local not correct for id = "
                     << globalId << std::endl;
+                */
               }
 
             cumulativeDofs += numCellDofs;

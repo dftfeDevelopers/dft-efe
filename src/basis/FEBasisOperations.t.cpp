@@ -141,12 +141,6 @@ namespace dftefe
             numCumulativeDofsCellsInBlock * numComponents);
 
           dftefe::size_type testLocalId = 0;
-          for (auto it = field.begin(); it != field.end(); it++)
-            {
-              std::cout << "testLocalId = " << testLocalId
-                        << " dataVal = " << *it << std::endl;
-              testLocalId++;
-            }
           FEBasisOperationsInternal<ValueType, memorySpace>::
             copyFieldToCellWiseData(field.begin(),
                                     numComponents,
@@ -233,25 +227,6 @@ namespace dftefe
 		  BStartOffset;
 
 	  size_type aOffset = 0;
-	  for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-	  {
-		  for (size_type iData = 0;
-				  iData < mSizesTmp[iCell] * kSizesTmp[iCell];
-				  iData++)
-		  {
-			  std::cout
-				  << " iData = " << iData
-				  << " A = " << *(fieldCellValues.data() + aOffset + iData)
-				  << "\n";
-		  }
-		  aOffset += mSizesTmp[iCell] * kSizesTmp[iCell];
-	  }
-	  for (size_type iData = 0; iData < kSizesTmp[0] * nSizesTmp[0];
-			  iData++)
-	  {
-		  std::cout << " iData = " << iData << " B = " << *(B + iData)
-			  << "\n";
-	  }
 	  ValueType *C = quadValuesContainer.begin() + CStartOffset;
 	  linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
 		  memorySpace>(
@@ -276,17 +251,6 @@ namespace dftefe
 				  linAlgOpContext);
 
 	  size_type cOffset = 0;
-	  for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-	  {
-		  for (size_type iData = 0;
-				  iData < mSizesTmp[iCell] * nSizesTmp[iCell];
-				  iData++)
-		  {
-			  std::cout << " iData = " << iData
-				  << " C = " << *(C + cOffset + iData) << "\n";
-		  }
-		  cOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
-	  }
 
 	  for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
 	  {
