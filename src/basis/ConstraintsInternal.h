@@ -50,6 +50,8 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
         const utils::MemoryStorage<ValueType, memorySpace>
@@ -64,6 +66,8 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues);
 
@@ -83,22 +87,18 @@ namespace dftefe
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
-          &             vectorData,
-        const size_type blockSize,
-        const utils::MemoryStorage<size_type,
-                                   dftefe::utils::MemorySpace::DEVICE>
-          &rowConstraintsIdsLocal,
-        const utils::MemoryStorage<size_type,
-                                   dftefe::utils::MemorySpace::DEVICE>
-          &rowConstraintsSizes,
-        const utils::MemoryStorage<size_type,
-                                   dftefe::utils::MemorySpace::DEVICE>
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        const size_type                                blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
+                                                           &rowConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
+        const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsIdsLocal,
-        const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
+        const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueType,
-                                   dftefe::utils::MemorySpace::DEVICE>
+        const utils::MemoryStorage<ValueType, memorySpace>
           &constraintsInhomogenities);
 
       static void
@@ -115,6 +115,8 @@ namespace dftefe
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues);
 

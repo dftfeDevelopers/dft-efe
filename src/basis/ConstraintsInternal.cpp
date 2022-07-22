@@ -38,16 +38,17 @@ namespace dftefe
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &rowConstraintsIdsLocal,
+                                                           &rowConstraintsIdsLocal,
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
         const utils::MemoryStorage<ValueType, memorySpace>
           &constraintsInhomogenities)
     {
-      size_type              count = 0;
       std::vector<ValueType> newValuesBlock(blockSize, 0.0);
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
@@ -58,16 +59,18 @@ namespace dftefe
           const size_type startingLocalDofIndexRow =
             (*(rowConstraintsIdsLocal.begin() + i)) * blockSize;
 
+          size_type columnIndexStart = columnConstraintsAccumulated[i];
           for (size_type j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
               utils::throwException(
                 count < columnConstraintsValues.size(),
                 "Array out of bounds in ConstraintsInternal::constraintsDistributeParentToChild");
 
-              const size_type startingLocalDofIndexColumn =
-                *(columnConstraintsIdsLocal.begin() + count * blockSize);
 
-              ValueType alpha = *(columnConstraintsValues.begin() + count);
+              const size_type startingLocalDofIndexColumn =
+                ((*(columnConstraintsIdsLocal.begin() + columnIndexStart + j )) * blockSize);
+
+              ValueType alpha = *(columnConstraintsValues.begin() + columnIndexStart + j);
 
               // TODO check if this performance efficient
               for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
@@ -77,7 +80,6 @@ namespace dftefe
                        iBlock)) *
                     alpha;
                 }
-              count++;
             }
 
           std::copy(&newValuesBlock[0],
@@ -97,31 +99,30 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues)
     {
-      size_type count = 0;
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
           const size_type startingLocalDofIndexRow =
             (*(rowConstraintsIdsLocal.begin() + i)) * blockSize;
 
+          size_type columnIndexStart = columnConstraintsAccumulated[i];
           for (unsigned int j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
               const size_type startingLocalDofIndexColumn =
-                (*(columnConstraintsIdsLocal.begin() + count)) * blockSize;
+                (*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) * blockSize;
 
-              ValueType alpha = (*(columnConstraintsValues.begin() + count));
+              ValueType alpha = (*(columnConstraintsValues.begin() + columnIndexStart + j));
               for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
                 {
-                  *(vectorData.begin() + startingLocalDofIndexColumn + iBlock) =
+                  *(vectorData.begin() + startingLocalDofIndexColumn + iBlock) +=
                     (*(vectorData.begin() + startingLocalDofIndexRow +
                        iBlock)) *
                     alpha;
                 }
-
-
-              count++;
             }
 
           //

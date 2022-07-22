@@ -311,6 +311,7 @@ namespace dftefe
       std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
       std::vector<size_type>        rowConstraintsIdsLocalTmp;
       std::vector<size_type>        columnConstraintsIdsLocalTmp;
+      std::vector<size_type>        constraintRowSizesAccumulatedTmp;
       std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
 
       std::vector<double>    columnConstraintsValuesTmp;
@@ -319,6 +320,8 @@ namespace dftefe
       std::vector<size_type> rowConstraintsSizesTmp;
 
       auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+
+      size_type columnIdStart = 0 ;
 
       for (auto locallyOwnedId = locallyOwnedRange.first;
            locallyOwnedId < locallyOwnedRange.second;
@@ -342,6 +345,8 @@ namespace dftefe
                     }
                 }
 
+
+
               if (isConstraintRhsExpandingOutOfIndexSet)
                 continue;
 
@@ -358,6 +363,9 @@ namespace dftefe
                   double realPart = utils::getRealPart((*rowData)[j].second);
                   columnConstraintsValuesTmp.push_back(realPart);
                 }
+
+              constraintRowSizesAccumulatedTmp.push_back(columnIdStart);
+              columnIdStart += rowData->size();
             }
         }
 
@@ -402,6 +410,8 @@ namespace dftefe
                   double realPart = utils::getRealPart((*rowData)[j].second);
                   columnConstraintsValuesTmp.push_back(realPart);
                 }
+              constraintRowSizesAccumulatedTmp.push_back(columnIdStart);
+              columnIdStart += rowData->size();
             }
         }
 
@@ -441,6 +451,13 @@ namespace dftefe
         columnConstraintsValuesTmp.size(),
         d_columnConstraintsValues.data(),
         columnConstraintsValuesTmp.data());
+
+      d_constraintRowSizesAccumulated.resize(constraintRowSizesAccumulatedTmp.size());
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        constraintRowSizesAccumulatedTmp.size(),
+        d_constraintRowSizesAccumulated.data(),
+        constraintRowSizesAccumulatedTmp.data());
+
 
       d_constraintsInhomogenities.resize(constraintsInhomogenitiesTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -490,6 +507,7 @@ namespace dftefe
                                            d_rowConstraintsIdsLocal,
                                            d_rowConstraintsSizes,
                                            d_columnConstraintsIdsLocal,
+                                           d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues,
                                            d_constraintsInhomogenities);
     }
@@ -508,6 +526,7 @@ namespace dftefe
                                            d_rowConstraintsIdsLocal,
                                            d_rowConstraintsSizes,
                                            d_columnConstraintsIdsLocal,
+                                           d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues);
     }
 

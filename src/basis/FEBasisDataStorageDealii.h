@@ -66,6 +66,7 @@ namespace dftefe
           constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
+        const QuadratureRuleAttributes &quadRuleAttributeGradNiGradNj,
         const bool storeValues,
         const bool storeGradient,
         const bool storeHessian,
@@ -85,7 +86,8 @@ namespace dftefe
         const bool                      storeValues,
         const bool                      storeGradient,
         const bool                      storeHessian,
-        const bool                      storeOverlap) override;
+        const bool                      storeOverlap,
+        const bool                      storeGradNiGradNj) override;
 
       void
       deleteBasisData(
@@ -171,6 +173,19 @@ namespace dftefe
       getBasisOverlapInAllCells(const QuadratureRuleAttributes
                                   &quadratureRuleAttributes) const override;
 
+
+      // get the laplace operator in a cell
+      Storage
+      getBasisGradNiGradNjInCell(
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                 cellId) const override;
+
+      // get laplace operator in all cells
+      const Storage &
+      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes
+                                  &quadratureRuleAttributes) const override;
+
+
       const quadrature::QuadratureRuleContainer &
       getQuadratureRuleContainer(const QuadratureRuleAttributes
                                    &quadratureRuleAttributes) const override;
@@ -182,6 +197,9 @@ namespace dftefe
         d_quadratureRuleContainer;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
         d_basisQuadStorage;
+
+      std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
+        d_basisGradNiGradNj;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
         d_basisGradientQuadStorage;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
@@ -199,6 +217,7 @@ namespace dftefe
         d_cellStartIdsBasisGradientQuadStorage;
       std::map<QuadratureRuleAttributes, std::vector<size_type>>
         d_cellStartIdsBasisHessianQuadStorage;
+      std::vector <size_type> d_cellStartIdsGradNiGradNj;
 
 
     }; // end of FEBasisDataStorageDealii

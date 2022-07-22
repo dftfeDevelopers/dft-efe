@@ -33,62 +33,84 @@ namespace dftefe
           }
       }
 
-      /*
-                template <typename ValueType>
-                __global__ void
-                distributeParentToChildKernel(
-                  const size_type  contiguousBlockSize,
-                  ValueType *    xVec,
-                  const size_type *constraintLocalRowIds,
-                  const size_type  numConstraints,
-                  const size_type *constraintRowSizes,
-                  const size_type *constraintRowSizesAccumulated,
-                  const size_type *constraintLocalColumnIds,
-                  const double *      constraintColumnValues,
-                  const ValueType *      inhomogenities)
-                {
-                  const size_type globalThreadId =
-                    blockIdx.x * blockDim.x + threadIdx.x;
-                  const size_type numberEntries =
-                    numConstraints * contiguousBlockSize;
+      template <typename ValueType>
+      __global__ void
+      distributeParentToChildKernel(
+        const size_type  contiguousBlockSize,
+        ValueType *    xVec,
+        const size_type *constraintLocalRowIds,
+        const size_type  numConstraints,
+        const size_type *constraintRowSizes,
+        const size_type *constraintRowSizesAccumulated,
+        const size_type *constraintLocalColumnIds,
+        const double *      constraintColumnValues,
+        const ValueType *      inhomogenities)
+      {
+        const size_type globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const size_type numberEntries =
+          numConstraints * contiguousBlockSize;
+        for (size_type index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const size_type blockIndex      = index /contiguousBlockSize;
+            const size_type intraBlockIndex = index - blockIndex*contiguousBlockSize;
+            const size_type constrainedRowId = constraintLocalRowIds[blockIndex];
+            const size_type numberColumns = constraintRowSizes[blockIndex];
+            const size_type startingColumnNumber = constraintRowSizesAccumulated[blockIndex];
+            const size_type xVecStartingIdRow = constrainedRowId*contiguousBlockSize  + intraBlockIndex ;
+            xVec[xVecStartingIdRow + intraBlockIndex] = inhomogenities[blockIndex];
+            for (size_type i = 0; i < numberColumns; ++i)
+              {
+                const dealii::types::global_dof_index xVecStartingIdColumn =
+                  constraintLocalColumnIds[startingColumnNumber + i ];
+                const dealii::types::global_dof_index xVecColumnId = xVecStartingIdColumn*contiguousBlockSize + intraBlockIndex;
+                xVec[xVecStartingIdRow ] = dftefe::utils::add(xVec[xVecStartingIdRow],
+                                                            dftefe::utils::mult(constraintColumnValues[startingColumnNumber + i ] , xVec[xVecColumnId]));
+              }
+          }
+      }
 
-                  for (size_type index = globalThreadId;
-                       index < numberEntries;
-                       index += blockDim.x * gridDim.x)
-                    {
-                      const size_type blockIndex      = index /
-         contiguousBlockSize; const size_type intraBlockIndex = index -
-         blockIndex*contiguousBlockSize; const size_type constrainedRowId =
-                        constraintLocalRowIds[blockIndex];
-                      const size_type numberColumns =
-         constraintRowSizes[blockIndex]; const size_type startingColumnNumber =
-                        constraintRowSizesAccumulated[blockIndex];
-                      const size_type xVecStartingIdRow =
-                        localIndexMapUnflattenedToFlattened[constrainedRowId];
-                      xVec[xVecStartingIdRow + intraBlockIndex] =
-                        make_cuFloatComplex(inhomogenities[blockIndex], 0.0);
-                      for (size_type i = 0; i < numberColumns; ++i)
-                        {
-                          const size_type constrainedColumnId =
-                            constraintLocalColumnIdsAllRowsUnflattened
-                              [startingColumnNumber + i];
-                          const dealii::types::global_dof_index
-         xVecStartingIdColumn =
-                            localIndexMapUnflattenedToFlattened[constrainedColumnId];
-                          xVec[xVecStartingIdRow + intraBlockIndex] =
-                            cuCaddf(xVec[xVecStartingIdRow + intraBlockIndex],
-                                    make_cuFloatComplex(
-                                      xVec[xVecStartingIdColumn +
-         intraBlockIndex].x * constraintColumnValuesAllRowsUnflattened
-                                          [startingColumnNumber + i],
-                                      xVec[xVecStartingIdColumn +
-         intraBlockIndex].y * constraintColumnValuesAllRowsUnflattened
-                                          [startingColumnNumber + i]));
-                        }
-                    }
-                }
+      template <typename ValueType>
+      __global__ void
+      distributeChildToParentKernel(
+        const size_type  contiguousBlockSize,
+        ValueType *    xVec,
+        const size_type *constraintLocalRowIds,
+        const size_type  numConstraints,
+        const size_type *constraintRowSizes,
+        const size_type *constraintRowSizesAccumulated,
+        const size_type *constraintLocalColumnIds,
+        const double *      constraintColumnValues)
+      {
+        const size_type globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const size_type numberEntries =
+          numConstraints * contiguousBlockSize;
+        for (size_type index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const size_type blockIndex      = index /contiguousBlockSize;
+            const size_type intraBlockIndex = index - blockIndex*contiguousBlockSize;
+            const size_type constrainedRowId = constraintLocalRowIds[blockIndex];
+            const size_type numberColumns = constraintRowSizes[blockIndex];
+            const size_type startingColumnNumber = constraintRowSizesAccumulated[blockIndex];
+            const size_type xVecStartingIdRow = constrainedRowId*contiguousBlockSize + intraBlockIndex ;
+            xVec[xVecStartingIdRow + intraBlockIndex] = inhomogenities[blockIndex];
+            for (size_type i = 0; i < numberColumns; ++i)
+              {
+                const dealii::types::global_dof_index xVecStartingIdColumn =
+                  constraintLocalColumnIds[startingColumnNumber + i ];
+                const dealii::types::global_dof_index xVecColumnId = xVecStartingIdColumn*contiguousBlockSize + intraBlockIndex;
+                ValueType tempVal = dftefe::utils::mult(constraintColumnValues[startingColumnNumber + i ] , xVec[xVecStartingIdRow]));
 
-      */
+                (xVec[xVecColumnId],tempVal);
+              }
+          }
+      }
+
 
     } // end of namespace constraintsInternal
 
@@ -116,6 +138,88 @@ namespace dftefe
         rowConstraintsIdsLocal.data(),
         numConstrainedDofs,
         blockSize);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    ConstraintsInternal<ValueType, memorySpace>::
+      constraintsDistributeParentToChild(
+        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        const size_type                                blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
+                                                           &rowConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsIdsLocal,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &columnConstraintsAccumulated,
+        const utils::MemoryStorage<double, memorySpace>
+          &columnConstraintsValues,
+        const utils::MemoryStorage<ValueType, memorySpace>
+          &constraintsInhomogenities)
+    {
+
+      const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
+
+      if (numConstrainedDofs == 0)
+        return;
+
+      constraintsInternal::distributeParentToChildKernel<<<
+        numConstrainedDofs * blockSize / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>
+        (
+          blockSize,
+          dftefe::utils::makeDataTypeDeviceCompatible(vectorData.data()),
+          rowConstraintsIdsLocal.data(),
+          numConstrainedDofs,
+          rowConstraintsSizes.data(),
+          columnConstraintsAccumulated.data(),
+          columnConstraintsIdsLocal.data(),
+          columnConstraintsValues.data(),
+          constraintsInhomogenities.data());
+
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    ConstraintsInternal<ValueType, memorySpace>::
+    constraintsDistributeChildToParent(
+      linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+                     &             vectorData,
+      const size_type blockSize,
+      const utils::MemoryStorage<size_type,
+                                 dftefe::utils::MemorySpace::DEVICE>
+        &rowConstraintsIdsLocal,
+      const utils::MemoryStorage<size_type,
+                                 dftefe::utils::MemorySpace::DEVICE>
+        &rowConstraintsSizes,
+      const utils::MemoryStorage<size_type,
+                                 dftefe::utils::MemorySpace::DEVICE>
+        &columnConstraintsIdsLocal,
+      const utils::MemoryStorage<size_type, memorySpace>
+        &columnConstraintsAccumulated,
+      const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
+        &columnConstraintsValues)
+    {
+
+      const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
+
+      if (numConstrainedDofs == 0)
+        return;
+
+      constraintsInternal::distributeChildToParentKernel<<<
+        numConstrainedDofs * blockSize / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>
+        (
+          blockSize,
+          dftefe::utils::makeDataTypeDeviceCompatible(vectorData.data()),
+          rowConstraintsIdsLocal.data(),
+          numConstrainedDofs,
+          rowConstraintsSizes.data(),
+          columnConstraintsAccumulated.data(),
+          columnConstraintsIdsLocal.data(),
+          columnConstraintsValues.data());
+
     }
 
 

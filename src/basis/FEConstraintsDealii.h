@@ -125,6 +125,7 @@ namespace dftefe
       GlobalSizeTypeVector d_rowConstraintsIdsGlobal;
       SizeTypeVector       d_rowConstraintsIdsLocal;
       SizeTypeVector       d_columnConstraintsIdsLocal;
+      SizeTypeVector       d_constraintRowSizesAccumulated;
       GlobalSizeTypeVector d_columnConstraintsIdsGlobal;
 
       utils::MemoryStorage<double, memorySpace>    d_columnConstraintsValues;
