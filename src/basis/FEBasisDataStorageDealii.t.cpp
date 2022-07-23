@@ -406,7 +406,7 @@ namespace dftefe
                       {
                         *basisGradNiGradNjTmpIter +=
                           ( dealiiFEValues.shape_grad(iNode, qPoint) *
-                          dealiiFEValues.shape_value(jNode, qPoint) )*
+                          dealiiFEValues.shape_grad(jNode, qPoint) )*
                           dealiiFEValues.JxW(qPoint);
                       }
                     basisGradNiGradNjTmpIter++;

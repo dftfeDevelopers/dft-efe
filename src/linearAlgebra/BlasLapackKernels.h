@@ -34,6 +34,17 @@ namespace dftefe
                ValueType *      z);
 
         /**
+         * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
+         * @param[in] size size of the array
+         * @param[in] x array
+         * @param[out] z array
+         */
+        static void
+        reciprocalX(size_type        size,
+                    const ValueType *x,
+                    ValueType *      z);
+
+        /**
          * @brief Template for performing \f$ z = \alpha x + \beta y \f$
          * @param[in] size size of the array
          * @param[in] \f$ alpha \f$ scalar

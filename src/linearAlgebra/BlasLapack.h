@@ -81,6 +81,24 @@ namespace dftefe
            size_type                           incy,
            LinAlgOpContext<memorySpace> &      context);
 
+      // i have neglected incx & incy parameters
+      /**
+       * @brief Template for computing the multiplicative inverse of all the elements of x, does not check if any element is zero
+       * @param[in] n size of each vector
+       * @param[in] x input vector
+       * @param[out] y output vector
+       * @param[in] context Blas context for GPU operations
+       *
+       * @return \f$ l_{\inf} \f$  norms of all the vectors
+       */
+      template <typename ValueType1,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      reciprocalX(size_type                           n,
+                  ValueType1 const *                  x,
+                  ValueType1 *                        y,
+                  LinAlgOpContext<memorySpace> &      context);
+
 
 
       /**

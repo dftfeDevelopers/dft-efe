@@ -25,6 +25,19 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
+      Kernels<ValueType, memorySpace>::reciprocalX(const size_type  size,
+                                                   const ValueType *x,
+                                                   ValueType *      z)
+      {
+        for (size_type i = 0; i < size; ++i)
+          {
+            z[i] = 1.0 / x[i];
+          }
+      }
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
       Kernels<ValueType, memorySpace>::axpby(const size_type  size,
                                              const ValueType  alpha,
                                              const ValueType *x,
