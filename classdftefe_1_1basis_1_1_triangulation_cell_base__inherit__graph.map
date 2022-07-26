@@ -1,0 +1,4 @@
+<map id="dftefe::basis::TriangulationCellBase" name="dftefe::basis::TriangulationCellBase">
+<area shape="rect" id="node1" title="An abstract class for an geometric cell. This is done to prevent the template (as required by deal...." alt="" coords="5,5,177,47"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1_triangulation_cell_dealii.html" title="An interface to deal.ii geometric cell." alt="" coords="5,95,177,136"/>
+</map>

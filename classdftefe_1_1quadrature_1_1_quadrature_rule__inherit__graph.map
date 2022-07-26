@@ -1,0 +1,5 @@
+<map id="dftefe::quadrature::QuadratureRule" name="dftefe::quadrature::QuadratureRule">
+<area shape="rect" id="node1" title=" " alt="" coords="5,39,128,80"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1_quadrature_rule_adaptive.html" title=" " alt="" coords="176,5,345,47"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1_quadrature_rule_gauss.html" title=" " alt="" coords="183,71,339,112"/>
+</map>

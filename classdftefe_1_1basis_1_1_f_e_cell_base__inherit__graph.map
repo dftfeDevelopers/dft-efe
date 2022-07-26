@@ -1,0 +1,4 @@
+<map id="dftefe::basis::FECellBase" name="dftefe::basis::FECellBase">
+<area shape="rect" id="node1" title="An abstract class for a finite element cell (can be of any dimension) This is created primarily to be..." alt="" coords="5,80,172,107"/>
+<area shape="rect" id="node2" title=" " alt="" coords="41,5,137,32"/>
+</map>

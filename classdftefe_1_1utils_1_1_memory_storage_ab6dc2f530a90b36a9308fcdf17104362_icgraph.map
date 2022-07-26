@@ -1,0 +1,8 @@
+<map id="dftefe::utils::MemoryStorage::size" name="dftefe::utils::MemoryStorage::size">
+<area shape="rect" id="node1" title="Returns the dimension of the Vector." alt="" coords="308,129,491,170"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1_m_p_i_communicator_p2_p_kernels.html#a01e5dbc2fdfe3d2310991da1e522c7f3" title="Function template for architecture adaptable accumlate kernel from recv buffer." alt="" coords="12,5,253,61"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1_memory_storage.html#ae53237f8f422012c01111353a2feedce" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="41,85,224,141"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1_memory_storage.html#afc501984e4ab70ce31da09a23f44911a" title="Copies the data to a MemoryStorage object in a different memory space. This provides a seamless inter..." alt="" coords="41,165,224,206"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1_m_p_i_communicator_p2_p_kernels.html#adb152ee65e9fd40c2fcdc9ab8b0aeb7c" title="Function template for architecture adaptable gather kernel to send buffer." alt="" coords="5,229,260,285"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1_memory_storage.html#a862673b9da7af376b3ace0ce54d79b74" title="Constructor for Vector with size and initial value arguments." alt="" coords="41,309,224,350"/>
+</map>

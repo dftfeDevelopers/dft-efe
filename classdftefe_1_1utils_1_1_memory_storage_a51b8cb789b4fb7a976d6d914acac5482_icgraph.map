@@ -1,0 +1,5 @@
+<map id="dftefe::utils::MemoryStorage::begin" name="dftefe::utils::MemoryStorage::begin">
+<area shape="rect" id="node1" title="Return iterator pointing to the beginning of point data." alt="" coords="236,13,419,54"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1_memory_storage.html#ae53237f8f422012c01111353a2feedce" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="5,5,188,61"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1_memory_storage.html#a8c9c62e62c2fa3ce1c5ac0fee315972c" title="Copies the data to a MemoryStorage object in a different memory space. This provides a seamless inter..." alt="" coords="5,85,188,126"/>
+</map>

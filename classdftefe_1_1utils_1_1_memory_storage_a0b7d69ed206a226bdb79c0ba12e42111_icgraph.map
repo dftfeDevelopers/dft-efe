@@ -1,0 +1,5 @@
+<map id="dftefe::utils::MemoryStorage::data" name="dftefe::utils::MemoryStorage::data">
+<area shape="rect" id="node1" title="Return the raw pointer to the Vector." alt="" coords="308,53,491,94"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1_m_p_i_communicator_p2_p_kernels.html#a01e5dbc2fdfe3d2310991da1e522c7f3" title="Function template for architecture adaptable accumlate kernel from recv buffer." alt="" coords="12,5,253,61"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1_m_p_i_communicator_p2_p_kernels.html#adb152ee65e9fd40c2fcdc9ab8b0aeb7c" title="Function template for architecture adaptable gather kernel to send buffer." alt="" coords="5,85,260,141"/>
+</map>
