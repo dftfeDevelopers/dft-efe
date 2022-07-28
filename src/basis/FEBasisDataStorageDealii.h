@@ -66,12 +66,7 @@ namespace dftefe
           constraintsVec,
         const std::vector<QuadratureRuleAttributes>
           &        quadratureRuleAttributesVec,
-        const QuadratureRuleAttributes &quadRuleAttributeGradNiGradNj,
-        const bool storeValues,
-        const bool storeGradient,
-        const bool storeHessian,
-        const bool storeJxW,
-        const bool storeQuadRealPoints);
+        const mapBasisStorageFlags mapBasisStorageFlagsObj);
 
       ~FEBasisDataStorageDealii() = default;
 
@@ -83,11 +78,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureRuleContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const bool                      storeValues,
-        const bool                      storeGradient,
-        const bool                      storeHessian,
-        const bool                      storeOverlap,
-        const bool                      storeGradNiGradNj) override;
+        const boolBasisStorageFlags  boolBasisStorageFlagsObj) override;
 
       void
       deleteBasisData(

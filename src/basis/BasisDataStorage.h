@@ -36,6 +36,21 @@ namespace dftefe
 {
   namespace basis
   {
+    enum class basisStorageFlags{
+      storeValues,
+      storeGradient,
+      storeHessian,
+      storeOverlap,
+      storeGradNiGradNj,
+      storeJxW,
+      storeQuadRealPoints
+    };
+
+    typedef std::map<basisStorageFlags,bool> boolBasisStorageFlags;
+
+    typedef std::map<quadrature::QuadratureRuleAttributes,boolBasisStorageFlags> mapBasisStorageFlags;
+
+
     /**
      * @brief An abstract class to store and access data for a given basis,
      * such as the basis function values on a quadrature grid, the overlap
@@ -68,11 +83,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const bool                      storeValues,
-        const bool                      storeGradient,
-        const bool                      storeHessian,
-        const bool                      storeOverlap,
-        const bool                      storeGradNiGradNj) = 0;
+        const boolBasisStorageFlags  boolBasisStorageFlagsObj) = 0;
       virtual void
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
