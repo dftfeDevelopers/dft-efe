@@ -76,15 +76,15 @@ namespace dftefe
         blas::axpy(n, alpha, x, incx, y, incy);
       }
 
-      template <typename ValueType1,
+      template <typename ValueType,
                 dftefe::utils::MemorySpace memorySpace>
       void
       reciprocalX(size_type                           n,
-                  ValueType1 const *                  x,
-                  ValueType1 *                        y,
+                  ValueType const *                  x,
+                  ValueType *                        y,
                   LinAlgOpContext<memorySpace> &      context)
       {
-        Kernels<ValueType1, ValueType2, memorySpace>::reciprocalX(n, x, y);
+        Kernels<ValueType, memorySpace>::reciprocalX(n, x, y);
       }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

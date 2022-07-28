@@ -102,9 +102,9 @@ namespace dftefe
 
         dealii::UpdateFlags dealiiUpdateFlags =
           dealii::update_values | dealii::update_JxW_values;
-        if (storeGradients)
+        if (boolBasisStorageFlagsObj.find(basisStorageFlags::storeGradient)->second)
           dealiiUpdateFlags |= dealii::update_gradients;
-        if (storeHessians)
+        if (boolBasisStorageFlagsObj.find(basisStorageFlags::storeHessian)->second)
           dealiiUpdateFlags |= dealii::update_hessians;
 
         // NOTE: cellId 0 passed as we assume h-refine finite element mesh in
@@ -325,6 +325,8 @@ namespace dftefe
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
           quadratureRuleAttributes.getNum1DPoints();
+        const size_type numQuadPointsPerCell =
+          utils::mathFunctions::sizeTypePow(num1DQuadPoints, dim);
         dealii::Quadrature<dim> dealiiQuadratureRule;
         if (quadratureFamily == quadrature::QuadratureFamily::GAUSS)
           {
@@ -378,7 +380,7 @@ namespace dftefe
         utils::throwException(
           feCellDealii != nullptr,
           "Dynamic casting of FECellBase to FECellDealii not successful");
-        auto      basisGradNiGradNjTmpIter = basisOverlapTmp.begin();
+        auto      basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         size_type cellIndex           = 0;
         for (; locallyOwnedCellIter != feBM->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -470,9 +472,9 @@ namespace dftefe
         dealii::UpdateFlags dealiiUpdateFlags =
           dealii::update_values | dealii::update_JxW_values;
 
-        if (storeGradients)
+        if (boolBasisStorageFlagsObj.find(basisStorageFlags::storeGradient)->second)
           dealiiUpdateFlags |= dealii::update_gradients;
-        if (storeHessians)
+        if (boolBasisStorageFlagsObj.find(basisStorageFlags::storeHessian)->second)
           dealiiUpdateFlags |= dealii::update_hessians;
         // NOTE: cellId 0 passed as we assume h-refined finite element mesh in
         // this function
@@ -746,7 +748,7 @@ namespace dftefe
           feCellDealii != nullptr,
           "Dynamic casting of FECellBase to FECellDealii not successful");
 
-        auto      basisGradNiGradNjTmpIter = basisOverlapTmp.begin();
+        auto      basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         size_type cellIndex           = 0;
 
         // get the dealii FiniteElement object
@@ -852,7 +854,6 @@ namespace dftefe
           constraintsVec,
         const std::vector<quadrature::QuadratureRuleAttributes>
           &        quadratureRuleAttribuesVec,
-        const QuadratureRuleAttributes &quadRuleAttributeGradNiGradNj,
        const mapBasisStorageFlags mapBasisStorageFlagsObj)
       : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
@@ -965,7 +966,7 @@ namespace dftefe
         dealii::MatrixFree<dim>::AdditionalData::partition_partition;
       dealii::UpdateFlags dealiiUpdateFlags = dealii::update_default;
 
-      if (storeValueBool)->second)
+      if (storeValueBool)
         dealiiUpdateFlags |= dealii::update_values;
       if (storeGradientBool)
         dealiiUpdateFlags |= dealii::update_gradients;
@@ -1645,8 +1646,9 @@ namespace dftefe
     }
 
     // get overlap of all the basis functions in all cells
-    const Storage &
-    getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    const typename BasisDataStorage<ValueType, memorySpace>::Storage &
+    FEBasisDataStorageDealii<ValueType, memorySpace, dim>::getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes
                                      &quadratureRuleAttributes) const
     {
       auto it = d_basisGradNiGradNj.find(quadratureRuleAttributes);

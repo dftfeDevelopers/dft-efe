@@ -59,12 +59,12 @@ namespace dftefe
           const size_type startingLocalDofIndexRow =
             (*(rowConstraintsIdsLocal.begin() + i)) * blockSize;
 
-          size_type columnIndexStart = columnConstraintsAccumulated[i];
+          size_type columnIndexStart = *(columnConstraintsAccumulated.begin() + i);
           for (size_type j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
-              utils::throwException(
-                count < columnConstraintsValues.size(),
-                "Array out of bounds in ConstraintsInternal::constraintsDistributeParentToChild");
+              //utils::throwException(
+              //  count < columnConstraintsValues.size(),
+              //  "Array out of bounds in ConstraintsInternal::constraintsDistributeParentToChild");
 
 
               const size_type startingLocalDofIndexColumn =
@@ -109,7 +109,7 @@ namespace dftefe
           const size_type startingLocalDofIndexRow =
             (*(rowConstraintsIdsLocal.begin() + i)) * blockSize;
 
-          size_type columnIndexStart = columnConstraintsAccumulated[i];
+          size_type columnIndexStart = *(columnConstraintsAccumulated.begin() + i);
           for (unsigned int j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
               const size_type startingLocalDofIndexColumn =

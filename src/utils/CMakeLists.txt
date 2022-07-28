@@ -14,7 +14,8 @@ endif()
 set(DFT-EFE-UTILS-SOURCES
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
-	MemoryManager.cpp
+	DeviceComplexUtils.cu
+        MemoryManager.cpp
 	Exceptions.cpp
 	NumberUtils.cpp
 	MemoryTransfer.cpp

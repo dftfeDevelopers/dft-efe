@@ -87,18 +87,19 @@ namespace dftefe
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE> &vectorData,
         const size_type                                blockSize,
-        const utils::MemoryStorage<size_type, memorySpace>
+        const utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
                                                            &rowConstraintsIdsLocal,
-        const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
-        const utils::MemoryStorage<size_type, memorySpace>
+        const utils::MemoryStorage<size_type,dftefe::utils::MemorySpace::DEVICE>
+          &rowConstraintsSizes,
+        const utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsIdsLocal,
-        const utils::MemoryStorage<size_type, memorySpace>
+        const utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsAccumulated,
-        const utils::MemoryStorage<double, memorySpace>
+        const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueType, memorySpace>
+        const utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &constraintsInhomogenities);
 
       static void
@@ -115,7 +116,7 @@ namespace dftefe
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsIdsLocal,
-        const utils::MemoryStorage<size_type, memorySpace>
+        const utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues);

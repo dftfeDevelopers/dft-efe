@@ -41,6 +41,7 @@ namespace dftefe
          */
         static void
         reciprocalX(size_type        size,
+                    const ValueType alpha,
                     const ValueType *x,
                     ValueType *      z);
 
@@ -104,6 +105,17 @@ namespace dftefe
                const ValueType *x,
                ValueType *      z);
 
+        /*
+        * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
+        * @param[in] size size of the array
+        * @param[in] x array
+        * @param[out] z array
+        */
+        static void
+        reciprocalX(size_type        size,
+                    const ValueType alpha,
+                    const ValueType *x,
+                    ValueType *      z);
         static void
         axpby(size_type        size,
               ValueType        alpha,

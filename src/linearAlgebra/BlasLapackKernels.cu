@@ -106,10 +106,10 @@ namespace dftefe
       void
       Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::reciprocalX(
         const size_type  size,
+        const ValueType alpha,
         const ValueType *x,
         ValueType *      z)
       {
-        ValueType alpha = 1.0 ;
         reciprocalXDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                              dftefe::utils::BLOCK_SIZE>>>(
           size,
