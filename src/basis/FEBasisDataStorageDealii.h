@@ -65,7 +65,7 @@ namespace dftefe
         std::vector<std::shared_ptr<Constraints<ValueType, memorySpace>>>
           constraintsVec,
         const std::vector<QuadratureRuleAttributes>
-          &        quadratureRuleAttributesVec,
+          &                        quadratureRuleAttributesVec,
         const mapBasisStorageFlags mapBasisStorageFlagsObj);
 
       ~FEBasisDataStorageDealii() = default;
@@ -78,7 +78,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureRuleContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const boolBasisStorageFlags  boolBasisStorageFlagsObj) override;
+        const boolBasisStorageFlags     boolBasisStorageFlagsObj) override;
 
       void
       deleteBasisData(
@@ -173,8 +173,8 @@ namespace dftefe
 
       // get laplace operator in all cells
       const Storage &
-      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes
-                                  &quadratureRuleAttributes) const override;
+      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes &
+                                       quadratureRuleAttributes) const override;
 
 
       const quadrature::QuadratureRuleContainer &
@@ -207,8 +207,8 @@ namespace dftefe
       std::map<QuadratureRuleAttributes, std::vector<size_type>>
         d_cellStartIdsBasisGradientQuadStorage;
       std::map<QuadratureRuleAttributes, std::vector<size_type>>
-        d_cellStartIdsBasisHessianQuadStorage;
-      std::vector <size_type> d_cellStartIdsGradNiGradNj;
+                             d_cellStartIdsBasisHessianQuadStorage;
+      std::vector<size_type> d_cellStartIdsGradNiGradNj;
 
 
     }; // end of FEBasisDataStorageDealii

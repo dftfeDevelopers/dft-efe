@@ -190,7 +190,8 @@ namespace dftefe
                 if (!locallyOwnedCellLocalIndices[cumulativeDofs + iDof] ==
                     globalId)
                   std::cout
-                    << " Error in mpiP2P global id to local not correct for id = "
+                    << " Error in mpiP2P global id to local not correct for id =
+                "
                     << globalId << std::endl;
                 */
               }

@@ -9,13 +9,19 @@ if (NOT TARGET dft-efe-linalg)
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu
-            DistributedVector.cpp
             Matrix.cpp
-            MatrixOperations.cpp
             QueueManager.cpp
-            #SerialDenseMatrix.cpp
-            SerialVector.cpp
-            VectorAttributes.cpp)
+            LinAlgOpContext.cpp
+            VectorAttributes.cpp
+	    Vector.cpp
+	    MultiVector.cpp
+            AbstractMatrix.cpp
+            GeneralMatrix.cpp
+            HermitianMatrix.cpp
+            TriangularMatrix.cpp
+            MatrixKernels.cu
+            MatrixKernels.cpp
+            MatrixOperations.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
@@ -50,5 +56,5 @@ if (NOT TARGET dft-efe-linalg)
     target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
     target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
-    target_link_libraries(dft-efe-linalg PUBLIC gomp blaspp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC blaspp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()

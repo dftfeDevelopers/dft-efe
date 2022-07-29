@@ -224,28 +224,28 @@ namespace dftefe
                                  .data() +
                                BStartOffset;
 
-	  ValueType *C = quadValuesContainer.begin() + CStartOffset;
-	  linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
-		  memorySpace>(
-				  layout,
-				  numCellsInBlock,
-				  transA.data(),
-				  transB.data(),
-				  strideA.data(),
-				  strideB.data(),
-				  strideC.data(),
-				  mSizes.data(),
-				  nSizes.data(),
-				  kSizes.data(),
-				  alpha,
-				  fieldCellValues.data(),
-				  ldaSizes.data(),
-				  B,
-				  ldbSizes.data(),
-				  beta,
-				  C,
-				  ldcSizes.data(),
-				  linAlgOpContext);
+          ValueType *C = quadValuesContainer.begin() + CStartOffset;
+          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
+                                                           memorySpace>(
+            layout,
+            numCellsInBlock,
+            transA.data(),
+            transB.data(),
+            strideA.data(),
+            strideB.data(),
+            strideC.data(),
+            mSizes.data(),
+            nSizes.data(),
+            kSizes.data(),
+            alpha,
+            fieldCellValues.data(),
+            ldaSizes.data(),
+            B,
+            ldbSizes.data(),
+            beta,
+            C,
+            ldcSizes.data(),
+            linAlgOpContext);
 
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)

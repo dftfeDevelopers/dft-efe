@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
+ * Copyright (c) 2022.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,32 +20,45 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das
+ * @author Ian C. Lin.
  */
+
+#ifndef dftefeMatrixKernels_h
+#define dftefeMatrixKernels_h
+
+#include <complex>
+#include <slate/slate.hh>
+#include <slate/slate.hh>
+#include <utils/MemorySpaceType.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
-      : d_blasQueue(blasQueue)
-    {}
-
-    template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setBlasQueue(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    class MatrixKernels
     {
-      d_blasQueue = blasQueue;
-    }
+    public:
+      void
+      GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix);
+      void
+      HermitianMatrixAllocation(slate::HermitianMatrix<ValueType> &matrix);
+    };
 
-    template <utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueType>
+    class MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>
     {
-      return *d_blasQueue;
-    }
-  } // end of namespace linearAlgebra
-} // end of namespace dftefe
+    public:
+      void
+      GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix);
+      void
+      HermitianMatrixAllocation(slate::HermitianMatrix<ValueType> &matrix);
+    };
+#endif
+  } // namespace linearAlgebra
+
+} // namespace dftefe
+
+
+#endif // dftefeMatrixKernels_h

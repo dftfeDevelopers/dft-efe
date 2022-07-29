@@ -76,28 +76,37 @@ namespace dftefe
         blas::axpy(n, alpha, x, incx, y, incy);
       }
 
-      template <typename ValueType,
-                dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      reciprocalX(size_type                           n,
-                  ValueType const *                  x,
-                  ValueType *                        y,
-                  LinAlgOpContext<memorySpace> &      context)
+      reciprocalX(size_type                     n,
+                  ValueType const *             x,
+                  ValueType *                   y,
+                  LinAlgOpContext<memorySpace> &context)
       {
         Kernels<ValueType, memorySpace>::reciprocalX(n, x, y);
       }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      ascale(const size_type         n,
-             const ValueType         alpha,
-             const ValueType *       x,
-             ValueType *             z,
-             BlasQueue<memorySpace> &BlasQueue)
+      ascale(const size_type               n,
+             const ValueType               alpha,
+             const ValueType *             x,
+             ValueType *                   z,
+             LinAlgOpContext<memorySpace> &context)
       {
         Kernels<ValueType, memorySpace>::ascale(n, alpha, x, z);
       }
 
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(const size_type               n,
+                      const ValueType *             x,
+                      const ValueType *             y,
+                      ValueType *                   z,
+                      LinAlgOpContext<memorySpace> &context)
+      {
+        Kernels<ValueType, memorySpace>::hadamardProduct(n, x, y, z);
+      }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void

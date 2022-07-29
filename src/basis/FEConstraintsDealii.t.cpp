@@ -320,7 +320,7 @@ namespace dftefe
 
       auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
-      size_type columnIdStart = 0 ;
+      size_type columnIdStart = 0;
 
       for (auto locallyOwnedId = locallyOwnedRange.first;
            locallyOwnedId < locallyOwnedRange.second;
@@ -451,7 +451,8 @@ namespace dftefe
         d_columnConstraintsValues.data(),
         columnConstraintsValuesTmp.data());
 
-      d_constraintRowSizesAccumulated.resize(constraintRowSizesAccumulatedTmp.size());
+      d_constraintRowSizesAccumulated.resize(
+        constraintRowSizesAccumulatedTmp.size());
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         constraintRowSizesAccumulatedTmp.size(),
         d_constraintRowSizesAccumulated.data(),

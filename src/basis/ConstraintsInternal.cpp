@@ -38,7 +38,7 @@ namespace dftefe
         linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-                                                           &rowConstraintsIdsLocal,
+          &rowConstraintsIdsLocal,
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsIdsLocal,
@@ -59,18 +59,22 @@ namespace dftefe
           const size_type startingLocalDofIndexRow =
             (*(rowConstraintsIdsLocal.begin() + i)) * blockSize;
 
-          size_type columnIndexStart = *(columnConstraintsAccumulated.begin() + i);
+          size_type columnIndexStart =
+            *(columnConstraintsAccumulated.begin() + i);
           for (size_type j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
-              //utils::throwException(
+              // utils::throwException(
               //  count < columnConstraintsValues.size(),
-              //  "Array out of bounds in ConstraintsInternal::constraintsDistributeParentToChild");
+              //  "Array out of bounds in
+              //  ConstraintsInternal::constraintsDistributeParentToChild");
 
 
               const size_type startingLocalDofIndexColumn =
-                ((*(columnConstraintsIdsLocal.begin() + columnIndexStart + j )) * blockSize);
+                ((*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) *
+                 blockSize);
 
-              ValueType alpha = *(columnConstraintsValues.begin() + columnIndexStart + j);
+              ValueType alpha =
+                *(columnConstraintsValues.begin() + columnIndexStart + j);
 
               // TODO check if this performance efficient
               for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
@@ -109,19 +113,22 @@ namespace dftefe
           const size_type startingLocalDofIndexRow =
             (*(rowConstraintsIdsLocal.begin() + i)) * blockSize;
 
-          size_type columnIndexStart = *(columnConstraintsAccumulated.begin() + i);
+          size_type columnIndexStart =
+            *(columnConstraintsAccumulated.begin() + i);
           for (unsigned int j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
               const size_type startingLocalDofIndexColumn =
-                (*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) * blockSize;
+                (*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) *
+                blockSize;
 
-              ValueType alpha = (*(columnConstraintsValues.begin() + columnIndexStart + j));
+              ValueType alpha =
+                (*(columnConstraintsValues.begin() + columnIndexStart + j));
               for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
                 {
-                  *(vectorData.begin() + startingLocalDofIndexColumn + iBlock) +=
-                    (*(vectorData.begin() + startingLocalDofIndexRow +
-                       iBlock)) *
-                    alpha;
+                  *(vectorData.begin() + startingLocalDofIndexColumn +
+                    iBlock) += (*(vectorData.begin() +
+                                  startingLocalDofIndexRow + iBlock)) *
+                               alpha;
                 }
             }
 

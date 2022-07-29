@@ -176,7 +176,7 @@ namespace dftefe
       return d_triangulation->nGlobalCells();
     }
 
-    //TODO put an assert condition to check if p refined is false
+    // TODO put an assert condition to check if p refined is false
     template <size_type dim>
     size_type
     FEBasisManagerDealii<dim>::getFEOrder(size_type cellId) const

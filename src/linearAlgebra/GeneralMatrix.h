@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
+ * Copyright (c) 2022.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,32 +20,39 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das
+ * @author Ian C. Lin.
  */
+
+#ifndef dftefeGeneralMatrix_h
+#define dftefeGeneralMatrix_h
+
+#include <linearAlgebra/AbstractMatrix.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
-      : d_blasQueue(blasQueue)
-    {}
-
-    template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setBlasQueue(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    class GeneralMatrix : public AbstractMatrix<ValueType, memorySpace>
     {
-      d_blasQueue = blasQueue;
-    }
+    public:
+      GeneralMatrix(size_t   m,
+                    size_t   n,
+                    MPI_Comm comm,
+                    size_t   p,
+                    size_t   q,
+                    size_t   nb = global_nb,
+                    size_t   mb = global_mb);
 
-    template <utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
-    {
-      return *d_blasQueue;
-    }
-  } // end of namespace linearAlgebra
-} // end of namespace dftefe
+      slate::Matrix<ValueType> &
+      getSlateMatrix() const;
+
+    protected:
+      using AbstractMatrix<ValueType, memorySpace>::d_baseMatrix;
+      slate::Matrix<ValueType> *d_matrix;
+    };
+  } // namespace linearAlgebra
+} // namespace dftefe
+
+#include "GeneralMatrix.t.cpp"
+#endif // dftefeGeneralMatrix_h

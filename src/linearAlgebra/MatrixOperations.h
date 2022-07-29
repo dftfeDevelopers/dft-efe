@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian.
+ * @author Sambit Das
  */
 
 #ifndef dftefeMatrixOperations_h
@@ -30,33 +30,69 @@
 #include <blas.hh>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/Matrix.h>
 #include <utils/MemorySpaceType.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class MatrixOperations
+    namespace MatrixOperations
     {
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      matMulc(blasLapack::Layout                                  layout,
-              blasLapack::Op                                      transA,
-              blasLapack::Op                                      transB,
-              size_type                                           m,
-              size_type                                           n,
-              size_type                                           k,
-              ValueType                                           alpha,
-              ValueType const *                                   dA,
-              size_type                                           ldda,
-              ValueType const *                                   dB,
-              size_type                                           lddb,
-              ValueType                                           beta,
-              ValueType *                                         dC,
-              size_type                                           lddc,
-              std::shared_ptr<blasLapack::BlasQueue<memorySpace>> BlasQueue);
-    };
-  } // namespace linearAlgebra
+      multiply(ValueType                              alpha,
+               GeneralMatrix<ValueType, memorySpace> &A,
+               GeneralMatrix<ValueType, memorySpace> &B,
+               ValueType                              beta,
+               GeneralMatrix<ValueType, memorySpace> &C);
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      multiply(ValueType                                alpha,
+               HermitianMatrix<ValueType, memorySpace> &A,
+               GeneralMatrix<ValueType, memorySpace> &  B,
+               ValueType                                beta,
+               GeneralMatrix<ValueType, memorySpace> &  C);
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      multiply(ValueType                                alpha,
+               GeneralMatrix<ValueType, memorySpace> &  A,
+               HermitianMatrix<ValueType, memorySpace> &B,
+               ValueType                                beta,
+               GeneralMatrix<ValueType, memorySpace> &  C);
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      triangular_multiply(TriangularMatrix<ValueType, memorySpace> &A,
+                          GeneralMatrix<ValueType, memorySpace> &   B);
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      triangular_multiply(GeneralMatrix<ValueType, memorySpace> &   A,
+                          TriangularMatrix<ValueType, memorySpace> &B);
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      triangular_solve(TriangularMatrix<ValueType, memorySpace> &A,
+                       GeneralMatrix<ValueType, memorySpace> &   B);
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      triangular_solve(GeneralMatrix<ValueType, memorySpace> &   A,
+                       TriangularMatrix<ValueType, memorySpace> &B);
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      chol_factor(HermitianMatrix<ValueType, memorySpace> &A);
+
+
+    } // namespace MatrixOperations
+  }   // namespace linearAlgebra
 
 } // namespace dftefe
 

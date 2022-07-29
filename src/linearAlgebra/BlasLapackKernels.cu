@@ -34,7 +34,7 @@ namespace dftefe
         template <typename ValueType>
         __global__ void
         reciprocalXDeviceKernel(const size_type  size,
-                                const ValueType alpha,
+                                const ValueType  alpha,
                                 const ValueType *x,
                                 ValueType *      z)
         {
@@ -44,6 +44,22 @@ namespace dftefe
                i += blockDim.x * gridDim.x)
             {
               z[i] = dftefe::utils::div(alpha, x[i]);
+            }
+        }
+
+        template <typename ValueType>
+        __global__ void
+        hadamardProductDeviceKernel(const size_type  size,
+                                    const ValueType *x,
+                                    const ValueType *y,
+                                    ValueType *      z)
+        {
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              z[i] = dftefe::utils::mult(x[i], y[i]);
             }
         }
 
@@ -106,18 +122,33 @@ namespace dftefe
       void
       Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::reciprocalX(
         const size_type  size,
-        const ValueType alpha,
+        const ValueType  alpha,
         const ValueType *x,
         ValueType *      z)
       {
         reciprocalXDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
-                             dftefe::utils::BLOCK_SIZE>>>(
+                                  dftefe::utils::BLOCK_SIZE>>>(
           size,
           dftefe::utils::makeDataTypeDeviceCompatible(alpha),
           dftefe::utils::makeDataTypeDeviceCompatible(x),
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
 
+      template <typename ValueType>
+      void
+      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::hadamardProduct(
+        const size_type  size,
+        const ValueType *x,
+        const ValueType *y,
+        ValueType *      z)
+      {
+        hadamardProductDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                                      dftefe::utils::BLOCK_SIZE>>>(
+          size,
+          dftefe::utils::makeDataTypeDeviceCompatible(x),
+          dftefe::utils::makeDataTypeDeviceCompatible(y),
+          dftefe::utils::makeDataTypeDeviceCompatible(z));
+      }
 
       template <typename ValueType>
       void

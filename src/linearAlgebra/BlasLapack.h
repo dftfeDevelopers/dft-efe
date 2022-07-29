@@ -94,10 +94,10 @@ namespace dftefe
       template <typename ValueType1,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      reciprocalX(size_type                           n,
-                  ValueType1 const *                  x,
-                  ValueType1 *                        y,
-                  LinAlgOpContext<memorySpace> &      context);
+      reciprocalX(size_type                     n,
+                  ValueType1 const *            x,
+                  ValueType1 *                  y,
+                  LinAlgOpContext<memorySpace> &context);
 
 
 
@@ -111,11 +111,28 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      ascale(size_type               n,
-             ValueType               alpha,
-             const ValueType         x,
-             ValueType *             z,
-             BlasQueue<memorySpace> &BlasQueue);
+      ascale(size_type                     n,
+             ValueType                     alpha,
+             const ValueType               x,
+             ValueType *                   z,
+             LinAlgOpContext<memorySpace> &context);
+
+
+      /**
+       * @brief Template for performing \f$ z_i = x_i * y_i$
+       * @param[in] size size of the array
+       * @param[in] x array
+       * @param[in] y array
+       * @param[out] z array
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(size_type                     n,
+                      const ValueType *             x,
+                      const ValueType *             y,
+                      ValueType *                   z,
+                      LinAlgOpContext<memorySpace> &context);
 
 
       /**

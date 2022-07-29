@@ -41,9 +41,21 @@ namespace dftefe
          */
         static void
         reciprocalX(size_type        size,
-                    const ValueType alpha,
+                    const ValueType  alpha,
                     const ValueType *x,
                     ValueType *      z);
+        /*
+         * @brief Template for performing \f$ z_i = x_i * y_i$
+         * @param[in] size size of the array
+         * @param[in] x array
+         * @param[in] y array
+         * @param[out] z array
+         */
+        static void
+        hadamardProduct(size_type        size,
+                        const ValueType *x,
+                        const ValueType *y,
+                        ValueType *      z);
 
         /**
          * @brief Template for performing \f$ z = \alpha x + \beta y \f$
@@ -106,16 +118,22 @@ namespace dftefe
                ValueType *      z);
 
         /*
-        * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
-        * @param[in] size size of the array
-        * @param[in] x array
-        * @param[out] z array
-        */
+         * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
+         * @param[in] size size of the array
+         * @param[in] x array
+         * @param[out] z array
+         */
         static void
         reciprocalX(size_type        size,
-                    const ValueType alpha,
+                    const ValueType  alpha,
                     const ValueType *x,
                     ValueType *      z);
+        static void
+        hadamardProduct(size_type        size,
+                        const ValueType *x,
+                        const ValueType *y,
+                        ValueType *      z);
+
         static void
         axpby(size_type        size,
               ValueType        alpha,

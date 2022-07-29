@@ -20,32 +20,6 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das
+ * @author Bikash Kanungo
  */
-
-namespace dftefe
-{
-  namespace linearAlgebra
-  {
-    template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
-      : d_blasQueue(blasQueue)
-    {}
-
-    template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setBlasQueue(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
-    {
-      d_blasQueue = blasQueue;
-    }
-
-    template <utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
-    {
-      return *d_blasQueue;
-    }
-  } // end of namespace linearAlgebra
-} // end of namespace dftefe
+#include "MultiVector.h"

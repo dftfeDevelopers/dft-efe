@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
+ * Copyright (c) 2022.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,32 +20,41 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das
+ * @author Ian C. Lin.
  */
+
+#ifdef DFTEFE_WITH_DEVICE_CUDA
+
+#  include <linearAlgebra/MatrixKernels.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
-      : d_blasQueue(blasQueue)
-    {}
-
-    template <utils::MemorySpace memorySpace>
+    template <typename ValueType>
     void
-    LinAlgOpContext<memorySpace>::setBlasQueue(
-      blasLapack::BlasQueue<memorySpace> *blasQueue)
+    MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::
+      GeneralMatrixAllocation(slate::Matrix<ValueType> &matrix)
     {
-      d_blasQueue = blasQueue;
+      matrix.insertLocalTiles(slate::Target::Devices);
     }
 
-    template <utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
+    template <typename ValueType>
+    void
+    MatrixKernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::
+      HermitianMatrixAllocation(slate::HermitianMatrix<ValueType> &matrix)
     {
-      return *d_blasQueue;
+      matrix.insertLocalTiles(slate::Target::Devices);
     }
-  } // end of namespace linearAlgebra
-} // end of namespace dftefe
+
+    template class MatrixKernels<double, dftefe::utils::MemorySpace::DEVICE>;
+    template class MatrixKernels<float, dftefe::utils::MemorySpace::DEVICE>;
+    template class MatrixKernels<std::complex<double>,
+                                 dftefe::utils::MemorySpace::DEVICE>;
+    template class MatrixKernels<std::complex<float>,
+                                 dftefe::utils::MemorySpace::DEVICE>;
+
+  } // namespace linearAlgebra
+} // namespace dftefe
+
+#endif

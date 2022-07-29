@@ -26,8 +26,8 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
       Kernels<ValueType, memorySpace>::reciprocalX(const size_type  size,
-                                                   const ValueType alpha,
- 						   const ValueType *x,
+                                                   const ValueType  alpha,
+                                                   const ValueType *x,
                                                    ValueType *      z)
       {
         for (size_type i = 0; i < size; ++i)
@@ -36,6 +36,18 @@ namespace dftefe
           }
       }
 
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      Kernels<ValueType, memorySpace>::hadamardProduct(const size_type  size,
+                                                       const ValueType *x,
+                                                       const ValueType *y,
+                                                       ValueType *      z)
+      {
+        for (size_type i = 0; i < size; ++i)
+          {
+            z[i] = x[i] * y[i];
+          }
+      }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void

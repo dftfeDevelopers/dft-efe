@@ -67,7 +67,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureRuleContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const boolBasisStorageFlags  boolBasisStorageFlagsObj) = 0;
+        const boolBasisStorageFlags     boolBasisStorageFlagsObj) = 0;
 
       virtual void
       deleteBasisData(
@@ -152,12 +152,12 @@ namespace dftefe
       Storage
       getBasisGradNiGradNjInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const = 0 ;
+        const size_type                 cellId) const = 0;
 
       // get laplace operator in all cells
       const Storage &
-      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes
-                                       &quadratureRuleAttributes) const = 0;
+      getBasisGradNiGradNjInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       // get overlap of all the basis functions in all cells
       virtual const Storage &

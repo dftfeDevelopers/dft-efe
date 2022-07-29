@@ -36,7 +36,8 @@ namespace dftefe
 {
   namespace basis
   {
-    enum class basisStorageFlags{
+    enum class basisStorageFlags
+    {
       storeValues,
       storeGradient,
       storeHessian,
@@ -46,9 +47,11 @@ namespace dftefe
       storeQuadRealPoints
     };
 
-    typedef std::map<basisStorageFlags,bool> boolBasisStorageFlags;
+    typedef std::map<basisStorageFlags, bool> boolBasisStorageFlags;
 
-    typedef std::map<quadrature::QuadratureRuleAttributes,boolBasisStorageFlags> mapBasisStorageFlags;
+    typedef std::map<quadrature::QuadratureRuleAttributes,
+                     boolBasisStorageFlags>
+      mapBasisStorageFlags;
 
 
     /**
@@ -83,7 +86,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const boolBasisStorageFlags  boolBasisStorageFlagsObj) = 0;
+        const boolBasisStorageFlags     boolBasisStorageFlagsObj) = 0;
       virtual void
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
@@ -172,12 +175,12 @@ namespace dftefe
       Storage
       getBasisGradNiGradNjInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const = 0 ;
+        const size_type                 cellId) const = 0;
 
       // get laplace operator in all cells
       const Storage &
-      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes
-                                       &quadratureRuleAttributes) const = 0;
+      getBasisGradNiGradNjInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       virtual const quadrature::QuadratureRuleContainer &
       getQuadratureRuleContainer(
