@@ -26,7 +26,7 @@ namespace dftefe
        * located.
        * @param[in] weights  the weight of the quad points
        */
-      QuadratureRule(const unsigned int               dim,
+      QuadratureRule(const size_type                  dim,
                      const std::vector<utils::Point> &points,
                      const std::vector<double> &      weights);
 
@@ -74,13 +74,13 @@ namespace dftefe
       virtual size_type
       n1DPoints() const;
 
-      virtual unsigned int
+      virtual size_type
       getDim() const;
 
     protected:
       QuadratureRule();
 
-      unsigned int              d_dim;
+      size_type                 d_dim;
       size_type                 d_numPoints;
       size_type                 d_num1DPoints;
       std::vector<utils::Point> d_points;

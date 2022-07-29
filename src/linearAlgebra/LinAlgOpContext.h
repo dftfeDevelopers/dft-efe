@@ -42,7 +42,7 @@ namespace dftefe
       setBlasQueue(blasLapack::BlasQueue<memorySpace> *blasQueue);
 
       blasLapack::BlasQueue<memorySpace> &
-      getBlasQueue();
+      getBlasQueue() const;
 
     private:
       blasLapack::BlasQueue<memorySpace> *d_blasQueue;

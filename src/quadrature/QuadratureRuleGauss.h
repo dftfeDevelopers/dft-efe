@@ -1,7 +1,7 @@
 #ifndef dftefeQuadratureRuleGauss_h
 #define dftefeQuadratureRuleGauss_h
 
-#include "QuadratureRule.h"
+#include <quadrature/QuadratureRule.h>
 
 namespace dftefe
 {
@@ -10,7 +10,7 @@ namespace dftefe
     class QuadratureRuleGauss : public QuadratureRule
     {
     public:
-      QuadratureRuleGauss(const unsigned int dim, const unsigned int order1D);
+      QuadratureRuleGauss(const size_type dim, const size_type order1D);
     };
   } // end of namespace quadrature
 

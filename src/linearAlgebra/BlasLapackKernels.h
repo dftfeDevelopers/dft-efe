@@ -34,6 +34,17 @@ namespace dftefe
                ValueType *      z);
 
         /**
+         * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
+         * @param[in] size size of the array
+         * @param[in] x array
+         * @param[out] z array
+         */
+        static void
+        reciprocalX(size_type        size,
+                    const ValueType  alpha,
+                    const ValueType *x,
+                    ValueType *      z);
+        /*
          * @brief Template for performing \f$ z_i = x_i * y_i$
          * @param[in] size size of the array
          * @param[in] x array
@@ -106,6 +117,17 @@ namespace dftefe
                const ValueType *x,
                ValueType *      z);
 
+        /*
+         * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
+         * @param[in] size size of the array
+         * @param[in] x array
+         * @param[out] z array
+         */
+        static void
+        reciprocalX(size_type        size,
+                    const ValueType  alpha,
+                    const ValueType *x,
+                    ValueType *      z);
         static void
         hadamardProduct(size_type        size,
                         const ValueType *x,

@@ -1,7 +1,7 @@
 #ifndef dftefeIntegrate_h
 #define dftefeIntegrate_h
 
-#include "CellQuadratureContainer.h"
+#include "QuadratureRuleContainer.h"
 #include <utils/ScalarSpatialFunction.h>
 
 namespace dftefe
@@ -10,7 +10,7 @@ namespace dftefe
   {
     void
     integrate(const utils::ScalarSpatialFunction<double> &function,
-              const CellQuadratureContainer &cellQuadratureContainer,
+              const QuadratureRuleContainer &quadratureRuleContainer,
               double &                       integral);
 
   } // end of namespace quadrature

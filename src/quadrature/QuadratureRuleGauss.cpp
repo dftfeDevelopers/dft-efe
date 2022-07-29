@@ -1,12 +1,13 @@
-#include "QuadratureRuleGauss.h"
+#include <quadrature/QuadratureRuleGauss.h>
+#include <utils/MathFunctions.h>
 #include <deal.II/base/quadrature_lib.h>
 
 namespace dftefe
 {
   namespace quadrature
   {
-    QuadratureRuleGauss::QuadratureRuleGauss(const unsigned int dim,
-                                             const unsigned int order1D)
+    QuadratureRuleGauss::QuadratureRuleGauss(const size_type dim,
+                                             const size_type order1D)
     {
       d_dim = dim;
 
@@ -15,21 +16,21 @@ namespace dftefe
       d_1DWeights.resize(order1D);
       d_isTensorStructured = true;
 
-      d_numPoints = std::pow(order1D, dim);
+      d_numPoints = utils::mathFunctions::sizeTypePow(order1D, dim);
       d_points.resize(d_numPoints, utils::Point(d_dim, 0.0));
       d_weights.resize(d_numPoints);
 
       dealii::QGauss<1> qgauss1D(order1D);
 
-      for (unsigned int iQuad = 0; iQuad < order1D; iQuad++)
+      for (size_type iQuad = 0; iQuad < order1D; iQuad++)
         {
           d_1DWeights[iQuad]   = qgauss1D.weight(iQuad);
           d_1DPoints[iQuad][0] = qgauss1D.point(iQuad)[0];
         }
       if (d_dim == 1)
         {
-          unsigned int quadIndex = 0;
-          for (unsigned int iQuad = 0; iQuad < order1D; iQuad++)
+          size_type quadIndex = 0;
+          for (size_type iQuad = 0; iQuad < order1D; iQuad++)
             {
               d_points[quadIndex][0] = d_1DPoints[iQuad][0];
 
@@ -40,10 +41,10 @@ namespace dftefe
         }
       else if (d_dim == 2)
         {
-          unsigned int quadIndex = 0;
-          for (unsigned int jQuad = 0; jQuad < order1D; jQuad++)
+          size_type quadIndex = 0;
+          for (size_type jQuad = 0; jQuad < order1D; jQuad++)
             {
-              for (unsigned int iQuad = 0; iQuad < order1D; iQuad++)
+              for (size_type iQuad = 0; iQuad < order1D; iQuad++)
                 {
                   d_points[quadIndex][0] = d_1DPoints[iQuad][0];
                   d_points[quadIndex][1] = d_1DPoints[jQuad][0];
@@ -57,12 +58,12 @@ namespace dftefe
         }
       else if (d_dim == 3)
         {
-          unsigned int quadIndex = 0;
-          for (unsigned int kQuad = 0; kQuad < order1D; kQuad++)
+          size_type quadIndex = 0;
+          for (size_type kQuad = 0; kQuad < order1D; kQuad++)
             {
-              for (unsigned int jQuad = 0; jQuad < order1D; jQuad++)
+              for (size_type jQuad = 0; jQuad < order1D; jQuad++)
                 {
-                  for (unsigned int iQuad = 0; iQuad < order1D; iQuad++)
+                  for (size_type iQuad = 0; iQuad < order1D; iQuad++)
                     {
                       d_points[quadIndex][0] = d_1DPoints[iQuad][0];
                       d_points[quadIndex][1] = d_1DPoints[jQuad][0];

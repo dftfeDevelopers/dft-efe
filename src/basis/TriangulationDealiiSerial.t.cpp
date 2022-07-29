@@ -27,7 +27,7 @@ namespace dftefe
     {
       isInitialized = true;
       isFinalized   = false;
-      for (unsigned int iCell = 0; iCell < nLocalCells(); iCell++)
+      for (unsigned int iCell = 0; iCell < nLocallyOwnedCells(); iCell++)
         {
           // delete
           d_triaVectorCell[iCell].reset();
@@ -44,7 +44,7 @@ namespace dftefe
       isInitialized      = false;
       isFinalized        = true;
       unsigned int iCell = 0;
-      d_triaVectorCell.resize(nLocalCells());
+      d_triaVectorCell.resize(nLocallyOwnedCells());
 
       for (unsigned int iLevel = 0;
            iLevel < d_triangulationDealii.n_global_levels();
@@ -60,7 +60,7 @@ namespace dftefe
         }
 
       utils::throwException(
-        iCell == nLocalCells(),
+        iCell == nLocallyOwnedCells(),
         "Number of active cells is not matching in Finalize."
         "Kneel at the altar of Lord Vishal and"
         "he may grant your wish to rectify this error.");
@@ -207,16 +207,17 @@ namespace dftefe
     void
     TriangulationDealiiSerial<dim>::executeCoarseningAndRefinement()
     {
-      utils::throwException<utils::LogicError>(
-        isInitialized && !isFinalized,
-        "Cannot execute coarsening or refinement of triangulation without calling"
-        "initializeTriangulationConstruction");
+      /*
+       utils::throwException<utils::LogicError>(
+         isInitialized && !isFinalized,
+         "Cannot execute coarsening or refinement of triangulation without
+       calling" "initializeTriangulationConstruction");*/
       d_triangulationDealii.execute_coarsening_and_refinement();
     }
 
     template <unsigned int dim>
     size_type
-    TriangulationDealiiSerial<dim>::nLocalCells() const
+    TriangulationDealiiSerial<dim>::nLocallyOwnedCells() const
     {
       return d_triangulationDealii.n_active_cells();
     }
@@ -226,6 +227,13 @@ namespace dftefe
     TriangulationDealiiSerial<dim>::nGlobalCells() const
     {
       return d_triangulationDealii.n_global_active_cells();
+    }
+
+    template <unsigned int dim>
+    size_type
+    TriangulationDealiiSerial<dim>::nLocalCells() const
+    {
+      return d_triangulationDealii.n_cells();
     }
 
     template <unsigned int dim>
@@ -245,28 +253,28 @@ namespace dftefe
     }
 
     template <unsigned int dim>
-    TriangulationBase::cellIterator
+    TriangulationBase::TriangulationCellIterator
     TriangulationDealiiSerial<dim>::beginLocal()
     {
       return d_triaVectorCell.begin();
     }
 
     template <unsigned int dim>
-    TriangulationBase::cellIterator
+    TriangulationBase::TriangulationCellIterator
     TriangulationDealiiSerial<dim>::endLocal()
     {
       return d_triaVectorCell.end();
     }
 
     template <unsigned int dim>
-    TriangulationBase::const_cellIterator
+    TriangulationBase::const_TriangulationCellIterator
     TriangulationDealiiSerial<dim>::beginLocal() const
     {
       return d_triaVectorCell.begin();
     }
 
     template <unsigned int dim>
-    TriangulationBase::const_cellIterator
+    TriangulationBase::const_TriangulationCellIterator
     TriangulationDealiiSerial<dim>::endLocal() const
     {
       return d_triaVectorCell.end();
@@ -277,6 +285,13 @@ namespace dftefe
     TriangulationDealiiSerial<dim>::getDim() const
     {
       return dim;
+    }
+
+    template <unsigned int dim>
+    const dealii::Triangulation<dim> &
+    TriangulationDealiiSerial<dim>::returnDealiiTria() const
+    {
+      return d_triangulationDealii;
     }
   } // namespace basis
 

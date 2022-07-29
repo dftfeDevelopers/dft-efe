@@ -14,11 +14,15 @@ endif()
 set(DFT-EFE-UTILS-SOURCES
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
-	MemoryManager.cpp
+	DeviceComplexUtils.cu
+        MemoryManager.cpp
 	Exceptions.cpp
+	NumberUtils.cpp
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
+	MathFunctions.cpp
+	StringOperations.cpp
 	ConditionalOStream.cpp
 	MPITypes.cpp
 	MPIWrapper.cpp

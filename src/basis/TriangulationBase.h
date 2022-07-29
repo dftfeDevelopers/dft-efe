@@ -18,9 +18,9 @@ namespace dftefe
     public:
       virtual ~TriangulationBase() = default;
       typedef std::vector<std::shared_ptr<TriangulationCellBase>>::iterator
-        cellIterator;
+        TriangulationCellIterator;
       typedef std::vector<std::shared_ptr<TriangulationCellBase>>::
-        const_iterator const_cellIterator;
+        const_iterator const_TriangulationCellIterator;
       virtual void
       initializeTriangulationConstruction() = 0;
       virtual void
@@ -44,18 +44,22 @@ namespace dftefe
       virtual void
       executeCoarseningAndRefinement() = 0;
       virtual unsigned int
+      nLocallyOwnedCells() const = 0;
+      virtual unsigned int
       nLocalCells() const = 0;
       virtual size_type
       nGlobalCells() const = 0;
+      // virtual size_type
+      // nCells() const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
-      virtual cellIterator
+      virtual TriangulationCellIterator
       beginLocal() = 0;
-      virtual cellIterator
+      virtual TriangulationCellIterator
       endLocal() = 0;
-      virtual const_cellIterator
+      virtual const_TriangulationCellIterator
       beginLocal() const = 0;
-      virtual const_cellIterator
+      virtual const_TriangulationCellIterator
       endLocal() const = 0;
       virtual unsigned int
       getDim() const = 0;

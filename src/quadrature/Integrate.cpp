@@ -7,14 +7,14 @@ namespace dftefe
   {
     void
     integrate(const utils::ScalarSpatialFunction<double> &function,
-              const CellQuadratureContainer &cellQuadratureContainer,
+              const QuadratureRuleContainer &quadratureRuleContainer,
               double &                       integral)
     {
       const std::vector<dftefe::utils::Point> &realPoints =
-        cellQuadratureContainer.getRealPoints();
+        quadratureRuleContainer.getRealPoints();
       const size_type numQuadraturePoints =
-        cellQuadratureContainer.nQuadraturePoints();
-      const std::vector<double> &JxW = cellQuadratureContainer.getJxW();
+        quadratureRuleContainer.nQuadraturePoints();
+      const std::vector<double> &JxW = quadratureRuleContainer.getJxW();
       const std::vector<double> &functionValues = function(realPoints);
       integral                                  = 0.0;
       for (unsigned int i = 0; i < numQuadraturePoints; ++i)

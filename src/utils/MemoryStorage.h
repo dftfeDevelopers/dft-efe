@@ -79,7 +79,7 @@ namespace dftefe
        * @param[in] size size of the Vector
        * @param[in] initVal initial value of elements of the Vector
        */
-      explicit MemoryStorage(size_type size, ValueType initVal = 0);
+      explicit MemoryStorage(size_type size, ValueType initVal = ValueType());
 
       /**
        * @brief Destructor

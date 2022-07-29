@@ -1,5 +1,5 @@
 #include <utils/Exceptions.h>
-#include "QuadratureRule.h"
+#include <quadrature/QuadratureRule.h>
 
 namespace dftefe
 {
@@ -9,7 +9,7 @@ namespace dftefe
     {}
 
     QuadratureRule::QuadratureRule(
-      const unsigned int                       dim,
+      const size_type                          dim,
       const std::vector<dftefe::utils::Point> &points,
       const std::vector<double> &              weights)
       : d_dim(dim)
@@ -85,7 +85,7 @@ namespace dftefe
       return d_num1DPoints;
     }
 
-    unsigned int
+    size_type
     QuadratureRule::getDim() const
     {
       return d_dim;

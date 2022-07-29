@@ -25,11 +25,11 @@ namespace dftefe
        * typedefs
        */
     public:
-      using DealiiCellIter =
+      using DealiiTriangulationCellIterator =
         typename dealii::Triangulation<dim>::active_cell_iterator;
 
     public:
-      TriangulationCellDealii(DealiiCellIter dealiiCellIter);
+      TriangulationCellDealii(DealiiTriangulationCellIterator dealiiCellIter);
       ~TriangulationCellDealii();
 
       void
@@ -53,6 +53,14 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
+      double
+      diameter() const override;
+
+      void
+      center(dftefe::utils::Point &centerPoint) const override;
+
+      void
+      setRefineFlag() override;
       /*
        * \todo
        * TODO : Should implement the cellMapping before implementation
@@ -72,13 +80,11 @@ namespace dftefe
                    const CellMappingBase &cellMapping,
                    utils::Point &         realPoint) const override;
 
-      DealiiCellIter &
+      DealiiTriangulationCellIterator &
       getCellIterator();
-      //      const DealiiCellIter &
-      //      getCellIterator() const;
 
     private:
-      DealiiCellIter d_cellItr;
+      DealiiTriangulationCellIterator d_cellItr;
 
     }; // end of class TriaCellDealii
   }    // end of namespace basis

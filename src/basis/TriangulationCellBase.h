@@ -38,10 +38,17 @@ namespace dftefe
       virtual bool
       isAtBoundary() const = 0;
 
-      virtual unsigned int
+      virtual size_type
       getDim() const = 0;
 
+      virtual double
+      diameter() const = 0;
 
+      virtual void
+      center(dftefe::utils::Point &centerPoint) const = 0;
+
+      virtual void
+      setRefineFlag() = 0;
 
       virtual void
       getParametricPoint(const utils::Point &   realPoint,

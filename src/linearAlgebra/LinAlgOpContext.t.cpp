@@ -43,7 +43,7 @@ namespace dftefe
 
     template <utils::MemorySpace memorySpace>
     blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue()
+    LinAlgOpContext<memorySpace>::getBlasQueue() const
     {
       return *d_blasQueue;
     }

@@ -6,7 +6,7 @@
 #include <basis/ParentToChildCellsManagerDealii.h>
 #include <quadrature/QuadratureRule.h>
 #include <quadrature/QuadratureRuleGauss.h>
-#include <quadrature/CellQuadratureContainer.h>
+#include <quadrature/QuadratureRuleContainer.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <utils/Function.h>
@@ -65,7 +65,7 @@ main()
                 << std::endl;
     }
 
-  dftefe::quadrature::CellQuadratureContainer cellQuadratureManager(
+  dftefe::quadrature::QuadratureRuleContainer quadratureRuleContainer(
     quadratureRuleGauss, triangulationBase, *mapping);
 
   dftefe::basis::TriangulationBase::cellIterator it =
@@ -75,7 +75,7 @@ main()
     {
       std::cout << "Printing for iCell: " << iCell << std::endl;
       const std::vector<dftefe::utils::Point> points =
-        cellQuadratureManager.getCellRealPoints(iCell);
+        quadratureRuleContainer.getCellRealPoints(iCell);
       printVertices(points);
       iCell++;
     }
@@ -88,7 +88,7 @@ main()
   const double        smallestCellVolume = 1e-14;
   const unsigned int  maxRecursion       = 100;
 
-  dftefe::quadrature::CellQuadratureContainer cellAdaptiveQuadratureContainer(
+  dftefe::quadrature::QuadratureRuleContainer adaptiveQuadratureContainer(
     quadratureRuleGauss,
     triangulationBase,
     *mapping,
@@ -100,7 +100,7 @@ main()
     maxRecursion);
 
   const dftefe::size_type numAdaptiveQuadPoints =
-    cellAdaptiveQuadratureContainer.nQuadraturePoints();
+    adaptiveQuadratureContainer.nQuadraturePoints();
   std::cout << "Number of adaptive quad points:" << numAdaptiveQuadPoints
             << std::endl;
   // for (; it != triangulationBase->endLocal(); ++it)
