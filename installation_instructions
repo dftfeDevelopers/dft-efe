@@ -22,7 +22,7 @@ python install.py
 
 For perlmutter:
 
-python configure.py --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=/opt/cray/pe/craype/2.7.15/bin/cc --CMAKE_CXX_COMPILER=CC --CMAKE_CXX_FLAGS="-std=gnu++17 -march=znver3 -fPIC -target-accel=nvidia80" --CMAKE_C_FLAGS="-std=gnu++17 -march=znver3 -fPIC -target-accel=nvidia80" --MPI_C_COMPILER=/opt/cray/pe/craype/2.7.15/bin/cc --MPI_CXX_COMPILER=CC  --SLATE_DIR="/global/common/software/m2360/softwareDFTEFE/perlmutter/slate/gpu" --DEALII_PATH="/global/common/software/m2360/softwareDFTEFE/perlmutter/dealii/install" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-I$MPICH_DIR/include -L$MPICH_DIR/lib -lmpich -arch=sm_80"
+python configure.py --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=/opt/cray/pe/craype/2.7.15/bin/cc --CMAKE_CXX_COMPILER=CC --CMAKE_CXX_FLAGS="-std=gnu++17 -march=znver3 -fPIC -target-accel=nvidia80" --CMAKE_C_FLAGS="-std=gnu++17 -march=znver3 -fPIC -target-accel=nvidia80" --MPI_C_COMPILER=/opt/cray/pe/craype/2.7.15/bin/cc --MPI_CXX_COMPILER=CC  --SLATE_DIR="/global/common/software/m2360/softwareDFTEFE/perlmutter/slate/gpu/2022.7.inhouse.gcc11.2.0.nvcc11.7.64.mpich.8.1.17" --DEALII_PATH="/global/common/software/m2360/softwareDFTEFE/perlmutter/dealii/install" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-I$MPICH_DIR/include -L$MPICH_DIR/lib -lmpich -arch=sm_80"
 
 make
 
