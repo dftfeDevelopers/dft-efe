@@ -27,6 +27,14 @@ if (NOT TARGET dft-efe-linalg)
 
     include_directories(../)
 
+    find_package(deal.II 9.3.0 REQUIRED HINTS ${DEALII_PATH})
+    target_include_directories(dft-efe-linalg PUBLIC ${DEAL_II_INCLUDE_DIRS})
+    IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        target_link_libraries (dft-efe-linalg PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
+    ELSE()
+        target_link_libraries (dft-efe-linalg PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
+    ENDIF()
+
     if (ENABLE_MPI)
         add_compile_definitions(DFTEFE_WITH_MPI)
         if (NOT MPI_FOUND)
@@ -55,5 +63,5 @@ if (NOT TARGET dft-efe-linalg)
     target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
     target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
-    target_link_libraries(dft-efe-linalg PUBLIC blaspp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC blaspp slate gomp dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()

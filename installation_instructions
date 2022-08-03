@@ -12,6 +12,10 @@ mkdir build
 
 For greatlakes:
 
+CPU:
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --SLATE_DIR="/home/vikramg/DFT-FE-softwares/slate/2022.07.inhouse/gcc8.2.0_openmpi4.0.6" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=OFF
+
+GPU (not available for now, don't use):
 python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --SLATE_DIR="/home/vikramg/DFT-FE-softwares/slate/gpu/2022.7.15/gcc8.2.0_openmpi4.0.6_nvcc11.4.0" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-arch=sm_70 -fopenmp"
 
 python install.py
