@@ -65,8 +65,8 @@ namespace dftefe
         std::vector<std::shared_ptr<Constraints<ValueType, memorySpace>>>
           constraintsVec,
         const std::vector<QuadratureRuleAttributes>
-          &                        quadratureRuleAttributesVec,
-        const mapBasisStorageFlags mapBasisStorageFlagsObj);
+          &                                 quadratureRuleAttributesVec,
+        const QuadAttrToBasisStorageAttrMap quadAttrToBasisStorageAttrMap);
 
       ~FEBasisDataStorageDealii() = default;
 

@@ -36,22 +36,23 @@ namespace dftefe
 {
   namespace basis
   {
-    enum class basisStorageFlags
+    enum class BasisStorageAttributes
     {
-      storeValues,
-      storeGradient,
-      storeHessian,
-      storeOverlap,
-      storeGradNiGradNj,
-      storeJxW,
-      storeQuadRealPoints
+      StoreValues,
+      StoreGradient,
+      StoreHessian,
+      StoreOverlap,
+      StoreGradNiGradNj,
+      StoreJxW,
+      StoreQuadRealPoints
     };
 
-    typedef std::map<basisStorageFlags, bool> boolBasisStorageFlags;
+    typedef std::map<BasisStorageAttributes, bool>
+      BasisStorageAttributesBoolMap;
 
     typedef std::map<quadrature::QuadratureRuleAttributes,
-                     boolBasisStorageFlags>
-      mapBasisStorageFlags;
+                     BasisStorageAttributesBoolMap>
+      QuadAttrToBasisStorageAttrMap;
 
 
     /**
