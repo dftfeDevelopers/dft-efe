@@ -2,6 +2,7 @@
 #define dftefeQuadratureRuleContainer_h
 
 #include <quadrature/QuadratureRule.h>
+#include <quadrature/QuadratureAttributes.h>
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
 #include <utils/ScalarSpatialFunction.h>
@@ -33,7 +34,8 @@ namespace dftefe
        * is required to calculate the JxW values at each quad point
        */
       QuadratureRuleContainer(
-        std::shared_ptr<const QuadratureRule>           quadratureRule,
+        const QuadratureRuleAttributes &      quadratureRuleAttributes,
+        std::shared_ptr<const QuadratureRule> quadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,
         const basis::CellMappingBase &                  cellMapping);
 
@@ -48,6 +50,7 @@ namespace dftefe
        * is required to calculate the JxW values at each quad point
        */
       QuadratureRuleContainer(
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
         std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
         std::shared_ptr<const basis::TriangulationBase>    triangulation,
         const basis::CellMappingBase &                     cellMapping);
@@ -65,7 +68,8 @@ namespace dftefe
        * point
        */
       QuadratureRuleContainer(
-        std::shared_ptr<const QuadratureRule>           baseQuadratureRule,
+        const QuadratureRuleAttributes &      quadratureRuleAttributes,
+        std::shared_ptr<const QuadratureRule> baseQuadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,
         const basis::CellMappingBase &                  cellMapping,
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
@@ -75,6 +79,13 @@ namespace dftefe
         const std::vector<double> &integralThresholds,
         const double               smallestCellVolume = 1e-12,
         const unsigned int         maxRecursion       = 100);
+
+      /**
+       * @brief Returns the underlying QuadratureRuleAttributes
+       * @returns const reference to the QuadratureAttributes
+       */
+      const QuadratureRuleAttributes &
+      getQuadratureRuleAttributes() const;
 
       /**
        * @brief Returns the number of cells in the quadrature container
@@ -187,6 +198,7 @@ namespace dftefe
 
 
     private:
+      const QuadratureRuleAttributes &d_quadratureRuleAttributes;
       std::vector<std::shared_ptr<const QuadratureRule>> d_quadratureRuleVec;
       std::vector<size_type>                             d_numCellQuadPoints;
       std::vector<size_type>                             d_cellQuadStartIds;

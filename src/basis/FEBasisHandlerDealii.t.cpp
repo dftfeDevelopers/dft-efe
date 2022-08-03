@@ -232,7 +232,7 @@ namespace dftefe
         basisManager);
       utils::throwException(
         d_feBMDealii != nullptr,
-        "Error in casting the input basis manager in FEBasisHandlerDealii to FEBasisParitionerDealii");
+        "Error in casting the input basis manager in FEBasisHandlerDealii to FEBasisManagerDealii");
       const size_type numConstraints = constraintsMap.size();
       std::map<
         std::string,

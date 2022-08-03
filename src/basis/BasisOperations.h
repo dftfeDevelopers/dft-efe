@@ -59,13 +59,11 @@ namespace dftefe
       //                         Field<ValueType, memorySpace> &         field)
       //                         const = 0;
 
-      // virtual void
-      // integrateWithBasisValues(const QuadratureValuesContainer<ValueType,
-      // memorySpace> &f,
-      //    const quadrature::QuadratureRuleAttributes &
-      //    quadratureRuleAttributes,
-      //                         Field<ValueType, memorySpace> &field) const =
-      //                         0;
+      virtual void
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &f,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        Field<ValueType, memorySpace> &             field) const = 0;
 
       // virtual void
       // integrateWithBasisValues(

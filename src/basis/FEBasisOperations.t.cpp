@@ -58,23 +58,29 @@ namespace dftefe
     {
       const BasisHandler<ValueType, memorySpace> &basisHandler =
         field.getBasisHandler();
+      
       const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
         dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
           basisHandler);
       utils::throwException(
         &feBasisHandler != nullptr,
-        "Could not cast BasisHandler to FEBasisHandler in FEBasisOperations.interpolate()");
+        "Could not cast BasisHandler of the input Field to FEBasisHandler in "
+        "FEBasisOperations.interpolate()");
+      
       const BasisManager &basisManagerField = basisHandler.getBasisManager();
       const BasisManager &basisManagerDataStorage =
         d_feBasisDataStorage->getBasisManager();
       utils::throwException(
         &basisManagerField == &basisManagerDataStorage,
-        "Mismatch in BasisManager used in Field and BasisDataStorage.");
+        "Mismatch in BasisManager used in the Field and the BasisDataStorage "
+        "in FEBasisOperations.interpolate().");
+      
       const FEBasisManager &feBasisManager =
         dynamic_cast<const FEBasisManager &>(basisManagerField);
       utils::throwException(
         &feBasisManager != nullptr,
-        "Could not cast BasisManager to FEBasisManager in FEBasisOperations.interpolate()");
+        "Could not cast BasisManager of the input Field to FEBasisManager "
+        "in FEBasisOperations.interpolate()");
 
       const size_type   numComponents   = 1;
       const std::string constraintsName = field.getConstraintsName();
@@ -88,6 +94,13 @@ namespace dftefe
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         numCellDofs[iCell] = feBasisHandler.nLocallyOwnedCellDofs(iCell);
 
+      //
+      // reinit the quadValuesContainer
+      //
+      const quadrature::QuadratureRuleContainer &quadRuleContainer =
+        d_feBasisDataStorage->getQuadratureRuleContainer(
+          quadratureRuleAttributes);
+      quadValuesContainer.reinit(quadRuleContainer, numComponents, ValueType());
 
       const quadrature::QuadratureFamily quadratureFamily =
         quadratureRuleAttributes.getQuadratureFamily();
@@ -112,7 +125,8 @@ namespace dftefe
       // @note: The Be matrix is stored with the quad point as the fastest
       // index. That is Be_kj (k-th basis function value at j-th quad point in
       // e-th cell) is stored in a row-major format. Instead of copying it to a
-      // column major format, we use the transpose of Be matrix. That is, we
+      // column major format (which is assumed native format for Blas/Lapack data), 
+      // we use the transpose of Be matrix. That is, we
       // perform Ce = Ae*(Be)^T, with Be stored in row major format
       //
       const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
@@ -259,6 +273,53 @@ namespace dftefe
             }
         }
     }
+    
+    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    void
+    FEBasisOperations<ValueType, memorySpace, dim>::integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<ValueType, memorySpace> & inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        Field<ValueType, memorySpace> &             f) const
+    {
+        const quadrature::QuadratureRuleContainer & quadRuleContainer = 
+            inp.getQuadratureRuleContainer();
+        const quadrature::QuadratureRuleAttributes & quadratureRuleAttributesInp =
+            quadratureRuleContainer.getQuadratureRuleAttributes();
+        utils::throwException(quadratureRuleAttributes == quadratureRuleAttributesInp,
+                "Mismatch in the underlying QuadratureRuleAttributes of the "
+                "input QuadratureValuesContainer and the one passed to the "
+                " FEBasisOperations::integrateWithBasisValues function");
+
+      const BasisHandler<ValueType, memorySpace> &basisHandler =
+        field.getBasisHandler();
+      
+      const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
+        dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
+          basisHandler);
+      utils::throwException(
+        &feBasisHandler != nullptr,
+        "Could not cast BasisHandler of the input Field to FEBasisHandler in "
+        "FEBasisOperations.interpolate()");
+      
+      const BasisManager &basisManagerField = basisHandler.getBasisManager();
+      const BasisManager &basisManagerDataStorage =
+        d_feBasisDataStorage->getBasisManager();
+      utils::throwException(
+        &basisManagerField == &basisManagerDataStorage,
+        "Mismatch in BasisManager used in the Field and the BasisDataStorage "
+        "in FEBasisOperations.interpolate().");
+      
+      const FEBasisManager &feBasisManager =
+        dynamic_cast<const FEBasisManager &>(basisManagerField);
+      utils::throwException(
+        &feBasisManager != nullptr,
+        "Could not cast BasisManager of the input Field to FEBasisManager "
+        "in FEBasisOperations.interpolate()");
+
+
+
+    }
+
 
   } // namespace basis
 } // namespace dftefe

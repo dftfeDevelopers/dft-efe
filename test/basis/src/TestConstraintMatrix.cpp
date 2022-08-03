@@ -227,7 +227,7 @@ int main()
     std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
 
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadRule, triangulationBase,
+  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr[0], quadRule, triangulationBase,
                                                                  linearCellMappingDealii);
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, 1);

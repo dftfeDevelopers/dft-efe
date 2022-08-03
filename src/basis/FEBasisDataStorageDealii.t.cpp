@@ -999,6 +999,7 @@ namespace dftefe
                   dim, num1DQuadPoints);
               d_quadratureRuleContainer[quadratureRuleAttribuesVec[i]] =
                 std::make_shared<quadrature::QuadratureRuleContainer>(
+                  quadratureRuleAttribuesVec[i],
                   quadratureRule,
                   d_feBM->getTriangulation(),
                   linearCellMappingDealii);
@@ -1013,6 +1014,7 @@ namespace dftefe
                   dim, num1DQuadPoints);
               d_quadratureRuleContainer[quadratureRuleAttribuesVec[i]] =
                 std::make_shared<quadrature::QuadratureRuleContainer>(
+                  quadratureRuleAttribuesVec[i],
                   quadratureRule,
                   d_feBM->getTriangulation(),
                   linearCellMappingDealii);
@@ -1020,7 +1022,9 @@ namespace dftefe
           else
             utils::throwException<utils::InvalidArgument>(
               false,
-              "Quadrature family is undefined. Currently, only Gauss and GLL quadrature families are supported.");
+              "The constructor of FEBasisDataStorageDealii is implemented "
+              "only for QuadratureRuleAttributes created with "
+              "QuadratureFamily GAUSS and GLLL.");
         }
 
       typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
