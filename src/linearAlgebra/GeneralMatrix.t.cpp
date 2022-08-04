@@ -50,6 +50,21 @@ namespace dftefe
           d_matrix->insertLocalTiles(slate::Target::Host);
         }
     }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    GeneralMatrix<ValueType, memorySpace>::setValues(const ValueType *data) {
+        for (int64_t j = 0; j < d_matrix->nt(); ++j)
+          for (int64_t i = 0; i < d_matrix->mt(); ++i)
+            if (d_matrix->tileIsLocal(i, j))
+              {
+                slate::Tile<ValueType> T = *(d_matrix)(i, j);
+                for (int64_t jj = 0; jj < T.nb(); ++jj)
+                  for (int64_t ii = 0; ii < T.mb(); ++ii)
+                    T.at( ii, jj ) = 0;
+              }
+    }
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     slate::Matrix<ValueType> &
     GeneralMatrix<ValueType, memorySpace>::getSlateMatrix() const

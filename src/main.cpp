@@ -20,6 +20,8 @@
 #  include <utils/DeviceUtils.h>
 #endif
 
+#include <linearAlgebra/AbstractMatrix.h>
+
 int
 main(int argc, char **argv)
 {
@@ -55,20 +57,20 @@ main(int argc, char **argv)
   printf("This is gpu code");
 #endif
 
-  slate::Matrix<double> A(5, 5, 2, 1, 1, MPI_COMM_WORLD);
-  A.insertLocalTiles();
-  int cnt = 0;
-  for (int64_t j = 0; j < A.nt(); ++j)
-    for (int64_t i = 0; i < A.mt(); ++i)
-      if (A.tileIsLocal(i, j))
-        {
-          slate::Tile<double> T = A(i, j);
-          for (int64_t jj = 0; jj < T.nb(); ++jj)
-            for (int64_t ii = 0; ii < T.mb(); ++ii)
-              T.at( ii, jj ) = cnt++;
-        }
-  slate::HermitianMatrix<double> B(slate::Uplo::Upper, 5, 2, 1, 1, MPI_COMM_WORLD);
-  std::vector<double> b(5,0);
-  slate::heev(B, b, A);
-  slate::print("matrix", A);
+//  slate::Matrix<double> A(5, 5, 2, 1, 1, MPI_COMM_WORLD);
+//  A.insertLocalTiles();
+//  int cnt = 0;
+//  for (int64_t j = 0; j < A.nt(); ++j)
+//    for (int64_t i = 0; i < A.mt(); ++i)
+//      if (A.tileIsLocal(i, j))
+//        {
+//          slate::Tile<double> T = A(i, j);
+//          for (int64_t jj = 0; jj < T.nb(); ++jj)
+//            for (int64_t ii = 0; ii < T.mb(); ++ii)
+//              T.at( ii, jj ) = cnt++;
+//        }
+//  slate::HermitianMatrix<double> B(slate::Uplo::Upper, 5, 2, 1, 1, MPI_COMM_WORLD);
+//  std::vector<double> b(5,0);
+////  slate::heev(B, b, A);
+//  slate::print("matrix", A);
 }
