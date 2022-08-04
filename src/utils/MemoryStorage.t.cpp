@@ -88,6 +88,7 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
     MemoryStorage<ValueType, memorySpace>::setValue(const ValueType val)
     {
       dftefe::utils::MemoryManager<ValueType, memorySpace>::set(d_size,
