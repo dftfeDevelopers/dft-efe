@@ -39,10 +39,10 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class FEConstraintsDealii : public FEConstraintsBase<ValueType, memorySpace>
+    class FEConstraintsDealii : public FEConstraintsBase<ValueTypeBasisCoeff, memorySpace>
     {
     public:
       using GlobalSizeTypeVector =
@@ -54,7 +54,7 @@ namespace dftefe
       clear() override;
       void
       setInhomogeneity(global_size_type basisId,
-                       ValueType        constraintValue) override;
+                       ValueTypeBasisCoeff        constraintValue) override;
       bool
       isConstrained(global_size_type basisId) const override;
       void
@@ -64,18 +64,18 @@ namespace dftefe
       void
       setHomogeneousDirichletBC() override;
 
-      const std::vector<std::pair<global_size_type, ValueType>> *
+      const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 
       bool
       isInhomogeneouslyConstrained(const global_size_type index) const override;
 
-      ValueType
+      ValueTypeBasisCoeff
       getInhomogeneity(const global_size_type lineDof) const override;
 
       void
       copyConstraintsData(
-        const Constraints<ValueType, memorySpace> &   constraintsDataIn,
+        const Constraints<ValueTypeBasisCoeff, memorySpace> &   constraintsDataIn,
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) override;
       void
       populateConstraintsData(
@@ -84,15 +84,15 @@ namespace dftefe
 
       void
       distributeChildToParent(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         size_type blockSize = 1) const override;
       void
       distributeParentToChild(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         size_type blockSize = 1) const override;
       void
       setConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         size_type blockSize = 1) const override;
 
       //
@@ -105,19 +105,19 @@ namespace dftefe
       //
       // dealii specific fucntions
       //
-      const dealii::AffineConstraints<ValueType> &
+      const dealii::AffineConstraints<ValueTypeBasisCoeff> &
       getAffineConstraints() const;
 
     private:
       void
       addEntries(const global_size_type constrainedDofIndex,
-                 const std::vector<std::pair<global_size_type, ValueType>>
+                 const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
                    &colWeightPairs);
 
       void
       addLine(const global_size_type lineDof);
 
-      dealii::AffineConstraints<ValueType>             d_constraintMatrix;
+      dealii::AffineConstraints<ValueTypeBasisCoeff>             d_constraintMatrix;
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBasisManager;
       bool                                             d_isCleared;
       bool                                             d_isClosed;
@@ -129,7 +129,7 @@ namespace dftefe
       GlobalSizeTypeVector d_columnConstraintsIdsGlobal;
 
       utils::MemoryStorage<double, memorySpace>    d_columnConstraintsValues;
-      utils::MemoryStorage<ValueType, memorySpace> d_constraintsInhomogenities;
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> d_constraintsInhomogenities;
 
       SizeTypeVector d_rowConstraintsSizes;
     };

@@ -26,14 +26,14 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(
-      const ValueType *                             data,
+    FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::copyFieldToCellWiseData(
+      const ValueTypeBasisCoeff *                             data,
       const size_type                               numComponents,
       const size_type *                             cellLocalIdsStartPtr,
-      const BasisHandler<ValueType, memorySpace>::SizeTypeVector &                numCellDofs,
-      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector &                numCellDofs,
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
       const size_type numCells               = numCellDofs.size();
@@ -54,14 +54,14 @@ namespace dftefe
         }
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsInternal<ValueType, memorySpace>::addCellWiseDataToFieldData(
-      const utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
+    FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::addCellWiseDataToFieldData(
+      const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage,
       const size_type                               numComponents,
       const size_type *                             cellLocalIdsStartPtr,
-      const BasisHandler<ValueType, memorySpace>::SizeTypeVector &               numCellDofs,
-      ValueType *                             data)
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector &               numCellDofs,
+      ValueTypeBasisCoeff *                             data)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
       const size_type numCells               = numCellDofs.size();

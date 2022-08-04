@@ -54,10 +54,10 @@ namespace dftefe
      * https://en.wikipedia.org/wiki/Spherical_harmonics for more details on
      * spherical harmonics.
      *
-     * @tparam ValueType the primitive data for the enrichment function (e.g., double, float, complex<double>, complex<float>, etc.).
+     * @tparam ValueTypeBasisData the primitive data for the enrichment function (e.g., double, float, complex<double>, complex<float>, etc.).
      * @tparam dim dimension of the enrichment (e.g., 1D, 2D, 3D,...).
      */
-    template <typename ValueType, size_type dim>
+    template <typename ValueTypeBasisData, size_type dim>
     class EnrichmentFunctionManagerAtomCenteredNumerical
     {
     public:
@@ -97,7 +97,7 @@ namespace dftefe
        *
        * @return value of the enrichment function at the point
        */
-      virtual ValueType
+      virtual ValueTypeBasisData
       getValue(const size_type functionId, const utils::Point &point) const = 0;
 
       /**
@@ -108,7 +108,7 @@ namespace dftefe
        *
        * @return value of the enrichment function at the point
        */
-      virtual ValueType
+      virtual ValueTypeBasisData
       getValue(const size_type            functionId,
                const std::vector<double> &point) const = 0;
 
@@ -122,7 +122,7 @@ namespace dftefe
        *
        * @return values of the enrichment function on all the input points
        */
-      virtual std::vector<ValueType>
+      virtual std::vector<ValueTypeBasisData>
       getValues(const int                        functionId,
                 const std::vector<utils::Point> &points) const = 0;
 
@@ -136,7 +136,7 @@ namespace dftefe
        *
        * @return values of the enrichment function on all the input points
        */
-      virtual std::vector<ValueType>
+      virtual std::vector<ValueTypeBasisData>
       getValues(const int                               functionId,
                 const std::vector<std::vector<double>> &points) const = 0;
 
@@ -151,7 +151,7 @@ namespace dftefe
        * The i-th value in the value denotes the derivative with respect to the
        * i-th coordinate of the point.
        */
-      virtual std::vector<ValueType>
+      virtual std::vector<ValueTypeBasisData>
       getDerivativeValue(const size_type     functionId,
                          const utils::Point &point,
                          const size_type     derivativeOrder) const = 0;
@@ -167,7 +167,7 @@ namespace dftefe
        * The i-th value in the vector denotes the derivative with respect to the
        * i-th coordinate of the point.
        */
-      virtual ValueType
+      virtual ValueTypeBasisData
       getDerivativeValue(const size_type            functionId,
                          const std::vector<double> &point,
                          const size_type            derivativeOrder) const = 0;
@@ -184,7 +184,7 @@ namespace dftefe
        * The (i,j)-th value in the 2D vector denotes the derivative with respect
        * to the j-th coordinate of the i-th point.
        */
-      virtual std::vector<std::vector<ValueType>>
+      virtual std::vector<std::vector<ValueTypeBasisData>>
       getDerivativeValues(const int                        functionId,
                           const std::vector<utils::Point> &points,
                           const size_type derivativeOrder) const = 0;
@@ -201,7 +201,7 @@ namespace dftefe
        * The (i,j)-th value in the 2D vector denotes the derivative with respect
        * to the j-th coordinate of the i-th point.
        */
-      virtual std::vector<std::vector<ValueType>>
+      virtual std::vector<std::vector<ValueTypeBasisData>>
       getDerivativeValues(const int                               functionId,
                           const std::vector<std::vector<double>> &points,
                           const size_type derivativeOrder) const = 0;

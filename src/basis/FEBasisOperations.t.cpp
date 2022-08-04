@@ -34,33 +34,33 @@ namespace dftefe
     //
     // Constructor
     //
-    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
-    FEBasisOperations<ValueType, memorySpace, dim>::FEBasisOperations(
-      std::shared_ptr<const BasisDataStorage<ValueType, memorySpace>>
+    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::FEBasisOperations(
+      std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
                       basisDataStorage,
       const size_type maxCellTimesFieldBlock)
       : d_maxCellTimesFieldBlock(maxCellTimesFieldBlock)
     {
       d_feBasisDataStorage = std::dynamic_pointer_cast<
-        const FEBasisDataStorage<ValueType, memorySpace>>(basisDataStorage);
+        const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>(basisDataStorage);
       utils::throwException(
         d_feBasisDataStorage != nullptr,
         "Could not cast BasisDataStorage to FEBasisDataStorage in the constructor of FEBasisOperations");
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     void
-    FEBasisOperations<ValueType, memorySpace, dim>::interpolate(
-      const Field<ValueType, memorySpace> &       field,
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::interpolate(
+      const Field<ValueTypeBasisCoeff, memorySpace> &       field,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
         &quadValuesContainer) const
     {
-      const BasisHandler<ValueType, memorySpace> &basisHandler =
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
       
-      const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
-        dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
+      const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &feBasisHandler =
+        dynamic_cast<const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
           basisHandler);
       utils::throwException(
         &feBasisHandler != nullptr,
@@ -100,7 +100,7 @@ namespace dftefe
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer(
           quadratureRuleAttributes);
-      quadValuesContainer.reinit(quadRuleContainer, numComponents, ValueType());
+      quadValuesContainer.reinit(quadRuleContainer, numComponents, ValueTypeBasisCoeff());
 
       const quadrature::QuadratureFamily quadratureFamily =
         quadratureRuleAttributes.getQuadratureFamily();
@@ -151,11 +151,11 @@ namespace dftefe
             std::accumulate(numCellsInBlockDofs.begin(),
                             numCellsInBlockDofs.end(),
                             0);
-          utils::MemoryStorage<ValueType, memorySpace> fieldCellValues(
+          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> fieldCellValues(
             numCumulativeDofsCellsInBlock * numComponents);
 
           dftefe::size_type testLocalId = 0;
-          FEBasisOperationsInternal<ValueType, memorySpace>::
+          FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
             copyFieldToCellWiseData(field.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
@@ -228,18 +228,19 @@ namespace dftefe
                               strideC.data(),
                               strideCTmp.data());
 
-          ValueType                                    alpha = 1.0;
-          ValueType                                    beta  = 0.0;
+          scalar_type<ValueTypeBasisCoeff, ValueTypeBasisData>   alpha = 1.0;
+          scalar_type<ValueTypeBasisCoeff, ValueTypeBasisData>   beta  = 0.0;
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             field.getLinAlgOpContext();
 
-          const ValueType *B = (d_feBasisDataStorage->getBasisDataInAllCells(
+          const ValueTypeBasisData *B = (d_feBasisDataStorage->getBasisDataInAllCells(
                                   quadratureRuleAttributes))
                                  .data() +
                                BStartOffset;
 
-          ValueType *C = quadValuesContainer.begin() + CStartOffset;
-          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
+          scalar_type<ValueTypeBasisCoeff, ValueTypeBasisData> *C = quadValuesContainer.begin() + CStartOffset;
+          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,ValueTypeBasisData,
+                                                           scalar_type<ValueTypeBasisCoeff, ValueTypeBasisData>,
                                                            memorySpace>(
             layout,
             numCellsInBlock,
@@ -274,12 +275,12 @@ namespace dftefe
         }
     }
     
-    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     void
-    FEBasisOperations<ValueType, memorySpace, dim>::integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueType, memorySpace> & inp,
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace> & inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueType, memorySpace> &             f) const
+        Field<ValueTypeBasisCoeff, memorySpace> &             f) const
     {
         const quadrature::QuadratureRuleContainer & quadRuleContainer = 
             inp.getQuadratureRuleContainer();
@@ -290,11 +291,11 @@ namespace dftefe
                 "input QuadratureValuesContainer and the one passed to the "
                 " FEBasisOperations::integrateWithBasisValues function");
 
-      const BasisHandler<ValueType, memorySpace> &basisHandler =
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
       
-      const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
-        dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
+      const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &feBasisHandler =
+        dynamic_cast<const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
           basisHandler);
       utils::throwException(
         &feBasisHandler != nullptr,
@@ -337,7 +338,7 @@ namespace dftefe
 
 
       // check the arguments properly
-      FEBasisOperationInernal<ValueType, memorySpace>::addCellWiseDataToFieldData(
+      FEBasisOperationInernal<ValueTypeBasisCoeff, memorySpace>::addCellWiseDataToFieldData(
         cellWiseStorage,
         numComponents,
         cellLocalIdsStartPtr,

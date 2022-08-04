@@ -43,11 +43,11 @@ namespace dftefe
      * @brief An abstract class to encapsulate the partitioning
      * of a finite element basis across multiple processors
      */
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     class FEBasisHandlerDealii
-      : public FEBasisHandler<ValueType, memorySpace, dim>
+      : public FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
     {
       //
       // typedefs
@@ -66,27 +66,27 @@ namespace dftefe
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
                                    constraintsMap,
         const utils::mpi::MPIComm &mpiComm);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
                                    constraintsMap,
         const utils::mpi::MPIComm &mpiComm);
 
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
           constraintsMap);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
         std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
           constraintsMap);
 
       ~FEBasisHandlerDealii() = default;
@@ -97,7 +97,7 @@ namespace dftefe
       bool
       isDistributed() const override;
 
-      const Constraints<ValueType, memorySpace> &
+      const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
@@ -189,7 +189,7 @@ namespace dftefe
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
       std::map<
         std::string,
-        std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
+        std::shared_ptr<const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
                                                     d_feConstraintsDealiiOptMap;
       utils::mpi::MPIComm                           d_mpiComm;
       bool                                          d_isDistributed;

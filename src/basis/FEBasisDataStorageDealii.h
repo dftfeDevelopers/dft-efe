@@ -49,19 +49,19 @@ namespace dftefe
      * such as the basis function values on a quadrature grid, the overlap
      * matrix of the basis, etc.
      */
-    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     class FEBasisDataStorageDealii
-      : public FEBasisDataStorage<ValueType, memorySpace>
+      : public FEBasisDataStorage<ValueTypeBasisData, memorySpace>
     {
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
       using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
       using Storage =
-        typename BasisDataStorage<ValueType, memorySpace>::Storage;
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
       FEBasisDataStorageDealii(
         std::shared_ptr<const BasisManager> feBM,
-//        std::vector<std::shared_ptr<Constraints<ValueType, memorySpace>>>
+//        std::vector<std::shared_ptr<Constraints<ValueTypeBasisData, memorySpace>>>
 //          constraintsVec,
         const std::vector<QuadratureRuleAttributes>
         const std::vector<QuadratureRuleAttributes>
@@ -208,7 +208,7 @@ namespace dftefe
         d_basisHessianQuadStorage;
       std::map<QuadratureRuleAttributes, std::shared_ptr<Storage>>
                                                           d_basisOverlap;
-//      std::shared_ptr<dealii::MatrixFree<dim, ValueType>> d_dealiiMatrixFree;
+//      std::shared_ptr<dealii::MatrixFree<dim, ValueTypeBasisData>> d_dealiiMatrixFree;
       std::vector<size_type>                              d_dofsInCell;
       std::vector<size_type> d_cellStartIdsBasisOverlap;
       std::map<QuadratureRuleAttributes, std::vector<size_type>>

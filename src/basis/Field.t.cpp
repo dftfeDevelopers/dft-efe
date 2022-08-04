@@ -29,19 +29,19 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    Field<ValueType, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler<ValueType, memorySpace>> basisHandler,
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    Field<ValueTypeBasisCoeff, memorySpace>::Field(
+      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>> basisHandler,
       const std::string                            constraintsName,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
       reinit(basisHandler, constraintsName, linAlgOpContext);
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler<ValueType, memorySpace>> basisHandler,
+    Field<ValueTypeBasisCoeff, memorySpace>::reinit(
+      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>> basisHandler,
       const std::string                            constraintsName,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
@@ -55,126 +55,126 @@ namespace dftefe
       //
 
       d_vector = std::make_shared<
-        linearAlgebra::Vector<ValueType, memorySpace>>(
-        mpiPatternP2P, d_linAlgOpContext, ValueType());
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>>(
+        mpiPatternP2P, d_linAlgOpContext, ValueTypeBasisCoeff());
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::applyConstraintsParentToChild()
+    Field<ValueTypeBasisCoeff, memorySpace>::applyConstraintsParentToChild()
     {
-      const Constraints<ValueType, memorySpace> &constraints =
+      const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         d_basisHandler->getConstraints(d_constraintsName);
       constraints.distributeParentToChild(*d_vector);
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::applyConstraintsChildToParent()
+    Field<ValueTypeBasisCoeff, memorySpace>::applyConstraintsChildToParent()
     {
-      const Constraints<ValueType, memorySpace> &constraints =
+      const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         d_basisHandler->getConstraints(d_constraintsName);
       constraints.distributeChildToParent(*d_vector);
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    const linearAlgebra::Vector<ValueType, memorySpace> &
-    Field<ValueType, memorySpace>::getVector()
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    const linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &
+    Field<ValueTypeBasisCoeff, memorySpace>::getVector()
     {
       return *d_vector;
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    const BasisHandler<ValueType, memorySpace> &
-    Field<ValueType, memorySpace>::getBasisHandler() const
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    const BasisHandler<ValueTypeBasisCoeff, memorySpace> &
+    Field<ValueTypeBasisCoeff, memorySpace>::getBasisHandler() const
     {
       return *d_basisHandler;
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    typename Field<ValueType, memorySpace>::iterator
-    Field<ValueType, memorySpace>::begin()
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    typename Field<ValueTypeBasisCoeff, memorySpace>::iterator
+    Field<ValueTypeBasisCoeff, memorySpace>::begin()
     {
       return d_vector->begin();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    typename Field<ValueType, memorySpace>::const_iterator
-    Field<ValueType, memorySpace>::begin() const
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    typename Field<ValueTypeBasisCoeff, memorySpace>::const_iterator
+    Field<ValueTypeBasisCoeff, memorySpace>::begin() const
     {
       return d_vector->begin();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    typename Field<ValueType, memorySpace>::iterator
-    Field<ValueType, memorySpace>::end()
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    typename Field<ValueTypeBasisCoeff, memorySpace>::iterator
+    Field<ValueTypeBasisCoeff, memorySpace>::end()
     {
       return d_vector->end();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    typename Field<ValueType, memorySpace>::const_iterator
-    Field<ValueType, memorySpace>::end() const
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    typename Field<ValueTypeBasisCoeff, memorySpace>::const_iterator
+    Field<ValueTypeBasisCoeff, memorySpace>::end() const
     {
       return d_vector->end();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::updateGhostValues(
+    Field<ValueTypeBasisCoeff, memorySpace>::updateGhostValues(
       const size_type communicationChannel /*= 0*/)
     {
       d_vector->updateGhostValues(communicationChannel);
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::accumulateAddLocallyOwned(
+    Field<ValueTypeBasisCoeff, memorySpace>::accumulateAddLocallyOwned(
       const size_type communicationChannel /*= 0*/)
     {
       d_vector->accumulateAddLocallyOwned(communicationChannel);
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::updateGhostValuesBegin(
+    Field<ValueTypeBasisCoeff, memorySpace>::updateGhostValuesBegin(
       const size_type communicationChannel /*= 0*/)
     {
       d_vector->updateGhostValuesBegin(communicationChannel);
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::updateGhostValuesEnd()
+    Field<ValueTypeBasisCoeff, memorySpace>::updateGhostValuesEnd()
     {
       d_vector->updateGhostValuesEnd();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
+    Field<ValueTypeBasisCoeff, memorySpace>::accumulateAddLocallyOwnedBegin(
       const size_type communicationChannel /*= 0*/)
     {
       d_vector->accumulateAddLocallyOwnedBegin();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    Field<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
+    Field<ValueTypeBasisCoeff, memorySpace>::accumulateAddLocallyOwnedEnd()
     {
       d_vector->accumulateAddLocallyOwnedEnd();
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     std::string
-    Field<ValueType, memorySpace>::getConstraintsName() const
+    Field<ValueTypeBasisCoeff, memorySpace>::getConstraintsName() const
     {
       return d_constraintsName;
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     linearAlgebra::LinAlgOpContext<memorySpace> &
-    Field<ValueType, memorySpace>::getLinAlgOpContext() const
+    Field<ValueTypeBasisCoeff, memorySpace>::getLinAlgOpContext() const
     {
       return *d_linAlgOpContext;
     }

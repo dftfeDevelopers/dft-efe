@@ -35,19 +35,19 @@ namespace dftefe
      * @brief An abstract class to encapsulate the partitioning
      * of a finite element basis across multiple processors
      */
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class FEBasisHandler : public BasisHandler<ValueType, memorySpace>
+    class FEBasisHandler : public BasisHandler<ValueTypeBasisCoeff, memorySpace>
     {
       //
       // typedefs
       //
     public:
       using SizeTypeVector =
-        typename BasisHandler<ValueType, memorySpace>::SizeTypeVector;
+        typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector;
       using GlobalSizeTypeVector =
-        typename BasisHandler<ValueType, memorySpace>::GlobalSizeTypeVector;
+        typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::GlobalSizeTypeVector;
       using LocalIndexIter       = typename SizeTypeVector::iterator;
       using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
       using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
@@ -63,7 +63,7 @@ namespace dftefe
       virtual const BasisManager &
       getBasisManager() const = 0;
 
-      virtual const Constraints<ValueType, memorySpace> &
+      virtual const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>

@@ -44,12 +44,12 @@ namespace dftefe
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
      */
-    template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
-    class FEBasisOperations : public BasisOperations<ValueType, memorySpace>
+    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
+    class FEBasisOperations : public BasisOperations<ValueTypeBasisCoeff, memorySpace>
     {
     public:
       FEBasisOperations(
-        std::shared_ptr<const BasisDataStorage<ValueType, memorySpace>>
+        std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
                         basisDataStorage,
         const size_type maxCellTimesFieldBlock);
 
@@ -57,26 +57,26 @@ namespace dftefe
 
       void
       interpolate(
-        const Field<ValueType, memorySpace> &       field,
+        const Field<ValueTypeBasisCoeff, memorySpace> &       field,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
           &quadValuesContainer) const override;
       
       virtual void
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &f,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace> &f,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueType, memorySpace> &             field) const = 0;
+        Field<ValueTypeBasisCoeff, memorySpace> &             field) const = 0;
 
       // virtual void
       // integrateWithBasisValues(
-      //  const Field<ValueType, memorySpace> &       fieldInput,
+      //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
       //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      //  Field<ValueType, memorySpace> &             fieldOutput) const
+      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput) const
       //  override;
 
     private:
-      std::shared_ptr<const FEBasisDataStorage<ValueType, memorySpace>>
+      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                 d_feBasisDataStorage;
       size_type d_maxCellTimesFieldBlock;
 

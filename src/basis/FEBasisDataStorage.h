@@ -49,14 +49,14 @@ namespace dftefe
      * such as the basis function values on a quadrature grid, the overlap
      * matrix of the basis, etc.
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class FEBasisDataStorage : public BasisDataStorage<ValueType, memorySpace>
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace>
+    class FEBasisDataStorage : public BasisDataStorage<ValueTypeBasisData, memorySpace>
     {
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;
       using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
       using Storage =
-        typename BasisDataStorage<ValueType, memorySpace>::Storage;
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
 
       virtual const BasisManager &

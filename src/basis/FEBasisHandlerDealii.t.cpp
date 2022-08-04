@@ -103,7 +103,7 @@ namespace dftefe
           }
       }
 
-      template <typename ValueType,
+      template <typename ValueTypeBasisCoeff,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
@@ -112,9 +112,9 @@ namespace dftefe
         const std::map<
           std::string,
           std::shared_ptr<
-            const FEConstraintsDealii<ValueType, memorySpace, dim>>>
+            const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
           &                                 feConstraintsDealiiMap,
-        dealii::MatrixFree<dim, ValueType> &dealiiMatrixFree)
+        dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree)
       {
         typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
         dealiiAdditionalData.tasks_parallel_scheme =
@@ -128,7 +128,7 @@ namespace dftefe
         size_type numConstraints = feConstraintsDealiiMap.size();
         std::vector<const dealii::DoFHandler<dim> *> dofHandlerVec(
           numConstraints, dofHandler.get());
-        std::vector<const dealii::AffineConstraints<ValueType> *>
+        std::vector<const dealii::AffineConstraints<ValueTypeBasisCoeff> *>
                   dealiiAffineConstraintsVec(numConstraints, nullptr);
         size_type iConstraint = 0;
         for (auto it = feConstraintsDealiiMap.begin();
@@ -149,10 +149,10 @@ namespace dftefe
                                 dealiiAdditionalData);
       }
 
-      template <typename ValueType, size_type dim>
+      template <typename ValueTypeBasisCoeff, size_type dim>
       void
       getGhostIndices(
-        const dealii::MatrixFree<dim, ValueType> &dealiiMatrixFree,
+        const dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree,
         const size_type                           constraintId,
         std::vector<global_size_type> &           ghostIndices)
       {
@@ -165,7 +165,7 @@ namespace dftefe
         ghostIndexSet.fill_index_vector(ghostIndices);
       }
 
-      template <typename ValueType,
+      template <typename ValueTypeBasisCoeff,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
@@ -202,27 +202,27 @@ namespace dftefe
     } // end of namespace FEBasisHandlerDealiiInternal
 
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::FEBasisHandlerDealii(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::FEBasisHandlerDealii(
       std::shared_ptr<const BasisManager> basisManager,
       std::map<std::string,
-               std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+               std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
                                  constraintsMap,
       const utils::mpi::MPIComm &mpiComm)
     {
       reinit(basisManager, constraintsMap, mpiComm);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::reinit(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::reinit(
       std::shared_ptr<const BasisManager> basisManager,
       std::map<std::string,
-               std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+               std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
                                  constraintsMap,
       const utils::mpi::MPIComm &mpiComm)
     {
@@ -236,15 +236,15 @@ namespace dftefe
       const size_type numConstraints = constraintsMap.size();
       std::map<
         std::string,
-        std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
+        std::shared_ptr<const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
         feConstraintsDealiiMap;
       for (auto it = constraintsMap.begin(); it != constraintsMap.end(); ++it)
         {
           std::string constraintsName = it->first;
           std::shared_ptr<
-            const FEConstraintsDealii<ValueType, memorySpace, dim>>
+            const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
             feBasisConstraintsDealii = std::dynamic_pointer_cast<
-              const FEConstraintsDealii<ValueType, memorySpace, dim>>(
+              const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
               it->second);
           utils::throwException(
             feBasisConstraintsDealii != nullptr,
@@ -290,9 +290,9 @@ namespace dftefe
       // the MatrixFree object for a dummy quadrature rule
       // and with default update flags
       //
-      dealii::MatrixFree<dim, ValueType> dealiiMatrixFree;
+      dealii::MatrixFree<dim, ValueTypeBasisCoeff> dealiiMatrixFree;
       FEBasisHandlerDealiiInternal::
-        setDealiiMatrixFreeLight<ValueType, memorySpace, dim>(
+        setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
           d_feBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
       size_type iConstraint = 0;
@@ -306,11 +306,11 @@ namespace dftefe
           // populate d_ghostIndicesMap
           //
           std::vector<global_size_type> ghostIndicesTmp(0);
-          FEBasisHandlerDealiiInternal::getGhostIndices<ValueType, dim>(
+          FEBasisHandlerDealiiInternal::getGhostIndices<ValueTypeBasisCoeff, dim>(
             dealiiMatrixFree, iConstraint, ghostIndicesTmp);
           const size_type numGhostIndices = ghostIndicesTmp.size();
           auto            globalSizeVectorGhostMap =
-            std::make_shared<typename BasisHandler<ValueType, memorySpace>::
+            std::make_shared<typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::
                                GlobalSizeTypeVector>(numGhostIndices);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             numGhostIndices,
@@ -326,9 +326,9 @@ namespace dftefe
               d_locallyOwnedRange, ghostIndicesTmp, d_mpiComm);
           d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
 
-          std::shared_ptr<FEConstraintsDealii<ValueType, memorySpace, dim>>
+          std::shared_ptr<FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
             feBasisConstraintsDealiiOpt = std::make_shared<
-              FEConstraintsDealii<ValueType, memorySpace, dim>>();
+              FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
           feBasisConstraintsDealiiOpt->copyConstraintsData(it->second.get(),
                                                            mpiPatternP2P.get());
           feBasisConstraintsDealiiOpt->populateConstraintsData(
@@ -342,13 +342,13 @@ namespace dftefe
           std::vector<size_type> locallyOwnedCellLocalIndicesTmp(
             cumulativeCellDofs, 0);
           FEBasisHandlerDealiiInternal::
-            getLocallyOwnedCellLocalIndices<ValueType, memorySpace, dim>(
+            getLocallyOwnedCellLocalIndices<ValueTypeBasisCoeff, memorySpace, dim>(
               d_feBMDealii.get(),
               mpiPatternP2P.get(),
               locallyOwnedCellGlobalIndicesTmp,
               locallyOwnedCellLocalIndicesTmp);
           auto sizeVectorLocalIndicies = std::make_shared<
-            typename BasisHandler<ValueType, memorySpace>::SizeTypeVector>(
+            typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector>(
             cumulativeCellDofs, 0);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             cumulativeCellDofs,
@@ -362,26 +362,26 @@ namespace dftefe
         }
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::FEBasisHandlerDealii(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::FEBasisHandlerDealii(
       std::shared_ptr<const BasisManager> basisManager,
       std::map<std::string,
-               std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+               std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
         constraintsMap)
     {
       reinit(basisManager, constraintsMap);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::reinit(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::reinit(
       std::shared_ptr<const BasisManager> basisManager,
       std::map<std::string,
-               std::shared_ptr<const Constraints<ValueType, memorySpace>>>
+               std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
         constraintsMap)
     {
       d_isDistributed = false;
@@ -393,15 +393,15 @@ namespace dftefe
       const size_type numConstraints = constraintsMap.size();
       std::map<
         std::string,
-        std::shared_ptr<const FEConstraintsDealii<ValueType, memorySpace, dim>>>
+        std::shared_ptr<const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
         feConstraintsDealiiMap;
       for (auto it = constraintsMap.begin(); it != constraintsMap.end(); ++it)
         {
           std::string constraintsName = it->first;
           std::shared_ptr<
-            const FEConstraintsDealii<ValueType, memorySpace, dim>>
+            const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
             feBasisConstraintsDealii = std::dynamic_pointer_cast<
-              const FEConstraintsDealii<ValueType, memorySpace, dim>>(
+              const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
               it->second);
           utils::throwException(
             feBasisConstraintsDealii != nullptr,
@@ -448,9 +448,9 @@ namespace dftefe
       // the MatrixFree object for a dummy quadrature rule
       // and with default update flags
       //
-      dealii::MatrixFree<dim, ValueType> dealiiMatrixFree;
+      dealii::MatrixFree<dim, ValueTypeBasisCoeff> dealiiMatrixFree;
       FEBasisHandlerDealiiInternal::
-        setDealiiMatrixFreeLight<ValueType, memorySpace, dim>(
+        setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
           d_feBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
       size_type iConstraint = 0;
@@ -464,11 +464,11 @@ namespace dftefe
           // populate d_ghostIndicesMap
           //
           std::vector<global_size_type> ghostIndicesTmp(0);
-          FEBasisHandlerDealiiInternal::getGhostIndices<ValueType, dim>(
+          FEBasisHandlerDealiiInternal::getGhostIndices<ValueTypeBasisCoeff, dim>(
             dealiiMatrixFree, iConstraint, ghostIndicesTmp);
           const size_type numGhostIndices = ghostIndicesTmp.size();
           auto            globalSizeVector =
-            std::make_shared<typename BasisHandler<ValueType, memorySpace>::
+            std::make_shared<typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::
                                GlobalSizeTypeVector>(numGhostIndices);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             numGhostIndices, globalSizeVector->data(), ghostIndicesTmp.data());
@@ -488,7 +488,7 @@ namespace dftefe
           std::vector<size_type> locallyOwnedCellLocalIndicesTmp(
             cumulativeCellDofs, 0);
           FEBasisHandlerDealiiInternal::
-            getLocallyOwnedCellLocalIndices<ValueType, memorySpace, dim>(
+            getLocallyOwnedCellLocalIndices<ValueTypeBasisCoeff, memorySpace, dim>(
               d_feBMDealii.get(),
               mpiPatternP2P.get(),
               locallyOwnedCellGlobalIndicesTmp,
@@ -496,7 +496,7 @@ namespace dftefe
 
           size_type cumulativeDofs    = nCumulativeLocallyOwnedCellDofs();
           auto      sizeTypeVectorPtr = std::make_shared<
-            typename BasisHandler<ValueType, memorySpace>::SizeTypeVector>(
+            typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector>(
             cumulativeDofs, 0);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             cumulativeDofs,
@@ -505,9 +505,9 @@ namespace dftefe
 
           d_locallyOwnedCellLocalIndicesMap[constraintName] = sizeTypeVectorPtr;
 
-          std::shared_ptr<FEConstraintsDealii<ValueType, memorySpace, dim>>
+          std::shared_ptr<FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
             feBasisConstraintsDealiiOpt = std::make_shared<
-              FEConstraintsDealii<ValueType, memorySpace, dim>>();
+              FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
           feBasisConstraintsDealiiOpt->copyConstraintsData(*(it->second),
                                                            *mpiPatternP2P);
           feBasisConstraintsDealiiOpt->populateConstraintsData(*mpiPatternP2P);
@@ -525,20 +525,20 @@ namespace dftefe
         mappingDealii, *(d_feBMDealii->getDoFHandler()), d_supportPoints);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::isDistributed() const
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::isDistributed() const
     {
       return d_isDistributed;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const Constraints<ValueType, memorySpace> &
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getConstraints(
+    const Constraints<ValueTypeBasisCoeff, memorySpace> &
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getConstraints(
       const std::string constraintsName) const
     {
       auto it = d_feConstraintsDealiiOptMap.find(constraintsName);
@@ -554,11 +554,11 @@ namespace dftefe
       return *(it->second);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getMPIPatternP2P(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getMPIPatternP2P(
       const std::string constraintsName) const
     {
       auto it = d_mpiPatternP2PMap.find(constraintsName);
@@ -573,21 +573,21 @@ namespace dftefe
       return it->second;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::pair<global_size_type, global_size_type>
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getLocallyOwnedRange(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getLocallyOwnedRange(
       const std::string constraintsName) const
     {
       return d_locallyOwnedRange;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocal(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::nLocal(
       const std::string constraintsName) const
     {
       auto it = d_ghostIndicesMap.find(constraintsName);
@@ -605,21 +605,21 @@ namespace dftefe
       return (numLocallyOwned + numGhost);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwned(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::nLocallyOwned(
       const std::string constraintsName) const
     {
       return (d_locallyOwnedRange.second - d_locallyOwnedRange.first);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nGhost(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::nGhost(
       const std::string constraintsName) const
     {
       auto it = d_ghostIndicesMap.find(constraintsName);
@@ -635,11 +635,11 @@ namespace dftefe
       return numGhost;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisCenters(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getBasisCenters(
       const size_type       localId,
       const std::string     constraintsName,
       dftefe::utils::Point &basisCenter) const
@@ -658,31 +658,31 @@ namespace dftefe
                                 basisCenter);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCells()
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::nLocallyOwnedCells()
       const
     {
       return d_feBMDealii->nLocallyOwnedCells();
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       nCumulativeLocallyOwnedCellDofs() const
     {
       return d_feBMDealii->nCumulativeLocallyOwnedCellDofs();
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::nLocallyOwnedCellDofs(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::nLocallyOwnedCellDofs(
       const size_type cellId) const
     {
       DFTEFE_AssertWithMsg(
@@ -693,12 +693,12 @@ namespace dftefe
     }
 
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    const typename FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       GlobalSizeTypeVector &
-      FEBasisHandlerDealii<ValueType, memorySpace, dim>::getGhostIndices(
+      FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getGhostIndices(
         const std::string constraintsName) const
     {
       auto it = d_ghostIndicesMap.find(constraintsName);
@@ -714,11 +714,11 @@ namespace dftefe
     }
 
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::inLocallyOwnedRange(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::inLocallyOwnedRange(
       const global_size_type globalId,
       const std::string      constraintsName) const
     {
@@ -734,11 +734,11 @@ namespace dftefe
       return (it->second)->inLocallyOwnedRange(globalId);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::isGhostEntry(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::isGhostEntry(
       const global_size_type ghostId,
       const std::string      constraintsName) const
     {
@@ -754,11 +754,11 @@ namespace dftefe
       return (it->second)->isGhostEntry(ghostId);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::globalToLocalIndex(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::globalToLocalIndex(
       const global_size_type globalId,
       const std::string      constraintsName) const
     {
@@ -774,11 +774,11 @@ namespace dftefe
       return (it->second)->globalToLocal(globalId);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     global_size_type
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::localToGlobalIndex(
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::localToGlobalIndex(
       const size_type   localId,
       const std::string constraintsName) const
     {
@@ -797,25 +797,25 @@ namespace dftefe
     //
     // FE specific functions
     //
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType,
+    typename FEBasisHandlerDealii<ValueTypeBasisCoeff,
                                   memorySpace,
                                   dim>::const_GlobalIndexIter
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       locallyOwnedCellGlobalDofIdsBegin(const std::string constraintsName) const
     {
       return d_locallyOwnedCellGlobalIndices.begin();
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType,
+    typename FEBasisHandlerDealii<ValueTypeBasisCoeff,
                                   memorySpace,
                                   dim>::const_GlobalIndexIter
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       locallyOwnedCellGlobalDofIdsBegin(const size_type   cellId,
                                         const std::string constraintsName) const
     {
@@ -827,12 +827,12 @@ namespace dftefe
              d_locallyOwnedCellStartIds[cellId];
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    typename FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       const_GlobalIndexIter
-      FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+      FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
         locallyOwnedCellGlobalDofIdsEnd(const size_type   cellId,
                                         const std::string constraintsName) const
     {
@@ -845,13 +845,13 @@ namespace dftefe
              d_numLocallyOwnedCellDofs[cellId];
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType,
+    typename FEBasisHandlerDealii<ValueTypeBasisCoeff,
                                   memorySpace,
                                   dim>::const_LocalIndexIter
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       locallyOwnedCellLocalDofIdsBegin(const std::string constraintsName) const
     {
       auto it = d_locallyOwnedCellLocalIndicesMap.find(constraintsName);
@@ -862,13 +862,13 @@ namespace dftefe
       return (*(it->second)).begin();
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType,
+    typename FEBasisHandlerDealii<ValueTypeBasisCoeff,
                                   memorySpace,
                                   dim>::const_LocalIndexIter
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       locallyOwnedCellLocalDofIdsBegin(const size_type   cellId,
                                        const std::string constraintsName) const
     {
@@ -884,12 +884,12 @@ namespace dftefe
       return (*(it->second)).begin() + d_locallyOwnedCellStartIds[cellId];
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+    typename FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       const_LocalIndexIter
-      FEBasisHandlerDealii<ValueType, memorySpace, dim>::
+      FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
         locallyOwnedCellLocalDofIdsEnd(const size_type   cellId,
                                        const std::string constraintsName) const
     {
@@ -906,11 +906,11 @@ namespace dftefe
              d_numLocallyOwnedCellDofs[cellId];
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const BasisManager &
-    FEBasisHandlerDealii<ValueType, memorySpace, dim>::getBasisManager() const
+    FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getBasisManager() const
     {
       return *d_feBMDealii;
     }

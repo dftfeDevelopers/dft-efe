@@ -60,14 +60,14 @@ namespace dftefe
      * such as the basis function values on a quadrature grid, the overlap
      * matrix of the basis, etc.
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace>
     class BasisDataStorage
     {
     public:
       //
       // typedefs
       //
-      using Storage   = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      using Storage   = dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
       using pointer   = typename Storage::pointer;
       using reference = typename Storage::reference;
       using const_reference           = typename Storage::const_reference;

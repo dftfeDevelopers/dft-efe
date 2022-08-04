@@ -35,25 +35,25 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     class FEBasisOperationsInternal
     {
     public:
       static void
       copyFieldToCellWiseData(
-        const ValueType *             data,
+        const ValueTypeBasisCoeff *             data,
         const size_type               numComponents,
         const size_type *             cellLocalIdsStartPtr,
-        const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector &numCellDofs,
+        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
+        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage,
         const size_type               numComponents,
         const size_type *             cellLocalIdsStartPtr,
-        const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
-        ValueType *             data);
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector &numCellDofs,
+        ValueTypeBasisCoeff *             data);
 
 
     }; // end of class FEBasisOperationsInternal

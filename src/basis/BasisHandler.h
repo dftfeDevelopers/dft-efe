@@ -42,11 +42,11 @@ namespace dftefe
      * @brief An abstract class to encapsulate the partitioning
      * of a basis across multiple processors
      *
-     * @tparam ValueType the datatype for the constraints
+     * @tparam ValueTypeBasisCoeff the datatype for the constraints
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the data must reside.
      */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
     class BasisHandler
     {
       //
@@ -71,7 +71,7 @@ namespace dftefe
       virtual const BasisManager &
       getBasisManager() const = 0;
 
-      virtual const Constraints<ValueType, memorySpace> &
+      virtual const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>

@@ -37,13 +37,13 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
     class ConstraintsInternal
     {
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
@@ -54,12 +54,12 @@ namespace dftefe
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueType, memorySpace>
+        const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &constraintsInhomogenities);
 
       static void
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
@@ -73,7 +73,7 @@ namespace dftefe
 
       static void
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal);
@@ -81,13 +81,13 @@ namespace dftefe
 
 
 #ifdef DFTEFE_WITH_DEVICE
-    template <typename ValueType>
-    class ConstraintsInternal<ValueType, dftefe::utils::MemorySpace::DEVICE>
+    template <typename ValueTypeBasisCoeff>
+    class ConstraintsInternal<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
     {
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+        linearAlgebra::Vector<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type,
@@ -104,13 +104,13 @@ namespace dftefe
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueType,
+        const utils::MemoryStorage<ValueTypeBasisCoeff,
                                    dftefe::utils::MemorySpace::DEVICE>
           &constraintsInhomogenities);
 
       static void
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+        linearAlgebra::Vector<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type,
@@ -130,7 +130,7 @@ namespace dftefe
 
       static void
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueType, dftefe::utils::MemorySpace::DEVICE>
+        linearAlgebra::Vector<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type,

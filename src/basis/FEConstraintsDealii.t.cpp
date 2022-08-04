@@ -11,44 +11,44 @@ namespace dftefe
   namespace basis
   {
     // default constructor
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    FEConstraintsDealii<ValueType, memorySpace, dim>::FEConstraintsDealii()
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::FEConstraintsDealii()
       : d_isCleared(false)
       , d_isClosed(false)
     {
-      //      d_constraintMatrix = dealii::AffineConstraints<ValueType>();
+      //      d_constraintMatrix = dealii::AffineConstraints<ValueTypeBasisCoeff>();
     }
 
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::clear()
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::clear()
     {
       d_constraintMatrix.clear();
       d_isCleared = true;
       d_isClosed  = false;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::close()
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::close()
     {
       d_constraintMatrix.close();
       d_isCleared = false;
       d_isClosed  = true;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::makeHangingNodeConstraint(
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::makeHangingNodeConstraint(
       std::shared_ptr<FEBasisManager> feBasis)
     {
       utils::throwException(
@@ -74,13 +74,13 @@ namespace dftefe
       d_isClosed  = false;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::setInhomogeneity(
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::setInhomogeneity(
       global_size_type basisId,
-      ValueType        constraintValue)
+      ValueTypeBasisCoeff        constraintValue)
     {
       utils::throwException(
         !d_isClosed,
@@ -94,30 +94,30 @@ namespace dftefe
       d_isClosed  = false;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    FEConstraintsDealii<ValueType, memorySpace, dim>::isClosed() const
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::isClosed() const
     {
       return d_isClosed;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    FEConstraintsDealii<ValueType, memorySpace, dim>::isConstrained(
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::isConstrained(
       global_size_type basisId) const
     {
       return d_constraintMatrix.is_constrained(basisId);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setHomogeneousDirichletBC()
     {
       dealii::IndexSet locallyRelevantDofs;
@@ -166,53 +166,53 @@ namespace dftefe
         }     // cell locally owned
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const dealii::AffineConstraints<ValueType> &
-    FEConstraintsDealii<ValueType, memorySpace, dim>::getAffineConstraints()
+    const dealii::AffineConstraints<ValueTypeBasisCoeff> &
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::getAffineConstraints()
       const
     {
       return d_constraintMatrix;
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const std::vector<std::pair<global_size_type, ValueType>> *
-    FEConstraintsDealii<ValueType, memorySpace, dim>::getConstraintEntries(
+    const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::getConstraintEntries(
       const global_size_type lineDof) const
     {
       return d_constraintMatrix.get_constraint_entries(lineDof);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    FEConstraintsDealii<ValueType, memorySpace, dim>::
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       isInhomogeneouslyConstrained(const global_size_type lineDof) const
     {
       return (d_constraintMatrix.is_inhomogeneously_constrained(lineDof));
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    ValueType
-    FEConstraintsDealii<ValueType, memorySpace, dim>::getInhomogeneity(
+    ValueTypeBasisCoeff
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::getInhomogeneity(
       const global_size_type lineDof) const
     {
       return (d_constraintMatrix.get_inhomogeneity(lineDof));
     }
 
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::copyConstraintsData(
-      const Constraints<ValueType, memorySpace> &   constraintsDataIn,
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::copyConstraintsData(
+      const Constraints<ValueTypeBasisCoeff, memorySpace> &   constraintsDataIn,
       const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern)
     {
       this->clear();
@@ -232,7 +232,7 @@ namespace dftefe
                   this->setInhomogeneity(
                     lineDof, constraintsDataIn.getInhomogeneity(lineDof));
                 }
-              const std::vector<std::pair<global_size_type, ValueType>>
+              const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
                 *rowData = constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -269,7 +269,7 @@ namespace dftefe
                   this->setInhomogeneity(
                     lineDof, constraintsDataIn.getInhomogeneity(lineDof));
                 }
-              const std::vector<std::pair<global_size_type, ValueType>>
+              const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
                 *rowData = constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -298,11 +298,11 @@ namespace dftefe
     }
 
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::populateConstraintsData(
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::populateConstraintsData(
       const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern)
     {
       bool printWarning = false;
@@ -314,7 +314,7 @@ namespace dftefe
       std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
 
       std::vector<double>    columnConstraintsValuesTmp;
-      std::vector<ValueType> constraintsInhomogenitiesTmp;
+      std::vector<ValueTypeBasisCoeff> constraintsInhomogenitiesTmp;
 
       std::vector<size_type> rowConstraintsSizesTmp;
 
@@ -329,7 +329,7 @@ namespace dftefe
           if (this->isConstrained(locallyOwnedId))
             {
               const global_size_type lineDof = locallyOwnedId;
-              const std::vector<std::pair<global_size_type, ValueType>>
+              const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
                 *rowData = this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -378,7 +378,7 @@ namespace dftefe
             {
               const global_size_type lineDof = *ghostIter;
 
-              const std::vector<std::pair<global_size_type, ValueType>>
+              const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
                 *rowData = this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -472,36 +472,36 @@ namespace dftefe
         rowConstraintsSizesTmp.data());
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::addEntries(
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::addEntries(
       const global_size_type constrainedDofIndex,
-      const std::vector<std::pair<global_size_type, ValueType>> &colWeightPairs)
+      const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> &colWeightPairs)
     {
       d_constraintMatrix.add_entries(constrainedDofIndex, colWeightPairs);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::addLine(
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::addLine(
       const global_size_type lineDof)
     {
       d_constraintMatrix.add_line(lineDof);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::distributeParentToChild(
-      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::distributeParentToChild(
+      linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
       size_type                                      blockSize) const
     {
-      ConstraintsInternal<ValueType, memorySpace>::
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsDistributeParentToChild(vectorData,
                                            blockSize,
                                            d_rowConstraintsIdsLocal,
@@ -512,15 +512,15 @@ namespace dftefe
                                            d_constraintsInhomogenities);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::distributeChildToParent(
-      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::distributeChildToParent(
+      linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
       size_type                                      blockSize) const
     {
-      ConstraintsInternal<ValueType, memorySpace>::
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsDistributeChildToParent(vectorData,
                                            blockSize,
                                            d_rowConstraintsIdsLocal,
@@ -530,15 +530,15 @@ namespace dftefe
                                            d_columnConstraintsValues);
     }
 
-    template <typename ValueType,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEConstraintsDealii<ValueType, memorySpace, dim>::setConstrainedNodesToZero(
-      linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::setConstrainedNodesToZero(
+      linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
       size_type                                      blockSize) const
     {
-      ConstraintsInternal<ValueType, memorySpace>::
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsSetConstrainedNodesToZero(vectorData,
                                              blockSize,
                                              d_rowConstraintsIdsLocal);

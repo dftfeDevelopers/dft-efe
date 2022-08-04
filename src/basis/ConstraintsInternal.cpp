@@ -31,11 +31,11 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
     void
-    ConstraintsInternal<ValueType, memorySpace>::
+    ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
@@ -46,10 +46,10 @@ namespace dftefe
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueType, memorySpace>
+        const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &constraintsInhomogenities)
     {
-      std::vector<ValueType> newValuesBlock(blockSize, 0.0);
+      std::vector<ValueTypeBasisCoeff> newValuesBlock(blockSize, 0.0);
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
           std::fill(newValuesBlock.begin(),
@@ -73,7 +73,7 @@ namespace dftefe
                 ((*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) *
                  blockSize);
 
-              ValueType alpha =
+              ValueTypeBasisCoeff alpha =
                 *(columnConstraintsValues.begin() + columnIndexStart + j);
 
               // TODO check if this performance efficient
@@ -92,11 +92,11 @@ namespace dftefe
         }
     }
 
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
     void
-    ConstraintsInternal<ValueType, memorySpace>::
+    ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
@@ -121,7 +121,7 @@ namespace dftefe
                 (*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) *
                 blockSize;
 
-              ValueType alpha =
+              ValueTypeBasisCoeff alpha =
                 (*(columnConstraintsValues.begin() + columnIndexStart + j));
               for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
                 {
@@ -141,11 +141,11 @@ namespace dftefe
         }
     }
 
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
     void
-    ConstraintsInternal<ValueType, memorySpace>::
+    ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueType, memorySpace> &vectorData,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         const size_type                                blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal)
