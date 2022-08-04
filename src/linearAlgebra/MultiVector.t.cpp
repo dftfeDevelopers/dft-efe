@@ -458,6 +458,13 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::setValue(const ValueType val)
+    {
+      d_storage->setValue(val);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     std::vector<double>
     MultiVector<ValueType, memorySpace>::l2Norms() const
     {

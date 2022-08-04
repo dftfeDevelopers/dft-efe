@@ -86,15 +86,20 @@ namespace dftefe
        */
       ~MemoryStorage();
 
-
       /**
-       * @brief Return iterator pointing to the beginning of point
-       * data.
-       *
-       * @returns Iterator pointing to the beginning of Vector.
+       * @brief Set all the entries to a given value
+       * @param[in] val The value to which the entries are to be set
        */
-      iterator
-      begin();
+      void
+      setValue(const ValueType val)
+
+        /**
+         * @brief Return iterator pointing to the beginning of point
+         * data.
+         *
+         * @returns Iterator pointing to the beginning of Vector.
+         */
+        iterator begin();
 
       /**
        * @brief Return iterator pointing to the beginning of Vector

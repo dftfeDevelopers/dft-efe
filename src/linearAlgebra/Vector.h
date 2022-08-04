@@ -323,6 +323,14 @@ namespace dftefe
       operator=(Vector &&u);
 
       /**
+       * @brief Set all the entries of the Vector to a given value
+       * @param[in] val The value to which all the entries in the Vector are
+       * to be set
+       */
+      void
+      setValue(const ValueType val);
+
+      /**
        * @brief Returns \f$ l_2 \f$ norm of the Vector
        * @return \f$ l_2 \f$  norm of the vector
        */

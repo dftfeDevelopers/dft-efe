@@ -356,38 +356,44 @@ namespace dftefe
       operator=(MultiVector &&u);
 
       /**
+       * @brief Set all entries of the MultiVector to a given value
+       *
+       * @param[in] val The value to which the entries are to be set
+       */
+      void
+      setValue(const ValueType val);
+
+      /**
        * @brief Returns \f$ l_2 \f$ norms of all the \f$N\f$ vectors in the  MultiVector
        * @return \f$ l_2 \f$  norms of the various vectors as std::vector<double> type
        */
       std::vector<double>
-      l2Norms() const override;
+      l2Norms() const;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norms of all the \f$N\f$ vectors in the  MultiVector
        * @return \f$ l_{\inf} \f$  norms of the various vectors as std::vector<double> type
        */
       std::vector<double>
-      lInfNorms() const override;
+      lInfNorms() const;
 
       void
-      updateGhostValues(const size_type communicationChannel = 0) override;
+      updateGhostValues(const size_type communicationChannel = 0);
 
       void
-      accumulateAddLocallyOwned(
-        const size_type communicationChannel = 0) override;
+      accumulateAddLocallyOwned(const size_type communicationChannel = 0);
 
       void
-      updateGhostValuesBegin(const size_type communicationChannel = 0) override;
+      updateGhostValuesBegin(const size_type communicationChannel = 0);
 
       void
-      updateGhostValuesEnd() override;
+      updateGhostValuesEnd();
 
       void
-      accumulateAddLocallyOwnedBegin(
-        const size_type communicationChannel = 0) override;
+      accumulateAddLocallyOwnedBegin(const size_type communicationChannel = 0);
 
       void
-      accumulateAddLocallyOwnedEnd() override;
+      accumulateAddLocallyOwnedEnd();
 
     private:
       std::unique_ptr<Storage>      d_storage;

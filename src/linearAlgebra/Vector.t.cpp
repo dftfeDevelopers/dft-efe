@@ -443,6 +443,13 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    Vector<ValueType, memorySpace>::setValue(const ValueType val)
+    {
+      d_storage->setValue(val);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     Vector<ValueType, memorySpace>::l2Norm() const
     {
