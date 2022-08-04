@@ -41,19 +41,20 @@ namespace dftefe
     public:
       static void
       copyFieldToCellWiseData(
-        const ValueType *             data,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
+        const ValueType *data,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
         const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
+        const dftefe::utils::MemoryStorage<ValueType, memorySpace>
+          &              cellWiseStorage,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
         const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
-        ValueType *             data);
+        ValueType *                                                 data);
 
 
     }; // end of class FEBasisOperationsInternal

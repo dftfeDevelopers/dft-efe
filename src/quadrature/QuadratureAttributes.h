@@ -140,9 +140,10 @@ namespace dftefe
       getNum1DPoints() const;
       bool
       operator<(const QuadratureRuleAttributes &quadratureRuleAttributes) const;
-      
+
       bool
-      operator==(const QuadratureRuleAttributes &quadratureRuleAttributes) const;
+      operator==(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const;
 
     private:
       QuadratureFamily d_quadratureFamily;

@@ -58,7 +58,7 @@ namespace dftefe
     {
       const BasisHandler<ValueType, memorySpace> &basisHandler =
         field.getBasisHandler();
-      
+
       const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
         dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
           basisHandler);
@@ -66,7 +66,7 @@ namespace dftefe
         &feBasisHandler != nullptr,
         "Could not cast BasisHandler of the input Field to FEBasisHandler in "
         "FEBasisOperations.interpolate()");
-      
+
       const BasisManager &basisManagerField = basisHandler.getBasisManager();
       const BasisManager &basisManagerDataStorage =
         d_feBasisDataStorage->getBasisManager();
@@ -74,7 +74,7 @@ namespace dftefe
         &basisManagerField == &basisManagerDataStorage,
         "Mismatch in BasisManager used in the Field and the BasisDataStorage "
         "in FEBasisOperations.interpolate().");
-      
+
       const FEBasisManager &feBasisManager =
         dynamic_cast<const FEBasisManager &>(basisManagerField);
       utils::throwException(
@@ -125,9 +125,9 @@ namespace dftefe
       // @note: The Be matrix is stored with the quad point as the fastest
       // index. That is Be_kj (k-th basis function value at j-th quad point in
       // e-th cell) is stored in a row-major format. Instead of copying it to a
-      // column major format (which is assumed native format for Blas/Lapack data), 
-      // we use the transpose of Be matrix. That is, we
-      // perform Ce = Ae*(Be)^T, with Be stored in row major format
+      // column major format (which is assumed native format for Blas/Lapack
+      // data), we use the transpose of Be matrix. That is, we perform Ce =
+      // Ae*(Be)^T, with Be stored in row major format
       //
       const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
       linearAlgebra::blasLapack::Layout layout =
@@ -272,26 +272,27 @@ namespace dftefe
             }
         }
     }
-    
+
     template <typename ValueType, utils::MemorySpace memorySpace, size_type dim>
     void
     FEBasisOperations<ValueType, memorySpace, dim>::integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueType, memorySpace> & inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueType, memorySpace> &             f) const
+      const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &inp,
+      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+      Field<ValueType, memorySpace> &             f) const
     {
-        const quadrature::QuadratureRuleContainer & quadRuleContainer = 
-            inp.getQuadratureRuleContainer();
-        const quadrature::QuadratureRuleAttributes & quadratureRuleAttributesInp =
-            quadratureRuleContainer.getQuadratureRuleAttributes();
-        utils::throwException(quadratureRuleAttributes == quadratureRuleAttributesInp,
-                "Mismatch in the underlying QuadratureRuleAttributes of the "
-                "input QuadratureValuesContainer and the one passed to the "
-                " FEBasisOperations::integrateWithBasisValues function");
+      const quadrature::QuadratureRuleContainer &quadRuleContainer =
+        inp.getQuadratureRuleContainer();
+      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributesInp =
+        quadratureRuleContainer.getQuadratureRuleAttributes();
+      utils::throwException(
+        quadratureRuleAttributes == quadratureRuleAttributesInp,
+        "Mismatch in the underlying QuadratureRuleAttributes of the "
+        "input QuadratureValuesContainer and the one passed to the "
+        " FEBasisOperations::integrateWithBasisValues function");
 
       const BasisHandler<ValueType, memorySpace> &basisHandler =
         field.getBasisHandler();
-      
+
       const FEBasisHandler<ValueType, memorySpace, dim> &feBasisHandler =
         dynamic_cast<const FEBasisHandler<ValueType, memorySpace, dim> &>(
           basisHandler);
@@ -299,7 +300,7 @@ namespace dftefe
         &feBasisHandler != nullptr,
         "Could not cast BasisHandler of the input Field to FEBasisHandler in "
         "FEBasisOperations.interpolate()");
-      
+
       const BasisManager &basisManagerField = basisHandler.getBasisManager();
       const BasisManager &basisManagerDataStorage =
         d_feBasisDataStorage->getBasisManager();
@@ -307,7 +308,7 @@ namespace dftefe
         &basisManagerField == &basisManagerDataStorage,
         "Mismatch in BasisManager used in the Field and the BasisDataStorage "
         "in FEBasisOperations.interpolate().");
-      
+
       const FEBasisManager &feBasisManager =
         dynamic_cast<const FEBasisManager &>(basisManagerField);
       utils::throwException(
@@ -316,41 +317,42 @@ namespace dftefe
         "in FEBasisOperations.interpolate()");
 
 
-      auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
+      auto jxwStorage =
+        d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
 
-//      template <typename ValueType,
-//                typename dftefe::utils::MemorySpace memorySpace>
-//      void
-//      hadamardProduct(size_type                     n,
-//                      const ValueType *             x,
-//                      const ValueType *             y,
-//                      ValueType *                   z,
-//                      LinAlgOpContext<memorySpace> &context);
-//
-//
-//       for ( iCell : cell loop )
-//         for ( iNode : nodel loop )
-//           cellWiseStorage (iCell, iNode ) = 0.0;
-//           for ( jQuad : quad loop )
-//             cellWiseStorage (iCell, iNode ) += shape_func(iCell,iNode,jQuad)*inp(iCell,jQuad)*JxW(iCell,Jquad);
+      //      template <typename ValueType,
+      //                typename dftefe::utils::MemorySpace memorySpace>
+      //      void
+      //      hadamardProduct(size_type                     n,
+      //                      const ValueType *             x,
+      //                      const ValueType *             y,
+      //                      ValueType *                   z,
+      //                      LinAlgOpContext<memorySpace> &context);
+      //
+      //
+      //       for ( iCell : cell loop )
+      //         for ( iNode : nodel loop )
+      //           cellWiseStorage (iCell, iNode ) = 0.0;
+      //           for ( jQuad : quad loop )
+      //             cellWiseStorage (iCell, iNode ) +=
+      //             shape_func(iCell,iNode,jQuad)*inp(iCell,jQuad)*JxW(iCell,Jquad);
 
 
       // check the arguments properly
-      FEBasisOperationInernal<ValueType, memorySpace>::addCellWiseDataToFieldData(
-        cellWiseStorage,
-        numComponents,
-        cellLocalIdsStartPtr,
-        numCellDofs,
-        data);
+      FEBasisOperationInernal<ValueType, memorySpace>::
+        addCellWiseDataToFieldData(cellWiseStorage,
+                                   numComponents,
+                                   cellLocalIdsStartPtr,
+                                   numCellDofs,
+                                   data);
 
-      // Function to add the values to the local node from its corresponding ghost nodes from other processors.
+      // Function to add the values to the local node from its corresponding
+      // ghost nodes from other processors.
       f.accumulateAddLocallyOwned();
 
-      // function to do a static condensation to send the constraint nodes to its parent nodes
+      // function to do a static condensation to send the constraint nodes to
+      // its parent nodes
       f.applyConstraintsChildToParent();
-
-
-
     }
 
 

@@ -61,7 +61,7 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &quadValuesContainer) const override;
-      
+
       virtual void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &f,

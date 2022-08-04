@@ -29,10 +29,10 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
     FEBasisOperationsInternal<ValueType, memorySpace>::copyFieldToCellWiseData(
-      const ValueType *                             data,
-      const size_type                               numComponents,
-      const size_type *                             cellLocalIdsStartPtr,
-      const BasisHandler<ValueType, memorySpace>::SizeTypeVector &                numCellDofs,
+      const ValueType *data,
+      const size_type  numComponents,
+      const size_type *cellLocalIdsStartPtr,
+      const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
       utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
@@ -56,12 +56,13 @@ namespace dftefe
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsInternal<ValueType, memorySpace>::addCellWiseDataToFieldData(
-      const utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
-      const size_type                               numComponents,
-      const size_type *                             cellLocalIdsStartPtr,
-      const BasisHandler<ValueType, memorySpace>::SizeTypeVector &               numCellDofs,
-      ValueType *                             data)
+    FEBasisOperationsInternal<ValueType, memorySpace>::
+      addCellWiseDataToFieldData(
+        const utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
+        const size_type                                     numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
+        ValueType *                                                 data)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
       const size_type numCells               = numCellDofs.size();
@@ -77,9 +78,9 @@ namespace dftefe
                             (cumulativeCellDofs + iDof) * numComponents;
               auto dstPtr = data + localId * numComponents;
 
-              for (size_type iComp = 0; iComp < numComponents ; iComp++)
+              for (size_type iComp = 0; iComp < numComponents; iComp++)
                 {
-                  *(dstPtr + iComp ) += *(srcPtr + iComp);
+                  *(dstPtr + iComp) += *(srcPtr + iComp);
                 }
             }
           cumulativeCellDofs += cellDofs;

@@ -54,9 +54,9 @@ namespace dftefe
       // create the vector
       //
 
-      d_vector = std::make_shared<
-        linearAlgebra::Vector<ValueType, memorySpace>>(
-        mpiPatternP2P, d_linAlgOpContext, ValueType());
+      d_vector =
+        std::make_shared<linearAlgebra::Vector<ValueType, memorySpace>>(
+          mpiPatternP2P, d_linAlgOpContext, ValueType());
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>

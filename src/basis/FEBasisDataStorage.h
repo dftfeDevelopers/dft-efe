@@ -124,9 +124,8 @@ namespace dftefe
         const size_type                 cellId) const = 0;
 
       virtual Storage
-      getJxWInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const = 0;
+      getJxWInCell(const QuadratureRuleAttributes &quadratureRuleAttributes,
+                   const size_type                 cellId) const = 0;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
