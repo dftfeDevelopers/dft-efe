@@ -154,7 +154,6 @@ namespace dftefe
           utils::MemoryStorage<ValueType, memorySpace> fieldCellValues(
             numCumulativeDofsCellsInBlock * numComponents);
 
-          dftefe::size_type testLocalId = 0;
           FEBasisOperationsInternal<ValueType, memorySpace>::
             copyFieldToCellWiseData(field.begin(),
                                     numComponents,
