@@ -86,6 +86,12 @@ namespace dftefe
        */
       ~MemoryStorage();
 
+      /**
+       * @brief Set all the entries to a given value
+       * @param[in] val The value to which the entries are to be set
+       */
+      void
+      setValue(const ValueType val);
 
       /**
        * @brief Return iterator pointing to the beginning of point
