@@ -123,6 +123,11 @@ namespace dftefe
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
 
+      virtual Storage
+      getJxWInCell(
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                 cellId) const = 0;
+
       // functions to get data for all basis functions on all quad points in all
       // cells
       virtual const Storage &
@@ -133,6 +138,10 @@ namespace dftefe
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
       virtual const Storage &
       getBasisHessianDataInAllCells(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+
+      virtual const Storage &
+      getJxWInAllCells(
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       // get overlap of two basis functions in a cell

@@ -317,6 +317,40 @@ namespace dftefe
         "in FEBasisOperations.interpolate()");
 
 
+      auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
+
+//      template <typename ValueType,
+//                typename dftefe::utils::MemorySpace memorySpace>
+//      void
+//      hadamardProduct(size_type                     n,
+//                      const ValueType *             x,
+//                      const ValueType *             y,
+//                      ValueType *                   z,
+//                      LinAlgOpContext<memorySpace> &context);
+//
+//
+//       for ( iCell : cell loop )
+//         for ( iNode : nodel loop )
+//           cellWiseStorage (iCell, iNode ) = 0.0;
+//           for ( jQuad : quad loop )
+//             cellWiseStorage (iCell, iNode ) += shape_func(iCell,iNode,jQuad)*inp(iCell,jQuad)*JxW(iCell,Jquad);
+
+
+      // check the arguments properly
+      FEBasisOperationInernal<ValueType, memorySpace>::addCellWiseDataToFieldData(
+        cellWiseStorage,
+        numComponents,
+        cellLocalIdsStartPtr,
+        numCellDofs,
+        data);
+
+      // Function to add the values to the local node from its corresponding ghost nodes from other processors.
+      f.accumulateAddLocallyOwned();
+
+      // function to do a static condensation to send the constraint nodes to its parent nodes
+      f.applyConstraintsChildToParent();
+
+
 
     }
 

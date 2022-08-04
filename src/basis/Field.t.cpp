@@ -53,22 +53,10 @@ namespace dftefe
       //
       // create the vector
       //
-      if (d_basisHandler->isDistributed())
-        {
-          d_vector = std::make_shared<
-            linearAlgebra::DistributedVector<ValueType, memorySpace>>(
-            mpiPatternP2P, d_linAlgOpContext, ValueType());
-        }
-      else
-        {
-          auto locallyOwnedRange =
-            d_basisHandler->getLocallyOwnedRange(d_constraintsName);
-          const size_type size =
-            locallyOwnedRange.second - locallyOwnedRange.first;
-          d_vector = std::make_shared<
-            linearAlgebra::SerialVector<ValueType, memorySpace>>(
-            size, d_linAlgOpContext, ValueType());
-        }
+
+      d_vector = std::make_shared<
+        linearAlgebra::Vector<ValueType, memorySpace>>(
+        mpiPatternP2P, d_linAlgOpContext, ValueType());
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>

@@ -44,8 +44,17 @@ namespace dftefe
         const ValueType *             data,
         const size_type               numComponents,
         const size_type *             cellLocalIdsStartPtr,
-        const std::vector<size_type> &numCellDofs,
+        const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
+
+      static void
+      addCellWiseDataToFieldData(
+        const dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
+        const size_type               numComponents,
+        const size_type *             cellLocalIdsStartPtr,
+        const BasisHandler<ValueType, memorySpace>::SizeTypeVector &numCellDofs,
+        ValueType *             data);
+
 
     }; // end of class FEBasisOperationsInternal
   }    // end of namespace basis
