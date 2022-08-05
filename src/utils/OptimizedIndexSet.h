@@ -39,10 +39,6 @@ namespace dftefe
      * are fewer compared to the size of the index set. If the number of
      * contiguous sub-ranges competes with the size of the index set (i.e., the
      * index set is very random) then it default to the behavior of an std::set.
-     * The default to STL set is governed by the numRangesToSetSizeTol value.
-     * That is, if the ratio of number of contiguous ranges to the size of index
-     * set exceeds numRangesToSetSizeTol, it defaults to the behavior of STL
-     * set. The default value for numRangesToSetSizeTol is 0.1
      *
      * @tparam ValueType The data type of the indices (e.g., unsigned int, unsigned long int)
      */
@@ -51,6 +47,12 @@ namespace dftefe
     class OptimizedIndexSet
     {
     public:
+      /**
+       * @brief Constructor
+       *
+       * @param[in] inputSet A set of unsigned int or unsigned long int
+       * for which an OptimizedIndexSet is to be created
+       */
       OptimizedIndexSet(const std::set<T> &inputSet = std::set<T>());
       ~OptimizedIndexSet() = default;
 
@@ -73,6 +75,9 @@ namespace dftefe
       /// Vector of size d_numContiguousRanges which stores the accumulated
       /// number of elements in d_set prior to the i-th contiguous range
       std::vector<size_type> d_numEntriesBefore;
+
+      bool
+      operator==(const OptimizedIndexSet<T> &rhs) const;
     };
 
   } // end of namespace utils

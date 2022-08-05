@@ -395,6 +395,9 @@ namespace dftefe
       void
       accumulateAddLocallyOwnedEnd();
 
+      bool
+      isCompatible(const MultiVector<ValueType, memorySpace> &rhs) const;
+
     private:
       std::unique_ptr<Storage>      d_storage;
       LinAlgOpContext<memorySpace> *d_linAlgOpContext;
