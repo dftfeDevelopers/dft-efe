@@ -31,9 +31,15 @@ namespace dftefe
 {
   namespace utils
   {
+    //
+    // Constructor
+    //
     template <typename T>
-    OptimizedIndexSet<T>::OptimizedIndexSet(const std::set<T> &inputSet)
-      : d_contiguousRanges(0)
+    OptimizedIndexSet<T>::OptimizedIndexSet(
+      const std::set<T> &inputSet /*=std::set<T>()*/)
+      : d_numContiguousRanges(0)
+      , d_contiguousRanges(0)
+      , d_numEntriesBefore(0)
     {
       bool isValid = std::is_same<size_type, T>::value ||
                      std::is_same<global_size_type, T>::value;
@@ -103,17 +109,30 @@ namespace dftefe
        * index lies
        */
 
-      auto      up    = std::upper_bound(d_contiguousRanges.begin(),
+      auto up = std::upper_bound(d_contiguousRanges.begin(),
                                  d_contiguousRanges.end(),
                                  index);
-      size_type upPos = std::distance(d_contiguousRanges.begin(), up);
-      if (upPos % 2 == 1)
+      if (up != d_contiguousRanges.end())
         {
-          found             = true;
-          size_type rangeId = upPos / 2;
-          pos =
-            d_numEntriesBefore[rangeId] + index - d_contiguousRanges[upPos - 1];
+          size_type upPos = std::distance(d_contiguousRanges.begin(), up);
+          if (upPos % 2 == 1)
+            {
+              found             = true;
+              size_type rangeId = upPos / 2;
+              pos               = d_numEntriesBefore[rangeId] + index -
+                    d_contiguousRanges[upPos - 1];
+            }
         }
+    }
+
+    template <typename T>
+    bool
+    OptimizedIndexSet<T>::getPosition(const OptimizedIndexSet<T> &rhs) const
+    {
+      if (d_numContiguousRanges != rhs.d_numContiguousRanges)
+        return false;
+      else
+        return (d_contiguousRanges == rhs.d_contiguousRanges);
     }
   } // end of namespace utils
 } // end of namespace dftefe

@@ -539,6 +539,25 @@ namespace dftefe
       d_mpiCommunicatorP2P->accumulateAddLocallyOwnedEnd(*d_storage);
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    bool
+    Vector<ValueType, memorySpace>::isCompatible(
+      const Vector<ValueType, memorySpace> &rhs)
+    {
+      if (d_vectorAttributes.areDistributionCompatible(
+            rhs.d_vectorAttributes) == false)
+        return false;
+      else if (d_globalSize != rhs.d_globalSize)
+        return false;
+      else if (d_localSize != rhs.d_localSize)
+        return false;
+      else if (d_locallyOwnedSize != rhs.d_locallyOwnedSize)
+        return false;
+      else if (d_ghostSize != rhs.d_ghostSize)
+        return false;
+      else
+        return (d_mpiPatternP2P->isCompatible(*(rhs.d_mpiPatternP2P)));
+    }
 
 
     //
