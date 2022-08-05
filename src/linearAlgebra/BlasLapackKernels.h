@@ -15,8 +15,12 @@ namespace dftefe
       /**
        * @brief namespace class for BlasLapack kernels not present in blaspp.
        */
-      namespace kernels
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      class KernelsTwoValueTypes
       {
+      public:
         /**
          * @brief Template for performing \f$ z = \alpha x$
          * @param[in] size size of the array
@@ -24,9 +28,6 @@ namespace dftefe
          * @param[in] x array
          * @param[out] z array
          */
-        template <typename ValueType1,
-                  typename ValueType2,
-                  dftefe::utils::MemorySpace memorySpace>
         static void
         ascale(size_type                            size,
                ValueType1                           alpha,
@@ -40,9 +41,6 @@ namespace dftefe
          * @param[in] y array
          * @param[out] z array
          */
-        template <typename ValueType1,
-                  typename ValueType2,
-                  dftefe::utils::MemorySpace memorySpace>
         static void
         hadamardProduct(size_type                            size,
                         const ValueType1 *                   x,
@@ -58,9 +56,6 @@ namespace dftefe
          * @param[in] y array
          * @param[out] z array
          */
-        template <typename ValueType1,
-                  typename ValueType2,
-                  dftefe::utils::MemorySpace memorySpace>
         static void
         axpby(size_type                            size,
               scalar_type<ValueType1, ValueType2>  alpha,
@@ -68,8 +63,12 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
+      };
 
-
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      class KernelsOneValueType
+      {
+      public:
         /**
          * @brief Template for computing \f$ l_{\inf} \f$ norms of all the numVec vectors in a multi Vector
          * @param[in] vecSize size of each vector
@@ -79,7 +78,6 @@ namespace dftefe
          *
          * @return \f$ l_{\inf} \f$  norms of all the vectors
          */
-        template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
         static std::vector<double>
         amaxsMultiVector(size_type        vecSize,
                          size_type        numVec,
@@ -94,15 +92,64 @@ namespace dftefe
          *
          * @return \f$ l_2 \f$  norms of all the vectors
          */
-        template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
         static std::vector<double>
         nrms2MultiVector(size_type               vecSize,
                          size_type               numVec,
                          const ValueType *       multiVecData,
                          BlasQueue<memorySpace> &BlasQueue);
-      } // namespace kernels
-    }   // namespace blasLapack
-  }     // namespace linearAlgebra
+      };
+
+#ifdef DFTEFE_WITH_DEVICE
+      template <typename ValueType1, typename ValueType2>
+      class KernelsTwoValueTypes<ValueType1,
+                                 ValueType2,
+                                 dftefe::utils::MemorySpace::DEVICE>
+      {
+      public:
+        static void
+        ascale(size_type                            size,
+               ValueType1                           alpha,
+               const ValueType2 *                   x,
+               scalar_type<ValueType1, ValueType2> *z);
+
+
+        static void
+        hadamardProduct(size_type                            size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        scalar_type<ValueType1, ValueType2> *z);
+
+        static void
+        axpby(size_type                            size,
+              scalar_type<ValueType1, ValueType2>  alpha,
+              const ValueType1 *                   x,
+              scalar_type<ValueType1, ValueType2>  beta,
+              const ValueType2 *                   y,
+              scalar_type<ValueType1, ValueType2> *z);
+      };
+
+      template <typename ValueType>
+      class KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>
+      {
+      public:
+        static std::vector<double>
+        amaxsMultiVector(size_type        vecSize,
+                         size_type        numVec,
+                         const ValueType *multiVecData);
+
+
+        static std::vector<double>
+        nrms2MultiVector(
+          size_type                                      vecSize,
+          size_type                                      numVec,
+          const ValueType *                              multiVecData,
+          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
+      };
+
+#endif
+
+    } // namespace blasLapack
+  }   // namespace linearAlgebra
 } // namespace dftefe
 
 #endif // dftefeKernels_h
