@@ -57,6 +57,32 @@ namespace dftefe
 
 
     }; // end of class FEBasisOperationsInternal
+
+
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueTypeBasisCoeff>
+    class FEBasisOperationsInternal
+    {
+    public:
+      static void
+      copyFieldToCellWiseData(
+        const ValueTypeBasisCoeff *             data,
+        const size_type               numComponents,
+        const size_type *             cellLocalIdsStartPtr,
+        const BasisHandler<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE> &cellWiseStorage);
+
+      static void
+      addCellWiseDataToFieldData(
+        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE> &cellWiseStorage,
+        const size_type               numComponents,
+        const size_type *             cellLocalIdsStartPtr,
+        const BasisHandler<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        ValueTypeBasisCoeff *             data);
+
+
+    }; // end of class FEBasisOperationsInternal
+#endif
   }    // end of namespace basis
 } // end of namespace dftefe
 #include <basis/FEBasisOperationsInternal.t.cpp>
