@@ -58,7 +58,6 @@ namespace dftefe
     {
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
-      
       const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &feBasisHandler =
         dynamic_cast<const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
           basisHandler);
@@ -66,7 +65,7 @@ namespace dftefe
         &feBasisHandler != nullptr,
         "Could not cast BasisHandler of the input Field to FEBasisHandler in "
         "FEBasisOperations.interpolate()");
-      
+
       const BasisManager &basisManagerField = basisHandler.getBasisManager();
       const BasisManager &basisManagerDataStorage =
         d_feBasisDataStorage->getBasisManager();
@@ -74,7 +73,7 @@ namespace dftefe
         &basisManagerField == &basisManagerDataStorage,
         "Mismatch in BasisManager used in the Field and the BasisDataStorage "
         "in FEBasisOperations.interpolate().");
-      
+
       const FEBasisManager &feBasisManager =
         dynamic_cast<const FEBasisManager &>(basisManagerField);
       utils::throwException(
@@ -125,9 +124,9 @@ namespace dftefe
       // @note: The Be matrix is stored with the quad point as the fastest
       // index. That is Be_kj (k-th basis function value at j-th quad point in
       // e-th cell) is stored in a row-major format. Instead of copying it to a
-      // column major format (which is assumed native format for Blas/Lapack data), 
-      // we use the transpose of Be matrix. That is, we
-      // perform Ce = Ae*(Be)^T, with Be stored in row major format
+      // column major format (which is assumed native format for Blas/Lapack
+      // data), we use the transpose of Be matrix. That is, we perform Ce =
+      // Ae*(Be)^T, with Be stored in row major format
       //
       const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
       linearAlgebra::blasLapack::Layout layout =
@@ -154,7 +153,6 @@ namespace dftefe
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> fieldCellValues(
             numCumulativeDofsCellsInBlock * numComponents);
 
-          dftefe::size_type testLocalId = 0;
           FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
             copyFieldToCellWiseData(field.begin(),
                                     numComponents,
@@ -301,7 +299,7 @@ namespace dftefe
         &feBasisHandler != nullptr,
         "Could not cast BasisHandler of the input Field to FEBasisHandler in "
         "FEBasisOperations interpolate()");
-      
+
       const BasisManager &basisManagerField = basisHandler.getBasisManager();
       const BasisManager &basisManagerDataStorage =
         d_feBasisDataStorage->getBasisManager();
@@ -309,7 +307,6 @@ namespace dftefe
         &basisManagerField == &basisManagerDataStorage,
         "Mismatch in BasisManager used in the Field and the BasisDataStorage "
         "in FEBasisOperations interpolate().");
-      
       const FEBasisManager &feBasisManager =
         dynamic_cast<const FEBasisManager &>(basisManagerField);
       utils::throwException(
@@ -541,17 +538,14 @@ namespace dftefe
 //             cellWiseStorage (iCell, iNode ) += shape_func(iCell,iNode,jQuad)*inp(iCell,jQuad)*JxW(iCell,Jquad);
 
 
-      // check the arguments properly
 
 
       // Function to add the values to the local node from its corresponding ghost nodes from other processors.
       f.accumulateAddLocallyOwned();
 
-      // function to do a static condensation to send the constraint nodes to its parent nodes
+      // function to do a static condensation to send the constraint nodes to
+      // its parent nodes
       f.applyConstraintsChildToParent();
-
-
-
     }
 
 

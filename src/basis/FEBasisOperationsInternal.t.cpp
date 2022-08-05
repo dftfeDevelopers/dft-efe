@@ -77,9 +77,9 @@ namespace dftefe
                             (cumulativeCellDofs + iDof) * numComponents;
               auto dstPtr = data + localId * numComponents;
 
-              for (size_type iComp = 0; iComp < numComponents ; iComp++)
+              for (size_type iComp = 0; iComp < numComponents; iComp++)
                 {
-                  *(dstPtr + iComp ) += *(srcPtr + iComp);
+                  *(dstPtr + iComp) += *(srcPtr + iComp);
                 }
             }
           cumulativeCellDofs += cellDofs;

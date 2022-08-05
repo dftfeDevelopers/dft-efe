@@ -90,14 +90,16 @@ namespace dftefe
       else
         return d_quadratureFamily < quadratureRuleAttributes.d_quadratureFamily;
     }
-    
+
     bool
     QuadratureRuleAttributes::operator==(
       const QuadratureRuleAttributes &quadratureRuleAttributes) const
     {
-      const bool flag = (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily) &&
-          (d_num1DPoints == quadratureRuleAttributes.d_num1DPoints) &&
-          (d_isCartesianTensorStructured == quadratureRuleAttributes.d_isCartesianTensorStructured);
+      const bool flag =
+        (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily) &&
+        (d_num1DPoints == quadratureRuleAttributes.d_num1DPoints) &&
+        (d_isCartesianTensorStructured ==
+         quadratureRuleAttributes.d_isCartesianTensorStructured);
       return flag;
     }
   } // end of namespace quadrature

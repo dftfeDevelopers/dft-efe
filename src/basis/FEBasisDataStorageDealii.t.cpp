@@ -912,7 +912,7 @@ namespace dftefe
       utils::throwException(
         d_feBM != nullptr,
         " Could not cast the FEBasisManager to FEBasisManagerDealii in FEBasisDataStorageDealii");
-//      const size_type numConstraints  = constraintsVec.size();
+      //      const size_type numConstraints  = constraintsVec.size();
       const size_type numQuadRuleType = quadratureRuleAttribuesVec.size();
       std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler =
         d_feBM->getDoFHandler();
@@ -1054,10 +1054,10 @@ namespace dftefe
        * to the real cell and hence we do not require to pass
        * a dealii mapping object to the  MatrixFree reinit function
        */
-//      d_dealiiMatrixFree->reinit(dofHandlerVec,
-//                                 dealiiAffineConstraintsVec,
-//                                 dealiiQuadratureTypeVec,
-//                                 dealiiAdditionalData);
+      //      d_dealiiMatrixFree->reinit(dofHandlerVec,
+      //                                 dealiiAffineConstraintsVec,
+      //                                 dealiiQuadratureTypeVec,
+      //                                 dealiiAdditionalData);
 
       for (size_type i = 0; i < numQuadRuleType; ++i)
         {
@@ -1153,18 +1153,16 @@ namespace dftefe
                 typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                 jxwQuadStorage;
 
-              const std::vector<double> & jxwVec = d_quadratureRuleContainer[quadratureRuleAttributes]->getJxW();
+              const std::vector<double> &jxwVec =
+                d_quadratureRuleContainer[quadratureRuleAttributes]->getJxW();
               jxwQuadStorage = std::make_shared<
                 typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
                 jxwVec.size());
 
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                jxwVec.size(),
-                jxwQuadStorage->data(),
-                jxwVec.data());
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
               d_JxWStorage[quadratureRuleAttributes] = jxwQuadStorage;
-
             }
         }
     }
@@ -1260,26 +1258,23 @@ namespace dftefe
               quadratureRuleContainer);
           d_basisGradNiGradNj[quadratureRuleAttributes] = basisGradNiGradNj;
         }
-      if (basisStorageAttributesBoolMap
-            .find(BasisStorageAttributes::StoreJxW)
+      if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
             ->second)
         {
           std::shared_ptr<
             typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
             jxwQuadStorage;
 
-          const std::vector<double> & jxwVec = d_quadratureRuleContainer[quadratureRuleAttributes]->getJxW();
+          const std::vector<double> &jxwVec =
+            d_quadratureRuleContainer[quadratureRuleAttributes]->getJxW();
           jxwQuadStorage = std::make_shared<
             typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
             jxwVec.size());
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-            jxwVec.size(),
-            jxwQuadStorage->data(),
-            jxwVec.data());
+            jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
           d_JxWStorage[quadratureRuleAttributes] = jxwQuadStorage;
-
         }
     }
 
@@ -1477,7 +1472,8 @@ namespace dftefe
         itNQuad != d_nQuadPointsIncell.end(),
         "Quad points in cell is not evaluated for the given QuadratureRuleAttributes.");
 
-      auto itquadRuleContainer = d_quadratureRuleContainer.find(quadratureRuleAttributes);
+      auto itquadRuleContainer =
+        d_quadratureRuleContainer.find(quadratureRuleAttributes);
       utils::throwException(
         itquadRuleContainer != d_quadratureRuleContainer.end(),
         "Quad rule container is not stored for the given QuadratureRuleAttributes.");
@@ -1493,7 +1489,8 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, memorySpace>::copy(
         sizeToCopy,
         returnValue.data(),
-        jxwQuadStorage->data() + itquadRuleContainer->getCellQuadStartId(cellId));
+        jxwQuadStorage->data() +
+          itquadRuleContainer->getCellQuadStartId(cellId));
       return returnValue;
     }
 
