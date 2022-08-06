@@ -365,6 +365,9 @@ namespace dftefe
       bool
       isCompatible(const Vector<ValueType, memorySpace> &rhs) const;
 
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const;
+
     private:
       std::unique_ptr<Storage>      d_storage;
       LinAlgOpContext<memorySpace> *d_linAlgOpContext;

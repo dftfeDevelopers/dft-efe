@@ -583,5 +583,12 @@ namespace dftefe
       else
         return (d_mpiPatternP2P->isCompatible(*(rhs.d_mpiPatternP2P)));
     }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+    MultiVector<ValueType, memorySpace>::getMPIPatternP2P() const
+    {
+      return d_mpiPatternP2P;
+    }
   } // end of namespace linearAlgebra
 } // namespace dftefe
