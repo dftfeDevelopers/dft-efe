@@ -53,8 +53,9 @@ namespace dftefe
           "amaxsMultiVector() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
 
-        return KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
-          vecSize, numVec, multiVecData);
+        return Kernels<memorySpace, ValueType>::amaxsMultiVector(vecSize,
+                                                                 numVec,
+                                                                 multiVecData);
       }
 
       template <typename ValueType1,
@@ -86,10 +87,7 @@ namespace dftefe
              scalar_type<ValueType1, ValueType2> *z,
              LinAlgOpContext<memorySpace> &       context)
       {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(n,
-                                                                          alpha,
-                                                                          x,
-                                                                          z);
+        Kernels<memorySpace, ValueType1, ValueType2>::ascale(n, alpha, x, z);
       }
 
       template <typename ValueType1,
@@ -102,8 +100,10 @@ namespace dftefe
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context)
       {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          hadamardProduct(n, x, y, z);
+        Kernels<memorySpace, ValueType1, ValueType2>::hadamardProduct(n,
+                                                                      x,
+                                                                      y,
+                                                                      z);
       }
 
       template <typename ValueType1,
@@ -118,7 +118,7 @@ namespace dftefe
             scalar_type<ValueType1, ValueType2> *     z,
             LinAlgOpContext<memorySpace> &            context)
       {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
+        Kernels<memorySpace, ValueType1, ValueType2>::axpby(
           n, alpha, x, beta, y, z);
       }
 
@@ -166,7 +166,7 @@ namespace dftefe
                        const ValueType *             multiVecData,
                        LinAlgOpContext<memorySpace> &context)
       {
-        return KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
+        return Kernels<memorySpace, ValueType>::nrms2MultiVector(
           vecSize, numVec, multiVecData, context.setBlasQueue());
       }
 

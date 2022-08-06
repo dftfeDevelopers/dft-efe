@@ -88,9 +88,7 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      KernelsTwoValueTypes<ValueType1,
-                           ValueType2,
-                           dftefe::utils::MemorySpace::DEVICE>::
+      Kernels<dftefe::utils::MemorySpace::DEVICE, ValueType1, ValueType2>::
         ascale(const size_type                      size,
                const ValueType1                     alpha,
                const ValueType2 *                   x,
@@ -106,9 +104,7 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      KernelsTwoValueTypes<ValueType1,
-                           ValueType2,
-                           dftefe::utils::MemorySpace::DEVICE>::
+      Kernels<dftefe::utils::MemorySpace::DEVICE, ValueType1, ValueType2>::
         hadamardProduct(const size_type                      size,
                         const ValueType1 *                   x,
                         const ValueType2 *                   y,
@@ -124,9 +120,7 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      KernelsTwoValueTypes<ValueType1,
-                           ValueType2,
-                           dftefe::utils::MemorySpace::DEVICE>::
+      Kernels<dftefe::utils::MemorySpace::DEVICE, ValueType1, ValueType2>::
         axpby(const size_type                           size,
               const scalar_type<ValueType1, ValueType2> alpha,
               const ValueType1 *                        x,
@@ -145,12 +139,12 @@ namespace dftefe
       }
 
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       std::vector<double>
-      KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>::
-        amaxsMultiVector(size_type        vecSize,
-                         size_type        numVec,
-                         ValueType const *multiVecData)
+      Kernels<dftefe::utils::MemorySpace::DEVICE, ValueType1, ValueType2>::
+        amaxsMultiVector(size_type         vecSize,
+                         size_type         numVec,
+                         ValueType1 const *multiVecData)
       {
         std::vector<double> amaxs(numVec, 0);
 
@@ -162,13 +156,13 @@ namespace dftefe
 
 
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       std::vector<double>
-      KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>::
+      Kernels<dftefe::utils::MemorySpace::DEVICE, ValueType1, ValueType2>::
         nrms2MultiVector(
           size_type                                      vecSize,
           size_type                                      numVec,
-          ValueType const *                              multiVecData,
+          ValueType1 const *                             multiVecData,
           BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
       {
         std::vector<double> nrms2(numVec, 0);
@@ -213,69 +207,52 @@ namespace dftefe
         return nrms2;
       }
 
-#  define EXPLICITLY_INSTANTIATE_2T(T1, T2, M) \
-    template class KernelsTwoValueTypes<T1, T2, M>;
-
-#  define EXPLICITLY_INSTANTIATE_1T(T, M) \
-    template class KernelsOneValueType<T, M>;
+#  define EXPLICITLY_INSTANTIATE(T1, T2, M) template class Kernels<M, T1, T2>;
 
 
-      EXPLICITLY_INSTANTIATE_1T(float, dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_1T(double, dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_1T(std::complex<float>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_1T(std::complex<double>,
-                                dftefe::utils::MemorySpace::DEVICE);
 
-
-      EXPLICITLY_INSTANTIATE_2T(float,
-                                float,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(float,
-                                double,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(float,
-                                std::complex<float>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(float,
-                                std::complex<double>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(double,
-                                float,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(double,
-                                double,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(double,
-                                std::complex<float>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(double,
-                                std::complex<double>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
-                                float,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
-                                double,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
-                                std::complex<float>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
-                                std::complex<double>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
-                                float,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
-                                double,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
-                                std::complex<float>,
-                                dftefe::utils::MemorySpace::DEVICE);
-      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
-                                std::complex<double>,
-                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(float, float, dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(float, double, dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(float,
+                             std::complex<float>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(float,
+                             std::complex<double>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(double, float, dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(double,
+                             double,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(double,
+                             std::complex<float>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(double,
+                             std::complex<double>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<float>,
+                             float,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<float>,
+                             double,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<float>,
+                             std::complex<float>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<float>,
+                             std::complex<double>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<double>,
+                             float,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<double>,
+                             double,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<double>,
+                             std::complex<float>,
+                             dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE(std::complex<double>,
+                             std::complex<double>,
+                             dftefe::utils::MemorySpace::DEVICE);
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe

@@ -15,10 +15,10 @@ namespace dftefe
       /**
        * @brief namespace class for BlasLapack kernels not present in blaspp.
        */
-      template <typename ValueType1,
-                typename ValueType2,
-                dftefe::utils::MemorySpace memorySpace>
-      class KernelsTwoValueTypes
+      template <dftefe::utils::MemorySpace memorySpace,
+                typename ValueType1,
+                typename ValueType2 = ValueType1>
+      class Kernels
       {
       public:
         /**
@@ -63,12 +63,7 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
-      };
 
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-      class KernelsOneValueType
-      {
-      public:
         /**
          * @brief Template for computing \f$ l_{\inf} \f$ norms of all the numVec vectors in a multi Vector
          * @param[in] vecSize size of each vector
@@ -79,9 +74,9 @@ namespace dftefe
          * @return \f$ l_{\inf} \f$  norms of all the vectors
          */
         static std::vector<double>
-        amaxsMultiVector(size_type        vecSize,
-                         size_type        numVec,
-                         const ValueType *multiVecData);
+        amaxsMultiVector(size_type         vecSize,
+                         size_type         numVec,
+                         const ValueType1 *multiVecData);
 
         /**
          * @brief Template for computing \f$ l_2 \f$ norms of all the numVec vectors in a multi Vector
@@ -95,15 +90,13 @@ namespace dftefe
         static std::vector<double>
         nrms2MultiVector(size_type               vecSize,
                          size_type               numVec,
-                         const ValueType *       multiVecData,
+                         const ValueType1 *      multiVecData,
                          BlasQueue<memorySpace> &BlasQueue);
       };
 
 #ifdef DFTEFE_WITH_DEVICE
       template <typename ValueType1, typename ValueType2>
-      class KernelsTwoValueTypes<ValueType1,
-                                 ValueType2,
-                                 dftefe::utils::MemorySpace::DEVICE>
+      class Kernels<dftefe::utils::MemorySpace::DEVICE, ValueType1, ValueType2>
       {
       public:
         static void
@@ -126,23 +119,18 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
-      };
 
-      template <typename ValueType>
-      class KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>
-      {
-      public:
         static std::vector<double>
-        amaxsMultiVector(size_type        vecSize,
-                         size_type        numVec,
-                         const ValueType *multiVecData);
+        amaxsMultiVector(size_type         vecSize,
+                         size_type         numVec,
+                         const ValueType1 *multiVecData);
 
 
         static std::vector<double>
         nrms2MultiVector(
           size_type                                      vecSize,
           size_type                                      numVec,
-          const ValueType *                              multiVecData,
+          const ValueType1 *                             multiVecData,
           BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
       };
 
