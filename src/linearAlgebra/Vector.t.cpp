@@ -560,6 +560,13 @@ namespace dftefe
     }
 
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+    Vector<ValueType, memorySpace>::getMPIPatternP2P() const
+    {
+      return d_mpiPatternP2P;
+    }
+
     //
     // Helper functions
     //
