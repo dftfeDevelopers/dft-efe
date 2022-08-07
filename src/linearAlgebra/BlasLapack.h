@@ -96,7 +96,7 @@ namespace dftefe
       void
       ascale(size_type                            n,
              ValueType1                           alpha,
-             const ValueType2                     x,
+             const ValueType2 *                   x,
              scalar_type<ValueType1, ValueType2> *z,
              LinAlgOpContext<memorySpace> &       context);
 

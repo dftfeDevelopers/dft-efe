@@ -13,8 +13,8 @@ if (NOT TARGET dft-efe-linalg)
             QueueManager.cpp
             LinAlgOpContext.cpp
             VectorAttributes.cpp
-	    Vector.cpp
-	    MultiVector.cpp
+	          Vector.cpp
+	          MultiVector.cpp
             AbstractMatrix.cpp
             GeneralMatrix.cpp
             HermitianMatrix.cpp
