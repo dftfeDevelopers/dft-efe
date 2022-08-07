@@ -356,6 +356,56 @@ namespace dftefe
       operator=(MultiVector &&u);
 
       /**
+       * @brief Return iterator pointing to the beginning of MultiVector data.
+       *
+       * @returns Iterator pointing to the beginning of MultiVector.
+       */
+      iterator
+      begin();
+
+      /**
+       * @brief Return iterator pointing to the beginning of MultiVector
+       * data.
+       *
+       * @returns Constant iterator pointing to the beginning of
+       * MultiVector.
+       */
+      const_iterator
+      begin() const;
+
+      /**
+       * @brief Return iterator pointing to the end of MultiVector data.
+       *
+       * @returns Iterator pointing to the end of MultiVector.
+       */
+      iterator
+      end();
+
+      /**
+       * @brief Return iterator pointing to the end of MultiVector data.
+       *
+       * @returns Constant iterator pointing to the end of
+       * MultiVector.
+       */
+      const_iterator
+      end() const;
+
+      /**
+       * @brief Return the raw pointer to the MultiVector data
+       * @return pointer to data
+       */
+      ValueType *
+      data();
+
+      /**
+       * @brief Return the constant raw pointer to the MultiVector data
+       * @return pointer to const data
+       */
+      const ValueType *
+      data() const;
+
+
+      /**
        * @brief Set all entries of the MultiVector to a given value
        *
        * @param[in] val The value to which the entries are to be set

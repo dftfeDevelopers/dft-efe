@@ -443,6 +443,48 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::iterator
+    Vector<ValueType, memorySpace>::begin()
+    {
+      return d_storage->begin();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::const_iterator
+    Vector<ValueType, memorySpace>::begin() const
+    {
+      return d_storage->begin();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::iterator
+    Vector<ValueType, memorySpace>::end()
+    {
+      return d_storage->end();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename Vector<ValueType, memorySpace>::const_iterator
+    Vector<ValueType, memorySpace>::end() const
+    {
+      return d_storage->end();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    ValueType *
+    Vector<ValueType, memorySpace>::data()
+    {
+      return d_storage->data();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const ValueType *
+    Vector<ValueType, memorySpace>::data() const
+    {
+      return d_storage->data();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     Vector<ValueType, memorySpace>::setValue(const ValueType val)
     {
