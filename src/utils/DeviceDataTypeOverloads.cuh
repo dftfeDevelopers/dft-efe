@@ -65,6 +65,18 @@ namespace dftefe
       return cuCmulf(a, b);
     }
 
+    __inline__ __device__ cuDoubleComplex
+    mult(cuFloatComplex a, cuDoubleComplex b)
+    {
+      return cuCmul(make_cuDoubleComplex(a.x, a.y), b);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(cuDoubleComplex a, cuFloatComplex b)
+    {
+      return cuCmul(a, make_cuDoubleComplex(b.x, b.y));
+    }
+
     __inline__ __device__ size_type
     add(size_type a, size_type b)
     {
@@ -188,15 +200,27 @@ namespace dftefe
     }
 
     __inline__ __device__ cuFloatComplex
-    mult(double a, cuFloatComplex b)
+    mult(float a, cuFloatComplex b)
     {
       return make_cuFloatComplex(a * b.x, a * b.y);
     }
 
     __inline__ __device__ cuFloatComplex
-    mult(cuFloatComplex a, double b)
+    mult(cuFloatComplex a, float b)
     {
       return make_cuFloatComplex(b * a.x, b * a.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(double a, cuFloatComplex b)
+    {
+      return make_cuDoubleComplex(a * b.x, a * b.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(cuFloatComplex a, double b)
+    {
+      return make_cuDoubleComplex(b * a.x, b * a.y);
     }
 
     inline int *
