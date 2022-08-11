@@ -458,6 +458,55 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename MultiVector<ValueType, memorySpace>::iterator
+    MultiVector<ValueType, memorySpace>::begin()
+    {
+      return d_storage->begin();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename MultiVector<ValueType, memorySpace>::const_iterator
+    MultiVector<ValueType, memorySpace>::begin() const
+    {
+      return d_storage->begin();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename MultiVector<ValueType, memorySpace>::iterator
+    MultiVector<ValueType, memorySpace>::end()
+    {
+      return d_storage->end();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename MultiVector<ValueType, memorySpace>::const_iterator
+    MultiVector<ValueType, memorySpace>::end() const
+    {
+      return d_storage->end();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    ValueType *
+    MultiVector<ValueType, memorySpace>::data()
+    {
+      return d_storage->data();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    const ValueType *
+    MultiVector<ValueType, memorySpace>::data() const
+    {
+      return d_storage->data();
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    MultiVector<ValueType, memorySpace>::setValue(const ValueType val)
+    {
+      d_storage->setValue(val);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     std::vector<double>
     MultiVector<ValueType, memorySpace>::l2Norms() const
     {
@@ -553,6 +602,35 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
     {
       d_mpiCommunicatorP2P->accumulateAddLocallyOwnedEnd(*d_storage);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    bool
+    MultiVector<ValueType, memorySpace>::isCompatible(
+      const MultiVector<ValueType, memorySpace> &rhs) const
+    {
+      if (d_vectorAttributes.areDistributionCompatible(
+            rhs.d_vectorAttributes) == false)
+        return false;
+      else if (d_numVectors != rhs.d_numVectors)
+        return false;
+      else if (d_globalSize != rhs.d_globalSize)
+        return false;
+      else if (d_localSize != rhs.d_localSize)
+        return false;
+      else if (d_locallyOwnedSize != rhs.d_locallyOwnedSize)
+        return false;
+      else if (d_ghostSize != rhs.d_ghostSize)
+        return false;
+      else
+        return (d_mpiPatternP2P->isCompatible(*(rhs.d_mpiPatternP2P)));
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+    MultiVector<ValueType, memorySpace>::getMPIPatternP2P() const
+    {
+      return d_mpiPatternP2P;
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

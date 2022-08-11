@@ -36,14 +36,20 @@ namespace dftefe
     namespace blasLapack
     {
       using Side   = blas::Side;
-      using Op     = blas::Op;
+      using Op     = blas::Op; // Op::NoTrans, Op::Trans, Op::ConjTrans
       using Diag   = blas::Diag;
       using Uplo   = blas::Uplo;
       using Layout = blas::Layout;
       using Queue  = blas::Queue;
+
+      // real_type< float >                               is float
+      // real_type< float, double, complex<float> >       is double
       template <typename ValueType>
       using real_type = blas::real_type<ValueType>;
 
+      // scalar_type< float >                             is float
+      // scalar_type< float, complex<float> >             is complex<float>
+      // scalar_type< float, double, complex<float> >     is complex<double>
       template <typename ValueType1, typename ValueType2>
       using scalar_type = blas::scalar_type<ValueType1, ValueType2>;
       template <dftefe::utils::MemorySpace memorySpace>

@@ -191,6 +191,9 @@ namespace dftefe
         const MPIComm &
         mpiCommunicator() const;
 
+        bool
+        isCompatible(const MPIPatternP2P<memorySpace> &rhs) const;
+
       private:
         /**
          * A pair \f$(a,b)\f$ which defines a range of indices (continuous)

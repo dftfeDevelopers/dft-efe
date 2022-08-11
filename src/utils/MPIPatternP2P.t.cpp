@@ -589,6 +589,11 @@ namespace dftefe
         for (unsigned int i = 0; i < d_nprocs; ++i)
           d_nGlobalIndices +=
             d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
+
+        // set the d_ghostIndicesSetSTL to be of size zero
+        d_ghostIndicesSetSTL.clear();
+        d_ghostIndicesOptimizedIndexSet =
+          OptimizedIndexSet<global_size_type>(d_ghostIndicesSetSTL);
       }
 
 #endif
@@ -617,6 +622,11 @@ namespace dftefe
       {
         d_myRank = 0;
         d_nprocs = 1;
+        throwException(
+          d_locallyOwnedRange.second >= d_locallyOwnedRange.first,
+          "In processor " + std::to_string(d_myRank) +
+            ", invalid locally owned range found "
+            "(i.e., the second value in the range is less than the first value).");
         d_numLocallyOwnedIndices =
           d_locallyOwnedRange.second - d_locallyOwnedRange.first;
         std::vector<global_size_type> d_allOwnedRanges = {
@@ -624,6 +634,11 @@ namespace dftefe
         for (unsigned int i = 0; i < d_nprocs; ++i)
           d_nGlobalIndices +=
             d_allOwnedRanges[2 * i + 1] - d_allOwnedRanges[2 * i];
+
+        // set the d_ghostIndicesSetSTL to be of size zero
+        d_ghostIndicesSetSTL.clear();
+        d_ghostIndicesOptimizedIndexSet =
+          OptimizedIndexSet<global_size_type>(d_ghostIndicesSetSTL);
       }
 
       template <dftefe::utils::MemorySpace memorySpace>
@@ -928,6 +943,28 @@ namespace dftefe
         size_type localId;
         d_ghostIndicesOptimizedIndexSet.getPosition(globalId, localId, found);
         return found;
+      }
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      bool
+      MPIPatternP2P<memorySpace>::isCompatible(
+        const MPIPatternP2P<memorySpace> &rhs) const
+      {
+        if (d_nprocs != rhs.d_nprocs)
+          return false;
+
+        else if (d_nGlobalIndices != rhs.d_nGlobalIndices)
+          return false;
+
+        else if (d_locallyOwnedRange != rhs.d_locallyOwnedRange)
+          return false;
+
+        else if (d_numGhostIndices != rhs.d_numGhostIndices)
+          return false;
+
+        else
+          return (d_ghostIndicesOptimizedIndexSet ==
+                  rhs.d_ghostIndicesOptimizedIndexSet);
       }
     } // end of namespace mpi
   }   // end of namespace utils

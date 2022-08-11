@@ -15,12 +15,12 @@ namespace dftefe
     {
       namespace
       {
-        template <typename ValueType>
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
-        ascaleDeviceKernel(const size_type  size,
-                           const ValueType  alpha,
-                           const ValueType *x,
-                           ValueType *      z)
+        ascaleDeviceKernel(const size_type   size,
+                           const ValueType1  alpha,
+                           const ValueType2 *x,
+                           ValueType3 *      z)
         {
           const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
@@ -31,7 +31,7 @@ namespace dftefe
             }
         }
 
-        template <typename ValueType>
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
         reciprocalXDeviceKernel(const size_type  size,
                                 const ValueType  alpha,
@@ -47,12 +47,12 @@ namespace dftefe
             }
         }
 
-        template <typename ValueType>
+	template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
-        hadamardProductDeviceKernel(const size_type  size,
-                                    const ValueType *x,
-                                    const ValueType *y,
-                                    ValueType *      z)
+        hadamardProductDeviceKernel(const size_type   size,
+                                    const ValueType1 *x,
+                                    const ValueType2 *y,
+                                    ValueType3 *      z)
         {
           const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
@@ -63,14 +63,14 @@ namespace dftefe
             }
         }
 
-        template <typename ValueType>
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
-        axpbyDeviceKernel(const size_type  size,
-                          const ValueType  alpha,
-                          const ValueType *x,
-                          const ValueType  beta,
-                          const ValueType *y,
-                          ValueType *      z)
+        axpbyDeviceKernel(const size_type   size,
+                          const ValueType3  alpha,
+                          const ValueType1 *x,
+                          const ValueType3  beta,
+                          const ValueType2 *y,
+                          ValueType3 *      z)
         {
           const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
@@ -102,13 +102,15 @@ namespace dftefe
       } // namespace
 
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
-      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::ascale(
-        const size_type  size,
-        const ValueType  alpha,
-        const ValueType *x,
-        ValueType *      z)
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        ascale(const size_type                      size,
+               const ValueType1                     alpha,
+               const ValueType2 *                   x,
+               scalar_type<ValueType1, ValueType2> *z)
       {
         ascaleDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                              dftefe::utils::BLOCK_SIZE>>>(
@@ -118,9 +120,9 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
-      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::reciprocalX(
+      KernelsTwoValueTypes<ValueType, dftefe::utils::MemorySpace::DEVICE>::reciprocalX(
         const size_type  size,
         const ValueType  alpha,
         const ValueType *x,
@@ -134,13 +136,15 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
 
-      template <typename ValueType>
-      void
-      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::hadamardProduct(
-        const size_type  size,
-        const ValueType *x,
-        const ValueType *y,
-        ValueType *      z)
+      template <typename ValueType1, typename ValueType2>
+      void 
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        hadamardProduct(const size_type                      size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        scalar_type<ValueType1, ValueType2> *z)
       {
         hadamardProductDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                                       dftefe::utils::BLOCK_SIZE>>>(
@@ -150,15 +154,17 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
-      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::axpby(
-        const size_type  size,
-        const ValueType  alpha,
-        const ValueType *x,
-        const ValueType  beta,
-        const ValueType *y,
-        ValueType *      z)
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        axpby(const size_type                           size,
+              const scalar_type<ValueType1, ValueType2> alpha,
+              const ValueType1 *                        x,
+              const scalar_type<ValueType1, ValueType2> beta,
+              const ValueType2 *                        y,
+              scalar_type<ValueType1, ValueType2> *     z)
       {
         axpbyDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                             dftefe::utils::BLOCK_SIZE>>>(
@@ -173,10 +179,10 @@ namespace dftefe
 
       template <typename ValueType>
       std::vector<double>
-      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::amaxsMultiVector(
-        size_type        vecSize,
-        size_type        numVec,
-        ValueType const *multiVecData)
+      KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>::
+        amaxsMultiVector(size_type        vecSize,
+                         size_type        numVec,
+                         ValueType const *multiVecData)
       {
         std::vector<double> amaxs(numVec, 0);
 
@@ -190,11 +196,12 @@ namespace dftefe
 
       template <typename ValueType>
       std::vector<double>
-      Kernels<ValueType, dftefe::utils::MemorySpace::DEVICE>::nrms2MultiVector(
-        size_type                                      vecSize,
-        size_type                                      numVec,
-        ValueType const *                              multiVecData,
-        BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+      KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>::
+        nrms2MultiVector(
+          size_type                                      vecSize,
+          size_type                                      numVec,
+          ValueType const *                              multiVecData,
+          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
       {
         std::vector<double> nrms2(numVec, 0);
 
@@ -230,7 +237,7 @@ namespace dftefe
                    BlasQueue);
 
 
-        nrmsSqVecDevice.copyTo<dftefe::utils::MemorySpace::HOST>(&nrms2[0]);
+        nrmsSqVecDevice.copyTo<dftefe::utils::MemorySpace::DEVICE>(&nrms2[0]);
 
         for (size_type i = 0; i < numVec; i++)
           nrms2[i] = std::sqrt(nrms2[i]);
@@ -238,12 +245,69 @@ namespace dftefe
         return nrms2;
       }
 
-      template class Kernels<double, dftefe::utils::MemorySpace::DEVICE>;
-      template class Kernels<float, dftefe::utils::MemorySpace::DEVICE>;
-      template class Kernels<std::complex<double>,
-                             dftefe::utils::MemorySpace::DEVICE>;
-      template class Kernels<std::complex<float>,
-                             dftefe::utils::MemorySpace::DEVICE>;
+#  define EXPLICITLY_INSTANTIATE_2T(T1, T2, M) \
+    template class KernelsTwoValueTypes<T1, T2, M>;
+
+#  define EXPLICITLY_INSTANTIATE_1T(T, M) \
+    template class KernelsOneValueType<T, M>;
+
+
+      EXPLICITLY_INSTANTIATE_1T(float, dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_1T(double, dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_1T(std::complex<float>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_1T(std::complex<double>,
+                                dftefe::utils::MemorySpace::DEVICE);
+
+
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                float,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                double,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                float,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                double,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                float,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                double,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                float,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                double,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::DEVICE);
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe

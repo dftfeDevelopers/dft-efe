@@ -323,6 +323,63 @@ namespace dftefe
       operator=(Vector &&u);
 
       /**
+       * @brief Return iterator pointing to the beginning of Vector data.
+       *
+       * @returns Iterator pointing to the beginning of Vector.
+       */
+      iterator
+      begin();
+
+      /**
+       * @brief Return iterator pointing to the beginning of Vector
+       * data.
+       *
+       * @returns Constant iterator pointing to the beginning of
+       * Vector.
+       */
+      const_iterator
+      begin() const;
+
+      /**
+       * @brief Return iterator pointing to the end of Vector data.
+       *
+       * @returns Iterator pointing to the end of Vector.
+       */
+      iterator
+      end();
+
+      /**
+       * @brief Return iterator pointing to the end of Vector data.
+       *
+       * @returns Constant iterator pointing to the end of
+       * Vector.
+       */
+      const_iterator
+      end() const;
+
+      /**
+       * @brief Return the raw pointer to the Vector data
+       * @return pointer to data
+       */
+      ValueType *
+      data();
+
+      /**
+       * @brief Return the constant raw pointer to the Vector data
+       * @return pointer to const data
+       */
+      const ValueType *
+      data() const;
+
+      /**
+       * @brief Set all the entries of the Vector to a given value
+       * @param[in] val The value to which all the entries in the Vector are
+       * to be set
+       */
+      void
+      setValue(const ValueType val);
+
+      /**
        * @brief Returns \f$ l_2 \f$ norm of the Vector
        * @return \f$ l_2 \f$  norm of the vector
        */
@@ -353,6 +410,12 @@ namespace dftefe
 
       void
       accumulateAddLocallyOwnedEnd();
+
+      bool
+      isCompatible(const Vector<ValueType, memorySpace> &rhs) const;
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const;
 
     private:
       std::unique_ptr<Storage>      d_storage;
