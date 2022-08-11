@@ -23,6 +23,8 @@
  * @author Ian C. Lin.
  */
 
+#include "AbstractMatrix.h"
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -44,6 +46,41 @@ namespace dftefe
       , d_mb(mb)
     {}
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    AbstractMatrix<ValueType, memorySpace>::setValues(const ValueType *data)
+    {
+      setValueSlateMatrix(d_baseMatrix, data);
+    }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(
+      slate::BaseMatrix<ValueType> *matrix,
+      const ValueType              *data)
+    {
+      for (int64_t j = 0, j_offset = 0; j < matrix->nt();
+           j_offset += matrix->tileNb(j++))
+        {
+          for (int64_t i = 0, i_offset = 0; i < matrix->mt();
+               i_offset += matrix->tileMb(i++))
+            {
+              if (matrix->tileIsLocal(i, j))
+                {
+                  slate::Tile<double> T = (*matrix)(i, j);
+                  // todo: check for transpose case (d_m and d_n)
+                  int64_t mb = T.mb(), nb = T.nb(),
+                          offset = i_offset + j_offset * d_m;
+                  lapack::lacpy(lapack::MatrixType::General,
+                                mb,
+                                nb,
+                                &data[offset],
+                                d_m,
+                                T.data(),
+                                mb);
+                }
+            }
+        }
+    }
   } // namespace linearAlgebra
 } // namespace dftefe

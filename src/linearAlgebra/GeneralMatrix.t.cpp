@@ -51,25 +51,31 @@ namespace dftefe
         }
     }
 
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    GeneralMatrix<ValueType, memorySpace>::setValues(const ValueType *data) {
-        for (int64_t j = 0; j < d_matrix->nt(); ++j)
-          for (int64_t i = 0; i < d_matrix->mt(); ++i)
-            if (d_matrix->tileIsLocal(i, j))
-              {
-                slate::Tile<ValueType> T = *(d_matrix)(i, j);
-                for (int64_t jj = 0; jj < T.nb(); ++jj)
-                  for (int64_t ii = 0; ii < T.mb(); ++ii)
-                    T.at( ii, jj ) = 0;
-              }
-    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     slate::Matrix<ValueType> &
     GeneralMatrix<ValueType, memorySpace>::getSlateMatrix() const
     {
-      return d_matrix;
+      return *d_matrix;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    GeneralMatrix<ValueType, memorySpace>::setValues(const ValueType *data)
+    {
+      AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(d_baseMatrix, data);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    GeneralMatrix<ValueType, memorySpace>::setValues(size_t           i1,
+                                                     size_t           i2,
+                                                     size_t           j1,
+                                                     size_t           j2,
+                                                     const ValueType *data)
+    {
+      slate::Matrix<ValueType> mat = d_matrix->sub(i1, i2, j1, j2);
+      AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(&mat, data);
     }
   } // namespace linearAlgebra
 } // namespace dftefe

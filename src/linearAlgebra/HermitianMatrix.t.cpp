@@ -53,7 +53,7 @@ namespace dftefe
     slate::HermitianMatrix<ValueType> &
     HermitianMatrix<ValueType, memorySpace>::getSlateMatrix() const
     {
-      return d_matrix;
+      return *d_matrix;
     }
   } // namespace linearAlgebra
 } // namespace dftefe

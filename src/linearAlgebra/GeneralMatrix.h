@@ -57,30 +57,30 @@ namespace dftefe
       virtual void
       setValues(const ValueType *data) override;
 
-//      /**
-//       * @brief The value setter interface for the matrix class. This setter
-//       *        assumes the given pointer to ValueType to be a serially repeated
-//       *        matrix and copy the data to the corresponding local owned
-//       *        sub-matrix (i1:i2-1, j1:j2-1) trivially.
-//       * @warning There is no boundary check in this function. The user should
-//       *          be responsible that the size of data array should have
-//       *          (j2-j1)*(i2-i1) size.
-//       * @param i1 the global index of the first row of the submatrix.
-//       * @param i2 one passes the global index of the last row of the submatrix.
-//       * @param j1 the global index of the first column of the submatrix.
-//       * @param j2 one passes the global index of the last column of the
-//       *           submatrix.
-//       * @param data The pointer to the data to be copied from. The user should
-//       *             be responsible that the size of data array should have
-//       *             (j2-j1)*(i2-i1) size.
-//       */
-//      virtual void
-//      setValues(size_t           i1,
-//                size_t           i2,
-//                size_t           j1,
-//                size_t           j2,
-//                const ValueType *data);
-//
+      /**
+       * @brief The value setter interface for the matrix class. This setter
+       *        assumes the given pointer to ValueType to be a serially repeated
+       *        matrix and copy the data to the corresponding local owned
+       *        sub-matrix (i1:i2-1, j1:j2-1) trivially.
+       * @warning There is no boundary check in this function. The user should
+       *          be responsible that the size of data array should have
+       *          (j2-j1)*(i2-i1) size.
+       * @param i1 the global index of the first row of the submatrix.
+       * @param i2 one passes the global index of the last row of the submatrix.
+       * @param j1 the global index of the first column of the submatrix.
+       * @param j2 one passes the global index of the last column of the
+       *           submatrix.
+       * @param data The pointer to the data to be copied from. The user should
+       *             be responsible that the size of data array should have
+       *             (j2-j1)*(i2-i1) size.
+       */
+      virtual void
+      setValues(size_t           i1,
+                size_t           i2,
+                size_t           j1,
+                size_t           j2,
+                const ValueType *data) override;
+
 //      /**
 //       * @brief The value setter interface for the matrix class. This setter
 //       *        allows data to be different on each processor. The locally owned
