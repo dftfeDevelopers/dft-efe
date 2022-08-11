@@ -261,8 +261,8 @@ namespace dftefe
     }
 
 
-    const QuadratureRuleAttributes &quadratureRuleAttributes,
-      QuadratureRuleContainer::getQuadratureRuleAttributes() const
+    const QuadratureRuleAttributes &
+    QuadratureRuleContainer::getQuadratureRuleAttributes() const
     {
       return d_quadratureRuleAttributes;
     }

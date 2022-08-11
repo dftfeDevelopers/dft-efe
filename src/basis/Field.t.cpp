@@ -31,7 +31,8 @@ namespace dftefe
   {
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     Field<ValueTypeBasisCoeff, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>> basisHandler,
+      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
+                                                   basisHandler,
       const std::string                            constraintsName,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
     {
@@ -41,7 +42,8 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
     Field<ValueTypeBasisCoeff, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>> basisHandler,
+      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
+                                                   basisHandler,
       const std::string                            constraintsName,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
     {

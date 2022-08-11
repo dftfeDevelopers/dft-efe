@@ -50,7 +50,8 @@ namespace dftefe
      * matrix of the basis, etc.
      */
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace>
-    class FEBasisDataStorage : public BasisDataStorage<ValueTypeBasisData, memorySpace>
+    class FEBasisDataStorage
+      : public BasisDataStorage<ValueTypeBasisData, memorySpace>
     {
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;

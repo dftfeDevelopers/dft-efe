@@ -42,7 +42,8 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class FEConstraintsDealii : public FEConstraintsBase<ValueTypeBasisCoeff, memorySpace>
+    class FEConstraintsDealii
+      : public FEConstraintsBase<ValueTypeBasisCoeff, memorySpace>
     {
     public:
       using GlobalSizeTypeVector =
@@ -53,8 +54,8 @@ namespace dftefe
       void
       clear() override;
       void
-      setInhomogeneity(global_size_type basisId,
-                       ValueTypeBasisCoeff        constraintValue) override;
+      setInhomogeneity(global_size_type    basisId,
+                       ValueTypeBasisCoeff constraintValue) override;
       bool
       isConstrained(global_size_type basisId) const override;
       void
@@ -75,7 +76,7 @@ namespace dftefe
 
       void
       copyConstraintsData(
-        const Constraints<ValueTypeBasisCoeff, memorySpace> &   constraintsDataIn,
+        const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) override;
       void
       populateConstraintsData(
@@ -110,14 +111,15 @@ namespace dftefe
 
     private:
       void
-      addEntries(const global_size_type constrainedDofIndex,
-                 const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
-                   &colWeightPairs);
+      addEntries(
+        const global_size_type constrainedDofIndex,
+        const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
+          &colWeightPairs);
 
       void
       addLine(const global_size_type lineDof);
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>             d_constraintMatrix;
+      dealii::AffineConstraints<ValueTypeBasisCoeff>   d_constraintMatrix;
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBasisManager;
       bool                                             d_isCleared;
       bool                                             d_isClosed;
@@ -128,8 +130,9 @@ namespace dftefe
       SizeTypeVector       d_constraintRowSizesAccumulated;
       GlobalSizeTypeVector d_columnConstraintsIdsGlobal;
 
-      utils::MemoryStorage<double, memorySpace>    d_columnConstraintsValues;
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> d_constraintsInhomogenities;
+      utils::MemoryStorage<double, memorySpace> d_columnConstraintsValues;
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        d_constraintsInhomogenities;
 
       SizeTypeVector d_rowConstraintsSizes;
     };

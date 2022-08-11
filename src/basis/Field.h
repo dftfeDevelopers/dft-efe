@@ -50,30 +50,35 @@ namespace dftefe
       // typedefs
       //
       using value_type =
-        typename linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>::value_type;
-      using pointer =
-        typename linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>::pointer;
-      using reference =
-        typename linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>::reference;
+        typename linearAlgebra::Vector<ValueTypeBasisCoeff,
+                                       memorySpace>::value_type;
+      using pointer   = typename linearAlgebra::Vector<ValueTypeBasisCoeff,
+                                                     memorySpace>::pointer;
+      using reference = typename linearAlgebra::Vector<ValueTypeBasisCoeff,
+                                                       memorySpace>::reference;
       using const_reference =
-        typename linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>::const_reference;
-      using iterator =
-        typename linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>::iterator;
+        typename linearAlgebra::Vector<ValueTypeBasisCoeff,
+                                       memorySpace>::const_reference;
+      using iterator = typename linearAlgebra::Vector<ValueTypeBasisCoeff,
+                                                      memorySpace>::iterator;
       using const_iterator =
-        typename linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>::const_iterator;
+        typename linearAlgebra::Vector<ValueTypeBasisCoeff,
+                                       memorySpace>::const_iterator;
 
-      Field(std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                                                         basishandler,
-            const std::string                            constraintsName,
-            linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext);
+      Field(
+        std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
+                                                     basishandler,
+        const std::string                            constraintsName,
+        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       ~Field() = default;
 
       void
-      reinit(std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                                                          basisHandler,
-             const std::string                            constraintsName,
-             linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext);
+      reinit(
+        std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
+                                                     basisHandler,
+        const std::string                            constraintsName,
+        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext);
 
       void
       applyConstraintsParentToChild();
@@ -128,7 +133,8 @@ namespace dftefe
       linearAlgebra::LinAlgOpContext<memorySpace> *d_linAlgOpContext;
       std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
         d_basisHandler;
-      std::shared_ptr<linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>> d_vector;
+      std::shared_ptr<linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>>
+        d_vector;
     }; // end of Field
   }    // end of namespace basis
 } // end of namespace dftefe

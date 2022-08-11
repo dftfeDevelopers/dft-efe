@@ -46,7 +46,8 @@ namespace dftefe
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the data must reside.
      */
-    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
     class BasisHandler
     {
       //

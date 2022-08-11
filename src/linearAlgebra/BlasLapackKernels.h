@@ -41,10 +41,10 @@ namespace dftefe
          * @param[out] z array
          */
         static void
-        reciprocalX(size_type        size,
-                    const ValueType  alpha,
-                    const ValueType *x,
-                    ValueType *      z);
+        reciprocalX(size_type                            size,
+                    const ValueType1                     alpha,
+                    const ValueType2 *                   x,
+                    scalar_type<ValueType1, ValueType2> *z);
         /*
          * @brief Template for performing \f$ z_i = x_i * y_i$
          * @param[in] size size of the array
@@ -130,10 +130,10 @@ namespace dftefe
          * @param[out] z array
          */
         static void
-        reciprocalX(size_type        size,
-                    const ValueType  alpha,
-                    const ValueType *x,
-                    ValueType *      z);
+        reciprocalX(size_type                            size,
+                    const ValueType1                     alpha,
+                    const ValueType2 *                   x,
+                    scalar_type<ValueType1, ValueType2> *z);
 
         static void
         hadamardProduct(size_type                            size,

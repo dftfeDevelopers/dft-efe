@@ -33,10 +33,10 @@ namespace dftefe
 
         template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
-        reciprocalXDeviceKernel(const size_type  size,
-                                const ValueType  alpha,
-                                const ValueType *x,
-                                ValueType *      z)
+        reciprocalXDeviceKernel(const size_type   size,
+                                const ValueType1  alpha,
+                                const ValueType2 *x,
+                                ValueType3 *      z)
         {
           const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
@@ -47,7 +47,7 @@ namespace dftefe
             }
         }
 
-	template <typename ValueType1, typename ValueType2, typename ValueType3>
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
         hadamardProductDeviceKernel(const size_type   size,
                                     const ValueType1 *x,
@@ -122,11 +122,13 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      KernelsTwoValueTypes<ValueType, dftefe::utils::MemorySpace::DEVICE>::reciprocalX(
-        const size_type  size,
-        const ValueType  alpha,
-        const ValueType *x,
-        ValueType *      z)
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        reciprocalX(const size_type                      size,
+                    const ValueType1                     alpha,
+                    const ValueType2 *                   x,
+                    scalar_type<ValueType1, ValueType2> *z)
       {
         reciprocalXDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                                   dftefe::utils::BLOCK_SIZE>>>(
@@ -137,7 +139,7 @@ namespace dftefe
       }
 
       template <typename ValueType1, typename ValueType2>
-      void 
+      void
       KernelsTwoValueTypes<ValueType1,
                            ValueType2,
                            dftefe::utils::MemorySpace::DEVICE>::

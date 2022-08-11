@@ -37,7 +37,8 @@ namespace dftefe
     /**
      * An abstract class to handle the constraints related to a basis
      */
-    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
     class Constraints
     {
     public:
@@ -45,7 +46,8 @@ namespace dftefe
       virtual void
       clear() = 0;
       virtual void
-      setInhomogeneity(global_size_type basisId, ValueTypeBasisCoeff constraintValue) = 0;
+      setInhomogeneity(global_size_type    basisId,
+                       ValueTypeBasisCoeff constraintValue) = 0;
       virtual void
       close() = 0;
       virtual bool
@@ -55,7 +57,8 @@ namespace dftefe
       virtual bool
       isConstrained(global_size_type basisId) const = 0;
 
-      virtual const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
+      virtual const std::vector<
+        std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const = 0;
 
       virtual bool
@@ -66,8 +69,8 @@ namespace dftefe
 
       virtual void
       copyConstraintsData(
-        const Constraints<ValueTypeBasisCoeff, memorySpace> &   constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
+        const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
+        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern) = 0;
       virtual void
       populateConstraintsData(
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
@@ -75,15 +78,15 @@ namespace dftefe
       virtual void
       distributeChildToParent(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type                                      blockSize = 1) const = 0;
+        size_type blockSize = 1) const = 0;
       virtual void
       distributeParentToChild(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type                                      blockSize = 1) const = 0;
+        size_type blockSize = 1) const = 0;
       virtual void
       setConstrainedNodesToZero(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type                                      blockSize = 1) const = 0;
+        size_type blockSize = 1) const = 0;
     };
 
   } // namespace basis

@@ -47,7 +47,8 @@ namespace dftefe
       using SizeTypeVector =
         typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector;
       using GlobalSizeTypeVector =
-        typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::GlobalSizeTypeVector;
+        typename BasisHandler<ValueTypeBasisCoeff,
+                              memorySpace>::GlobalSizeTypeVector;
       using LocalIndexIter       = typename SizeTypeVector::iterator;
       using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
       using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;

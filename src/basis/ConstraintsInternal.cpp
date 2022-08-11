@@ -31,12 +31,13 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
     void
     ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
       constraintsDistributeParentToChild(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const size_type                                blockSize,
+        const size_type                                          blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
@@ -92,12 +93,13 @@ namespace dftefe
         }
     }
 
-    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
     void
     ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
       constraintsDistributeChildToParent(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const size_type                                blockSize,
+        const size_type                                          blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
@@ -141,12 +143,13 @@ namespace dftefe
         }
     }
 
-    template <typename ValueTypeBasisCoeff, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
     void
     ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
       constraintsSetConstrainedNodesToZero(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const size_type                                blockSize,
+        const size_type                                          blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal)
     {

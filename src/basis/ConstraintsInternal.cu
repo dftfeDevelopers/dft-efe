@@ -15,10 +15,10 @@ namespace dftefe
     {
       template <typename ValueTypeBasisCoeff>
       __global__ void
-      setZeroKernel(ValueTypeBasisCoeff *      xVec,
-                    const size_type *constraintLocalRowIds,
-                    const size_type  numConstraints,
-                    const size_type  blockSize)
+      setZeroKernel(ValueTypeBasisCoeff *xVec,
+                    const size_type *    constraintLocalRowIds,
+                    const size_type      numConstraints,
+                    const size_type      blockSize)
       {
         const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
         const size_type numberEntries  = numConstraints * blockSize;
@@ -38,14 +38,14 @@ namespace dftefe
       template <typename ValueTypeBasisCoeff>
       __global__ void
       distributeParentToChildKernel(
-        const size_type  contiguousBlockSize,
+        const size_type            contiguousBlockSize,
         ValueTypeBasisCoeff *      xVec,
-        const size_type *constraintLocalRowIds,
-        const size_type  numConstraints,
-        const size_type *constraintRowSizes,
-        const size_type *constraintRowSizesAccumulated,
-        const size_type *constraintLocalColumnIds,
-        const double *   constraintColumnValues,
+        const size_type *          constraintLocalRowIds,
+        const size_type            numConstraints,
+        const size_type *          constraintRowSizes,
+        const size_type *          constraintRowSizesAccumulated,
+        const size_type *          constraintLocalColumnIds,
+        const double *             constraintColumnValues,
         const ValueTypeBasisCoeff *inhomogenities)
       {
         const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -84,14 +84,14 @@ namespace dftefe
       template <typename ValueTypeBasisCoeff>
       __global__ void
       distributeChildToParentKernel(
-        const size_type  contiguousBlockSize,
-        ValueTypeBasisCoeff *      xVec,
-        const size_type *constraintLocalRowIds,
-        const size_type  numConstraints,
-        const size_type *constraintRowSizes,
-        const size_type *constraintRowSizesAccumulated,
-        const size_type *constraintLocalColumnIds,
-        const double *   constraintColumnValues)
+        const size_type      contiguousBlockSize,
+        ValueTypeBasisCoeff *xVec,
+        const size_type *    constraintLocalRowIds,
+        const size_type      numConstraints,
+        const size_type *    constraintRowSizes,
+        const size_type *    constraintRowSizesAccumulated,
+        const size_type *    constraintLocalColumnIds,
+        const double *       constraintColumnValues)
       {
         const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
         const size_type numberEntries  = numConstraints * contiguousBlockSize;
@@ -128,11 +128,12 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff>
     void
-    ConstraintsInternal<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::
+    ConstraintsInternal<ValueTypeBasisCoeff,
+                        dftefe::utils::MemorySpace::DEVICE>::
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
-          &             vectorData,
-        const size_type blockSize,
+        linearAlgebra::Vector<ValueTypeBasisCoeff,
+                              dftefe::utils::MemorySpace::DEVICE> &vectorData,
+        const size_type                                            blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal)
@@ -153,11 +154,12 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff>
     void
-    ConstraintsInternal<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::
+    ConstraintsInternal<ValueTypeBasisCoeff,
+                        dftefe::utils::MemorySpace::DEVICE>::
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
-          &             vectorData,
-        const size_type blockSize,
+        linearAlgebra::Vector<ValueTypeBasisCoeff,
+                              dftefe::utils::MemorySpace::DEVICE> &vectorData,
+        const size_type                                            blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
@@ -198,11 +200,12 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff>
     void
-    ConstraintsInternal<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::
+    ConstraintsInternal<ValueTypeBasisCoeff,
+                        dftefe::utils::MemorySpace::DEVICE>::
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>
-          &             vectorData,
-        const size_type blockSize,
+        linearAlgebra::Vector<ValueTypeBasisCoeff,
+                              dftefe::utils::MemorySpace::DEVICE> &vectorData,
+        const size_type                                            blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,

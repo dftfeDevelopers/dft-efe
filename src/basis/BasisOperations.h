@@ -39,7 +39,7 @@ namespace dftefe
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
      */
-    template <typename ValueTypeBasisCoeff,  utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     class BasisOperations
     {
     public:
@@ -47,29 +47,32 @@ namespace dftefe
 
       virtual void
       interpolate(
-        const Field<ValueTypeBasisCoeff, memorySpace> &       field,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const Field<ValueTypeBasisCoeff, memorySpace> &field,
+        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
           &quadValuesContainer) const = 0;
 
       // virtual void
-      // integrateWithBasisValues(const ScalarSpatialFunction<ValueTypeBasisCoeff> &f,
+      // integrateWithBasisValues(const
+      // ScalarSpatialFunction<ValueTypeBasisCoeff> &f,
       //    const quadrature::QuadratureRuleAttributes &
       //    quadratureRuleAttributes,
-      //                         Field<ValueTypeBasisCoeff, memorySpace> &         field)
-      //                         const = 0;
+      //                         Field<ValueTypeBasisCoeff, memorySpace> &
+      //                         field) const = 0;
 
       virtual void
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace> &f,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace> &f,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueTypeBasisCoeff, memorySpace> &             field) const = 0;
+        Field<ValueTypeBasisCoeff, memorySpace> &   field) const = 0;
 
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
       //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput) const = 0;
+      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput)
+      //  const = 0;
 
     }; // end of BasisOperations
   }    // end of namespace basis

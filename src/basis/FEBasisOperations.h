@@ -44,8 +44,12 @@ namespace dftefe
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
      */
-    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
-    class FEBasisOperations : public BasisOperations<ValueTypeBasisCoeff, memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    class FEBasisOperations
+      : public BasisOperations<ValueTypeBasisCoeff, memorySpace>
     {
     public:
       FEBasisOperations(
@@ -57,23 +61,24 @@ namespace dftefe
 
       void
       interpolate(
-        const Field<ValueTypeBasisCoeff, memorySpace> &       field,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const Field<ValueTypeBasisCoeff, memorySpace> &field,
+        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
           &quadValuesContainer) const override;
 
       virtual void
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace> &f,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace> &f,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueTypeBasisCoeff, memorySpace> &             field) const = 0;
+        Field<ValueTypeBasisCoeff, memorySpace> &   field) const = 0;
 
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
       //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput) const
-      //  override;
+      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput)
+      //  const override;
 
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>

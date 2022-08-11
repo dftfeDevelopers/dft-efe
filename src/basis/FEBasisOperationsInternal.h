@@ -41,19 +41,23 @@ namespace dftefe
     public:
       static void
       copyFieldToCellWiseData(
-        const ValueTypeBasisCoeff *             data,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage);
+        const ValueTypeBasisCoeff *data,
+        const size_type            numComponents,
+        const size_type *          cellLocalIdsStartPtr,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector
+          &numCellDofs,
+        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector &numCellDofs,
-        ValueTypeBasisCoeff *             data);
+        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &              cellWiseStorage,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector
+          &                  numCellDofs,
+        ValueTypeBasisCoeff *data);
 
 
     }; // end of class FEBasisOperationsInternal
@@ -66,24 +70,32 @@ namespace dftefe
     public:
       static void
       copyFieldToCellWiseData(
-        const ValueTypeBasisCoeff *             data,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE> &cellWiseStorage);
+        const ValueTypeBasisCoeff *data,
+        const size_type            numComponents,
+        const size_type *          cellLocalIdsStartPtr,
+        const BasisHandler<ValueTypeBasisCoeff,
+                           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
+          &numCellDofs,
+        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                     dftefe::utils::MemorySpace::DEVICE>
+          &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE> &cellWiseStorage,
-        const size_type               numComponents,
-        const size_type *             cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff, dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
-        ValueTypeBasisCoeff *             data);
+        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff,
+                                           dftefe::utils::MemorySpace::DEVICE>
+          &              cellWiseStorage,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const BasisHandler<ValueTypeBasisCoeff,
+                           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
+          &                  numCellDofs,
+        ValueTypeBasisCoeff *data);
 
 
     }; // end of class FEBasisOperationsInternal
 #endif
-  }    // end of namespace basis
+  } // end of namespace basis
 } // end of namespace dftefe
 #include <basis/FEBasisOperationsInternal.t.cpp>
 #endif // dftefeFEBasisOperationsInternal_h

@@ -67,9 +67,10 @@ namespace dftefe
       //
       // typedefs
       //
-      using Storage   = dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
-      using pointer   = typename Storage::pointer;
-      using reference = typename Storage::reference;
+      using Storage =
+        dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
+      using pointer                   = typename Storage::pointer;
+      using reference                 = typename Storage::reference;
       using const_reference           = typename Storage::const_reference;
       using iterator                  = typename Storage::iterator;
       using const_iterator            = typename Storage::const_iterator;

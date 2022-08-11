@@ -65,28 +65,32 @@ namespace dftefe
     public:
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
                                    constraintsMap,
         const utils::mpi::MPIComm &mpiComm);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
                                    constraintsMap,
         const utils::mpi::MPIComm &mpiComm);
 
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
           constraintsMap);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
-        std::map<std::string,
-                 std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
           constraintsMap);
 
       ~FEBasisHandlerDealii() = default;
@@ -189,7 +193,8 @@ namespace dftefe
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
       std::map<
         std::string,
-        std::shared_ptr<const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
+        std::shared_ptr<
+          const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
                                                     d_feConstraintsDealiiOptMap;
       utils::mpi::MPIComm                           d_mpiComm;
       bool                                          d_isDistributed;

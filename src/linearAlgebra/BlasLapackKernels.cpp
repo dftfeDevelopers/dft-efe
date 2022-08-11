@@ -31,14 +31,16 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
-      KernelsTwoValueTypes<ValueType, memorySpace>::reciprocalX(const size_type  size,
-                                                   const ValueType  alpha,
-                                                   const ValueType *x,
-                                                   ValueType *      z)
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::reciprocalX(
+        const size_type                      size,
+        const ValueType1                     alpha,
+        const ValueType2 *                   x,
+        scalar_type<ValueType1, ValueType2> *z)
       {
         for (size_type i = 0; i < size; ++i)
           {
-            z[i] = alpha / x[i];
+            z[i] = ((scalar_type<ValueType1, ValueType2>)alpha) /
+                   ((scalar_type<ValueType1, ValueType2>)x[i]);
           }
       }
 
