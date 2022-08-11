@@ -1,5 +1,5 @@
-#include "QuadratureRuleContainer.h"
-#include "QuadratureRuleAdaptive.h"
+#include <quadrature/QuadratureRuleContainer.h>
+#include <quadrature/QuadratureRuleAdaptive.h>
 #include <utils/Exceptions.h>
 
 namespace dftefe

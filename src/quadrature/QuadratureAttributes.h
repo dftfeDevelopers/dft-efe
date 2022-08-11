@@ -82,47 +82,11 @@ namespace dftefe
       ADAPTIVE
     };
 
-    std::map<QuadratureRuleType, size_type>
-      _dftefe_quadrature_rule_to_1d_num_points_map_ = {
-        {QuadratureRuleType::GAUSS_1, 1},   {QuadratureRuleType::GAUSS_2, 2},
-        {QuadratureRuleType::GAUSS_3, 3},   {QuadratureRuleType::GAUSS_4, 4},
-        {QuadratureRuleType::GAUSS_5, 5},   {QuadratureRuleType::GAUSS_6, 6},
-        {QuadratureRuleType::GAUSS_7, 7},   {QuadratureRuleType::GAUSS_8, 8},
-        {QuadratureRuleType::GAUSS_9, 9},   {QuadratureRuleType::GAUSS_10, 10},
-        {QuadratureRuleType::GAUSS_11, 11}, {QuadratureRuleType::GAUSS_12, 12},
-        {QuadratureRuleType::GLL_1, 1},     {QuadratureRuleType::GLL_2, 2},
-        {QuadratureRuleType::GLL_3, 3},     {QuadratureRuleType::GLL_4, 4},
-        {QuadratureRuleType::GLL_5, 5},     {QuadratureRuleType::GLL_6, 6},
-        {QuadratureRuleType::GLL_7, 7},     {QuadratureRuleType::GLL_8, 8},
-        {QuadratureRuleType::GLL_9, 9},     {QuadratureRuleType::GLL_10, 10},
-        {QuadratureRuleType::GLL_11, 11},   {QuadratureRuleType::GLL_12, 12}};
+extern std::map<QuadratureRuleType, size_type>
+      _dftefe_quadrature_rule_to_1d_num_points_map_ ;
 
-    std::map<QuadratureRuleType, QuadratureFamily>
-      _dftefe_quadrature_rule_to_quad_family_ = {
-        {QuadratureRuleType::GAUSS_1, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_2, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_3, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_4, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_5, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_6, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_7, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_8, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_9, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_10, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_11, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GAUSS_12, QuadratureFamily::GAUSS},
-        {QuadratureRuleType::GLL_1, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_2, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_3, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_4, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_5, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_6, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_7, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_8, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_9, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_10, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_11, QuadratureFamily::GLL},
-        {QuadratureRuleType::GLL_12, QuadratureFamily::GLL}};
+    extern  std::map<QuadratureRuleType, QuadratureFamily>
+	    _dftefe_quadrature_rule_to_quad_family_ ;
 
     class QuadratureRuleAttributes
     {

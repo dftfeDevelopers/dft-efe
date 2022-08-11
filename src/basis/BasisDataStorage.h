@@ -88,7 +88,7 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                         quadratureContainer,
         const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const boolBasisStorageFlags     boolBasisStorageFlagsObj) = 0;
+        const BasisStorageAttributesBoolMap     boolBasisStorageFlagsObj) = 0;
       virtual void
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;

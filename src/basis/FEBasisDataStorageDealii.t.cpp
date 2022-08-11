@@ -1527,7 +1527,7 @@ namespace dftefe
         sizeToCopy,
         returnValue.data(),
         jxwQuadStorage->data() +
-          itquadRuleContainer->getCellQuadStartId(cellId));
+          itquadRuleContainer->second->getCellQuadStartId(cellId));
       return returnValue;
     }
 

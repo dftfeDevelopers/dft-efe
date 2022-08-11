@@ -1,5 +1,5 @@
 #include <utils/Exceptions.h>
-#include "QuadratureRuleAdaptive.h"
+#include <quadrature/QuadratureRuleAdaptive.h>
 #include <numeric>
 #include <functional>
 #include <algorithm>
