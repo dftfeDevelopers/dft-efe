@@ -404,7 +404,7 @@ namespace dftefe
         N, this->begin() + dstOffset, src.data() + srcOffset);
     }
 
-    template <ValueType, utils::MemorySpace memorySpaceDst>
+    template <typename ValueType, utils::MemorySpace memorySpaceDst>
     MemoryStorage<ValueType, memorySpaceDst>
     memoryStorageFromSTL(const std::vector<ValueType> &src)
     {

@@ -59,6 +59,10 @@ namespace dftefe
       void
       getPosition(const T &index, size_type &pos, bool &found) const;
 
+      bool
+      getPosition(const OptimizedIndexSet<T> &rhs) const;
+
+
     private:
       /// Store the number of contiguous ranges in the input set of indices
       size_type d_numContiguousRanges;

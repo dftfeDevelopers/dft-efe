@@ -458,28 +458,28 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    MultiVector<ValueType, memorySpace>::iterator
+    typename MultiVector<ValueType, memorySpace>::iterator
     MultiVector<ValueType, memorySpace>::begin()
     {
       return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    MultiVector<ValueType, memorySpace>::const_iterator
+    typename MultiVector<ValueType, memorySpace>::const_iterator
     MultiVector<ValueType, memorySpace>::begin() const
     {
       return d_storage->begin();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    MultiVector<ValueType, memorySpace>::iterator
+    typename MultiVector<ValueType, memorySpace>::iterator
     MultiVector<ValueType, memorySpace>::end()
     {
       return d_storage->end();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    MultiVector<ValueType, memorySpace>::const_iterator
+    typename MultiVector<ValueType, memorySpace>::const_iterator
     MultiVector<ValueType, memorySpace>::end() const
     {
       return d_storage->end();
