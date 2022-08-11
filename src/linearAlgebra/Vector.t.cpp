@@ -584,7 +584,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     bool
     Vector<ValueType, memorySpace>::isCompatible(
-      const Vector<ValueType, memorySpace> &rhs)
+      const Vector<ValueType, memorySpace> &rhs) const
     {
       if (d_vectorAttributes.areDistributionCompatible(
             rhs.d_vectorAttributes) == false)
