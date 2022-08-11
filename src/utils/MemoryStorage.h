@@ -515,7 +515,7 @@ namespace dftefe
      * @tparam memorySpaceDst MemorySpace (e.g. HOST, DEVICE, HOST_PINNED, etc)
      * where the output MemoryStorage object should reside
      */
-    template <ValueType, utils::MemorySpace memorySpaceDst>
+    template <typename ValueType, utils::MemorySpace memorySpaceDst>
     MemoryStorage<ValueType, memorySpaceDst>
     memoryStorageFromSTL(const std::vector<ValueType> &src);
 
