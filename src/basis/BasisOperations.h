@@ -31,6 +31,7 @@
 #include <utils/ScalarSpatialFunction.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
   namespace basis
@@ -39,18 +40,13 @@ namespace dftefe
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
      */
-    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace>
     class BasisOperations
     {
     public:
       virtual ~BasisOperations() = default;
-
-      virtual void
-      interpolate(
-        const Field<ValueTypeBasisCoeff, memorySpace> &field,
-        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
-          &quadValuesContainer) const = 0;
 
       // virtual void
       // integrateWithBasisValues(const
@@ -61,12 +57,23 @@ namespace dftefe
       //                         field) const = 0;
 
       virtual void
-      integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace> &f,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueTypeBasisCoeff, memorySpace> &   field) const = 0;
+      interpolate(
+        const Field<ValueTypeBasisCoeff, memorySpace> &field,
+        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const = 0;
 
+
+      virtual void
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        Field<ValueTypeBasisCoeff, memorySpace> &   f) const = 0;
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,

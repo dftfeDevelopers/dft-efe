@@ -48,8 +48,9 @@ namespace dftefe
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class FEBasisOperations
-      : public BasisOperations<ValueTypeBasisCoeff, memorySpace>
+    class FEBasisOperations : public BasisOperations<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace>
     {
     public:
       FEBasisOperations(
@@ -63,16 +64,18 @@ namespace dftefe
       interpolate(
         const Field<ValueTypeBasisCoeff, memorySpace> &field,
         const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
-          &quadValuesContainer) const override;
-
-      virtual void
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const override;
+      void
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace> &f,
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueTypeBasisCoeff, memorySpace> &   field) const = 0;
-
+        Field<ValueTypeBasisCoeff, memorySpace> &   f) const override;
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,

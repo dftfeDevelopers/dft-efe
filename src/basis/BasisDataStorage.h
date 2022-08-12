@@ -86,9 +86,9 @@ namespace dftefe
       virtual void
       evaluateBasisData(
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                                        quadratureContainer,
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap     boolBasisStorageFlagsObj) = 0;
+                                            quadratureContainer,
+        const QuadratureRuleAttributes &    quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj) = 0;
       virtual void
       deleteBasisData(
         const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
@@ -182,13 +182,13 @@ namespace dftefe
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
       // get the laplace operator in a cell
-      Storage
+      virtual Storage
       getBasisGradNiGradNjInCell(
         const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
 
       // get laplace operator in all cells
-      const Storage &
+      virtual const Storage &
       getBasisGradNiGradNjInAllCells(
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 

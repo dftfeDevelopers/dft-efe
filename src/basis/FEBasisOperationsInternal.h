@@ -44,8 +44,8 @@ namespace dftefe
         const ValueTypeBasisCoeff *data,
         const size_type            numComponents,
         const size_type *          cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector
-          &numCellDofs,
+        const typename BasisHandler<ValueTypeBasisCoeff,
+                                    memorySpace>::SizeTypeVector &numCellDofs,
         dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &cellWiseStorage);
 
@@ -55,9 +55,9 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector
-          &                  numCellDofs,
-        ValueTypeBasisCoeff *data);
+        const typename BasisHandler<ValueTypeBasisCoeff,
+                                    memorySpace>::SizeTypeVector &numCellDofs,
+        ValueTypeBasisCoeff *                                     data);
 
 
     }; // end of class FEBasisOperationsInternal

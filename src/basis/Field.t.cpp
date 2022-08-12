@@ -23,8 +23,7 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#include <linearAlgebra/SerialVector.h>
-#include <linearAlgebra/DistributedVector.h>
+#include <linearAlgebra/Vector.h>
 namespace dftefe
 {
   namespace basis

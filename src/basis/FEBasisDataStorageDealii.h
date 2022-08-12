@@ -66,9 +66,9 @@ namespace dftefe
         //        std::vector<std::shared_ptr<Constraints<ValueTypeBasisData,
         //        memorySpace>>>
         //          constraintsVec,
-        const 
-          std::vector<QuadratureRuleAttributes> &quadratureRuleAttributesVec,
-        const QuadAttrToBasisStorageAttrMap      quadAttrToBasisStorageAttrMap);
+        const std::vector<QuadratureRuleAttributes>
+          &                                 quadratureRuleAttributesVec,
+        const QuadAttrToBasisStorageAttrMap quadAttrToBasisStorageAttrMap);
 
       ~FEBasisDataStorageDealii() = default;
 
@@ -78,9 +78,9 @@ namespace dftefe
       void
       evaluateBasisData(
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                                        quadratureRuleContainer,
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap     boolBasisStorageFlagsObj) override;
+                                            quadratureRuleContainer,
+        const QuadratureRuleAttributes &    quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj) override;
 
       void
       deleteBasisData(
