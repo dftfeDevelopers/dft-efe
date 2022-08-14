@@ -496,7 +496,7 @@ namespace dftefe
           //
           auto mpiPatternP2P =
             std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
-              d_locallyOwnedRange);
+              d_locallyOwnedRange.second - d_locallyOwnedRange.first);
           d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
 
           //
