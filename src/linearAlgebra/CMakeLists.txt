@@ -56,5 +56,5 @@ if (NOT TARGET dft-efe-linalg)
     target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
     target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
-    target_link_libraries(dft-efe-linalg PUBLIC blaspp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC blaspp lapackpp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()
