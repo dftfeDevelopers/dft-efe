@@ -47,11 +47,11 @@ if(ENABLE_MPI)
 
 endif()
 
-#target_include_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/include)
-#target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib64)
-#target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib)
+target_include_directories(dft-efe-utils PRIVATE ${BOOST_DIR}/include)
+target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib64)
+target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib)
 
 include_directories(../)
 
-target_link_libraries(dft-efe-utils PUBLIC ${DFTEFE_UTILS_MPI_LIBRARIES})
+target_link_libraries(dft-efe-utils PUBLIC boost_regex ${DFTEFE_UTILS_MPI_LIBRARIES})
 endif()
