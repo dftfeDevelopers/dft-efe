@@ -9,39 +9,66 @@ namespace dftefe
   {
     namespace blasLapack
     {
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      Kernels<ValueType, memorySpace>::ascale(const size_type  size,
-                                              const ValueType  alpha,
-                                              const ValueType *x,
-                                              ValueType *      z)
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(
+        const size_type                      size,
+        const ValueType1                     alpha,
+        const ValueType2 *                   x,
+        scalar_type<ValueType1, ValueType2> *z)
       {
         for (size_type i = 0; i < size; ++i)
           {
-            z[i] = alpha * x[i];
+            z[i] = ((scalar_type<ValueType1, ValueType2>)alpha) *
+                   ((scalar_type<ValueType1, ValueType2>)x[i]);
           }
       }
 
 
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      Kernels<ValueType, memorySpace>::axpby(const size_type  size,
-                                             const ValueType  alpha,
-                                             const ValueType *x,
-                                             const ValueType  beta,
-                                             const ValueType *y,
-                                             ValueType *      z)
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        hadamardProduct(const size_type                      size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        scalar_type<ValueType1, ValueType2> *z)
       {
         for (size_type i = 0; i < size; ++i)
           {
-            z[i] = alpha * x[i] + beta * y[i];
+            z[i] = ((scalar_type<ValueType1, ValueType2>)x[i]) *
+                   ((scalar_type<ValueType1, ValueType2>)y[i]);
+          }
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
+        const size_type                           size,
+        const scalar_type<ValueType1, ValueType2> alpha,
+        const ValueType1 *                        x,
+        const scalar_type<ValueType1, ValueType2> beta,
+        const ValueType2 *                        y,
+        scalar_type<ValueType1, ValueType2> *     z)
+      {
+        for (size_type i = 0; i < size; ++i)
+          {
+            z[i] = ((scalar_type<ValueType1, ValueType2>)alpha) *
+                     ((scalar_type<ValueType1, ValueType2>)x[i]) +
+                   ((scalar_type<ValueType1, ValueType2>)beta) *
+                     ((scalar_type<ValueType1, ValueType2>)y[i]);
           }
       }
 
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      Kernels<ValueType, memorySpace>::amaxsMultiVector(
+      KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
         const size_type  vecSize,
         const size_type  numVec,
         const ValueType *multiVecData)
@@ -68,7 +95,7 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      Kernels<ValueType, memorySpace>::nrms2MultiVector(
+      KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
         const size_type         vecSize,
         const size_type         numVec,
         const ValueType *       multiVecData,
@@ -86,21 +113,125 @@ namespace dftefe
         return nrms2;
       }
 
+#define EXPLICITLY_INSTANTIATE_2T(T1, T2, M) \
+  template class KernelsTwoValueTypes<T1, T2, M>;
 
-      template class Kernels<double, dftefe::utils::MemorySpace::HOST>;
-      template class Kernels<float, dftefe::utils::MemorySpace::HOST>;
-      template class Kernels<std::complex<double>,
-                             dftefe::utils::MemorySpace::HOST>;
-      template class Kernels<std::complex<float>,
-                             dftefe::utils::MemorySpace::HOST>;
+#define EXPLICITLY_INSTANTIATE_1T(T, M) \
+  template class KernelsOneValueType<T, M>;
+
+
+      EXPLICITLY_INSTANTIATE_1T(float, dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_1T(double, dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_1T(std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_1T(std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST);
+
+
+      EXPLICITLY_INSTANTIATE_2T(float, float, dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                double,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                float,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                double,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                float,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                double,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                float,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                double,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST);
 
 #ifdef DFTEFE_WITH_DEVICE
-      template class Kernels<double, dftefe::utils::MemorySpace::HOST_PINNED>;
-      template class Kernels<float, dftefe::utils::MemorySpace::HOST_PINNED>;
-      template class Kernels<std::complex<double>,
-                             dftefe::utils::MemorySpace::HOST_PINNED>;
-      template class Kernels<std::complex<float>,
-                             dftefe::utils::MemorySpace::HOST_PINNED>;
+      EXPLICITLY_INSTANTIATE_1T(float, dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_1T(double,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_1T(std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_1T(std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                float,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                double,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(float,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                float,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                double,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(double,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                float,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                double,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<float>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                float,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                double,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_2T(std::complex<double>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::HOST_PINNED);
 #endif
     } // namespace blasLapack
   }   // namespace linearAlgebra

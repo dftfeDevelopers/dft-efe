@@ -20,16 +20,18 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das
+ * @author Sambit Das, Bikash Kanungo
  */
+
 
 #ifndef dftefeMultiVector_h
 #define dftefeMultiVector_h
 
+#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/VectorAttributes.h>
-#include <linearAlgebra/BlasLapack.h>
-#include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/MemoryStorage.h>
+#include <utils/MPICommunicatorP2P.h>
+#include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
 #include <memory>
 namespace dftefe
@@ -37,47 +39,92 @@ namespace dftefe
   namespace linearAlgebra
   {
     /**
-     * @brief An base class template which provides an interface for a multi vector.
-     * This is a collection of \f$N\f$ vectors belonging to the same
+     * @brief An class template to encapsulate a MultiVector.
+     * A MultiVector is a collection of \f$N\f$ vectors belonging to the same
      * finite-dimensional vector space, where usual notion of vector size
      * denotes the dimension of the vector space. Note that this in the
      * mathematical sense and not in the sense of an multi-dimensional array.The
-     * multi vector is stored contiguously with the vector index being the
+     * MultiVector is stored contiguously with the vector index being the
      * fastest index, or in other words a matrix of size \f$M \times N\f$ in row
      * major format with \f$M \f$ denoting the dimension of the vector space
-     * (size of the vector).
+     * (size of individual vector).
      *
-     * It provides the interface for two derived classes: SerialMultiVector and
-     * DistributedMultiVector.
+     * This class handles both serial and distributed MultiVector
+     * in a unfied way. There are different constructors provided for the
+     * serial and distributed case.
      *
-     * SerialMultiVector, as the name suggests, resides entirely in a processor.
+     * The serial MultiVector, as the name suggests, resides entirely in a
+     * processor.
      *
-     * DistributedMultiVector, on the other hand, is distributed across a set of
-     * processors. The storage of each of the \f$N\f$ vectors in the
-     * DistributedMultiVector in a processor follows along similar lines to
-     * DistributedVector and comprises of two parts (considering the
-     * \f$i^{\textrm{th}}\f$ vector component):
-     *   1. <b>locally owned part</b>: A part of the DistributedMultiVector,
-     * defined through a strided range of indices
-     * \f$\{a*N+i,\,(a+1)*N+i,\,(a+2)*N+i,\,\cdots,b*N+i\}\f$
-     * (\f$a+N*i\f$ is included, but \f$b*N+i\f$ is not), for which the current
-     * processor is the sole owner. The size of the locally owned indices for
-     * each vector is termed as \e locallyOwnedSize.
-     *   2. <b>ghost part</b>: Part of the DistributedMultiVector, defined
-     * through a set of ghost indices, that are owned by other processors. The
-     * size of ghost indices for each vector is termed as \e ghostSize.
+     * The distributed MultiVector, on the other hand, is distributed across a
+     * set of processors. The storage of each of the \f$N\f$ vectors in the
+     * distributed MultiVector in a processor follows along similar lines to
+     * a distributed Vector object and comprises of two parts:
+     *   1. <b>locally owned part</b>: A part of the distribute MultiVector,
+     * defined through a contiguous range of indices \f$[a,b)\f$ (\f$a\f$ is
+     * included, but \f$b\f$ is not), for which the current processor is the
+     * sole owner. The size of the locally owned part (i.e., \f$b-a\f$) is
+     * termed as \e locallyOwnedSize. Note that the range of indices that
+     * comprises the locally owned part (i.e., \f$[a,b)\f$) is same for all the
+     * \f$N\f$ vectors in the MultiVector
+     *   2. <b>ghost part</b>: Part of the MultiVector, defined
+     *      through a set of ghost indices, that are owned by other processors.
+     * The size of ghost indices for each vector is termed as \e ghostSize. Note
+     * that the set of indices that define the ghost indices are same for all
+     * the \f$N\f$ vectors in the MultiVector
      *
-     * The global size each vector in of the DistributedMultiVector
+     * The global size of each vector in the distributed MultiVector
      * (i.e., the number of unique indices across all the processors) is simply
      * termed as \e size. Additionally, we define \e localSize = \e
      * locallyOwnedSize + \e ghostSize.
      *
-     * @note For a SerialMultiVector, \e size = \e locallyOwnedSize and \e ghostSize = 0.
+     * We handle the serial MultiVector as a special case of the distributed
+     * MultiVector, wherein \e size = \e locallyOwnedSize and \e ghostSize = 0.
+     *
+     * @note While typically one would link to an MPI library while compiling this class,
+     * care is taken to seamlessly allow usage of this class even while not
+     * linking to an MPI library. To do so, we have our own MPI wrappers that
+     * redirect to the MPI library's function calls and definitions while
+     * linking to an MPI library. While not linking to an MPI library, the MPI
+     * wrappers provide equivalent functions and definitions that mimic the MPI
+     * functions and definitions, albeit for a single processor. This allows the
+     * user of this class to seamlessly switch between linking and de-linking to
+     * an MPI library without any change in the code and with the expected
+     * behavior.
+     *
+     * @note Note that the case of not linking to an MPI library and the case of
+     * creating a serial mult-Vector are two independent things. One can still
+     * create a serial MultiVector while linking to an MPI library and
+     * running the code across multipe processors. That is, one can create a
+     * serial MultiVector in one or more than one of the set of processors used
+     * when running in parallel. Internally, we handle this by using
+     * MPI_COMM_SELF as our MPI_Comm for the serial MultiVector (i.e., the
+     * processor does self communication). However, while not linking to an MPI
+     * library (which by definition means running on a single processor), there
+     * is no notion of communication (neither with self nor with other
+     * processors). In such case, both serial and distributed mult-Vector mean
+     * the same thing and the MPI wrappers ensure the expected behavior (i.e.,
+     * the behavior of a MultiVector while using just one processor)
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
-     *  in the multi vector (i.e., int, double, complex<double>, etc.)
+     *  in the MultiVector (i.e., int, double, complex<double>, etc.)
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
-     * DEVICE) in which the multi vector must reside.
+     * DEVICE) in which the MultiVector must reside.
+     *
+     * @note Broadly, there are two ways of constructing a distributed MultiVector.
+     *  1. [<b>Prefered and efficient approach</b>] The first approach takes a
+     *     pointer to an MPIPatternP2P as an input argument (along with other
+     * arguments). The MPIPatternP2P, in turn, contains all the information
+     *     regarding the locally owned and ghost part of the MultiVector as well
+     * as the interaction map between processors. This is the most efficient way
+     * of constructing a distributed MultiVector as it allows for reusing of an
+     *     already constructed MPIPatternP2P.
+     *  2. [<b> Expensive approach</b>] The second approach takes in the
+     *     locally owned, ghost indices or the total number of indices
+     *     across all the processors and internally creates an
+     *     MPIPatternP2P object. Given that the creation of an MPIPatternP2P is
+     *     expensive, this route of constructing a distributed MultiVector
+     *     <b>should</b> be avoided.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class MultiVector
@@ -95,7 +142,218 @@ namespace dftefe
       using const_iterator  = typename Storage::const_iterator;
 
     public:
-      virtual ~MultiVector() = default;
+      /**
+       * @brief Default Constructor
+       */
+      MultiVector() = default;
+
+      /**
+       * @brief Default Destructor
+       */
+      ~MultiVector() = default;
+
+      /**
+       * @brief Constructor for \b serial MultiVector with vector size, number of vectors and initial value arguments
+       * @param[in] size size of each vector in the MultiVector
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] initVal initial value of elements of the MultiVector
+       * @param[in] linAlgOpContext handle for linear algebra operations on
+       * HOST or DEVICE.
+       *
+       */
+      MultiVector(const size_type               size,
+                  const size_type               numVectors,
+                  LinAlgOpContext<memorySpace> *linAlgOpContext,
+                  const ValueType               initVal = ValueType());
+
+      /**
+       * @brief Constructor for a \serial MultiVector with a predefined
+       * MultiVector::Storage (i.e., utils::MemoryStorage).
+       * This constructor transfers the ownership of the input Storage to the
+       * MultiVector. This is useful when one does not want to allocate new
+       * memory and instead use memory allocated in the MultiVector::Storage
+       * (i.e., utils::MemoryStorage).
+       * The \e locallyOwnedSize, \e ghostSize, etc., are automatically set
+       * using the size of the input Storage object.
+       *
+       * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
+       * is to be transfered to the MultiVector
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @note This Constructor transfers the ownership from the input
+       * unique_ptr \p storage to the internal data member of the MultiVector.
+       * Thus, after the function call \p storage will point to NULL and any
+       * access through \p storage will lead to <b>undefined behavior</b>.
+       *
+       */
+      MultiVector(
+        std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
+                                      storage,
+        size_type                     numVectors,
+        LinAlgOpContext<memorySpace> *linAlgOpContext);
+
+      /**
+       * @brief Constructor for a \b distributed MultiVector based on an input MPIPatternP2P.
+       *
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
+       * based on which the distributed MultiVector will be created.
+       * @param[in] linAlgOpContext handle for linear algebra operations on
+       * HOST or DEVICE.
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] initVal value with which the MultiVector shoud be
+       * initialized
+       */
+      MultiVector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                mpiPatternP2P,
+                  LinAlgOpContext<memorySpace> *linAlgOpContext,
+                  const size_type               numVectors,
+                  const ValueType               initVal = ValueType());
+
+      /**
+       * @brief Constructor for a \b distributed MultiVector with a predefined
+       * MultiVector::Storage (i.e., utils::MemoryStorage) and MPIPatternP2P.
+       * This constructor transfers the ownership of the input Storage to the
+       * MultiVector. This is useful when one does not want to allocate new
+       * memory and instead use memory allocated in the input
+       * MultiVector::Storage (i.e., utils::MemoryStorage).
+       *
+       * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
+       * is to be transfered to the MultiVector
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
+       * based on which the distributed MultiVector will be created.
+       * @param[in] linAlgOpContext handle for linear algebra operations on
+       * HOST or DEVICE.
+       * @param[in] numVectors number of vectors in the MultiVector
+       *
+       * @note This Constructor transfers the ownership from the input
+       * unique_ptr \p storage to the internal data member of the MultiVector.
+       * Thus, after the function call \p storage will point to NULL and any
+       * access through \p storage will lead to <b>undefined behavior</b>.
+       *
+       */
+      MultiVector(
+        std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
+          &storage,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                      mpiPatternP2P,
+        LinAlgOpContext<memorySpace> *linAlgOpContext,
+        const size_type               numVectors);
+
+      /**
+       * @brief Constructor for a \distributed MultiVector based on locally
+       * owned and ghost indices.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPIPatternP2P as far as possible.
+       *
+       * @param[in] locallyOwnedRange a pair \f$(a,b)\f$ which defines a range
+       * of indices (continuous) that are owned by the current processor.
+       * @param[in] ghostIndices vector containing an ordered set of ghost
+       * indices (ordered in increasing order and non-repeating)
+       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * of processors across which the MultiVector is to be distributed
+       * @param[in] linAlgOpContext handle for linear algebra operations on
+       * HOST or DEVICE.
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] initVal value with which the MultiVector shoud be
+       * initialized
+       *
+       * @note The locallyOwnedRange should be an open interval where the start
+       * index is included, but the end index is not included.
+       */
+      MultiVector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const std::vector<global_size_type> &               ghostIndices,
+        const utils::mpi::MPIComm &                         mpiComm,
+        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        const size_type                                     numVectors,
+        ValueType initVal = ValueType());
+
+      /**
+       * @brief Constructor for a special case of \b distributed MultiVector where none
+       * none of the processors have any ghost indices.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPIPatternP2P as far as possible.
+       *
+       * @param[in] locallyOwnedRange a pair \f$(a,b)\f$ which defines a range
+       * of indices (continuous) that are owned by the current processor.
+       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * of processors across which the MultiVector is to be distributed
+       * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] initVal value with which the Vector shoud be
+       * initialized
+       *
+       * @note The locallyOwnedRange should be an open interval where the start index included,
+       * but the end index is not included.
+       */
+      MultiVector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const utils::mpi::MPIComm &                         mpiComm,
+        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        const size_type                                     numVectors,
+        const ValueType initVal = ValueType());
+
+
+      /**
+       * @brief Constructor for a \b distributed MultiVector based on total number of global indices.
+       * The resulting Vector will not contain any ghost indices on any of the
+       * processors. Internally, the vector is divided to ensure as much
+       * equitable distribution across all the processors much as possible.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPIPatternP2P as far as possible.
+       * Further, the decomposition is not compatible with other ways of
+       * distributed MultiVector construction.
+       * @param[in] globalSize Total number of global indices that is
+       * distributed over the processors.
+       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * of processors across which the Vector is to be distributed
+       * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] initVal value with which the Vector shoud be
+       * initialized
+       */
+      MultiVector(const global_size_type        globalSize,
+                  const utils::mpi::MPIComm &   mpiComm,
+                  LinAlgOpContext<memorySpace> *linAlgOpContext,
+                  const size_type               numVectors,
+                  const ValueType               initVal = ValueType());
+
+
+      /**
+       * @brief Copy constructor
+       * @param[in] u MultiVector object to copy from
+       */
+      MultiVector(const MultiVector &u);
+
+      /**
+       * @brief Copy constructor with reinitialisation
+       * @param[in] u MultiVector object to copy from
+       * @param[in] initVal Initial value of the MultiVector
+       */
+      MultiVector(const MultiVector &u, const ValueType initVal = ValueType());
+
+      /**
+       * @brief Move constructor
+       * @param[in] u MultiVector object to move from
+       */
+      MultiVector(MultiVector &&u) noexcept;
+
+      /**
+       * @brief Copy assignment operator
+       * @param[in] u const reference to MultiVector object to copy
+       * from
+       * @return reference to this object after copying data from u
+       */
+      MultiVector &
+      operator=(const MultiVector &u);
+
+      /**
+       * @brief Move assignment operator
+       * @param[in] u const reference to MultiVector object to move
+       * from
+       * @return reference to this object after moving data from u
+       */
+      MultiVector &
+      operator=(MultiVector &&u);
 
       /**
        * @brief Return iterator pointing to the beginning of MultiVector data.
@@ -133,51 +391,6 @@ namespace dftefe
       end() const;
 
       /**
-       * @brief Returns the global size of the vectors in the MultiVector (see top for explanation)
-       * @returns global size of each vector
-       */
-      global_size_type
-      size() const;
-
-      /**
-       * @brief Returns the size of the part of each vector in the MultiVector that
-       * is locally owned in the current processor.
-       * For a SerialMultiVector, it is same as the \e globalSize.
-       * For a DistributedMultiVector, it is the size of the part of each vector
-       * in the DistributedMultiVector, for which the current processor is the
-       * sole owner.
-       * @returns the \e locallyOwnedSize of each vector
-       */
-      size_type
-      locallyOwnedSize() const;
-
-      /**
-       * @brief Returns the size of the \b ghost \b part (i.e., \e ghostSize) of each vector in the
-       * MultiVector (see top for an explanation)
-       * @returns the \e ghostSize of each vector
-       */
-      size_type
-      ghostSize() const;
-
-      /**
-       * @brief Returns the combined size of the locally owned and the ghost part of each vector in
-       * the MultiVector in the current processor.
-       * For a SerialMultiVector, it is same as the \e globalSize. For a
-       * DistributedMultiVector, it is the sum of \e locallyOwnedSize and \e
-       * ghostSize.
-       * @returns the local size of each vector
-       */
-      size_type
-      localSize() const;
-
-      /**
-       * @brief Returns the number of vectors in the MultiVector
-       * @returns the number of vectors in the MultiVector
-       */
-      size_type
-      numVectors() const;
-
-      /**
        * @brief Return the raw pointer to the MultiVector data
        * @return pointer to data
        */
@@ -191,168 +404,54 @@ namespace dftefe
       const ValueType *
       data() const;
 
-      /**
-       * @brief Compound addition for elementwise addition lhs += rhs
-       * @param[in] rhs the MultiVector to add
-       * @return the original MultiVector
-       * @throws exception if the sizes and type (SerialMultiVector or
-       * DistributedMultiVector) are incompatible
-       */
-      MultiVector &
-      operator+=(const MultiVector &rhs);
 
       /**
-       * @brief Compound subtraction for elementwise addition lhs -= rhs
-       * @param[in] rhs the vector to subtract
-       * @return the original vector
-       * @throws exception if the sizes and type (SerialMultiVector or
-       * DistributedMultiVector) are incompatible
-       */
-      MultiVector &
-      operator-=(const MultiVector &rhs);
-
-      /**
-       * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
-       * of the MultiVector.
+       * @brief Set all entries of the MultiVector to a given value
        *
-       * @return reference to the underlying MemoryStorage.
-       */
-      Storage &
-      getValues();
-
-      /**
-       * @brief Returns a const reference to the underlying storage (i.e., MemoryStorage object)
-       * of the MultiVector.
-       *
-       * @return const reference to the underlying MemoryStorage.
-       */
-      const Storage &
-      getValues() const;
-
-      /**
-       * @brief Returns a shared pointer to underlying linAlgOptContext.
-       *
-       * @return a pointer to linAlgOptContext.
-       */
-      LinAlgOpContext<memorySpace> *
-      getLinAlgOptContext() const;
-
-      /**
-       * @brief Set values in the MultiVector using a user provided MultiVector::Storage object (i.e., MemoryStorage object).
-       * The MemoryStorage may lie in a different memoryspace (say memSpace2)
-       * than the MultiVector's memory space (memSpace). The function internally
-       * does a data transfer from memSpace2 to memSpace.
-       *
-       * @param[in] storage const reference to MemoryStorage object from which
-       * to set values into the MultiVector.
-       * @throws exception if the size of the input storage is smaller than the
-       * \e localSize (\e locallyOwnedSize + \e ghostSize) of the MultiVector
-       */
-      template <dftefe::utils::MemorySpace memorySpace2>
-      void
-      setValues(
-        const typename MultiVector<ValueType, memorySpace2>::Storage &storage);
-
-      /**
-       * @brief Transfer ownership of a user provided MultiVector::Storage object (i.e., MemoryStorage object)
-       * to the MultiVector. This is useful when a MemoryStorage has been
-       * already been allocated and we need the the MultiVector to claim its
-       * ownership. This avoids reallocation of memory.
-       *
-       * @param[in] storage unique_ptr to MemoryStorage object whose ownership
-       * is to be passed to the MultiVector
-       *
-       * @note Since we are passing the ownership of the input storage to the MultiVector, the
-       * storage will point to NULL after a call to this function. Accessing the
-       * input storage pointer will lead to undefined behavior.
-       *
+       * @param[in] val The value to which the entries are to be set
        */
       void
-      setStorage(std::unique_ptr<Storage> &storage);
-
-      /**
-       * @brief Returns a VectorAttributes object that stores various attributes
-       * (e.g., Serial or Distributed etc)
-       *
-       * @return const reference to the VectorAttributes
-       */
-      const VectorAttributes &
-      getVectorAttributes() const;
-
-      //
-      // virtual functions
-      //
+      setValue(const ValueType val);
 
       /**
        * @brief Returns \f$ l_2 \f$ norms of all the \f$N\f$ vectors in the  MultiVector
        * @return \f$ l_2 \f$  norms of the various vectors as std::vector<double> type
        */
-      virtual std::vector<double>
-      l2Norms() const = 0;
+      std::vector<double>
+      l2Norms() const;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norms of all the \f$N\f$ vectors in the  MultiVector
        * @return \f$ l_{\inf} \f$  norms of the various vectors as std::vector<double> type
        */
-      virtual std::vector<double>
-      lInfNorms() const = 0;
+      std::vector<double>
+      lInfNorms() const;
 
-      virtual void
-      updateGhostValues(const size_type communicationChannel = 0) = 0;
+      void
+      updateGhostValues(const size_type communicationChannel = 0);
 
-      virtual void
-      accumulateAddLocallyOwned(const size_type communicationChannel = 0) = 0;
+      void
+      accumulateAddLocallyOwned(const size_type communicationChannel = 0);
 
-      virtual void
-      updateGhostValuesBegin(const size_type communicationChannel = 0) = 0;
+      void
+      updateGhostValuesBegin(const size_type communicationChannel = 0);
 
-      virtual void
-      updateGhostValuesEnd() = 0;
+      void
+      updateGhostValuesEnd();
 
-      virtual void
-      accumulateAddLocallyOwnedBegin(
-        const size_type communicationChannel = 0) = 0;
+      void
+      accumulateAddLocallyOwnedBegin(const size_type communicationChannel = 0);
 
-      virtual void
-      accumulateAddLocallyOwnedEnd() = 0;
+      void
+      accumulateAddLocallyOwnedEnd();
 
-    protected:
-      /**
-       * @brief Constructor
-       *
-       * @param[in] storage reference to unique_ptr to MultiVector::Storage
-       * (i.e., MemoryStorage) from which the MultiVector to transfer ownership.
-       * @param[in] globalSize global size of the vector (i.e., the number of
-       * unique indices across all processors).
-       * @param[in] locallyOwnedSize size of the part of the vector for which
-       * the current processor is the sole owner (see top for explanation). For
-       * a SerialMultiVector, the locallyOwnedSize and the the globalSize are
-       * the same.
-       * @param[in] ghostSize size of the part of the vector that is owned by
-       * the other processors but required by the current processor. For a
-       * SerialMultiVector, the ghostSize is 0.
-       * @param[in] numVectors number of vectors in the MultiVector
-       * @param[in] linAlgOptContext handle for linear algebra operations on
-       * HOST/DEVICE.
-       *
-       *
-       * @note Since we are passing the ownership of the input storage to the MultiVector, the
-       * storage will point to NULL after a call to this Constructor. Accessing
-       * the input storage pointer will lead to undefined behavior.
-       */
-      MultiVector(std::unique_ptr<Storage> &    storage,
-                  const global_size_type        globalSize,
-                  const size_type               locallyOwnedSize,
-                  const size_type               ghostSize,
-                  const size_type               numVectors,
-                  LinAlgOpContext<memorySpace> *linAlgOptContext);
+      bool
+      isCompatible(const MultiVector<ValueType, memorySpace> &rhs) const;
 
-      /**
-       * @brief Default Constructor
-       */
-      MultiVector();
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const;
 
-    protected:
+    private:
       std::unique_ptr<Storage>      d_storage;
       LinAlgOpContext<memorySpace> *d_linAlgOpContext;
       VectorAttributes              d_vectorAttributes;
@@ -361,27 +460,13 @@ namespace dftefe
       size_type                     d_locallyOwnedSize;
       size_type                     d_ghostSize;
       size_type                     d_numVectors;
+      std::unique_ptr<utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>
+        d_mpiCommunicatorP2P;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2P;
     };
 
-    // helper functions
-
-    /**
-     * @brief Perform \f$ w = au + bv \f$
-     * @param[in] a scalar
-     * @param[in] u array
-     * @param[in] b scalar
-     * @param[in] v array
-     * @param[out] w array of the result
-     */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    add(ValueType                                  a,
-        const MultiVector<ValueType, memorySpace> &u,
-        ValueType                                  b,
-        const MultiVector<ValueType, memorySpace> &v,
-        MultiVector<ValueType, memorySpace> &      w);
-
-  } // namespace linearAlgebra
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #include <linearAlgebra/MultiVector.t.cpp>
-#endif
+#endif // dftefeMultiVector_h

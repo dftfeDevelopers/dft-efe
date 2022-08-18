@@ -29,7 +29,8 @@
 #include <utils/MPITypes.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-
+#include <string>
+#include <utility>
 namespace dftefe
 {
   namespace utils
@@ -253,6 +254,15 @@ namespace dftefe
 
       int
       MPIFinalize(void);
+
+      bool
+      MPIErrIsSuccess(int errCode);
+
+      std::string
+      MPIErrMsg(int errCode);
+
+      std::pair<bool, std::string>
+      MPIErrIsSuccessAndMsg(int errCode);
 
     } // end of namespace mpi
   }   // end of namespace utils

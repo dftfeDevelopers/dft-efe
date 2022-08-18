@@ -53,9 +53,8 @@ namespace dftefe
           "amaxsMultiVector() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
 
 
-        return Kernels<ValueType, memorySpace>::amaxsMultiVector(vecSize,
-                                                                 numVec,
-                                                                 multiVecData);
+        return KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
+          vecSize, numVec, multiVecData);
       }
 
       template <typename ValueType1,
@@ -77,45 +76,50 @@ namespace dftefe
       }
 
 
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      ascale(const size_type         n,
-             const ValueType         alpha,
-             const ValueType *       x,
-             ValueType *             z,
-             BlasQueue<memorySpace> &BlasQueue)
+      ascale(const size_type                      n,
+             const ValueType1                     alpha,
+             const ValueType2 *                   x,
+             scalar_type<ValueType1, ValueType2> *z,
+             LinAlgOpContext<memorySpace> &       context)
       {
-        Kernels<ValueType, memorySpace>::ascale(n, alpha, x, z);
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(n,
+                                                                          alpha,
+                                                                          x,
+                                                                          z);
       }
 
-
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      axpby(const size_type               n,
-            const ValueType               alpha,
-            const ValueType *             x,
-            const ValueType               beta,
-            const ValueType *             y,
-            ValueType *                   z,
-            LinAlgOpContext<memorySpace> &context)
+      hadamardProduct(const size_type                      n,
+                      const ValueType1 *                   x,
+                      const ValueType2 *                   y,
+                      scalar_type<ValueType1, ValueType2> *z,
+                      LinAlgOpContext<memorySpace> &       context)
       {
-        Kernels<ValueType, memorySpace>::axpby(n, alpha, x, beta, y, z);
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          hadamardProduct(n, x, y, z);
       }
 
-
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      axpbyMultiVector(const size_type               vecSize,
-                       const size_type               numVec,
-                       const ValueType               alpha,
-                       const ValueType *             x,
-                       const ValueType               beta,
-                       const ValueType *             y,
-                       ValueType *                   z,
-                       LinAlgOpContext<memorySpace> &context)
+      axpby(const size_type                           n,
+            const scalar_type<ValueType1, ValueType2> alpha,
+            const ValueType1 *                        x,
+            const scalar_type<ValueType1, ValueType2> beta,
+            const ValueType2 *                        y,
+            scalar_type<ValueType1, ValueType2> *     z,
+            LinAlgOpContext<memorySpace> &            context)
       {
-        Kernels<ValueType, memorySpace>::axpbyMultiVector(
-          vecSize, numVec, alpha, x, beta, y, z);
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
+          n, alpha, x, beta, y, z);
       }
 
 
@@ -162,28 +166,30 @@ namespace dftefe
                        const ValueType *             multiVecData,
                        LinAlgOpContext<memorySpace> &context)
       {
-        return Kernels<ValueType, memorySpace>::nrms2MultiVector(
+        return KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
           vecSize, numVec, multiVecData, context.setBlasQueue());
       }
 
 
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      gemm(const Layout                  layout,
-           const Op                      transA,
-           const Op                      transB,
-           const size_type               m,
-           const size_type               n,
-           const size_type               k,
-           const ValueType               alpha,
-           ValueType const *             dA,
-           const size_type               ldda,
-           ValueType const *             dB,
-           const size_type               lddb,
-           const ValueType               beta,
-           ValueType *                   dC,
-           const size_type               lddc,
-           LinAlgOpContext<memorySpace> &context)
+      gemm(const Layout                              layout,
+           const Op                                  transA,
+           const Op                                  transB,
+           const size_type                           m,
+           const size_type                           n,
+           const size_type                           k,
+           const scalar_type<ValueType1, ValueType2> alpha,
+           ValueType1 const *                        dA,
+           const size_type                           ldda,
+           ValueType2 const *                        dB,
+           const size_type                           lddb,
+           const scalar_type<ValueType1, ValueType2> beta,
+           scalar_type<ValueType1, ValueType2> *     dC,
+           const size_type                           lddc,
+           LinAlgOpContext<memorySpace> &            context)
       {
         blas::gemm(layout,
                    transA,
@@ -201,7 +207,7 @@ namespace dftefe
                    lddc);
       }
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
       gemm(const Layout                                         layout,
            const Op                                             transA,
@@ -209,13 +215,13 @@ namespace dftefe
            const size_type                                      m,
            const size_type                                      n,
            const size_type                                      k,
-           const ValueType                                      alpha,
-           ValueType const *                                    dA,
+           const scalar_type<ValueType1, ValueType2>            alpha,
+           ValueType1 const *                                   dA,
            const size_type                                      ldda,
-           ValueType const *                                    dB,
+           ValueType2 const *                                   dB,
            const size_type                                      lddb,
-           const ValueType                                      beta,
-           ValueType *                                          dC,
+           const scalar_type<ValueType1, ValueType2>            beta,
+           scalar_type<ValueType1, ValueType2> *                dC,
            const size_type                                      lddc,
            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
@@ -238,27 +244,29 @@ namespace dftefe
 
 
 
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       void
-      gemmStridedVarBatched(const Layout                  layout,
-                            const size_type               numMats,
-                            const Op *                    transA,
-                            const Op *                    transB,
-                            const size_type *             stridea,
-                            const size_type *             strideb,
-                            const size_type *             stridec,
-                            const size_type *             m,
-                            const size_type *             n,
-                            const size_type *             k,
-                            const ValueType               alpha,
-                            const ValueType *             dA,
-                            const size_type *             ldda,
-                            const ValueType *             dB,
-                            const size_type *             lddb,
-                            const ValueType               beta,
-                            ValueType *                   dC,
-                            const size_type *             lddc,
-                            LinAlgOpContext<memorySpace> &context)
+      gemmStridedVarBatched(const Layout                              layout,
+                            const size_type                           numMats,
+                            const Op *                                transA,
+                            const Op *                                transB,
+                            const size_type *                         stridea,
+                            const size_type *                         strideb,
+                            const size_type *                         stridec,
+                            const size_type *                         m,
+                            const size_type *                         n,
+                            const size_type *                         k,
+                            const scalar_type<ValueType1, ValueType2> alpha,
+                            const ValueType1 *                        dA,
+                            const size_type *                         ldda,
+                            const ValueType2 *                        dB,
+                            const size_type *                         lddb,
+                            const scalar_type<ValueType1, ValueType2> beta,
+                            scalar_type<ValueType1, ValueType2> *     dC,
+                            const size_type *                         lddc,
+                            LinAlgOpContext<memorySpace> &            context)
       {
         size_type cumulativeA = 0;
         size_type cumulativeB = 0;
@@ -286,7 +294,7 @@ namespace dftefe
           }
       }
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
       gemmStridedVarBatched(
         const Layout                                         layout,
@@ -299,13 +307,13 @@ namespace dftefe
         const size_type *                                    m,
         const size_type *                                    n,
         const size_type *                                    k,
-        const ValueType                                      alpha,
-        const ValueType *                                    dA,
+        const scalar_type<ValueType1, ValueType2>            alpha,
+        const ValueType1 *                                   dA,
         const size_type *                                    ldda,
-        const ValueType *                                    dB,
+        const ValueType2 *                                   dB,
         const size_type *                                    lddb,
-        const ValueType                                      beta,
-        ValueType *                                          dC,
+        const scalar_type<ValueType1, ValueType2>            beta,
+        scalar_type<ValueType1, ValueType2> *                dC,
         const size_type *                                    lddc,
         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
