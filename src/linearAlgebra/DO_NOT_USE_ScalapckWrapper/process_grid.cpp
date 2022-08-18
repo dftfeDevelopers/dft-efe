@@ -256,12 +256,13 @@ namespace dftefeScalapack
         AssertThrowMPI(ierr);
       }
   }
-} // namespace dftfe
+} // namespace dftefeScalapack
 
 // instantiations
 
 template void
-dftefeScalapack::ProcessGrid::send_to_inactive<double>(double *, const int) const;
+dftefeScalapack::ProcessGrid::send_to_inactive<double>(double *,
+                                                       const int) const;
 template void
 dftefeScalapack::ProcessGrid::send_to_inactive<float>(float *, const int) const;
 template void

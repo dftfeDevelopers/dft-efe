@@ -55,7 +55,9 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    AbstractMatrix<ValueType, memorySpace>::initSlateMatrix(slate::BaseMatrix<ValueType> *matrix, ValueType val)
+    AbstractMatrix<ValueType, memorySpace>::initSlateMatrix(
+      slate::BaseMatrix<ValueType> *matrix,
+      ValueType                     val)
     {
       for (int64_t j = 0, j_offset = 0; j < matrix->nt();
            j_offset += matrix->tileNb(j++))
@@ -75,7 +77,7 @@ namespace dftefe
     void
     AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(
       slate::BaseMatrix<ValueType> *matrix,
-      const ValueType              *data)
+      const ValueType *             data)
     {
       for (int64_t j = 0, j_offset = 0; j < matrix->nt();
            j_offset += matrix->tileNb(j++))
@@ -105,8 +107,11 @@ namespace dftefe
     void
     AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(
       slate::BaseMatrix<ValueType> *matrix,
-      const ValueType              *data,
-      int i1, int i2, int j1, int j2)
+      const ValueType *             data,
+      int                           i1,
+      int                           i2,
+      int                           j1,
+      int                           j2)
     {
       for (int64_t j = 0, j_offset = 0; j < matrix->nt();
            j_offset += matrix->tileNb(j++))
@@ -120,14 +125,13 @@ namespace dftefe
                   // todo: check for transpose case (d_m and d_n)
                   int64_t mb = T.mb(), nb = T.nb(),
                           offset = i_offset + j_offset * d_m;
-                  int64_t ii1 =
-                  lapack::lacpy(lapack::MatrixType::General,
-                                mb,
-                                nb,
-                                &data[offset],
-                                d_m,
-                                T.data(),
-                                mb);
+                  int64_t ii1    = lapack::lacpy(lapack::MatrixType::General,
+                                              mb,
+                                              nb,
+                                              &data[offset],
+                                              d_m,
+                                              T.data(),
+                                              mb);
                 }
             }
         }

@@ -229,5 +229,5 @@ namespace dftefeScalapack
       << "picks up an existing BLAS and LAPACK installation at "
       << "configuration time.");
   } // namespace LAPACKSupport
-} // namespace dftfe
+} // namespace dftefeScalapack
 #endif

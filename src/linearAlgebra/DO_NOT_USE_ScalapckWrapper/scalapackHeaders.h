@@ -1,7 +1,7 @@
 //// ---------------------------------------------------------------------
 ////
-//// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
-//// authors.
+//// Copyright (c) 2017-2022 The Regents of the University of Michigan and
+///DFT-FE / authors.
 ////
 //// This file is part of the DFT-FE code.
 ////
@@ -97,7 +97,7 @@
 //
 //#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 //// commonly used  typedefs used in dftfe go here
-//namespace dftfe
+// namespace dftfe
 //{
 //  template <typename elem_type>
 //  using distributedCPUVec =

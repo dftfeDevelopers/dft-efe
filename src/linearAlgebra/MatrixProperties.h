@@ -30,8 +30,8 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-   enum class Uplo
+    enum class Uplo
   }
-}
+} // namespace dftefe
 
 #endif // dftefeMatrixProperties_h

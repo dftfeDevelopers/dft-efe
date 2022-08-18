@@ -64,7 +64,8 @@ namespace dftefe
     void
     GeneralMatrix<ValueType, memorySpace>::setValues(const ValueType *data)
     {
-      AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(d_baseMatrix, data);
+      AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(d_baseMatrix,
+                                                                  data);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

@@ -143,12 +143,15 @@ namespace dftefe
 
       void
       setValueSlateMatrix(slate::BaseMatrix<ValueType> *matrix,
-                          const ValueType              *data);
+                          const ValueType *             data);
 
       void
       setValueSlateMatrix(slate::BaseMatrix<ValueType> *matrix,
-                          const ValueType              *data,
-                          int i1, int i2, int j1, int j2);
+                          const ValueType *             data,
+                          int                           i1,
+                          int                           i2,
+                          int                           j1,
+                          int                           j2);
 
 
       void

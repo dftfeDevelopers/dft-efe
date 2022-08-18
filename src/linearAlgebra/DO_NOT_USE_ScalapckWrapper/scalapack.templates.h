@@ -2799,5 +2799,5 @@ namespace dftefeScalapack
   {
     return static_cast<int>(work[0].real());
   }
-} // namespace dftfe
+} // namespace dftefeScalapack
 #endif // dftfe_scalapack_templates_h

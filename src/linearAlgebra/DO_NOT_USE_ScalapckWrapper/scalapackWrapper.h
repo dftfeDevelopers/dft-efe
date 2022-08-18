@@ -53,12 +53,12 @@ namespace dftefeScalapack
      * \dots$.
      */
     ScaLAPACKMatrix(
-      const size_type                                  n_rows,
-      const size_type                                  n_columns,
+      const size_type                                            n_rows,
+      const size_type                                            n_columns,
       const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-      const size_type                                  row_block_size    = 32,
-      const size_type                                  column_block_size = 32,
-      const dftefeScalapack::LAPACKSupport::Property             property =
+      const size_type                                row_block_size    = 32,
+      const size_type                                column_block_size = 32,
+      const dftefeScalapack::LAPACKSupport::Property property =
         dftefeScalapack::LAPACKSupport::Property::general);
 
     /**
@@ -71,10 +71,10 @@ namespace dftefeScalapack
      * \dots$.
      */
     ScaLAPACKMatrix(
-      const size_type                                  size,
+      const size_type                                            size,
       const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-      const size_type                                  block_size = 32,
-      const dftefeScalapack::LAPACKSupport::Property             property =
+      const size_type                                block_size = 32,
+      const dftefeScalapack::LAPACKSupport::Property property =
         dftefeScalapack::LAPACKSupport::Property::hermitian);
 
 
@@ -88,12 +88,13 @@ namespace dftefeScalapack
      * \dots$.
      */
     void
-    reinit(const size_type                                  n_rows,
-           const size_type                                  n_columns,
-           const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-           const size_type                                  row_block_size = 32,
-           const size_type                      column_block_size          = 32,
-           const dftefeScalapack::LAPACKSupport::Property property =
+    reinit(
+      const size_type                                            n_rows,
+      const size_type                                            n_columns,
+      const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
+      const size_type                                row_block_size    = 32,
+      const size_type                                column_block_size = 32,
+      const dftefeScalapack::LAPACKSupport::Property property =
         dftefeScalapack::LAPACKSupport::Property::general);
 
     /**
@@ -105,10 +106,11 @@ namespace dftefeScalapack
      * \dots$.
      */
     void
-    reinit(const size_type                                  size,
-           const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-           const size_type                                  block_size = 32,
-           const dftefeScalapack::LAPACKSupport::Property             property =
+    reinit(
+      const size_type                                            size,
+      const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
+      const size_type                                block_size = 32,
+      const dftefeScalapack::LAPACKSupport::Property property =
         dftefeScalapack::LAPACKSupport::Property::hermitian);
 
 
@@ -796,5 +798,5 @@ namespace dftefeScalapack
 #endif // DOXYGEN
 
 
-} // namespace dftfe
+} // namespace dftefeScalapack
 #endif // ScaLAPACKMatrix_H_

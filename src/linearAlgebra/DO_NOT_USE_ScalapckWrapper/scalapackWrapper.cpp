@@ -26,12 +26,12 @@ namespace dftefeScalapack
 {
   template <typename NumberType>
   ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
-    const size_type                                  n_rows_,
-    const size_type                                  n_columns_,
+    const size_type                                            n_rows_,
+    const size_type                                            n_columns_,
     const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-    const size_type                                  row_block_size_,
-    const size_type                                  column_block_size_,
-    const dftefeScalapack::LAPACKSupport::Property             property_)
+    const size_type                                            row_block_size_,
+    const size_type                                column_block_size_,
+    const dftefeScalapack::LAPACKSupport::Property property_)
     : uplo('L')
     , // for non-hermitian matrices this is not needed
     first_process_row(0)
@@ -51,9 +51,9 @@ namespace dftefeScalapack
 
   template <typename NumberType>
   ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
-    const size_type                                  size,
+    const size_type                                            size,
     const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-    const size_type                                  block_size,
+    const size_type                                            block_size,
     const dftefeScalapack::LAPACKSupport::Property             property)
     : ScaLAPACKMatrix<NumberType>(size,
                                   size,
@@ -68,12 +68,12 @@ namespace dftefeScalapack
   template <typename NumberType>
   void
   ScaLAPACKMatrix<NumberType>::reinit(
-    const size_type                                  n_rows_,
-    const size_type                                  n_columns_,
+    const size_type                                            n_rows_,
+    const size_type                                            n_columns_,
     const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-    const size_type                                  row_block_size_,
-    const size_type                                  column_block_size_,
-    const dftefeScalapack::LAPACKSupport::Property             property_)
+    const size_type                                            row_block_size_,
+    const size_type                                column_block_size_,
+    const dftefeScalapack::LAPACKSupport::Property property_)
   {
     Assert(row_block_size_ > 0,
            dealii::ExcMessage("Row block size has to be positive."));
@@ -126,7 +126,8 @@ namespace dftefeScalapack
                   &lda,
                   &info);
         AssertThrow(info == 0,
-                    dftefeScalapack::LAPACKSupport::ExcErrorCode("descinit_", info));
+                    dftefeScalapack::LAPACKSupport::ExcErrorCode("descinit_",
+                                                                 info));
 
         values.clear();
         values.resize(n_local_rows * n_local_columns, NumberType(0.0));
@@ -147,9 +148,9 @@ namespace dftefeScalapack
   template <typename NumberType>
   void
   ScaLAPACKMatrix<NumberType>::reinit(
-    const size_type                                  size,
+    const size_type                                            size,
     const std::shared_ptr<const dftefeScalapack::ProcessGrid> &process_grid,
-    const size_type                                  block_size,
+    const size_type                                            block_size,
     const dftefeScalapack::LAPACKSupport::Property             property)
   {
     reinit(size, size, process_grid, block_size, block_size, property);
@@ -365,7 +366,7 @@ namespace dftefeScalapack
     else
       // process is active in the process grid
       if (this->grid->mpi_process_is_active)
-        dest.values = this->values;
+      dest.values = this->values;
 
     dest.state    = state;
     dest.property = property;
@@ -911,7 +912,8 @@ namespace dftefeScalapack
                descriptor,
                &info);
         AssertThrow(info == 0,
-                    dftefeScalapack::LAPACKSupport::ExcErrorCode("ppotrf", info));
+                    dftefeScalapack::LAPACKSupport::ExcErrorCode("ppotrf",
+                                                                 info));
       }
     state    = dftefeScalapack::LAPACKSupport::cholesky;
     property = (uplo == 'L' ? dftefeScalapack::LAPACKSupport::lower_triangular :
@@ -952,7 +954,8 @@ namespace dftefeScalapack
                ipiv.data(),
                &info);
         AssertThrow(info == 0,
-                    dftefeScalapack::LAPACKSupport::ExcErrorCode("pgetrf", info));
+                    dftefeScalapack::LAPACKSupport::ExcErrorCode("pgetrf",
+                                                                 info));
       }
     state    = dftefeScalapack::LAPACKSupport::State::lu;
     property = dftefeScalapack::LAPACKSupport::Property::general;
@@ -965,8 +968,9 @@ namespace dftefeScalapack
     // Check whether matrix is hermitian and save flag.
     // If a Cholesky factorization has been applied previously,
     // the original matrix was hermitian.
-    const bool is_hermitian = (property == dftefeScalapack::LAPACKSupport::hermitian ||
-                               state == dftefeScalapack::LAPACKSupport::State::cholesky);
+    const bool is_hermitian =
+      (property == dftefeScalapack::LAPACKSupport::hermitian ||
+       state == dftefeScalapack::LAPACKSupport::State::cholesky);
 
     // Check whether matrix is triangular and is in an unfactorized state.
     const bool is_triangular =
@@ -980,7 +984,9 @@ namespace dftefeScalapack
         if (grid->mpi_process_is_active)
           {
             const char uploTriangular =
-              property == dftefeScalapack::LAPACKSupport::upper_triangular ? 'U' : 'L';
+              property == dftefeScalapack::LAPACKSupport::upper_triangular ?
+                'U' :
+                'L';
             const char  diag  = 'N';
             int         info  = 0;
             NumberType *A_loc = this->values.data();
@@ -993,7 +999,8 @@ namespace dftefeScalapack
                    descriptor,
                    &info);
             AssertThrow(info == 0,
-                        dftefeScalapack::LAPACKSupport::ExcErrorCode("ptrtri", info));
+                        dftefeScalapack::LAPACKSupport::ExcErrorCode("ptrtri",
+                                                                     info));
             // The inversion is stored in the same part as the triangular
             // matrix, so we don't need to re-set the property here.
           }
@@ -1025,7 +1032,8 @@ namespace dftefeScalapack
                        &submatrix_column,
                        descriptor,
                        &info);
-                AssertThrow(info == 0,
+                AssertThrow(
+                  info == 0,
                   dftefeScalapack::LAPACKSupport::ExcErrorCode("ppotri", info));
                 property = dftefeScalapack::LAPACKSupport::Property::hermitian;
               }
@@ -1047,7 +1055,8 @@ namespace dftefeScalapack
                        &liwork,
                        &info);
 
-                AssertThrow(info == 0,
+                AssertThrow(
+                  info == 0,
                   dftefeScalapack::LAPACKSupport::ExcErrorCode("pgetri", info));
                 lwork  = lworkFromWork(work);
                 liwork = iwork[0];
@@ -1066,7 +1075,8 @@ namespace dftefeScalapack
                        &liwork,
                        &info);
 
-                AssertThrow(info == 0,
+                AssertThrow(
+                  info == 0,
                   dftefeScalapack::LAPACKSupport::ExcErrorCode("pgetri", info));
               }
           }
@@ -1246,7 +1256,8 @@ namespace dftefeScalapack
                   &lwork,
                   &info);
             AssertThrow(info == 0,
-                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyev", info));
+                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyev",
+                                                                     info));
           }
         else
           {
@@ -1287,7 +1298,8 @@ namespace dftefeScalapack
                    gap.data(),
                    &info);
             AssertThrow(info == 0,
-                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevx", info));
+                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevx",
+                                                                     info));
           }
         lwork = lworkFromWork(work);
         work.resize(lwork);
@@ -1311,7 +1323,8 @@ namespace dftefeScalapack
                   &info);
 
             AssertThrow(info == 0,
-                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyev", info));
+                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyev",
+                                                                     info));
           }
         else
           {
@@ -1350,7 +1363,8 @@ namespace dftefeScalapack
                    &info);
 
             AssertThrow(info == 0,
-                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevx", info));
+                        dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevx",
+                                                                     info));
           }
         // if eigenvectors are queried copy eigenvectors to original matrix
         // as the temporary matrix eigenvectors has identical dimensions and
@@ -1547,7 +1561,8 @@ namespace dftefeScalapack
                &liwork,
                &info);
         AssertThrow(info == 0,
-                    dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevr", info));
+                    dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevr",
+                                                                 info));
 
         lwork = lworkFromWork(work);
         work.resize(lwork);
@@ -1580,7 +1595,8 @@ namespace dftefeScalapack
                &info);
 
         AssertThrow(info == 0,
-                    dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevr", info));
+                    dftefeScalapack::LAPACKSupport::ExcErrorCode("psyevr",
+                                                                 info));
 
         if (compute_eigenvectors)
           AssertThrow(
@@ -1632,4 +1648,4 @@ namespace dftefeScalapack
 
   template class ScaLAPACKMatrix<double>;
   template class ScaLAPACKMatrix<std::complex<double>>;
-} // namespace dftfe
+} // namespace dftefeScalapack

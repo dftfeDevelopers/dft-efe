@@ -248,6 +248,6 @@ namespace dftefeScalapack
 
 #endif // ifndef DOXYGEN
 
-} // end of namespace dftfe
+} // namespace dftefeScalapack
 
 #endif
