@@ -49,6 +49,7 @@ namespace dftefe
         {
           d_matrix->insertLocalTiles(slate::Target::Host);
         }
+      AbstractMatrix<ValueType, memorySpace>::initSlateMatrix(d_matrix);
     }
 
 

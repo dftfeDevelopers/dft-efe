@@ -55,6 +55,24 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
+    AbstractMatrix<ValueType, memorySpace>::initSlateMatrix(slate::BaseMatrix<ValueType> *matrix, ValueType val)
+    {
+      for (int64_t j = 0, j_offset = 0; j < matrix->nt();
+           j_offset += matrix->tileNb(j++))
+        {
+          for (int64_t i = 0, i_offset = 0; i < matrix->mt();
+               i_offset += matrix->tileMb(i++))
+            {
+              if (matrix->tileIsLocal(i, j))
+                {
+                  matrix->at(i, j).set(val);
+                }
+            }
+        }
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
     AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(
       slate::BaseMatrix<ValueType> *matrix,
       const ValueType              *data)
@@ -71,6 +89,38 @@ namespace dftefe
                   // todo: check for transpose case (d_m and d_n)
                   int64_t mb = T.mb(), nb = T.nb(),
                           offset = i_offset + j_offset * d_m;
+                  lapack::lacpy(lapack::MatrixType::General,
+                                mb,
+                                nb,
+                                &data[offset],
+                                d_m,
+                                T.data(),
+                                mb);
+                }
+            }
+        }
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(
+      slate::BaseMatrix<ValueType> *matrix,
+      const ValueType              *data,
+      int i1, int i2, int j1, int j2)
+    {
+      for (int64_t j = 0, j_offset = 0; j < matrix->nt();
+           j_offset += matrix->tileNb(j++))
+        {
+          for (int64_t i = 0, i_offset = 0; i < matrix->mt();
+               i_offset += matrix->tileMb(i++))
+            {
+              if (matrix->tileIsLocal(i, j))
+                {
+                  slate::Tile<double> T = (*matrix)(i, j);
+                  // todo: check for transpose case (d_m and d_n)
+                  int64_t mb = T.mb(), nb = T.nb(),
+                          offset = i_offset + j_offset * d_m;
+                  int64_t ii1 =
                   lapack::lacpy(lapack::MatrixType::General,
                                 mb,
                                 nb,

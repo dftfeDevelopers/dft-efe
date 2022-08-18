@@ -144,6 +144,15 @@ namespace dftefe
       void
       setValueSlateMatrix(slate::BaseMatrix<ValueType> *matrix,
                           const ValueType              *data);
+
+      void
+      setValueSlateMatrix(slate::BaseMatrix<ValueType> *matrix,
+                          const ValueType              *data,
+                          int i1, int i2, int j1, int j2);
+
+
+      void
+      initSlateMatrix(slate::BaseMatrix<ValueType> *matrix, ValueType val = 0);
     };
 
   } // namespace linearAlgebra
