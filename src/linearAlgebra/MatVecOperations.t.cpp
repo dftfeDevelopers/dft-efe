@@ -64,7 +64,9 @@ namespace dftefe
 
           const unsigned int D = N - ivec;
 
-          // Comptute local XTrunc^{T}*XcBlock.
+          // Block1: (0,M-1,ivec-1,N-1)
+          // Block2: (0,M-1,ivec-1,ivec+B-1)
+          // Comptute local ABlock1^{Trans}*ABlock2Conj.
           blasLapack::gemm<ValueType, memorySpace>(
             blasLapack::Layout::ColMajor,
             transA,
@@ -83,7 +85,7 @@ namespace dftefe
             context);
 
 
-          // Sum local XTrunc^{T}*XcBlock across MPI tasks
+          // Sum local ABlock1^{Trans}*ABlock2Conj across MPI tasks
           utils::mpi::MPIAllreduce<memorySpace>(
             MPI_IN_PLACE,
             overlapMatrixBlock.data(),
@@ -100,7 +102,8 @@ namespace dftefe
           // the Hermitian matrix is actually storing upper triangular values
           // and the setValues function tries to set for the lower triangular
           // part
-          S.setValues(ivec, N, ivec, ivec + B, overlapMatrixBlock.data());
+          S.setValues(
+            ivec - 1, N - 1, ivec - 1, ivec + B - 1, overlapMatrixBlock.data());
         }
 
       // FIXME: to be implemented (not complex conjugate transpose)
