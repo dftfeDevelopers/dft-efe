@@ -40,6 +40,22 @@ namespace dftefe
   {
     namespace MatVecOperations
     {
+      /**
+       * @brief Compute \f$ {\bf S}= {\bf A}^{\dagger} {\bf A} \f$ where
+       * \f$ {\bf A} \f$ is a dense matrix of size M times N with distributed
+       * memory parallelization over the rows. \f$ {\bf A} \f$ is stored
+       * as a MultiVector with number of vectors to be N and row major
+       * storage
+       * @param[in] A the dense matrix stored as a MultiVector
+       * @param[in,out] S Hermitian overlap matrix, that is preallocated
+       * @param[in] context LinAlg context
+       * @param[in] vectorsBlockSize determines the block size for
+       * blocked loop over the N vectors during the computation
+       * of \f$ {\bf S} \f$, for default value of 0 it is heuristically
+       * determined. This aspect to required for reducing the local MPI task
+       * peak memory scaling to \f$ \approx \f$ N times vectorsBlockSize
+       * instead of N times N
+       */
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
       computeOverlapMatrixAConjugateTransposeA(
@@ -50,9 +66,8 @@ namespace dftefe
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      choleskyOrthogonalization(const MultiVector<ValueType, memorySpace> &A,
-                                MultiVector<ValueType, memorySpace> &      B,
-                                LinAlgOpContext<memorySpace> &context);
+      choleskyOrthogonalization(MultiVector<ValueType, memorySpace> &A,
+                                LinAlgOpContext<memorySpace> &       context);
 
     } // namespace MatVecOperations
   }   // namespace linearAlgebra

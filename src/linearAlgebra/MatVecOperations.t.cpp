@@ -93,18 +93,26 @@ namespace dftefe
             A.getMPIPatternP2P()->mpiCommunicator());
 
 
-          // Copy only the lower triangular part to the SLATE
-          // overlap matrix
+          // Copy only the lower/upper triangular part to the Hermitian
+          // overlap matrix, the matrix object already assumed to be created
+          // outside this function
+          // FIXME:The setValues function should work for the case where
+          // the Hermitian matrix is actually storing upper triangular values
+          // and the setValues function tries to set for the lower triangular
+          // part
+          S.setValues(ivec, N, ivec, ivec + B, overlapMatrixBlock.data());
         }
+
+      // FIXME: to be implemented (not complex conjugate transpose)
+      // S.complexConjugate();
     }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     MatVecOperations::choleskyOrthogonalization(
-      const MultiVector<ValueType, memorySpace> &A,
-      MultiVector<ValueType, memorySpace> &      B,
-      LinAlgOpContext<memorySpace> &             context)
+      MultiVector<ValueType, memorySpace> &A,
+      LinAlgOpContext<memorySpace> &       context)
     {}
   } // namespace linearAlgebra
 } // namespace dftefe
