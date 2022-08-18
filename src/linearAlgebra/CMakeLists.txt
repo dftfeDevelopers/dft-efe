@@ -13,15 +13,16 @@ if (NOT TARGET dft-efe-linalg)
             QueueManager.cpp
             LinAlgOpContext.cpp
             VectorAttributes.cpp
-	    Vector.cpp
-	    MultiVector.cpp
+	          Vector.cpp
+	          MultiVector.cpp
             AbstractMatrix.cpp
             GeneralMatrix.cpp
             HermitianMatrix.cpp
             TriangularMatrix.cpp
             MatrixKernels.cu
             MatrixKernels.cpp
-            MatrixOperations.cpp)
+            MatrixOperations.cpp
+            MatVecOperations.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

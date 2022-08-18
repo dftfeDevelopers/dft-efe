@@ -52,10 +52,11 @@ namespace dftefe
           // Correct block dimensions if block "goes off edge of" the matrix
           const size_type B = std::min(vectorsBlockSizeUsed, N - ivec);
 
-          const char transA = blasLapack::Op::NoTrans,
-                     transB = std::is_same<T, std::complex<double>>::value ?
-                                'blasLapack::Op::ConjTrans' :
-                                'blasLapack::Op::Trans';
+          const blasLapack::Op
+            transA = blasLapack::Op::NoTrans,
+            transB = std::is_same<ValueType, std::complex<double>>::value ?
+                       blasLapack::Op::ConjTrans :
+                       blasLapack::Op::Trans;
           const ValueType scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
           // member function to be created
@@ -64,30 +65,32 @@ namespace dftefe
           const unsigned int D = N - ivec;
 
           // Comptute local XTrunc^{T}*XcBlock.
-          blasLapack::gemm<ValueType, memorySpace>(Layout::ColMajor,
-                                                   transA,
-                                                   transB,
-                                                   D,
-                                                   B,
-                                                   numLocalDofs,
-                                                   scalarCoeffAlpha,
-                                                   A.data() + ivec,
-                                                   N,
-                                                   A.data() + ivec,
-                                                   N,
-                                                   scalarCoeffBeta,
-                                                   overlapMatrixBlock.data(),
-                                                   D,
-                                                   context);
+          blasLapack::gemm<ValueType, memorySpace>(
+            blasLapack::Layout::ColMajor,
+            transA,
+            transB,
+            D,
+            B,
+            A.getMPIPatternP2P()->localOwnedSize(),
+            scalarCoeffAlpha,
+            A.data() + ivec,
+            N,
+            A.data() + ivec,
+            N,
+            scalarCoeffBeta,
+            overlapMatrixBlock.data(),
+            D,
+            context);
 
 
           // Sum local XTrunc^{T}*XcBlock across MPI tasks
-          utils::mpi::MPIAllreduce<memorySpace>(MPI_IN_PLACE,
-                                                overlapMatrixBlock.data(),
-                                                D * B * sizeof(ValueType),
-                                                utils::mpi::MPIByte,
-                                                utils::mpi::MPISum,
-                                                mpiCommunicator);
+          utils::mpi::MPIAllreduce<memorySpace>(
+            MPI_IN_PLACE,
+            overlapMatrixBlock.data(),
+            D * B * sizeof(ValueType),
+            utils::mpi::MPIByte,
+            utils::mpi::MPISum,
+            A.getMPIPatternP2P()->mpiCommunicator());
 
 
           // Copy only the lower triangular part to the SLATE
@@ -101,7 +104,7 @@ namespace dftefe
     MatVecOperations::choleskyOrthogonalization(
       const MultiVector<ValueType, memorySpace> &A,
       MultiVector<ValueType, memorySpace> &      B,
-      LinAlgOpContext<memorySpace> &             context);
+      LinAlgOpContext<memorySpace> &             context)
     {}
   } // namespace linearAlgebra
 } // namespace dftefe
