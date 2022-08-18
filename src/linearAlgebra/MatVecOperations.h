@@ -45,11 +45,13 @@ namespace dftefe
        * \f$ {\bf A} \f$ is a dense matrix of size M times N with distributed
        * memory parallelization over the rows. \f$ {\bf A} \f$ is stored
        * as a MultiVector with number of vectors to be N and row major
-       * storage
+       * storage. \f$ {\bf S} \f$ is the N times N Hermitian overlap matrix
+       * stored in block-cyclic format. The parallelization of \f$ {\bf S} \f$
+       * is independent of that of \f$ {\bf A} \f$
        * @param[in] A the dense matrix stored as a MultiVector
-       * @param[in,out] S Hermitian overlap matrix, that is preallocated
+       * @param[in,out] S preallocated Hermitian overlap matrix
        * @param[in] context LinAlg context
-       * @param[in] vectorsBlockSize determines the block size for
+       * @param[in] NBlockSize determines the block size for
        * blocked loop over the N vectors during the computation
        * of \f$ {\bf S} \f$, for default value of 0 it is heuristically
        * determined. This aspect to required for reducing the local MPI task
@@ -58,11 +60,63 @@ namespace dftefe
        */
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
-      computeOverlapMatrixAConjugateTransposeA(
+      computeAMultiVecConjTransTimesAMultiVec(
         const MultiVector<ValueType, memorySpace> &A,
         HermitianMatrix<ValueType, memorySpace> &  S,
         LinAlgOpContext<memorySpace> &             context,
-        const size_type                            vectorsBlockSize = 0);
+        const size_type                            NBlockSize = 0);
+
+      /**
+       * @brief In-place computation of \f$ {\bf A}= {\bf A} {\bf T} \f$ where
+       * \f$ {\bf A} \f$ is a dense matrix of size M times N with distributed
+       * memory parallelization over the rows. \f$ {\bf A} \f$ is stored
+       * as a MultiVector with number of vectors to be N and row major
+       * storage. \f$ {\bf T} \f$ is either an upper or lower triangular
+       * N times N matrix stored in block cyclic format. The parallelization
+       * of \f$ {\bf T} \f$ is independent of that of \f$ {\bf A} \f$
+       * @param[in,out] A the dense matrix stored as a MultiVector
+       * @param[in] T preallocated triangular matrix
+       * @param[in] context LinAlg context
+       * @param[in] MBlockSize determines the block size for
+       * blocked loop over the M vector size during the in-place computation
+       * @param[in] NBlockSize determines the block size for
+       * blocked loop over the N vectors
+       */
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      computeAMultiVecTimesTriangularMat(
+        MultiVector<ValueType, memorySpace> &           A,
+        const TriangularMatrix<ValueType, memorySpace> &T,
+        LinAlgOpContext<memorySpace> &                  context,
+        const size_type                                 MBlockSize = 0,
+        const size_type                                 NBlockSize = 0);
+
+
+      /**
+       * @brief In-place computation of \f$ {\bf A}= {\bf A} {\bf G} \f$ where
+       * \f$ {\bf A} \f$ is a dense matrix of size M times N with distributed
+       * memory parallelization over the rows. \f$ {\bf A} \f$ is stored
+       * as a MultiVector with number of vectors to be N and row major
+       * storage. \f$ {\bf G} \f$ is a N times N general matrix
+       * stored in block cyclic format. The parallelization
+       * of \f$ {\bf G} \f$ is independent of that of \f$ {\bf A} \f$
+       * @param[in,out] A the dense matrix stored as a MultiVector
+       * @param[in] G preallocated general matrix
+       * @param[in] context LinAlg context
+       * @param[in] MBlockSize determines the block size for
+       * blocked loop over the M vector size during the in-place computation
+       * @param[in] NBlockSize determines the block size for
+       * blocked loop over the N vectors
+       */
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      computeAMultiVecTimesGeneralMat(
+        MultiVector<ValueType, memorySpace> &        A,
+        const GeneralMatrix<ValueType, memorySpace> &G,
+        LinAlgOpContext<memorySpace> &               context,
+        const size_type                              MBlockSize = 0,
+        const size_type                              NBlockSize = 0);
+
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void

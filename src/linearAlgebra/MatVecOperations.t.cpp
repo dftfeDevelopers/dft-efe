@@ -31,26 +31,26 @@ namespace dftefe
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MatVecOperations::computeOverlapMatrixAConjugateTransposeA(
+    MatVecOperations::computeAMultiVecConjTransTimesAMultiVec(
       const MultiVector<ValueType, memorySpace> &A,
       HermitianMatrix<ValueType, memorySpace> &  S,
       LinAlgOpContext<memorySpace> &             context,
-      const size_type                            vectorsBlockSize)
+      const size_type                            NBlockSize)
     {
       const size_type N = A.numVectors();
 
       const size_type maxEntriesInBlock =
         40000 * 400; // about 250 MB in FP64 datatype
-      const size_type vectorsBlockSizeUsed =
-        vectorsBlockSize == 0 ? (maxEntriesInBlock / N) : vectorsBlockSize;
+      const size_type NBlockSizeUsed =
+        NBlockSize == 0 ? (maxEntriesInBlock / N) : NBlockSize;
 
       dftefe::utils::MemoryStorage<ValueType, memorySpace> overlapMatrixBlock(
-        N * vectorsBlockSizeUsed, 0);
+        N * NBlockSizeUsed, 0);
 
-      for (size_type ivec = 0; ivec < N; ivec += vectorsBlockSizeUsed)
+      for (size_type ivec = 0; ivec < N; ivec += NBlockSizeUsed)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const size_type B = std::min(vectorsBlockSizeUsed, N - ivec);
+          const size_type B = std::min(NBlockSizeUsed, N - ivec);
 
           const blasLapack::Op
             transA = blasLapack::Op::NoTrans,
@@ -109,6 +109,28 @@ namespace dftefe
       // FIXME: to be implemented (not complex conjugate transpose)
       // S.complexConjugate();
     }
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    computeAMultiVecTimesTriangularMat(
+      MultiVector<ValueType, memorySpace> &           A,
+      const TriangularMatrix<ValueType, memorySpace> &T,
+      LinAlgOpContext<memorySpace> &                  context,
+      const size_type                                 MBlockSize = 0,
+      const size_type                                 NBlockSize = 0)
+    {}
+
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    computeAMultiVecTimesGeneralMat(
+      MultiVector<ValueType, memorySpace> &        A,
+      const GeneralMatrix<ValueType, memorySpace> &T,
+      LinAlgOpContext<memorySpace> &               context,
+      const size_type                              MBlockSize = 0,
+      const size_type                              NBlockSize = 0)
+    {}
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
