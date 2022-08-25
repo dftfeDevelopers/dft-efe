@@ -78,9 +78,11 @@ namespace dftefe
        * @param[in] T preallocated triangular matrix
        * @param[in] context LinAlg context
        * @param[in] MBlockSize determines the block size for
-       * blocked loop over the M vector size during the in-place computation
+       * blocked loop over the M vector size during the in-place computation.
+       * Default value of 0 sets block size heuristically.
        * @param[in] NBlockSize determines the block size for
-       * blocked loop over the N vectors
+       * blocked loop over the N vectors. Default value of 0 sets
+       * block size heuristically.
        */
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
@@ -105,8 +107,10 @@ namespace dftefe
        * @param[in] context LinAlg context
        * @param[in] MBlockSize determines the block size for
        * blocked loop over the M vector size during the in-place computation
+       * Default value of 0 sets block size heuristically.
        * @param[in] NBlockSize determines the block size for
-       * blocked loop over the N vectors
+       * blocked loop over the N vectors. Default value of 0 sets block size
+       * heuristically.
        */
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
