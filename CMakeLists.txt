@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
-add_executable(dft-efe src/main.cpp)
+#add_executable(dft-efe src/main.cpp)
+add_executable(dft-efe src/TestIntegrateWithShapeFunctions.cpp)
 #add_executable(dft-efe src/TestConstraintMatrix.cpp)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 

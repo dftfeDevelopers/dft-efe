@@ -449,9 +449,11 @@ namespace dftefe
           utils::MemoryStorage<ValueTypeQuad, memorySpace> inpJxW(
             numComponents * numCumulativeDofsQuadCellsInBlock, ValueTypeQuad());
 
-          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+	  std::cout<<"numCumulativeDofsCellsInBlock = "<<numCumulativeDofsCellsInBlock<< " numComponents  = "<<numComponents<<"\n";
+
+	  utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             outputFieldCellValues(numCumulativeDofsCellsInBlock *
-                                  numComponents);
+                                  numComponents, ValueTypeQuad());
 
 
           // Hadamard product for inp and JxW
@@ -542,7 +544,7 @@ namespace dftefe
 
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData> *C =
-            outputFieldCellValues.begin() + CStartOffset;
+            outputFieldCellValues.begin() ;
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
@@ -567,6 +569,13 @@ namespace dftefe
             linAlgOpContext);
 
 
+	            FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
+            addCellWiseDataToFieldData(outputFieldCellValues,
+                                       numComponents,
+                                       itCellLocalIdsBegin + cellLocalIdsOffset,
+                                       numCellsInBlockDofsMemSpace,
+                                       f.begin());
+
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               if (!zeroStrideB)
@@ -579,12 +588,6 @@ namespace dftefe
 
 
 
-          FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
-            addCellWiseDataToFieldData(outputFieldCellValues,
-                                       numComponents,
-                                       itCellLocalIdsBegin + cellLocalIdsOffset,
-                                       numCellsInBlockDofsMemSpace,
-                                       f.begin());
         }
 
 
