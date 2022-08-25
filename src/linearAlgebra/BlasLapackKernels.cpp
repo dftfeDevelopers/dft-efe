@@ -44,6 +44,27 @@ namespace dftefe
           }
       }
 
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        khatriRaoProduct(const size_type                      sizeI,
+                         const size_type                      sizeJ,
+                         const size_type                      sizeK,
+                         const ValueType1 *                   A,
+                         const ValueType2 *                   B,
+                         scalar_type<ValueType1, ValueType2> *Z)
+      {
+        for (size_type k = 0; k < sizeK; ++k)
+          for (size_type i = 0; i < sizeI; ++i)
+            for (size_type j = 0; j < sizeJ; ++j)
+              Z[k * sizeI * sizeJ + i * sizeJ + j] =
+                ((scalar_type<ValueType1, ValueType2>)A[k * sizeI + i]) *
+                ((scalar_type<ValueType1, ValueType2>)B[k * sizeJ + j]);
+      }
+
       template <typename ValueType1,
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>

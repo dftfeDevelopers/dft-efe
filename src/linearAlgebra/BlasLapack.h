@@ -120,6 +120,32 @@ namespace dftefe
 
 
       /**
+       * @brief Template for performing \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
+       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
+       * is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$, and \f$
+       * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. All the matrices are assumed to
+       * be stored in column major format
+       * @param[in] size size I
+       * @param[in] size size J
+       * @param[in] size size K
+       * @param[in] X array
+       * @param[in] Y array
+       * @param[out] Z array
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      khatriRaoProduct(size_type                            sizeI,
+                       size_type                            sizeJ,
+                       size_type                            sizeK,
+                       const ValueType1 *                   A,
+                       const ValueType2 *                   B,
+                       scalar_type<ValueType1, ValueType2> *Z,
+                       LinAlgOpContext<memorySpace> &       context);
+
+
+      /**
        * @brief Template for performing \f$ z = \alpha x + \beta y \f$
        * @param[in] size size of the array
        * @param[in] \f$ alpha \f$ scalar

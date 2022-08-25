@@ -47,6 +47,31 @@ namespace dftefe
             }
         }
 
+
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
+        __global__ void
+        khatriRaoProductDeviceKernel(const size_type   sizeI,
+                                     const size_type   sizeJ,
+                                     const size_type   sizeK,
+                                     const ValueType1 *A,
+                                     const ValueType2 *B,
+                                     ValueType3 *      Z)
+        {
+          const size_type totalSize = sizeI * sizeJ * sizeK;
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type kij = globalThreadId; kij < totalSize;
+               kij += blockDim.x * gridDim.x)
+            {
+              const size_type k     = kij / (sizeI * sizeJ);
+              const size_type ijRem = kij - k * sizeI * sizeJ;
+              const size_type i     = ijRem / sizeI;
+              const size_type j     = ijRem - i * sizeJ;
+              Z[kij] = dftefe::utils::mult(A[k * sizeI + i], B[k * sizeJ + j]);
+            }
+        }
+
+
         template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
         axpbyDeviceKernel(const size_type   size,
@@ -121,6 +146,31 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(y),
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        khatriRaoProduct(const size_type                      sizeI,
+                         const size_type                      sizeJ,
+                         const size_type                      sizeK,
+                         const ValueType1 *                   A,
+                         const ValueType2 *                   B,
+                         scalar_type<ValueType1, ValueType2> *Z)
+      {
+        khatriRaoProductDeviceKernel<<<
+          (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
+          dftefe::utils::BLOCK_SIZE>>>(
+          sizeI,
+          sizeJ,
+          sizeK,
+          dftefe::utils::makeDataTypeDeviceCompatible(A),
+          dftefe::utils::makeDataTypeDeviceCompatible(B),
+          dftefe::utils::makeDataTypeDeviceCompatible(Z));
+      }
+
 
       template <typename ValueType1, typename ValueType2>
       void
