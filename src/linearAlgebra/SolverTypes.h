@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo 
+ * @author Bikash Kanungo
  */
 
 #ifndef dftefeSolverTypes_h
@@ -30,7 +30,6 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-
     enum class LinearSolverType
     {
       CG
@@ -48,6 +47,6 @@ namespace dftefe
       LBFGS
     };
 
-  }// end of namespace linearAlgebra
-}// end of namespace dftefe
-#endif //dftefeSolverTypes_h
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe
+#endif // dftefeSolverTypes_h

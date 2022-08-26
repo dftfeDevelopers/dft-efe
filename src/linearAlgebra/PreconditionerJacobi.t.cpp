@@ -20,23 +20,60 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo 
+ * @author Bikash Kanungo
  */
 
 
 #include <utils/MemoryTransfer.h>
-#include <linearAlgebra/PreconditionerJacobiInternal.h>
+#include <BlasLapack.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    template <utils::MemorySpace memorySpaceSrc>
+    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      PreconditionerJacobi(
+        const utils::MemoryStorage<ValueTypeOperator, memoryStorageSrc>
+          &diagonal,
+	  LinAlgOpContext<memorySpace> & linAlgContext)
+      : d_digonalInv(digonal.size())
+    {
+      const size_type                              N = diagonal.size();
+      if (memorySpaceSrc != memorySpace)
+        {
+          utils::MemoryStorage<ValueType, memorySpace> diagonalCopy(N);
+          diagonalCopy.copyFrom(diagonal);
+	  blasLapack::reciprocalX(N, 1.0, diagonalCopy.data(), d_digonalInv.data(), linAlgContext); 
+        }
+      else
+        {
+	  blasLapack::reciprocalX(N, 1.0, diagonal.data(), d_digonalInv.data(), linAlgContext); 
+        }
+    }
 
-	template <typename ValueTypeOperator, typename ValueTypeOperand, utils::MemorySpace memorySpace>
-	template<utils::MemorySpace memorySpaceSrc>
-	  PreconditionerJacobi<ValueTypeOperator,ValueTypeOperand,memorySpace>::PreconditionerJacobi(const utils::MemoryStorage<ValueTypeOperator, memoryStorageSrc> & diagonal)
-	  {
-		
-	  }
-  
-  }// end of namespace linearAlgebra
-}// end of namespace dftefe
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    template <utils::MemorySpace memorySpaceSrc>
+    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      PreconditionerJacobi(const ValueTypeOperator *diagonal, const size_type N,
+	  LinAlgOpContext<memorySpace> & linAlgContext)
+      : d_digonalInv(N)
+    {
+      if (memorySpaceSrc != memorySpace)
+        {
+          utils::MemoryStorage<ValueType, memorySpace> diagonalCopy(N);
+          diagonalCopy.copyFrom(diagonal);
+	  blasLapack::reciprocalX(N, 1.0, diagonalCopy.data(), d_digonalInv.data(), linAlgContext); 
+        }
+      else
+        {
+	  blasLapack::reciprocalX(N, 1.0, diagonal.data(), d_digonalInv.data(), linAlgContext); 
+        }
+    }
+
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe

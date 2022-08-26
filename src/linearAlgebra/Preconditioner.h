@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo 
+ * @author Bikash Kanungo
  */
 
 #ifndef dftefePreconditioner_h
@@ -34,52 +34,53 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-	
     /**
      *@brief Abstract class to encapsulate a preconditioner
      *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying preconditioner 
-     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc. 
+     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying preconditioner
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
      *  on which the preconditioner will act.
-     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the preconditioner 
+     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the preconditioner
      * and its operands reside
      *
      */
-    template <typename ValueTypeOperator, typename ValueTypeOperand, utils::MemorySpace memorySpace>
-    class Preconditioner: public OperatorContext<ValueTypeOperator, ValueTypeOperand, ValueTypeOperand>
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    class Preconditioner : public OperatorContext<ValueTypeOperator,
+                                                  ValueTypeOperand,
+                                                  ValueTypeOperand>
     {
-      public:
+    public:
+      /**
+       *@brief Default Destructor
+       *
+       */
+      ~Preconditioner() = default;
 
-	/**
-	 *@brief Default Destructor 
-	 *
-	 */
-	~Preconditioner() = default;
+      virtual void
+      apply(const Vector<ValueTypeOperand, memorySpace> &x,
+            Vector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                   memorySpace> &                        y) const = 0;
 
-	virtual
-	void
-	  apply(const Vector<ValueTypeOperand, memorySpace> & x,
-	    Vector<scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> & y) const = 0;
+      virtual void
+      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
+            MultiVector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                        memorySpace> &                        Y) const = 0;
 
-	virtual
-	  void
-	  apply(const MultiVector<ValueTypeOperand, memorySpace> & X,
-	    MultiVector<scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> & Y) const = 0;
+      virtual SolverTypes::PreconditionerType
+      getPreconditionerType() const = 0;
+      //
+      // TODO: Uncomment the following and implement in all the derived classes
+      //
 
-	virtual
-	SolverTypes::PreconditionerType
-	  getPreconditionerType() const = 0;
-	//
-	//TODO: Uncomment the following and implement in all the derived classes
-	//
-	
-	//virtual
-	//  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
-	//    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> & Y) const = 0;
-
+      // virtual
+      //  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
+      //    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+      //    memorySpace> & Y) const = 0;
     };
 
 
-  }// end of namespace linearAlgebra
-}// end of namespace dftefe
-#endif //dftefePreconditioner_h
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe
+#endif // dftefePreconditioner_h

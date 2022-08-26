@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo 
+ * @author Bikash Kanungo
  */
 
 #ifndef dftefePreconditionerFactory_h
@@ -34,39 +34,40 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-	
     /**
      *@brief Factory class create preconditioner objects based on input parameter(s)
      *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying preconditioner 
-     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc. 
+     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying preconditioner
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
      *  on which the preconditioner will act.
-     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the preconditioner 
+     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the preconditioner
      * and its operands reside
      *
      */
-    template <typename ValueTypeOperator, typename ValueTypeOperand, utils::MemorySpace memorySpace>
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     class PreconditionerFactory
     {
-      public:
-	/**
-	 *@brief Default Constructor 
-	 *
-	 */
-	PreconditionerFactory() = default;
+    public:
+      /**
+       *@brief Default Constructor
+       *
+       */
+      PreconditionerFactory() = default;
 
-	/**
-	 *@brief Default Destructor 
-	 *
-	 */
-	~PreconditionerFactory() = default;
+      /**
+       *@brief Default Destructor
+       *
+       */
+      ~PreconditionerFactory() = default;
 
-	static
-	std::shared_ptr<Preconditioner<ValueTypeOperator, ValueTypeOperand, memorySpace>>
-	create(const SolverTypes::PreconditionerType & pcType) const;
+      static std::shared_ptr<
+        Preconditioner<ValueTypeOperator, ValueTypeOperand, memorySpace>>
+      create(const SolverTypes::PreconditionerType &pcType) const;
     };
 
-  }// end of namespace linearAlgebra
-}// end of namespace dftefe
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe
 #include <linearAlgebra/PreconditionerFactory.t.cpp>
-#endif //dftefePreconditionerFactory_h
+#endif // dftefePreconditionerFactory_h

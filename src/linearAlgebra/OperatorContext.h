@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo 
+ * @author Bikash Kanungo
  */
 
 #ifndef dftefeOperatorContext_h
@@ -36,48 +36,47 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-
     /**
      *@brief Abstract class to encapsulate the action of a discrete operator on vectors, matrices, etc.
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
-     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc. 
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
      * on which the operator will act
-     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the operator 
+     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the operator
      * and its operands reside
      *
      */
-    template <typename ValueTypeOperator, typename ValueTypeOperand, utils::MemorySpace memorySpace>
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     class OperatorContext
     {
+    public:
+      /**
+       *@brief Default Destructor
+       *
+       */
+      ~OperatorContext() = default;
 
-      public:
+      virtual void
+      apply(const Vector<ValueTypeOperand, memorySpace> &x,
+            Vector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                   memorySpace> &                        y) const = 0;
 
-	/**
-	 *@brief Default Destructor
-	 *
-	 */
-	~OperatorContext() = default;
+      virtual void
+      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
+            MultiVector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                        memorySpace> &                        Y) const = 0;
 
-	virtual
-	void
-	  apply(const Vector<ValueTypeOperand, memorySpace> & x,
-	    Vector<scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> & y) const = 0;
+      //
+      // TODO: Uncomment the following and implement in all the derived classes
+      //
 
-	virtual
-	  void
-	  apply(const MultiVector<ValueTypeOperand, memorySpace> & X,
-	    MultiVector<scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> & Y) const = 0;
-
-	//
-	//TODO: Uncomment the following and implement in all the derived classes
-	//
-	
-	//virtual
-	//  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
-	//    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> & Y) const = 0;
-
+      // virtual
+      //  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
+      //    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+      //    memorySpace> & Y) const = 0;
     };
-  }// end of namespace linearAlgebra
-}// end of namespace dftefe
-#endif //dftefeOperatorContext_h
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe
+#endif // dftefeOperatorContext_h
