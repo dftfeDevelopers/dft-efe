@@ -66,7 +66,7 @@ namespace dftefe
             {
               const size_type k     = kij / (sizeI * sizeJ);
               const size_type ijRem = kij - k * sizeI * sizeJ;
-              const size_type i     = ijRem / sizeI;
+              const size_type i     = ijRem / sizeJ;
               const size_type j     = ijRem - i * sizeJ;
               Z[kij] = dftefe::utils::mult(A[k * sizeI + i], B[k * sizeJ + j]);
             }
