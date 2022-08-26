@@ -51,8 +51,8 @@ namespace dftefe
          * @brief Template for performing \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
          * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf
          * A}\f$ is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$,
-         * and \f$ {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. All the matrices are
-         * assumed to be stored in column major format
+         * and \f$ {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. All the matrices
+         * are assumed to be stored in column major format
          * @param[in] size size I
          * @param[in] size size J
          * @param[in] size size K
@@ -84,6 +84,26 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
+
+        /**
+         * @brief Template for computing dot products numVec vectors in a multi Vector
+         * @param[in] vecSize size of each vector
+         * @param[in] numVec number of vectors in the multi Vector
+         * @param[in] multiVecDataX multi vector data in row major format i.e.
+         * vector index is the fastest index
+         * @param[in] multiVecDataY multi vector data in row major format i.e.
+         * vector index is the fastest index
+         * @param[out] multiVecDotProduct multi vector dot product of size
+         * numVec
+         *
+         */
+        static void
+        dotMultiVector(size_type                            vecSize,
+                       size_type                            numVec,
+                       const ValueType1 *                   multiVecDataX,
+                       const ValueType2 *                   multiVecDataY,
+                       scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+                       BlasQueue<memorySpace> &             BlasQueue);
       };
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -156,6 +176,15 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
+
+        static void
+        dotMultiVector(
+          size_type                                      vecSize,
+          size_type                                      numVec,
+          const ValueType1 *                             multiVecDataX,
+          const ValueType2 *                             multiVecDataY,
+          scalar_type<ValueType1, ValueType2> *          multiVecDotProduct,
+          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
       };
 
       template <typename ValueType>

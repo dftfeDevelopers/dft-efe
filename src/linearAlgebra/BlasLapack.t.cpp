@@ -161,6 +161,27 @@ namespace dftefe
         return output;
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      dotMultiVector(const size_type                      vecSize,
+                     const size_type                      numVec,
+                     const ValueType1 *                   multiVecDataX,
+                     const ValueType2 *                   multiVecDataY,
+                     scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+                     LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          dotMultiVector(vecSize,
+                         numVec,
+                         multiVecDataX,
+                         multiVecDataY,
+                         multiVecDotProduct,
+                         context.getBlasQueue());
+      }
+
+
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
       nrm2(const size_type               n,
@@ -185,7 +206,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &context)
       {
         return KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
-          vecSize, numVec, multiVecData, context.setBlasQueue());
+          vecSize, numVec, multiVecData, context.getBlasQueue());
       }
 
 

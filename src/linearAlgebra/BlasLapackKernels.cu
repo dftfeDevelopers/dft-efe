@@ -195,6 +195,48 @@ namespace dftefe
       }
 
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        dotMultiVector(const size_type                      vecSize,
+                       const size_type                      numVec,
+                       const ValueType1 *                   multiVecDataX,
+                       const ValueType2 *                   multiVecDataY,
+                       scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+                       BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+      {
+        dftefe::utils::MemoryStorage<scalar_type<ValueType1, ValueType2>,
+                                     dftefe::utils::MemorySpace::DEVICE>
+          onesVecDevice(vecSize, 1.0);
+        dftefe::utils::MemoryStorage<scalar_type<ValueType1, ValueType2>,
+                                     dftefe::utils::MemorySpace::DEVICE>
+          hadamardProductDevice(vecSize * numVec, 0.0);
+
+        hadamardProduct(vecSize * numVec,
+                        multiVecDataX,
+                        multiVecDataY,
+                        hadamardProductDevice.data());
+
+        blas::gemm(Layout::ColMajor,
+                   Op::NoTrans,
+                   Op::Trans,
+                   1,
+                   numVec,
+                   vecSize,
+                   1.0,
+                   onesVecDevice.data(),
+                   1,
+                   hadamardProductDevice.data(),
+                   numVec,
+                   1.0,
+                   multiVecDotProduct,
+                   1,
+                   BlasQueue);
+      }
+
+
       template <typename ValueType>
       std::vector<double>
       KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>::
