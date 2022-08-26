@@ -331,6 +331,31 @@ namespace dftefe
       return make_cuFloatComplex(a.real(), a.imag());
     }
 
+    __inline__ __device__ void
+    setRealValue(cuFloatComplex *a, double value)
+    {
+      *a = make_cuFloatComplex(value, 0.0);
+    }
+
+    __inline__ __device__ void
+    setRealValue(cuDoubleComplex *a, double value)
+    {
+      *a = make_cuDoubleComplex(value, 0.0);
+    }
+
+    __inline__ __device__ void
+    setRealValue(float *a, double value)
+    {
+      *a = value;
+    }
+
+    __inline__ __device__ void
+    setRealValue(double *a, double value)
+    {
+      *a = value;
+    }
+
+
 
   } // namespace utils
 

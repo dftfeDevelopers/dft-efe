@@ -33,6 +33,22 @@ namespace dftefe
 
         template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
+        reciprocalXDeviceKernel(const size_type   size,
+                                const ValueType1  alpha,
+                                const ValueType2 *x,
+                                ValueType3 *      z)
+        {
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              z[i] = dftefe::utils::div(alpha, x[i]);
+            }
+        }
+
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
+        __global__ void
         hadamardProductDeviceKernel(const size_type   size,
                                     const ValueType1 *x,
                                     const ValueType2 *y,
@@ -98,6 +114,24 @@ namespace dftefe
       {
         ascaleDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
                              dftefe::utils::BLOCK_SIZE>>>(
+          size,
+          dftefe::utils::makeDataTypeDeviceCompatible(alpha),
+          dftefe::utils::makeDataTypeDeviceCompatible(x),
+          dftefe::utils::makeDataTypeDeviceCompatible(z));
+      }
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        reciprocalX(const size_type                      size,
+                    const ValueType1                     alpha,
+                    const ValueType2 *                   x,
+                    scalar_type<ValueType1, ValueType2> *z)
+      {
+        reciprocalXDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                                  dftefe::utils::BLOCK_SIZE>>>(
           size,
           dftefe::utils::makeDataTypeDeviceCompatible(alpha),
           dftefe::utils::makeDataTypeDeviceCompatible(x),
