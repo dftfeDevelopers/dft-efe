@@ -1,4 +1,5 @@
 #include <linearAlgebra/BlasLapackKernels.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <utils/DataTypeOverloads.h>
 #include <complex>
 #include <algorithm>
@@ -96,34 +97,15 @@ namespace dftefe
         const ValueType1 *                   multiVecDataX,
         const ValueType2 *                   multiVecDataY,
         scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
-        BlasQueue<memorySpace> &             BlasQueue)
+        LinAlgOpContext<memorySpace> &       context)
       {
-        dftefe::utils::MemoryStorage<scalar_type<ValueType1, ValueType2>,
-                                     memorySpace>
-          onesVecDevice(vecSize, 1.0);
-        dftefe::utils::MemoryStorage<scalar_type<ValueType1, ValueType2>,
-                                     memorySpace>
-          hadamardProductDevice(vecSize * numVec, 0.0);
-
-        hadamardProduct(vecSize * numVec,
-                        multiVecDataX,
-                        multiVecDataY,
-                        hadamardProductDevice.data());
-
-        blas::gemm(Layout::ColMajor,
-                   Op::NoTrans,
-                   Op::Trans,
-                   1,
-                   numVec,
-                   vecSize,
-                   1.0,
-                   onesVecDevice.data(),
-                   1,
-                   hadamardProductDevice.data(),
-                   numVec,
-                   1.0,
-                   multiVecDotProduct,
-                   1);
+        std::fill(multiVecDotProduct, multiVecDotProduct + numVec, 0);
+        for (size_type i = 0; i < vecSize; ++i)
+          for (size_type j = 0; j < numVec; ++j)
+            multiVecDotProduct[j] += ((scalar_type<ValueType1, ValueType2>)
+                                        multiVecDataX[i * numVec + j]) *
+                                     ((scalar_type<ValueType1, ValueType2>)
+                                        multiVecDataY[i * numVec + j]);
       }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -156,10 +138,10 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
       KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
-        const size_type         vecSize,
-        const size_type         numVec,
-        const ValueType *       multiVecData,
-        BlasQueue<memorySpace> &BlasQueue)
+        const size_type               vecSize,
+        const size_type               numVec,
+        const ValueType *             multiVecData,
+        LinAlgOpContext<memorySpace> &context)
       {
         std::vector<double> nrms2(numVec, 0);
 

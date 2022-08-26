@@ -5,6 +5,7 @@
 #  include <utils/MemoryTransfer.h>
 #  include <utils/Exceptions.h>
 #  include <linearAlgebra/BlasLapackKernels.h>
+#  include <linearAlgebra/BlasLapack.h>
 #  include <complex>
 #  include <algorithm>
 namespace dftefe
@@ -200,12 +201,13 @@ namespace dftefe
       KernelsTwoValueTypes<ValueType1,
                            ValueType2,
                            dftefe::utils::MemorySpace::DEVICE>::
-        dotMultiVector(const size_type                      vecSize,
-                       const size_type                      numVec,
-                       const ValueType1 *                   multiVecDataX,
-                       const ValueType2 *                   multiVecDataY,
-                       scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
-                       BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+        dotMultiVector(
+          const size_type                      vecSize,
+          const size_type                      numVec,
+          const ValueType1 *                   multiVecDataX,
+          const ValueType2 *                   multiVecDataY,
+          scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         dftefe::utils::MemoryStorage<scalar_type<ValueType1, ValueType2>,
                                      dftefe::utils::MemorySpace::DEVICE>
@@ -219,21 +221,23 @@ namespace dftefe
                         multiVecDataY,
                         hadamardProductDevice.data());
 
-        blas::gemm(Layout::ColMajor,
-                   Op::NoTrans,
-                   Op::Trans,
-                   1,
-                   numVec,
-                   vecSize,
-                   1.0,
-                   onesVecDevice.data(),
-                   1,
-                   hadamardProductDevice.data(),
-                   numVec,
-                   1.0,
-                   multiVecDotProduct,
-                   1,
-                   BlasQueue);
+        gemm<scalar_type<ValueType1, ValueType2>,
+             scalar_type<ValueType1, ValueType2>,
+             dftefe::utils::MemorySpace::DEVICE>(Layout::ColMajor,
+                                                 Op::NoTrans,
+                                                 Op::Trans,
+                                                 1,
+                                                 numVec,
+                                                 vecSize,
+                                                 1.0,
+                                                 onesVecDevice.data(),
+                                                 1,
+                                                 hadamardProductDevice.data(),
+                                                 numVec,
+                                                 1.0,
+                                                 multiVecDotProduct,
+                                                 1,
+                                                 context);
       }
 
 
@@ -258,10 +262,10 @@ namespace dftefe
       std::vector<double>
       KernelsOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>::
         nrms2MultiVector(
-          size_type                                      vecSize,
-          size_type                                      numVec,
-          ValueType const *                              multiVecData,
-          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue)
+          size_type                                            vecSize,
+          size_type                                            numVec,
+          ValueType const *                                    multiVecData,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         std::vector<double> nrms2(numVec, 0);
 
@@ -280,21 +284,22 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(
             squaredEntriesDevice.begin()));
 
-        blas::gemm(Layout::ColMajor,
-                   Op::NoTrans,
-                   Op::Trans,
-                   1,
-                   numVec,
-                   vecSize,
-                   1.0,
-                   onesVecDevice.data(),
-                   1,
-                   squaredEntriesDevice.data(),
-                   numVec,
-                   1.0,
-                   nrmsSqVecDevice.data(),
-                   1,
-                   BlasQueue);
+        gemm<double, double, dftefe::utils::MemorySpace::DEVICE>(
+          Layout::ColMajor,
+          Op::NoTrans,
+          Op::Trans,
+          1,
+          numVec,
+          vecSize,
+          1.0,
+          onesVecDevice.data(),
+          1,
+          squaredEntriesDevice.data(),
+          numVec,
+          1.0,
+          nrmsSqVecDevice.data(),
+          1,
+          context);
 
 
         nrmsSqVecDevice.copyTo<dftefe::utils::MemorySpace::DEVICE>(&nrms2[0]);

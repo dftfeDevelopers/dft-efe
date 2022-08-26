@@ -178,7 +178,7 @@ namespace dftefe
                          multiVecDataX,
                          multiVecDataY,
                          multiVecDotProduct,
-                         context.getBlasQueue());
+                         context);
       }
 
 
@@ -206,7 +206,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &context)
       {
         return KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
-          vecSize, numVec, multiVecData, context.getBlasQueue());
+          vecSize, numVec, multiVecData, context);
       }
 
 

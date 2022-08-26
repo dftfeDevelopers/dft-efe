@@ -3,6 +3,7 @@
 
 #include <utils/MemoryManager.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <blas.hh>
 #include <vector>
 
@@ -103,7 +104,7 @@ namespace dftefe
                        const ValueType1 *                   multiVecDataX,
                        const ValueType2 *                   multiVecDataY,
                        scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
-                       BlasQueue<memorySpace> &             BlasQueue);
+                       LinAlgOpContext<memorySpace> &       context);
       };
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -134,10 +135,10 @@ namespace dftefe
          * @return \f$ l_2 \f$  norms of all the vectors
          */
         static std::vector<double>
-        nrms2MultiVector(size_type               vecSize,
-                         size_type               numVec,
-                         const ValueType *       multiVecData,
-                         BlasQueue<memorySpace> &BlasQueue);
+        nrms2MultiVector(size_type                     vecSize,
+                         size_type                     numVec,
+                         const ValueType *             multiVecData,
+                         LinAlgOpContext<memorySpace> &context);
       };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -179,12 +180,12 @@ namespace dftefe
 
         static void
         dotMultiVector(
-          size_type                                      vecSize,
-          size_type                                      numVec,
-          const ValueType1 *                             multiVecDataX,
-          const ValueType2 *                             multiVecDataY,
-          scalar_type<ValueType1, ValueType2> *          multiVecDotProduct,
-          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
+          size_type                            vecSize,
+          size_type                            numVec,
+          const ValueType1 *                   multiVecDataX,
+          const ValueType2 *                   multiVecDataY,
+          scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
       };
 
       template <typename ValueType>
@@ -199,10 +200,10 @@ namespace dftefe
 
         static std::vector<double>
         nrms2MultiVector(
-          size_type                                      vecSize,
-          size_type                                      numVec,
-          const ValueType *                              multiVecData,
-          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
+          size_type                                            vecSize,
+          size_type                                            numVec,
+          const ValueType *                                    multiVecData,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
       };
 
 #endif
