@@ -1,4 +1,5 @@
 #include <linearAlgebra/BlasLapackKernels.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <utils/DataTypeOverloads.h>
 #include <complex>
 #include <algorithm>
@@ -61,6 +62,27 @@ namespace dftefe
           }
       }
 
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        khatriRaoProduct(const size_type                      sizeI,
+                         const size_type                      sizeJ,
+                         const size_type                      sizeK,
+                         const ValueType1 *                   A,
+                         const ValueType2 *                   B,
+                         scalar_type<ValueType1, ValueType2> *Z)
+      {
+        for (size_type k = 0; k < sizeK; ++k)
+          for (size_type i = 0; i < sizeI; ++i)
+            for (size_type j = 0; j < sizeJ; ++j)
+              Z[k * sizeI * sizeJ + i * sizeJ + j] =
+                ((scalar_type<ValueType1, ValueType2>)A[k * sizeI + i]) *
+                ((scalar_type<ValueType1, ValueType2>)B[k * sizeJ + j]);
+      }
+
       template <typename ValueType1,
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
@@ -82,6 +104,26 @@ namespace dftefe
           }
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::dotMultiVector(
+        const size_type                      vecSize,
+        const size_type                      numVec,
+        const ValueType1 *                   multiVecDataX,
+        const ValueType2 *                   multiVecDataY,
+        scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+        LinAlgOpContext<memorySpace> &       context)
+      {
+        std::fill(multiVecDotProduct, multiVecDotProduct + numVec, 0);
+        for (size_type i = 0; i < vecSize; ++i)
+          for (size_type j = 0; j < numVec; ++j)
+            multiVecDotProduct[j] += ((scalar_type<ValueType1, ValueType2>)
+                                        multiVecDataX[i * numVec + j]) *
+                                     ((scalar_type<ValueType1, ValueType2>)
+                                        multiVecDataY[i * numVec + j]);
+      }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
@@ -113,10 +155,10 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
       KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
-        const size_type         vecSize,
-        const size_type         numVec,
-        const ValueType *       multiVecData,
-        BlasQueue<memorySpace> &BlasQueue)
+        const size_type               vecSize,
+        const size_type               numVec,
+        const ValueType *             multiVecData,
+        LinAlgOpContext<memorySpace> &context)
       {
         std::vector<double> nrms2(numVec, 0);
 
