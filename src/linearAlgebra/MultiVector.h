@@ -453,6 +453,18 @@ namespace dftefe
       
       std::shared_ptr<LinAlgOpContext<memorySpace>>
 	getLinAlgOpContext() const;
+      
+      global_size_type
+	globalSize() const;
+
+      size_type 
+	localSize() const;
+
+      size_type
+	locallyOwnedSize() const;
+
+      size_type
+	ghostSize() const;
 
     private:
       std::unique_ptr<Storage>      d_storage;

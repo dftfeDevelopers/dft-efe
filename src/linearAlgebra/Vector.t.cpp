@@ -616,6 +616,35 @@ namespace dftefe
       return d_linAlgOpContext;
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    global_size_type
+    Vector<ValueType, memorySpace>::globalSize() const
+    {
+	return d_globalSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type
+    Vector<ValueType, memorySpace>::localSize() const
+    {
+	return d_localSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type
+    Vector<ValueType, memorySpace>::locallyOwnedSize() const
+    {
+	return d_locallyOwnedSize;
+    }
+    
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type
+    Vector<ValueType, memorySpace>::ghostSize() const
+    {
+	return d_ghostSize;
+    }
+    
     //
     // Helper functions
     //
