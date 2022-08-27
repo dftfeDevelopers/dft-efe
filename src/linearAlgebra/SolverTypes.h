@@ -47,6 +47,14 @@ namespace dftefe
       LBFGS
     };
 
+    enum class Error
+    {
+      SUCCESS,
+      FAILED_TO_CONVERGE,
+      DIVISON_BY_ZERO,
+      OTHER_ERROR
+    };
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeSolverTypes_h

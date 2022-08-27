@@ -23,9 +23,9 @@
  * @author Bikash Kanungo
  */
 
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/BlasLapack.h>
 
-#include <utils/MemoryTransfer.h>
-#include <BlasLapack.h>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -33,28 +33,42 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      PreconditionerJacobi(
-        const Vector<ValueTypeOperator, memorySpaceSrc> &diagonal)
-      : d_digonalInv(diagonal)
-    {
-      blasLapack::reciprocalX(diagonal.localSize(), 1.0, digonal.data(), d_diagonalInv.data(), *(diagonal.getLinAlgOpContext());
-    }
+    CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      CGLinearSolver(const size_type                  maxIter,
+                     const double                     absoluteTol,
+                     const double                     relativeTol,
+                     const utils::ConditionalOStream *coStream)
+      : d_maxIter(maxIter)
+      , d_absoluteTol(absoluteTol)
+      , d_relativeTol(relativeTol)
+      , d_coStream(coStream)
+    {}
+
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    void
-    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                   memorySpace> &                        y) const
+    SolverTypes::Error
+    CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::solve(
+      LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &linearSolverFunction) const
     {
-      blaslapack::hadamardProduct(d_digonalInv.localSize(),
-                                  d_digonalInv.data(),
-                                  x.data(),
-                                  y.data(),
-                                  *(d_digonalInv.getLinAlgOpContext()));
+      using ValueType =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>
+          Vector<ValueType, memorySpace>    b = linearSolverFunction.getRhs();
+      Vector<ValueTypeOperand, memorySpace> x =
+        linearSolverFunction.getInitialGuess();
+
+      // get handle to Ax
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &AxContext = linearSolverFunction.getAxContext();
+
+      // get handle to the preconditioner
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &pcContext = linearSolverFunction.getPCContext();
+
+      for (size_type iter = 0; iter < d_maxIter; ++iter)
+        {}
     }
 
   } // end of namespace linearAlgebra

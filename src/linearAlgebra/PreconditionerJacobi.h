@@ -29,7 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <linearAlgebra/Preconditioner.h>
 #include <linearAlgebra/Vector.h>
-
+#include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -68,7 +68,7 @@ namespace dftefe
 
       void
       apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
                    memorySpace> &                        y) const override;
 
       void
