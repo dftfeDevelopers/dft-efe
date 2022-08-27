@@ -37,7 +37,7 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::MultiVector(
       const size_type               size,
       const size_type               numVectors,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const ValueType               initVal)
     {
       d_storage =
@@ -71,7 +71,7 @@ namespace dftefe
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
                                     storage,
       const size_type               numVectors,
-      LinAlgOpContext<memorySpace> *linAlgOpContext)
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       d_storage         = std::move(storage);
       d_linAlgOpContext = linAlgOpContext;
@@ -98,7 +98,7 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::MultiVector(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                     mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type               numVectors,
       const ValueType               initVal)
       : d_mpiPatternP2P(mpiPatternP2P)
@@ -133,7 +133,7 @@ namespace dftefe
         &storage,
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                     mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type               numVectors)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
@@ -162,7 +162,7 @@ namespace dftefe
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<global_size_type> &               ghostIndices,
       const utils::mpi::MPIComm &                         mpiComm,
-      LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                                     numVectors,
       const ValueType                                     initVal)
     {
@@ -216,7 +216,7 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const utils::mpi::MPIComm &                         mpiComm,
-      LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                                     numVectors,
       const ValueType                                     initVal)
     {
@@ -276,7 +276,7 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::MultiVector(
       const global_size_type        globalSize,
       const utils::mpi::MPIComm &   mpiComm,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type               numVectors,
       const ValueType               initVal)
     {
@@ -631,6 +631,13 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::getMPIPatternP2P() const
     {
       return d_mpiPatternP2P;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<LinAlgOpContext<memorySpace>>
+    MultiVector<ValueType, memorySpace>::getLinAlgOpContext() const
+    {
+      return d_linAlgOpContext;
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

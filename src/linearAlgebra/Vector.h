@@ -148,7 +148,7 @@ namespace dftefe
        * @param[in] initVal initial value of elements of the SerialVector
        */
       Vector(size_type                     size,
-             LinAlgOpContext<memorySpace> *linAlgOpContext,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
              ValueType                     initVal = ValueType());
 
       /**
@@ -170,7 +170,7 @@ namespace dftefe
        */
       Vector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
                                            storage,
-             LinAlgOpContext<memorySpace> *linAlgOpContext);
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
        * @brief Constructor for a \b distributed Vector based on an input MPIPatternP2P.
@@ -187,7 +187,7 @@ namespace dftefe
        */
       Vector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                            mpiPatternP2P,
-             LinAlgOpContext<memorySpace> *linAlgOpContext,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
              const ValueType               initVal = ValueType());
 
       /**
@@ -211,7 +211,7 @@ namespace dftefe
                &storage,
              std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                            mpiPatternP2P,
-             LinAlgOpContext<memorySpace> *linAlgOpContext);
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
        * @brief Constructor for a \b distributed Vector based on locally owned and ghost indices.
@@ -235,7 +235,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const utils::mpi::MPIComm &                         mpiComm,
-        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const ValueType                                     initVal);
 
       /**
@@ -258,7 +258,7 @@ namespace dftefe
       Vector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const utils::mpi::MPIComm &                         mpiComm,
-        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const ValueType initVal = ValueType());
 
 
@@ -283,7 +283,7 @@ namespace dftefe
        */
       Vector(const global_size_type        globalSize,
              const utils::mpi::MPIComm &   mpiComm,
-             LinAlgOpContext<memorySpace> *linAlgOpContext,
+             std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
              const ValueType               initVal = ValueType());
 
 
@@ -417,9 +417,12 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
 
+      std::shared_ptr<LinAlgOpContext<memorySpace>>
+	getLinAlgOpContext() const;
+
     private:
       std::unique_ptr<Storage>      d_storage;
-      LinAlgOpContext<memorySpace> *d_linAlgOpContext;
+      std::shared_ptr<LinAlgOpContext<memorySpace>> d_linAlgOpContext;
       VectorAttributes              d_vectorAttributes;
       size_type                     d_localSize;
       global_size_type              d_globalSize;
