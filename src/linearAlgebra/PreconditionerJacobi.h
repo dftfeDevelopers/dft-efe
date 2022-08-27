@@ -47,47 +47,18 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class PreconditionerJacobi : public Preconditioner<ValueTypeOperator,
-                                                       ValueTypeOperand,
-                                                       ValueTypeOperand>
+    class PreconditionerJacobi
+      : public Preconditioner<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
     public:
       /**
-       * @brief Constructor based on input MemoryStorage
+       * @brief Constructor
        *
-       * @param[in] diagonal MemoryStorage object containing the local part of
-       * diagonal of the matrix. The local part denotes the union of the locally
-       * owned and the ghost part of the matrix (i.e, the locally relevant part)
-       *
-       * @tparam memorySpaceSrc The memory space in which the input parameter diagonal resides. This allows
-       * us to seamlessly transfer data from any memory space (i.e.,
-       * memorySpaceSrc) to the memory space of the PreconditionerJacobi object
-       * (i.e., memorySpace)
-       *
+       * @param[in] diagonal Vector object containing the diagonal vector of a
+       * matrix. The Vector can be serial or distributed.
        */
-      template <utils::MemorySpace memorySpaceSrc>
       PreconditionerJacobi(
-        const utils::MemoryStorage<ValueTypeOperator, memoryStorageSrc>
-          &diagonal);
-
-      /**
-       * @brief Constructor based on input pointer
-       *
-       * @param[in] diagData Pointer to data containing the local part of
-       * diagonal of the matrix. The local part denotes the union of the locally
-       * owned and the ghost part of the matrix (i.e, the locally relevant part)
-       *
-       * @param[in] N size of the local part of the diagonal of the matrix (..e,
-       * the size of the locally owned plus the ghost indices)
-       *
-       * @note: This constructor assumes that the data pointed by diagData
-       * resides in the memory space of the PreconditionerJacobi (i.e.,
-       * memorySpace).
-       *
-       * @note: The diagData must be appropriately allocated
-       *
-       */
-      PreconditionerJacobi(const ValueTypeOperator *diagonal, size_type N);
+        const Vector<ValueTypeOperator, memoryStorageSrc> &diagonal);
 
       /**
        *@brief Default Destructor
@@ -117,7 +88,7 @@ namespace dftefe
       //    memorySpace> & Y) const = 0;
 
     private:
-      utils::MemoryStorage<ValueTypeOperator, memoryStorageSrc> d_invDiagonal;
+      Vector<ValueTypeOperator, memoryStorage> d_invDiagonal;
     };
 
 
