@@ -58,7 +58,7 @@ namespace dftefe
     __inline__ __device__ cuDoubleComplex
     conj(cuDoubleComplex a)
     {
-      return cuConjf(a);
+      return cuConj(a);
     }
 
     __inline__ __device__ cuFloatComplex
