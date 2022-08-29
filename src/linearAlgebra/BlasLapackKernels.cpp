@@ -13,6 +13,7 @@ namespace dftefe
       namespace blasLapackKernelsInternal
       {
         template <typename T>
+        inline
         T
         conjugate(const T &x)
         {
@@ -20,6 +21,7 @@ namespace dftefe
         }
 
         template <>
+        inline
         double
         conjugate(const double &x)
         {
@@ -27,6 +29,7 @@ namespace dftefe
         }
 
         template <>
+        inline
         float
         conjugate(const float &x)
         {
