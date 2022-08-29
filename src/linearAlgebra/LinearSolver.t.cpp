@@ -23,38 +23,47 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeSolverTypes_h
-#define dftefeSolverTypes_h
-
+#include <linearAlgebra/CGLinearSolver.h>
+#include <utils/Exceptions.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    enum class LinearSolverType
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    LinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      LinearSolver(
+        const LinearSolverType linearSolverType,
+        const size_type        maxIter,
+        const double           absoluteTol /*= LinearSolverDefaults::ABS_TOL*/,
+        const double           relativeTol /*= LinearSolverDefaults::REL_TOL*/,
+        const double divergenceTol /*= LinearSolverDefaults::DIVERGENCE_TOL*/,
+        LinearSolverPrintControl printControl /*= LinearSolverPrintControl()*/)
+      : d_linearSolverImpl(nullptr)
     {
-      CG
-    };
+      if (linearSolverType == LinearSolverType::CG)
+        {
+          d_linearSolverImpl = std::make_shared<
+            CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
+            maxIter, absoluteTol, relativeTol, divergenceTol, printControl);
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false, "Invalid LinearSolverType passed to LinearSolver");
+        }
+    }
 
-    enum class PreconditionerType
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    Error
+    LinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::solve(
+      LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &linearSolverFunction) const
     {
-      NONE,
-      JACOBI
-    };
-
-    enum class NonLinearSolverType
-    {
-      CG,
-      LBFGS
-    };
-
-    enum class Error
-    {
-      SUCCESS,
-      FAILED_TO_CONVERGE,
-      DIVISON_BY_ZERO,
-      OTHER_ERROR
-    };
-
+      return d_linearSolverImpl->solve(linearSolverFunction);
+    }
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeSolverTypes_h

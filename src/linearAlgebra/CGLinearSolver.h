@@ -28,8 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <utils/ConditionalOStream.h>
-#include <linearAlgebra/SolverTypes.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverImpl.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 
@@ -77,17 +76,21 @@ namespace dftefe
        * subspace that will be used.
        * @param[in] absoluteTol Convergence tolerane on the absolute \f$ L_2 $\f
        * norm of the residual (i.e., on \f$||\mathbf{Ax}-\mathbf{b}||$\f)
-       * @param[in] RelativeTol Convergence tolerane on the relative L2 norm of
+       * @param[in] relativeTol Convergence tolerane on the relative L2 norm of
        * the residual (i.e., on \f$||\mathbf{Ax}-\mathbf{b}||/||\mathbf{b}||$\f)
+       * @param[in] divergenceTol Tolerance to abort the linear solver if the
+       * L2 norm of the residual exceeds it
+       * (i.e., if \f$||\mathbf{Ax}-\mathbf{b}|| > divergenceTol$\f)
        *
        * @note Convergence is achieved if
        * \f$||\mathbf{Ax}-\mathbf{b}|| < max(absoluteTol,
        * relativeTol*||\mathbf{b}||)$\f
        */
-      CGLinearSolver(const size_type                  maxIter,
-                     const double                     absoluteTol,
-                     const double                     relativeTol,
-                     const utils::ConditionalOStream &costream);
+      CGLinearSolver(const size_type                        maxIter,
+                     const double                           absoluteTol,
+                     const double                           relativeTol,
+                     const double                           divergenceTol,
+                     LinearSolver::LinearSolverPrintControl printControl);
 
       /**
        * @brief Default Destructor
@@ -112,11 +115,11 @@ namespace dftefe
           &linearSolverFunction) const override;
 
     private:
-      const utils::ConditionalOstream *d_coStream;
-      size_type                        d_maxIter;
-      double                           d_absoluteTol;
-      double                           d_relativeTol;
-
+      LinearSolver::LinearSolverPrintControl d_printControl;
+      size_type                              d_maxIter;
+      double                                 d_absoluteTol;
+      double                                 d_relativeTol;
+      double                                 d_divergenceTol;
     }; // end of class CGLinearSolver
   }    // end of namespace linearAlgebra
 #include <linearAlgebra/CGLinearSolver.t.cpp>

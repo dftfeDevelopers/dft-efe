@@ -23,13 +23,16 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeLinearSolverImpl_h
-#define dftefeLinearSolverImpl_h
+#ifndef dftefeLinearSolverFunction_h
+#define dftefeLinearSolverFunction_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
+#include <utils/MPITypes.h>
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 
 namespace dftefe
 {
@@ -37,11 +40,15 @@ namespace dftefe
   {
     /**
      *
-     * @brief Abstract class that implements the LinearSolver algorithm.
-     *  For example, the derived classes of it, such as CGLinearSolver,
-     *  GMRESLinearSolver implement the Conjugate-Gradient (CG) and
-     *  Generalized Minimum Residual (GMRES) Krylov subspace based approches,
-     *  respectively, to solve a linear system of equations.
+     * @brief An abstract class that encapsulates a linear partial differential equation
+     *  (PDE). That in, in a discrete sense it represents the linear system of
+     * equations: \f$ \mathbf{Ax}=\mathbf{b}$\f.
+     *
+     *  It provides the handle for the action of the linear operator on
+     *  a given Vector, including the enforcement of appropriate boudnary
+     *  conditions and other constraints. Additionally, it provides a handle
+     *  to apply the preconditioner on a Vector. Finally, it also stores the
+     *  solution.
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
      * etc.) for the operator (e.g. Matrix) associated with the linear solve
@@ -56,31 +63,43 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LinearSolverImpl
+    class LinearSolverFunction
     {
     public:
       /**
-       * @brief Default Destructor
+       * @brief define ValueType as the superior (bigger set) of the
+       * ValueTypeOperator and ValueTypeOperand
+       * (e.g., between double and complex<double>, complex<double>
+       * is the bigger set)
        */
-      virtual ~LinearSolverImpl() = default;
+      using ValueType =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
-      /**
-       * @brief Function that initiates the linear solve
-       *
-       * @param[in] linearSolverFunction Reference to a LinearSolverFunction
-       *  object that encapsulates the discrete partial differential equation
-       *  that is being solved as a linear solve. Typically, the
-       *  linearSolverFunction provides the right hand side
-       *  vector (i.e., \f$\mathbf{b}$\f) and the handle to the action of the
-       *  discrete operator on a Vector. It also stores the final solution
-       *  \f$\mathbf{x}$\f
-       *
-       */
-      virtual Error
-      solve(
-        LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) const = 0;
-    }; // end of class LinearSolverImpl
+    public:
+      virtual ~LinearSolverFunction() = default;
+
+      virtual const OperatorContext<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace> &
+      getAxContext() const = 0;
+
+      virtual const OperatorContext<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace> &
+      getPCContext() const = 0;
+
+      void
+      setSolution(const Vector<ValueTypeOperand> &x) = 0;
+
+      virtual Vector<ValueType, memorySpace>
+      getRhs() const = 0;
+
+      virtual Vector<ValueTypeOperand, memorySpace>
+      getInitialGuess() const = 0;
+
+      const utils::mpi::MPIComm &
+      getMPIComm() const = 0;
+    }; // end of class LinearSolverFunction
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearSolverImpl_h
+#endif // dftefeLinearSolverFunction_h

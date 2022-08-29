@@ -28,10 +28,10 @@
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <utils/ConditionalOStream.h>
-#include <linearAlgebra/SolverTypes.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <linearAlgebra/LinearSolverImpl.h>
+#include <linearAlgebra/LinearAlgebraPrintControl.h>
 
 namespace dftefe
 {
@@ -43,7 +43,7 @@ namespace dftefe
      *  linear solver. It solves for \f$\mathbf{x}$\f in the linear system
      *  of equations: \f$ \mathbf{Ax}=\mathbf{b}$\f. Internally, it
      *  creates a derived object of LinearSolverImpl based on the input
-     *  linearAlgebra::SolverTypes::LinearSolverType and then delegates the
+     *  linearAlgebra::LinearSolverType and then delegates the
      *  linear solve task to it. In that sense, it works more as a
      *  LinearSolver factory.
      *
@@ -63,28 +63,36 @@ namespace dftefe
     class LinearSolver
     {
     public:
+      using LinearSolverPrintControl = LinearAlgebraPrintControl;
+
+    public:
       /**
        * @brief Constructor
        *
        * @param[in] linearSolverType Type of the linear solver. For example,
-       * linearAlgbera::SolverTypes::LinearSolverType:CG,
-       * linearAlgbera::SolverTypes::LinearSolverType:GMRES, etc.
+       * linearAlgbera::LinearSolverType:CG,
+       * linearAlgbera::LinearSolverType:GMRES, etc.
        * @param[in] maxIter Maximum number of iterations to allow the solver
        * to iterate. Generally, this determines the maximum size of the Krylov
        * subspace that will be used.
        * @param[in] absoluteTol Convergence tolerane on the absolute \f$ L_2 $\f
        * norm of the residual (i.e., on \f$||\mathbf{Ax}-\mathbf{b}||$\f)
-       * @param[in] RelativeTol Convergence tolerane on the relative L2 norm of
+       * @param[in] relativeTol Convergence tolerane on the relative L2 norm of
        * the residual (i.e., on \f$||\mathbf{Ax}-\mathbf{b}||/||\mathbf{b}||$\f)
+       * @param[in] divergenceTol Tolerance to abort the linear solver if the
+       * L2 norm of the residual exceeds it
+       * (i.e., if \f$||\mathbf{Ax}-\mathbf{b}|| > divergenceTol$\f)
        *
        * @note Convergence is achieved if \f$||\mathbf{Ax}-\mathbf{b}|| < max(absoluteTol, relativeTol*||\mathbf{b}||)$\f
        *
        */
-      LinearSolver(const SolverTypes::LinearSolverType linearSolverType,
-                   const size_type                     maxIter,
-                   const double                        absoluteTol,
-                   const double                        relativeTol,
-                   const utils::ConditionalOStream &   coStream);
+      LinearSolver(
+        const LinearSolverType linearSolverType,
+        const size_type        maxIter,
+        const double           absoluteTol = LinearSolverDefaults::ABS_TOL,
+        const double           relativeTol = LinearSolverDefaults::REL_TOL,
+        const double divergenceTol = LinearSolverDefaults::DIVERGENCE_TOL,
+        LinearSolverPrintControl printControl = LinearSolverPrintControl());
 
       /**
        * @brief Default Destructor
@@ -103,24 +111,16 @@ namespace dftefe
        *  \f$\mathbf{x}$\f
        *
        */
-      SolverTypes::Error
+      Error
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
           &linearSolverFunction) const;
 
-      void
-      setConditionalOStream(const utils::ConditionalOStream &pout);
-
     private:
-      SolverTypes::LinearSolverType    d_linearSolverType;
-      const utils::ConditionalOstream *d_coStream;
-      size_type                        d_maxIter;
-      double                           d_absoluteTol;
-      double                           d_relativeTol;
+      LinearSolverType d_linearSolverType;
       std::shared_ptr<
         LinearSolverImpl<ValueTypeOperator, ValueTypeOperand, memorySpace>>
         d_linearSolverImpl;
-
     }; // end of class LinearSolver
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
