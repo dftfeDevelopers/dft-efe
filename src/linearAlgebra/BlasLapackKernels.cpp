@@ -302,9 +302,9 @@ namespace dftefe
                   }
               }
           }
-        
+
         // (opX == ScalarOp::Conj && opY == ScalarOp::Conj)
-        else 
+        else
           {
             blasLapackKernelsInternal::ScalarProduct<ValueType1,
                                                      ValueType2,
