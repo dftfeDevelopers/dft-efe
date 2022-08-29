@@ -157,13 +157,12 @@ namespace dftefe
        * @param[in] size size of each vector in the MultiVector
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal initial value of elements of the MultiVector
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        *
        */
       MultiVector(const size_type               size,
                   const size_type               numVectors,
-                  LinAlgOpContext<memorySpace> *linAlgOpContext,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const ValueType               initVal = ValueType());
 
       /**
@@ -179,6 +178,7 @@ namespace dftefe
        * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
        * is to be transfered to the MultiVector
        * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @note This Constructor transfers the ownership from the input
        * unique_ptr \p storage to the internal data member of the MultiVector.
        * Thus, after the function call \p storage will point to NULL and any
@@ -189,22 +189,21 @@ namespace dftefe
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
                                       storage,
         size_type                     numVectors,
-        LinAlgOpContext<memorySpace> *linAlgOpContext);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
        * @brief Constructor for a \b distributed MultiVector based on an input MPIPatternP2P.
        *
        * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
        * based on which the distributed MultiVector will be created.
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        */
       MultiVector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                 mpiPatternP2P,
-                  LinAlgOpContext<memorySpace> *linAlgOpContext,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const size_type               numVectors,
                   const ValueType               initVal = ValueType());
 
@@ -220,8 +219,7 @@ namespace dftefe
        * is to be transfered to the MultiVector
        * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
        * based on which the distributed MultiVector will be created.
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        *
        * @note This Constructor transfers the ownership from the input
@@ -235,7 +233,7 @@ namespace dftefe
           &storage,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                       mpiPatternP2P,
-        LinAlgOpContext<memorySpace> *linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
         const size_type               numVectors);
 
       /**
@@ -250,8 +248,7 @@ namespace dftefe
        * indices (ordered in increasing order and non-repeating)
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
        * of processors across which the MultiVector is to be distributed
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
@@ -263,7 +260,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<global_size_type> &               ghostIndices,
         const utils::mpi::MPIComm &                         mpiComm,
-        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>                       linAlgOpContext,
         const size_type                                     numVectors,
         ValueType initVal = ValueType());
 
@@ -277,7 +274,7 @@ namespace dftefe
        * of indices (continuous) that are owned by the current processor.
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
        * of processors across which the MultiVector is to be distributed
-       * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the Vector shoud be
        * initialized
@@ -288,7 +285,7 @@ namespace dftefe
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const utils::mpi::MPIComm &                         mpiComm,
-        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>                       linAlgOpContext,
         const size_type                                     numVectors,
         const ValueType initVal = ValueType());
 
@@ -306,14 +303,14 @@ namespace dftefe
        * distributed over the processors.
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
        * of processors across which the Vector is to be distributed
-       * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the Vector shoud be
        * initialized
        */
       MultiVector(const global_size_type        globalSize,
                   const utils::mpi::MPIComm &   mpiComm,
-                  LinAlgOpContext<memorySpace> *linAlgOpContext,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const size_type               numVectors,
                   const ValueType               initVal = ValueType());
 
@@ -451,6 +448,9 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
       
+      std::shared_ptr<LinAlgOpContext<memorySpace>> 
+      getLinAlgOpContext() const;
+      
       global_size_type globalSize() const;
       size_type localSize() const;
       size_type locallyOwnedSize() const;
@@ -459,7 +459,7 @@ namespace dftefe
 
     private:
       std::unique_ptr<Storage>      d_storage;
-      LinAlgOpContext<memorySpace> *d_linAlgOpContext;
+      std::shared_ptr<LinAlgOpContext<memorySpace>> d_linAlgOpContext;
       VectorAttributes              d_vectorAttributes;
       size_type                     d_localSize;
       global_size_type              d_globalSize;

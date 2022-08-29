@@ -36,7 +36,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       const size_type               size,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext,
       const ValueType               initVal)
     {
       d_storage =
@@ -66,7 +66,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
-      LinAlgOpContext<memorySpace> *linAlgOpContext)
+      std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext)
     {
       d_storage         = std::move(storage);
       d_linAlgOpContext = linAlgOpContext;
@@ -93,7 +93,7 @@ namespace dftefe
     Vector<ValueType, memorySpace>::Vector(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                     mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext,
       const ValueType               initVal)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
@@ -125,7 +125,7 @@ namespace dftefe
         &storage,
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                     mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *linAlgOpContext)
+      std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_storage         = std::move(storage);
@@ -154,7 +154,7 @@ namespace dftefe
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<dftefe::global_size_type> &       ghostIndices,
       const utils::mpi::MPIComm &                         mpiComm,
-      LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>                        linAlgOpContext,
       const ValueType                                     initVal)
     {
       //
@@ -209,7 +209,7 @@ namespace dftefe
     Vector<ValueType, memorySpace>::Vector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const utils::mpi::MPIComm &                         mpiComm,
-      LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>                        linAlgOpContext,
       const ValueType                                     initVal)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
@@ -268,7 +268,7 @@ namespace dftefe
     Vector<ValueType, memorySpace>::Vector(
       const global_size_type        totalGlobalDofs,
       const utils::mpi::MPIComm &   mpiComm,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext,
       const ValueType               initVal)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
@@ -503,7 +503,7 @@ namespace dftefe
       const double l2NormLocallyOwnedSquare =
         l2NormLocallyOwned * l2NormLocallyOwned;
       double returnValue = 0.0;
-      utils::mpi::MPIAllreduce<memorySpace>(&l2NormLocallyOwnedSquare,
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(&l2NormLocallyOwnedSquare,
                                             &returnValue,
                                             1,
                                             utils::mpi::MPIDouble,
@@ -523,7 +523,7 @@ namespace dftefe
                                                  1,
                                                  *d_linAlgOpContext);
       double returnValue = lInfNormLocallyOwned;
-      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormLocallyOwned,
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(&lInfNormLocallyOwned,
                                             &returnValue,
                                             1,
                                             utils::mpi::MPIDouble,
@@ -610,6 +610,13 @@ namespace dftefe
     }
       
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    std::shared_ptr<LinAlgOpContext<memorySpace>> 
+    Vector<ValueType, memorySpace>::getLinAlgOpContext() const
+    {
+      return d_linAlgOpContext; 
+    }
+      
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     global_size_type 
     Vector<ValueType, memorySpace>::globalSize() const
     {
@@ -672,13 +679,26 @@ namespace dftefe
       {
 	DFTEFE_AssertWithMsg(u.isCompatible(v), 
 	    "u and v Vectors used for dot product are not compatible.");
+	utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>, memorySpace> dotProdLocallyOwned(1,0.0);
 	utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>, memorySpace> dotProd(1,0.0);
 	blasLapack::dotMultiVector(u.locallyOwnedSize(),
                      1 ,//numVec,
                      u.data(),
 		     v.data(),
-		     dotProd.data(),
+		     dotProdLocallyOwned.data(),
                      *(u.getLinAlgOpContext()));
+
+	utils::mpi::MPIDatatype mpiDatatype = utils::mpi::MPIGetDatatype<blasLapack::scalar_type<ValueType1, ValueType2>>();
+        utils::mpi::MPIAllreduce<memorySpace>(&dotProdLocallyOwned,
+                                            &dotProd,
+                                            1,
+                                            mpiDatatype,
+                                            utils::mpi::MPISum,
+                                            (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
+
+	blasLapack::scalar_type<ValueType1, ValueType2> returnValue(0.0);
+	utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(1, &returnValue, dotProd.data());
+	return returnValue;
       }
 
 
