@@ -614,13 +614,13 @@ namespace dftefe
     //
 
 
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
-        const Vector<ValueType, memorySpace> &u,
-        ValueType                             b,
-        const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace> &      w)
+    add(blasLapack::scalar_type<ValueType1, ValueType2>                       a,
+        const Vector<ValueType1, memorySpace> &                               u,
+        blasLapack::scalar_type<ValueType1, ValueType2>                       b,
+        const Vector<ValueType2, memorySpace> &                               v,
+        Vector<blasLapack::scalar_type<ValueType1, ValueType2>, memorySpace> &w)
     {
       const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
       const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
@@ -639,13 +639,6 @@ namespace dftefe
         (u.size() == v.size()) && (v.size() == w.size()) &&
           (u.localSize() == v.localSize()) && (v.localSize() == w.localSize()),
         "Mismatch of sizes of the Vectors that are added.");
-      const size_type uStorageSize = (u.getValues()).size();
-      const size_type vStorageSize = (v.getValues()).size();
-      const size_type wStorageSize = (w.getValues()).size();
-      utils::throwException<utils::LengthError>(
-        (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
-        "Mismatch of sizes of the underlying storages"
-        "of the Vectors that are added.");
 
       blasLapack::axpby(u.localSize(),
                         a,
@@ -655,6 +648,27 @@ namespace dftefe
                         w.data(),
                         (w.getLinAlgOpContext())->getBlasQueue());
     }
+
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    blasLapack::scalar_type<ValueType1, ValueType2>
+    dot(const Vector<ValueType1, memorySpace> &u,
+        const Vector<ValueType2, memorySpace> &v,
+        const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+    {
+      const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
+      const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
+      bool                    areCompatible =
+        uVectorAttributes.areDistributionCompatible(vVectorAttributes);
+      utils::throwException(
+        areCompatible,
+        "Trying to add incompatible Vectors. One is a serial Vector and the other a distributed Vector.");
+      utils::throwException<utils::LengthError>(
+        (u.size() == v.size()) && (u.localSize() == v.localSize()),
+        "Mismatch of sizes of the Vectors that are added.");
+    }
+
+
 
   } // end of namespace linearAlgebra
 } // namespace dftefe

@@ -27,13 +27,14 @@
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
-#include <linearAlgebra/VectorAttributes.h>
-#include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/MPICommunicatorP2P.h>
 #include <utils/TypeConfig.h>
+#include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 #include <memory>
 namespace dftefe
 {
@@ -440,14 +441,56 @@ namespace dftefe
      * @param[in] b scalar
      * @param[in] v second Vector on the right
      * @param[out] w resulting Vector
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the scalars a, b, and the resultant Vector w is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
-        const Vector<ValueType, memorySpace> &u,
-        ValueType                             b,
-        const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace> &      w);
+    add(
+      blasLapack::scalar_type<ValueType1, ValueType2>                       a,
+      const Vector<ValueType1, memorySpace> &                               u,
+      blasLapack::scalar_type<ValueType1, ValueType2>                       b,
+      const Vector<ValueType2, memorySpace> &                               v,
+      Vector<blasLapack::scalar_type<ValueType1, ValueType2>, memorySpace> &w);
+
+    /**
+     * @brief Perform dot product of op(u) and op(v), i.e.,
+     * evaluate \f$ alpha = \sum_i op(\mathbf{u}_i) op(\mathbf{v}_i)
+     * where op can be
+     * (a) blasLapack::ScalarOp::Identity for op(x) = x (the usual dot product)
+     * or (b) blasLapack::ScalarOp::ComplexConjugate for op(x) = complex
+     * conjugate of x
+     *
+     * @param[in] u first Vector
+     * @param[in] v second Vector
+     * @param[in] opU blasLapack::ScalarOp for u Vector
+     * @param[in] opV blasLapack::ScalarOp for v Vector
+     * @return dot product of opU(u) and opV(v)
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the dot product is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
+     */
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    blasLapack::scalar_type<ValueType1, ValueType2>
+    dot(const Vector<ValueType1, memorySpace> &u,
+        const Vector<ValueType2, memorySpace> &v,
+        const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

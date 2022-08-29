@@ -42,6 +42,11 @@ namespace dftefe
       using Layout = blas::Layout;
       using Queue  = blas::Queue;
 
+      enum class ScalarOp
+      {
+        Identity,
+        ComplexConjugate
+      };
       // real_type< float >                               is float
       // real_type< float, double, complex<float> >       is double
       template <typename ValueType>
