@@ -37,6 +37,7 @@ namespace dftefe
         class ScalarProduct
         {
         public:
+          inline
           static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
@@ -48,6 +49,7 @@ namespace dftefe
         class ScalarProduct<T1, T2, ScalarOp::Identity, ScalarOp::Conj>
         {
         public:
+          inline
           static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
@@ -60,6 +62,7 @@ namespace dftefe
         class ScalarProduct<T1, T2, ScalarOp::Conj, ScalarOp::Identity>
         {
         public:
+          inline
           static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
@@ -72,6 +75,7 @@ namespace dftefe
         class ScalarProduct<T1, T2, ScalarOp::Conj, ScalarOp::Conj>
         {
         public:
+          inline
           static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
