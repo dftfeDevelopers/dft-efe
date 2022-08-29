@@ -418,6 +418,10 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
 
+      global_size_type globalSize() const;
+      size_type localSize() const;
+      size_type locallyOwnedSize() const;
+      size_type ghostSize() const;
     private:
       std::unique_ptr<Storage>      d_storage;
       LinAlgOpContext<memorySpace> *d_linAlgOpContext;

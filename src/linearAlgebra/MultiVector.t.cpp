@@ -264,7 +264,7 @@ namespace dftefe
 
     /**
      * @brief Constructor for a \b distributed MultiVector based on total number of global indices.
-     * The resulting Vector will not contain any ghost indices on any of the
+     * The resulting MultiVector will not contain any ghost indices on any of the
      * processors. Internally, the vector is divided to ensure as much
      * equitable distribution across all the processors much as possible.
      * @note This way of construction is expensive. One should use the other
@@ -631,6 +631,41 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::getMPIPatternP2P() const
     {
       return d_mpiPatternP2P;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    global_size_type 
+    MultiVector<ValueType, memorySpace>::globalSize() const
+    {
+      return d_globalSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    MultiVector<ValueType, memorySpace>::localSize() const
+    {
+      return d_localSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    MultiVector<ValueType, memorySpace>::locallyOwnedSize() const
+    {
+      return d_locallyOwnedSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    MultiVector<ValueType, memorySpace>::ghostSize() const
+    {
+      return d_ghostSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    MultiVector<ValueType, memorySpace>::numVectors() const
+    {
+      return d_numVectors;
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

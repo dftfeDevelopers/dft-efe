@@ -608,6 +608,34 @@ namespace dftefe
     {
       return d_mpiPatternP2P;
     }
+      
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    global_size_type 
+    Vector<ValueType, memorySpace>::globalSize() const
+    {
+      return d_globalSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    Vector<ValueType, memorySpace>::localSize() const
+    {
+      return d_localSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    Vector<ValueType, memorySpace>::locallyOwnedSize() const
+    {
+      return d_locallyOwnedSize;
+    }
+    
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type 
+    Vector<ValueType, memorySpace>::ghostSize() const
+    {
+      return d_ghostSize;
+    }
 
     //
     // Helper functions
@@ -622,51 +650,36 @@ namespace dftefe
         const Vector<ValueType2, memorySpace> &                               v,
         Vector<blasLapack::scalar_type<ValueType1, ValueType2>, memorySpace> &w)
     {
-      const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
-      const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
-      const VectorAttributes &wVectorAttributes = w.getVectorAttributes();
-      bool                    areCompatible =
-        uVectorAttributes.areDistributionCompatible(vVectorAttributes);
-      utils::throwException(
-        areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the other a distributed Vector.");
-      areCompatible =
-        vVectorAttributes.areDistributionCompatible(wVectorAttributes);
-      utils::throwException(
-        areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the other a distributed Vector.");
-      utils::throwException<utils::LengthError>(
-        (u.size() == v.size()) && (v.size() == w.size()) &&
-          (u.localSize() == v.localSize()) && (v.localSize() == w.localSize()),
-        "Mismatch of sizes of the Vectors that are added.");
-
+      DFTEFE_AssertWithMsg(u.isCompatible(v), 
+	  "u and v Vectors being added are not compatible.");
+      DFTEFE_AssertWithMsg(u.isCompatible(w), 
+	  "Resultant Vector w = u + v is compatible with u.");
       blasLapack::axpby(u.localSize(),
-                        a,
-                        u.data(),
-                        b,
-                        v.data(),
-                        w.data(),
-                        (w.getLinAlgOpContext())->getBlasQueue());
+	  a,
+	  u.data(),
+	  b,
+	  v.data(),
+	  w.data(),
+	  *(w.getLinAlgOpContext()));
     }
 
     template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
-    blasLapack::scalar_type<ValueType1, ValueType2>
-    dot(const Vector<ValueType1, memorySpace> &u,
-        const Vector<ValueType2, memorySpace> &v,
-        const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
-        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
-    {
-      const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
-      const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
-      bool                    areCompatible =
-        uVectorAttributes.areDistributionCompatible(vVectorAttributes);
-      utils::throwException(
-        areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the other a distributed Vector.");
-      utils::throwException<utils::LengthError>(
-        (u.size() == v.size()) && (u.localSize() == v.localSize()),
-        "Mismatch of sizes of the Vectors that are added.");
-    }
+      blasLapack::scalar_type<ValueType1, ValueType2>
+      dot(const Vector<ValueType1, memorySpace> &u,
+	  const Vector<ValueType2, memorySpace> &v,
+	  const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+	  const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+      {
+	DFTEFE_AssertWithMsg(u.isCompatible(v), 
+	    "u and v Vectors used for dot product are not compatible.");
+	utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>, memorySpace> dotProd(1,0.0);
+	blasLapack::dotMultiVector(u.locallyOwnedSize(),
+                     1 ,//numVec,
+                     u.data(),
+		     v.data(),
+		     dotProd.data(),
+                     *(u.getLinAlgOpContext()));
+      }
 
 
 
