@@ -58,6 +58,13 @@ namespace dftefe
                         const ValueType1 *                   x,
                         const ValueType2 *                   y,
                         scalar_type<ValueType1, ValueType2> *z);
+        static void
+        hadamardProduct(size_type                            size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        const ScalarOp &                     opx,
+                        const ScalarOp &                     opy,
+                        scalar_type<ValueType1, ValueType2> *z);
 
         /**
          * @brief Template for performing \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
@@ -105,6 +112,12 @@ namespace dftefe
          * vector index is the fastest index
          * @param[in] multiVecDataY multi vector data in row major format i.e.
          * vector index is the fastest index
+         * @param[in] opX blasLapack::ScalarOp defining the operation on each
+         * entry of multiVecDataX. The available options are
+         * (a) blasLapack::ScalarOp::Identity (identity operation on a scalar),
+         * and (b) blasLapack::ScalarOp::Conj (complex conjugate on a scalar)
+         * @param[in] opY blasLapack::ScalarOp defining the operation on each
+         * entry of multiVecDataY.
          * @param[out] multiVecDotProduct multi vector dot product of size
          * numVec
          *
@@ -114,6 +127,8 @@ namespace dftefe
                        size_type                            numVec,
                        const ValueType1 *                   multiVecDataX,
                        const ValueType2 *                   multiVecDataY,
+                       const ScalarOp &                     opX,
+                       const ScalarOp &                     opY,
                        scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
                        LinAlgOpContext<memorySpace> &       context);
       };
@@ -183,6 +198,14 @@ namespace dftefe
                         const ValueType2 *                   y,
                         scalar_type<ValueType1, ValueType2> *z);
 
+        static void
+        hadamardProduct(size_type                            size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        const ScalarOp &                     opx,
+                        const ScalarOp &                     opy,
+                        scalar_type<ValueType1, ValueType2> *z);
+
 
         static void
         khatriRaoProduct(size_type                            sizeI,
@@ -206,6 +229,8 @@ namespace dftefe
           size_type                            numVec,
           const ValueType1 *                   multiVecDataX,
           const ValueType2 *                   multiVecDataY,
+          const ScalarOp &                     opX,
+          const ScalarOp &                     opY,
           scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
       };

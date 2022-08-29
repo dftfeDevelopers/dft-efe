@@ -84,9 +84,9 @@ namespace dftefe
       // i have neglected incx & incy parameters
       /**
        * @brief Template for computing the multiplicative inverse of all the elements of x, does not check if any element is zero
-       * computes \f $ y[i] = \frac{alpha}{x[i]} $ \f 
+       * computes \f $ y[i] = \frac{alpha}{x[i]} $ \f
        * @param[in] n size of each vector
-       * @param[in] alpha scalr input for the numerator 
+       * @param[in] alpha scalr input for the numerator
        * @param[in] x input vector
        * @param[out] y output vector
        * @param[in] context Blas context for GPU operations
@@ -136,6 +136,32 @@ namespace dftefe
       hadamardProduct(size_type                            n,
                       const ValueType1 *                   x,
                       const ValueType2 *                   y,
+                      scalar_type<ValueType1, ValueType2> *z,
+                      LinAlgOpContext<memorySpace> &       context);
+      /**
+       * @brief Template for performing \f$ z_i = op(x_i) * op(y_i)$
+       * where op represents either identity or complex conjugate
+       * operation on a scalar
+       * @param[in] size size of the array
+       * @param[in] x array
+       * @param[in] y array
+       * @param[in] opx blasLapack::ScalarOp defining the operation on each
+       * entry of x. The available options are
+       * (a) blasLapack::ScalarOp::Identity (identity operation on a scalar),
+       * and (b) blasLapack::ScalarOp::Conj (complex conjugate on a scalar)
+       * @param[in] opy blasLapack::ScalarOp defining the operation on each
+       * entry of y.
+       * @param[out] z array
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(size_type                            n,
+                      const ValueType1 *                   x,
+                      const ValueType2 *                   y,
+                      const ScalarOp &                     opx,
+                      const ScalarOp &                     opy,
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context);
 
@@ -209,6 +235,12 @@ namespace dftefe
        * vector index is the fastest index
        * @param[in] multiVecDataY multi vector data in row major format i.e.
        * vector index is the fastest index
+       * @param[in] opX blasLapack::ScalarOp defining the operation on each
+       * entry of multiVecDataX. The available options are
+       * (a) blasLapack::ScalarOp::Identity (identity operation on a scalar),
+       * and (b) blasLapack::ScalarOp::Conj (complex conjugate on a scalar)
+       * @param[in] opY blasLapack::ScalarOp defining the operation on each
+       * entry of multiVecDataY.
        * @param[out] multiVecDotProduct multi vector dot product of size numVec
        *
        */
@@ -220,6 +252,8 @@ namespace dftefe
                      size_type                            numVec,
                      const ValueType1 *                   multiVecDataX,
                      const ValueType2 *                   multiVecDataY,
+                     const ScalarOp &                     opX,
+                     const ScalarOp &                     opY,
                      scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
                      LinAlgOpContext<memorySpace> &       context);
 
