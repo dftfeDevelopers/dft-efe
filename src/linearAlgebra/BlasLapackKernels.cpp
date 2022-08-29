@@ -13,24 +13,21 @@ namespace dftefe
       namespace blasLapackKernelsInternal
       {
         template <typename T>
-        inline
-        T
+        inline T
         conjugate(const T &x)
         {
           return std::conj(x);
         }
 
         template <>
-        inline
-        double
+        inline double
         conjugate(const double &x)
         {
           return x;
         }
 
         template <>
-        inline
-        float
+        inline float
         conjugate(const float &x)
         {
           return x;
@@ -40,8 +37,7 @@ namespace dftefe
         class ScalarProduct
         {
         public:
-          inline
-          static scalar_type<T1, T2>
+          inline static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
             return ((scalar_type<T1, T2>)t1) * ((scalar_type<T1, T2>)t2);
@@ -52,8 +48,7 @@ namespace dftefe
         class ScalarProduct<T1, T2, ScalarOp::Identity, ScalarOp::Conj>
         {
         public:
-          inline
-          static scalar_type<T1, T2>
+          inline static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
             return ((scalar_type<T1, T2>)t1) *
@@ -65,8 +60,7 @@ namespace dftefe
         class ScalarProduct<T1, T2, ScalarOp::Conj, ScalarOp::Identity>
         {
         public:
-          inline
-          static scalar_type<T1, T2>
+          inline static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
             return ((scalar_type<T1, T2>)conjugate(t1)) *
@@ -78,8 +72,7 @@ namespace dftefe
         class ScalarProduct<T1, T2, ScalarOp::Conj, ScalarOp::Conj>
         {
         public:
-          inline
-          static scalar_type<T1, T2>
+          inline static scalar_type<T1, T2>
           prod(T1 t1, T2 t2)
           {
             return ((scalar_type<T1, T2>)conjugate(t1)) *
