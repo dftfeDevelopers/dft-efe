@@ -24,6 +24,7 @@ set(DFT-EFE-UTILS-SOURCES
 	MPIWrapper.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
+	Defaults.cpp
   MPICommunicatorP2PKernels.cpp
   MPICommunicatorP2PKernels.cu
   MPIErrorCodeHandler.cpp)
