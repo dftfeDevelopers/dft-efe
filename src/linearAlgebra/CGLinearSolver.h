@@ -90,7 +90,7 @@ namespace dftefe
                      const double                           absoluteTol,
                      const double                           relativeTol,
                      const double                           divergenceTol,
-                     LinearSolver::LinearSolverPrintControl printControl);
+                     LinearSolver::LinearSolverProfiler profiler);
 
       /**
        * @brief Default Destructor
@@ -115,7 +115,7 @@ namespace dftefe
           &linearSolverFunction) const override;
 
     private:
-      LinearSolver::LinearSolverPrintControl d_printControl;
+      LinearSolver::LinearSolverProfiler d_profiler;
       size_type                              d_maxIter;
       double                                 d_absoluteTol;
       double                                 d_relativeTol;

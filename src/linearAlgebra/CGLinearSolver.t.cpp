@@ -51,12 +51,12 @@ namespace dftefe
                      const double                           absoluteTol,
                      const double                           relativeTol,
                      const double                           divergenceTol,
-                     LinearSolver::LinearSolverPrintControl printControl)
+                     LinearSolver::LinearSolverProfiler profiler)
       : d_maxIter(maxIter)
       , d_absoluteTol(absoluteTol)
       , d_relativeTol(relativeTol)
       , d_divergenceTol(divergenceTol)
-      , d_printControl(printControl)
+      , d_profiler(profiler)
     {}
 
 
@@ -71,7 +71,7 @@ namespace dftefe
       auto mpiComm = linearSolverFunction.getMPIComm();
 
       // register the start of the algorithm
-      d_printControl.registerStart(mpiComm);
+      d_profiler.registerStart(mpiComm);
 
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
@@ -130,12 +130,13 @@ namespace dftefe
       //
       // CG loop
       //
-      size_type precision = printControl.getPrecision();
+      size_type precision = d_profiler.getPrecision();
       Error     err       = Error::OTHER_ERROR;
-      size_type iter      = 0 for (; iter < d_maxIter; ++iter)
+      size_type iter      = 0;
+      for (; iter < d_maxIter; ++iter)
       {
         // register start of the iteration
-        printControl.registerIterStart(iter);
+        d_profiler.registerIterStart(iter);
 
         if (rNorm < std::max(d_absoluteTol, bNorm * d_relativeTol))
           {
@@ -187,9 +188,7 @@ namespace dftefe
                                                              precision);
 
         // register end of the iteration
-        printControl.registerIterEnd(msg);
-
-        iter++;
+        d_profiler.registerIterEnd(msg);
       }
 
       linearSolverFunction.setSolution(x);
@@ -211,7 +210,7 @@ namespace dftefe
         msg = successAndMsg.second;
 
       // register end of CG
-      printControl.registerEnd(msg);
+      d_profiler.registerEnd(msg);
 
       return err;
     }

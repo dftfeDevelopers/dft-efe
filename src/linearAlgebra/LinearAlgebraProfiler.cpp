@@ -24,7 +24,7 @@
  */
 
 #include <utils/MPIWrapper.h>
-#include <linearAlgebra/LinearAlgebraPrintControl.h>
+#include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <time.h>
 namespace dftefe
 {
@@ -33,14 +33,14 @@ namespace dftefe
     namespace
     {
       inline void
-      getTime(LinearAlgebraPrintControl::Time &t)
+      getTime(LinearAlgebraProfiler::Time &t)
       {
         time(&t);
       }
 
       double
-      getTimeDiff(const LinearAlgebraPrintControl::Time &t1,
-                  const LinearAlgebraPrintControl::Time &t2)
+      getTimeDiff(const LinearAlgebraProfiler::Time &t1,
+                  const LinearAlgebraProfiler::Time &t2)
       {
         return (double)(t2 - t1);
       }
@@ -57,7 +57,7 @@ namespace dftefe
     //
     // Constructor
     //
-    LinearAlgebraPrintControl::LinearAlgebraPrintControl(
+    LinearAlgebraProfiler::LinearAlgebraProfiler(
       std::ostream &  stream /*= std::cout*/,
       const size_type printFreq /*= PrintControlDefaults::PRINT_FREQ*/,
       const size_type wallTimeFreq /*= PrintControlDefaults::WALL_TIME_FREQ*/,
@@ -88,7 +88,7 @@ namespace dftefe
     {}
 
     void
-    LinearAlgebraPrintControl::registerStart(const utils::mpi::MPIComm &mpiComm)
+    LinearAlgebraProfiler::registerStart(const utils::mpi::MPIComm &mpiComm)
     {
       d_mpiComm = mpiComm;
       int err   = utils::mpi::MPICommRank(d_mpiComm, &d_myRank);
@@ -107,7 +107,7 @@ namespace dftefe
       else
         utils::throwException<utils::InvalidArgument>(
           false,
-          "Invalid argument passed for ParallelPrintType to LinearAlgebraPrintControl");
+          "Invalid argument passed for ParallelPrintType to LinearAlgebraProfiler");
 
       if (d_printTotalWallTime)
         {
@@ -117,7 +117,7 @@ namespace dftefe
     }
 
     void
-    LinearAlgebraPrintControl::registerEnd(const std::string &s)
+    LinearAlgebraProfiler::registerEnd(const std::string &s)
     {
       std::string msg = "";
       if (d_printFinal)
@@ -141,7 +141,7 @@ namespace dftefe
     }
 
     void
-    LinearAlgebraPrintControl::registerIterStart(const size_type iter)
+    LinearAlgebraProfiler::registerIterStart(const size_type iter)
     {
       d_iter = iter;
       if (d_iter % d_wallTimeFreq == 0 && d_wallTimeFreq > 0)
@@ -152,7 +152,7 @@ namespace dftefe
     }
 
     void
-    LinearAlgebraPrintControl::registerIterEnd(const std::string &s)
+    LinearAlgebraProfiler::registerIterEnd(const std::string &s)
     {
       std::string msg = "";
       if (d_iter % d_printFreq == 0 && d_printFreq > 0)
@@ -174,43 +174,43 @@ namespace dftefe
     }
 
     size_type
-    LinearAlgebraPrintControl::getPrintFrequency() const
+    LinearAlgebraProfiler::getPrintFrequency() const
     {
       return d_printFreq;
     }
 
     size_type
-    LinearAlgebraPrintControl::getWallTimeFrequency() const
+    LinearAlgebraProfiler::getWallTimeFrequency() const
     {
       return d_wallTimeFreq;
     }
 
     ParallelPrintType
-    LinearAlgebraPrintControl::getParallelPrintType() const
+    LinearAlgebraProfiler::getParallelPrintType() const
     {
       return d_printType;
     }
 
     bool
-    LinearAlgebraPrintControl::getPrintFinal() const
+    LinearAlgebraProfiler::getPrintFinal() const
     {
       return d_printFinal;
     }
 
     bool
-    LinearAlgebraPrintControl::getPrintTotalWallTime() const
+    LinearAlgebraProfiler::getPrintTotalWallTime() const
     {
       return d_printTotalWallTime;
     }
 
     size_type
-    LinearAlgebraPrintControl::getPrecision() const
+    LinearAlgebraProfiler::getPrecision() const
     {
       return d_precision;
     }
 
     std::string
-    LinearAlgebraPrintControl::getDelimiter() const
+    LinearAlgebraProfiler::getDelimiter() const
     {
       return d_delimiter;
     }

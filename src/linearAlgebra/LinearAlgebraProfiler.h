@@ -23,8 +23,8 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeLinearAlgebraPrintControl_h
-#define dftefeLinearAlgebraPrintControl_h
+#ifndef dftefeLinearAlgebraProfiler_h
+#define dftefeLinearAlgebraProfiler_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MPITypes.h>
@@ -38,13 +38,13 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    class LinearAlgebraPrintControl
+    class LinearAlgebraProfiler
     {
     public:
       using Time = time_t;
 
     public:
-      LinearAlgebraPrintControl(
+      LinearAlgebraProfiler(
         std::ostream &  stream       = std::cout,
         const size_type printFreq    = PrintControlDefaults::PRINT_FREQ,
         const size_type wallTimeFreq = PrintControlDefaults::WALL_TIME_FREQ,
@@ -98,7 +98,7 @@ namespace dftefe
       size_type           d_iter;
       bool                d_myRankPrintFlag;
       std::string         d_myRankStringPrefix;
-    }; // end of class LinearAlgebraPrintControl
+    }; // end of class LinearAlgebraProfiler
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearAlgebraPrintControl_h
+#endif // dftefeLinearAlgebraProfiler_h

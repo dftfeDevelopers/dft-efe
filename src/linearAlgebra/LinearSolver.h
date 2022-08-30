@@ -31,7 +31,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <linearAlgebra/LinearSolverImpl.h>
-#include <linearAlgebra/LinearAlgebraPrintControl.h>
+#include <linearAlgebra/LinearAlgebraProfiler.h>
 
 namespace dftefe
 {
@@ -63,7 +63,7 @@ namespace dftefe
     class LinearSolver
     {
     public:
-      using LinearSolverPrintControl = LinearAlgebraPrintControl;
+      using LinearSolverProfiler = LinearAlgebraProfiler;
 
     public:
       /**
@@ -92,7 +92,7 @@ namespace dftefe
         const double           absoluteTol = LinearSolverDefaults::ABS_TOL,
         const double           relativeTol = LinearSolverDefaults::REL_TOL,
         const double divergenceTol = LinearSolverDefaults::DIVERGENCE_TOL,
-        LinearSolverPrintControl printControl = LinearSolverPrintControl());
+        LinearSolverProfiler profiler = LinearSolverProfiler());
 
       /**
        * @brief Default Destructor

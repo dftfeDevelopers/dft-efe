@@ -45,7 +45,7 @@ namespace dftefe
       enum class ScalarOp
       {
         Identity,
-        ComplexConjugate
+        Conj 
       };
       // real_type< float >                               is float
       // real_type< float, double, complex<float> >       is double
