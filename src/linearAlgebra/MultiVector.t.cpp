@@ -40,7 +40,7 @@ namespace dftefe
       const size_type                               size,
       const size_type                               numVectors,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const ValueType                               initVal)
+      const ValueType                               initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
@@ -102,7 +102,7 @@ namespace dftefe
                                                     mpiPatternP2P,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                               numVectors,
-      const ValueType                               initVal)
+      const ValueType                               initVal /* = utils::Types<ValueType>::zero*/)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_vectorAttributes =
@@ -166,7 +166,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                         mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
       const size_type                                     numVectors,
-      const ValueType                                     initVal)
+      const ValueType                                     initVal/* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -220,7 +220,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                         mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
       const size_type                                     numVectors,
-      const ValueType                                     initVal)
+      const ValueType                                     initVal/* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -280,7 +280,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                   mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                               numVectors,
-      const ValueType                               initVal)
+      const ValueType                               initVal/* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -378,7 +378,7 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(const MultiVector &u,
-                                                     const ValueType    initVal)
+                                                     const ValueType    initVal/* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(

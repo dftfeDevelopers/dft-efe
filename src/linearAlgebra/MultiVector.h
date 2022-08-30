@@ -27,11 +27,12 @@
 #ifndef dftefeMultiVector_h
 #define dftefeMultiVector_h
 
+#include <utils/TypeConfig.h>
+#include <utils/Defaults.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/MPICommunicatorP2P.h>
-#include <utils/TypeConfig.h>
 #include <linearAlgebra/VectorAttributes.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -165,7 +166,7 @@ namespace dftefe
       MultiVector(const size_type                               size,
                   const size_type                               numVectors,
                   std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-                  const ValueType initVal = ValueType());
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \serial MultiVector with a predefined
@@ -207,7 +208,7 @@ namespace dftefe
                                                                 mpiPatternP2P,
                   std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const size_type                               numVectors,
-                  const ValueType initVal = ValueType());
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \b distributed MultiVector with a predefined
@@ -264,7 +265,7 @@ namespace dftefe
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const size_type                                     numVectors,
-        ValueType initVal = ValueType());
+        ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a special case of \b distributed MultiVector where none
@@ -289,7 +290,7 @@ namespace dftefe
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const size_type                                     numVectors,
-        const ValueType initVal = ValueType());
+        const ValueType initVal = utils::Types<ValueType>::zero);
 
 
       /**
@@ -314,7 +315,7 @@ namespace dftefe
                   const utils::mpi::MPIComm &                   mpiComm,
                   std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const size_type                               numVectors,
-                  const ValueType initVal = ValueType());
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
 
       /**
@@ -328,7 +329,7 @@ namespace dftefe
        * @param[in] u MultiVector object to copy from
        * @param[in] initVal Initial value of the MultiVector
        */
-      MultiVector(const MultiVector &u, const ValueType initVal = ValueType());
+      MultiVector(const MultiVector &u, const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Move constructor
