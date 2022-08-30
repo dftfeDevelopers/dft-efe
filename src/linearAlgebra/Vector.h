@@ -148,9 +148,9 @@ namespace dftefe
        * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] initVal initial value of elements of the SerialVector
        */
-      Vector(size_type                     size,
+      Vector(size_type                                     size,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-             ValueType                     initVal = ValueType());
+             ValueType initVal = ValueType());
 
       /**
        * @brief Constructor for a <b>serial</b> Vector with predefined Storage (i.e., utils::MemoryStorage).
@@ -170,7 +170,7 @@ namespace dftefe
        *
        */
       Vector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
-                                           storage,
+                                                           storage,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
@@ -187,9 +187,9 @@ namespace dftefe
        *
        */
       Vector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                           mpiPatternP2P,
+                                                           mpiPatternP2P,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-             const ValueType               initVal = ValueType());
+             const ValueType initVal = ValueType());
 
       /**
        * @brief Constructor for a \b distributed Vector with a predefined Storage (i.e., utils::MemoryStorage) and MPIPatternP2P.
@@ -211,7 +211,7 @@ namespace dftefe
       Vector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
                &storage,
              std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                           mpiPatternP2P,
+                                                           mpiPatternP2P,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
@@ -236,7 +236,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const utils::mpi::MPIComm &                         mpiComm,
-        std::shared_ptr<LinAlgOpContext<memorySpace>>                       linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const ValueType                                     initVal);
 
       /**
@@ -259,7 +259,7 @@ namespace dftefe
       Vector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const utils::mpi::MPIComm &                         mpiComm,
-        std::shared_ptr<LinAlgOpContext<memorySpace>>                       linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const ValueType initVal = ValueType());
 
 
@@ -282,10 +282,10 @@ namespace dftefe
        *
        *
        */
-      Vector(const global_size_type        globalSize,
-             const utils::mpi::MPIComm &   mpiComm,
+      Vector(const global_size_type                        globalSize,
+             const utils::mpi::MPIComm &                   mpiComm,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-             const ValueType               initVal = ValueType());
+             const ValueType initVal = ValueType());
 
 
       /**
@@ -417,22 +417,27 @@ namespace dftefe
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
-      
-      std::shared_ptr<LinAlgOpContext<memorySpace>> 
+
+      std::shared_ptr<LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
 
-      global_size_type globalSize() const;
-      size_type localSize() const;
-      size_type locallyOwnedSize() const;
-      size_type ghostSize() const;
+      global_size_type
+      globalSize() const;
+      size_type
+      localSize() const;
+      size_type
+      locallyOwnedSize() const;
+      size_type
+      ghostSize() const;
+
     private:
-      std::unique_ptr<Storage>      d_storage;
+      std::unique_ptr<Storage>                      d_storage;
       std::shared_ptr<LinAlgOpContext<memorySpace>> d_linAlgOpContext;
-      VectorAttributes              d_vectorAttributes;
-      size_type                     d_localSize;
-      global_size_type              d_globalSize;
-      size_type                     d_locallyOwnedSize;
-      size_type                     d_ghostSize;
+      VectorAttributes                              d_vectorAttributes;
+      size_type                                     d_localSize;
+      global_size_type                              d_globalSize;
+      size_type                                     d_locallyOwnedSize;
+      size_type                                     d_ghostSize;
       std::unique_ptr<utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
@@ -442,7 +447,7 @@ namespace dftefe
     // helper functions
 
     /**
-     * @brief Perform \f$ w = au + bv \f$
+     * @brief Perform \f$ \mathbf{w} = a\mathbf{u} + b\mathbf{v} \f$
      * @param[in] a scalar
      * @param[in] u first Vector on the right
      * @param[in] b scalar
@@ -451,7 +456,7 @@ namespace dftefe
      *
      * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
      *  u vector
-     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
      *  v vector
      * @tparam memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the vector must reside.
@@ -470,11 +475,13 @@ namespace dftefe
 
     /**
      * @brief Perform dot product of op(u) and op(v), i.e.,
-     * evaluate \f$ alpha = \sum_i op(\mathbf{u}_i) op(\mathbf{v}_i)
-     * where op can be
+     * evaluate \f$ alpha = \sum_i op(\mathbf{u}_i) op(\mathbf{v}_i)$\f,
+     * where op is an operation of a scalar and can be
      * (a) blasLapack::ScalarOp::Identity for op(x) = x (the usual dot product)
      * or (b) blasLapack::ScalarOp::ComplexConjugate for op(x) = complex
      * conjugate of x
+     *
+     * The returned value resides on utils::MemorySpace::HOST (i.e., CPU)
      *
      * @param[in] u first Vector
      * @param[in] v second Vector
@@ -484,7 +491,7 @@ namespace dftefe
      *
      * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
      *  u vector
-     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
      *  v vector
      * @tparam memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the vector must reside.
@@ -496,6 +503,37 @@ namespace dftefe
     blasLapack::scalar_type<ValueType1, ValueType2>
     dot(const Vector<ValueType1, memorySpace> &u,
         const Vector<ValueType2, memorySpace> &v,
+        const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
+
+    /**
+     * @brief Same as the above dot() function but instead of returning the
+     * result on utils::MemorySpace:::HOST it returns it in a user-provided
+     * memory on the input MemorySpace.
+     *
+     * @param[in] u first Vector
+     * @param[in] v second Vector
+     * @param[in] opU blasLapack::ScalarOp for u Vector
+     * @param[in] opV blasLapack::ScalarOp for v Vector
+     * @param[out] dotProd Pointer to dot product of opU(u) and opV(v)
+     * @note The pointer dotProd must be properly allocated
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the dot product is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
+     *
+     */
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    void
+    dot(const Vector<ValueType1, memorySpace> &          u,
+        const Vector<ValueType2, memorySpace> &          v,
+        blasLapack::scalar_type<ValueType1, ValueType2> *dotProd,
         const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
         const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
 
