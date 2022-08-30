@@ -23,6 +23,8 @@
  * @author Sambit Das, Bikash Kanungo
  */
 #include <utils/Exceptions.h>
+#include <utils/MPIWrapper.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <cmath>
 
 namespace dftefe
@@ -511,11 +513,10 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::l2Norms() const
     {
       const std::vector<double> l2NormsLocallyOwned =
-        blasLapack::nrms2MultiVector<ValueType, memorySpace>(
-          this->locallyOwnedSize(),
-          this->numVectors(),
-          this->data(),
-          *d_linAlgOpContext);
+        blasLapack::nrms2MultiVector(this->locallyOwnedSize(),
+                                     this->numVectors(),
+                                     this->data(),
+                                     *d_linAlgOpContext);
 
       std::vector<double> l2NormsLocallyOwnedSquare(d_numVectors, 0.0);
       for (size_type i = 0; i < d_numVectors; ++i)
@@ -681,7 +682,9 @@ namespace dftefe
     // Helper functions
     //
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(blasLapack::scalar_type<ValueType1, ValueType2> a,
         const MultiVector<ValueType1, memorySpace> &    u,
@@ -705,7 +708,9 @@ namespace dftefe
                         *(w.getLinAlgOpContext()));
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const MultiVector<ValueType1, memorySpace> &     u,
         const MultiVector<ValueType2, memorySpace> &     v,
@@ -744,8 +749,10 @@ namespace dftefe
         (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
-    std::vetcor<blasLapack::scalar_type<ValueType1, ValueType2>>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
     dot(const MultiVector<ValueType1, memorySpace> &u,
         const MultiVector<ValueType2, memorySpace> &v,
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,

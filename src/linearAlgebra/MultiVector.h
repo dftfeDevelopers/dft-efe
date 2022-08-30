@@ -27,11 +27,14 @@
 #ifndef dftefeMultiVector_h
 #define dftefeMultiVector_h
 
-#include <linearAlgebra/VectorAttributes.h>
 #include <utils/MemoryStorage.h>
-#include <utils/MPICommunicatorP2P.h>
+#include <utils/MPITypes.h>
 #include <utils/MPIPatternP2P.h>
+#include <utils/MPICommunicatorP2P.h>
 #include <utils/TypeConfig.h>
+#include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 #include <memory>
 namespace dftefe
 {
@@ -498,7 +501,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(blasLapack::scalar_type<ValueType1, ValueType2> a,
         const MultiVector<ValueType1, memorySpace> &    u,
@@ -538,7 +543,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
     dot(const MultiVector<ValueType1, memorySpace> &u,
         const MultiVector<ValueType2, memorySpace> &v,
@@ -570,7 +577,9 @@ namespace dftefe
      * (e.g., union of double and complex<double> is complex<double>)
      *
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const MultiVector<ValueType1, memorySpace> &     u,
         const MultiVector<ValueType2, memorySpace> &     v,

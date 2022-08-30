@@ -464,7 +464,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(
       blasLapack::scalar_type<ValueType1, ValueType2>                       a,
@@ -499,7 +501,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     blasLapack::scalar_type<ValueType1, ValueType2>
     dot(const Vector<ValueType1, memorySpace> &u,
         const Vector<ValueType2, memorySpace> &v,
@@ -529,7 +533,9 @@ namespace dftefe
      * (e.g., union of double and complex<double> is complex<double>)
      *
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const Vector<ValueType1, memorySpace> &          u,
         const Vector<ValueType2, memorySpace> &          v,

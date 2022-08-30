@@ -651,7 +651,9 @@ namespace dftefe
     //
 
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(blasLapack::scalar_type<ValueType1, ValueType2>                       a,
         const Vector<ValueType1, memorySpace> &                               u,
@@ -672,7 +674,9 @@ namespace dftefe
                         *(w.getLinAlgOpContext()));
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const Vector<ValueType1, memorySpace> &          u,
         const Vector<ValueType2, memorySpace> &          v,
@@ -704,7 +708,9 @@ namespace dftefe
         (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     blasLapack::scalar_type<ValueType1, ValueType2>
     dot(const Vector<ValueType1, memorySpace> &u,
         const Vector<ValueType2, memorySpace> &v,
