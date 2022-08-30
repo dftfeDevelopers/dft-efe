@@ -482,7 +482,6 @@ namespace dftefe
         return std::make_pair(MPIErrIsSuccess(errCode), MPIErrMsg(errCode));
       }
 
-
 #endif // DFTEFE_WITH_MPI
     }  // end of namespace mpi
   }    // end of namespace utils
