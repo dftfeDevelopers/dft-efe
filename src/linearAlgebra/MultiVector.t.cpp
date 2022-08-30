@@ -35,10 +35,10 @@ namespace dftefe
      **/
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
-      const size_type               size,
-      const size_type               numVectors,
+      const size_type                               size,
+      const size_type                               numVectors,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const ValueType               initVal)
+      const ValueType                               initVal)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
@@ -69,8 +69,8 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                    storage,
-      const size_type               numVectors,
+                                                    storage,
+      const size_type                               numVectors,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       d_storage         = std::move(storage);
@@ -97,10 +97,10 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                    mpiPatternP2P,
+                                                    mpiPatternP2P,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const size_type               numVectors,
-      const ValueType               initVal)
+      const size_type                               numVectors,
+      const ValueType                               initVal)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_vectorAttributes =
@@ -132,9 +132,9 @@ namespace dftefe
       std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
         &storage,
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                    mpiPatternP2P,
+                                                    mpiPatternP2P,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const size_type               numVectors)
+      const size_type                               numVectors)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_storage         = std::move(storage);
@@ -162,7 +162,7 @@ namespace dftefe
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<global_size_type> &               ghostIndices,
       const utils::mpi::MPIComm &                         mpiComm,
-      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
       const size_type                                     numVectors,
       const ValueType                                     initVal)
     {
@@ -216,7 +216,7 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const utils::mpi::MPIComm &                         mpiComm,
-      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
       const size_type                                     numVectors,
       const ValueType                                     initVal)
     {
@@ -264,8 +264,8 @@ namespace dftefe
 
     /**
      * @brief Constructor for a \b distributed MultiVector based on total number of global indices.
-     * The resulting MultiVector will not contain any ghost indices on any of the
-     * processors. Internally, the vector is divided to ensure as much
+     * The resulting MultiVector will not contain any ghost indices on any of
+     * the processors. Internally, the vector is divided to ensure as much
      * equitable distribution across all the processors much as possible.
      * @note This way of construction is expensive. One should use the other
      * constructor based on an input MPIPatternP2P as far as possible.
@@ -274,11 +274,11 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
-      const global_size_type        globalSize,
-      const utils::mpi::MPIComm &   mpiComm,
+      const global_size_type                        globalSize,
+      const utils::mpi::MPIComm &                   mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const size_type               numVectors,
-      const ValueType               initVal)
+      const size_type                               numVectors,
+      const ValueType                               initVal)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -523,12 +523,13 @@ namespace dftefe
           l2NormsLocallyOwned[i] * l2NormsLocallyOwned[i];
 
       std::vector<double> returnValues(d_numVectors, 0.0);
-      utils::mpi::MPIAllreduce<memorySpace>(&l2NormsLocallyOwnedSquare,
-                                            &returnValues[0],
-                                            d_numVectors,
-                                            utils::mpi::MPIDouble,
-                                            utils::mpi::MPIMax,
-                                            d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        &l2NormsLocallyOwnedSquare,
+        &returnValues[0],
+        d_numVectors,
+        utils::mpi::MPIDouble,
+        utils::mpi::MPIMax,
+        d_mpiPatternP2P->mpiCommunicator());
       for (size_type i = 0; i < d_numVectors; ++i)
         returnValues[i] = std::sqrt(returnValues[i]);
       return returnValues;
@@ -546,12 +547,13 @@ namespace dftefe
           *d_linAlgOpContext);
 
       std::vector<double> returnValues(d_numVectors, 0.0);
-      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormsLocallyOwned,
-                                            &returnValues[0],
-                                            d_numVectors,
-                                            utils::mpi::MPIDouble,
-                                            utils::mpi::MPIMax,
-                                            d_mpiPatternP2P->mpiCommunicator());
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        &lInfNormsLocallyOwned,
+        &returnValues[0],
+        d_numVectors,
+        utils::mpi::MPIDouble,
+        utils::mpi::MPIMax,
+        d_mpiPatternP2P->mpiCommunicator());
       return returnValues;
     }
 
@@ -632,41 +634,133 @@ namespace dftefe
     {
       return d_mpiPatternP2P;
     }
-    
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     std::shared_ptr<LinAlgOpContext<memorySpace>>
     MultiVector<ValueType, memorySpace>::getLinAlgOpContext() const
     {
       return d_linAlgOpContext;
     }
-    
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     global_size_type
     MultiVector<ValueType, memorySpace>::globalSize() const
     {
-	return d_globalSize;
+      return d_globalSize;
     }
-    
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
     MultiVector<ValueType, memorySpace>::localSize() const
     {
-	return d_localSize;
+      return d_localSize;
     }
-    
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
     MultiVector<ValueType, memorySpace>::locallyOwnedSize() const
     {
-	return d_locallyOwnedSize;
+      return d_locallyOwnedSize;
     }
-    
-    
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     size_type
     MultiVector<ValueType, memorySpace>::ghostSize() const
     {
-	return d_ghostSize;
+      return d_ghostSize;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type
+    MultiVector<ValueType, memorySpace>::numVectors() const
+    {
+      return d_numVectors;
+    }
+
+    //
+    // Helper functions
+    //
+
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    void
+    add(blasLapack::scalar_type<ValueType1, ValueType2> a,
+        const MultiVector<ValueType1, memorySpace> &    u,
+        blasLapack::scalar_type<ValueType1, ValueType2> b,
+        const MultiVector<ValueType2, memorySpace> &    v,
+        MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
+                    memorySpace> &                      w)
+    {
+      DFTEFE_AssertWithMsg(u.isCompatible(v),
+                           "u and v Vectors being added are not compatible.");
+      DFTEFE_AssertWithMsg(
+        u.isCompatible(w),
+        "Resultant MultiVector w = u + v is compatible with u.");
+      const size_type nv = u.numVectors();
+      blasLapack::axpby(u.localSize() * nv,
+                        a,
+                        u.data(),
+                        b,
+                        v.data(),
+                        w.data(),
+                        *(w.getLinAlgOpContext()));
+    }
+
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    void
+    dot(const MultiVector<ValueType1, memorySpace> &     u,
+        const MultiVector<ValueType2, memorySpace> &     v,
+        blasLapack::scalar_type<ValueType1, ValueType2> *dotProd,
+        const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+    {
+      DFTEFE_AssertWithMsg(
+        u.isCompatible(v),
+        "u and v MultiVectors used for dot product are not compatible.");
+      const size_type nv = u.numVectors();
+      utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+                           memorySpace>
+        dotProdLocallyOwned(nv, 0.0);
+
+      //
+      // @note: The following assumes that the MultiVector has the vector
+      // index as the fastest index (i.e., that if viewed as a Matrix,
+      // the MultiVector is stored in a row-major format)
+      //
+      blasLapack::dotMultiVector(u.locallyOwnedSize(),
+                                 nv,
+                                 u.data(),
+                                 v.data(),
+                                 dotProdLocallyOwned.data(),
+                                 *(u.getLinAlgOpContext()));
+
+      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::MPIGetDatatype<
+        blasLapack::scalar_type<ValueType1, ValueType2>>();
+      utils::mpi::MPIAllreduce<memorySpace>(
+        &dotProdLocallyOwned,
+        dotProd,
+        nv,
+        mpiDatatype,
+        utils::mpi::MPISum,
+        (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
+    }
+
+    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    std::vetcor<blasLapack::scalar_type<ValueType1, ValueType2>>
+    dot(const MultiVector<ValueType1, memorySpace> &u,
+        const MultiVector<ValueType2, memorySpace> &v,
+        const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+    {
+      const size_type nv = u.numVectors();
+      utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+                           memorySpace>
+        dotProd(nv, 0.0);
+      dot(u, v, dotProd.data(), opU, opV);
+      std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> returnValue(
+        nv, 0.0);
+      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+        nv, &returnValue, dotProd.data());
+      return returnValue;
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe
