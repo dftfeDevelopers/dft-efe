@@ -6,6 +6,7 @@ if (NOT TARGET dft-efe-linalg)
 
     # Add source files here
     set(DFT-EFE-LINALG-SOURCES
+	    Defaults.cpp
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu

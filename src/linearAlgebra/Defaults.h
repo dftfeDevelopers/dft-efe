@@ -23,8 +23,8 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeDefaults_h
-#define dftefeDefaults_h
+#ifndef dftefeLinearAlgebraDefaults_h
+#define dftefeLinearAlgebraDefaults_h
 
 #include <utils/TypeConfig.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
@@ -98,4 +98,4 @@ namespace dftefe
     }; // end of class LinearSolverDefaults
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeDefaults_h
+#endif // dftefeLinearAlgebraDefaults_h
