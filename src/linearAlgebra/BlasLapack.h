@@ -81,6 +81,27 @@ namespace dftefe
            size_type                           incy,
            LinAlgOpContext<memorySpace> &      context);
 
+      // i have neglected incx & incy parameters
+      /**
+       * @brief Template for computing the multiplicative inverse of all the elements of x, does not check if any element is zero
+       * computes \f $ y[i] = \frac{alpha}{x[i]} $ \f
+       * @param[in] n size of each vector
+       * @param[in] alpha scalr input for the numerator
+       * @param[in] x input vector
+       * @param[out] y output vector
+       * @param[in] context Blas context for GPU operations
+       *
+       * @return orms of all the vectors
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      reciprocalX(size_type                            n,
+                  const ValueType1                     alpha,
+                  ValueType2 const *                   x,
+                  scalar_type<ValueType1, ValueType2> *y,
+                  LinAlgOpContext<memorySpace> &       context);
 
 
       /**
@@ -117,6 +138,58 @@ namespace dftefe
                       const ValueType2 *                   y,
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context);
+      /**
+       * @brief Template for performing \f$ z_i = op(x_i) * op(y_i)$
+       * where op represents either identity or complex conjugate
+       * operation on a scalar
+       * @param[in] size size of the array
+       * @param[in] x array
+       * @param[in] y array
+       * @param[in] opx blasLapack::ScalarOp defining the operation on each
+       * entry of x. The available options are
+       * (a) blasLapack::ScalarOp::Identity (identity operation on a scalar),
+       * and (b) blasLapack::ScalarOp::Conj (complex conjugate on a scalar)
+       * @param[in] opy blasLapack::ScalarOp defining the operation on each
+       * entry of y.
+       * @param[out] z array
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(size_type                            n,
+                      const ValueType1 *                   x,
+                      const ValueType2 *                   y,
+                      const ScalarOp &                     opx,
+                      const ScalarOp &                     opy,
+                      scalar_type<ValueType1, ValueType2> *z,
+                      LinAlgOpContext<memorySpace> &       context);
+
+
+      /**
+       * @brief Template for performing \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
+       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
+       * is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$, and \f$
+       * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. All the matrices are
+       * assumed to be stored in column major format
+       * @param[in] size size I
+       * @param[in] size size J
+       * @param[in] size size K
+       * @param[in] X array
+       * @param[in] Y array
+       * @param[out] Z array
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      khatriRaoProduct(size_type                            sizeI,
+                       size_type                            sizeJ,
+                       size_type                            sizeK,
+                       const ValueType1 *                   A,
+                       const ValueType2 *                   B,
+                       scalar_type<ValueType1, ValueType2> *Z,
+                       LinAlgOpContext<memorySpace> &       context);
 
 
       /**
@@ -152,6 +225,37 @@ namespace dftefe
           ValueType2 const *            y,
           size_type                     incy,
           LinAlgOpContext<memorySpace> &context);
+
+
+      /**
+       * @brief Template for computing dot products numVec vectors in a multi Vector
+       * @param[in] vecSize size of each vector
+       * @param[in] numVec number of vectors in the multi Vector
+       * @param[in] multiVecDataX multi vector data in row major format i.e.
+       * vector index is the fastest index
+       * @param[in] multiVecDataY multi vector data in row major format i.e.
+       * vector index is the fastest index
+       * @param[in] opX blasLapack::ScalarOp defining the operation on each
+       * entry of multiVecDataX. The available options are
+       * (a) blasLapack::ScalarOp::Identity (identity operation on a scalar),
+       * and (b) blasLapack::ScalarOp::Conj (complex conjugate on a scalar)
+       * @param[in] opY blasLapack::ScalarOp defining the operation on each
+       * entry of multiVecDataY.
+       * @param[out] multiVecDotProduct multi vector dot product of size numVec
+       *
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      dotMultiVector(size_type                            vecSize,
+                     size_type                            numVec,
+                     const ValueType1 *                   multiVecDataX,
+                     const ValueType2 *                   multiVecDataY,
+                     const ScalarOp &                     opX,
+                     const ScalarOp &                     opY,
+                     scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+                     LinAlgOpContext<memorySpace> &       context);
 
 
       template <typename ValueType,

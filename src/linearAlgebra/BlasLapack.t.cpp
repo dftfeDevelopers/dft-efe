@@ -75,6 +75,19 @@ namespace dftefe
         blas::axpy(n, alpha, x, incx, y, incy);
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      reciprocalX(size_type                            n,
+                  const ValueType1                     alpha,
+                  ValueType2 const *                   x,
+                  scalar_type<ValueType1, ValueType2> *y,
+                  LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::reciprocalX(
+          n, alpha, x, y);
+      }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -105,6 +118,40 @@ namespace dftefe
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
           hadamardProduct(n, x, y, z);
       }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(size_type                            n,
+                      const ValueType1 *                   x,
+                      const ValueType2 *                   y,
+                      const ScalarOp &                     opx,
+                      const ScalarOp &                     opy,
+                      scalar_type<ValueType1, ValueType2> *z,
+                      LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          hadamardProduct(n, x, y, opx, opy, z);
+      }
+
+
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      khatriRaoProduct(const size_type                      sizeI,
+                       const size_type                      sizeJ,
+                       const size_type                      sizeK,
+                       const ValueType1 *                   A,
+                       const ValueType2 *                   B,
+                       scalar_type<ValueType1, ValueType2> *Z,
+                       LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          khatriRaoProduct(sizeI, sizeJ, sizeK, A, B, Z);
+      }
+
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -143,6 +190,31 @@ namespace dftefe
         return output;
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      dotMultiVector(const size_type                      vecSize,
+                     const size_type                      numVec,
+                     const ValueType1 *                   multiVecDataX,
+                     const ValueType2 *                   multiVecDataY,
+                     const ScalarOp &                     opX,
+                     const ScalarOp &                     opY,
+                     scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+                     LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          dotMultiVector(vecSize,
+                         numVec,
+                         multiVecDataX,
+                         multiVecDataY,
+                         multiVecDotProduct,
+                         opX,
+                         opY,
+                         context);
+      }
+
+
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       real_type<ValueType>
       nrm2(const size_type               n,
@@ -167,7 +239,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &context)
       {
         return KernelsOneValueType<ValueType, memorySpace>::nrms2MultiVector(
-          vecSize, numVec, multiVecData, context.setBlasQueue());
+          vecSize, numVec, multiVecData, context);
       }
 
 
