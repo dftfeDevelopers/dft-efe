@@ -40,13 +40,9 @@ namespace dftefe
      * @brief Setting all the PrintControlDefaults
      */
 
-    // set the default to max unsigned int so that
-    // there is no walltime printing
-    const size_type PrintControlDefaults::WALL_TIME_FREQ = UINT_MAX;
-    // set the default to max unsigned int so that
-    // there is no residual printing
-    const size_type         PrintControlDefaults::PRINT_FREQ  = UINT_MAX;
-    const bool              PrintControlDefaults::PRINT_FINAL = true;
+    const size_type         PrintControlDefaults::WALL_TIME_FREQ        = 0;
+    const size_type         PrintControlDefaults::PRINT_FREQ            = 0;
+    const bool              PrintControlDefaults::PRINT_FINAL           = true;
     const bool              PrintControlDefaults::PRINT_TOTAL_WALL_TIME = false;
     const ParallelPrintType PrintControlDefaults::PARALLEL_PRINT_TYPE =
       ParallelPrintType::ROOT_ONLY;
