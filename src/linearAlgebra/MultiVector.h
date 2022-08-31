@@ -329,7 +329,8 @@ namespace dftefe
        * @param[in] u MultiVector object to copy from
        * @param[in] initVal Initial value of the MultiVector
        */
-      MultiVector(const MultiVector &u, const ValueType initVal = utils::Types<ValueType>::zero);
+      MultiVector(const MultiVector &u,
+                  const ValueType    initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Move constructor

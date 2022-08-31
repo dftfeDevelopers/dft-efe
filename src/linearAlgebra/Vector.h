@@ -238,7 +238,7 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
-        const ValueType                                     initVal = utils::Types<ValueType>::zero);
+        const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a special case of \b distributed Vector where none
@@ -300,7 +300,8 @@ namespace dftefe
        * @param[in] u Vector object to copy from
        * @param[in] initVal Initial value of the vector
        */
-      Vector(const Vector &u, ValueType initVal = utils::Types<ValueType>::zero);
+      Vector(const Vector &u,
+             ValueType     initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Move constructor

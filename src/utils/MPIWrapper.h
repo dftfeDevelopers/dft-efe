@@ -255,9 +255,9 @@ namespace dftefe
       int
       MPIFinalize(void);
 
-      template <typename T>
-      MPIDatatype
-      MPIGetDatatype();
+      // template <typename T>
+      // MPIDatatype
+      // MPIGetDatatype();
 
       bool
       MPIErrIsSuccess(int errCode);
