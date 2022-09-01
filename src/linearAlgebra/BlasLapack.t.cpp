@@ -140,7 +140,8 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      khatriRaoProduct(const size_type                      sizeI,
+      khatriRaoProduct(const Layout                         layout,
+                       const size_type                      sizeI,
                        const size_type                      sizeJ,
                        const size_type                      sizeK,
                        const ValueType1 *                   A,
@@ -149,7 +150,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          khatriRaoProduct(sizeI, sizeJ, sizeK, A, B, Z);
+          khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
       }
 
 

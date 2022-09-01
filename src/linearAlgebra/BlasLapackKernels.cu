@@ -100,14 +100,14 @@ namespace dftefe
 
         template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
-        khatriRaoProductDeviceKernel(const size_type   sizeI,
-                                     const size_type   sizeJ,
-                                     const size_type   sizeK,
-                                     const ValueType1 *A,
-                                     const ValueType2 *B,
-                                     ValueType3 *      Z)
+        khatriRaoProductColMajorDeviceKernel(const size_type   sizeI,
+                                             const size_type   sizeJ,
+                                             const size_type   sizeK,
+                                             const ValueType1 *A,
+                                             const ValueType2 *B,
+                                             ValueType3 *      Z)
         {
-          const size_type totalSize = sizeI * sizeJ * sizeK;
+          const size_type totalSize = sizeJ * sizeI * sizeK;
           const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
           for (size_type kij = globalThreadId; kij < totalSize;
@@ -118,6 +118,30 @@ namespace dftefe
               const size_type i     = ijRem / sizeJ;
               const size_type j     = ijRem - i * sizeJ;
               Z[kij] = dftefe::utils::mult(A[k * sizeI + i], B[k * sizeJ + j]);
+            }
+        }
+
+
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
+        __global__ void
+        khatriRaoProductRowMajorDeviceKernel(const size_type   sizeI,
+                                             const size_type   sizeJ,
+                                             const size_type   sizeK,
+                                             const ValueType1 *A,
+                                             const ValueType2 *B,
+                                             ValueType3 *      Z)
+        {
+          const size_type totalSize = sizeK * sizeI * sizeJ;
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type jik = globalThreadId; jik < totalSize;
+               jik += blockDim.x * gridDim.x)
+            {
+              const size_type j     = jik / (sizeK * sizeI);
+              const size_type ikRem = jik - j * sizeK * sizeI;
+              const size_type i     = ikRem / sizeK;
+              const size_type k     = ikRem - i * sizeK;
+              Z[jik] = dftefe::utils::mult(A[i * sizeK + k], B[j * sizeK + k]);
             }
         }
 
@@ -282,22 +306,38 @@ namespace dftefe
       KernelsTwoValueTypes<ValueType1,
                            ValueType2,
                            dftefe::utils::MemorySpace::DEVICE>::
-        khatriRaoProduct(const size_type                      sizeI,
+        khatriRaoProduct(const Layout                         layout,
+                         const size_type                      sizeI,
                          const size_type                      sizeJ,
                          const size_type                      sizeK,
                          const ValueType1 *                   A,
                          const ValueType2 *                   B,
                          scalar_type<ValueType1, ValueType2> *Z)
       {
-        khatriRaoProductDeviceKernel<<<
-          (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
-          dftefe::utils::BLOCK_SIZE>>>(
-          sizeI,
-          sizeJ,
-          sizeK,
-          dftefe::utils::makeDataTypeDeviceCompatible(A),
-          dftefe::utils::makeDataTypeDeviceCompatible(B),
-          dftefe::utils::makeDataTypeDeviceCompatible(Z));
+        if (layout == Layout::ColMajor)
+          {
+            khatriRaoProductColMajorDeviceKernel<<<
+              (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
+              dftefe::utils::BLOCK_SIZE>>>(
+              sizeI,
+              sizeJ,
+              sizeK,
+              dftefe::utils::makeDataTypeDeviceCompatible(A),
+              dftefe::utils::makeDataTypeDeviceCompatible(B),
+              dftefe::utils::makeDataTypeDeviceCompatible(Z));
+          }
+        else if (layout == Layout::RowMajor)
+          {
+            khatriRaoProductRowMajorDeviceKernel<<<
+              (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
+              dftefe::utils::BLOCK_SIZE>>>(
+              sizeI,
+              sizeJ,
+              sizeK,
+              dftefe::utils::makeDataTypeDeviceCompatible(A),
+              dftefe::utils::makeDataTypeDeviceCompatible(B),
+              dftefe::utils::makeDataTypeDeviceCompatible(Z));
+          }
       }
 
 
