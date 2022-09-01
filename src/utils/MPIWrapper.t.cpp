@@ -362,7 +362,7 @@ namespace dftefe
       }
 
 
-#else // DFTEFE_WITH_MPI
+#else  // DFTEFE_WITH_MPI
 
       template <MemorySpace memorySpace>
       int
@@ -566,8 +566,56 @@ namespace dftefe
           "MPIIssend is not implemented when not linking with an MPI library.");
         return MPISuccess;
       }
-
 #endif // DFTEFE_WITH_MPI
-    }  // end of namespace mpi
-  }    // end of namespace utils
+
+      // template <typename T>
+      // MPIDatatype
+      // MPIGetDatatype()
+      //{
+      //  MPIDatatype returnValue = MPIByte;
+      //  if (std::is_same<T, double>::value)
+      //    returnValue = MPIDouble;
+      //  else if (std::is_same<T, std::complex<double>>::value)
+      //    returnValue = MPIDoubleComplex;
+      //  else if (std::is_same<T, float>::value)
+      //    returnValue = MPIFloat;
+      //  else if (std::is_same<T, std::complex<float>>::value)
+      //    returnValue = MPIComplex;
+      //  else if (std::is_same<T, int>::value)
+      //    returnValue = MPIInt;
+      //  else if (std::is_same<T, unsigned int>::value)
+      //    returnValue = MPIUnsigned;
+      //  else if (std::is_same<T, long int>::value)
+      //    returnValue = MPILong;
+      //  else if (std::is_same<T, unsigned long int>::value)
+      //    returnValue = MPIUnsignedLong;
+      //  else if (std::is_same<T, char>::value)
+      //    returnValue = MPIChar;
+      //  else if (std::is_same<T, signed char>::value)
+      //    returnValue = MPISignedChar;
+      //  else if (std::is_same<T, unsigned char>::value)
+      //    returnValue = MPIUnsignedChar;
+      //  else if (std::is_same<T, wchar_t>::value)
+      //    returnValue = MPIWChar;
+      //  else if (std::is_same<T, short int>::value)
+      //    returnValue = MPIShort;
+      //  else if (std::is_same<T, unsigned short int>::value)
+      //    returnValue = MPIUnsignedShort;
+      //  else if (std::is_same<T, long long int>::value)
+      //    returnValue = MPILongLongInt;
+      //  else if (std::is_same<T, long long>::value)
+      //    returnValue = MPILongLong;
+      //  else if (std::is_same<T, unsigned long long int>::value)
+      //    returnValue = MPIUnsignedLongLong;
+      //  else if (std::is_same<T, long double>::value)
+      //    returnValue = MPILongDouble;
+      //  else
+      //    throwException<InvalidArgument>(
+      //      false, "Invalid typename/datatpe passed to
+      //      mpi::MPIGetDatatype()");
+
+      //  return returnValue;
+      //}
+    } // end of namespace mpi
+  }   // end of namespace utils
 } // end of namespace dftefe

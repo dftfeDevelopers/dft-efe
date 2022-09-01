@@ -27,12 +27,15 @@
 #ifndef dftefeMultiVector_h
 #define dftefeMultiVector_h
 
-#include <linearAlgebra/Vector.h>
-#include <linearAlgebra/VectorAttributes.h>
-#include <utils/MemoryStorage.h>
-#include <utils/MPICommunicatorP2P.h>
-#include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
+#include <utils/Defaults.h>
+#include <utils/MemoryStorage.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIPatternP2P.h>
+#include <utils/MPICommunicatorP2P.h>
+#include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 #include <memory>
 namespace dftefe
 {
@@ -157,14 +160,13 @@ namespace dftefe
        * @param[in] size size of each vector in the MultiVector
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal initial value of elements of the MultiVector
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        *
        */
-      MultiVector(const size_type               size,
-                  const size_type               numVectors,
-                  LinAlgOpContext<memorySpace> *linAlgOpContext,
-                  const ValueType               initVal = ValueType());
+      MultiVector(const size_type                               size,
+                  const size_type                               numVectors,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \serial MultiVector with a predefined
@@ -179,6 +181,7 @@ namespace dftefe
        * @param[in] storage unique_ptr to MultiVector::Storage whose ownership
        * is to be transfered to the MultiVector
        * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @note This Constructor transfers the ownership from the input
        * unique_ptr \p storage to the internal data member of the MultiVector.
        * Thus, after the function call \p storage will point to NULL and any
@@ -187,26 +190,25 @@ namespace dftefe
        */
       MultiVector(
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                                      storage,
-        size_type                     numVectors,
-        LinAlgOpContext<memorySpace> *linAlgOpContext);
+                                                      storage,
+        size_type                                     numVectors,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
        * @brief Constructor for a \b distributed MultiVector based on an input MPIPatternP2P.
        *
        * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
        * based on which the distributed MultiVector will be created.
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        */
       MultiVector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                mpiPatternP2P,
-                  LinAlgOpContext<memorySpace> *linAlgOpContext,
-                  const size_type               numVectors,
-                  const ValueType               initVal = ValueType());
+                                                                mpiPatternP2P,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+                  const size_type                               numVectors,
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \b distributed MultiVector with a predefined
@@ -220,8 +222,7 @@ namespace dftefe
        * is to be transfered to the MultiVector
        * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
        * based on which the distributed MultiVector will be created.
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        *
        * @note This Constructor transfers the ownership from the input
@@ -234,9 +235,9 @@ namespace dftefe
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                      mpiPatternP2P,
-        LinAlgOpContext<memorySpace> *linAlgOpContext,
-        const size_type               numVectors);
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const size_type                               numVectors);
 
       /**
        * @brief Constructor for a \distributed MultiVector based on locally
@@ -250,8 +251,7 @@ namespace dftefe
        * indices (ordered in increasing order and non-repeating)
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
        * of processors across which the MultiVector is to be distributed
-       * @param[in] linAlgOpContext handle for linear algebra operations on
-       * HOST or DEVICE.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
@@ -263,9 +263,9 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const std::vector<global_size_type> &               ghostIndices,
         const utils::mpi::MPIComm &                         mpiComm,
-        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const size_type                                     numVectors,
-        ValueType initVal = ValueType());
+        ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a special case of \b distributed MultiVector where none
@@ -277,9 +277,9 @@ namespace dftefe
        * of indices (continuous) that are owned by the current processor.
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
        * of processors across which the MultiVector is to be distributed
-       * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
-       * @param[in] initVal value with which the Vector shoud be
+       * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        *
        * @note The locallyOwnedRange should be an open interval where the start index included,
@@ -288,15 +288,15 @@ namespace dftefe
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const utils::mpi::MPIComm &                         mpiComm,
-        LinAlgOpContext<memorySpace> *                      linAlgOpContext,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const size_type                                     numVectors,
-        const ValueType initVal = ValueType());
+        const ValueType initVal = utils::Types<ValueType>::zero);
 
 
       /**
        * @brief Constructor for a \b distributed MultiVector based on total number of global indices.
-       * The resulting Vector will not contain any ghost indices on any of the
-       * processors. Internally, the vector is divided to ensure as much
+       * The resulting MultiVector will not contain any ghost indices on any of
+       * the processors. Internally, the vector is divided to ensure as much
        * equitable distribution across all the processors much as possible.
        * @note This way of construction is expensive. One should use the other
        * constructor based on an input MPIPatternP2P as far as possible.
@@ -305,17 +305,17 @@ namespace dftefe
        * @param[in] globalSize Total number of global indices that is
        * distributed over the processors.
        * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
-       * of processors across which the Vector is to be distributed
-       * @param[in] linAlgOpContext pointer to LinAlgOpContext object.
+       * of processors across which the MultiVector is to be distributed
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        * @param[in] numVectors number of vectors in the MultiVector
-       * @param[in] initVal value with which the Vector shoud be
+       * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        */
-      MultiVector(const global_size_type        globalSize,
-                  const utils::mpi::MPIComm &   mpiComm,
-                  LinAlgOpContext<memorySpace> *linAlgOpContext,
-                  const size_type               numVectors,
-                  const ValueType               initVal = ValueType());
+      MultiVector(const global_size_type                        globalSize,
+                  const utils::mpi::MPIComm &                   mpiComm,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+                  const size_type                               numVectors,
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
 
       /**
@@ -329,7 +329,8 @@ namespace dftefe
        * @param[in] u MultiVector object to copy from
        * @param[in] initVal Initial value of the MultiVector
        */
-      MultiVector(const MultiVector &u, const ValueType initVal = ValueType());
+      MultiVector(const MultiVector &u,
+                  const ValueType    initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Move constructor
@@ -451,20 +452,143 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
 
+      std::shared_ptr<LinAlgOpContext<memorySpace>>
+      getLinAlgOpContext() const;
+
+      global_size_type
+      globalSize() const;
+      size_type
+      localSize() const;
+      size_type
+      locallyOwnedSize() const;
+      size_type
+      ghostSize() const;
+      size_type
+      numVectors() const;
+
     private:
-      std::unique_ptr<Storage>      d_storage;
-      LinAlgOpContext<memorySpace> *d_linAlgOpContext;
-      VectorAttributes              d_vectorAttributes;
-      size_type                     d_localSize;
-      global_size_type              d_globalSize;
-      size_type                     d_locallyOwnedSize;
-      size_type                     d_ghostSize;
-      size_type                     d_numVectors;
+      std::unique_ptr<Storage>                      d_storage;
+      std::shared_ptr<LinAlgOpContext<memorySpace>> d_linAlgOpContext;
+      VectorAttributes                              d_vectorAttributes;
+      size_type                                     d_localSize;
+      global_size_type                              d_globalSize;
+      size_type                                     d_locallyOwnedSize;
+      size_type                                     d_ghostSize;
+      size_type                                     d_numVectors;
       std::unique_ptr<utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
     };
+
+    //
+    // helper functions
+    //
+
+    /**
+     * @brief Perform \f$ w = au + bv \f$
+     * @param[in] a scalar
+     * @param[in] u first MultiVector on the right
+     * @param[in] b scalar
+     * @param[in] v second MultiVector on the right
+     * @param[out] w resulting MultiVector
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the scalars a, b, and the resultant MultiVector w is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
+     */
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    void
+    add(blasLapack::scalar_type<ValueType1, ValueType2> a,
+        const MultiVector<ValueType1, memorySpace> &    u,
+        blasLapack::scalar_type<ValueType1, ValueType2> b,
+        const MultiVector<ValueType2, memorySpace> &    v,
+        MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
+                    memorySpace> &                      w);
+
+    /**
+     * @brief Perform \f$d_I$\f = dot product of op(\f$\mathbf{u}_I$\f)
+     * and op(\f$\mathbf{v}_I$\f),
+     * where \f$\mathbf{u}_I$\f and \f$\mathbf{v}_I$\f are the \f$I$\f-th
+     * vector in the MultiVector. In other words,
+     * \f$ d_I = \sum_i op(\mathbf{u}_{I,i}) op(\mathbf{v}_{I,i})$\f
+     * where op is an operation of a scalar and can be
+     * (a) blasLapack::ScalarOp::Identity for op(x) = x (the usual dot product)
+     * or (b) blasLapack::ScalarOp::ComplexConjugate for op(x) = complex
+     * conjugate of x
+     *
+     * The returned value resides on utils::MemorySpace::HOST (i.e., CPU)
+     *
+     * @param[in] u first MultiVector
+     * @param[in] v second MultiVector
+     * @param[in] opU blasLapack::ScalarOp for u MultiVector
+     * @param[in] opV blasLapack::ScalarOp for v MultiVector
+     * @return An STL vector containing where I-th element contains the
+     * the dot product between opU(u_I) and opV(v_I), where u_I and v_I are
+     * I-th vector from u and v, respectively
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the dot product is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
+     */
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
+    dot(const MultiVector<ValueType1, memorySpace> &u,
+        const MultiVector<ValueType2, memorySpace> &v,
+        const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
+
+    /**
+     * @brief Same as the above dot() function but instead of returning the
+     * result on utils::MemorySpace:::HOST it returns it in a user-provided
+     * memory on the input MemorySpace.
+     *
+     * @param[in] u first MultiVector
+     * @param[in] v second MultiVector
+     * @param[in] opU blasLapack::ScalarOp for u MultiVector
+     * @param[in] opV blasLapack::ScalarOp for v MultiVector
+     * @param[out] dotProd Pointer to dot products between opU(u_I) and
+     * opV(v_I), where u_I and v_I are I-th vector from u and v, respectively
+     *
+     * @note The pointer dotProd must be properly allocated
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the dot product is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
+     *
+     */
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    void
+    dot(const MultiVector<ValueType1, memorySpace> &     u,
+        const MultiVector<ValueType2, memorySpace> &     v,
+        blasLapack::scalar_type<ValueType1, ValueType2> *dotProd,
+        const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
+
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

@@ -174,5 +174,112 @@ namespace dftefe
     int mpi::MPIThreadMultiple   = 2;
     int mpi::MPIThreadSerialized = 3;
 #endif // DFTEFE_WITH_MPI
-  }    // end of namespace utils
+
+    //
+    // define the getMPIDatatype() static function for various
+    // specializations of Types<T>
+    //
+    mpi::MPIDatatype
+    mpi::Types<char>::getMPIDatatype()
+    {
+      return mpi::MPIChar;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<signed char>::getMPIDatatype()
+    {
+      return mpi::MPISignedChar;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<unsigned char>::getMPIDatatype()
+    {
+      return mpi::MPIUnsignedChar;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<wchar_t>::getMPIDatatype()
+    {
+      return mpi::MPIWChar;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<short>::getMPIDatatype()
+    {
+      return mpi::MPIShort;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<unsigned short>::getMPIDatatype()
+    {
+      return mpi::MPIUnsignedShort;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<int>::getMPIDatatype()
+    {
+      return mpi::MPIInt;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<unsigned int>::getMPIDatatype()
+    {
+      return mpi::MPIUnsigned;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<long>::getMPIDatatype()
+    {
+      return mpi::MPILong;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<unsigned long>::getMPIDatatype()
+    {
+      return mpi::MPIUnsignedLong;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<float>::getMPIDatatype()
+    {
+      return mpi::MPIFloat;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<double>::getMPIDatatype()
+    {
+      return mpi::MPIDouble;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<long double>::getMPIDatatype()
+    {
+      return mpi::MPILongDouble;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<long long int>::getMPIDatatype()
+    {
+      return mpi::MPILongLongInt;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<unsigned long long int>::getMPIDatatype()
+    {
+      return mpi::MPIUnsignedLongLong;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<std::complex<float>>::getMPIDatatype()
+    {
+      return mpi::MPIComplex;
+    }
+
+    mpi::MPIDatatype
+    mpi::Types<std::complex<double>>::getMPIDatatype()
+    {
+      return mpi::MPIDoubleComplex;
+    }
+
+  } // end of namespace utils
 } // end of namespace dftefe
