@@ -198,19 +198,32 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        khatriRaoProduct(const size_type                      sizeI,
+        khatriRaoProduct(const Layout                         layout,
+                         const size_type                      sizeI,
                          const size_type                      sizeJ,
                          const size_type                      sizeK,
                          const ValueType1 *                   A,
                          const ValueType2 *                   B,
                          scalar_type<ValueType1, ValueType2> *Z)
       {
-        for (size_type k = 0; k < sizeK; ++k)
-          for (size_type i = 0; i < sizeI; ++i)
+        if (layout == Layout::ColMajor)
+          {
+            for (size_type k = 0; k < sizeK; ++k)
+              for (size_type i = 0; i < sizeI; ++i)
+                for (size_type j = 0; j < sizeJ; ++j)
+                  Z[k * sizeI * sizeJ + i * sizeJ + j] =
+                    ((scalar_type<ValueType1, ValueType2>)A[k * sizeI + i]) *
+                    ((scalar_type<ValueType1, ValueType2>)B[k * sizeJ + j]);
+          }
+        else if (layout == Layout::RowMajor)
+          {
             for (size_type j = 0; j < sizeJ; ++j)
-              Z[k * sizeI * sizeJ + i * sizeJ + j] =
-                ((scalar_type<ValueType1, ValueType2>)A[k * sizeI + i]) *
-                ((scalar_type<ValueType1, ValueType2>)B[k * sizeJ + j]);
+              for (size_type i = 0; i < sizeI; ++i)
+                for (size_type k = 0; k < sizeK; ++k)
+                  Z[j * sizeI * sizeK + i * sizeK + k] =
+                    ((scalar_type<ValueType1, ValueType2>)A[i * sizeK + k]) *
+                    ((scalar_type<ValueType1, ValueType2>)B[j * sizeK + k]);
+          }
       }
 
       template <typename ValueType1,
