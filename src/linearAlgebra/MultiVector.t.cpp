@@ -530,7 +530,7 @@ namespace dftefe
         &returnValues[0],
         d_numVectors,
         utils::mpi::MPIDouble,
-        utils::mpi::MPIMax,
+        utils::mpi::MPISum,
         d_mpiPatternP2P->mpiCommunicator());
       for (size_type i = 0; i < d_numVectors; ++i)
         returnValues[i] = std::sqrt(returnValues[i]);
