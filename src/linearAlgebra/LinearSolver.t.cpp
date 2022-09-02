@@ -39,14 +39,14 @@ namespace dftefe
         const double           absoluteTol /*= LinearSolverDefaults::ABS_TOL*/,
         const double           relativeTol /*= LinearSolverDefaults::REL_TOL*/,
         const double divergenceTol /*= LinearSolverDefaults::DIVERGENCE_TOL*/,
-        LinearSolverPrintControl printControl /*= LinearSolverPrintControl()*/)
+        LinearAlgebraProfiler profiler /*= LinearSolverPrintControl()*/)
       : d_linearSolverImpl(nullptr)
     {
       if (linearSolverType == LinearSolverType::CG)
         {
           d_linearSolverImpl = std::make_shared<
             CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
-            maxIter, absoluteTol, relativeTol, divergenceTol, printControl);
+            maxIter, absoluteTol, relativeTol, divergenceTol, profiler);
         }
       else
         {

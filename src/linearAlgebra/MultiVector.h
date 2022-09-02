@@ -27,11 +27,15 @@
 #ifndef dftefeMultiVector_h
 #define dftefeMultiVector_h
 
-#include <linearAlgebra/VectorAttributes.h>
-#include <utils/MemoryStorage.h>
-#include <utils/MPICommunicatorP2P.h>
-#include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
+#include <utils/Defaults.h>
+#include <utils/MemoryStorage.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIPatternP2P.h>
+#include <utils/MPICommunicatorP2P.h>
+#include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 #include <memory>
 namespace dftefe
 {
@@ -162,7 +166,7 @@ namespace dftefe
       MultiVector(const size_type                               size,
                   const size_type                               numVectors,
                   std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-                  const ValueType initVal = ValueType());
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \serial MultiVector with a predefined
@@ -204,7 +208,7 @@ namespace dftefe
                                                                 mpiPatternP2P,
                   std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const size_type                               numVectors,
-                  const ValueType initVal = ValueType());
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \b distributed MultiVector with a predefined
@@ -261,7 +265,7 @@ namespace dftefe
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const size_type                                     numVectors,
-        ValueType initVal = ValueType());
+        ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a special case of \b distributed MultiVector where none
@@ -286,7 +290,7 @@ namespace dftefe
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
         const size_type                                     numVectors,
-        const ValueType initVal = ValueType());
+        const ValueType initVal = utils::Types<ValueType>::zero);
 
 
       /**
@@ -311,8 +315,7 @@ namespace dftefe
                   const utils::mpi::MPIComm &                   mpiComm,
                   std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
                   const size_type                               numVectors,
-                  const ValueType initVal = ValueType());
-
+                  const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Copy constructor
@@ -325,7 +328,8 @@ namespace dftefe
        * @param[in] u MultiVector object to copy from
        * @param[in] initVal Initial value of the MultiVector
        */
-      MultiVector(const MultiVector &u, const ValueType initVal = ValueType());
+      MultiVector(const MultiVector &u,
+                  const ValueType    initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Move constructor
@@ -498,7 +502,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(blasLapack::scalar_type<ValueType1, ValueType2> a,
         const MultiVector<ValueType1, memorySpace> &    u,
@@ -538,7 +544,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
     dot(const MultiVector<ValueType1, memorySpace> &u,
         const MultiVector<ValueType2, memorySpace> &v,
@@ -570,7 +578,9 @@ namespace dftefe
      * (e.g., union of double and complex<double> is complex<double>)
      *
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const MultiVector<ValueType1, memorySpace> &     u,
         const MultiVector<ValueType2, memorySpace> &     v,

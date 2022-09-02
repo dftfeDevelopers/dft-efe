@@ -23,6 +23,8 @@
  * @author Sambit Das, Bikash Kanungo
  */
 #include <utils/Exceptions.h>
+#include <utils/MPIWrapper.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <cmath>
 
 namespace dftefe
@@ -38,7 +40,7 @@ namespace dftefe
       const size_type                               size,
       const size_type                               numVectors,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const ValueType                               initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
@@ -100,7 +102,7 @@ namespace dftefe
                                                     mpiPatternP2P,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                               numVectors,
-      const ValueType                               initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_vectorAttributes =
@@ -164,7 +166,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                         mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
       const size_type                                     numVectors,
-      const ValueType                                     initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -218,7 +220,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                         mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
       const size_type                                     numVectors,
-      const ValueType                                     initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -278,7 +280,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                   mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                               numVectors,
-      const ValueType                               initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -375,8 +377,9 @@ namespace dftefe
     // Copy Constructor with reinitialization
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    MultiVector<ValueType, memorySpace>::MultiVector(const MultiVector &u,
-                                                     const ValueType    initVal)
+    MultiVector<ValueType, memorySpace>::MultiVector(
+      const MultiVector &u,
+      const ValueType    initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
@@ -511,11 +514,10 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::l2Norms() const
     {
       const std::vector<double> l2NormsLocallyOwned =
-        blasLapack::nrms2MultiVector<ValueType, memorySpace>(
-          this->locallyOwnedSize(),
-          this->numVectors(),
-          this->data(),
-          *d_linAlgOpContext);
+        blasLapack::nrms2MultiVector(this->locallyOwnedSize(),
+                                     this->numVectors(),
+                                     this->data(),
+                                     *d_linAlgOpContext);
 
       std::vector<double> l2NormsLocallyOwnedSquare(d_numVectors, 0.0);
       for (size_type i = 0; i < d_numVectors; ++i)
@@ -528,7 +530,7 @@ namespace dftefe
         &returnValues[0],
         d_numVectors,
         utils::mpi::MPIDouble,
-        utils::mpi::MPIMax,
+        utils::mpi::MPISum,
         d_mpiPatternP2P->mpiCommunicator());
       for (size_type i = 0; i < d_numVectors; ++i)
         returnValues[i] = std::sqrt(returnValues[i]);
@@ -681,7 +683,9 @@ namespace dftefe
     // Helper functions
     //
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(blasLapack::scalar_type<ValueType1, ValueType2> a,
         const MultiVector<ValueType1, memorySpace> &    u,
@@ -705,7 +709,9 @@ namespace dftefe
                         *(w.getLinAlgOpContext()));
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const MultiVector<ValueType1, memorySpace> &     u,
         const MultiVector<ValueType2, memorySpace> &     v,
@@ -733,8 +739,8 @@ namespace dftefe
                                  dotProdLocallyOwned.data(),
                                  *(u.getLinAlgOpContext()));
 
-      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::MPIGetDatatype<
-        blasLapack::scalar_type<ValueType1, ValueType2>>();
+      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
+        blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
       utils::mpi::MPIAllreduce<memorySpace>(
         &dotProdLocallyOwned,
         dotProd,
@@ -744,8 +750,10 @@ namespace dftefe
         (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
-    std::vetcor<blasLapack::scalar_type<ValueType1, ValueType2>>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
     dot(const MultiVector<ValueType1, memorySpace> &u,
         const MultiVector<ValueType2, memorySpace> &v,
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,

@@ -79,7 +79,7 @@ namespace dftefe
       virtual Error
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) const = 0;
+          &linearSolverFunction) = 0;
     }; // end of class LinearSolverImpl
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe

@@ -23,34 +23,106 @@
  * @author Bikash Kanungo
  */
 
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <utils/Exceptions.h>
+#ifndef dftefeUtilsDefaults_h
+#define dftefeUtilsDefaults_h
+
+#include <complex>
+#include <string>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace utils
   {
-    const std::map<Error, std::string> ErrorMsg::d_errToMsgMap = {
-      {Error::SUCCESS, "Success"},
-      {Error::FAILED_TO_CONVERGE, "Failed to converge"},
-      {Error::RESIDUAL_DIVERGENCE, "Residual diverged"},
-      {Error::DIVISON_BY_ZERO, "Division by zero encountered"},
-      {Error::OTHER_ERROR, "Other error encountered"}};
-
-    std::pair<bool, std::string>
-    ErrorMsg::isSuccessAndMsg(const Error &error)
+    template <typename T>
+    class Types
     {
-      std::pair<bool, std::string> returnValue(false, "");
-      auto                         it = d_errToMsgMap.find(error);
-      if (it != d_errToMsgMap.end())
-        returnValue = std::make_pair(error == Error::SUCCESS, it->second);
+    public:
+      static const T zero;
+    };
 
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false, "Invalid linearAlgebra::Error passed.");
-        }
+    template <>
+    class Types<int>
+    {
+    public:
+      static const int zero;
+    };
 
-      return returnValue;
-    }
-  } // namespace linearAlgebra
-} // namespace dftefe
+    template <>
+    class Types<unsigned int>
+    {
+    public:
+      static const unsigned int zero;
+    };
+
+    template <>
+    class Types<short int>
+    {
+    public:
+      static const short int zero;
+    };
+
+    template <>
+    class Types<unsigned short int>
+    {
+    public:
+      static const unsigned short int zero;
+    };
+
+    template <>
+    class Types<long int>
+    {
+    public:
+      static const long int zero;
+    };
+
+    template <>
+    class Types<unsigned long int>
+    {
+    public:
+      static const unsigned long int zero;
+    };
+
+    template <>
+    class Types<double>
+    {
+    public:
+      static const double zero;
+    };
+
+    template <>
+    class Types<float>
+    {
+    public:
+      static const float zero;
+    };
+
+    template <>
+    class Types<std::complex<double>>
+    {
+    public:
+      static const std::complex<double> zero;
+    };
+
+    template <>
+    class Types<std::complex<float>>
+    {
+    public:
+      static const std::complex<float> zero;
+    };
+
+    template <>
+    class Types<char>
+    {
+    public:
+      static const char zero;
+    };
+
+    template <>
+    class Types<std::string>
+    {
+    public:
+      static const std::string zero;
+    };
+  } // end of namespace utils
+} // end of namespace dftefe
+#include <utils/Defaults.t.cpp>
+#endif // dftefeUtilsDefaults_h

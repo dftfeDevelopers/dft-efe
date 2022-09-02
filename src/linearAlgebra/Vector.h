@@ -27,11 +27,12 @@
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
+#include <utils/TypeConfig.h>
+#include <utils/Defaults.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIPatternP2P.h>
 #include <utils/MPICommunicatorP2P.h>
-#include <utils/TypeConfig.h>
 #include <linearAlgebra/VectorAttributes.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -150,7 +151,7 @@ namespace dftefe
        */
       Vector(size_type                                     size,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-             ValueType initVal = ValueType());
+             ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a <b>serial</b> Vector with predefined Storage (i.e., utils::MemoryStorage).
@@ -189,7 +190,7 @@ namespace dftefe
       Vector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                            mpiPatternP2P,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-             const ValueType initVal = ValueType());
+             const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a \b distributed Vector with a predefined Storage (i.e., utils::MemoryStorage) and MPIPatternP2P.
@@ -237,7 +238,7 @@ namespace dftefe
         const std::vector<dftefe::global_size_type> &       ghostIndices,
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
-        const ValueType                                     initVal);
+        const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Constructor for a special case of \b distributed Vector where none
@@ -260,7 +261,7 @@ namespace dftefe
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
         const utils::mpi::MPIComm &                         mpiComm,
         std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
-        const ValueType initVal = ValueType());
+        const ValueType initVal = utils::Types<ValueType>::zero);
 
 
       /**
@@ -285,8 +286,7 @@ namespace dftefe
       Vector(const global_size_type                        globalSize,
              const utils::mpi::MPIComm &                   mpiComm,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-             const ValueType initVal = ValueType());
-
+             const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Copy constructor
@@ -299,7 +299,8 @@ namespace dftefe
        * @param[in] u Vector object to copy from
        * @param[in] initVal Initial value of the vector
        */
-      Vector(const Vector &u, ValueType initVal = ValueType());
+      Vector(const Vector &u,
+             ValueType     initVal = utils::Types<ValueType>::zero);
 
       /**
        * @brief Move constructor
@@ -464,7 +465,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(
       blasLapack::scalar_type<ValueType1, ValueType2>                       a,
@@ -499,7 +502,9 @@ namespace dftefe
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     blasLapack::scalar_type<ValueType1, ValueType2>
     dot(const Vector<ValueType1, memorySpace> &u,
         const Vector<ValueType2, memorySpace> &v,
@@ -529,7 +534,9 @@ namespace dftefe
      * (e.g., union of double and complex<double> is complex<double>)
      *
      */
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const Vector<ValueType1, memorySpace> &          u,
         const Vector<ValueType2, memorySpace> &          v,

@@ -37,7 +37,7 @@ namespace dftefe
     Vector<ValueType, memorySpace>::Vector(
       const size_type                               size,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const ValueType                               initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -94,7 +94,7 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                     mpiPatternP2P,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const ValueType                               initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
       : d_mpiPatternP2P(mpiPatternP2P)
     {
       d_vectorAttributes =
@@ -155,7 +155,7 @@ namespace dftefe
       const std::vector<dftefe::global_size_type> &       ghostIndices,
       const utils::mpi::MPIComm &                         mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
-      const ValueType                                     initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -210,7 +210,7 @@ namespace dftefe
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const utils::mpi::MPIComm &                         mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
-      const ValueType                                     initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -269,7 +269,7 @@ namespace dftefe
       const global_size_type                        totalGlobalDofs,
       const utils::mpi::MPIComm &                   mpiComm,
       std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const ValueType                               initVal)
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -365,7 +365,9 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(const Vector &u, ValueType initVal)
+    Vector<ValueType, memorySpace>::Vector(
+      const Vector &u,
+      ValueType     initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -651,7 +653,9 @@ namespace dftefe
     //
 
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     add(blasLapack::scalar_type<ValueType1, ValueType2>                       a,
         const Vector<ValueType1, memorySpace> &                               u,
@@ -672,7 +676,9 @@ namespace dftefe
                         *(w.getLinAlgOpContext()));
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
     dot(const Vector<ValueType1, memorySpace> &          u,
         const Vector<ValueType2, memorySpace> &          v,
@@ -693,8 +699,8 @@ namespace dftefe
                                  dotProdLocallyOwned.data(),
                                  *(u.getLinAlgOpContext()));
 
-      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::MPIGetDatatype<
-        blasLapack::scalar_type<ValueType1, ValueType2>>();
+      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
+        blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
       utils::mpi::MPIAllreduce<memorySpace>(
         &dotProdLocallyOwned,
         dotProd,
@@ -704,7 +710,9 @@ namespace dftefe
         (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
     }
 
-    template <typename ValueType1, ValueType2, utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     blasLapack::scalar_type<ValueType1, ValueType2>
     dot(const Vector<ValueType1, memorySpace> &u,
         const Vector<ValueType2, memorySpace> &v,

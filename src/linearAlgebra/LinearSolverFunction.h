@@ -89,7 +89,7 @@ namespace dftefe
       getPCContext() const = 0;
 
       void
-      setSolution(const Vector<ValueTypeOperand> &x) = 0;
+      setSolution(const Vector<ValueTypeOperand, memorySpace> &x) = 0;
 
       virtual Vector<ValueType, memorySpace>
       getRhs() const = 0;

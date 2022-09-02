@@ -63,8 +63,6 @@ namespace dftefe
     class LinearSolver
     {
     public:
-      using LinearSolverProfiler = LinearAlgebraProfiler;
-
     public:
       /**
        * @brief Constructor
@@ -91,8 +89,8 @@ namespace dftefe
         const size_type        maxIter,
         const double           absoluteTol = LinearSolverDefaults::ABS_TOL,
         const double           relativeTol = LinearSolverDefaults::REL_TOL,
-        const double divergenceTol = LinearSolverDefaults::DIVERGENCE_TOL,
-        LinearSolverProfiler profiler = LinearSolverProfiler());
+        const double divergenceTol     = LinearSolverDefaults::DIVERGENCE_TOL,
+        LinearAlgebraProfiler profiler = LinearAlgebraProfiler());
 
       /**
        * @brief Default Destructor

@@ -60,13 +60,14 @@ namespace dftefe
 
       virtual void
       apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
+            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
                    memorySpace> &                        y) const = 0;
 
       virtual void
       apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                        memorySpace> &                        Y) const = 0;
+            MultiVector<
+              blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+              memorySpace> &Y) const = 0;
 
       //
       // TODO: Uncomment the following and implement in all the derived classes
@@ -74,8 +75,8 @@ namespace dftefe
 
       // virtual
       //  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
-      //    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>,
-      //    memorySpace> & Y) const = 0;
+      //    AbstractMatrix<blasLapack::scalar_type<ValueTypeOperator,
+      //    ValueTypeOperand>, memorySpace> & Y) const = 0;
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

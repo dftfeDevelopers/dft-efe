@@ -119,12 +119,29 @@ namespace dftefe
           hadamardProduct(n, x, y, z);
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      hadamardProduct(size_type                            n,
+                      const ValueType1 *                   x,
+                      const ValueType2 *                   y,
+                      const ScalarOp &                     opx,
+                      const ScalarOp &                     opy,
+                      scalar_type<ValueType1, ValueType2> *z,
+                      LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          hadamardProduct(n, x, y, opx, opy, z);
+      }
+
 
       template <typename ValueType1,
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      khatriRaoProduct(const size_type                      sizeI,
+      khatriRaoProduct(const Layout                         layout,
+                       const size_type                      sizeI,
                        const size_type                      sizeJ,
                        const size_type                      sizeK,
                        const ValueType1 *                   A,
@@ -133,7 +150,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          khatriRaoProduct(sizeI, sizeJ, sizeK, A, B, Z);
+          khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
       }
 
 
@@ -182,6 +199,8 @@ namespace dftefe
                      const size_type                      numVec,
                      const ValueType1 *                   multiVecDataX,
                      const ValueType2 *                   multiVecDataY,
+                     const ScalarOp &                     opX,
+                     const ScalarOp &                     opY,
                      scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
                      LinAlgOpContext<memorySpace> &       context)
       {
@@ -191,6 +210,8 @@ namespace dftefe
                          multiVecDataX,
                          multiVecDataY,
                          multiVecDotProduct,
+                         opX,
+                         opY,
                          context);
       }
 

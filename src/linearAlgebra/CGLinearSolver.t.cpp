@@ -47,11 +47,11 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      CGLinearSolver(const size_type                        maxIter,
-                     const double                           absoluteTol,
-                     const double                           relativeTol,
-                     const double                           divergenceTol,
-                     LinearSolver::LinearSolverProfiler profiler)
+      CGLinearSolver(const size_type       maxIter,
+                     const double          absoluteTol,
+                     const double          relativeTol,
+                     const double          divergenceTol,
+                     LinearAlgebraProfiler profiler)
       : d_maxIter(maxIter)
       , d_absoluteTol(absoluteTol)
       , d_relativeTol(relativeTol)
@@ -66,7 +66,7 @@ namespace dftefe
     Error
     CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::solve(
       LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-        &linearSolverFunction) const
+        &linearSolverFunction)
     {
       auto mpiComm = linearSolverFunction.getMPIComm();
 
@@ -134,62 +134,73 @@ namespace dftefe
       Error     err       = Error::OTHER_ERROR;
       size_type iter      = 0;
       for (; iter < d_maxIter; ++iter)
-      {
-        // register start of the iteration
-        d_profiler.registerIterStart(iter);
+        {
+          // register start of the iteration
+          d_profiler.registerIterStart(iter);
 
-        if (rNorm < std::max(d_absoluteTol, bNorm * d_relativeTol))
-          {
-            err = Error::SUCCESS;
-            break;
-          }
-        else
-          (rNorm > d_divergenceTol)
-          {
-            err = Error::RESIDUAL_DIVERGENCE;
-            break;
-          }
+          if (rNorm < std::max(d_absoluteTol, bNorm * d_relativeTol))
+            {
+              err = Error::SUCCESS;
+              break;
+            }
 
-        // w = Ap
-        AxContext.apply(p, w);
+          //(rNorm > d_divergenceTol)
+          else
+            {
+              err = Error::RESIDUAL_DIVERGENCE;
+              break;
+            }
 
-        // z^Hr (dot product of z-conjugate and r)
-        ValueType zDotr = z.dot(r);
+          // w = Ap
+          AxContext.apply(p, w);
 
-        // p^Hw (dot product of p-conjugate and w)
-        ValueType pDotw = p.dot(w);
+          // z^Hr (dot product of z-conjugate and r)
+          ValueType zDotr = dot(z,
+                                r,
+                                blasLapack::ScalarOp::Conj,
+                                blasLapack::ScalarOp::Identity);
 
-        ValueType alpha = zDotr / pDotw;
+          // p^Hw (dot product of p-conjugate and w)
+          ValueType pDotw = dot(p,
+                                w,
+                                blasLapack::ScalarOp::Conj,
+                                blasLapack::ScalarOp::Identity);
 
-        // x = x + alpha*p
-        add((ValueType)1.0, x, alpha, p, x);
+          ValueType alpha = zDotr / pDotw;
 
-        // r = r - alpha*w
-        add((ValueType)1.0, r, -alpha, w, r);
+          // x = x + alpha*p
+          add((ValueType)1.0, x, alpha, p, x);
 
-        // z = preconditioned r
-        pcContext.apply(r, z);
+          // r = r - alpha*w
+          add((ValueType)1.0, r, -alpha, w, r);
 
-        // updated z^Hr (dot product of new z-conjugate and r)
-        ValueType zDotrNew = z.dot(r);
+          // z = preconditioned r
+          pcContext.apply(r, z);
 
-        ValueType beta = zDotrNew / zDotr;
+          // updated z^Hr (dot product of new z-conjugate and r)
+          ValueType zDotrNew = dot(z,
+                                   r,
+                                   blasLapack::ScalarOp::Conj,
+                                   blasLapack::ScalarOp::Identity);
 
-        // p = z + beta*p
-        add((ValueType)1.0, z, beta, p, p);
+          ValueType beta = zDotrNew / zDotr;
 
-        rNorm = r.l2Norm();
+          // p = z + beta*p
+          add((ValueType)1.0, z, beta, p, p);
 
-        std::string msg = "CGLinearSolver[" + std::to_string(iter) + "]";
-        msg += " Abs. residual: " +
-               CGLinearSolverInternal::toStringWithPrecision(rNorm, precision);
-        msg += " Rel. residual: " +
-               CGLinearSolverInternal::toStringWithPrecision(rNorm / bNorm,
-                                                             precision);
+          rNorm = r.l2Norm();
 
-        // register end of the iteration
-        d_profiler.registerIterEnd(msg);
-      }
+          std::string msg = "CGLinearSolver[" + std::to_string(iter) + "]";
+          msg +=
+            " Abs. residual: " +
+            CGLinearSolverInternal::toStringWithPrecision(rNorm, precision);
+          msg += " Rel. residual: " +
+                 CGLinearSolverInternal::toStringWithPrecision(rNorm / bNorm,
+                                                               precision);
+
+          // register end of the iteration
+          d_profiler.registerIterEnd(msg);
+        }
 
       linearSolverFunction.setSolution(x);
 
@@ -204,7 +215,8 @@ namespace dftefe
 
       if (successAndMsg.first)
         {
-          msg = "CGLinear solve converged in " << iter << "iterations"
+          msg = "CGLinear solve converged in " + std::to_string(iter) +
+                " iterations";
         }
       else
         msg = successAndMsg.second;

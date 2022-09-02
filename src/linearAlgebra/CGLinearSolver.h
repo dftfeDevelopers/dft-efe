@@ -29,6 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/LinearSolverImpl.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 
@@ -86,11 +87,11 @@ namespace dftefe
        * \f$||\mathbf{Ax}-\mathbf{b}|| < max(absoluteTol,
        * relativeTol*||\mathbf{b}||)$\f
        */
-      CGLinearSolver(const size_type                        maxIter,
-                     const double                           absoluteTol,
-                     const double                           relativeTol,
-                     const double                           divergenceTol,
-                     LinearSolver::LinearSolverProfiler profiler);
+      CGLinearSolver(const size_type       maxIter,
+                     const double          absoluteTol,
+                     const double          relativeTol,
+                     const double          divergenceTol,
+                     LinearAlgebraProfiler profiler);
 
       /**
        * @brief Default Destructor
@@ -109,19 +110,19 @@ namespace dftefe
        *  \f$\mathbf{x}$\f
        *
        */
-      SolverTypes::Error
+      Error
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) const override;
+          &linearSolverFunction) override;
 
     private:
-      LinearSolver::LinearSolverProfiler d_profiler;
-      size_type                              d_maxIter;
-      double                                 d_absoluteTol;
-      double                                 d_relativeTol;
-      double                                 d_divergenceTol;
+      LinearAlgebraProfiler d_profiler;
+      size_type             d_maxIter;
+      double                d_absoluteTol;
+      double                d_relativeTol;
+      double                d_divergenceTol;
     }; // end of class CGLinearSolver
   }    // end of namespace linearAlgebra
-#include <linearAlgebra/CGLinearSolver.t.cpp>
 } // end of namespace dftefe
+#include <linearAlgebra/CGLinearSolver.t.cpp>
 #endif // dftefeCGLinearSolver_h

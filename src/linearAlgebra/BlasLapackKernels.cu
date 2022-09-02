@@ -64,17 +64,50 @@ namespace dftefe
             }
         }
 
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
+        __global__ void
+        hadamardProductDeviceKernelConj(const size_type   size,
+                                        const ValueType1 *x,
+                                        const ValueType2 *y,
+                                        ValueType3 *      z)
+        {
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              z[i] = dftefe::utils::mult(dftefe::utils::conj(x[i]), y[i]);
+            }
+        }
 
         template <typename ValueType1, typename ValueType2, typename ValueType3>
         __global__ void
-        khatriRaoProductDeviceKernel(const size_type   sizeI,
-                                     const size_type   sizeJ,
-                                     const size_type   sizeK,
-                                     const ValueType1 *A,
-                                     const ValueType2 *B,
-                                     ValueType3 *      Z)
+        hadamardProductDeviceKernelConjConj(const size_type   size,
+                                            const ValueType1 *x,
+                                            const ValueType2 *y,
+                                            ValueType3 *      z)
         {
-          const size_type totalSize = sizeI * sizeJ * sizeK;
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type i = globalThreadId; i < size;
+               i += blockDim.x * gridDim.x)
+            {
+              z[i] = dftefe::utils::mult(dftefe::utils::conj(x[i]),
+                                         dftefe::utils::conj(y[i]));
+            }
+        }
+
+
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
+        __global__ void
+        khatriRaoProductColMajorDeviceKernel(const size_type   sizeI,
+                                             const size_type   sizeJ,
+                                             const size_type   sizeK,
+                                             const ValueType1 *A,
+                                             const ValueType2 *B,
+                                             ValueType3 *      Z)
+        {
+          const size_type totalSize = sizeJ * sizeI * sizeK;
           const size_type globalThreadId =
             blockIdx.x * blockDim.x + threadIdx.x;
           for (size_type kij = globalThreadId; kij < totalSize;
@@ -85,6 +118,30 @@ namespace dftefe
               const size_type i     = ijRem / sizeJ;
               const size_type j     = ijRem - i * sizeJ;
               Z[kij] = dftefe::utils::mult(A[k * sizeI + i], B[k * sizeJ + j]);
+            }
+        }
+
+
+        template <typename ValueType1, typename ValueType2, typename ValueType3>
+        __global__ void
+        khatriRaoProductRowMajorDeviceKernel(const size_type   sizeI,
+                                             const size_type   sizeJ,
+                                             const size_type   sizeK,
+                                             const ValueType1 *A,
+                                             const ValueType2 *B,
+                                             ValueType3 *      Z)
+        {
+          const size_type totalSize = sizeK * sizeI * sizeJ;
+          const size_type globalThreadId =
+            blockIdx.x * blockDim.x + threadIdx.x;
+          for (size_type jik = globalThreadId; jik < totalSize;
+               jik += blockDim.x * gridDim.x)
+            {
+              const size_type j     = jik / (sizeK * sizeI);
+              const size_type ikRem = jik - j * sizeK * sizeI;
+              const size_type i     = ikRem / sizeK;
+              const size_type k     = ikRem - i * sizeK;
+              Z[jik] = dftefe::utils::mult(A[i * sizeK + k], B[j * sizeK + k]);
             }
         }
 
@@ -182,28 +239,105 @@ namespace dftefe
           dftefe::utils::makeDataTypeDeviceCompatible(z));
       }
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        hadamardProduct(const size_type                      size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        const ScalarOp &                     opx,
+                        const ScalarOp &                     opy,
+                        scalar_type<ValueType1, ValueType2> *z)
+      {
+        if (opx == ScalarOp::Identity && opy == ScalarOp::Identity)
+          {
+            hadamardProductDeviceKernel<<<size / dftefe::utils::BLOCK_SIZE + 1,
+                                          dftefe::utils::BLOCK_SIZE>>>(
+              size,
+              dftefe::utils::makeDataTypeDeviceCompatible(x),
+              dftefe::utils::makeDataTypeDeviceCompatible(y),
+              dftefe::utils::makeDataTypeDeviceCompatible(z));
+          }
+
+        else if (opx == ScalarOp::Identity && opy == ScalarOp::Conj)
+          {
+            //
+            // @note hadamardProductDeviceKernelConj takes the conjgate of
+            // the first entry. In order to take the conjugate of second entry,
+            // we flip x and y
+            //
+
+            hadamardProductDeviceKernelConj<<<size / dftefe::utils::BLOCK_SIZE +
+                                                1,
+                                              dftefe::utils::BLOCK_SIZE>>>(
+              size,
+              dftefe::utils::makeDataTypeDeviceCompatible(y),
+              dftefe::utils::makeDataTypeDeviceCompatible(x),
+              dftefe::utils::makeDataTypeDeviceCompatible(z));
+          }
+
+        else if (opx == ScalarOp::Conj && opy == ScalarOp::Identity)
+          {
+            hadamardProductDeviceKernelConj<<<size / dftefe::utils::BLOCK_SIZE +
+                                                1,
+                                              dftefe::utils::BLOCK_SIZE>>>(
+              size,
+              dftefe::utils::makeDataTypeDeviceCompatible(x),
+              dftefe::utils::makeDataTypeDeviceCompatible(y),
+              dftefe::utils::makeDataTypeDeviceCompatible(z));
+          }
+
+        else
+          {
+            hadamardProductDeviceKernelConjConj<<<
+              size / dftefe::utils::BLOCK_SIZE + 1,
+              dftefe::utils::BLOCK_SIZE>>>(
+              size,
+              dftefe::utils::makeDataTypeDeviceCompatible(x),
+              dftefe::utils::makeDataTypeDeviceCompatible(y),
+              dftefe::utils::makeDataTypeDeviceCompatible(z));
+          }
+      }
 
       template <typename ValueType1, typename ValueType2>
       void
       KernelsTwoValueTypes<ValueType1,
                            ValueType2,
                            dftefe::utils::MemorySpace::DEVICE>::
-        khatriRaoProduct(const size_type                      sizeI,
+        khatriRaoProduct(const Layout                         layout,
+                         const size_type                      sizeI,
                          const size_type                      sizeJ,
                          const size_type                      sizeK,
                          const ValueType1 *                   A,
                          const ValueType2 *                   B,
                          scalar_type<ValueType1, ValueType2> *Z)
       {
-        khatriRaoProductDeviceKernel<<<
-          (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
-          dftefe::utils::BLOCK_SIZE>>>(
-          sizeI,
-          sizeJ,
-          sizeK,
-          dftefe::utils::makeDataTypeDeviceCompatible(A),
-          dftefe::utils::makeDataTypeDeviceCompatible(B),
-          dftefe::utils::makeDataTypeDeviceCompatible(Z));
+        if (layout == Layout::ColMajor)
+          {
+            khatriRaoProductColMajorDeviceKernel<<<
+              (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
+              dftefe::utils::BLOCK_SIZE>>>(
+              sizeI,
+              sizeJ,
+              sizeK,
+              dftefe::utils::makeDataTypeDeviceCompatible(A),
+              dftefe::utils::makeDataTypeDeviceCompatible(B),
+              dftefe::utils::makeDataTypeDeviceCompatible(Z));
+          }
+        else if (layout == Layout::RowMajor)
+          {
+            khatriRaoProductRowMajorDeviceKernel<<<
+              (sizeI * sizeJ * sizeK) / dftefe::utils::BLOCK_SIZE + 1,
+              dftefe::utils::BLOCK_SIZE>>>(
+              sizeI,
+              sizeJ,
+              sizeK,
+              dftefe::utils::makeDataTypeDeviceCompatible(A),
+              dftefe::utils::makeDataTypeDeviceCompatible(B),
+              dftefe::utils::makeDataTypeDeviceCompatible(Z));
+          }
       }
 
 
@@ -240,6 +374,8 @@ namespace dftefe
           const size_type                      numVec,
           const ValueType1 *                   multiVecDataX,
           const ValueType2 *                   multiVecDataY,
+          const ScalarOp &                     opX,
+          const ScalarOp &                     opY,
           scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
@@ -253,6 +389,8 @@ namespace dftefe
         hadamardProduct(vecSize * numVec,
                         multiVecDataX,
                         multiVecDataY,
+                        opX,
+                        opY,
                         hadamardProductDevice.data());
 
         gemm<scalar_type<ValueType1, ValueType2>,

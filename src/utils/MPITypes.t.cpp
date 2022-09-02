@@ -23,34 +23,24 @@
  * @author Bikash Kanungo
  */
 
-#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <utils/Exceptions.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace utils
   {
-    const std::map<Error, std::string> ErrorMsg::d_errToMsgMap = {
-      {Error::SUCCESS, "Success"},
-      {Error::FAILED_TO_CONVERGE, "Failed to converge"},
-      {Error::RESIDUAL_DIVERGENCE, "Residual diverged"},
-      {Error::DIVISON_BY_ZERO, "Division by zero encountered"},
-      {Error::OTHER_ERROR, "Other error encountered"}};
-
-    std::pair<bool, std::string>
-    ErrorMsg::isSuccessAndMsg(const Error &error)
+    namespace mpi
     {
-      std::pair<bool, std::string> returnValue(false, "");
-      auto                         it = d_errToMsgMap.find(error);
-      if (it != d_errToMsgMap.end())
-        returnValue = std::make_pair(error == Error::SUCCESS, it->second);
-
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false, "Invalid linearAlgebra::Error passed.");
-        }
-
-      return returnValue;
-    }
-  } // namespace linearAlgebra
-} // namespace dftefe
+      template <typename T>
+      MPIDatatype
+      Types<T>::getMPIDatatype()
+      {
+        utils::throwException<utils::InvalidArgument>(
+          false,
+          "No equivalent primitive C++ datatype that is supported by MPI "
+          "matches the template parameter T passsed to "
+          "mpi::Types<T>::getMPIDatatype()");
+        return MPIByte;
+      }
+    } // end of namespace mpi
+  }   // end of namespace utils
+} // end of namespace dftefe

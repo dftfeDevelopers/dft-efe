@@ -30,6 +30,8 @@
 #  include <mpi.h>
 #endif // DFTEFE_WITH_MPI
 
+#include <complex>
+
 namespace dftefe
 {
   namespace utils
@@ -148,7 +150,154 @@ namespace dftefe
       extern int MPIThreadFunneled;
       extern int MPIThreadMultiple;
       extern int MPIThreadSerialized;
+
+      /**
+       * @brief A simple struct to return the MPIDatatype based on the
+       * user provided primitive data type (e.g., int, double, char, etc)
+       * @tparam T C++ primitive datatype, such as int, double, char, etc.
+       * @note The template parameter T cannot be std::string, as string
+       * is not a standalone datatype supported in MPI.
+       *
+       * @note: For efficient use of memory Types<T> has only a static member
+       * function Types<T>::getMPIDatatype() that returns the appropriate
+       * mpi::MPIDatatype based on the template parameter T.
+       * Further, for efficiency (compile time evaluation), we specialize
+       * the Types<T> class for various primitive C++ datatypes that are
+       * supported
+       *
+       */
+      template <typename T>
+      struct Types
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+
+      //
+      // various specialization of Types<T>
+      //
+      template <>
+      struct Types<char>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<signed char>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<unsigned char>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<wchar_t>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<short>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<unsigned short>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<int>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<unsigned int>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<long>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<unsigned long>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<float>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<double>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<long double>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<long long int>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<unsigned long long int>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<std::complex<float>>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
+      template <>
+      struct Types<std::complex<double>>
+      {
+        static MPIDatatype
+        getMPIDatatype();
+      };
+
     } // end of namespace mpi
   }   // end of namespace utils
 } // end of namespace dftefe
+#include <utils/MPITypes.t.cpp>
 #endif // dftefeMPITypes_h

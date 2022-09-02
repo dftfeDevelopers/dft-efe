@@ -23,34 +23,24 @@
  * @author Bikash Kanungo
  */
 
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <utils/Exceptions.h>
+#include <utils/Defaults.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace utils
   {
-    const std::map<Error, std::string> ErrorMsg::d_errToMsgMap = {
-      {Error::SUCCESS, "Success"},
-      {Error::FAILED_TO_CONVERGE, "Failed to converge"},
-      {Error::RESIDUAL_DIVERGENCE, "Residual diverged"},
-      {Error::DIVISON_BY_ZERO, "Division by zero encountered"},
-      {Error::OTHER_ERROR, "Other error encountered"}};
-
-    std::pair<bool, std::string>
-    ErrorMsg::isSuccessAndMsg(const Error &error)
-    {
-      std::pair<bool, std::string> returnValue(false, "");
-      auto                         it = d_errToMsgMap.find(error);
-      if (it != d_errToMsgMap.end())
-        returnValue = std::make_pair(error == Error::SUCCESS, it->second);
-
-      else
-        {
-          utils::throwException<utils::InvalidArgument>(
-            false, "Invalid linearAlgebra::Error passed.");
-        }
-
-      return returnValue;
-    }
-  } // namespace linearAlgebra
-} // namespace dftefe
+    const int                  Types<int>::zero                = 0;
+    const unsigned int         Types<unsigned int>::zero       = 0;
+    const short int            Types<short int>::zero          = 0;
+    const unsigned short int   Types<unsigned short int>::zero = 0;
+    const long int             Types<long int>::zero           = 0;
+    const unsigned long int    Types<unsigned long int>::zero  = 0;
+    const float                Types<float>::zero              = 0.0;
+    const double               Types<double>::zero             = 0.0;
+    const std::complex<double> Types<std::complex<double>>::zero =
+      std::complex<double>(0.0, 0.0);
+    const std::complex<float> Types<std::complex<float>>::zero =
+      std::complex<float>(0.0, 0.0);
+    const char        Types<char>::zero        = (char)0;
+    const std::string Types<std::string>::zero = "";
+  } // end of namespace utils
+} // end of namespace dftefe
