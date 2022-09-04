@@ -126,6 +126,7 @@ namespace dftefe
       // p = z
       //
       Vector<ValueType, memorySpace> p = z;
+      // p = z;
 
       //
       // CG loop

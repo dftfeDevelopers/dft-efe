@@ -271,7 +271,5 @@ namespace dftefe
     } // end of namespace mpi
   }   // end of namespace utils
 } // end of namespace dftefe
-
 #include "MPIWrapper.t.cpp"
-
 #endif // dftefeMPIWrapper_h

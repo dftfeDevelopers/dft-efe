@@ -346,7 +346,8 @@ namespace dftefe
     // Copy Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(const Vector &u)
+    Vector<ValueType, memorySpace>::Vector(
+      const Vector<ValueType, memorySpace> &u)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -355,7 +356,7 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -366,8 +367,8 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      const Vector &u,
-      ValueType     initVal /* = utils::Types<ValueType>::zero*/)
+      const Vector<ValueType, memorySpace> &u,
+      ValueType                             initVal)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -375,7 +376,7 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -388,7 +389,8 @@ namespace dftefe
     // Move Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(Vector &&u) noexcept
+    Vector<ValueType, memorySpace>::Vector(
+      Vector<ValueType, memorySpace> &&u) noexcept
     {
       d_storage            = std::move(u.d_storage);
       d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
@@ -406,7 +408,8 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace> &
-    Vector<ValueType, memorySpace>::operator=(const Vector &u)
+    Vector<ValueType, memorySpace>::operator=(
+      const Vector<ValueType, memorySpace> &u)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -414,7 +417,7 @@ namespace dftefe
       *d_storage           = *(u.d_storage);
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -430,7 +433,8 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace> &
-    Vector<ValueType, memorySpace>::operator=(Vector &&u)
+    Vector<ValueType, memorySpace>::operator=(
+      Vector<ValueType, memorySpace> &&u)
     {
       d_storage            = std::move(u.d_storage);
       d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
@@ -696,6 +700,8 @@ namespace dftefe
                                  1, // numVec,
                                  u.data(),
                                  v.data(),
+                                 opU,
+                                 opV,
                                  dotProdLocallyOwned.data(),
                                  *(u.getLinAlgOpContext()));
 
@@ -707,7 +713,7 @@ namespace dftefe
         1,
         mpiDatatype,
         utils::mpi::MPISum,
-        (u->getMPIPatternP2P)->d_mpiPatternP2P->mpiCommunicator());
+        (u.getMPIPatternP2P())->mpiCommunicator());
     }
 
     template <typename ValueType1,
