@@ -708,7 +708,7 @@ namespace dftefe
       utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
         blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
       utils::mpi::MPIAllreduce<memorySpace>(
-        &dotProdLocallyOwned,
+        dotProdLocallyOwned.data(),
         dotProd,
         1,
         mpiDatatype,

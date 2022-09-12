@@ -255,6 +255,9 @@ namespace dftefe
       int
       MPIFinalize(void);
 
+      int
+      MPIFinalized(int *flag);
+
       // template <typename T>
       // MPIDatatype
       // MPIGetDatatype();

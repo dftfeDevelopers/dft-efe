@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <memory>
+#include <complex>
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/CGLinearSolver.h>
@@ -36,22 +37,11 @@
 using namespace dftefe;
 
 extern "C" {
-  // C = alphaA.B + betaC    
-  void dgemm(char* TRANSA, char* TRANSB, const int* M,
-      const int* N, const int* K, double* alpha, double* A,
-      const int* LDA, double* B, const int* LDB, double* beta,
-      double* C, const int* LDC);
-
-  // Y= alphaA.X + betaY                                               
-  void dgemv(char* TRANS, const int* M, const int* N,
-      double* alpha, double* A, const int* LDA, double* X,
-      const int* INCX, double* beta, double* C, const int* INCY);
-
   // LU decomoposition of a general matrix
-  void dgetrf(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+  void zgetrf(int* M, int *N, std::complex<double> * A, int* lda, int* IPIV, int* INFO);
 
   // generate inverse of a matrix given its LU decomposition
-  void dgetri(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+  void zgetri(int* N, std::complex<double> * A, int* lda, int* IPIV, std::complex<double> * WORK, int* lwork, int* INFO);
 }
 
 namespace 
@@ -66,15 +56,15 @@ namespace
       return out.str();
     }
 
-  void inverse(double* A, int N)
+  void inverse(std::complex<double> * A, int N)
   {
     int *IPIV = new int[N];
     int LWORK = N*N;
-    double *WORK = new double[LWORK];
+    std::complex<double> * WORK = new std::complex<double>[LWORK];
     int INFO;
 
-    dgetrf(&N,&N,A,&N,IPIV,&INFO);
-    dgetri(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
+    zgetrf(&N,&N,A,&N,IPIV,&INFO);
+    zgetri(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
 
     delete[] IPIV;
     delete[] WORK;
@@ -195,7 +185,7 @@ namespace
 		   y.setValue(ValueType(0.0));
 		   for(unsigned int i = 0; i < d_N; ++i)
 		   {
-		     *(y.data() + i)= *(x.data() + i);//(1.0/d_diag[i])*(*(x.data()+i));
+		     *(y.data() + i)= (1.0/d_diag[i])*(*(x.data()+i));
 		   }
 		 }
 
@@ -236,7 +226,6 @@ namespace
 	       for(unsigned int i = 0; i < N; ++i)
 		 diag[i] = A[i*N+i];
 	       d_PCContext = std::make_shared<OperatorContextJacobiPC<ValueTypeOperator, ValueTypeOperand>>(diag);
-
 	       for(unsigned int i = 0; i < N; ++i)
 	       {
 		 *(d_b.data() + i) = b[i];
@@ -265,7 +254,7 @@ namespace
 	       void
 		 setSolution(const linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x) override 
 		 {
-		   d_x =x;
+		   d_x = x;
 		 }
 
 	       const linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &
@@ -339,29 +328,29 @@ int main()
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> laoc = 
     std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
 
-  RandMatHermitianGen<double> rMatGen(N);
-  std::vector<double> A = rMatGen.getA();
-  std::vector<double> b(N,0.0);
-  utils::RandNumGen<double> rng(0.0, 1.0);
+  RandMatHermitianGen<std::complex<double>> rMatGen(N);
+  std::vector<std::complex<double>> A = rMatGen.getA();
+  std::vector<std::complex<double>> b(N,0.0);
+  utils::RandNumGen<std::complex<double>> rng(0.0, 1.0);
   for(unsigned int i = 0; i < N; ++i)
     b[i] = rng.generate();
 
-  std::vector<double> AInv(A);
+  std::vector<std::complex<double>> AInv(A);
   inverse(AInv.data(), N);
-  std::vector<double> x(N,0.0);
+  std::vector<std::complex<double>> x(N,0.0);
   for(unsigned int i = 0; i < N; ++i)
   {
     for(unsigned int j = 0; j < N; ++j)
       x[i] += AInv[i*N + j]*b[j];
   }
 
-  LinearSolverFunctionTest<double, double> lsf(A, b, N, laoc);
-  linearAlgebra::CGLinearSolver<double, double, Host> cgls(N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
+  LinearSolverFunctionTest<std::complex<double>, std::complex<double>> lsf(A, b, N, laoc);
+  linearAlgebra::CGLinearSolver<std::complex<double>, std::complex<double>, Host> cgls(N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
   linearAlgebra::Error err = cgls.solve(lsf);
-  const linearAlgebra::Vector<double, Host> & xcg = lsf.getSolution();
+  const linearAlgebra::Vector<std::complex<double>, Host> & xcg = lsf.getSolution();
   double diffL2 = 0.0;
   for(unsigned int i = 0; i < N; ++i)
-    diffL2 += pow(x[i] - *(xcg.data()+i), 2.0);
+    diffL2 += pow(std::abs(x[i] - *(xcg.data()+i)), 2.0);
 
   diffL2 = sqrt(diffL2);
   utils::throwException(diffL2 < diffTol, 

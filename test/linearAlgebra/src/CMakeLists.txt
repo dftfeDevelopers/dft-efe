@@ -11,6 +11,13 @@ if (ENABLE_CUDA)
     add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
 endif ()
 
+if(ENABLE_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
+	find_package(MPI REQUIRED)
+	include_directories(${MPI_CXX_INCLUDE_PATH})
+	set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+endif()
+
 add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
 include_directories(${MAIN_PROJECT_DIR}/src)
 
@@ -106,10 +113,17 @@ include_directories(${MAIN_PROJECT_DIR}/src)
 find_package(MKL REQUIRED)
 include_directories(${MKL_INCLUDE_DIRS})
 link_directories(${MKL_LIBRARIES})
+
+
+if (ENABLE_MPI)
 add_executable(TestCGLinearSolverSerialHostDouble  TestCGLinearSolverSerialHostDouble.cpp)
 target_link_libraries(TestCGLinearSolverSerialHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
-#target_link_libraries(TestCGLinearSolverSerialHostDouble mkl_intel_lp64 mkl_sequential mkl_core)
 set_target_properties(TestCGLinearSolverSerialHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+
+add_executable(TestCGLinearSolverSerialHostComplexDouble  TestCGLinearSolverSerialHostComplexDouble.cpp)
+target_link_libraries(TestCGLinearSolverSerialHostComplexDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+set_target_properties(TestCGLinearSolverSerialHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+endif()
 
 if (ENABLE_CUDA)
     add_executable(TestSerialVectorDoubleAddDevice TestSerialVectorDoubleAddDevice.cpp)
