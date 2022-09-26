@@ -108,17 +108,33 @@ namespace
 	RandMatHermitianGen(const unsigned int N):
 	  d_A(N*N, T(0.0))
       {
+         std::vector<T> AMat(N*N);
+         std::vector<T> ATMat(N*N);
 	// random symmetrix matrix
 	utils::RandNumGen<T> rng(T(0.0), T(1.0));
 	for(unsigned int i = 0; i < N; ++i)
 	{
-	  for(unsigned int j = i; j < N; ++j)
+	  for(unsigned int j = 0; j < N; ++j)
 	  {
 	    const T x = rng.generate(); 
-	    d_A[i*N + j] = x;
-	    d_A[j*N + i] = conjugate(x);
+	    AMat[i*N + j] = x;
+            ATMat[j*N+i] =  conjugate(x);
 	  }
 	}
+        // Create a positive semi-definite matrix 
+        // A = A (A^*)
+        // Use dgemms to accelerate this
+        for(unsigned int i = 0; i < N; ++i)
+        {
+          for(unsigned int j = 0; j < N; ++j)
+          {
+            for (unsigned int k = 0 ; k < N ; ++k)
+            {
+              d_A[i*N + j] += AMat[i*N+k] * ATMat[k*N+j];
+            }
+          }
+	}
+          
 
       }
 	std::vector<T> getA() const 
@@ -195,7 +211,8 @@ namespace
 		   y.setValue(ValueType(0.0));
 		   for(unsigned int i = 0; i < d_N; ++i)
 		   {
-		     *(y.data() + i)= *(x.data() + i);//(1.0/d_diag[i])*(*(x.data()+i));
+		     //*(y.data() + i)= *(x.data() + i);//(1.0/d_diag[i])*(*(x.data()+i));
+                    *(y.data() + i)= (1.0/d_diag[i])*(*(x.data()+i));
 		   }
 		 }
 
@@ -314,14 +331,14 @@ int main()
   //
 
   // size of the matrix
-  const unsigned int N = 4;
+  const unsigned int N = 1000;
   // absolute tolerance for the residual (r = Ax - b) in the linear solve
   const double absTol = 1e-12;
   // relative tolerance for the residual (r = Ax - b) in the linear solve
-  const double relTol = 1e-12;
+  const double relTol = 1e-10;
   // tolerance to check accuracy of exact x (x = A^{-1}b) and the x from the 
   // CG linear solver
-  const double diffTol = 1e-12;
+  const double diffTol = 1e-8;
 
   //
   // initialize MPI
@@ -339,7 +356,9 @@ int main()
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> laoc = 
     std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
 
+  std::cout<<" Generate Random Matrix .... \n";
   RandMatHermitianGen<double> rMatGen(N);
+ std::cout<<" Random Positive Semi-Definite Matrix Generate\n";
   std::vector<double> A = rMatGen.getA();
   std::vector<double> b(N,0.0);
   utils::RandNumGen<double> rng(0.0, 1.0);
@@ -356,8 +375,10 @@ int main()
   }
 
   LinearSolverFunctionTest<double, double> lsf(A, b, N, laoc);
-  linearAlgebra::CGLinearSolver<double, double, Host> cgls(N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
+  linearAlgebra::CGLinearSolver<double, double, Host> cgls(N*N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
+  std::cout<<" Using CG Solver \n";
   linearAlgebra::Error err = cgls.solve(lsf);
+  std::cout<< "Exitted CG solver\n";
   const linearAlgebra::Vector<double, Host> & xcg = lsf.getSolution();
   double diffL2 = 0.0;
   for(unsigned int i = 0; i < N; ++i)

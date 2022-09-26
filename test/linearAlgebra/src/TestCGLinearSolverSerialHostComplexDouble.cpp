@@ -98,17 +98,33 @@ namespace
 	RandMatHermitianGen(const unsigned int N):
 	  d_A(N*N, T(0.0))
       {
-	// random symmetrix matrix
-	utils::RandNumGen<T> rng(T(0.0), T(1.0));
-	for(unsigned int i = 0; i < N; ++i)
-	{
-	  for(unsigned int j = i; j < N; ++j)
-	  {
-	    const T x = rng.generate(); 
-	    d_A[i*N + j] = x;
-	    d_A[j*N + i] = conjugate(x);
-	  }
+        std::vector<T> AMat(N*N);
+        std::vector<T> ATMat(N*N);
+        // random symmetrix matrix
+        utils::RandNumGen<T> rng(T(0.0), T(1.0));
+        for(unsigned int i = 0; i < N; ++i)
+        {
+          for(unsigned int j = 0; j < N; ++j)
+          {
+            const T x = rng.generate(); 
+            AMat[i*N + j] = x;
+            ATMat[j*N+i] =  conjugate(x);
+          }
 	}
+	// Create a positive semi-definite matrix 
+        // A = A (A^*)
+        // Use dgemms to accelerate this
+        for(unsigned int i = 0; i < N; ++i)
+        {
+          for(unsigned int j = 0; j < N; ++j)
+          {
+            for (unsigned int k = 0 ; k < N ; ++k)
+            {
+              d_A[i*N + j] += AMat[i*N+k] * ATMat[k*N+j];
+            }
+          }
+	}
+
 
       }
 	std::vector<T> getA() const 
@@ -303,7 +319,7 @@ int main()
   //
 
   // size of the matrix
-  const unsigned int N = 4;
+  const unsigned int N = 20;
   // absolute tolerance for the residual (r = Ax - b) in the linear solve
   const double absTol = 1e-12;
   // relative tolerance for the residual (r = Ax - b) in the linear solve
@@ -345,7 +361,7 @@ int main()
   }
 
   LinearSolverFunctionTest<std::complex<double>, std::complex<double>> lsf(A, b, N, laoc);
-  linearAlgebra::CGLinearSolver<std::complex<double>, std::complex<double>, Host> cgls(N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
+  linearAlgebra::CGLinearSolver<std::complex<double>, std::complex<double>, Host> cgls(N*N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
   linearAlgebra::Error err = cgls.solve(lsf);
   const linearAlgebra::Vector<std::complex<double>, Host> & xcg = lsf.getSolution();
   double diffL2 = 0.0;
