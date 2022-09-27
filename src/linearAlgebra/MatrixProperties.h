@@ -23,21 +23,15 @@
  * @author Ian C. Lin.
  */
 
-#ifndef dftefeDistributedDenseMatrix_h
-#define dftefeDistributedDenseMatrix_h
-
-#include "Matrix.h"
+#ifndef dftefeMatrixProperties_h
+#define dftefeMatrixProperties_h
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class DistributedDenseMatrix : protected Matrix<ValueType, memorySpace>
-    {};
-  } // namespace linearAlgebra
+    enum class Uplo
+  }
 } // namespace dftefe
 
-
-
-#endif // dftefeDistributedDenseMatrix_h
+#endif // dftefeMatrixProperties_h

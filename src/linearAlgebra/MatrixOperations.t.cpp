@@ -37,22 +37,28 @@ namespace dftefe
                                ValueType                              beta,
                                GeneralMatrix<ValueType, memorySpace> &C)
     {
-      if (memorySpace == dftefe::utils::MemorySpace::DEVICE)
-        {
-          slate::multiply(alpha,
-                          A.getSlateMatrix(),
-                          B.getSlateMatrix(),
-                          beta,
-                          {slate::Option::Target, slate::Target::Devices});
-        }
-      else
-        {
-          slate::multiply(alpha,
-                          A.getSlateMatrix(),
-                          B.getSlateMatrix(),
-                          beta,
-                          {slate::Option::Target, slate::Target::HostTask});
-        }
+      //      if (memorySpace == dftefe::utils::MemorySpace::DEVICE)
+      //        {
+      //          slate::multiply(alpha,
+      //                          A.getSlateMatrix(),
+      //                          B.getSlateMatrix(),
+      //                          beta,
+      //                          {slate::Option::Target,
+      //                          slate::Target::Devices});
+      //        }
+      //      else
+      //        {
+      //          slate::multiply(alpha,
+      //                          A.getSlateMatrix(),
+      //                          B.getSlateMatrix(),
+      //                          beta,
+      //                          {slate::Option::Target, slate::Target::Host});
+      slate::multiply(alpha,
+                      A.getSlateMatrix(),
+                      B.getSlateMatrix(),
+                      beta,
+                      C.getSlateMatrix());
+      //        }
     }
 
 
@@ -78,7 +84,7 @@ namespace dftefe
                           A.getSlateMatrix(),
                           B.getSlateMatrix(),
                           beta,
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -106,7 +112,7 @@ namespace dftefe
                           A.getSlateMatrix(),
                           B.getSlateMatrix(),
                           beta,
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -127,7 +133,7 @@ namespace dftefe
         {
           slate::multiply(A.getSlateMatrix(),
                           B.getSlateMatrix(),
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -149,7 +155,7 @@ namespace dftefe
         {
           slate::multiply(A.getSlateMatrix(),
                           B.getSlateMatrix(),
-                          {slate::Option::Target, slate::Target::HostTask});
+                          {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -171,8 +177,7 @@ namespace dftefe
         {
           slate::triangular_solve(A.getSlateMatrix(),
                                   B.getSlateMatrix(),
-                                  {slate::Option::Target,
-                                   slate::Target::HostTask});
+                                  {slate::Option::Target, slate::Target::Host});
         }
     }
 
@@ -195,8 +200,7 @@ namespace dftefe
         {
           slate::triangular_solve(A.getSlateMatrix(),
                                   B.getSlateMatrix(),
-                                  {slate::Option::Target,
-                                   slate::Target::HostTask});
+                                  {slate::Option::Target, slate::Target::Host});
         }
     }
 

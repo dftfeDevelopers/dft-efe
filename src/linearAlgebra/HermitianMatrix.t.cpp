@@ -48,12 +48,30 @@ namespace dftefe
         {
           d_matrix->insertLocalTiles(slate::Target::Host);
         }
+      AbstractMatrix<ValueType, memorySpace>::initSlateMatrix(d_matrix);
     }
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     slate::HermitianMatrix<ValueType> &
     HermitianMatrix<ValueType, memorySpace>::getSlateMatrix() const
     {
-      return d_matrix;
+      return *d_matrix;
     }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    HermitianMatrix<ValueType, memorySpace>::setValues(const ValueType *data)
+    {
+      AbstractMatrix<ValueType, memorySpace>::setValueSlateMatrix(d_baseMatrix,
+                                                                  data);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    HermitianMatrix<ValueType, memorySpace>::setValues(size_t           i1,
+                                                       size_t           i2,
+                                                       size_t           j1,
+                                                       size_t           j2,
+                                                       const ValueType *data)
+    {}
   } // namespace linearAlgebra
 } // namespace dftefe

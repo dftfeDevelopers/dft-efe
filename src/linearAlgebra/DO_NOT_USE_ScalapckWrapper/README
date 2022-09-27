@@ -1,0 +1,4 @@
+This directory is adapted from Scalapack wrapper in DFT-FE and Deal.ii code. It contains the scalapack wrapper when we
+really need a fall back option if SLATE does not work.
+
+This project currently does NOT support Scalapck.

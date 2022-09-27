@@ -20,10 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin.
+ * @author Sambit Das.
  */
 
-#include "DistributedDenseMatrix.h"
-
-namespace dftefe
-{}
+#include "MatVecOperations.h"
