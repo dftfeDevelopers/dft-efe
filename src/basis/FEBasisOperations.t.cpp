@@ -26,7 +26,7 @@
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
-#include <basis/FEBasisOperationsInternal.h>
+#include <basis/FECellWiseDataOperations.h>
 namespace dftefe
 {
   namespace basis
@@ -183,7 +183,7 @@ namespace dftefe
           memoryTransfer.copy(numCellsInBlock,
                               numCellsInBlockDofsMemSpace.data(),
                               numCellsInBlockDofs.data());
-          FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
+          FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
             copyFieldToCellWiseData(field.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
@@ -569,7 +569,7 @@ namespace dftefe
             linAlgOpContext);
 
 
-	            FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
+	    FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
             addCellWiseDataToFieldData(outputFieldCellValues,
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,

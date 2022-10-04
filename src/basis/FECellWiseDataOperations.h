@@ -23,8 +23,8 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeFEBasisOperationsInternal_h
-#define dftefeFEBasisOperationsInternal_h
+#ifndef dftefeFECellWiseDataOperations_h
+#define dftefeFECellWiseDataOperations_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -36,7 +36,7 @@ namespace dftefe
   namespace basis
   {
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
-    class FEBasisOperationsInternal
+    class FECellWiseDataOperations
     {
     public:
       static void
@@ -60,12 +60,12 @@ namespace dftefe
         ValueTypeBasisCoeff *                                     data);
 
 
-    }; // end of class FEBasisOperationsInternal
+    }; // end of class FECellWiseDataOperations
 
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueTypeBasisCoeff>
-    class FEBasisOperationsInternal
+    class FECellWiseDataOperations
     {
     public:
       static void
@@ -93,9 +93,9 @@ namespace dftefe
         ValueTypeBasisCoeff *data);
 
 
-    }; // end of class FEBasisOperationsInternal
+    }; // end of class FECellWiseDataOperations
 #endif
   } // end of namespace basis
 } // end of namespace dftefe
-#include <basis/FEBasisOperationsInternal.t.cpp>
-#endif // dftefeFEBasisOperationsInternal_h
+#include <basis/FECellWiseDataOperations.t.cpp>
+#endif // dftefeFECellWiseDataOperations_h

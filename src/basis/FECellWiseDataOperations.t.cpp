@@ -28,7 +28,7 @@ namespace dftefe
   {
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
+    FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
       copyFieldToCellWiseData(
         const ValueTypeBasisCoeff *data,
         const size_type            numComponents,
@@ -58,7 +58,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsInternal<ValueTypeBasisCoeff, memorySpace>::
+    FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
       addCellWiseDataToFieldData(
         const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &              cellWiseStorage,
