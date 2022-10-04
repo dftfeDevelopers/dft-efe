@@ -144,10 +144,13 @@ namespace dftefe
     LinearAlgebraProfiler::registerIterStart(const size_type iter)
     {
       d_iter = iter;
-      if (d_iter % d_wallTimeFreq == 0 && d_wallTimeFreq > 0)
+      if (d_wallTimeFreq > 0)
         {
-          utils::mpi::MPIBarrier(d_mpiComm);
-          getTime(d_tIterStart);
+          if (d_iter % d_wallTimeFreq == 0)
+            {
+              utils::mpi::MPIBarrier(d_mpiComm);
+              getTime(d_tIterStart);
+            }
         }
     }
 
@@ -155,18 +158,24 @@ namespace dftefe
     LinearAlgebraProfiler::registerIterEnd(const std::string &s)
     {
       std::string msg = "";
-      if (d_iter % d_printFreq == 0 && d_printFreq > 0)
+      if (d_printFreq > 0)
         {
-          msg = s;
+          if (d_iter % d_printFreq == 0)
+            {
+              msg = s;
+            }
         }
 
-      if (d_iter % d_wallTimeFreq == 0 && d_wallTimeFreq > 0)
+      if (d_wallTimeFreq > 0)
         {
-          utils::mpi::MPIBarrier(d_mpiComm);
-          getTime(d_tIterEnd);
-          msg += " Total wall time: " +
-                 std::to_string(getTimeDiff(d_tIterStart, d_tIterEnd)) + " " +
-                 getTimeUnit();
+          if (d_iter % d_wallTimeFreq == 0)
+            {
+              utils::mpi::MPIBarrier(d_mpiComm);
+              getTime(d_tIterEnd);
+              msg += " Total wall time: " +
+                     std::to_string(getTimeDiff(d_tIterStart, d_tIterEnd)) +
+                     " " + getTimeUnit();
+            }
         }
 
       if (d_myRankPrintFlag && (d_printFreq > 0 || d_wallTimeFreq > 0))

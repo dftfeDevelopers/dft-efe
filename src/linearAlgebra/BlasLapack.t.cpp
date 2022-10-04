@@ -209,9 +209,9 @@ namespace dftefe
                          numVec,
                          multiVecDataX,
                          multiVecDataY,
-                         multiVecDotProduct,
                          opX,
                          opY,
+                         multiVecDotProduct,
                          context);
       }
 

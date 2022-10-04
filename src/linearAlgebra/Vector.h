@@ -292,15 +292,14 @@ namespace dftefe
        * @brief Copy constructor
        * @param[in] u Vector object to copy from
        */
-      Vector(const Vector &u);
+      Vector(const Vector<ValueType, memorySpace> &u);
 
       /**
        * @brief Copy constructor with reinitialisation
        * @param[in] u Vector object to copy from
        * @param[in] initVal Initial value of the vector
        */
-      Vector(const Vector &u,
-             ValueType     initVal = utils::Types<ValueType>::zero);
+      Vector(const Vector<ValueType, memorySpace> &u, ValueType initVal);
 
       /**
        * @brief Move constructor
@@ -313,16 +312,16 @@ namespace dftefe
        * @param[in] u const reference to Vector object to copy from
        * @return reference to this object after copying data from u
        */
-      Vector &
-      operator=(const Vector &u);
+      Vector<ValueType, memorySpace> &
+      operator=(const Vector<ValueType, memorySpace> &u);
 
       /**
        * @brief Move assignment operator
        * @param[in] u const reference to Vector object to move from
        * @return reference to this object after moving data from u
        */
-      Vector &
-      operator=(Vector &&u);
+      Vector<ValueType, memorySpace> &
+      operator=(Vector<ValueType, memorySpace> &&u);
 
       /**
        * @brief Return iterator pointing to the beginning of Vector data.

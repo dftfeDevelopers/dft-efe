@@ -88,8 +88,11 @@ namespace dftefe
                                     memorySpace> &
       getPCContext() const = 0;
 
-      void
+      virtual void
       setSolution(const Vector<ValueTypeOperand, memorySpace> &x) = 0;
+
+      virtual const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &
+      getSolution() const = 0;
 
       virtual Vector<ValueType, memorySpace>
       getRhs() const = 0;
@@ -97,7 +100,7 @@ namespace dftefe
       virtual Vector<ValueTypeOperand, memorySpace>
       getInitialGuess() const = 0;
 
-      const utils::mpi::MPIComm &
+      virtual const utils::mpi::MPIComm &
       getMPIComm() const = 0;
     }; // end of class LinearSolverFunction
   }    // end of namespace linearAlgebra
