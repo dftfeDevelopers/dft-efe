@@ -23,8 +23,8 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeOperatorContext_h
-#define dftefeOperatorContext_h
+#ifndef dftefeLaplaceOperatorContextFE_h
+#define dftefeLaplaceOperatorContextFE_h
 
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -32,12 +32,14 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/AbstractMatrix.h>
+#include <linearAlgebra/OperatorContext.h>
 namespace dftefe
 {
-  namespace linearAlgebra
+  namespace physics 
   {
     /**
-     *@brief Abstract class to encapsulate the action of a discrete operator on vectors, matrices, etc.
+     *@brief A derived class of linearAlgebra::OperatorContext to encapsulate
+     * the action of a discrete operator on vectors, matrices, etc.
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
      * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
@@ -48,36 +50,55 @@ namespace dftefe
      */
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
-              utils::MemorySpace memorySpace>
-    class OperatorContext
+              utils::MemorySpace memorySpace,
+	      size_type dim>
+    class LaplaceOperatorContextFE: public linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
-    public:
+      public:
       /**
-       *@brief Default Destructor
-       *
+       * @brief define ValueType as the superior (bigger set) of the
+       * ValueTypeOperator and ValueTypeOperand
+       * (e.g., between double and complex<double>, complex<double>
+       * is the bigger set)
        */
-      ~OperatorContext() = default;
+      using ValueType =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperand>;
+	
+      public:
 
-      virtual void
+      /**
+       * @brief Constructor
+       */
+      LaplaceOperatorContextFE(const basis::FEBasisHandler<ValueTypeOperator,
+        memorySpace,
+        dim > &feBasisHandler,
+        const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &                                                  feBasisDataStorage,
+        const std::string                                    constraintsName,
+	const QuadratureRuleAttributes &quadratureRuleAttributes,
+	const size_type maxCellTimesNumVecs);
+
+      void
       apply(const Vector<ValueTypeOperand, memorySpace> &x,
             Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                   memorySpace> &                        y) const = 0;
+                   memorySpace> &                        y) const override;
 
-      virtual void
+      void
       apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<
               blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-              memorySpace> &Y) const = 0;
+              memorySpace> &Y) const override;
 
-      //
-      // TODO: Uncomment the following and implement in all the derived classes
-      //
-
-      // virtual
-      //  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
-      //    AbstractMatrix<blasLapack::scalar_type<ValueTypeOperator,
-      //    ValueTypeOperand>, memorySpace> & Y) const = 0;
-    };
-  } // end of namespace linearAlgebra
-} // end of namespace dftefe
-#endif // dftefeOperatorContext_h
+      private:
+      
+      const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim> * d_feBasisHandler;
+      const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace> * d_feBasisDataStorage;
+      const std::string d_constraintsName;
+      const QuadratureRuleAttributes & d_quadratureRuleAttributes;
+      const size_type d_maxCellTimesNumVecs;
+    };// end of class LaplaceOperatorContextFE
+  }// end of namespace physics
+}// end of namespace dftefe
+#include <physics/LaplaceOperatorContextFE.t.cpp>
+#endif // dftefeLaplaceOperatorContextFE_h
