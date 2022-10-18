@@ -669,7 +669,6 @@ namespace dftefe
         return d_numGhostIndicesInGhostProcs;
       }
 
-
       template <dftefe::utils::MemorySpace memorySpace>
       const std::vector<size_type> &
       MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const

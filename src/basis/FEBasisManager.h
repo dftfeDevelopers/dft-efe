@@ -30,7 +30,7 @@
 #include <utils/Point.h>
 #include <basis/BasisManager.h>
 #include <basis/TriangulationBase.h>
-#include <basis/TriangulationCellBase.h>
+#include <basis/FECellBase.h>
 namespace dftefe
 {
   namespace basis
@@ -41,22 +41,19 @@ namespace dftefe
      * point, getting cell and nodal information, etc.
      *
      */
-    template <size_type dim>
     class FEBasisManager : public BasisManager
     {
       //
       // Typedefs
       //
     public:
-      typedef std::vector<std::shared_ptr<TriangulationCellBase>>::iterator
-        cellIterator;
-      typedef std::vector<std::shared_ptr<TriangulationCellBase>>::
-        const_iterator const_cellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::iterator FECellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
+        const_FECellIterator;
 
-      virtual ~FEBasisManager() = default;
       virtual double
       getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) = 0;
+                            const utils::Point &point) const = 0;
       virtual std::vector<double>
       getBasisFunctionDerivative(const size_type     basisId,
                                  const utils::Point &point,
@@ -64,33 +61,65 @@ namespace dftefe
 
       ////// FE specific virtual member functions /////
       virtual void
-      reinit(const TriangulationBase &triangulation, const size_type feOrder);
+      reinit(std::shared_ptr<const TriangulationBase> triangulation,
+             const size_type                          feOrder) = 0;
+
+      virtual std::shared_ptr<const TriangulationBase>
+      getTriangulation() const = 0;
+
       virtual size_type
       nLocalCells() const = 0;
+      virtual size_type
+      nLocallyOwnedCells() const = 0;
       virtual size_type
       nGlobalCells() const = 0;
       virtual size_type
       getFEOrder(size_type cellId) const = 0;
       virtual size_type
       nCellDofs(size_type cellId) const = 0;
+      virtual bool
+      isHPRefined() const = 0;
+
+      virtual std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange() const = 0;
+
       virtual size_type
       nLocalNodes() const = 0;
       virtual global_size_type
       nGlobalNodes() const = 0;
       virtual std::vector<size_type>
-      getLocalNodeIds(size_type cellId) = 0;
+      getLocalNodeIds(size_type cellId) const = 0;
       virtual std::vector<size_type>
-      getGlobalNodeIds() = 0;
+      getGlobalNodeIds() const = 0;
+      virtual void
+      getCellDofsGlobalIds(
+        size_type                      cellId,
+        std::vector<global_size_type> &vecGlobalNodeId) const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
-      virtual cellIterator
-      beginLocal() = 0;
-      virtual cellIterator
-      endLocal() = 0;
-      virtual const_cellIterator
-      beginLocal() const = 0;
-      virtual const_cellIterator
-      endLocal() const = 0;
+      virtual FECellIterator
+      beginLocallyOwnedCells() = 0;
+      virtual FECellIterator
+      endLocallyOwnedCells() = 0;
+      virtual const_FECellIterator
+      beginLocallyOwnedCells() const = 0;
+      virtual const_FECellIterator
+      endLocallyOwnedCells() const = 0;
+      virtual FECellIterator
+      beginLocalCells() = 0;
+      virtual FECellIterator
+      endLocalCells() = 0;
+      virtual const_FECellIterator
+      beginLocalCells() const = 0;
+      virtual const_FECellIterator
+      endLocalCells() const = 0;
+
+      virtual size_type
+      nCumulativeLocallyOwnedCellDofs() const = 0;
+
+      virtual size_type
+      nCumulativeLocalCellDofs() const = 0;
+
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

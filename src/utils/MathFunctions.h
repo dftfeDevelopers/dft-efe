@@ -23,40 +23,22 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeBasisOperationsManager_h
-#define dftefeBasisOperationsManager_h
+#ifndef dftefeMathFunctions_h
+#define dftefeMathFunctions_h
 
 #include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
-#include <utils/ScalarSpatialFunction.h>
+#include <cmath>
 namespace dftefe
 {
-  namespace basis
+  namespace utils
   {
-    /**
-     * An abstract class to handle interactions between a basis and a
-     * field (e.g., integration of field with basis).
-     */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class BasisOperationsManager
+    namespace mathFunctions
     {
-    public:
-      virtual ~BasisOperationsManager() = default;
-      virtual void
-      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-                               const CellQuadratureContainer &         q,
-                               Field<ValueType, memorySpace> &         field);
-
-      virtual void
-      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
-                               Field<ValueType, memorySpace> &field);
-
-      virtual void
-      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
-                               const CellQuadratureContainer &      q,
-                               Field<ValueType, memorySpace> &fieldOutput);
-
-    }; // end of BasisOperationsManager
-  }    // end of namespace basis
+      int
+      intPow(int base, unsigned int e);
+      size_type
+      sizeTypePow(size_type base, size_type e);
+    } // namespace mathFunctions
+  }   // end of namespace utils
 } // end of namespace dftefe
-#endif // dftefeBasisOperationsManager_h
+#endif // dftefeMathFunctions_h

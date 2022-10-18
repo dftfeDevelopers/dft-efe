@@ -32,7 +32,6 @@
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/LinearSolverImpl.h>
 #include <linearAlgebra/LinearSolverFunction.h>
-
 namespace dftefe
 {
   namespace linearAlgebra

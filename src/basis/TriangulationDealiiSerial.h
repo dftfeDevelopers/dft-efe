@@ -38,10 +38,12 @@ namespace dftefe
       clearUserFlags() override;
       void
       executeCoarseningAndRefinement() override;
-      size_type
-      nLocalCells() const override;
+      unsigned int
+      nLocallyOwnedCells() const override;
       size_type
       nGlobalCells() const override;
+      size_type
+      nLocalCells() const override;
       /**
        * \todo
        * TODO:
@@ -50,17 +52,20 @@ namespace dftefe
        */
       std::vector<size_type>
       getBoundaryIds() const override;
-      TriangulationBase::cellIterator
+      TriangulationBase::TriangulationCellIterator
       beginLocal() override;
-      TriangulationBase::cellIterator
+      TriangulationBase::TriangulationCellIterator
       endLocal() override;
-      TriangulationBase::const_cellIterator
+      TriangulationBase::const_TriangulationCellIterator
       beginLocal() const override;
-      TriangulationBase::const_cellIterator
+      TriangulationBase::const_TriangulationCellIterator
       endLocal() const override;
       unsigned int
       getDim() const override;
 
+      // class specific member function
+      const dealii::Triangulation<dim> &
+      returnDealiiTria() const;
 
     private:
       /**

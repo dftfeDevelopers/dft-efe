@@ -28,7 +28,6 @@ namespace dftefe
 {
   namespace physics
   {
-
     //
     // Constructor
     //
@@ -36,27 +35,27 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    PoissonLinearSolverFunctionFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
-    PoissonLinearSolverFunctionFE(const basis::FEBasisHandler<ValueTypeOperator,
-        memorySpace,
-        dim > &feBasisHandler,
+    PoissonLinearSolverFunctionFE<ValueTypeOperator,
+                                  ValueTypeOperand,
+                                  memorySpace,
+                                  dim>::
+      PoissonLinearSolverFunctionFE(
+        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
         const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &                                                  feBasisDataStorage,
         const linearAlgebra::Vector<ValueType, memorySpace> &b,
         const std::string                                    constraintsName,
-	const linearAlgebra::PreconditionerType pcType):
-      d_feBasisHandler(&feBasisHandler),
-      d_feBasisDataStorage(&feBasisDataStorage),
-      d_b(b),
-      d_constraintsName(constraintsName),
-      d_pcType(pcType),
-      d_x(b.getMPIPatternP2P(),
-	  b.getLinAlgOpContext(),
-	  utils::Types<ValueType>::zero)
-	{
+        const linearAlgebra::PreconditionerType              pcType)
+      : d_feBasisHandler(&feBasisHandler)
+      , d_feBasisDataStorage(&feBasisDataStorage)
+      , d_b(b)
+      , d_constraintsName(constraintsName)
+      , d_pcType(pcType)
+      , d_x(b.getMPIPatternP2P(),
+            b.getLinAlgOpContext(),
+            utils::Types<ValueType>::zero)
+    {}
 
-	}
-
-  }// end of namespace physics
-}// end of namespace dftefe
-
+  } // end of namespace physics
+} // end of namespace dftefe

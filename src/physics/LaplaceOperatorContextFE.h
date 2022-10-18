@@ -35,7 +35,7 @@
 #include <linearAlgebra/OperatorContext.h>
 namespace dftefe
 {
-  namespace physics 
+  namespace physics
   {
     /**
      *@brief A derived class of linearAlgebra::OperatorContext to encapsulate
@@ -51,10 +51,12 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
-	      size_type dim>
-    class LaplaceOperatorContextFE: public linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+              size_type          dim>
+    class LaplaceOperatorContextFE
+      : public linearAlgebra::
+          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
-      public:
+    public:
       /**
        * @brief define ValueType as the superior (bigger set) of the
        * ValueTypeOperator and ValueTypeOperand
@@ -64,41 +66,39 @@ namespace dftefe
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
-	
-      public:
 
+    public:
       /**
        * @brief Constructor
        */
-      LaplaceOperatorContextFE(const basis::FEBasisHandler<ValueTypeOperator,
-        memorySpace,
-        dim > &feBasisHandler,
+      LaplaceOperatorContextFE(
+        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
         const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &                                                  feBasisDataStorage,
-        const std::string                                    constraintsName,
-	const QuadratureRuleAttributes &quadratureRuleAttributes,
-	const size_type maxCellTimesNumVecs);
+          &                             feBasisDataStorage,
+        const std::string               constraintsName,
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                 maxCellTimesNumVecs);
 
       void
-      apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                   memorySpace> &                        y) const override;
+      apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
+            linearAlgberba::Vector<ValueType, memorySpace> &y) const override;
 
       void
-      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<
-              blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-              memorySpace> &Y) const override;
+      apply(const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+            linearAlgebra::MultiVector<ValueType>,
+            memorySpace > &Y) const override;
 
-      private:
-      
-      const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim> * d_feBasisHandler;
-      const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace> * d_feBasisDataStorage;
-      const std::string d_constraintsName;
-      const QuadratureRuleAttributes & d_quadratureRuleAttributes;
-      const size_type d_maxCellTimesNumVecs;
-    };// end of class LaplaceOperatorContextFE
-  }// end of namespace physics
-}// end of namespace dftefe
+    private:
+      const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+        *d_feBasisHandler;
+      const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+        *                             d_feBasisDataStorage;
+      const std::string               d_constraintsName;
+      const QuadratureRuleAttributes &d_quadratureRuleAttributes;
+      const size_type                 d_maxCellTimesNumVecs;
+    }; // end of class LaplaceOperatorContextFE
+  }    // end of namespace physics
+} // end of namespace dftefe
 #include <physics/LaplaceOperatorContextFE.t.cpp>
 #endif // dftefeLaplaceOperatorContextFE_h

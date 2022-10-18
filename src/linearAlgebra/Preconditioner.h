@@ -79,8 +79,6 @@ namespace dftefe
       //    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>,
       //    memorySpace> & Y) const = 0;
     };
-
-
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefePreconditioner_h

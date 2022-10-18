@@ -31,7 +31,7 @@ namespace dftefe
       std::vector<std::shared_ptr<const TriangulationCellBase>> returnValue(
         numberCells);
 
-      TriangulationBase::const_cellIterator cellIter =
+      TriangulationBase::const_TriangulationCellIterator cellIter =
         triangulationDealiiSerial->beginLocal();
       unsigned int iCell = 0;
       for (; cellIter != triangulationDealiiSerial->endLocal(); ++cellIter)

@@ -33,7 +33,6 @@
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
-
 namespace dftefe
 {
   namespace linearAlgebra

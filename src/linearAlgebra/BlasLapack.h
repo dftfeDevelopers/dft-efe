@@ -91,7 +91,7 @@ namespace dftefe
        * @param[out] y output vector
        * @param[in] context Blas context for GPU operations
        *
-       * @return orms of all the vectors
+       * @return norms of all the vectors
        */
       template <typename ValueType1,
                 typename ValueType2,

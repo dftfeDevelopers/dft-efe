@@ -1,7 +1,8 @@
-#ifndef dftefeCellQuadratureContainer_h
-#define dftefeCellQuadratureContainer_h
+#ifndef dftefeQuadratureRuleContainer_h
+#define dftefeQuadratureRuleContainer_h
 
-#include "QuadratureRule.h"
+#include <quadrature/QuadratureRule.h>
+#include <quadrature/QuadratureAttributes.h>
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
 #include <utils/ScalarSpatialFunction.h>
@@ -19,7 +20,7 @@ namespace dftefe
      * cell. This supports adaptive quadrature i.e each cell can have different
      * quadrature rules. Further each cell can have arbitrary quadrature rule.
      */
-    class CellQuadratureContainer
+    class QuadratureRuleContainer
     {
     public:
       /**
@@ -32,8 +33,9 @@ namespace dftefe
        * the cell in real space is mapped to its parametric coordinates.  This
        * is required to calculate the JxW values at each quad point
        */
-      CellQuadratureContainer(
-        std::shared_ptr<const QuadratureRule>           quadratureRule,
+      QuadratureRuleContainer(
+        const QuadratureRuleAttributes &      quadratureRuleAttributes,
+        std::shared_ptr<const QuadratureRule> quadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,
         const basis::CellMappingBase &                  cellMapping);
 
@@ -47,7 +49,8 @@ namespace dftefe
        * the cell in real space is mapped to its parametric coordinates.  This
        * is required to calculate the JxW values at each quad point
        */
-      CellQuadratureContainer(
+      QuadratureRuleContainer(
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
         std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
         std::shared_ptr<const basis::TriangulationBase>    triangulation,
         const basis::CellMappingBase &                     cellMapping);
@@ -64,8 +67,9 @@ namespace dftefe
        * coordinates. This is required to calculate the JxW values at each quad
        * point
        */
-      CellQuadratureContainer(
-        std::shared_ptr<const QuadratureRule>           baseQuadratureRule,
+      QuadratureRuleContainer(
+        const QuadratureRuleAttributes &      quadratureRuleAttributes,
+        std::shared_ptr<const QuadratureRule> baseQuadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,
         const basis::CellMappingBase &                  cellMapping,
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
@@ -75,6 +79,13 @@ namespace dftefe
         const std::vector<double> &integralThresholds,
         const double               smallestCellVolume = 1e-12,
         const unsigned int         maxRecursion       = 100);
+
+      /**
+       * @brief Returns the underlying QuadratureRuleAttributes
+       * @returns const reference to the QuadratureAttributes
+       */
+      const QuadratureRuleAttributes &
+      getQuadratureRuleAttributes() const;
 
       /**
        * @brief Returns the number of cells in the quadrature container
@@ -168,9 +179,26 @@ namespace dftefe
       size_type
       nCellQuadraturePoints(const unsigned int cellId) const;
 
+      /**
+       * @brief A function to return the starting index of the quadrature point of each cell
+       *
+       * @returns  vector storing the starting index of the quadrature point of each cell
+       */
+      const std::vector<size_type> &
+      getCellQuadStartIds() const;
+
+      /**
+       * @brief A function to return the starting index of the quadrature point of a given cell
+       *
+       * @param[in] cellId index of the cell
+       * @returns  the starting index of the quadrature point of the cell
+       */
+      size_type
+      getCellQuadStartId(const size_type cellId) const;
 
 
     private:
+      const QuadratureRuleAttributes &d_quadratureRuleAttributes;
       std::vector<std::shared_ptr<const QuadratureRule>> d_quadratureRuleVec;
       std::vector<size_type>                             d_numCellQuadPoints;
       std::vector<size_type>                             d_cellQuadStartIds;
@@ -179,9 +207,10 @@ namespace dftefe
       unsigned int                                       d_dim;
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
+      bool                                               d_storeJacobianInverse;
     };
   } // end of namespace quadrature
 
 } // end of namespace dftefe
 
-#endif // dftefeCellQuadratureContainer_h
+#endif // dftefeQuadratureRuleContainer_h

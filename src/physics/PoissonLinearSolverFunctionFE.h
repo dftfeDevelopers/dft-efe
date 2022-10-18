@@ -75,14 +75,13 @@ namespace dftefe
 
     public:
       PoissonLinearSolverFunctionFE(
-        const basis::FEBasisHandler<ValueTypeOperator,
-        memorySpace,
-        dim > &feBasisHandler,
+        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
         const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &                                                  feBasisDataStorage,
         const linearAlgebra::Vector<ValueType, memorySpace> &b,
         const std::string                                    constraintsName,
-	const linearAlgebra::PreconditionerType pcType);
+        const linearAlgebra::PreconditionerType              pcType);
 
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
       getAxContext() const override;
@@ -102,15 +101,17 @@ namespace dftefe
       const utils::mpi::MPIComm &
       getMPIComm() const override;
 
-     private:
-      const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim> * d_feBasisHandler;
-      const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace> * d_feBasisDataStorage;
-      linearAlgebra::Vector<ValueType, memorySpace> d_b;
+    private:
+      const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+        *d_feBasisHandler;
+      const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+        *                                                  d_feBasisDataStorage;
+      linearAlgebra::Vector<ValueType, memorySpace>        d_b;
       linearAlgebra::Vector<ValueTypeOperand, memorySpace> d_x;
-      std::string d_constraintsName;
-      linearAlgebra::PreconditionerType d_pcType;
+      std::string                                          d_constraintsName;
+      linearAlgebra::PreconditionerType                    d_pcType;
     }; // end of class PoissonLinearSolverFunctionFE
-  } // namespace physics
+  }    // namespace physics
 } // end of namespace dftefe
 #include <physics/PoissonLinearSolverFunctionFE.t.cpp>
 #endif // dftefePoissonLinearSolverFunctionFE_h
