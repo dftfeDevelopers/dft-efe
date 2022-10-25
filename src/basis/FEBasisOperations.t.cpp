@@ -68,10 +68,8 @@ namespace dftefe
       interpolate(
         const Field<ValueTypeBasisCoeff, memorySpace> &field,
         const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &quadValuesContainer) const
+        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &quadValuesContainer) const
     {
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
@@ -117,11 +115,9 @@ namespace dftefe
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer(
           quadratureRuleAttributes);
-      quadValuesContainer.reinit(
-        quadRuleContainer,
-        numComponents,
-        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData>());
+      quadValuesContainer.reinit(quadRuleContainer,
+                                 numComponents,
+                                 ValueTypeUnion());
 
       const quadrature::QuadratureFamily quadratureFamily =
         quadratureRuleAttributes.getQuadratureFamily();
@@ -254,12 +250,8 @@ namespace dftefe
                               strideC.data(),
                               strideCTmp.data());
 
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>
-            alpha = 1.0;
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>
-                                                       beta = 0.0;
+          ValueTypeUnion                               alpha = 1.0;
+          ValueTypeUnion                               beta  = 0.0;
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             field.getLinAlgOpContext();
 
@@ -269,9 +261,7 @@ namespace dftefe
               .data() +
             BStartOffset;
 
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData> *C =
-            quadValuesContainer.begin() + CStartOffset;
+          ValueTypeUnion *C = quadValuesContainer.begin() + CStartOffset;
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
@@ -318,16 +308,11 @@ namespace dftefe
                       memorySpace,
                       dim>::
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &                            inp,
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                                         inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const
     {
-      using ValueTypeQuad =
-        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData>;
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
         inp.getQuadratureRuleContainer();
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributesInp =
@@ -446,14 +431,17 @@ namespace dftefe
                             0);
 
 
-          utils::MemoryStorage<ValueTypeQuad, memorySpace> inpJxW(
-            numComponents * numCumulativeDofsQuadCellsInBlock, ValueTypeQuad());
+          utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
+            numComponents * numCumulativeDofsQuadCellsInBlock,
+            ValueTypeUnion());
 
-	  std::cout<<"numCumulativeDofsCellsInBlock = "<<numCumulativeDofsCellsInBlock<< " numComponents  = "<<numComponents<<"\n";
+          std::cout << "numCumulativeDofsCellsInBlock = "
+                    << numCumulativeDofsCellsInBlock
+                    << " numComponents  = " << numComponents << "\n";
 
-	  utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-            outputFieldCellValues(numCumulativeDofsCellsInBlock *
-                                  numComponents, ValueTypeQuad());
+          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+            outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,
+                                  ValueTypeUnion());
 
 
           // Hadamard product for inp and JxW
@@ -529,12 +517,8 @@ namespace dftefe
                               strideC.data(),
                               strideCTmp.data());
 
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>
-            alpha = 1.0;
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>
-            beta = 0.0;
+          ValueTypeUnion alpha = 1.0;
+          ValueTypeUnion beta  = 0.0;
 
           const ValueTypeBasisData *B =
             (d_feBasisDataStorage->getBasisDataInAllCells(
@@ -542,9 +526,7 @@ namespace dftefe
               .data() +
             BStartOffset;
 
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData> *C =
-            outputFieldCellValues.begin() ;
+          ValueTypeUnion *C = outputFieldCellValues.begin();
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
@@ -569,7 +551,7 @@ namespace dftefe
             linAlgOpContext);
 
 
-	    FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
+          FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
             addCellWiseDataToFieldData(outputFieldCellValues,
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,
@@ -585,9 +567,6 @@ namespace dftefe
               CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
-
-
-
         }
 
 

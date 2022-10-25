@@ -206,8 +206,8 @@ main()
   dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData(
     basisHandler, constraintName, &linAlgOpContext);
 
-  dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> outputFieldData(
-    basisHandler, constraintName, &linAlgOpContext);
+  dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST>
+    outputFieldData(basisHandler, constraintName, &linAlgOpContext);
 
   // populate the value of the Field
 
@@ -297,10 +297,9 @@ main()
   // Interpolate the nodal data to the quad points
   feBasisOp.interpolate(fieldData, quadAttr[0], quadValuesContainer);
 
- feBasisOp.integrateWithBasisValues(
-            quadValuesContainer,
-            quadAttr[0],
-	    outputFieldData);
+  feBasisOp.integrateWithBasisValues(quadValuesContainer,
+                                     quadAttr[0],
+                                     outputFieldData);
 
 
   const std::vector<dftefe::utils::Point> &locQuadPoints =

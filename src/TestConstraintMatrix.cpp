@@ -65,7 +65,7 @@ main()
   const unsigned int                                dim = 3;
   std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
     std::make_shared<dftefe::basis::TriangulationDealiiSerial<dim>>();
-  std::vector<unsigned int>         subdivisions = {2, 2,2};
+  std::vector<unsigned int>         subdivisions = {2, 2, 2};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim,

@@ -35,6 +35,9 @@
 #include <basis/FEBasisHandler.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
 #include <memory>
 namespace dftefe
 {
@@ -52,6 +55,17 @@ namespace dftefe
                                                      ValueTypeBasisData,
                                                      memorySpace>
     {
+      //
+      // typedefs
+      //
+    public:
+      //
+      // Get the union of the ValueTypeBasisCoeff and ValueTypeBasisData
+      // (.e.g, the union of double and complex<double> is complex<double>)
+      //
+      using ValueTypeUnion = linearAlgebra::blasLapack::scalar_type<
+        ValueTypeBasisCoeff ValueTypeBasisData>;
+
     public:
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
@@ -64,18 +78,49 @@ namespace dftefe
       interpolate(
         const Field<ValueTypeBasisCoeff, memorySpace> &field,
         const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &quadValuesContainer) const override;
+        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &quadValuesContainer) const override;
+
+      void
+      interpolate(
+        const linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &v,
+        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &quadValuesContainer) const override;
+
+      void
+      interpolate(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &V,
+        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &quadValuesContainer) const override;
+
       void
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &                            inp,
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                                         inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const override;
+
+      void
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                                         inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> & feBasisHandler,
+        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &v)
+        const override;
+
+      void
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                                         inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &V)
+        const override;
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
