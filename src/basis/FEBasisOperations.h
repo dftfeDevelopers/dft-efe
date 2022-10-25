@@ -63,8 +63,9 @@ namespace dftefe
       // Get the union of the ValueTypeBasisCoeff and ValueTypeBasisData
       // (.e.g, the union of double and complex<double> is complex<double>)
       //
-      using ValueTypeUnion = linearAlgebra::blasLapack::scalar_type<
-        ValueTypeBasisCoeff ValueTypeBasisData>;
+      using ValueTypeUnion =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData>;
 
     public:
       FEBasisOperations(
