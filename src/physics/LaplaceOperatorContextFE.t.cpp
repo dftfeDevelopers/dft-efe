@@ -89,8 +89,7 @@ namespace dftefe
         const utils::MemoryStorage<ValueTypeOperator, memorySpace>
           &                     gradNiGradNjAllCells,
         const ValueTypeOperand *x,
-        linearAlgebra::Vector <
-          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand> *
             y,
         const size_type                              numVecs,
@@ -292,6 +291,14 @@ namespace dftefe
         d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsName);
 
       const size_type numVecs = 1;
+      
+      // get handle to constraints
+      const Constraints<ValueType, memorySpace> &constraints =
+        d_feBasisHandler->getConstraints(d_constraintsName);
+
+      // update the child nodes based on the parent nodes
+      constraints.distributeParentToChild(x);
+
 
       // access cell-wise discrete Laplace operator
       auto gradNiGradNjInAllCells =
@@ -323,8 +330,6 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      const Constraints<ValueType, memorySpace> &constraints =
-        d_feBasisHandler->getConstraints(d_constraintsName);
       constraints.distributeChildToParent(y);
     }
 
@@ -350,6 +355,13 @@ namespace dftefe
         d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsName);
 
       const size_type numVecs = X.numberVectors();
+      
+      // get handle to constraints
+      const Constraints<ValueType, memorySpace> &constraints =
+        d_feBasisHandler->getConstraints(d_constraintsName);
+
+      // update the child nodes based on the parent nodes
+      constraints.distributeParentToChild(X);
 
       // access cell-wise discrete Laplace operator
       auto gradNiGradNjInAllCells =
@@ -381,8 +393,6 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      const Constraints<ValueType, memorySpace> &constraints =
-        d_feBasisHandler->getConstraints(d_constraintsName);
       constraints.distributeChildToParent(Y);
     }
 

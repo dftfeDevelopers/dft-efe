@@ -49,7 +49,7 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     class Preconditioner : public OperatorContext<ValueTypeOperator,
                                                   ValueTypeOperand,
-                                                  ValueTypeOperand>
+                                                  memorySpace>
     {
     public:
       /**
