@@ -124,7 +124,7 @@ namespace dftefe
 
       /**
        * @brief Template for performing \f$ z_i = x_i * y_i$
-       * @param[in] size size of the array
+       * @param[in] n size of the array
        * @param[in] x array
        * @param[in] y array
        * @param[out] z array
@@ -142,7 +142,7 @@ namespace dftefe
        * @brief Template for performing \f$ z_i = op(x_i) * op(y_i)$
        * where op represents either identity or complex conjugate
        * operation on a scalar
-       * @param[in] size size of the array
+       * @param[in] n size of the array
        * @param[in] x array
        * @param[in] y array
        * @param[in] opx blasLapack::ScalarOp defining the operation on each

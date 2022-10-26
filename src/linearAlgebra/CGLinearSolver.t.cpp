@@ -146,7 +146,7 @@ namespace dftefe
 
               // z^Hr (dot product of z-conjugate and r)
 
-	      ValueType zDotr = dot(z,
+              ValueType zDotr = dot(z,
                                     r,
                                     blasLapack::ScalarOp::Conj,
                                     blasLapack::ScalarOp::Identity);
@@ -180,7 +180,7 @@ namespace dftefe
 
               // p = z + beta*p
               add((ValueType)1.0, z, beta, p, p);
-	    }
+            }
 
           rNorm = r.l2Norm();
 

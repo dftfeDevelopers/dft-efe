@@ -26,9 +26,11 @@
 #ifndef dftefePreconditionerJacobi_h
 #define dftefePreconditionerJacobi_h
 
-#include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
 #include <linearAlgebra/Preconditioner.h>
 #include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
@@ -50,6 +52,17 @@ namespace dftefe
     class PreconditionerJacobi
       : public Preconditioner<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
+      //
+      // typedefs
+      //
+    public:
+      //
+      // alias to define the union of ValueTypeOperator and ValueTypeOperand
+      // (e.g., the union of double and complex<double> is complex<double>)
+      //
+      using ValueTypeUnion =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
     public:
       /**
        * @brief Constructor
@@ -66,29 +79,46 @@ namespace dftefe
        */
       ~PreconditionerJacobi() = default;
 
+      /*
+       * @brief Function to apply the Jacobi preconditioner on an input Vector \p x
+       * and store the output in \p y. That is, it stores \f$y_i=1/x_i$\f
+       *
+       * @param[in] x Input Vector
+       * @param[out] y Output Vector
+       *
+       * @note The input Vector \p x can be modified inside the function for
+       * performance reasons. If the user needs \p x to be constant
+       * (un-modified), we suggest the user to make a copy of \p x
+       * prior to calling this function
+       *
+       */
       void
-      apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                   memorySpace> &                        y) const override;
+      apply(Vector<ValueTypeOperand, memorySpace> &x,
+            Vector<ValueTypeUnion, memorySpace> &  y) const override;
 
+      /*
+       * @brief Function to apply the Jacobi preconditioner on an input Vector \p X
+       * and store the output in \p Y. That is, it stores \f$Y_i=1/X_i$\f
+       *
+       * @param[in] X Input Vector
+       * @param[out] Y Output Vector
+       *
+       * @note The input Vector \p X can be modified inside the function for
+       * performance reasons. If the user needs \p X to be constant
+       * (un-modified), we suggest the user to make a copy of \p X
+       * prior to calling this function
+       *
+       */
       void
       apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                        memorySpace> &                        Y) const override;
+            MultiVector<ValueTypeUnion, memorySpace> &        Y) const override;
 
-      SolverTypes::PreconditionerType
+      PreconditionerType
       getPreconditionerType() const = override;
-      //
-      // TODO: Uncomment the following and implement in all the derived classes
-      //
-
-      // virtual
-      //  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
-      //    AbstractMatrix<scalar_type<ValueTypeOperator, ValueTypeOperand>,
-      //    memorySpace> & Y) const = 0;
 
     private:
       Vector<ValueTypeOperator, memoryStorage> d_invDiagonal;
+      PreconditionerType                       d_pcType;
     };
 
 

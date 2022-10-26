@@ -25,6 +25,7 @@
 
 
 #include <utils/MemoryTransfer.h>
+#include <utils/Exceptions.h>
 #include <BlasLapack.h>
 namespace dftefe
 {
@@ -37,8 +38,14 @@ namespace dftefe
       PreconditionerJacobi(
         const Vector<ValueTypeOperator, memorySpaceSrc> &diagonal)
       : d_digonalInv(diagonal)
+      , d_pcType(PreconditionerType::JACOBI)
+
     {
-      blasLapack::reciprocalX(diagonal.localSize(), 1.0, digonal.data(), d_diagonalInv.data(), *(diagonal.getLinAlgOpContext());
+      blasLapack::reciprocalX(diagonal.localSize(),
+                              1.0,
+                              digonal.data(),
+                              d_diagonalInv.data(),
+                              *(diagonal.getLinAlgOpContext()));
     }
 
     template <typename ValueTypeOperator,
@@ -46,15 +53,37 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                   memorySpace> &                        y) const
+      apply(Vector<ValueTypeOperand, memorySpace> &x,
+            Vector<ValueTypeUnion, memorySpace> &  y) const
     {
       blaslapack::hadamardProduct(d_digonalInv.localSize(),
                                   d_digonalInv.data(),
                                   x.data(),
                                   y.data(),
                                   *(d_digonalInv.getLinAlgOpContext()));
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const
+    {
+      utils::throwException(
+        false,
+        "apply() in PreconditionerJacobi for MultiVector is not "
+        "implemented yet.");
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>
+      : getPreconditionerType() const
+    {
+      return d_pcType;
     }
 
   } // end of namespace linearAlgebra

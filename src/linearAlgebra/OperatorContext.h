@@ -27,11 +27,9 @@
 #define dftefeOperatorContext_h
 
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
-#include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
-#include <linearAlgebra/AbstractMatrix.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -51,6 +49,17 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     class OperatorContext
     {
+      //
+      // typedefs
+      //
+    public:
+      //
+      // alias to define the union of ValueTypeOperator and ValueTypeOperand
+      // (e.g., the union of double and complex<double> is complex<double>)
+      //
+      using ValueTypeUnion =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
     public:
       /**
        *@brief Default Destructor
@@ -58,25 +67,43 @@ namespace dftefe
        */
       ~OperatorContext() = default;
 
+      /*
+       * @brief Function to apply the operator on an input Vector \p x and store
+       * the output in \p y. A typical use case is that the operator is a matrix
+       * (\f$A$\f) and we want to evaluate \f$y=Ax$\f
+       *
+       * @param[in] x Input Vector
+       * @param[out] y Output Vector that stores the action of the operator
+       *  on \p x
+       *
+       * @note The input Vector \p x can be modified inside the function for
+       * performance reasons. If the user needs \p x to be constant
+       * (un-modified), we suggest the user to make a copy of \p x
+       * prior to calling this function
+       *
+       */
       virtual void
-      apply(const Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                   memorySpace> &                        y) const = 0;
+      apply(Vector<ValueTypeOperand, memorySpace> &x,
+            Vector<ValueTypeUnion, memorySpace> &  y) const = 0;
 
+      /*
+       * @brief Function to apply the operator on an input Vector \p X and store
+       * the output in \p Y. A typical use case is that the operator is a matrix
+       * (\f$A$\f) and we want to evaluate \f$Y=AX$\f
+       *
+       * @param[in] X Input Vector
+       * @param[out] Y Output Vector that stores the action of the operator
+       *  on \p X
+       *
+       * @note The input Vector \p X can be modified inside the function for
+       * performance reasons. If the user needs \p X to be constant
+       * (un-modified), we suggest the user to make a copy of \p X
+       * prior to calling this function
+       *
+       */
       virtual void
-      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<
-              blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-              memorySpace> &Y) const = 0;
-
-      //
-      // TODO: Uncomment the following and implement in all the derived classes
-      //
-
-      // virtual
-      //  apply(const AbstractMatrix<ValueTypeOperand, memorySpace> & X,
-      //    AbstractMatrix<blasLapack::scalar_type<ValueTypeOperator,
-      //    ValueTypeOperand>, memorySpace> & Y) const = 0;
+      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const = 0;
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
