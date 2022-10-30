@@ -83,6 +83,24 @@ namespace dftefe
         const std::string                                    constraintsName,
         const linearAlgebra::PreconditionerType              pcType);
 
+      PoissonLinearSolverFunctionFE(
+        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
+        const basis::FEBasisOperations<ValueTypeBasisCoeff,ValueTypeBasisData,memorySpace,dim>
+          &feOperations,
+        const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &feBasisDataStorage,
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes
+        const std::string                                    constraintsName,
+        const linearAlgebra::PreconditionerType              pcType,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
       getAxContext() const override;
 
@@ -106,8 +124,8 @@ namespace dftefe
         *d_feBasisHandler;
       const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
         *                                                  d_feBasisDataStorage;
-      linearAlgebra::Vector<ValueType, memorySpace>        d_b;
-      linearAlgebra::Vector<ValueTypeOperand, memorySpace> d_x;
+      linearAlgebra::MultiVector<ValueType, memorySpace>        d_b;
+      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> d_x;
       std::string                                          d_constraintsName;
       linearAlgebra::PreconditionerType                    d_pcType;
     }; // end of class PoissonLinearSolverFunctionFE
