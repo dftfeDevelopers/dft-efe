@@ -67,7 +67,6 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                ValueTypeBasisData>;
 
-    public:
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
                         basisDataStorage,
@@ -92,6 +91,16 @@ namespace dftefe
 
       void
       interpolate(
+        const MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        const std::string &constraintsName,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const override;
+      void
+      interpolate(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &V,
         const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -107,21 +116,25 @@ namespace dftefe
 
       void
       integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                         inp,
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> & feBasisHandler,
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &v)
-        const override;
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> & basisHandler,
+        const std::string &constraintsName,
+        MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData) const override;
 
-      void
-      integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                         inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &V)
-        const override;
+
+//        void
+//      integrateWithBasisValues(
+//        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+//          &                                         inp,
+//        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+//        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> & feBasisHandler,
+//        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &v)
+//        const override;
+
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,

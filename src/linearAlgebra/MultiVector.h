@@ -427,6 +427,12 @@ namespace dftefe
       std::vector<double>
       lInfNorms() const;
 
+      /**
+       * @brief Returns the nunber of vectors in this multi-vector
+       * @return d_numVectors
+       */
+      size_type getNumberComponents();
+
       void
       updateGhostValues(const size_type communicationChannel = 0);
 
@@ -450,6 +456,9 @@ namespace dftefe
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const;
+
+      linearAlgebra::LinAlgOpContext<memorySpace> &
+      getLinAlgOpContext() const;
 
     private:
       std::unique_ptr<Storage>      d_storage;

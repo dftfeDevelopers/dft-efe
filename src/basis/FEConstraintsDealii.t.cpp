@@ -603,8 +603,42 @@ namespace dftefe
               size_type                  dim>
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      distributeChildToParent(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        size_type blockSize) const
+    {
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
+        constraintsDistributeChildToParent(vectorData,
+                                           blockSize,
+                                           d_rowConstraintsIdsLocal,
+                                           d_rowConstraintsSizes,
+                                           d_columnConstraintsIdsLocal,
+                                           d_constraintRowSizesAccumulated,
+                                           d_columnConstraintsValues);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setConstrainedNodesToZero(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        size_type blockSize) const
+    {
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
+        constraintsSetConstrainedNodesToZero(vectorData,
+                                             blockSize,
+                                             d_rowConstraintsIdsLocal);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setConstrainedNodesToZero(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         size_type blockSize) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::

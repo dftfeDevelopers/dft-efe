@@ -92,12 +92,17 @@ namespace dftefe
         size_type blockSize = 1) const override;
       void
       distributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize = 1) const override;
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        size_type blockSize) const override;
       void
       setConstrainedNodesToZero(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         size_type blockSize = 1) const override;
+
+      void
+      setConstrainedNodesToZero(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        size_type blockSize) const override;
 
       //
       // FE related functions

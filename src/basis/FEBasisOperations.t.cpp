@@ -71,34 +71,58 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &quadValuesContainer) const
     {
+
+      auto vectorData = field.getVector();
+      const std::string constraintsName = field.getConstraintsName();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
+
+      interpolate(vectorData,
+                  constraintsName,
+                  basisHandler,
+                  quadratureRuleAttributes,
+                  quadValuesContainer);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      memorySpace,
+                      dim>::
+    interpolate(
+      const MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+      const std::string &constraintsName,
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+      const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
+      quadrature::QuadratureValuesContainer<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData>,
+        memorySpace> &quadValuesContainer) const
+
+    {
       const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
         &feBasisHandler = dynamic_cast<
           const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
           basisHandler);
       utils::throwException(
         &feBasisHandler != nullptr,
-        "Could not cast BasisHandler of the input Field to FEBasisHandler in "
+        "Could not cast BasisHandler of the input vector to FEBasisHandler in "
         "FEBasisOperations.interpolate()");
 
-      const BasisManager &basisManagerField = basisHandler.getBasisManager();
-      const BasisManager &basisManagerDataStorage =
-        d_feBasisDataStorage->getBasisManager();
-      utils::throwException(
-        &basisManagerField == &basisManagerDataStorage,
-        "Mismatch in BasisManager used in the Field and the BasisDataStorage "
-        "in FEBasisOperations.interpolate().");
+      const BasisManager &basisManager = basisHandler.getBasisManager();
 
       const FEBasisManager &feBasisManager =
-        dynamic_cast<const FEBasisManager &>(basisManagerField);
+        dynamic_cast<const FEBasisManager &>(basisManager);
       utils::throwException(
         &feBasisManager != nullptr,
-        "Could not cast BasisManager of the input Field to FEBasisManager "
+        "Could not cast BasisManager of the input vector to FEBasisManager "
         "in FEBasisOperations.interpolate()");
 
-      const size_type   numComponents   = 1;
-      const std::string constraintsName = field.getConstraintsName();
+      const size_type   numComponents   = vectorData.getNumberComponents();
       const size_type   numLocallyOwnedCells =
         feBasisHandler.nLocallyOwnedCells();
       const size_type numCumulativeLocallyOwnedCellDofs =
@@ -129,7 +153,7 @@ namespace dftefe
 
       // Perform
       // Ce = Ae*Be, where Ce_ij = interpolated value of the i-th component at
-      // j-th quad point in e-th cell Ae_ik = i-th field components at k-th
+      // j-th quad point in e-th cell Ae_ik = i-th vector components at k-th
       // basis function of e-th cell Be_kj = k-th basis function value at j-th
       // quad point in e-th cell
       //
@@ -180,7 +204,7 @@ namespace dftefe
                               numCellsInBlockDofsMemSpace.data(),
                               numCellsInBlockDofs.data());
           FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
-            copyFieldToCellWiseData(field.begin(),
+            copyFieldToCellWiseData(vectorData.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
                                     numCellsInBlockDofsMemSpace,
@@ -253,7 +277,7 @@ namespace dftefe
           ValueTypeUnion                               alpha = 1.0;
           ValueTypeUnion                               beta  = 0.0;
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-            field.getLinAlgOpContext();
+            vectorData.getLinAlgOpContext();
 
           const ValueTypeBasisData *B =
             (d_feBasisDataStorage->getBasisDataInAllCells(
@@ -313,6 +337,31 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const
     {
+
+      auto vectorData = f.getVector();
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
+        f.getBasisHandler();
+      const std::string constraintsName = f.getConstraintsName();
+
+      integrateWithBasisValues(inp,
+                               quadratureRuleAttributes,
+                               basisHandler,
+                               constraintsName,
+                               vectorData);
+    }
+
+    void
+    integrateWithBasisValues(
+      const quadrature::QuadratureValuesContainer<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData>,
+        memorySpace> &                            inp,
+      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace> & basisHandler,
+      const std::string &constraintsName,
+      MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData) const
+
+    {
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
         inp.getQuadratureRuleContainer();
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributesInp =
@@ -323,9 +372,6 @@ namespace dftefe
         "input QuadratureValuesContainer and the one passed to the "
         " FEBasisOperations::integrateWithBasisValues function");
 
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
-        f.getBasisHandler();
-
       const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
         &feBasisHandler = dynamic_cast<
           const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
@@ -333,7 +379,7 @@ namespace dftefe
       utils::throwException(
         &feBasisHandler != nullptr,
         "Could not cast BasisHandler of the input Field to FEBasisHandler in "
-        "FEBasisOperations interpolate()");
+        "FEBasisOperations integrateWithBasisValues()");
 
       const BasisManager &basisManagerField = basisHandler.getBasisManager();
       const BasisManager &basisManagerDataStorage =
@@ -341,22 +387,25 @@ namespace dftefe
       utils::throwException(
         &basisManagerField == &basisManagerDataStorage,
         "Mismatch in BasisManager used in the Field and the BasisDataStorage "
-        "in FEBasisOperations interpolate().");
+        "in FEBasisOperations integrateWithBasisValues().");
       const FEBasisManager &feBasisManager =
         dynamic_cast<const FEBasisManager &>(basisManagerField);
       utils::throwException(
         &feBasisManager != nullptr,
         "Could not cast BasisManager of the input Field to FEBasisManager "
-        "in FEBasisOperations interpolate()");
+        "in FEBasisOperations integrateWithBasisValues()");
 
 
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-        f.getLinAlgOpContext();
+        vectorData.getLinAlgOpContext();
       auto jxwStorage =
         d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
 
       const size_type   numComponents   = inp.getNumberComponents();
-      const std::string constraintsName = f.getConstraintsName();
+      utils::throwException(
+        vectorData.getNumberComponents() == numComponents,
+        "Mismatch in number of components in input and output "
+        "in FEBasisOperations integrateWithBasisValues().");
       const size_type   numLocallyOwnedCells =
         feBasisHandler.nLocallyOwnedCells();
       const size_type numCumulativeLocallyOwnedCellDofs =
@@ -556,7 +605,7 @@ namespace dftefe
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,
                                        numCellsInBlockDofsMemSpace,
-                                       f.begin());
+                                       vecorData.begin());
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
@@ -570,32 +619,14 @@ namespace dftefe
         }
 
 
-      //      template <typename ValueType,
-      //                typename dftefe::utils::MemorySpace memorySpace>
-      //      void
-      //      hadamardProduct(size_type                     n,
-      //                      const ValueType *             x,
-      //                      const ValueType *             y,
-      //                      ValueType *                   z,
-      //                      LinAlgOpContext<memorySpace> &context);
-      //
-      //
-      //       for ( iCell : cell loop )
-      //         for ( iNode : nodel loop )
-      //           cellWiseStorage (iCell, iNode ) = 0.0;
-      //           for ( jQuad : quad loop )
-      //             cellWiseStorage (iCell, iNode ) +=
-      //             shape_func(iCell,iNode,jQuad)*inp(iCell,jQuad)*JxW(iCell,Jquad);
-
-
 
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
-      f.accumulateAddLocallyOwned();
+      vectorData.accumulateAddLocallyOwned();
 
-      // function to do a static condensation to send the constraint nodes to
-      // its parent nodes
-      f.applyConstraintsChildToParent();
+      const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
+        feBasisHandler.getConstraints(constraintsName);
+      constraints.distributeChildToParent(vectorData);
     }
 
 

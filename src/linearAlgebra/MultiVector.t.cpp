@@ -556,6 +556,12 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    size_type  MultiVector<ValueType, memorySpace>::getNumberComponents()
+    {
+      return d_numVectors;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     MultiVector<ValueType, memorySpace>::updateGhostValues(
       const size_type communicationChannel /*= 0*/)
@@ -631,6 +637,13 @@ namespace dftefe
     MultiVector<ValueType, memorySpace>::getMPIPatternP2P() const
     {
       return d_mpiPatternP2P;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    linearAlgebra::LinAlgOpContext<memorySpace> &
+    MultiVector<ValueType, memorySpace>::getLinAlgOpContext() const
+    {
+      return *d_linAlgOpContext;
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

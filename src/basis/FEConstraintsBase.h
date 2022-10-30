@@ -94,12 +94,17 @@ namespace dftefe
         size_type blockSize = 1) const = 0;
       virtual void
       distributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize = 1) const = 0;
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        size_type blockSize) const = 0;
       virtual void
       setConstrainedNodesToZero(
         linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
         size_type blockSize = 1) const = 0;
+
+      virtual void
+      setConstrainedNodesToZero(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        size_type blockSize) const = 0;
       //
       // FE related functions
       //
