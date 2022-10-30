@@ -31,6 +31,8 @@
 #include <utils/TypeConfig.h>
 #include <utils/MPIPatternP2P.h>
 #include <linearAlgebra/Vector.h>
+#include <utils/ScalarSpatialFunction.h>
+
 namespace dftefe
 {
   namespace basis
@@ -61,6 +63,9 @@ namespace dftefe
 
       virtual void
       setHomogeneousDirichletBC() = 0;
+
+      virtual void
+      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues) = 0;
 
       virtual bool
       isConstrained(global_size_type basisId) const = 0;

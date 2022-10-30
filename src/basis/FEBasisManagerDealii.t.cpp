@@ -23,6 +23,7 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 #include <deal.II/base/index_set.h>
+#include <deal.II/dofs/dof_tools.h>
 #include "TriangulationDealiiParallel.h"
 #include "TriangulationDealiiSerial.h"
 #include "FECellDealii.h"
@@ -363,6 +364,17 @@ namespace dftefe
         }
 
       return d_dofHandler->get_fe(0);
+    }
+
+    template <size_type dim>
+    void getBasisCenters( std::map< global_size_type, utils::Point> &dofCoords ) const
+    {
+      //TODO if the creation of linear mapping is inefficient, then this has to be improved
+      std::map< global_size_type, Point<dim,double>> dealiiDofCoords
+      MappingQ1<dim,dim> mappingQ1;
+      DoFTools::map_dofs_to_support_points<dim,dim>(mappingQ1,dof_handler,dealiiDofCoords);
+
+      convertToDftefePoint(dealiiDofCoords , dofCoords);
     }
 
     template <size_type dim>

@@ -120,6 +120,9 @@ namespace dftefe
       virtual size_type
       nCumulativeLocalCellDofs() const = 0;
 
+      // This assumes a linear cell mapping
+      virtual void getBasisCenters( std::map< global_size_type, utils::Point> &dofCoords ) const = 0;
+
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

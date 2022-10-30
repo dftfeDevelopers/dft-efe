@@ -65,6 +65,9 @@ namespace dftefe
       void
       setHomogeneousDirichletBC() override;
 
+      void
+      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues) override;
+
       const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 

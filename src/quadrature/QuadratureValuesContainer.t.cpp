@@ -384,6 +384,30 @@ namespace dftefe
       return (d_storage.begin() + cellStartId(cellId) + nCellEntries(cellId));
     }
 
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    ValueType
+    QuadratureValuesContainer<ValueType, memorySpace>::dotProduct() const
+    {
+      const std::vector<double> & jxwValues =
+        d_quadratureRuleContainer->getJxW();
+
+      utils::MemoryStorage<double, memorySpace>
+        jxwValuesMemorySpace(jxwValues.size());
+
+      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+        jxwValues.size(),
+        jxwValuesMemorySpace.data(),
+        &jxwValues[0]);
+
+      auto dotValue = dotProductMultiComponent(jxwValues.size(),
+                 d_numberComponents,
+                  d_storage.begin(),
+                  1,
+                  jxwValuesMemorySpace.begin(),
+                                          1);
+      return dotValue;
+    }
+
 
     //
     // Helper functions

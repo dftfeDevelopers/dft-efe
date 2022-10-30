@@ -137,6 +137,9 @@ namespace dftefe
       virtual size_type
       nCumulativeLocalCellDofs() const override;
 
+      // This assumes a linear cell mapping
+      void getBasisCenters( std::map< global_size_type, utils::Point> &dofCoords ) const override;
+
       //
       // dealii specific functions
       //
