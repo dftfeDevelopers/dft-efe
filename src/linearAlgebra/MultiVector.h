@@ -549,11 +549,12 @@ namespace dftefe
     template <typename ValueType1,
               typename ValueType2,
               utils::MemorySpace memorySpace>
-    dot(const MultiVector<ValueType1, memorySpace> &u,
-        const MultiVector<ValueType2, memorySpace> &v,
+    void
+    dot(const MultiVector<ValueType1, memorySpace> &                  u,
+        const MultiVector<ValueType2, memorySpace> &                  v,
+        std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &dotProds,
         const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
-        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity,
-        std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &dotProds);
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
 
     /**
      * @brief Same as the above dot() function but instead of returning the

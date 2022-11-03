@@ -161,7 +161,7 @@ namespace
 	     }
 
 	       void
-		 apply(const linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
+		 apply(linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
 		     linearAlgebra::Vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
 		     utils::MemorySpace::HOST> &                        y) const override 
 		 {
@@ -175,7 +175,7 @@ namespace
 		 }
 
 	       void
-		 apply(const linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &X,
+		 apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &X,
 		     linearAlgebra::MultiVector<
 		     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
 		     utils::MemorySpace::HOST> &Y) const override
@@ -203,7 +203,7 @@ namespace
 	     {}
 
 	       void
-		 apply(const linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
+		 apply(linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
 		     linearAlgebra::Vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
 		     utils::MemorySpace::HOST> &                        y) const override 
 		 {
@@ -217,7 +217,7 @@ namespace
 		 }
 
 	       void
-		 apply(const linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &X,
+		 apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &X,
 		     linearAlgebra::MultiVector<
 		     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
 		     utils::MemorySpace::HOST> &Y) const override

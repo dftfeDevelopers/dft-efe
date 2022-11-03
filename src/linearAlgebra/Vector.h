@@ -124,10 +124,10 @@ namespace dftefe
       //
       // typedefs
       //
-      using Storage         = MultiVector<ValueType, memorySpace>::Storage;
-      using value_type      = typename Storage::value_type;
-      using pointer         = typename Storage::pointer;
-      using reference       = typename Storage::reference;
+      using Storage    = typename MultiVector<ValueType, memorySpace>::Storage;
+      using value_type = typename Storage::value_type;
+      using pointer    = typename Storage::pointer;
+      using reference  = typename Storage::reference;
       using const_reference = typename Storage::const_reference;
       using iterator        = typename Storage::iterator;
       using const_iterator  = typename Storage::const_iterator;
@@ -138,16 +138,16 @@ namespace dftefe
       // or explicit qualification (ParentClass::d_parentClassMember)
       // and directly use d_parentClassDataMember.
       //
-      using MultiVector<ValueType, memorySpace> d_storage;
-      using MultiVector<ValueType, memorySpace> d_linAlgOpContext;
-      using MultiVector<ValueType, memorySpace> d_vectorAttributes;
-      using MultiVector<ValueType, memorySpace> d_localSize;
-      using MultiVector<ValueType, memorySpace> d_globalSize;
-      using MultiVector<ValueType, memorySpace> d_locallyOwnedSize;
-      using MultiVector<ValueType, memorySpace> d_ghostSize;
-      using MultiVector<ValueType, memorySpace> d_numVectors;
-      using MultiVector<ValueType, memorySpace> d_mpiCommunicatorP2P;
-      using MultiVector<ValueType, memorySpace> d_mpiPatternP2P;
+      using MultiVector<ValueType, memorySpace>::d_storage;
+      using MultiVector<ValueType, memorySpace>::d_linAlgOpContext;
+      using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
+      using MultiVector<ValueType, memorySpace>::d_localSize;
+      using MultiVector<ValueType, memorySpace>::d_globalSize;
+      using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
+      using MultiVector<ValueType, memorySpace>::d_ghostSize;
+      using MultiVector<ValueType, memorySpace>::d_numVectors;
+      using MultiVector<ValueType, memorySpace>::d_mpiCommunicatorP2P;
+      using MultiVector<ValueType, memorySpace>::d_mpiPatternP2P;
 
 
     public:
@@ -386,11 +386,12 @@ namespace dftefe
     template <typename ValueType1,
               typename ValueType2,
               utils::MemorySpace memorySpace>
-    dot(const Vector<ValueType1, memorySpace> &u,
-        const Vector<ValueType2, memorySpace> &v,
+    void
+    dot(const Vector<ValueType1, memorySpace> &          u,
+        const Vector<ValueType2, memorySpace> &          v,
+        blasLapack::scalar_type<ValueType1, ValueType2> &dotProd,
         const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
-        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity,
-        blasLapack::scalar_type<ValueType1, ValueType2> &dotProd);
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

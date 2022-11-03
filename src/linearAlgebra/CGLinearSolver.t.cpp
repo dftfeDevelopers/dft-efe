@@ -25,6 +25,7 @@
 
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <utils/DataTypeOverloads.h>
 
 namespace dftefe
 {
@@ -78,6 +79,15 @@ namespace dftefe
 
       Vector<ValueType, memorySpace> b     = linearSolverFunction.getRhs();
       const double                   bNorm = b.l2Norm();
+      std::cout << "bNorm:" << bNorm << std::endl;
+
+      size_type nlocallyOwnedSize = b.locallyOwnedSize();
+      double    normTest          = 0.0;
+      for (size_type i = 0; i < nlocallyOwnedSize; ++i)
+        normTest += utils::absSq(*(b.data() + i));
+
+      normTest = sqrt(normTest);
+      std::cout << "bNorm 2: " << normTest << std::endl;
 
       Vector<ValueTypeOperand, memorySpace> x =
         linearSolverFunction.getInitialGuess();
@@ -145,17 +155,20 @@ namespace dftefe
               AxContext.apply(p, w);
 
               // z^Hr (dot product of z-conjugate and r)
-
-              ValueType zDotr = dot(z,
-                                    r,
-                                    blasLapack::ScalarOp::Conj,
-                                    blasLapack::ScalarOp::Identity);
+              ValueType zDotr;
+              dot(z,
+                  r,
+                  zDotr,
+                  blasLapack::ScalarOp::Conj,
+                  blasLapack::ScalarOp::Identity);
 
               // p^Hw (dot product of p-conjugate and w)
-              ValueType pDotw = dot(p,
-                                    w,
-                                    blasLapack::ScalarOp::Conj,
-                                    blasLapack::ScalarOp::Identity);
+              ValueType pDotw;
+              dot(p,
+                  w,
+                  pDotw,
+                  blasLapack::ScalarOp::Conj,
+                  blasLapack::ScalarOp::Identity);
 
               ValueType alpha = zDotr / pDotw;
 
@@ -169,10 +182,12 @@ namespace dftefe
               pcContext.apply(r, z);
 
               // updated z^Hr (dot product of new z-conjugate and r)
-              ValueType zDotrNew = dot(z,
-                                       r,
-                                       blasLapack::ScalarOp::Conj,
-                                       blasLapack::ScalarOp::Identity);
+              ValueType zDotrNew;
+              dot(z,
+                  r,
+                  zDotrNew,
+                  blasLapack::ScalarOp::Conj,
+                  blasLapack::ScalarOp::Identity);
 
 
 
