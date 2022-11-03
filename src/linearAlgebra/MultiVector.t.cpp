@@ -715,7 +715,7 @@ namespace dftefe
     void
     dot(const MultiVector<ValueType1, memorySpace> &     u,
         const MultiVector<ValueType2, memorySpace> &     v,
-        blasLapack::scalar_type<ValueType1, ValueType2> *dotProd,
+        blasLapack::scalar_type<ValueType1, ValueType2> *dotProds,
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
         const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
     {
@@ -725,7 +725,7 @@ namespace dftefe
       const size_type nv = u.numVectors();
       utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
                            memorySpace>
-        dotProdLocallyOwned(nv, 0.0);
+        dotProdsLocallyOwned(nv, 0.0);
 
       //
       // @note: The following assumes that the MultiVector has the vector
@@ -736,14 +736,14 @@ namespace dftefe
                                  nv,
                                  u.data(),
                                  v.data(),
-                                 dotProdLocallyOwned.data(),
+                                 dotProdsLocallyOwned.data(),
                                  *(u.getLinAlgOpContext()));
 
       utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
         blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
       utils::mpi::MPIAllreduce<memorySpace>(
-        &dotProdLocallyOwned,
-        dotProd,
+        &dotProdsLocallyOwned,
+        dotProds,
         nv,
         mpiDatatype,
         utils::mpi::MPISum,
@@ -753,22 +753,19 @@ namespace dftefe
     template <typename ValueType1,
               typename ValueType2,
               utils::MemorySpace memorySpace>
-    std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
     dot(const MultiVector<ValueType1, memorySpace> &u,
         const MultiVector<ValueType2, memorySpace> &v,
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
-        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/,
+        std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &dotProds)
     {
       const size_type nv = u.numVectors();
       utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
                            memorySpace>
-        dotProd(nv, 0.0);
-      dot(u, v, dotProd.data(), opU, opV);
-      std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> returnValue(
-        nv, 0.0);
+        dotProdsInMemorySpace(nv, 0.0);
+      dot(u, v, dotProdsInMemorySpace.data(), opU, opV);
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        nv, &returnValue, dotProd.data());
-      return returnValue;
+        nv, &dotProds, dotProdsInMemorySpace.data());
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe
