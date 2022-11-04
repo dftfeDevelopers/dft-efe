@@ -22,6 +22,17 @@
 /*
  * @author Bikash Kanungo
  */
+
+/*
+ * @brief This example tests the linear Conjugate Gradient (CG) algorithm for 
+ * a complex Hermitian positive definite matrix. We create a random Hermitian
+ * positive definite matrix and constrain its condition number to a pre-defined
+ * value. The size of the matrix and its pre-defined condition number are
+ * hard-coded at the beginning of the main() function. Further, the various 
+ * tolerances for the CG solver are also hard-coded at the beginning of the 
+ * main() function.
+ */
+
 #include <iomanip>
 #include <stdexcept>
 #include <cmath>
@@ -42,6 +53,8 @@ extern "C" {
 
   // generate inverse of a matrix given its LU decomposition
   void zgetri(int* N, std::complex<double> * A, int* lda, int* IPIV, std::complex<double> * WORK, int* lwork, int* INFO);
+  void zheev(char * JOBZ, char * UPLO, int * N, std::complex<double> * A, int * LDA, double * W,
+	     std::complex<double> * WORK, int * LWORK, double * RWORK, int * INFO);
 }
 
 namespace 
@@ -69,6 +82,35 @@ namespace
     delete[] IPIV;
     delete[] WORK;
   }
+  
+  void getEigenvalues(std::complex<double> * A, double * eigs, int N)
+  {
+    char jobz = 'N';
+    char uplo = 'U';
+    int lwork = 2*N-1;
+    std::complex<double> * work = new std::complex<double>[lwork];
+    double * rwork = new double[3*N-2];
+    int info;
+
+    zheev(&jobz, &uplo, &N, A, &N, eigs, work, &lwork, rwork, &info); 
+
+    delete work;
+    delete rwork;
+  }
+  
+  template<typename T>
+    void
+    linearTransformMatrix(std::vector<T> & A, const T a, const T b, int N)
+    {
+      for(unsigned int i = 0; i < N; ++i)
+      {
+        for(unsigned int j = 0; j < N; ++j)
+	{
+	  A[i*N+j] *= a;
+	}
+	A[i*N+i] += b;
+      }
+    }
 
   template <typename T>
     inline T
@@ -92,22 +134,38 @@ namespace
     }
 
   template <typename T>
-    class RandMatHermitianGen
+    class RandMatHermitianPositiveDefiniteMatGen
     {
       public:
-	RandMatHermitianGen(const unsigned int N):
+	RandMatHermitianPositiveDefiniteMatGen(const unsigned int N):
 	  d_A(N*N, T(0.0))
       {
-	// random symmetrix matrix
-	utils::RandNumGen<T> rng(T(0.0), T(1.0));
-	for(unsigned int i = 0; i < N; ++i)
-	{
-	  for(unsigned int j = i; j < N; ++j)
-	  {
-	    const T x = rng.generate(); 
-	    d_A[i*N + j] = x;
-	    d_A[j*N + i] = conjugate(x);
-	  }
+	std::vector<T> BMat(N*N);
+        std::vector<T> BTMat(N*N);
+        // random symmetrix matrix
+        utils::RandNumGen<T> rng(T(0.0), T(1.0));
+        for(unsigned int i = 0; i < N; ++i)
+        {
+          for(unsigned int j = 0; j < N; ++j)
+          {
+            const T x = rng.generate(); 
+            BMat[i*N + j] = x;
+            BTMat[j*N+i] =  conjugate(x);
+          }
+	}
+	
+	// Create a positive semi-definite matrix 
+        // A = B^* B (i.e., B-adjoint times B)
+        // Use dgemms to accelerate this
+        for(unsigned int i = 0; i < N; ++i)
+        {
+          for(unsigned int j = 0; j < N; ++j)
+          {
+            for (unsigned int k = 0 ; k < N ; ++k)
+            {
+              d_A[i*N + j] += BTMat[i*N+k] * BMat[k*N+j];
+            }
+          }
 	}
 
       }
@@ -302,15 +360,37 @@ int main()
   // define various parameters for the test
   //
 
+  //
+  // matrix parameters
+  //
+
   // size of the matrix
-  const unsigned int N = 4;
+  const unsigned int N = 100;
+  // pre-defined condition number of the matrix
+  const double conditionNumber = 1e6;
+  // set the lowest eigenvalue for the matrix
+  const double eigLow = 1e-3;
+  // set the highest eigenvalue for the matrix in accordance with the lowest
+  // eigenvalue and the condition number
+  const double eigHigh= eigLow*conditionNumber;
+  
+ 
+  //
+  // CG parameters
+  //
+
   // absolute tolerance for the residual (r = Ax - b) in the linear solve
   const double absTol = 1e-12;
   // relative tolerance for the residual (r = Ax - b) in the linear solve
-  const double relTol = 1e-12;
+  const double relTol = 1e-15;
+  // tolerance for divergence of the residual 
+  // (i.e., exit CG solver if the residual exceeds this value)
+  const double resDivTol = 1e10;
   // tolerance to check accuracy of exact x (x = A^{-1}b) and the x from the 
   // CG linear solver
-  const double diffTol = 1e-12;
+  const double diffRelTol = 1e-14*conditionNumber;
+  // Max. iterations for the CG linear solver
+  const unsigned int maxIter = 3*N;
 
   //
   // initialize MPI
@@ -328,8 +408,38 @@ int main()
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> laoc = 
     std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
 
-  RandMatHermitianGen<std::complex<double>> rMatGen(N);
+  //
+  // create random symmetric positive definite matrix
+  //
+  RandMatHermitianPositiveDefiniteMatGen<std::complex<double>> rMatGen(N);
   std::vector<std::complex<double>> A = rMatGen.getA();
+  std::cout << "Generated Hermitian positive definite matrix" << std::endl; 
+  
+  // evaluate the eigenvalues of A
+  std::vector<std::complex<double>> ACopy(A);
+  std::vector<double> eigs(N);
+  getEigenvalues(&ACopy[0], &eigs[0], N);
+  std::sort(eigs.begin(), eigs.end());
+  double eig1 = eigs[0];
+  double eig2 = eigs[N-1];
+  std::cout << "Min. eigenvalue: " << eig1<< " Max. eigenvalue: " << 
+    eig2 << " Condition Number: " << eig2/eig1<< std::endl;
+
+  // linearly transform A to map the eigenvalues to eigLow and eigHigh
+  const double u = (eigLow-eigHigh)/(eig1-eig2);
+  const double v = (eigHigh*eig1 - eigLow*eig2)/(eig1-eig2);
+  std::complex<double> alpha(u,0.0);
+  std::complex<double> beta(v,0.0);
+  linearTransformMatrix(A, alpha, beta, N);
+ 
+  ACopy = A;
+  getEigenvalues(&ACopy[0], &eigs[0], N);
+  std::sort(eigs.begin(), eigs.end());
+  eig1 = eigs[0];
+  eig2 = eigs[N-1];
+  std::cout << "Min. eigenvalue: " << eig1 << " Max. eigenvalue: " << 
+    eig2 << " Condition Number: " << eig2/eig1 << std::endl;
+  
   std::vector<std::complex<double>> b(N,0.0);
   utils::RandNumGen<std::complex<double>> rng(0.0, 1.0);
   for(unsigned int i = 0; i < N; ++i)
@@ -345,20 +455,22 @@ int main()
   }
 
   LinearSolverFunctionTest<std::complex<double>, std::complex<double>> lsf(A, b, N, laoc);
-  linearAlgebra::CGLinearSolver<std::complex<double>, std::complex<double>, Host> cgls(N, absTol, relTol, 1e6, linearAlgebra::LinearAlgebraProfiler()); 
+  linearAlgebra::CGLinearSolver<std::complex<double>, std::complex<double>, Host> cgls(maxIter, absTol, relTol, resDivTol, linearAlgebra::LinearAlgebraProfiler()); 
   linearAlgebra::Error err = cgls.solve(lsf);
   const linearAlgebra::Vector<std::complex<double>, Host> & xcg = lsf.getSolution();
-  double diffL2 = 0.0;
+  linearAlgebra::Vector<std::complex<double>, utils::MemorySpace::HOST> bVec = lsf.getRhs();
+  const double bNorm = bVec.l2Norm();
+  double diffRelL2 = 0.0;
   for(unsigned int i = 0; i < N; ++i)
-    diffL2 += pow(std::abs(x[i] - *(xcg.data()+i)), 2.0);
+    diffRelL2 += pow(std::abs(x[i] - *(xcg.data()+i)), 2.0);
 
-  diffL2 = sqrt(diffL2);
-  utils::throwException(diffL2 < diffTol, 
-      "TestCGLinearSolverSerialHostDouble.cpp failed. "
+  diffRelL2 = sqrt(diffRelL2)/bNorm;
+  utils::throwException(diffRelL2 < diffRelTol, 
+      "TestCGLinearSolverSerialHostComplexDouble.cpp failed. "
       "L2 norm tolerance required: " + 
-      toStringWithPrecision(diffTol, 16) + 
+      toStringWithPrecision(diffRelTol, 16) + 
       ", L2 norm attained: " + 
-      toStringWithPrecision(diffL2, 16));
+      toStringWithPrecision(diffRelL2, 16));
 
   //
   // gracefully end MPI
