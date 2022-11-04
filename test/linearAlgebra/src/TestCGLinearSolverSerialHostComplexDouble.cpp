@@ -25,7 +25,7 @@
 
 /*
  * @brief This example tests the linear Conjugate Gradient (CG) algorithm for 
- * a complex Hermitian positive definite matrix. We create a random Hermitian
+ * a complex Hermitian positive definite matrix on HOST (CPU). We create a random Hermitian
  * positive definite matrix and constrain its condition number to a pre-defined
  * value. The size of the matrix and its pre-defined condition number are
  * hard-coded at the beginning of the main() function. Further, the various 
@@ -357,9 +357,11 @@ namespace
 
 int main()
 {
-  //
-  // define various parameters for the test
-  //
+  /////////////////////////////////////////////////////
+  ////						   ////	
+  //// Start of setting parameters for the test    ////
+  ////						   ////
+  /////////////////////////////////////////////////////
 
   //
   // matrix parameters
@@ -392,6 +394,12 @@ int main()
   const double diffRelTol = 1e-14*conditionNumber;
   // Max. iterations for the CG linear solver
   const unsigned int maxIter = 3*N;
+  
+  /////////////////////////////////////////////////////
+  ////						   ////	
+  ////   End of setting parameters for the test    ////
+  ////						   ////
+  /////////////////////////////////////////////////////
 
   //
   // initialize MPI
@@ -414,7 +422,6 @@ int main()
   //
   RandMatHermitianPositiveDefiniteMatGen<std::complex<double>> rMatGen(N);
   std::vector<std::complex<double>> A = rMatGen.getA();
-  std::cout << "Generated Hermitian positive definite matrix" << std::endl; 
   
   // evaluate the eigenvalues of A
   std::vector<std::complex<double>> ACopy(A);
@@ -423,8 +430,6 @@ int main()
   std::sort(eigs.begin(), eigs.end());
   double eig1 = eigs[0];
   double eig2 = eigs[N-1];
-  std::cout << "Min. eigenvalue: " << eig1<< " Max. eigenvalue: " << 
-    eig2 << " Condition Number: " << eig2/eig1<< std::endl;
 
   // linearly transform A to map the eigenvalues to eigLow and eigHigh
   const double u = (eigLow-eigHigh)/(eig1-eig2);
@@ -432,14 +437,6 @@ int main()
   std::complex<double> alpha(u,0.0);
   std::complex<double> beta(v,0.0);
   linearTransformMatrix(A, alpha, beta, N);
- 
-  ACopy = A;
-  getEigenvalues(&ACopy[0], &eigs[0], N);
-  std::sort(eigs.begin(), eigs.end());
-  eig1 = eigs[0];
-  eig2 = eigs[N-1];
-  std::cout << "Min. eigenvalue: " << eig1 << " Max. eigenvalue: " << 
-    eig2 << " Condition Number: " << eig2/eig1 << std::endl;
   
   std::vector<std::complex<double>> b(N,0.0);
   utils::RandNumGen<std::complex<double>> rng(0.0, 1.0);

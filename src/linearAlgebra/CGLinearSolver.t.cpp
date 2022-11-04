@@ -79,15 +79,6 @@ namespace dftefe
 
       Vector<ValueType, memorySpace> b     = linearSolverFunction.getRhs();
       const double                   bNorm = b.l2Norm();
-      std::cout << "bNorm:" << bNorm << std::endl;
-
-      size_type nlocallyOwnedSize = b.locallyOwnedSize();
-      double    normTest          = 0.0;
-      for (size_type i = 0; i < nlocallyOwnedSize; ++i)
-        normTest += utils::absSq(*(b.data() + i));
-
-      normTest = sqrt(normTest);
-      std::cout << "bNorm 2: " << normTest << std::endl;
 
       Vector<ValueTypeOperand, memorySpace> x =
         linearSolverFunction.getInitialGuess();

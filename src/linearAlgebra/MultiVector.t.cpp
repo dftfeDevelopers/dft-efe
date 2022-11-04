@@ -524,10 +524,6 @@ namespace dftefe
         l2NormsLocallyOwnedSquare[i] =
           l2NormsLocallyOwned[i] * l2NormsLocallyOwned[i];
 
-      for (size_type i = 0; i < d_numVectors; ++i)
-        std::cout << "localNorm[" << i << "]: " << l2NormsLocallyOwned[i]
-                  << std::endl;
-
       std::vector<double> returnValues(d_numVectors, 0.0);
       utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         l2NormsLocallyOwnedSquare.data(),
@@ -537,11 +533,8 @@ namespace dftefe
         utils::mpi::MPISum,
         d_mpiPatternP2P->mpiCommunicator());
       for (size_type i = 0; i < d_numVectors; ++i)
-        {
-          std::cout << "localNormSq[" << i << "]:" << returnValues[i]
-                    << std::endl;
-          returnValues[i] = std::sqrt(returnValues[i]);
-        }
+        returnValues[i] = std::sqrt(returnValues[i]);
+
       return returnValues;
     }
 

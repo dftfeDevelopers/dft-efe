@@ -462,26 +462,26 @@ namespace dftefe
     double
     Vector<ValueType, memorySpace>::l2Norm() const
     {
-      const double l2NormLocallyOwned =
-        blasLapack::nrm2<ValueType, memorySpace>(d_locallyOwnedSize,
-                                                 this->data(),
-                                                 1,
-                                                 *d_linAlgOpContext);
-      const double l2NormLocallyOwnedSquare =
-        l2NormLocallyOwned * l2NormLocallyOwned;
-      double returnValue = 0.0;
-      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-        &l2NormLocallyOwnedSquare,
-        &returnValue,
-        1,
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        d_mpiPatternP2P->mpiCommunicator());
-      returnValue = std::sqrt(returnValue);
-      return returnValue;
+      // const double l2NormLocallyOwned =
+      //  blasLapack::nrm2<ValueType, memorySpace>(d_locallyOwnedSize,
+      //                                           this->data(),
+      //                                           1,
+      //                                           *d_linAlgOpContext);
+      // const double l2NormLocallyOwnedSquare =
+      //  l2NormLocallyOwned * l2NormLocallyOwned;
+      // double returnValue = 0.0;
+      // utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+      //  &l2NormLocallyOwnedSquare,
+      //  &returnValue,
+      //  1,
+      //  utils::mpi::MPIDouble,
+      //  utils::mpi::MPISum,
+      //  d_mpiPatternP2P->mpiCommunicator());
+      // returnValue = std::sqrt(returnValue);
+      // return returnValue;
 
-      // std::vector<double> norms = this->l2Norms();
-      // return norms[0];
+      std::vector<double> norms = this->l2Norms();
+      return norms[0];
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -495,22 +495,6 @@ namespace dftefe
     // Helper functions
     //
 
-    // template <typename ValueType1,
-    //          typename ValueType2,
-    //          utils::MemorySpace memorySpace>
-    // void
-    // dot(const Vector<ValueType1, memorySpace> &          u,
-    //    const Vector<ValueType2, memorySpace> &          v,
-    //    blasLapack::scalar_type<ValueType1, ValueType2> &dotProd,
-    //    const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
-    //    const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
-    //{
-    //  std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> dotProds(
-    //    1, 0.0);
-    //  dot(u, v, dotProds, opU, opV);
-    //  dotProd = dotProds[0];
-    //}
-
     template <typename ValueType1,
               typename ValueType2,
               utils::MemorySpace memorySpace>
@@ -521,37 +505,53 @@ namespace dftefe
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
         const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
     {
-      DFTEFE_AssertWithMsg(
-        u.isCompatible(v),
-        "u and v Vectors used for dot product are not compatible.");
-      utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
-                           memorySpace>
-        dotProdLocallyOwned(1, 0.0);
-      blasLapack::dotMultiVector(u.locallyOwnedSize(),
-                                 1, // numVec,
-                                 u.data(),
-                                 v.data(),
-                                 opU,
-                                 opV,
-                                 dotProdLocallyOwned.data(),
-                                 *(u.getLinAlgOpContext()));
-
-      utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
-                           memorySpace>
-                              dotProdInMemorySpace(1, 0.0);
-      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
-        blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
-      utils::mpi::MPIAllreduce<memorySpace>(
-        &dotProdLocallyOwned,
-        dotProdInMemorySpace.data(),
-        1,
-        mpiDatatype,
-        utils::mpi::MPISum,
-        (u.getMPIPatternP2P())->mpiCommunicator());
-
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        1, &dotProd, dotProdInMemorySpace.data());
+      std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> dotProds(
+        1, 0.0);
+      dot(u, v, dotProds, opU, opV);
+      dotProd = dotProds[0];
     }
+
+    // template <typename ValueType1,
+    //          typename ValueType2,
+    //          utils::MemorySpace memorySpace>
+    // void
+    // dot(const Vector<ValueType1, memorySpace> &          u,
+    //    const Vector<ValueType2, memorySpace> &          v,
+    //    blasLapack::scalar_type<ValueType1, ValueType2> &dotProd,
+    //    const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+    //    const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+    //{
+    //  DFTEFE_AssertWithMsg(
+    //    u.isCompatible(v),
+    //    "u and v Vectors used for dot product are not compatible.");
+    //  utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+    //                       memorySpace>
+    //    dotProdLocallyOwned(1, 0.0);
+    //  blasLapack::dotMultiVector(u.locallyOwnedSize(),
+    //                             1, // numVec,
+    //                             u.data(),
+    //                             v.data(),
+    //                             opU,
+    //                             opV,
+    //                             dotProdLocallyOwned.data(),
+    //                             *(u.getLinAlgOpContext()));
+
+    //  utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+    //                       memorySpace>
+    //                          dotProdInMemorySpace(1, 0.0);
+    //  utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
+    //    blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
+    //  utils::mpi::MPIAllreduce<memorySpace>(
+    //    dotProdLocallyOwned.data(),
+    //    dotProdInMemorySpace.data(),
+    //    1,
+    //    mpiDatatype,
+    //    utils::mpi::MPISum,
+    //    (u.getMPIPatternP2P())->mpiCommunicator());
+
+    //  utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+    //    1, &dotProd, dotProdInMemorySpace.data());
+    //}
 
   } // end of namespace linearAlgebra
 } // namespace dftefe

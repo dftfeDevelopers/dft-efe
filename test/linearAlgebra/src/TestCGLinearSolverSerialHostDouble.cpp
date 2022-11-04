@@ -25,12 +25,13 @@
 
 /*
  * @brief This example tests the linear Conjugate Gradient (CG) algorithm for 
- * a real symmetric positive definite matrix. We create a random symmetric
- * positive definite matrix and constrain its condition number to a pre-defined
- * value. The size of the matrix and its pre-defined condition number are
- * hard-coded at the beginning of the main() function. Further, the various 
- * tolerances for the CG solver are also hard-coded at the beginning of the 
- * main() function.
+ * a real symmetric positive definite matrix on the HOST (CPU). 
+ * We create a random symmetric positive definite matrix and constrain its 
+ * condition number to a pre-defined value. The size of the matrix and its 
+ * pre-defined condition number are hard-coded at the beginning of the main() 
+ * function. Further, the various tolerances for the CG solver are also 
+ * hard-coded at the beginning of the main() function.
+ *
  */
 
 
@@ -179,22 +180,8 @@ namespace
             }
           }
 	}
-        // Create a positive semi-definite matrix 
-        // A = A (A^*)
-        // Use dgemms to accelerate this
-        for(unsigned int i = 0; i < N; ++i)
-        {
-          for(unsigned int j = 0; j < N; ++j)
-          {
-            for (unsigned int k = 0 ; k < N ; ++k)
-            {
-              d_A[i*N + j] += AMat[i*N+k] * ATMat[k*N+j];
-            }
-          }
-	}
-          
-
       }
+	
 	std::vector<T> getA() const 
 	{
 	  return d_A;
@@ -384,9 +371,11 @@ namespace
 
 int main()
 {
-  //
-  // define various parameters for the test
-  //
+  /////////////////////////////////////////////////////
+  ////						   ////	
+  //// Start of setting parameters for the test    ////
+  ////						   ////
+  /////////////////////////////////////////////////////
 
   //
   // matrix parameters
@@ -420,6 +409,12 @@ int main()
   // Max. iterations for the CG linear solver
   const unsigned int maxIter = 3*N;
   
+  /////////////////////////////////////////////////////
+  ////						   ////	
+  ////   End of setting parameters for the test    ////
+  ////						   ////
+  /////////////////////////////////////////////////////
+  
   //
   // initialize MPI
   //
@@ -450,8 +445,6 @@ int main()
   std::sort(eigs.begin(), eigs.end());
   double eig1 = eigs[0];
   double eig2 = eigs[N-1];
-  std::cout << "Min. eigenvalue: " << eig1<< " Max. eigenvalue: " << 
-    eig2 << " Condition Number: " << eig2/eig1<< std::endl;
 
   // linearly transform A to map the eigenvalues to eigLow and eigHigh
   const double alpha = (eigLow-eigHigh)/(eig1-eig2);
@@ -463,8 +456,6 @@ int main()
   std::sort(eigs.begin(), eigs.end());
   eig1 = eigs[0];
   eig2 = eigs[N-1];
-  std::cout << "Min. eigenvalue: " << eig1 << " Max. eigenvalue: " << 
-    eig2 << " Condition Number: " << eig2/eig1 << std::endl;
   
   std::vector<double> b(N,0.0);
   utils::RandNumGen<double> rng(0.0, 1.0);
