@@ -561,7 +561,8 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    size_type  MultiVector<ValueType, memorySpace>::getNumberComponents()
+    size_type
+    MultiVector<ValueType, memorySpace>::getNumberComponents()
     {
       return d_numVectors;
     }

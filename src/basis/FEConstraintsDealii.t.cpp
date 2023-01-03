@@ -173,7 +173,7 @@ namespace dftefe
               size_type                  dim>
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues )
+      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues)
     {
       dealii::IndexSet locallyRelevantDofs;
       dealii::DoFTools::extract_locally_relevant_dofs(
@@ -190,7 +190,7 @@ namespace dftefe
 
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-      std::map<global_size_type,utils::Point> boundaryCoord;
+      std::map<global_size_type, utils::Point> boundaryCoord;
       d_feBasisManager->getBasisCenters(boundaryCoord);
 
       std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(), false);
@@ -213,7 +213,8 @@ namespace dftefe
                         iFaceGlobalDofIndices[iFaceDof];
                       if (dofs_touched[nodeId])
                         continue;
-                      auto inhomoValue = boundaryValues.values(boundaryCoord[nodeId]);
+                      auto inhomoValue =
+                        boundaryValues.values(boundaryCoord[nodeId]);
                       dofs_touched[nodeId] = true;
                       if (!isConstrained(nodeId))
                         {
@@ -604,7 +605,8 @@ namespace dftefe
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeChildToParent(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
         size_type blockSize) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
@@ -638,7 +640,8 @@ namespace dftefe
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setConstrainedNodesToZero(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
         size_type blockSize) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::

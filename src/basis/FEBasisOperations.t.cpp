@@ -71,8 +71,7 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &quadValuesContainer) const
     {
-
-      auto vectorData = field.getVector();
+      auto              vectorData      = field.getVector();
       const std::string constraintsName = field.getConstraintsName();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
@@ -93,15 +92,15 @@ namespace dftefe
                       ValueTypeBasisData,
                       memorySpace,
                       dim>::
-    interpolate(
-      const MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-      const std::string &constraintsName,
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-      const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
-      quadrature::QuadratureValuesContainer<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData>,
-        memorySpace> &quadValuesContainer) const
+      interpolate(
+        const MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const std::string &                                   constraintsName,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const
 
     {
       const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
@@ -122,8 +121,8 @@ namespace dftefe
         "Could not cast BasisManager of the input vector to FEBasisManager "
         "in FEBasisOperations.interpolate()");
 
-      const size_type   numComponents   = vectorData.getNumberComponents();
-      const size_type   numLocallyOwnedCells =
+      const size_type numComponents = vectorData.getNumberComponents();
+      const size_type numLocallyOwnedCells =
         feBasisHandler.nLocallyOwnedCells();
       const size_type numCumulativeLocallyOwnedCellDofs =
         feBasisHandler.nCumulativeLocallyOwnedCellDofs();
@@ -337,7 +336,6 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const
     {
-
       auto vectorData = f.getVector();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         f.getBasisHandler();
@@ -357,9 +355,9 @@ namespace dftefe
                                                ValueTypeBasisData>,
         memorySpace> &                            inp,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> & basisHandler,
-      const std::string &constraintsName,
-      MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData) const
+      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+      const std::string &                                   constraintsName,
+      MultiVector<ValueTypeBasisCoeff, memorySpace> &       vectorData) const
 
     {
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
@@ -401,12 +399,12 @@ namespace dftefe
       auto jxwStorage =
         d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
 
-      const size_type   numComponents   = inp.getNumberComponents();
+      const size_type numComponents = inp.getNumberComponents();
       utils::throwException(
         vectorData.getNumberComponents() == numComponents,
         "Mismatch in number of components in input and output "
         "in FEBasisOperations integrateWithBasisValues().");
-      const size_type   numLocallyOwnedCells =
+      const size_type numLocallyOwnedCells =
         feBasisHandler.nLocallyOwnedCells();
       const size_type numCumulativeLocallyOwnedCellDofs =
         feBasisHandler.nCumulativeLocallyOwnedCellDofs();

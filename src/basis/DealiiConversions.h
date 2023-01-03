@@ -39,8 +39,9 @@ namespace dftefe
     template <unsigned int dim>
     void
     convertToDftefePoint(
-      const std::map<global_size_type, dealii::Point<dim, double>> &dealiiPoints,
-      std::map<global_size_type, utils::Point> &                    points);
+      const std::map<global_size_type, dealii::Point<dim, double>>
+        &                                       dealiiPoints,
+      std::map<global_size_type, utils::Point> &points);
 
   } // namespace basis
 } // namespace dftefe

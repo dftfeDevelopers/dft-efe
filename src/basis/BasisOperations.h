@@ -67,10 +67,10 @@ namespace dftefe
 
       virtual void
       interpolate(
-        const MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const std::string &constraintsName,
+        const MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
@@ -93,8 +93,8 @@ namespace dftefe
                                                  ValueTypeBasisData>,
           memorySpace> &                            inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> & basisHandler,
-        const std::string &constraintsName,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const std::string &                                   constraintsName,
         MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData) const = 0;
       // virtual void
       // integrateWithBasisValues(

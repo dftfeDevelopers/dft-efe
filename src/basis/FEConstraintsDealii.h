@@ -66,7 +66,8 @@ namespace dftefe
       setHomogeneousDirichletBC() override;
 
       void
-      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues) override;
+      setInhomogeneousDirichletBC(
+        ScalarSpatialFunctionReal &boundaryValues) override;
 
       const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
@@ -92,7 +93,8 @@ namespace dftefe
         size_type blockSize = 1) const override;
       void
       distributeParentToChild(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
         size_type blockSize) const override;
       void
       setConstrainedNodesToZero(
@@ -101,7 +103,8 @@ namespace dftefe
 
       void
       setConstrainedNodesToZero(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
         size_type blockSize) const override;
 
       //

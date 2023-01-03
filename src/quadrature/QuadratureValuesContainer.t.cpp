@@ -388,23 +388,21 @@ namespace dftefe
     ValueType
     QuadratureValuesContainer<ValueType, memorySpace>::dotProduct() const
     {
-      const std::vector<double> & jxwValues =
+      const std::vector<double> &jxwValues =
         d_quadratureRuleContainer->getJxW();
 
-      utils::MemoryStorage<double, memorySpace>
-        jxwValuesMemorySpace(jxwValues.size());
+      utils::MemoryStorage<double, memorySpace> jxwValuesMemorySpace(
+        jxwValues.size());
 
       utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-        jxwValues.size(),
-        jxwValuesMemorySpace.data(),
-        &jxwValues[0]);
+        jxwValues.size(), jxwValuesMemorySpace.data(), &jxwValues[0]);
 
       auto dotValue = dotProductMultiComponent(jxwValues.size(),
-                 d_numberComponents,
-                  d_storage.begin(),
-                  1,
-                  jxwValuesMemorySpace.begin(),
-                                          1);
+                                               d_numberComponents,
+                                               d_storage.begin(),
+                                               1,
+                                               jxwValuesMemorySpace.begin(),
+                                               1);
       return dotValue;
     }
 

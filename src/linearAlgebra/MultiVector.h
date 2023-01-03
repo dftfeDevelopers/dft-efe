@@ -431,7 +431,8 @@ namespace dftefe
        * @brief Returns the nunber of vectors in this multi-vector
        * @return d_numVectors
        */
-      size_type getNumberComponents();
+      size_type
+      getNumberComponents();
 
       void
       updateGhostValues(const size_type communicationChannel = 0);
@@ -459,19 +460,19 @@ namespace dftefe
 
       std::shared_ptr<LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
-      
+
       global_size_type
       globalSize() const;
-      
+
       size_type
       localSize() const;
-      
+
       size_type
       locallyOwnedSize() const;
-      
+
       size_type
       ghostSize() const;
-      
+
       size_type
       numVectors() const;
 
