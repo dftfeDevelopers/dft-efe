@@ -3,6 +3,7 @@
 
 #include <utils/MemoryManager.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <blas.hh>
 #include <vector>
 
@@ -57,6 +58,46 @@ namespace dftefe
                         const ValueType1 *                   x,
                         const ValueType2 *                   y,
                         scalar_type<ValueType1, ValueType2> *z);
+        static void
+        hadamardProduct(size_type                            size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        const ScalarOp &                     opx,
+                        const ScalarOp &                     opy,
+                        scalar_type<ValueType1, ValueType2> *z);
+
+        /**
+         * @brief Template for performing
+         * In column major storage format:
+         * \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
+         * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf
+         * A}\f$ is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$,
+         * and \f$
+         * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. \f$ a_1 \cdots \a_K \f$
+         * are the columns of \f${\bf A}\f$
+         * In row major storage format:
+         * \f$ {\bf Z}^T={\bf A}^T \odot {\bf B}^T = a_1 \otimes b_1
+         * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf
+         * A}\f$ is  \f$K \times I\f$ matrix, \f${\bf B}\f$ is \f$K \times J\f$,
+         * and \f$
+         * {\bf Z} \f$ is \f$ K\times (IJ) \f$ matrix. \f$ a_1 \cdots \a_K \f$
+         * are the rows of \f${\bf A}\f$
+         * @param[in] layout Layout::ColMajor or Layout::RowMajor
+         * @param[in] size size I
+         * @param[in] size size J
+         * @param[in] size size K
+         * @param[in] X array
+         * @param[in] Y array
+         * @param[out] Z array
+         */
+        static void
+        khatriRaoProduct(const Layout                         layout,
+                         const size_type                      sizeI,
+                         const size_type                      sizeJ,
+                         const size_type                      sizeK,
+                         const ValueType1 *                   A,
+                         const ValueType2 *                   B,
+                         scalar_type<ValueType1, ValueType2> *Z);
 
         /**
          * @brief Template for performing \f$ z = \alpha x + \beta y \f$
@@ -74,6 +115,34 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
+
+        /**
+         * @brief Template for computing dot products numVec vectors in a multi Vector
+         * @param[in] vecSize size of each vector
+         * @param[in] numVec number of vectors in the multi Vector
+         * @param[in] multiVecDataX multi vector data in row major format i.e.
+         * vector index is the fastest index
+         * @param[in] multiVecDataY multi vector data in row major format i.e.
+         * vector index is the fastest index
+         * @param[in] opX blasLapack::ScalarOp defining the operation on each
+         * entry of multiVecDataX. The available options are
+         * (a) blasLapack::ScalarOp::Identity (identity operation on a scalar),
+         * and (b) blasLapack::ScalarOp::Conj (complex conjugate on a scalar)
+         * @param[in] opY blasLapack::ScalarOp defining the operation on each
+         * entry of multiVecDataY.
+         * @param[out] multiVecDotProduct multi vector dot product of size
+         * numVec
+         *
+         */
+        static void
+        dotMultiVector(size_type                            vecSize,
+                       size_type                            numVec,
+                       const ValueType1 *                   multiVecDataX,
+                       const ValueType2 *                   multiVecDataY,
+                       const ScalarOp &                     opX,
+                       const ScalarOp &                     opY,
+                       scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+                       LinAlgOpContext<memorySpace> &       context);
       };
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -104,10 +173,10 @@ namespace dftefe
          * @return \f$ l_2 \f$  norms of all the vectors
          */
         static std::vector<double>
-        nrms2MultiVector(size_type               vecSize,
-                         size_type               numVec,
-                         const ValueType *       multiVecData,
-                         BlasQueue<memorySpace> &BlasQueue);
+        nrms2MultiVector(size_type                     vecSize,
+                         size_type                     numVec,
+                         const ValueType *             multiVecData,
+                         LinAlgOpContext<memorySpace> &context);
       };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -142,12 +211,41 @@ namespace dftefe
                         scalar_type<ValueType1, ValueType2> *z);
 
         static void
+        hadamardProduct(size_type                            size,
+                        const ValueType1 *                   x,
+                        const ValueType2 *                   y,
+                        const ScalarOp &                     opx,
+                        const ScalarOp &                     opy,
+                        scalar_type<ValueType1, ValueType2> *z);
+
+
+        static void
+        khatriRaoProduct(const Layout                         layout,
+                         const size_type                      sizeI,
+                         const size_type                      sizeJ,
+                         const size_type                      sizeK,
+                         const ValueType1 *                   A,
+                         const ValueType2 *                   B,
+                         scalar_type<ValueType1, ValueType2> *Z);
+
+        static void
         axpby(size_type                            size,
               scalar_type<ValueType1, ValueType2>  alpha,
               const ValueType1 *                   x,
               scalar_type<ValueType1, ValueType2>  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z);
+
+        static void
+        dotMultiVector(
+          size_type                            vecSize,
+          size_type                            numVec,
+          const ValueType1 *                   multiVecDataX,
+          const ValueType2 *                   multiVecDataY,
+          const ScalarOp &                     opX,
+          const ScalarOp &                     opY,
+          scalar_type<ValueType1, ValueType2> *multiVecDotProduct,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
       };
 
       template <typename ValueType>
@@ -162,10 +260,10 @@ namespace dftefe
 
         static std::vector<double>
         nrms2MultiVector(
-          size_type                                      vecSize,
-          size_type                                      numVec,
-          const ValueType *                              multiVecData,
-          BlasQueue<dftefe::utils::MemorySpace::DEVICE> &BlasQueue);
+          size_type                                            vecSize,
+          size_type                                            numVec,
+          const ValueType *                                    multiVecData,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
       };
 
 #endif

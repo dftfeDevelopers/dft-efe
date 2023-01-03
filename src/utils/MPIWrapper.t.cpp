@@ -45,14 +45,14 @@ namespace dftefe
             {
               char *      r = static_cast<char *>(recvbuf);
               const char *s = static_cast<const char *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPISignedChar)
             {
               signed char *      r = static_cast<signed char *>(recvbuf);
               const signed char *s = static_cast<const signed char *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIUnsignedChar)
@@ -60,21 +60,21 @@ namespace dftefe
               unsigned char *      r = static_cast<unsigned char *>(recvbuf);
               const unsigned char *s =
                 static_cast<const unsigned char *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIWChar)
             {
               wchar_t *      r = static_cast<wchar_t *>(recvbuf);
               const wchar_t *s = static_cast<const wchar_t *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIShort)
             {
               short int *      r = static_cast<short int *>(recvbuf);
               const short int *s = static_cast<const short int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIUnsignedShort)
@@ -83,14 +83,14 @@ namespace dftefe
                 static_cast<unsigned short int *>(recvbuf);
               const unsigned short int *s =
                 static_cast<const unsigned short int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIInt)
             {
               int *      r = static_cast<int *>(recvbuf);
               const int *s = static_cast<const int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIUnsigned)
@@ -98,14 +98,14 @@ namespace dftefe
               unsigned int *      r = static_cast<unsigned int *>(recvbuf);
               const unsigned int *s =
                 static_cast<const unsigned int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPILong)
             {
               long int *      r = static_cast<long int *>(recvbuf);
               const long int *s = static_cast<const long int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIUnsignedLong)
@@ -113,28 +113,28 @@ namespace dftefe
               unsigned long int *r = static_cast<unsigned long int *>(recvbuf);
               const unsigned long int *s =
                 static_cast<const unsigned long int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIFloat)
             {
               float *      r = static_cast<float *>(recvbuf);
               const float *s = static_cast<const float *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIDouble)
             {
               double *      r = static_cast<double *>(recvbuf);
               const double *s = static_cast<const double *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPILongDouble)
             {
               long double *      r = static_cast<long double *>(recvbuf);
               const long double *s = static_cast<const long double *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPILongLongInt || datatype == MPILongLong)
@@ -142,7 +142,7 @@ namespace dftefe
               long long int *      r = static_cast<long long int *>(recvbuf);
               const long long int *s =
                 static_cast<const long long int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIUnsignedLongLong)
@@ -151,7 +151,7 @@ namespace dftefe
                 static_cast<unsigned long long int *>(recvbuf);
               const unsigned long long int *s =
                 static_cast<const unsigned long long int *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else if (datatype == MPIComplex)
@@ -160,7 +160,7 @@ namespace dftefe
                 static_cast<std::complex<float> *>(recvbuf);
               const std::complex<float> *s =
                 static_cast<const std::complex<float> *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
           else if (datatype == MPIDoubleComplex)
             {
@@ -168,7 +168,7 @@ namespace dftefe
                 static_cast<std::complex<double> *>(recvbuf);
               const std::complex<double> *s =
                 static_cast<const std::complex<double> *>(sendbuf);
-              MemoryTransfer<memorySpace, memorySpace>(count, r, s);
+              MemoryTransfer<memorySpace, memorySpace>::copy(count, r, s);
             }
 
           else
@@ -362,7 +362,7 @@ namespace dftefe
       }
 
 
-#else // DFTEFE_WITH_MPI
+#else  // DFTEFE_WITH_MPI
 
       template <MemorySpace memorySpace>
       int
@@ -566,8 +566,56 @@ namespace dftefe
           "MPIIssend is not implemented when not linking with an MPI library.");
         return MPISuccess;
       }
-
 #endif // DFTEFE_WITH_MPI
-    }  // end of namespace mpi
-  }    // end of namespace utils
+
+      // template <typename T>
+      // MPIDatatype
+      // MPIGetDatatype()
+      //{
+      //  MPIDatatype returnValue = MPIByte;
+      //  if (std::is_same<T, double>::value)
+      //    returnValue = MPIDouble;
+      //  else if (std::is_same<T, std::complex<double>>::value)
+      //    returnValue = MPIDoubleComplex;
+      //  else if (std::is_same<T, float>::value)
+      //    returnValue = MPIFloat;
+      //  else if (std::is_same<T, std::complex<float>>::value)
+      //    returnValue = MPIComplex;
+      //  else if (std::is_same<T, int>::value)
+      //    returnValue = MPIInt;
+      //  else if (std::is_same<T, unsigned int>::value)
+      //    returnValue = MPIUnsigned;
+      //  else if (std::is_same<T, long int>::value)
+      //    returnValue = MPILong;
+      //  else if (std::is_same<T, unsigned long int>::value)
+      //    returnValue = MPIUnsignedLong;
+      //  else if (std::is_same<T, char>::value)
+      //    returnValue = MPIChar;
+      //  else if (std::is_same<T, signed char>::value)
+      //    returnValue = MPISignedChar;
+      //  else if (std::is_same<T, unsigned char>::value)
+      //    returnValue = MPIUnsignedChar;
+      //  else if (std::is_same<T, wchar_t>::value)
+      //    returnValue = MPIWChar;
+      //  else if (std::is_same<T, short int>::value)
+      //    returnValue = MPIShort;
+      //  else if (std::is_same<T, unsigned short int>::value)
+      //    returnValue = MPIUnsignedShort;
+      //  else if (std::is_same<T, long long int>::value)
+      //    returnValue = MPILongLongInt;
+      //  else if (std::is_same<T, long long>::value)
+      //    returnValue = MPILongLong;
+      //  else if (std::is_same<T, unsigned long long int>::value)
+      //    returnValue = MPIUnsignedLongLong;
+      //  else if (std::is_same<T, long double>::value)
+      //    returnValue = MPILongDouble;
+      //  else
+      //    throwException<InvalidArgument>(
+      //      false, "Invalid typename/datatpe passed to
+      //      mpi::MPIGetDatatype()");
+
+      //  return returnValue;
+      //}
+    } // end of namespace mpi
+  }   // end of namespace utils
 } // end of namespace dftefe

@@ -35,9 +35,9 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      const size_type               size,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
-      const ValueType               initVal)
+      const size_type                               size,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -51,11 +51,11 @@ namespace dftefe
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
       d_mpiPatternP2P =
         std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(size);
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
     }
 
     /**
@@ -66,7 +66,7 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage> storage,
-      LinAlgOpContext<memorySpace> *linAlgOpContext)
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       d_storage         = std::move(storage);
       d_linAlgOpContext = linAlgOpContext;
@@ -79,11 +79,11 @@ namespace dftefe
       d_mpiPatternP2P =
         std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           d_globalSize);
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
     }
 
     /**
@@ -92,13 +92,13 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                    mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
-      const ValueType               initVal)
-      : d_mpiPatternP2P(mpiPatternP2P)
+                                                    mpiPatternP2P,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
+      d_mpiPatternP2P    = mpiPatternP2P;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
       d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize        = d_mpiPatternP2P->localGhostSize();
@@ -108,11 +108,11 @@ namespace dftefe
           d_localSize, initVal);
       d_linAlgOpContext = linAlgOpContext;
 
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
     }
 
     /**
@@ -124,23 +124,23 @@ namespace dftefe
       std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
         &storage,
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                    mpiPatternP2P,
-      LinAlgOpContext<memorySpace> *linAlgOpContext)
-      : d_mpiPatternP2P(mpiPatternP2P)
+                                                    mpiPatternP2P,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       d_storage         = std::move(storage);
       d_linAlgOpContext = std::move(linAlgOpContext);
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
+      d_mpiPatternP2P    = mpiPatternP2P;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
       d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
       d_ghostSize        = d_mpiPatternP2P->localGhostSize();
       d_localSize        = d_locallyOwnedSize + d_ghostSize;
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
     }
 
     /**
@@ -154,8 +154,8 @@ namespace dftefe
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const std::vector<dftefe::global_size_type> &       ghostIndices,
       const utils::mpi::MPIComm &                         mpiComm,
-      LinAlgOpContext<memorySpace> *                      linAlgOpContext,
-      const ValueType                                     initVal)
+      std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       //
       // TODO Move the warning message to a Logger class
@@ -181,11 +181,11 @@ namespace dftefe
         std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -209,8 +209,8 @@ namespace dftefe
     Vector<ValueType, memorySpace>::Vector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
       const utils::mpi::MPIComm &                         mpiComm,
-      LinAlgOpContext<memorySpace> *                      linAlgOpContext,
-      const ValueType                                     initVal)
+      std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -237,11 +237,11 @@ namespace dftefe
         std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -266,10 +266,10 @@ namespace dftefe
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace>::Vector(
-      const global_size_type        totalGlobalDofs,
-      const utils::mpi::MPIComm &   mpiComm,
-      LinAlgOpContext<memorySpace> *linAlgOpContext,
-      const ValueType               initVal)
+      const global_size_type                        totalGlobalDofs,
+      const utils::mpi::MPIComm &                   mpiComm,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
       std::vector<dftefe::global_size_type> ghostIndices;
       ghostIndices.resize(0);
@@ -323,11 +323,11 @@ namespace dftefe
         std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRange, ghostIndices, mpiComm);
 
-      // block size set to 1 as it is a single vector
-      const size_type blockSize = 1;
-      d_mpiCommunicatorP2P      = std::make_unique<
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                blockSize);
+                                                                d_numVectors);
 
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
@@ -346,7 +346,8 @@ namespace dftefe
     // Copy Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(const Vector &u)
+    Vector<ValueType, memorySpace>::Vector(
+      const Vector<ValueType, memorySpace> &u)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -355,17 +356,24 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
       d_ghostSize        = u.d_ghostSize;
       d_globalSize       = u.d_globalSize;
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors = 1;
     }
 
+    //
+    // Copy Constructor with initial value
+    //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(const Vector &u, ValueType initVal)
+    Vector<ValueType, memorySpace>::Vector(
+      const Vector<ValueType, memorySpace> &u,
+      ValueType                             initVal)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -373,20 +381,23 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
       d_locallyOwnedSize = u.d_locallyOwnedSize;
       d_ghostSize        = u.d_ghostSize;
       d_globalSize       = u.d_globalSize;
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors = 1;
     }
 
     //
     // Move Constructor
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    Vector<ValueType, memorySpace>::Vector(Vector &&u) noexcept
+    Vector<ValueType, memorySpace>::Vector(
+      Vector<ValueType, memorySpace> &&u) noexcept
     {
       d_storage            = std::move(u.d_storage);
       d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
@@ -397,6 +408,7 @@ namespace dftefe
       d_globalSize         = std::move(u.d_globalSize);
       d_mpiCommunicatorP2P = std::move(u.d_mpiCommunicatorP2P);
       d_mpiPatternP2P      = std::move(u.d_mpiPatternP2P);
+      d_numVectors         = std::move(u.d_numVectors);
     }
 
     //
@@ -404,7 +416,8 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace> &
-    Vector<ValueType, memorySpace>::operator=(const Vector &u)
+    Vector<ValueType, memorySpace>::operator=(
+      const Vector<ValueType, memorySpace> &u)
     {
       d_storage =
         std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
@@ -412,7 +425,7 @@ namespace dftefe
       *d_storage           = *(u.d_storage);
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, (u.d_mpiCommunicatorP2P).getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -420,6 +433,7 @@ namespace dftefe
       d_ghostSize        = u.d_ghostSize;
       d_globalSize       = u.d_globalSize;
       d_mpiPatternP2P    = u.d_mpiPatternP2P;
+      d_numVectors       = u.d_numVectors;
       return *this;
     }
 
@@ -428,7 +442,8 @@ namespace dftefe
     //
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     Vector<ValueType, memorySpace> &
-    Vector<ValueType, memorySpace>::operator=(Vector &&u)
+    Vector<ValueType, memorySpace>::operator=(
+      Vector<ValueType, memorySpace> &&u)
     {
       d_storage            = std::move(u.d_storage);
       d_linAlgOpContext    = std::move(u.d_linAlgOpContext);
@@ -439,223 +454,104 @@ namespace dftefe
       d_globalSize         = std::move(u.d_globalSize);
       d_mpiCommunicatorP2P = std::move(u.d_mpiCommunicatorP2P);
       d_mpiPatternP2P      = std::move(u.d_mpiPatternP2P);
+      d_numVectors         = std::move(u.d_numVectors);
       return *this;
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::iterator
-    Vector<ValueType, memorySpace>::begin()
-    {
-      return d_storage->begin();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::const_iterator
-    Vector<ValueType, memorySpace>::begin() const
-    {
-      return d_storage->begin();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::iterator
-    Vector<ValueType, memorySpace>::end()
-    {
-      return d_storage->end();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    typename Vector<ValueType, memorySpace>::const_iterator
-    Vector<ValueType, memorySpace>::end() const
-    {
-      return d_storage->end();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    ValueType *
-    Vector<ValueType, memorySpace>::data()
-    {
-      return d_storage->data();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    const ValueType *
-    Vector<ValueType, memorySpace>::data() const
-    {
-      return d_storage->data();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::setValue(const ValueType val)
-    {
-      d_storage->setValue(val);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     Vector<ValueType, memorySpace>::l2Norm() const
     {
-      const double l2NormLocallyOwned =
-        blasLapack::nrm2<ValueType, memorySpace>(d_locallyOwnedSize,
-                                                 this->data(),
-                                                 1,
-                                                 *d_linAlgOpContext);
-      const double l2NormLocallyOwnedSquare =
-        l2NormLocallyOwned * l2NormLocallyOwned;
-      double returnValue = 0.0;
-      utils::mpi::MPIAllreduce<memorySpace>(&l2NormLocallyOwnedSquare,
-                                            &returnValue,
-                                            1,
-                                            utils::mpi::MPIDouble,
-                                            utils::mpi::MPISum,
-                                            d_mpiPatternP2P->mpiCommunicator());
-      returnValue = std::sqrt(returnValue);
-      return returnValue;
+      // const double l2NormLocallyOwned =
+      //  blasLapack::nrm2<ValueType, memorySpace>(d_locallyOwnedSize,
+      //                                           this->data(),
+      //                                           1,
+      //                                           *d_linAlgOpContext);
+      // const double l2NormLocallyOwnedSquare =
+      //  l2NormLocallyOwned * l2NormLocallyOwned;
+      // double returnValue = 0.0;
+      // utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+      //  &l2NormLocallyOwnedSquare,
+      //  &returnValue,
+      //  1,
+      //  utils::mpi::MPIDouble,
+      //  utils::mpi::MPISum,
+      //  d_mpiPatternP2P->mpiCommunicator());
+      // returnValue = std::sqrt(returnValue);
+      // return returnValue;
+
+      std::vector<double> norms = this->l2Norms();
+      return norms[0];
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     double
     Vector<ValueType, memorySpace>::lInfNorm() const
     {
-      const double lInfNormLocallyOwned =
-        blasLapack::amax<ValueType, memorySpace>(d_locallyOwnedSize,
-                                                 this->data(),
-                                                 1,
-                                                 *d_linAlgOpContext);
-      double returnValue = lInfNormLocallyOwned;
-      utils::mpi::MPIAllreduce<memorySpace>(&lInfNormLocallyOwned,
-                                            &returnValue,
-                                            1,
-                                            utils::mpi::MPIDouble,
-                                            utils::mpi::MPIMax,
-                                            d_mpiPatternP2P->mpiCommunicator());
-      return returnValue;
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::updateGhostValues(
-      const size_type communicationChannel /*= 0*/)
-    {
-      d_mpiCommunicatorP2P->updateGhostValues(*d_storage, communicationChannel);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::accumulateAddLocallyOwned(
-      const size_type communicationChannel /*= 0*/)
-    {
-      d_mpiCommunicatorP2P->accumulateAddLocallyOwned(*d_storage,
-                                                      communicationChannel);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::updateGhostValuesBegin(
-      const size_type communicationChannel /*= 0*/)
-    {
-      d_mpiCommunicatorP2P->updateGhostValuesBegin(*d_storage,
-                                                   communicationChannel);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::updateGhostValuesEnd()
-    {
-      d_mpiCommunicatorP2P->updateGhostValuesEnd(*d_storage);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::accumulateAddLocallyOwnedBegin(
-      const size_type communicationChannel /*= 0*/)
-    {
-      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedBegin(
-        *d_storage, communicationChannel);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    Vector<ValueType, memorySpace>::accumulateAddLocallyOwnedEnd()
-    {
-      d_mpiCommunicatorP2P->accumulateAddLocallyOwnedEnd(*d_storage);
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    bool
-    Vector<ValueType, memorySpace>::isCompatible(
-      const Vector<ValueType, memorySpace> &rhs) const
-    {
-      if (d_vectorAttributes.areDistributionCompatible(
-            rhs.d_vectorAttributes) == false)
-        return false;
-      else if (d_globalSize != rhs.d_globalSize)
-        return false;
-      else if (d_localSize != rhs.d_localSize)
-        return false;
-      else if (d_locallyOwnedSize != rhs.d_locallyOwnedSize)
-        return false;
-      else if (d_ghostSize != rhs.d_ghostSize)
-        return false;
-      else
-        return (d_mpiPatternP2P->isCompatible(*(rhs.d_mpiPatternP2P)));
-    }
-
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-    Vector<ValueType, memorySpace>::getMPIPatternP2P() const
-    {
-      return d_mpiPatternP2P;
+      return (this->lInfNorms())[0];
     }
 
     //
     // Helper functions
     //
 
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
-        const Vector<ValueType, memorySpace> &u,
-        ValueType                             b,
-        const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace> &      w)
+    dot(const Vector<ValueType1, memorySpace> &          u,
+        const Vector<ValueType2, memorySpace> &          v,
+        blasLapack::scalar_type<ValueType1, ValueType2> &dotProd,
+        const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+        const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
     {
-      const VectorAttributes &uVectorAttributes = u.getVectorAttributes();
-      const VectorAttributes &vVectorAttributes = v.getVectorAttributes();
-      const VectorAttributes &wVectorAttributes = w.getVectorAttributes();
-      bool                    areCompatible =
-        uVectorAttributes.areDistributionCompatible(vVectorAttributes);
-      utils::throwException(
-        areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the other a distributed Vector.");
-      areCompatible =
-        vVectorAttributes.areDistributionCompatible(wVectorAttributes);
-      utils::throwException(
-        areCompatible,
-        "Trying to add incompatible Vectors. One is a serial Vector and the other a distributed Vector.");
-      utils::throwException<utils::LengthError>(
-        (u.size() == v.size()) && (v.size() == w.size()) &&
-          (u.localSize() == v.localSize()) && (v.localSize() == w.localSize()),
-        "Mismatch of sizes of the Vectors that are added.");
-      const size_type uStorageSize = (u.getValues()).size();
-      const size_type vStorageSize = (v.getValues()).size();
-      const size_type wStorageSize = (w.getValues()).size();
-      utils::throwException<utils::LengthError>(
-        (uStorageSize == vStorageSize) && (vStorageSize == wStorageSize),
-        "Mismatch of sizes of the underlying storages"
-        "of the Vectors that are added.");
-
-      blasLapack::axpby<ValueType, memorySpace>(
-        u.localSize(),
-        a,
-        u.data(),
-        b,
-        v.data(),
-        w.data(),
-        (w.getLinAlgOpContext())->getBlasQueue());
+      std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> dotProds(
+        1, 0.0);
+      dot(u, v, dotProds, opU, opV);
+      dotProd = dotProds[0];
     }
+
+    // template <typename ValueType1,
+    //          typename ValueType2,
+    //          utils::MemorySpace memorySpace>
+    // void
+    // dot(const Vector<ValueType1, memorySpace> &          u,
+    //    const Vector<ValueType2, memorySpace> &          v,
+    //    blasLapack::scalar_type<ValueType1, ValueType2> &dotProd,
+    //    const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
+    //    const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
+    //{
+    //  DFTEFE_AssertWithMsg(
+    //    u.isCompatible(v),
+    //    "u and v Vectors used for dot product are not compatible.");
+    //  utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+    //                       memorySpace>
+    //    dotProdLocallyOwned(1, 0.0);
+    //  blasLapack::dotMultiVector(u.locallyOwnedSize(),
+    //                             1, // numVec,
+    //                             u.data(),
+    //                             v.data(),
+    //                             opU,
+    //                             opV,
+    //                             dotProdLocallyOwned.data(),
+    //                             *(u.getLinAlgOpContext()));
+
+    //  utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+    //                       memorySpace>
+    //                          dotProdInMemorySpace(1, 0.0);
+    //  utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
+    //    blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
+    //  utils::mpi::MPIAllreduce<memorySpace>(
+    //    dotProdLocallyOwned.data(),
+    //    dotProdInMemorySpace.data(),
+    //    1,
+    //    mpiDatatype,
+    //    utils::mpi::MPISum,
+    //    (u.getMPIPatternP2P())->mpiCommunicator());
+
+    //  utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+    //    1, &dotProd, dotProdInMemorySpace.data());
+    //}
 
   } // end of namespace linearAlgebra
 } // namespace dftefe

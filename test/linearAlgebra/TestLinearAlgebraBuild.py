@@ -50,7 +50,7 @@ The process of building and running a test is as follows
 1. set DFTEFE_PATH to the main directory (i.e., "export DFTEFE_PATH="/path/to/dft-efe/")
 2. python configure.py in the main directory of DFT-EFE to generate CMakeConfigOptions.txt
 3. In the test/linearAlgebra directory, run "reframe -C ../config/mysettings.py -c TestLinearAlgebraBuild.py -r" 
-   to compile the tests.
+   to compile the tests. To retain the stage files in reframe add --keep-stage-files --dont-restage
 4. to run all cpu tests, use the command
    reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest*' -t cpu -r
    to run all gpu tests, use the command (GPU options need to be turned on in CMakeConfigOptions.txt)

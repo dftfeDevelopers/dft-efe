@@ -6,6 +6,9 @@ if (NOT TARGET dft-efe-linalg)
 
     # Add source files here
     set(DFT-EFE-LINALG-SOURCES
+	    Defaults.cpp
+	    LinearAlgebraTypes.cpp
+	    LinearAlgebraProfiler.cpp
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu
@@ -21,7 +24,9 @@ if (NOT TARGET dft-efe-linalg)
             TriangularMatrix.cpp
             MatrixKernels.cu
             MatrixKernels.cpp
-            MatrixOperations.cpp)
+            MatrixOperations.cpp
+	    LinearSolver.cpp
+	    CGLinearSolver.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

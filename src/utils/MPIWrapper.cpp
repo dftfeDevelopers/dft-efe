@@ -213,6 +213,12 @@ namespace dftefe
         return ::MPI_Finalize();
       }
 
+      int
+      MPIFinalized(int *flag)
+      {
+        return ::MPI_Finalized(flag);
+      }
+
       bool
       MPIErrIsSuccess(int errCode)
       {
@@ -462,6 +468,13 @@ namespace dftefe
         return MPISuccess;
       }
 
+      int
+      MPIFinalized(int *flag)
+      {
+        *flag = 1;
+        return MPISuccess;
+      }
+
       bool
       MPIErrIsSuccess(int errCode)
       {
@@ -481,7 +494,6 @@ namespace dftefe
       {
         return std::make_pair(MPIErrIsSuccess(errCode), MPIErrMsg(errCode));
       }
-
 
 #endif // DFTEFE_WITH_MPI
     }  // end of namespace mpi

@@ -1,4 +1,3 @@
-
 /******************************************************************************
  * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
@@ -27,52 +26,84 @@
 #ifndef dftefeLinearSolverFunction_h
 #define dftefeLinearSolverFunction_h
 
-#include <linearAlgebra/Vector.h>
+#include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
+#include <utils/MPITypes.h>
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+
+>>>>>>> operator
 namespace dftefe
 {
   namespace linearAlgebra
   {
     /**
-     * @brief An abstract class to encapsulate a linear partial differential equation (PDE)
      *
-     * @tparam ValueType datatype (float, double, complex<float>, complex<double>, etc) of the underlying fields in the PDE
-     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
-     * DEVICE) in which the underlying data (vector and matrices associated with
-     * the discrete PDE) vector must reside.
+     * @brief An abstract class that encapsulates a linear partial differential equation
+     *  (PDE). That in, in a discrete sense it represents the linear system of
+     * equations: \f$ \mathbf{Ax}=\mathbf{b}$\f.
+     *
+     *  It provides the handle for the action of the linear operator on
+     *  a given Vector, including the enforcement of appropriate boudnary
+     *  conditions and other constraints. Additionally, it provides a handle
+     *  to apply the preconditioner on a Vector. Finally, it also stores the
+     *  solution.
+     *
+     * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
+     * etc.) for the operator (e.g. Matrix) associated with the linear solve
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>,
+     * etc.) of the vector, matrices, etc.
+     * on which the operator will act
+     * @tparam memorySpace The meory space (HOST, DEVICE, HOST_PINNED, etc.)
+     * in which the data of the operator
+     * and its operands reside
+     *
      */
-
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     class LinearSolverFunction
     {
+    public:
       /**
-       * @brief Destructor.
+       * @brief define ValueType as the superior (bigger set) of the
+       * ValueTypeOperator and ValueTypeOperand
+       * (e.g., between double and complex<double>, complex<double>
+       * is the bigger set)
        */
+      using ValueType =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
+    public:
       virtual ~LinearSolverFunction() = default;
 
-      virtual Vector<ValueType, memorySpace>
-      getRhs() = 0;
+      virtual const OperatorContext<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace> &
+      getAxContext() const = 0;
 
-      virtual Vector<ValueType, memorySpace>
-      getInitialGuess() const = 0;
+      virtual const OperatorContext<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace> &
+      getPCContext() const = 0;
 
-      virtual Vector<ValueType, memorySpace>
+      virtual void
+      setSolution(const Vector<ValueTypeOperand, memorySpace> &x) = 0;
+
+      virtual const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &
       getSolution() const = 0;
 
-      virtual void
-      setSolution(const Vector<ValueType, memorySpace> &x) = 0;
+      virtual Vector<ValueType, memorySpace>
+      getRhs() const = 0;
 
-      virtual void
-      computeAx(const Vector<ValueType, memorySpace> &x,
-                Vector<ValueType, memorySpace> &      Ax) const = 0;
+      virtual Vector<ValueTypeOperand, memorySpace>
+      getInitialGuess() const = 0;
 
-      virtual void
-      computeATransx(const Vector<ValueType, memorySpace> &x,
-                     Vector<ValueType, memorySpace> &      ATx) const = 0;
-
-      virtual void
-      getDiagonalA(Vector<ValueType, memorySpace> &d) const = 0;
-    };
-  } // end of namespace linearAlgebra
+      virtual const utils::mpi::MPIComm &
+      getMPIComm() const = 0;
+    }; // end of class LinearSolverFunction
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeLinearSolverFunction_h

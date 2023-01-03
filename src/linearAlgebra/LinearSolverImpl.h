@@ -23,14 +23,12 @@
  * @author Bikash Kanungo
  */
 
-#ifndef dftefeCGLinearSolver_h
-#define dftefeCGLinearSolver_h
+#ifndef dftefeLinearSolverImpl_h
+#define dftefeLinearSolverImpl_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearAlgebraProfiler.h>
-#include <linearAlgebra/LinearSolverImpl.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 
 namespace dftefe
@@ -39,17 +37,11 @@ namespace dftefe
   {
     /**
      *
-     * @brief A class that implements the Conjugate-Gradient (CG) based Krylov
-     *  subspace algorithm  to solve a linear system of
-     *  (i.e., solve for \f$ \mathbf{Ax}=\mathbf{b}$\f).
-     *
-     * @see <em>An Introduction to the Conjugate Gradient Method Without the
-     *   Agonizing Pain</em>, Jonathan Richard Shewchuk
-     *   (<a
-     * href="https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf">Painless
-     * Conjugate-Gradient</a>)
-     *
-     * @see <em> Numerical Linear Algebra </em>, Trefethen, Lloyd N., and David Bau III., Vol. 50. Siam, 1997.
+     * @brief Abstract class that implements the LinearSolver algorithm.
+     *  For example, the derived classes of it, such as CGLinearSolver,
+     *  GMRESLinearSolver implement the Conjugate-Gradient (CG) and
+     *  Generalized Minimum Residual (GMRES) Krylov subspace based approches,
+     *  respectively, to solve a linear system of equations.
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
      * etc.) for the operator (e.g. Matrix) associated with the linear solve
@@ -64,39 +56,13 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class CGLinearSolver : public LinearSolverImpl<ValueTypeOperator,
-                                                   ValueTypeOperand,
-                                                   memorySpace>
+    class LinearSolverImpl
     {
     public:
       /**
-       * @brief Constructor
-       *
-       * @param[in] maxIter Maximum number of iterations to allow the solver
-       * to iterate. Generally, this determines the maximum size of the Krylov
-       * subspace that will be used.
-       * @param[in] absoluteTol Convergence tolerane on the absolute \f$ L_2 $\f
-       * norm of the residual (i.e., on \f$||\mathbf{Ax}-\mathbf{b}||$\f)
-       * @param[in] relativeTol Convergence tolerane on the relative L2 norm of
-       * the residual (i.e., on \f$||\mathbf{Ax}-\mathbf{b}||/||\mathbf{b}||$\f)
-       * @param[in] divergenceTol Tolerance to abort the linear solver if the
-       * L2 norm of the residual exceeds it
-       * (i.e., if \f$||\mathbf{Ax}-\mathbf{b}|| > divergenceTol$\f)
-       *
-       * @note Convergence is achieved if
-       * \f$||\mathbf{Ax}-\mathbf{b}|| < max(absoluteTol,
-       * relativeTol*||\mathbf{b}||)$\f
-       */
-      CGLinearSolver(const size_type       maxIter,
-                     const double          absoluteTol,
-                     const double          relativeTol,
-                     const double          divergenceTol,
-                     LinearAlgebraProfiler profiler);
-
-      /**
        * @brief Default Destructor
        */
-      ~CGLinearSolver() = default;
+      virtual ~LinearSolverImpl() = default;
 
       /**
        * @brief Function that initiates the linear solve
@@ -110,19 +76,11 @@ namespace dftefe
        *  \f$\mathbf{x}$\f
        *
        */
-      Error
+      virtual Error
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) override;
-
-    private:
-      LinearAlgebraProfiler d_profiler;
-      size_type             d_maxIter;
-      double                d_absoluteTol;
-      double                d_relativeTol;
-      double                d_divergenceTol;
-    }; // end of class CGLinearSolver
+          &linearSolverFunction) = 0;
+    }; // end of class LinearSolverImpl
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#include <linearAlgebra/CGLinearSolver.t.cpp>
-#endif // dftefeCGLinearSolver_h
+#endif // dftefeLinearSolverImpl_h
