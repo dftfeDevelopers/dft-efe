@@ -9,7 +9,7 @@ namespace dftefe
   {
     template <unsigned int dim>
     TriangulationCellDealii<dim>::TriangulationCellDealii(
-      DealiiCellIter dealiiCellIter)
+      DealiiTriangulationCellIterator dealiiCellIter)
       : d_cellItr(dealiiCellIter)
     {}
 
@@ -82,6 +82,29 @@ namespace dftefe
     {
       return dim;
     }
+    template <unsigned int dim>
+    double
+    TriangulationCellDealii<dim>::diameter() const
+    {
+      return d_cellItr->diameter();
+    }
+
+    template <unsigned int dim>
+    void
+    TriangulationCellDealii<dim>::center(
+      dftefe::utils::Point &centerPoint) const
+    {
+      dealii::Point<dim, double> dealiiPoint;
+      dealiiPoint = d_cellItr->center();
+      convertToDftefePoint<dim>(dealiiPoint, centerPoint);
+    }
+
+    template <unsigned int dim>
+    void
+    TriangulationCellDealii<dim>::setRefineFlag()
+    {
+      d_cellItr->set_refine_flag();
+    }
 
     template <unsigned int dim>
     void
@@ -110,7 +133,7 @@ namespace dftefe
 
     // TODO removed const qualifier
     template <unsigned int dim>
-    typename dealii::Triangulation<dim>::active_cell_iterator &
+    typename TriangulationCellDealii<dim>::DealiiTriangulationCellIterator &
     TriangulationCellDealii<dim>::getCellIterator()
     {
       return d_cellItr;

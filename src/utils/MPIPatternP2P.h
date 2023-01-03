@@ -122,7 +122,6 @@ namespace dftefe
         MPIPatternP2P(const size_type size);
 
 
-
         // void
         // reinit(){};
 

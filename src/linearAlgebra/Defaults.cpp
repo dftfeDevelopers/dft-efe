@@ -20,43 +20,33 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo
  */
-
-#ifndef dftefeBasisOperationsManager_h
-#define dftefeBasisOperationsManager_h
-
-#include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
-#include <utils/ScalarSpatialFunction.h>
+#include <linearAlgebra/Defaults.h>
+#include <limits.h>
 namespace dftefe
 {
-  namespace basis
+  namespace linearAlgebra
   {
     /**
-     * An abstract class to handle interactions between a basis and a
-     * field (e.g., integration of field with basis).
+     * @brief Setting all the LinearSolverDefaults
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class BasisOperationsManager
-    {
-    public:
-      virtual ~BasisOperationsManager() = default;
-      virtual void
-      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-                               const CellQuadratureContainer &         q,
-                               Field<ValueType, memorySpace> &         field);
+    const double LinearSolverDefaults::ABS_TOL        = 1e-12;
+    const double LinearSolverDefaults::REL_TOL        = 1e-12;
+    const double LinearSolverDefaults::DIVERGENCE_TOL = 1e6;
 
-      virtual void
-      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
-                               Field<ValueType, memorySpace> &field);
 
-      virtual void
-      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
-                               const CellQuadratureContainer &      q,
-                               Field<ValueType, memorySpace> &fieldOutput);
+    /**
+     * @brief Setting all the PrintControlDefaults
+     */
 
-    }; // end of BasisOperationsManager
-  }    // end of namespace basis
+    const size_type         PrintControlDefaults::WALL_TIME_FREQ        = 0;
+    const size_type         PrintControlDefaults::PRINT_FREQ            = 0;
+    const bool              PrintControlDefaults::PRINT_FINAL           = true;
+    const bool              PrintControlDefaults::PRINT_TOTAL_WALL_TIME = false;
+    const ParallelPrintType PrintControlDefaults::PARALLEL_PRINT_TYPE =
+      ParallelPrintType::ROOT_ONLY;
+    const size_type   PrintControlDefaults::PRECISION = 15;
+    const std::string PrintControlDefaults::DELIMITER = "\t";
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeBasisOperationsManager_h

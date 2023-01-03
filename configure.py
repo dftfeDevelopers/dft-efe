@@ -5,6 +5,8 @@ import traceback
 
 cmake_dict = {'SLATE_DIR':['', 'Path to SLATE installation',
                                        '--SLATE_DIR=/path/to/SLATE/installation'],
+              'BOOST_DIR':['','Path to the boost installation',
+                                   '--DEALII_PATH=/path/to/boost/installation'],
               'DEALII_PATH':['','Path to the deal.ii installation',
                                    '--DEALII_PATH=/path/to/deal.ii/installation'],
               'CMAKE_BUILD_TYPE':['', 'Build type Debug/Release',

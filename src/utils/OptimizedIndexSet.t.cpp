@@ -127,7 +127,7 @@ namespace dftefe
 
     template <typename T>
     bool
-    OptimizedIndexSet<T>::getPosition(const OptimizedIndexSet<T> &rhs) const
+    OptimizedIndexSet<T>::operator==(const OptimizedIndexSet<T> &rhs) const
     {
       if (d_numContiguousRanges != rhs.d_numContiguousRanges)
         return false;

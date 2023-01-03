@@ -30,6 +30,7 @@
 #include <utils/Point.h>
 #include <basis/FEBasisManager.h>
 #include <memory>
+#include <deal.II/fe/fe_q.h>
 
 /// dealii includes
 #include <deal.II/dofs/dof_handler.h>
@@ -45,11 +46,12 @@ namespace dftefe
     class FEBasisManagerDealii : public FEBasisManager
     {
     public:
-      using cellIterator       = FEBasisManager<dim>::cellIterator;
-      using const_cellIterator = FEBasisManager<dim>::const_cellIterator;
+      using FECellIterator       = FEBasisManager::FECellIterator;
+      using const_FECellIterator = FEBasisManager::const_FECellIterator;
 
-      FEBasisManagerDealii();
-      ~FEBasisManagerDealii();
+      FEBasisManagerDealii(
+        std::shared_ptr<const TriangulationBase> triangulation,
+        const size_type                          feOrder);
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;
@@ -61,42 +63,105 @@ namespace dftefe
 
       ////// FE specific  member functions /////
       void
-      reinit(const TriangulationBase &triangulation, const size_type feOrder);
+      reinit(std::shared_ptr<const TriangulationBase> triangulation,
+             const size_type                          feOrder) override;
+
+      std::shared_ptr<const TriangulationBase>
+      getTriangulation() const override;
+
       size_type
-      nLocalCells() const;
+      nLocalCells() const override;
       size_type
-      nGlobalCells() const;
+      nLocallyOwnedCells() const override;
+
+      size_type
+      nGlobalCells() const override;
       size_type
       getFEOrder(size_type cellId) const;
+
       size_type
       nCellDofs(size_type cellId) const;
+
+      bool
+      isHPRefined() const;
+
       size_type
       nLocalNodes() const;
+
+      std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange() const;
+
       global_size_type
       nGlobalNodes() const;
+
       std::vector<size_type>
-      getLocalNodeIds(size_type cellId);
+      getLocalNodeIds(size_type cellId) const;
+
       std::vector<size_type>
-      getGlobalNodeIds();
+      getGlobalNodeIds() const;
+
+      void
+      getCellDofsGlobalIds(
+        size_type                      cellId,
+        std::vector<global_size_type> &vecGlobalNodeId) const;
+
       std::vector<size_type>
       getBoundaryIds() const;
-      cellIterator
-      beginLocal();
-      cellIterator
-      endLocal();
-      const_cellIterator
-      beginLocal() const;
-      const_cellIterator
-      endLocal() const;
+
+      FECellIterator
+      beginLocallyOwnedCells();
+
+      FECellIterator
+      endLocallyOwnedCells();
+
+      const_FECellIterator
+      beginLocallyOwnedCells() const;
+
+      const_FECellIterator
+      endLocallyOwnedCells() const;
+
+      FECellIterator
+      beginLocalCells();
+      FECellIterator
+      endLocalCells();
+      const_FECellIterator
+      beginLocalCells() const;
+      const_FECellIterator
+      endLocalCells() const;
       unsigned int
       getDim() const;
+
+      virtual size_type
+      nCumulativeLocallyOwnedCellDofs() const override;
+
+      virtual size_type
+      nCumulativeLocalCellDofs() const override;
+
+      // This assumes a linear cell mapping
+      void
+      getBasisCenters(
+        std::map<global_size_type, utils::Point> &dofCoords) const override;
+
+      //
+      // dealii specific functions
+      //
+      std::shared_ptr<const dealii::DoFHandler<dim>>
+      getDoFHandler() const;
+
+      const dealii::FiniteElement<dim> &
+      getReferenceFE(const size_type cellId) const;
 
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
-
+      bool                                     d_isHPRefined;
+      std::vector<std::shared_ptr<FECellBase>> d_localCells;
+      std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
+      size_type d_numCumulativeLocallyOwnedCellDofs;
+      size_type d_numCumulativeLocalCellDofs;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis
 } // end of namespace dftefe
+#include "FEBasisManagerDealii.t.cpp"
 #endif // dftefeFEBasisManagerDealii_h

@@ -213,6 +213,12 @@ namespace dftefe
         return ::MPI_Finalize();
       }
 
+      int
+      MPIFinalized(int *flag)
+      {
+        return ::MPI_Finalized(flag);
+      }
+
       bool
       MPIErrIsSuccess(int errCode)
       {
@@ -459,6 +465,13 @@ namespace dftefe
       int
       MPIFinalize(void)
       {
+        return MPISuccess;
+      }
+
+      int
+      MPIFinalized(int *flag)
+      {
+        *flag = 1;
         return MPISuccess;
       }
 

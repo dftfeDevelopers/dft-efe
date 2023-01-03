@@ -14,17 +14,22 @@ endif()
 set(DFT-EFE-UTILS-SOURCES
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
-	MemoryManager.cpp
+	DeviceComplexUtils.cu
+        MemoryManager.cpp
 	Exceptions.cpp
+	NumberUtils.cpp
 	MemoryTransfer.cpp
 	ExpModX.cpp
 	LogModX.cpp
+	MathFunctions.cpp
+	StringOperations.cpp
 	ConditionalOStream.cpp
 	MPITypes.cpp
 	MPIWrapper.cpp
 	MPIRequestersNBX.cpp
 	MPIPatternP2P.cpp
 	Defaults.cpp
+	RandNumGen.cpp
   MPICommunicatorP2PKernels.cpp
   MPICommunicatorP2PKernels.cu
   MPIErrorCodeHandler.cpp)
@@ -44,8 +49,11 @@ if(ENABLE_MPI)
 
 endif()
 
+target_include_directories(dft-efe-utils PRIVATE ${BOOST_DIR}/include)
+target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib64)
+target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib)
 
 include_directories(../)
 
-target_link_libraries(dft-efe-utils PUBLIC ${DFTEFE_UTILS_MPI_LIBRARIES})
+target_link_libraries(dft-efe-utils PUBLIC boost_regex ${DFTEFE_UTILS_MPI_LIBRARIES})
 endif()

@@ -317,7 +317,6 @@ namespace dftefe
                   const size_type                               numVectors,
                   const ValueType initVal = utils::Types<ValueType>::zero);
 
-
       /**
        * @brief Copy constructor
        * @param[in] u MultiVector object to copy from
@@ -428,6 +427,13 @@ namespace dftefe
       std::vector<double>
       lInfNorms() const;
 
+      /**
+       * @brief Returns the nunber of vectors in this multi-vector
+       * @return d_numVectors
+       */
+      size_type
+      getNumberComponents();
+
       void
       updateGhostValues(const size_type communicationChannel = 0);
 
@@ -457,16 +463,20 @@ namespace dftefe
 
       global_size_type
       globalSize() const;
+
       size_type
       localSize() const;
+
       size_type
       locallyOwnedSize() const;
+
       size_type
       ghostSize() const;
+
       size_type
       numVectors() const;
 
-    private:
+    protected:
       std::unique_ptr<Storage>                      d_storage;
       std::shared_ptr<LinAlgOpContext<memorySpace>> d_linAlgOpContext;
       VectorAttributes                              d_vectorAttributes;
@@ -525,13 +535,13 @@ namespace dftefe
      * or (b) blasLapack::ScalarOp::ComplexConjugate for op(x) = complex
      * conjugate of x
      *
-     * The returned value resides on utils::MemorySpace::HOST (i.e., CPU)
+     * The output resides on utils::MemorySpace::HOST (i.e., CPU)
      *
      * @param[in] u first MultiVector
      * @param[in] v second MultiVector
      * @param[in] opU blasLapack::ScalarOp for u MultiVector
      * @param[in] opV blasLapack::ScalarOp for v MultiVector
-     * @return An STL vector containing where I-th element contains the
+     * @param[out] dotPords STL vector where the I-th element contains the
      * the dot product between opU(u_I) and opV(v_I), where u_I and v_I are
      * I-th vector from u and v, respectively
      *
@@ -541,6 +551,8 @@ namespace dftefe
      *  v vector
      * @tparam memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the vector must reside.
+     * @note The dotProds must be appropriately allocated before calling
+     *  this function
      * @note The datatype of the dot product is
      * decided through a union of ValueType1 and ValueType2
      * (e.g., union of double and complex<double> is complex<double>)
@@ -548,9 +560,10 @@ namespace dftefe
     template <typename ValueType1,
               typename ValueType2,
               utils::MemorySpace memorySpace>
-    std::vector<blasLapack::scalar_type<ValueType1, ValueType2>>
-    dot(const MultiVector<ValueType1, memorySpace> &u,
-        const MultiVector<ValueType2, memorySpace> &v,
+    void
+    dot(const MultiVector<ValueType1, memorySpace> &                  u,
+        const MultiVector<ValueType2, memorySpace> &                  v,
+        std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &dotProds,
         const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
         const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
 
@@ -566,7 +579,8 @@ namespace dftefe
      * @param[out] dotProd Pointer to dot products between opU(u_I) and
      * opV(v_I), where u_I and v_I are I-th vector from u and v, respectively
      *
-     * @note The pointer dotProd must be properly allocated
+     * @note The pointer dotProd must be properly allocated within the memory
+     *  space of the MultiVector involved
      *
      * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
      *  u vector

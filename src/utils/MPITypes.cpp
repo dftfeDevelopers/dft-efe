@@ -100,7 +100,7 @@ namespace dftefe
     int mpi::MPIThreadMultiple   = MPI_THREAD_MULTIPLE;
     int mpi::MPIThreadSerialized = MPI_THREAD_SERIALIZED;
 
-#else  // DFTEF_WITH_MPI
+#else  // DFTEFE_WITH_MPI
 
     //
     // ANY or IGNORE objects
