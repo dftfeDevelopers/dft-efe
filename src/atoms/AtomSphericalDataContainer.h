@@ -51,12 +51,33 @@ namespace dftefe
      */
     class AtomSphericalDataContainer
     {
-    public
+    public:
+      
+      /**
+       * @brief Constructor 
+       *    
+       * @param[in] atomSymbolToFilename Map from atomic symbol to the XML file containing 
+       *   the atom's spherical field data
+       * @param[in] fieldname String defining the field that needs to be read from the atom's XML file
+       * 
+       */
       AtomSphericalDataContainer(
         const std::map<std::string, std::string> &atomSymbolToFilename,
         std::string                               fieldname);
+      
+      /**
+       * @brief Destructor
+       */
       ~AtomSphericalDataContainer();
 
+      /**
+       * @brief Returns the speherical data for a given atom and quantum numbers
+       * 
+       * @param[in] atomSymbol String defining the atom
+       * @param[in] qNumbers Vector of integers defining the quantum numbers 
+       *  (e.g., n,l,m quantum numbers) for which the SphericalData is required
+       * @return SphericalData object for the given atom and quantum numbers
+       */
       SphericalData
       getSphericalData(std::string             atomSymbol,
                        const std::vector<int> &qNumbers) const;
