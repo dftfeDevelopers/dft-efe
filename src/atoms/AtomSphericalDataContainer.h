@@ -68,7 +68,7 @@ namespace dftefe
       /**
        * @brief Destructor
        */
-      ~AtomSphericalDataContainer();
+      ~AtomSphericalDataContainer() = default;
 
       /**
        * @brief Returns the speherical data for a given atom and quantum numbers
@@ -92,7 +92,7 @@ namespace dftefe
       getFieldName() const;
 
     private:
-      std::map<std::string, std:: : string>    d_atomSymbolToFilename;
+      std::map<std::string, std::string>    d_atomSymbolToFilename;
       std::string                              d_fieldName;
       std::vector<AtomSphericalElectronicData> d_atomSphericalElectronicData;
 
