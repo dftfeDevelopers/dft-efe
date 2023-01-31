@@ -30,17 +30,17 @@
 #include <vector>
 namespace dftefe
 {
-    namespace atoms
+  namespace atoms
+  {
+    struct SphericalData
     {
-      struct SphericalData
-      {
-	std::vector<int> qNumbers;
-	std::vector<double> radialPoints;
-	std::vector<double> radialValues;
-	double cutoff;
-	double smoothness;
-      };
+      std::vector<int>    qNumbers;
+      std::vector<double> radialPoints;
+      std::vector<double> radialValues;
+      double              cutoff;
+      double              smoothness;
+    };
 
-    } // end of namespace atoms
+  } // end of namespace atoms
 } // end of namespace dftefe
 #endif // dftefeSphericalData_h

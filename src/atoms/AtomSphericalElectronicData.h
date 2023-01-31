@@ -34,57 +34,65 @@
 #include <string>
 namespace dftefe
 {
-    namespace atoms
-    {
-
+  namespace atoms
+  {
     /**
      * @brief Class to spherical data for a given atomic species.
-     * It <b> assumes the atomic data to be provided in a file to be in XML format</b>
-     * It <b> assumes the atomic data to be spherical in nature</b>, i.e., the field can be written
-     * as a product of a radial and an angular part, given as
-     * \f{equation*}{
-     *  N(\boldsymbol{\textbf{r}}) = f_{nl}(r) Y_{lm}(\theta,\phi)
-     * \f}
+     * It <b> assumes the atomic data to be provided in a file to be in XML
+     * format</b> It <b> assumes the atomic data to be spherical in nature</b>,
+     * i.e., the field can be written as a product of a radial and an angular
+     * part, given as \f{equation*}{ N(\boldsymbol{\textbf{r}}) = f_{nl}(r)
+     * Y_{lm}(\theta,\phi) \f}
      *
-     * where \f$r\f$ is the distance from origin, \f$\theta\f$ is the polar angle, and \f$\phi\f$ is the azimuthal angle.
-     * \f$n,l,m\f$ denote the principal, angular, and magnetic quantum numbers, respectively.
-     * $\fY_{lm}\f$ denotes a spherical harmonic of degree \f$l\f$ and order \f$m\f$. 
-     * See https://en.wikipedia.org/wiki/Spherical_harmonics for more details on spherical harmonics.  
+     * where \f$r\f$ is the distance from origin, \f$\theta\f$ is the polar
+     * angle, and \f$\phi\f$ is the azimuthal angle. \f$n,l,m\f$ denote the
+     * principal, angular, and magnetic quantum numbers, respectively.
+     * $\fY_{lm}\f$ denotes a spherical harmonic of degree \f$l\f$ and order
+     * \f$m\f$. See https://en.wikipedia.org/wiki/Spherical_harmonics for more
+     * details on spherical harmonics.
      */
-      class AtomSphericalElectronicData{
+    class AtomSphericalElectronicData
+    {
+    public:
+      AtomSphericalElectronicData(const std::string filename);
+      ~AtomSphericalElectronicData() = default;
+      double
+      getAtomicNumber() const;
+      double
+      getCharge() const;
+      std::string
+      getSymbol() const;
+      std::vector<double>
+      getRadialPoints() const;
+      const std::vector<SphericalData> &
+      getDensityData() const;
+      const std::vector<SphericalData> &
+      getVHartreeData() const;
+      const std::vector<SphericalData> &
+      getVNuclearData() const;
+      const std::vector<SphericalData> &
+      getVTotalData() const;
+      const std::vector<SphericalData> &
+      getOrbitalData() const;
 
-	public:
-	  AtomSphericalElectronicData(const std::string filename);
-	  ~AtomSphericalElectronicData() = default;
-	  double getAtomicNumber() const;
-	  double getCharge() const;
-	  std::string getSymbol() const;
-	  std::vector<double> getRadialPoints() const;
-	  const std::vector<SphericalData> & getDensityData() const;
-	  const std::vector<SphericalData> & getVHartreeData() const;
-	  const std::vector<SphericalData> & getVNuclearData() const;
-	  const std::vector<SphericalData> & getVTotalData() const;
-	  const std::vector<SphericalData> & getOrbitalData() const;
-
-       protected:
-	  std::string d_filename;
-	  std::string d_symbol;
-	 double d_Z;
-	 double d_charge;
-	 size_type d_numRadialPoints;
-	 std::vector<double> d_radialPoints;
-	 std::vector<SphericalData> d_densityData;
-	 std::vector<SphericalData> d_vHartreeData;
-	 std::vector<SphericalData> d_vNuclearData;
-	 std::vector<SphericalData> d_vTotalData;
-	 std::vector<SphericalData> d_orbitalData;
-	 std::map<std::vector<int>, size_type> d_qNumbersToDensityDataIdMap;
-	 std::map<std::vector<int>, size_type> d_qNumbersToVHartreeDataIdMap;
-	 std::map<std::vector<int>, size_type> d_qNumbersToVNuclearDataIdMap;
-	 std::map<std::vector<int>, size_type> d_qNumbersToVTotalDataIdMap;
-	 std::map<std::vector<int>, size_type> d_qNumbersToOrbitalDataIdMap;
-      };
+    protected:
+      std::string                           d_filename;
+      std::string                           d_symbol;
+      double                                d_Z;
+      double                                d_charge;
+      size_type                             d_numRadialPoints;
+      std::vector<double>                   d_radialPoints;
+      std::vector<SphericalData>            d_densityData;
+      std::vector<SphericalData>            d_vHartreeData;
+      std::vector<SphericalData>            d_vNuclearData;
+      std::vector<SphericalData>            d_vTotalData;
+      std::vector<SphericalData>            d_orbitalData;
+      std::map<std::vector<int>, size_type> d_qNumbersToDensityDataIdMap;
+      std::map<std::vector<int>, size_type> d_qNumbersToVHartreeDataIdMap;
+      std::map<std::vector<int>, size_type> d_qNumbersToVNuclearDataIdMap;
+      std::map<std::vector<int>, size_type> d_qNumbersToVTotalDataIdMap;
+      std::map<std::vector<int>, size_type> d_qNumbersToOrbitalDataIdMap;
+    };
   } // end of namespace atoms
 } // end of namespace dftefe
 #endif // dftefeAtomSphericalElectronicData_h
-
