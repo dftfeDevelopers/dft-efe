@@ -1,5 +1,5 @@
-#ifndef dftefeDataTypeOverloads_cuh
-#define dftefeDataTypeOverloads_cuh
+#ifndef dftefeDataTypeOverloads_h
+#define dftefeDataTypeOverloads_h
 
 #include <complex>
 #include <algorithm>

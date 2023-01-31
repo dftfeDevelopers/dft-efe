@@ -29,6 +29,9 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/ScalarSpatialFunction.h>
+#include <quadrature/QuadratureAttributes.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
   namespace basis
@@ -37,24 +40,68 @@ namespace dftefe
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
      */
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace>
     class BasisOperations
     {
     public:
       virtual ~BasisOperations() = default;
-      virtual void
-      integrateWithBasisValues(const ScalarSpatialFunction<ValueType> &f,
-                               const CellQuadratureContainer &         q,
-                               Field<ValueType, memorySpace> &         field);
+
+      // virtual void
+      // integrateWithBasisValues(const
+      // ScalarSpatialFunction<ValueTypeBasisCoeff> &f,
+      //    const quadrature::QuadratureRuleAttributes &
+      //    quadratureRuleAttributes,
+      //                         Field<ValueTypeBasisCoeff, memorySpace> &
+      //                         field) const = 0;
 
       virtual void
-      integrateWithBasisValues(const FunctionData<ValueType, memorySpace> &f,
-                               Field<ValueType, memorySpace> &field);
+      interpolate(
+        const Field<ValueTypeBasisCoeff, memorySpace> &field,
+        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const = 0;
 
       virtual void
-      integrateWithBasisValues(const Field<ValueType, memorySpace> &fieldInput,
-                               const CellQuadratureContainer &      q,
-                               Field<ValueType, memorySpace> &fieldOutput);
+      interpolate(
+        const MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const std::string &                                   constraintsName,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const = 0;
+
+
+      virtual void
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        Field<ValueTypeBasisCoeff, memorySpace> &   f) const = 0;
+
+      virtual void
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const std::string &                                   constraintsName,
+        MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData) const = 0;
+      // virtual void
+      // integrateWithBasisValues(
+      //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
+      //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput)
+      //  const = 0;
 
     }; // end of BasisOperations
   }    // end of namespace basis

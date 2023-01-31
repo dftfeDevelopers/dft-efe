@@ -39,11 +39,11 @@ namespace dftefe
       void
       executeCoarseningAndRefinement() override;
       unsigned int
-      nLocallyActiveCells() const override;
+      nLocallyOwnedCells() const override;
       size_type
-      nGloballyActiveCells() const override;
-      unsigned int
-      nCells() const override;
+      nGlobalCells() const override;
+      size_type
+      nLocalCells() const override;
       /**
        * \todo
        * TODO:
@@ -64,10 +64,10 @@ namespace dftefe
       getDim() const override;
 
       // class specific member function
-      dealii::Triangulation<dim> &
-      returnDealiiTria();
+      const dealii::Triangulation<dim> &
+      returnDealiiTria() const;
 
-        private:
+    private:
       /**
        * \todo
        * TODO:

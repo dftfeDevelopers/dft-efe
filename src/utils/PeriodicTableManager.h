@@ -31,26 +31,24 @@
 #include <string>
 namespace dftefe
 {
-  namespace utils 
+  namespace utils
   {
-
-  /**
-   * @brief Provides a map from Atomic Number to Atomic Symbol
-   */
- 
-   class PeriodicTableManager {
-
-    public:
-
     /**
-     * @brief Constructor 
+     * @brief Provides a map from Atomic Number to Atomic Symbol
      */
-    PeriodicTableManager();  
+
+    class PeriodicTableManager
+    {
+    public:
+      /**
+       * @brief Constructor
+       */
+      PeriodicTableManager();
 
     private:
-     static std::map<std::string, double> d_symbolToAtomicNumberMap;
-     static std::map<double, std::string> d_atomicNumberToSymbolMap;
-  };   
+      static std::map<std::string, double> d_symbolToAtomicNumberMap;
+      static std::map<double, std::string> d_atomicNumberToSymbolMap;
+    };
 
   } // end of namespace utils
 } // end of namespace dftefe

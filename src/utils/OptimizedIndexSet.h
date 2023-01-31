@@ -39,25 +39,35 @@ namespace dftefe
      * are fewer compared to the size of the index set. If the number of
      * contiguous sub-ranges competes with the size of the index set (i.e., the
      * index set is very random) then it default to the behavior of an std::set.
-     * The default to STL set is governed by the numRangesToSetSizeTol value.
-     * That is, if the ratio of number of contiguous ranges to the size of index
-     * set exceeds numRangesToSetSizeTol, it defaults to the behavior of STL
-     * set. The default value for numRangesToSetSizeTol is 0.1
+     *
+     * @tparam ValueType The data type of the indices (e.g., unsigned int, unsigned long int)
      */
+
+    template <typename T>
     class OptimizedIndexSet
     {
     public:
-      OptimizedIndexSet(const std::set<global_size_type> &inputSet);
+      /**
+       * @brief Constructor
+       *
+       * @param[in] inputSet A set of unsigned int or unsigned long int
+       * for which an OptimizedIndexSet is to be created
+       */
+      OptimizedIndexSet(const std::set<T> &inputSet = std::set<T>());
       ~OptimizedIndexSet() = default;
 
       void
-      getPosition(const global_size_type index,
-                  size_type &            pos,
-                  bool &                 found) const;
+      getPosition(const T &index, size_type &pos, bool &found) const;
+
+      bool
+      getPosition(const OptimizedIndexSet<T> &rhs) const;
+
+      bool
+      operator==(const OptimizedIndexSet<T> &rhs) const;
 
     private:
-      std::set<global_size_type> d_set;
-      size_type                  d_numContiguousRanges;
+      /// Store the number of contiguous ranges in the input set of indices
+      size_type d_numContiguousRanges;
 
       /*
        * Vector of size 2*(d_numContiguousRanges in d_set).
@@ -66,7 +76,7 @@ namespace dftefe
        * range2 startId> <continguous range2 endId> ... NOTE: The endId is one
        * past the lastId in the continguous range
        */
-      std::vector<global_size_type> d_contiguousRanges;
+      std::vector<T> d_contiguousRanges;
 
       /// Vector of size d_numContiguousRanges which stores the accumulated
       /// number of elements in d_set prior to the i-th contiguous range
@@ -76,5 +86,5 @@ namespace dftefe
   } // end of namespace utils
 
 } // end of namespace dftefe
-
+#include <utils/OptimizedIndexSet.t.cpp>
 #endif // dftefeOptimizedSet_h

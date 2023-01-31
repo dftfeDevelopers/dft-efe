@@ -42,9 +42,10 @@ absCompare(const std::complex<double> & a,
 int
 main()
 {
+  const dftefe::utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
   const double lo = -10.0;
   const double hi = 10.0;
-  unsigned int vSize = 3;
+  dftefe::size_type vSize = 3;
   const double tol = 1e-13;
   
   std::vector<std::complex<double>> zVecStd(vSize);
@@ -61,8 +62,12 @@ main()
   zVecStdL2Norm = std::sqrt(zVecStdL2Norm);
   double zVecStdLInfNorm = std::abs(*std::max_element(zVecStd.begin(), zVecStd.end(), absCompare));
 
+  dftefe::linearAlgebra::blasLapack::BlasQueue<Host> queue; 
+
+  dftefe::linearAlgebra::LinAlgOpContext<Host> linAlgContext(&queue); 
+
   std::shared_ptr<dftefe::linearAlgebra::Vector<std::complex<double>, dftefe::utils::MemorySpace::HOST>> zVec
-    = std::make_shared<dftefe::linearAlgebra::SerialVector<std::complex<double>, dftefe::utils::MemorySpace::HOST>>(vSize, 0);
+    = std::make_shared<dftefe::linearAlgebra::SerialVector<std::complex<double>, dftefe::utils::MemorySpace::HOST>>(vSize, &linAlgContext,0);
 
   dftefe::utils::MemoryTransfer<
     dftefe::utils::MemorySpace::HOST,

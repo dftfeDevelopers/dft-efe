@@ -29,12 +29,12 @@ namespace dftefe
 {
   namespace quadrature
   {
-    QuadratureAttributes::QuadratureAttributes()
+    QuadratureRuleAttributes::QuadratureRuleAttributes()
     {
       utils::throwException(
         false,
-        "Cannot use default constructor of QuadratureAttributes. Use "
-        "QuadratureAttributes(const quadrature::QuadratureFamily, bool isCartesianTensorStructured, const size_type num1DPoints) constructor.");
+        "Cannot use default constructor of QuadratureRuleAttributes. Use "
+        "QuadratureRuleAttributes(const quadrature::QuadratureFamily, bool isCartesianTensorStructured, const size_type num1DPoints) constructor.");
     }
 
     QuadratureRuleAttributes::QuadratureRuleAttributes(
@@ -47,7 +47,7 @@ namespace dftefe
     {
       if (d_isCartesianTensorStructured == false)
         {
-          utils::throwException<LogicError>(
+          utils::throwException<utils::LogicError>(
             d_num1DPoints == 0,
             "The use of non-zero number of points in 1D for a non-cartesian-tensored-structured quadrature is not allowed.");
         }
@@ -55,7 +55,7 @@ namespace dftefe
       if (d_quadratureFamily == QuadratureFamily::GAUSS_VARIABLE ||
           d_quadratureFamily == QuadratureFamily::GLL_VARIABLE)
         {
-          utils::throwException<LogicError>(
+          utils::throwException<utils::LogicError>(
             d_num1DPoints == 0,
             "The use of non-zero number of points in 1D for a quadrature rule that is variable across cells is not allowed.");
         }
@@ -77,6 +77,30 @@ namespace dftefe
     QuadratureRuleAttributes::getNum1DPoints() const
     {
       return d_num1DPoints;
+    }
+
+    bool
+    QuadratureRuleAttributes::operator<(
+      const QuadratureRuleAttributes &quadratureRuleAttributes) const
+    {
+      if (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily)
+        {
+          return d_num1DPoints < quadratureRuleAttributes.d_num1DPoints;
+        }
+      else
+        return d_quadratureFamily < quadratureRuleAttributes.d_quadratureFamily;
+    }
+
+    bool
+    QuadratureRuleAttributes::operator==(
+      const QuadratureRuleAttributes &quadratureRuleAttributes) const
+    {
+      const bool flag =
+        (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily) &&
+        (d_num1DPoints == quadratureRuleAttributes.d_num1DPoints) &&
+        (d_isCartesianTensorStructured ==
+         quadratureRuleAttributes.d_isCartesianTensorStructured);
+      return flag;
     }
   } // end of namespace quadrature
 } // end of namespace dftefe

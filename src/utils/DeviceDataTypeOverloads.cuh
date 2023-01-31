@@ -8,7 +8,69 @@ namespace dftefe
 {
   namespace utils
   {
-    // mult for homogeneous types e.g. (double, double)
+    // abs obverloads
+
+    __inline__ __device__ double
+    abs(double a)
+    {
+      return fabs(a);
+    }
+
+    __inline__ __device__ double
+    abs(cuDoubleComplex a)
+    {
+      return cuCabs(a);
+    }
+
+    __inline__ __device__ double
+    abs(cuFloatComplex a)
+    {
+      return cuCabsf(a);
+    }
+
+    //
+    // conjugate overloads
+    //
+
+    __inline__ __device__ size_type
+    conj(size_type a)
+    {
+      return a;
+    }
+
+    __inline__ __device__ int
+    conj(int a)
+    {
+      return a;
+    }
+
+    __inline__ __device__ float
+    conj(float a)
+    {
+      return a;
+    }
+    __inline__ __device__ double
+    conj(double a)
+    {
+      return a;
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    conj(cuDoubleComplex a)
+    {
+      return cuConj(a);
+    }
+
+    __inline__ __device__ cuFloatComplex
+    conj(cuFloatComplex a)
+    {
+      return cuConjf(a);
+    }
+
+
+    //
+    // mult for real homogeneous types e.g. (double, double)
+    //
     __inline__ __device__ size_type
     mult(size_type a, size_type b)
     {
@@ -33,6 +95,10 @@ namespace dftefe
       return a * b;
     }
 
+    //
+    // mult for complex homogenous types
+    // (e.g., cuDoubleComplex and cuDoubleComplex)
+    //
     __inline__ __device__ cuDoubleComplex
     mult(cuDoubleComplex a, cuDoubleComplex b)
     {
@@ -44,6 +110,64 @@ namespace dftefe
     {
       return cuCmulf(a, b);
     }
+
+
+    //
+    // mult for complex heterogeneous types e.g. (cuDoubleComplex,
+    // cuFloatComplex)
+    //
+    __inline__ __device__ cuDoubleComplex
+    mult(cuFloatComplex a, cuDoubleComplex b)
+    {
+      return cuCmul(make_cuDoubleComplex(a.x, a.y), b);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(cuDoubleComplex a, cuFloatComplex b)
+    {
+      return cuCmul(a, make_cuDoubleComplex(b.x, b.y));
+    }
+
+
+    //
+    // mult for real-complex heterogeneous types e.g. (double, cuFloatComplex)
+    //
+    __inline__ __device__ cuDoubleComplex
+    mult(double a, cuDoubleComplex b)
+    {
+      return make_cuDoubleComplex(a * b.x, a * b.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(cuDoubleComplex a, double b)
+    {
+      return make_cuDoubleComplex(b * a.x, b * a.y);
+    }
+
+    __inline__ __device__ cuFloatComplex
+    mult(float a, cuFloatComplex b)
+    {
+      return make_cuFloatComplex(a * b.x, a * b.y);
+    }
+
+    __inline__ __device__ cuFloatComplex
+    mult(cuFloatComplex a, float b)
+    {
+      return make_cuFloatComplex(b * a.x, b * a.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(double a, cuFloatComplex b)
+    {
+      return make_cuDoubleComplex(a * b.x, a * b.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    mult(cuFloatComplex a, double b)
+    {
+      return make_cuDoubleComplex(b * a.x, b * a.y);
+    }
+
 
     __inline__ __device__ size_type
     add(size_type a, size_type b)
@@ -154,30 +278,64 @@ namespace dftefe
       return cuCdivf(a, b);
     }
 
-    // mult for heterogeneous types e.g. (double, complex)
+    //
+    // div for complex heterogeneous types e.g. (cuDoubleComplex,
+    // cuFloatComplex)
+    //
     __inline__ __device__ cuDoubleComplex
-    mult(double a, cuDoubleComplex b)
+    div(cuFloatComplex a, cuDoubleComplex b)
     {
-      return make_cuDoubleComplex(a * b.x, a * b.y);
+      return cuCdiv(make_cuDoubleComplex(a.x, a.y), b);
     }
 
     __inline__ __device__ cuDoubleComplex
-    mult(cuDoubleComplex a, double b)
+    div(cuDoubleComplex a, cuFloatComplex b)
     {
-      return make_cuDoubleComplex(b * a.x, b * a.y);
+      return cuCdiv(a, make_cuDoubleComplex(b.x, b.y));
+    }
+
+
+    //
+    // div for real-complex heterogeneous types e.g. (double, cuFloatComplex)
+    //
+    __inline__ __device__ cuDoubleComplex
+    div(double a, cuDoubleComplex b)
+    {
+      return make_cuDoubleComplex(a / b.x, a / b.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    div(cuDoubleComplex a, double b)
+    {
+      return make_cuDoubleComplex(b / a.x, b / a.y);
     }
 
     __inline__ __device__ cuFloatComplex
-    mult(double a, cuFloatComplex b)
+    div(float a, cuFloatComplex b)
     {
-      return make_cuFloatComplex(a * b.x, a * b.y);
+      return make_cuFloatComplex(a / b.x, a / b.y);
     }
 
     __inline__ __device__ cuFloatComplex
-    mult(cuFloatComplex a, double b)
+    div(cuFloatComplex a, float b)
     {
-      return make_cuFloatComplex(b * a.x, b * a.y);
+      return make_cuFloatComplex(b / a.x, b / a.y);
     }
+
+    __inline__ __device__ cuDoubleComplex
+    div(double a, cuFloatComplex b)
+    {
+      return make_cuDoubleComplex(a / b.x, a / b.y);
+    }
+
+    __inline__ __device__ cuDoubleComplex
+    div(cuFloatComplex a, double b)
+    {
+      return make_cuDoubleComplex(b / a.x, b / a.y);
+    }
+
+    ////
+
 
     inline int *
     makeDataTypeDeviceCompatible(int *a)
@@ -286,6 +444,31 @@ namespace dftefe
     {
       return make_cuFloatComplex(a.real(), a.imag());
     }
+
+    __inline__ __device__ void
+    setRealValue(cuFloatComplex *a, double value)
+    {
+      *a = make_cuFloatComplex(value, 0.0);
+    }
+
+    __inline__ __device__ void
+    setRealValue(cuDoubleComplex *a, double value)
+    {
+      *a = make_cuDoubleComplex(value, 0.0);
+    }
+
+    __inline__ __device__ void
+    setRealValue(float *a, double value)
+    {
+      *a = value;
+    }
+
+    __inline__ __device__ void
+    setRealValue(double *a, double value)
+    {
+      *a = value;
+    }
+
 
 
   } // namespace utils

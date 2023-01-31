@@ -1,6 +1,6 @@
 if (NOT TARGET dft-efe-basis)
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
@@ -11,9 +11,12 @@ set(DFT-EFE-BASIS-SOURCES
 	LinearCellMappingDealii.cpp
 	ParentToChildCellsManagerDealii.cpp
         TriangulationDealiiParallel.cpp
+		ConstraintsInternal.cpp
+		ConstraintsInternal.cu
         FEConstraintsDealii.cpp
         FEConstraintsBase.cpp
-        FEBasisDataStorageDealii.cpp)
+        FEBasisDataStorageDealii.cpp
+        FEBasisHandlerDealii.cpp)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
@@ -41,5 +44,13 @@ if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
 
-target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
+if (NOT TARGET dft-efe-quadrature)
+  add_subdirectory(../quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
+endif()
+
+if (NOT TARGET dft-efe-linalg)
+  add_subdirectory(../linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
+endif()
+
+target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg  ${DFTEFE_MPI_LIBRARIES})
 endif()

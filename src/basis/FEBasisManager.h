@@ -51,10 +51,9 @@ namespace dftefe
       typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
         const_FECellIterator;
 
-      virtual ~FEBasisManager() = default;
       virtual double
       getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) = 0;
+                            const utils::Point &point) const = 0;
       virtual std::vector<double>
       getBasisFunctionDerivative(const size_type     basisId,
                                  const utils::Point &point,
@@ -62,19 +61,28 @@ namespace dftefe
 
       ////// FE specific virtual member functions /////
       virtual void
-      reinit(const TriangulationBase &triangulation, const size_type feOrder);
+      reinit(std::shared_ptr<const TriangulationBase> triangulation,
+             const size_type                          feOrder) = 0;
+
+      virtual std::shared_ptr<const TriangulationBase>
+      getTriangulation() const = 0;
+
       virtual size_type
-      nLocallyActiveCells() const = 0;
+      nLocalCells() const = 0;
       virtual size_type
-      nOwnedCells() const = 0;
+      nLocallyOwnedCells() const = 0;
       virtual size_type
-      nGloballyActiveCells() const = 0;
+      nGlobalCells() const = 0;
       virtual size_type
       getFEOrder(size_type cellId) const = 0;
       virtual size_type
       nCellDofs(size_type cellId) const = 0;
       virtual bool
       isHPRefined() const = 0;
+
+      virtual std::pair<global_size_type, global_size_type>
+      getLocallyOwnedRange() const = 0;
+
       virtual size_type
       nLocalNodes() const = 0;
       virtual global_size_type
@@ -83,8 +91,10 @@ namespace dftefe
       getLocalNodeIds(size_type cellId) const = 0;
       virtual std::vector<size_type>
       getGlobalNodeIds() const = 0;
-      virtual std::vector<size_type>
-      getCellDofsLocalIds(size_type cellId) const = 0;
+      virtual void
+      getCellDofsGlobalIds(
+        size_type                      cellId,
+        std::vector<global_size_type> &vecGlobalNodeId) const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual FECellIterator
@@ -96,13 +106,25 @@ namespace dftefe
       virtual const_FECellIterator
       endLocallyOwnedCells() const = 0;
       virtual FECellIterator
-      beginLocallyActiveCells() = 0;
+      beginLocalCells() = 0;
       virtual FECellIterator
-      endLocallyActiveCells() = 0;
+      endLocalCells() = 0;
       virtual const_FECellIterator
-      beginLocallyActiveCells() const = 0;
+      beginLocalCells() const = 0;
       virtual const_FECellIterator
-      endLocallyActiveCells() const = 0;
+      endLocalCells() const = 0;
+
+      virtual size_type
+      nCumulativeLocallyOwnedCellDofs() const = 0;
+
+      virtual size_type
+      nCumulativeLocalCellDofs() const = 0;
+
+      // This assumes a linear cell mapping
+      virtual void
+      getBasisCenters(
+        std::map<global_size_type, utils::Point> &dofCoords) const = 0;
+
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

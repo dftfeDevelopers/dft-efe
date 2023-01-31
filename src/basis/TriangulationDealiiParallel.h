@@ -64,11 +64,11 @@ namespace dftefe
       void
       executeCoarseningAndRefinement() override;
       unsigned int
-      nLocallyActiveCells() const override;
+      nLocallyOwnedCells() const override;
       size_type
-      nGloballyActiveCells() const override;
+      nGlobalCells() const override;
       size_type
-      nCells() const override;
+      nLocalCells() const override;
       /**
        * \todo
        * TODO:
@@ -91,8 +91,8 @@ namespace dftefe
       // Class specific member function
 
 
-      dealii::parallel::distributed::Triangulation<dim> &
-        returnDealiiTria();
+      const dealii::parallel::distributed::Triangulation<dim> &
+      returnDealiiTria() const;
 
     private:
       /**

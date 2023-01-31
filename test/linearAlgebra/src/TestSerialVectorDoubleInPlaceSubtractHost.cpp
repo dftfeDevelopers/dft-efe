@@ -40,9 +40,12 @@ using SerialVectorDoubleHost = dftefe::linearAlgebra::SerialVector<double, dftef
 main()
 {
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
+  dftefe::linearAlgebra::blasLapack::BlasQueue<Host> queue; 
+
+  dftefe::linearAlgebra::LinAlgOpContext<Host> linAlgContext(&queue);
   const double lo = -10.0;
   const double hi = 10.0;
-  unsigned int vSize = 3;
+  dftefe::size_type vSize = 3;
   const double tol = 1e-13;
 
   // test double
@@ -55,21 +58,21 @@ main()
     it = lo + (hi-lo)*std::rand()/RAND_MAX;
 
   std::vector<double> dVecStd3(vSize);
-  for(unsigned int i = 0; i < vSize; ++i)
+  for(dftefe::size_type i = 0; i < vSize; ++i)
     dVecStd3[i] = dVecStd1[i] - dVecStd2[i];
 
   std::unique_ptr<MemoryStorageDoubleHost> memStorage1 
     = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage1->copyFrom<Host>(dVecStd1.data());
   std::shared_ptr<VectorDoubleHost> dVec1
-    = std::make_shared<SerialVectorDoubleHost>(vSize, 0);
+    = std::make_shared<SerialVectorDoubleHost>(vSize, &linAlgContext,0);
   dVec1->setStorage(memStorage1);
 
   std::unique_ptr<MemoryStorageDoubleHost> memStorage2 
      = std::make_unique<MemoryStorageDoubleHost>(vSize);
   memStorage2->copyFrom<Host>(dVecStd2.data());
   std::shared_ptr<VectorDoubleHost> dVec2
-    = std::make_shared<SerialVectorDoubleHost>(vSize, 0);
+    = std::make_shared<SerialVectorDoubleHost>(vSize, &linAlgContext,0);
   dVec2->setStorage(memStorage2);
 
   *dVec1 -= *dVec2;
@@ -77,7 +80,7 @@ main()
   std::vector<double> dVec3HostCopy(vSize);
   dVec3Storage.copyTo<Host>(dVec3HostCopy.data()); 
 
-  for(unsigned int i = 0; i < vSize; ++i)
+  for(dftefe::size_type i = 0; i < vSize; ++i)
   {
     if(std::fabs(dVecStd3[i]-dVec3HostCopy[i]) > tol)
     { 

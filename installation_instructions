@@ -5,6 +5,7 @@ ouput should have the following modules
 
   1) gcc/8.2.0      3) openmpi/4.0.6   5) cuda/11.4.0
   2) mkl/2021.3.0   4) cmake/3.17.3    6) python3.6-anaconda/5.2.0 
+  7) boost/1.78.0
 
 install sphinx, sphinx-rtd-theme and breathe using pip (optional)
 
@@ -12,13 +13,23 @@ mkdir build
 
 For greatlakes:
 
-python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --CMAKE_C_FLAGS="-march=native" --CMAKE_CXX_FLAGS="-march=native"  --DFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  --DFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-arch=sm_70"
+For Compilation with CUDA
+
+
+For a CPU only compilation
+
+
+CPU:
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --BOOST_DIR="/sw/pkgs/arc/stacks/gcc/10.3.0/boost/1.78.0" --SLATE_DIR="/home/vikramg/DFT-softwares-gcc/slate/2022.07.inhouse/gcc10.3.0_openmpi4.1.4" --DEALII_PATH="/home/vikramg/DFT-softwares-gcc/dealii/installMinimal" --ENABLE_MPI=ON --ENABLE_CUDA=OFF
+
+GPU (not available for now, don't use):
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --SLATE_DIR="/home/vikramg/DFT-FE-softwares/slate/gpu/2022.7.15/gcc8.2.0_openmpi4.0.6_nvcc11.4.0" --DEALII_PATH="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_minimal" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-arch=sm_70 -fopenmp"
 
 python install.py
 
-For cori gpu:
+For perlmutter:
 
-cmake ../ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DMPI_C_COMPILER=mpicc -DMPI_CXX_COMPILER=mpic++  -DDFTEFE_BLAS_LIBRARIES="-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl"  -DDFTEFE_SCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl" -DBUILD_DOCS=OFF -DDEALII_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealiiDevCustomized/installGcc8.3CUDA11.1.1Mklscalapack" -DENABLE_CUDA=ON -DCMAKE_CUDA_FLAGS="-arch=sm_70"
+python configure.py --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=/opt/cray/pe/craype/2.7.15/bin/cc --CMAKE_CXX_COMPILER=CC --CMAKE_CXX_FLAGS="-std=gnu++17 -march=znver3 -fPIC -target-accel=nvidia80" --CMAKE_C_FLAGS="-std=gnu++17 -march=znver3 -fPIC -target-accel=nvidia80" --MPI_C_COMPILER=/opt/cray/pe/craype/2.7.15/bin/cc --MPI_CXX_COMPILER=CC  --SLATE_DIR="/global/common/software/m2360/softwareDFTEFE/perlmutter/slate/gpu/2022.7.inhouse.gcc11.2.0.nvcc11.7.64.mpich.8.1.17" --DEALII_PATH="/global/common/software/m2360/softwareDFTEFE/perlmutter/dealii/install" --ENABLE_MPI=ON --ENABLE_CUDA=ON --CMAKE_CUDA_FLAGS="-I$MPICH_DIR/include -L$MPICH_DIR/lib -lmpich -arch=sm_80"
 
 make
 

@@ -26,49 +26,51 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <utils/StringOperations.h>
 #include <utils/Exceptions.h>
-namespace dftefe {
-
-  namespace utils {
-
-    namespace stringOps {
-
-      bool strToInt(const std::string s, int & i)
+namespace dftefe
+{
+  namespace utils
+  {
+    namespace stringOps
+    {
+      bool
+      strToInt(const std::string s, int &i)
       {
-	try
-	{
-	  i = boost::lexical_cast<int>(s);
-	}
-	catch (const boost::bad_lexical_cast &e)
-	{
-	  return false;
-	}
-	return true;
+        try
+          {
+            i = boost::lexical_cast<int>(s);
+          }
+        catch (const boost::bad_lexical_cast &e)
+          {
+            return false;
+          }
+        return true;
       }
 
-      bool strToDouble(const std::string s, double & x)
+      bool
+      strToDouble(const std::string s, double &x)
       {
-	try
-	{
-	  x = boost::lexical_cast<double>(s);
-	}
-	catch (const boost::bad_lexical_cast &e)
-	{
-	  return false;
-	}
-	return true;
+        try
+          {
+            x = boost::lexical_cast<double>(s);
+          }
+        catch (const boost::bad_lexical_cast &e)
+          {
+            return false;
+          }
+        return true;
       }
 
       void
-	trim(std::string & s)
-	{
-	  boost::algorithm::trim(s);
-	}
+      trim(std::string &s)
+      {
+        boost::algorithm::trim(s);
+      }
 
       std::string
-	trimCopy(const std::string & s)
-	{
-	  return boost::algorithm::trim_copy(s);
-	}
-    }// end of namespace stringOps
-  } // end of namespace utils
+      trimCopy(const std::string &s)
+      {
+        return boost::algorithm::trim_copy(s);
+      }
+    } // end of namespace stringOps
+  }   // end of namespace utils
 } // end of namespace dftefe

@@ -44,11 +44,13 @@ namespace dftefe
       virtual void
       executeCoarseningAndRefinement() = 0;
       virtual unsigned int
-      nLocallyActiveCells() const = 0;
+      nLocallyOwnedCells() const = 0;
+      virtual unsigned int
+      nLocalCells() const = 0;
       virtual size_type
-      nGloballyActiveCells() const = 0;
-      virtual size_type
-      nCells() const = 0;
+      nGlobalCells() const = 0;
+      // virtual size_type
+      // nCells() const = 0;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual TriangulationCellIterator

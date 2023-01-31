@@ -32,9 +32,15 @@ namespace dftefe
     }
 
     void
-    deviceSetDevice(int count)
+    deviceGetDevice(int *deviceId)
     {
-      CUDA_API_CHECK(cudaSetDevice(count));
+      CUDA_API_CHECK(cudaGetDevice(deviceId));
+    }
+
+    void
+    deviceSetDevice(int deviceId)
+    {
+      CUDA_API_CHECK(cudaSetDevice(deviceId));
     }
 
     void

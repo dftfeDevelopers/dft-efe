@@ -6,7 +6,7 @@
 #include <basis/ParentToChildCellsManagerDealii.h>
 #include <quadrature/QuadratureRule.h>
 #include <quadrature/QuadratureRuleGauss.h>
-#include <quadrature/CellQuadratureContainer.h>
+#include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/Integrate.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
@@ -65,7 +65,7 @@ main()
   const double        smallestCellVolume = 1e-14;
   const unsigned int  maxRecursion       = 100;
 
-  dftefe::quadrature::CellQuadratureContainer cellAdaptiveQuadratureContainer(
+  dftefe::quadrature::QuadratureRuleContainer adaptiveQuadratureContainer(
       quadratureRuleGauss,
       triangulationBase,
       *mapping,
@@ -78,7 +78,7 @@ main()
 
   double integral = 0.0;
   dftefe::quadrature::integrate(*functions[0],
-      cellAdaptiveQuadratureContainer,
+      adaptiveQuadratureContainer,
       integral);
   
   std::ofstream out;

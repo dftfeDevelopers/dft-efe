@@ -82,7 +82,7 @@ namespace dftefe
       ADAPTIVE
     };
 
-    std::map<QuadratureRuleType, size_type>
+    static const std::map<QuadratureRuleType, size_type>
       _dftefe_quadrature_rule_to_1d_num_points_map_ = {
         {QuadratureRuleType::GAUSS_1, 1},   {QuadratureRuleType::GAUSS_2, 2},
         {QuadratureRuleType::GAUSS_3, 3},   {QuadratureRuleType::GAUSS_4, 4},
@@ -97,7 +97,8 @@ namespace dftefe
         {QuadratureRuleType::GLL_9, 9},     {QuadratureRuleType::GLL_10, 10},
         {QuadratureRuleType::GLL_11, 11},   {QuadratureRuleType::GLL_12, 12}};
 
-    std::map<QuadratureRuleType, QuadratureFamily>
+
+    static const std::map<QuadratureRuleType, QuadratureFamily>
       _dftefe_quadrature_rule_to_quad_family_ = {
         {QuadratureRuleType::GAUSS_1, QuadratureFamily::GAUSS},
         {QuadratureRuleType::GAUSS_2, QuadratureFamily::GAUSS},
@@ -124,6 +125,7 @@ namespace dftefe
         {QuadratureRuleType::GLL_11, QuadratureFamily::GLL},
         {QuadratureRuleType::GLL_12, QuadratureFamily::GLL}};
 
+
     class QuadratureRuleAttributes
     {
     public:
@@ -138,6 +140,12 @@ namespace dftefe
       isCartesianTensorStructured() const;
       size_type
       getNum1DPoints() const;
+      bool
+      operator<(const QuadratureRuleAttributes &quadratureRuleAttributes) const;
+
+      bool
+      operator==(
+        const QuadratureRuleAttributes &quadratureRuleAttributes) const;
 
     private:
       QuadratureFamily d_quadratureFamily;

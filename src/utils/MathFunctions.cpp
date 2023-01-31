@@ -22,7 +22,7 @@
 /*
  * @author Bikash Kanungo, Vishal Subramanian
  */
-#include<utils/TypeConfig.h>
+#include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace utils

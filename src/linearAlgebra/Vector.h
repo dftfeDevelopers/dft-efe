@@ -23,47 +23,94 @@
  * @author Bikash Kanungo
  */
 
+
 #ifndef dftefeVector_h
 #define dftefeVector_h
 
-#include <linearAlgebra/VectorAttributes.h>
-#include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
+#include <utils/Defaults.h>
+#include <utils/MemoryStorage.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIPatternP2P.h>
+#include <utils/MPICommunicatorP2P.h>
+#include <linearAlgebra/VectorAttributes.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/MultiVector.h>
 #include <memory>
 namespace dftefe
 {
   namespace linearAlgebra
   {
     /**
-     * @brief An base class template which provides an interface for a vector.
+     * @brief A class that encapsulates a vector.
      * This is a vector in the mathematical sense and not in the sense of an
      * array or STL container.
+     * This class handles both serial and distributed
+     * vector in a unfied way. There are different constructors provided for the
+     * serial and distributed case.
      *
-     * It provides the interface for two derived classes: SerialVector and
-     * DistributedVector.
+     * The serial Vector, as the name suggests, resides entirely in a processor.
      *
-     * SerialVector, as the name suggests, resides entirely in a processor.
-     *
-     * DistributedVector, on the other hand, is distributed across a set of
-     * processors. The storage of the DistributedVector in a processor comprises
-     * of two parts:
-     *   1. <b>locally owned part</b>: A part of the DistributedVector, defined
+     * The distributed Vector, on the other hand, is distributed across a set of
+     * processors. The storage of the distributed Vector in a processor
+     * comprises of two parts:
+     *   1. <b>locally owned part</b>: A part of the distribute dVector, defined
      * through a contiguous range of indices \f$[a,b)\f$ (\f$a\f$ is included,
      * but \f$b\f$ is not), for which the current processor is the sole owner.
      *      The size of the locally owned part (i.e., \f$b-a\f$) is termed as \e
      * locallyOwnedSize.
-     *   2. <b>ghost part</b>: Part of the DistributedVector, defined through a
+     *   2. <b>ghost part</b>: Part of the distributed Vector, defined through a
      * set of ghost indices, that are owned by other processors. The size of
      * ghost part is termed as \e ghostSize.
      *
      * Both the <b>locally owned part</b> and the <b>ghost part</b> are stored
      * in a contiguous memory inside a MemoryStorage object, with the <b>locally
-     * owned part</b> stored first. The global size of the DistributedVector
+     * owned part</b> stored first. The global size of the distributed Vector
      * (i.e., the number of unique indices across all the processors) is simply
      * termed as \e size. Additionally, we define \e localSize = \e
      * locallyOwnedSize + \e ghostSize.
      *
-     * @note For a SerialVector, \e size = \e locallyOwnedSize and \e ghostSize = 0.
+     * We handle the serial Vector as a special case of the distributed Vector,
+     * wherein \e size = \e locallyOwnedSize and \e ghostSize = 0.
+     *
+     * @note While typically one would link to an MPI library while compiling this class,
+     * care is taken to seamlessly allow usage of this class even while not
+     * linking to an MPI library. To do so, we have our own MPI wrappers that
+     * defaults to the MPI library's function calls and definitions while
+     * linking to an MPI library and provides a serial equivalent of those
+     * functions while not linking to an MPI library. This allows the user of
+     * this class to seamlessly switch between linking and de-linking to an MPI
+     * library without any change in the code and with the expected behavior.
+     *
+     * @note Note that the case of not linking to an MPI library and the case of
+     * creating a serial mult-Vector are two independent things. One can still
+     * create a serial Vector while linking to an MPI library and
+     * running the code across multipe processors. That is, one can create a
+     * serial Vector in one or more than one of the set of processors used when
+     * running in parallel. Internally, we handle this by using MPI_COMM_SELF
+     * as our MPI_Comm for the serial Vector (i.e., the processor does self
+     * communication). However, while not linking to an MPI library (which by
+     * definition means running on a single processor), there is no notion of
+     * communication (neither with self nor with other processors). In such
+     * case, both serial and distributed mult-Vector mean the same thing and the
+     * MPI wrappers ensure the expected behavior (i.e., the behavior of a Vector
+     * while using just one processor)
+     *
+     * @note Broadly, there are two ways of constructing a distributed Vector.
+     *  1. [<b>Prefered and efficient approach</b>] The first approach takes a
+     *     pointer to an MPIPatternP2P as an input argument (along with other
+     * arguments). The MPIPatternP2P, in turn, contains all the information
+     *     regarding the locally owned and ghost part of the Vector as well as
+     * the interaction map between processors. This is the most efficient way of
+     *     constructing a distributed Vector as it allows for reusing of an
+     *     already constructed MPIPatternP2P.
+     *  2. [<b> Expensive approach</b>] The second approach takes in the
+     *     locally owned, ghost indices or the total number of indices
+     *     across all the processors and internally creates an
+     *     MPIPatternP2P object. Given that the creation of an MPIPatternP2P is
+     *     expensive, this route of constructing a distributed Vector
+     *     <b>should</b> be avoided.
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
      *  in the vector (i.e., int, double, complex<double>, etc.)
@@ -71,13 +118,13 @@ namespace dftefe
      * DEVICE) in which the vector must reside.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    class Vector
+    class Vector : public MultiVector<ValueType, memorySpace>
     {
     public:
       //
       // typedefs
       //
-      using Storage    = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      using Storage    = typename MultiVector<ValueType, memorySpace>::Storage;
       using value_type = typename Storage::value_type;
       using pointer    = typename Storage::pointer;
       using reference  = typename Storage::reference;
@@ -85,273 +132,268 @@ namespace dftefe
       using iterator        = typename Storage::iterator;
       using const_iterator  = typename Storage::const_iterator;
 
+      //
+      // Forwarding the protected data members from the parent class
+      // MultiVector. This is done to avoid using this->d_parentClassDataMember
+      // or explicit qualification (ParentClass::d_parentClassMember)
+      // and directly use d_parentClassDataMember.
+      //
+      using MultiVector<ValueType, memorySpace>::d_storage;
+      using MultiVector<ValueType, memorySpace>::d_linAlgOpContext;
+      using MultiVector<ValueType, memorySpace>::d_vectorAttributes;
+      using MultiVector<ValueType, memorySpace>::d_localSize;
+      using MultiVector<ValueType, memorySpace>::d_globalSize;
+      using MultiVector<ValueType, memorySpace>::d_locallyOwnedSize;
+      using MultiVector<ValueType, memorySpace>::d_ghostSize;
+      using MultiVector<ValueType, memorySpace>::d_numVectors;
+      using MultiVector<ValueType, memorySpace>::d_mpiCommunicatorP2P;
+      using MultiVector<ValueType, memorySpace>::d_mpiPatternP2P;
+
+
     public:
-      virtual ~Vector() = default;
+      /**
+       * @brief Default constructor
+       */
+      Vector() = default;
 
       /**
-       * @brief Return iterator pointing to the beginning of Vector data.
+       * @brief Default Destructor
+       */
+      ~Vector() = default;
+
+      /**
+       * @brief Constructor for a <b>serial</b> Vector with size and initial value arguments
+       * @param[in] size size of the serial Vector
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       * @param[in] initVal initial value of elements of the SerialVector
+       */
+      Vector(size_type                                     size,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+             ValueType initVal = utils::Types<ValueType>::zero);
+
+      /**
+       * @brief Constructor for a <b>serial</b> Vector with predefined Storage (i.e., utils::MemoryStorage).
+       * This Constructor transfers the ownership of input Storage to the
+       * Vector. This is useful when one does not want to allocate new memory
+       * and instead use memory allocated in the Vector::Storage (i.e.,
+       * MemoryStorage). The \e locallyOwnedSize, \e ghostSize, etc., are
+       * automatically set using the size of the \p storage.
        *
-       * @returns Iterator pointing to the beginning of Vector.
-       */
-      iterator
-      begin();
-
-      /**
-       * @brief Return iterator pointing to the beginning of Vector
-       * data.
+       * @param[in] storage unique_ptr to Storage whose ownership
+       * is to be transfered to the Vector
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
        *
-       * @returns Constant iterator pointing to the beginning of
-       * Vector.
-       */
-      const_iterator
-      begin() const;
-
-      /**
-       * @brief Return iterator pointing to the end of Vector data.
-       *
-       * @returns Iterator pointing to the end of Vector.
-       */
-      iterator
-      end();
-
-      /**
-       * @brief Return iterator pointing to the end of Vector data.
-       *
-       * @returns Constant iterator pointing to the end of
-       * Vector.
-       */
-      const_iterator
-      end() const;
-
-      /**
-       * @brief Returns the global size of the Vector (see top for explanation)
-       * @returns global size of the Vector
-       */
-      global_size_type
-      size() const;
-
-      /**
-       * @brief Returns the size of the part of Vector that is locally owned in the current processor.
-       * For a SerialVector, it is same as the \e globalSize.
-       * For a DistributedVector, it is the size of the part of
-       * DistributedVector, defined through a contiguous range of indices
-       * \f$[a,b)\f$ (\f$a\f$ is included, but \f$b\f$ is not), for which the
-       * current processor is the sole owner.
-       * @returns the \e locallyOwnedSize of the Vector
-       */
-      size_type
-      locallyOwnedSize() const;
-
-      /**
-       * @brief Returns the size of the \b ghost \b part (i.e., \e ghostSize) of Vector (see top for an explanation)
-       * @returns the \e ghostSize of the Vector
-       */
-      size_type
-      ghostSize() const;
-
-      /**
-       * @brief Returns the combined size of the locally owned and the ghost part of Vector in the current processor.
-       * For a SerialVector, it is same as the \e globalSize. For a
-       * DistributedVector, it is the sum of \e locallyOwnedSize and \e
-       * ghostSize.
-       * @returns the local size of the Vector
-       */
-      size_type
-      localSize() const;
-
-      /**
-       * @brief Return the raw pointer to the Vector data
-       * @return pointer to data
-       */
-      ValueType *
-      data();
-
-      /**
-       * @brief Return the constant raw pointer to the Vector data
-       * @return pointer to const data
-       */
-      const ValueType *
-      data() const;
-
-      /**
-       * @brief Compound addition for elementwise addition lhs += rhs
-       * @param[in] rhs the Vector to add
-       * @return the original Vector
-       * @throws exception if the sizes and type (SerialVector or
-       * DistributedVector) are incompatible
-       */
-      Vector &
-      operator+=(const Vector &rhs);
-
-      /**
-       * @brief Compound subtraction for elementwise addition lhs -= rhs
-       * @param[in] rhs the vector to subtract
-       * @return the original vector
-       * @throws exception if the sizes and type (SerialVector or
-       * DistributedVector) are incompatible
-       */
-      Vector &
-      operator-=(const Vector &rhs);
-
-      /**
-       * @brief Returns a reference to the underlying storage (i.e., MemoryStorage object)
-       * of the Vector.
-       *
-       * @return reference to the underlying MemoryStorage.
-       */
-      Storage &
-      getValues();
-
-      /**
-       * @brief Returns a const reference to the underlying storage (i.e., MemoryStorage object)
-       * of the Vector.
-       *
-       * @return const reference to the underlying MemoryStorage.
-       */
-      const Storage &
-      getValues() const;
-
-      /**
-       * @brief Set values in the Vector using a user provided Vector::Storage object (i.e., MemoryStorage object).
-       * The MemoryStorage may lie in a different memoryspace (say memSpace2)
-       * than the Vector's memory space (memSpace). The function internally does
-       * a data transfer from memSpace2 to memSpace.
-       *
-       * @param[in] storage const reference to MemoryStorage object from which
-       * to set values into the Vector.
-       * @throws exception if the size of the input storage is smaller than the
-       * \e localSize (\e locallyOwnedSize + \e ghostSize) of the Vector
-       */
-      template <dftefe::utils::MemorySpace memorySpace2>
-      void
-      setValues(
-        const typename Vector<ValueType, memorySpace2>::Storage &storage);
-
-      /**
-       * @brief Transfer ownership of a user provided Vector::Storage object (i.e., MemoryStorage object)
-       * to the Vector. This is useful when a MemoryStorage has been already
-       * been allocated and we need the the Vector to claim its ownership. This
-       * avoids reallocation of memory.
-       *
-       * @param[in] storage unique_ptr to MemoryStorage object whose ownership
-       * is to be passed to the Vector
-       *
-       * @note Since we are passing the ownership of the input storage to the Vector, the
-       * storage will point to NULL after a call to this function. Accessing the
-       * input storage pointer will lead to undefined behavior.
+       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the Vector.
+       * Thus, after the function call \p storage will point to \p NULL and any
+       * access through \p storage will lead to <b>undefined behavior</b>.
        *
        */
-      void
-      setStorage(std::unique_ptr<Storage> &storage);
+      Vector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+                                                           storage,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
-       * @brief Returns a VectorAttributes object that stores various attributes
-       * (e.g., Serial or Distributed, number of components, etc)
+       * @brief Constructor for a \b distributed Vector based on an input MPIPatternP2P.
+       * This is the \p most prefered and optimal way of constructing a \b
+       * distributed Vector, as one can directly use the information already
+       * stored in the MPIPatternP2P
        *
-       * @return const reference to the VectorAttributes
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
+       * based on which the distributed Vector will be created.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       * @param[in] initVal value with which the Vector shoud be
+       * initialized
+       *
        */
-      const VectorAttributes &
-      getVectorAttributes() const;
+      Vector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+             const ValueType initVal = utils::Types<ValueType>::zero);
 
-      //
-      // virtual functions
-      //
+      /**
+       * @brief Constructor for a \b distributed Vector with a predefined Storage (i.e., utils::MemoryStorage) and MPIPatternP2P.
+       * This Constructor transfers the ownership of input Storage to the
+       * Vector. This is useful when one does not want to allocate new memory
+       * and instead use memory allocated in the Storage (i.e., MemoryStorage).
+       *
+       * @param[in] storage unique_ptr to Vector::Storage whose ownership
+       * is to be transfered to the Vector
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
+       * based on which the Vector will be created.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       *
+       * @note This Constructor transfers the ownership from the input unique_ptr \p storage to the internal data member of the Vector.
+       * Thus, after the function call \p storage will point to NULL and any
+       * access through \p storage will lead to <b>undefined behavior</b>.
+       *
+       */
+      Vector(std::unique_ptr<typename Vector<ValueType, memorySpace>::Storage>
+               &storage,
+             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+
+      /**
+       * @brief Constructor for a \b distributed Vector based on locally owned and ghost indices.
+       * @note This way of construction is \p expensive. One should use the other
+       * constructor based on an input MPIPatternP2P as far as possible.
+       *
+       * @param[in] locallyOwnedRange a pair \f$(a,b)\f$ which defines a range
+       * of indices (continuous) that are owned by the current processor.
+       * @param[in] ghostIndices vector containing an ordered set of ghost
+       * indices (ordered in increasing order and non-repeating)
+       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * of processors across which the Vector is to be distributed
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       * @param[in] initVal value with which the Vector shoud be
+       * initialized
+       *
+       * @note The locallyOwnedRange should be an open interval where the start index included,
+       * but the end index is not included.
+       */
+      Vector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const std::vector<dftefe::global_size_type> &       ghostIndices,
+        const utils::mpi::MPIComm &                         mpiComm,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
+        const ValueType initVal = utils::Types<ValueType>::zero);
+
+      /**
+       * @brief Constructor for a special case of \b distributed Vector where none
+       * none of the processors have any ghost indices.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPIPatternP2P as far as possible.
+       *
+       * @param[in] locallyOwnedRange a pair \f$(a,b)\f$ which defines a range
+       * of indices (continuous) that are owned by the current processor.
+       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * of processors across which the Vector is to be distributed
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       * @param[in] initVal value with which the Vector shoud be
+       * initialized
+       *
+       * @note The locallyOwnedRange should be an open interval where the start index included,
+       * but the end index is not included.
+       */
+      Vector(
+        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
+        const utils::mpi::MPIComm &                         mpiComm,
+        std::shared_ptr<LinAlgOpContext<memorySpace>>       linAlgOpContext,
+        const ValueType initVal = utils::Types<ValueType>::zero);
+
+
+      /**
+       * @brief Constructor for a \b distributed Vector based on total number of global indices.
+       * The resulting Vector will not contain any ghost indices on any of the
+       * processors. Internally, the vector is divided to ensure as much
+       * equitable distribution across all the processors much as possible.
+       * @note This way of construction is expensive. One should use the other
+       * constructor based on an input MPIPatternP2P as far as possible.
+       * Further, the decomposition is not compatible with other ways of
+       * distributed vector construction.
+       * @param[in] globalSize Total number of global indices that is
+       * distributed over the processors.
+       * @param[in] mpiComm utils::mpi::MPIComm object associated with the group
+       * of processors across which the Vector is to be distributed
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       * @param[in] initVal value with which the Vector shoud be
+       * initialized
+       *
+       *
+       */
+      Vector(const global_size_type                        globalSize,
+             const utils::mpi::MPIComm &                   mpiComm,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+             const ValueType initVal = utils::Types<ValueType>::zero);
+
+      /**
+       * @brief Copy constructor
+       * @param[in] u Vector object to copy from
+       */
+      Vector(const Vector<ValueType, memorySpace> &u);
+
+      /**
+       * @brief Copy constructor with reinitialisation
+       * @param[in] u Vector object to copy from
+       * @param[in] initVal Initial value of the vector
+       */
+      Vector(const Vector<ValueType, memorySpace> &u, ValueType initVal);
+
+      /**
+       * @brief Move constructor
+       * @param[in] u Vector object to move from
+       */
+      Vector(Vector &&u) noexcept;
+
+      /**
+       * @brief Copy assignment operator
+       * @param[in] u const reference to Vector object to copy from
+       * @return reference to this object after copying data from u
+       */
+      Vector<ValueType, memorySpace> &
+      operator=(const Vector<ValueType, memorySpace> &u);
+
+      /**
+       * @brief Move assignment operator
+       * @param[in] u const reference to Vector object to move from
+       * @return reference to this object after moving data from u
+       */
+      Vector<ValueType, memorySpace> &
+      operator=(Vector<ValueType, memorySpace> &&u);
 
       /**
        * @brief Returns \f$ l_2 \f$ norm of the Vector
-       * @return \f$ l_2 \f$  norm of the vector as double type
+       * @return \f$ l_2 \f$  norm of the vector
        */
-      virtual double
-      l2Norm() const = 0;
+      double
+      l2Norm() const;
 
       /**
        * @brief Returns \f$ l_{\inf} \f$ norm of the Vector
-       * @return \f$ l_{\inf} \f$  norm of the vector as double type
+       * @return \f$ l_{\inf} \f$  norm of the vector
        */
-      virtual double
-      lInfNorm() const = 0;
-
-      virtual void
-      updateGhostValues(const size_type communicationChannel = 0) = 0;
-
-      virtual void
-      accumulateAddLocallyOwned(const size_type communicationChannel = 0) = 0;
-
-      virtual void
-      updateGhostValuesBegin(const size_type communicationChannel = 0) = 0;
-
-      virtual void
-      updateGhostValuesEnd() = 0;
-
-      virtual void
-      accumulateAddLocallyOwnedBegin(
-        const size_type communicationChannel = 0) = 0;
-
-      virtual void
-      accumulateAddLocallyOwnedEnd() = 0;
-
-    protected:
-      /**
-       * @brief Constructor
-       *
-       * @param[in] storage reference to unique_ptr to Vector::Storage (i.e.,
-       * MemoryStorage) from which the Vector to transfer ownership.
-       * @param[in] vectorAttributes const reference to VectorAttributes object
-       * that contains certain properties of the Vector (e.g., serial or
-       * distributed, number of components etc.).
-       * @param[in] globalSize global size of the vector (i.e., the number of
-       * unique indices across all processors).
-       * @param[in] locallyOwnedSize size of the part of the vector for which
-       * the current processor is the sole owner (see top for explanation). For
-       * a SerialVector, the locallyOwnedSize and the the globalSize are the
-       * same.
-       * @param[in] ghostSize size of the part of the vector that is owned by
-       * the other processors but required by the current processor. For a
-       * SerialVector, the ghostSize is 0.
-       *
-       * @note Since we are passing the ownership of the input storage to the Vector, the
-       * storage will point to NULL after a call to this Constructor. Accessing
-       * the input storage pointer will lead to undefined behavior.
-       */
-      Vector(std::unique_ptr<Storage> &storage,
-             const VectorAttributes &  vectorAttributes,
-             const global_size_type    globalSize,
-             const size_type           locallyOwnedSize,
-             const size_type           ghostSize);
-
-      /**
-       * @brief Default Constructor
-       */
-      Vector();
-
-    protected:
-      std::unique_ptr<Storage> d_storage;
-      VectorAttributes         d_vectorAttributes;
-      size_type                d_localSize;
-      global_size_type         d_globalSize;
-      size_type                d_locallyOwnedSize;
-      size_type                d_ghostSize;
+      double
+      lInfNorm() const;
     };
 
-    // helper functions
 
     /**
-     * @brief Perform \f$ w = au + bv \f$
-     * @param[in] a scalar
-     * @param[in] u array
-     * @param[in] b scalar
-     * @param[in] v array
-     * @param[out] w array of the result
+     * @brief Perform dot product of op(u) and op(v), i.e.,
+     * evaluate \f$ alpha = \sum_i op(\mathbf{u}_i) op(\mathbf{v}_i)$\f,
+     * where op is an operation of a scalar and can be
+     * (a) blasLapack::ScalarOp::Identity for op(x) = x (the usual dot product)
+     * or (b) blasLapack::ScalarOp::ComplexConjugate for op(x) = complex
+     * conjugate of x
+     *
+     * The ouput value resides on utils::MemorySpace::HOST (i.e., CPU)
+     *
+     * @param[in] u first Vector
+     * @param[in] v second Vector
+     * @param[in] opU blasLapack::ScalarOp for u Vector
+     * @param[in] opV blasLapack::ScalarOp for v Vector
+     * @param[out] dotProd dot product of opU(u) and opV(v)
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the dot product is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
      */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
     void
-    add(ValueType                             a,
-        const Vector<ValueType, memorySpace> &u,
-        ValueType                             b,
-        const Vector<ValueType, memorySpace> &v,
-        Vector<ValueType, memorySpace> &      w);
+    dot(const Vector<ValueType1, memorySpace> &          u,
+        const Vector<ValueType2, memorySpace> &          v,
+        blasLapack::scalar_type<ValueType1, ValueType2> &dotProd,
+        const blasLapack::ScalarOp &opU = blasLapack::ScalarOp::Identity,
+        const blasLapack::ScalarOp &opV = blasLapack::ScalarOp::Identity);
 
-  } // namespace linearAlgebra
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #include <linearAlgebra/Vector.t.cpp>
-#endif
+#endif // dftefeVector_h
