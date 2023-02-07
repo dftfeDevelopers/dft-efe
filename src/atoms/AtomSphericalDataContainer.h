@@ -63,7 +63,8 @@ namespace dftefe
        */
       AtomSphericalDataContainer(
         const std::map<std::string, std::string> &atomSymbolToFilename,
-        std::string                               fieldname);
+        const std::vector<std::string> &          fieldNames,
+        const std::vector<std::string> &          metadataNames);
 
       /**
        * @brief Destructor
@@ -71,32 +72,46 @@ namespace dftefe
       ~AtomSphericalDataContainer() = default;
 
       /**
-       * @brief Returns the speherical data for a given atom and quantum numbers
+       * @brief Returns the spherical data for a given atom and quantum numbers
        *
        * @param[in] atomSymbol String defining the atom
        * @param[in] qNumbers Vector of integers defining the quantum numbers
        *  (e.g., n,l,m quantum numbers) for which the SphericalData is required
        * @return SphericalData object for the given atom and quantum numbers
        */
-      SphericalData
+      const std::vector<SphericalData> &
+      getSphericalData(std::string       atomSymbol,
+                       const std::string fieldName) const;
+
+
+      const SphericalData &
       getSphericalData(std::string             atomSymbol,
+                       const std::string       fieldName,
                        const std::vector<int> &qNumbers) const;
 
+      std::string
+      getMetadata(std::string atomSymbol, std::string metadataName) const;
+
       size_type
-      nSphericalData(std::string atomSymbol) const;
+      nSphericalData(std::string atomSymbol, std::string fieldName) const;
 
       std::vector<std::vector<int>>
       getQNumbers(std::string atomSymbol) const;
 
-      std::string
-      getFieldName() const;
+      size_type
+      getQNumberID(std::string             atomSymbol,
+                   const std::string       fieldName,
+                   const std::vector<int> &qNumbers) const;
 
     private:
-      std::map<std::string, std::string>       d_atomSymbolToFilename;
-      std::string                              d_fieldName;
-      std::vector<AtomSphericalElectronicData> d_atomSphericalElectronicData;
+      std::map<std::string, std::string> d_atomSymbolToFilename;
+      std::vector<std::string>           d_fieldNames;
+      std::vector<std::string>           d_metadataNames;
+      std::map<std::string, AtomSphericalData>
+        d_mapAtomSymbolToatomSphericalData;
 
     }; // end of class AtomSphericalDataContainer
   }    // end of namespace atoms
 } // end of namespace dftefe
+#include <atoms/AtomSphericalDataContainer.t.cpp>
 #endif // dftefeAtomSphericalDataContainer_h

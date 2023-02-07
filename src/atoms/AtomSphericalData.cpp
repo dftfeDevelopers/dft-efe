@@ -668,5 +668,32 @@ namespace dftefe
                             "Unable to find the metadata " + metadataName +
                               " while parsing the XML file " + d_fileName);
     }
+
+
+    size_type
+    AtomSphericalData::getQNumberID(const std::string       fieldName,
+                                    const std::vector<int> &qNumbers) const
+    {
+      auto it = d_qNumbersToIdMap.find(fieldName);
+      utils::throwException<utils::InvalidArgument>(
+        it != d_qNumbersToIdMap.end(),
+        "Cannot find the atom symbol provided to AtomSphericalData::getQNumberID");
+      auto it1 = (it->second).find(qNumbers);
+      utils::throwException<utils::InvalidArgument>(
+        it1 != (it->second).end(),
+        "Cannot find the qnumbers provided to AtomSphericalData::getQNumberID");
+      return (it1)->second;
+    }
+
+    size_type
+    AtomSphericalData::nSphericalData(std::string fieldName) const
+    {
+      auto it = d_sphericalData.find(fieldName);
+      utils::throwException<utils::InvalidArgument>(
+        it != d_sphericalData.end(),
+        "Cannot find the atom symbol provided to AtomSphericalData::nSphericalData");
+      return (it->second).size();
+    }
+
   } // end of namespace atoms
 } // end of namespace dftefe

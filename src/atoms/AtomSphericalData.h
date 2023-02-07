@@ -85,16 +85,23 @@ namespace dftefe
       std::string
       getMetadata(const std::string metadataName) const;
 
+      size_type
+      getQNumberID(const std::string       fieldName,
+                   const std::vector<int> &qNumbers) const;
+
+      size_type
+      nSphericalData(std::string fieldName) const;
+
     private:
       std::string                                       d_fileName;
       std::vector<std::string>                          d_fieldNames;
       std::vector<std::string>                          d_metadataNames;
       std::map<std::string, std::vector<SphericalData>> d_sphericalData;
-      std::map < std::string,
-        std::map<std::vector<int>, size_type> d_qNumbersToIdMap;
-      std::map<std::string, std::string>      d_metadata;
-      size_type                               d_numRadialPoints;
-      std::vector<double>                     d_radialPoints;
+      std::map<std::string, std::map<std::vector<int>, size_type>>
+                                         d_qNumbersToIdMap;
+      std::map<std::string, std::string> d_metadata;
+      size_type                          d_numRadialPoints;
+      std::vector<double>                d_radialPoints;
     };
   } // end of namespace atoms
 } // end of namespace dftefe
