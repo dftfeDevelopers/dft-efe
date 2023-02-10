@@ -113,5 +113,5 @@ namespace dftefe
     }; // end of class AtomSphericalDataContainer
   }    // end of namespace atoms
 } // end of namespace dftefe
-#include <atoms/AtomSphericalDataContainer.t.cpp>
+#include <atoms/AtomSphericalDataContainer.cpp>
 #endif // dftefeAtomSphericalDataContainer_h

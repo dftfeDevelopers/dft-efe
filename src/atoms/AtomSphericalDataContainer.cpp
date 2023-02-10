@@ -44,8 +44,8 @@ namespace dftefe
     {
       for (auto x : d_atomsymboltofilename)
         {
-          d_mapAtomSymbolToatomSphericalData[x->first] =
-            AtomsphericalData(x->second, d_fieldNames, d_metadataNames);
+          d_mapAtomSymbolToatomSphericalData[x.first] =
+            AtomsphericalData(x.second, d_fieldNames, d_metadataNames);
         }
     }
 
