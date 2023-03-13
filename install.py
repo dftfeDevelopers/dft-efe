@@ -7,9 +7,15 @@ opts_dict={'build_dir' : './build'}
 def getUsageMsg():
     msg = '''The correct usage is python install.py '''\
           '''[--build_dir=/path/to/build/directory]\n'''\
+          '''[--src_dir=/path/to/source/directory]\n'''\
           '''The optional [--build_dir=/path/to/build/directory] specifies '''\
           '''where to build the dft-efe executable.\nBy default it creates '''\
-          '''a build directory inside the dft-efe parent directory'''
+          '''a build directory inside the dft-efe parent directory'''\
+          '''The optional [--src_dir=/path/to/source/directory] specifies '''\
+          '''where the source files or smore specifically the '''\
+          '''CMakeLists.txt exists.\nThe default path is the '''\
+          ''' dft-efe parent directory that is set by the DFTEFE_PATH '''\
+          '''environment variable.'''
     return msg
 
 def sanityCheck(string):
@@ -51,15 +57,15 @@ if __name__ == "__main__":
         print(getUsageMsg())
 
     else:
-        src_dir = ""
         if not 'DFTEFE_PATH' in os.environ:
-            raise Exception('''DFTEFE_PATH is not set. Please use export ''' \
+            raise Exception('''DFTEFE_PATH is not set. Please use export '''\
                             '''DFTEFE_PATH=/path/to/dft-efe/parent/folder''')
         else:
-            src_dir = os.environ['DFTEFE_PATH']
+            opts_dict['src_dir'] = os.environ['DFTEFE_PATH']
         
         updateOptsDictFromCommandLine(sys.argv[1:])
         config_flags = cmflags.getConfig()
+        src_dir = opts_dict['src_dir']
         build_dir = opts_dict['build_dir']
         if not os.path.isdir(build_dir):
             os.mkdir(build_dir)
