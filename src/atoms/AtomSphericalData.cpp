@@ -23,7 +23,7 @@
  * @author Bikash Kanungo
  */
 
-#include <atoms/AtomSphericaData.h>
+#include <atoms/AtomSphericalData.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
 #include <libxml/parser.h>
@@ -491,9 +491,8 @@ namespace dftefe
       const std::vector<std::string> &fieldNames,
       const std::vector<std::string> &metadataNames)
       : d_fileName(fileName)
-      , d_fieldNames(fileNames)
+      , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
-      ,
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr   ptrToXmlDoc;
@@ -508,12 +507,12 @@ namespace dftefe
       xPathInfo.ns       = ns;
       xPathInfo.nsHRef   = nsHRef;
 
+      std::vector<std::string> nodeStrings(0);
       //
       // storing meta data
       //
       for (size_type iMeta = 0; iMeta < metadataNames.size(); ++iMeta)
         {
-          std::vector<std::string> nodeStrings(0);
           const std::string        metadataName = metadataNames[iMeta];
           // get symbol
           xPathInfo.xpath = getXPath(rootElementName, ns, metadataName);
@@ -582,9 +581,9 @@ namespace dftefe
           xPathInfo.xpath = getXPath(rootElementName, ns, fieldName);
           std::vector<SphericalData>            sphericaldata(0);
           std::map<std::vector<int>, size_type> qNumbersToIdMap;
-          getSphericalDataFromXMLNode(sphericalData, d_radialPoints, xPathInfo);
+          getSphericalDataFromXMLNode(sphericaldata, d_radialPoints, xPathInfo);
           storeQNumbersToDataIdMap(sphericaldata, qNumbersToIdMap);
-          d_sphericalData[fieldName]   = sphericalData;
+          d_sphericalData[fieldName]   = sphericaldata;
           d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;
         }
 
@@ -635,6 +634,7 @@ namespace dftefe
                               " not while parsing the XML file:" + d_fileName);
       return it->second;
     }
+  
 
     const SphericalData &
     AtomSphericalData::getSphericalData(const std::string       fieldName,
@@ -644,13 +644,17 @@ namespace dftefe
       utils::throwException(it != d_sphericalData.end(),
                             "Unable to find the field " + fieldName +
                               " while parsing the XML file " + d_fileName);
-      auto itSphericalData = it->find(qNumbers);
-      if (itSphericalData != it->end())
-        return itSphericalData->second;
+      auto iter = d_qNumbersToIdMap.find(fieldName);
+      utils::throwException(iter != d_qNumbersToIdMap.end(),
+                            "Unable to find the field " + fieldName +
+                              " while parsing the XML file " + d_fileName);
+      auto iterQNumberToId = (iter->second).find(qNumbers);   
+      if (iterQNumberToId != (iter->second).end())
+        return *((it->second).begin()+iterQNumberToId->second);
       else
         {
           std::string s = "";
-          for (size_type i = 0; i < qNumbers.size())
+          for (size_type i = 0; i < qNumbers.size(); i++)
             s += std::to_string(qNumbers[i]) + " ";
 
           utils::throwException(false,
@@ -667,6 +671,8 @@ namespace dftefe
       utils::throwException(it != d_metadata.end(),
                             "Unable to find the metadata " + metadataName +
                               " while parsing the XML file " + d_fileName);
+
+      return it->second;
     }
 
 

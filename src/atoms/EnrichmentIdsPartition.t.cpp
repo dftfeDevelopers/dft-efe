@@ -23,6 +23,7 @@
  * @author Avirup Sircar
  */
 
+#include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <set>
 #include <string>
@@ -40,15 +41,15 @@ namespace dftefe
   namespace atoms
   {
     template <unsigned int dim>
-    EnrichmentIdsPartition::EnrichmentIdsPartition( const AtomIdsPartition &                         atomIdsPartition,
-                                                    const AtomSphericalDataContainer &               atomSphericalDataContainer,
+    EnrichmentIdsPartition::EnrichmentIdsPartition( const AtomSphericalDataContainer &               atomSphericalDataContainer,
+                                                    const AtomIdsPartition<dim> &                    atomIdsPartition,
                                                     const std::vector<std::string> &                 atomSymbol,
                                                     const std::vector<utils::Point> &                atomCoordinates,
                                                     const std::string                                fieldName,                   
                                                     const std::vector<double> &                      minbound,  
                                                     const std::vector<double> &                      maxbound,
                                                     const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
-                                                    const MPIComm &                                  comm)
+                                                    const utils::mpi::MPIComm &                      comm)
     : d_atomSymbol(atomSymbol)
     , d_atomCoordinates(atomCoordinates)
     , d_fieldName(fieldName)
@@ -74,7 +75,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    EnrichmentIdsPartition::getNewAtomIdToEnrichedIdOffset() const
+    EnrichmentIdsPartition<dim>::getNewAtomIdToEnrichedIdOffset() const
     {
       // find newAtomIdToEnrichedIdOffset vector
       std::vector<int> newAtomIdToEnrichedIdOffsetTmp;
@@ -105,7 +106,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    EnrichmentIdsPartition::getLocalEnrichedIds() const
+    EnrichmentIdsPartition<dim>::getLocalEnrichedIds() const
     {
       std::vector<size_type> localAtomIds = atomIdsPartition.locallyOwnedAtomIds();
       std::vector<size_type> newAtomIds = atomIdsPartition.newAtomIds();
@@ -122,7 +123,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    EnrichmentIdsPartition::getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const
+    EnrichmentIdsPartition<dim>::getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const
     {
       atomIds.resize(0);
       size_type           Id = 0;
@@ -155,7 +156,7 @@ namespace dftefe
    
     template<unsigned int dim>
     void
-    EnrichmentIdsPartition::getOverlappingEnrichedIdsInCells() const
+    EnrichmentIdsPartition<dim>::getOverlappingEnrichedIdsInCells() const
     {
       std::vector<size_type> newAtomIds = atomIdsPartition.newAtomIds();
       std::vector<double> minCellBound;
@@ -236,7 +237,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    EnrichmentIdsPartition::getGhostEnrichedIds() const
+    EnrichmentIdsPartition<dim>::getGhostEnrichedIds() const
     {
       std::set<size_type> enrichedIdsInProcessorTmp;
       auto iter = d_overlappingEnrichedIdsInCells.begin();
@@ -280,42 +281,42 @@ namespace dftefe
 
     template <unsigned int dim>
     std::vector<size_type>
-    EnrichmentIdsPartition::newAtomIdToEnrichedIdOffset() const
+    EnrichmentIdsPartition<dim>::newAtomIdToEnrichedIdOffset() const
     {
       return d_newAtomIdToEnrichedIdOffset;
     }
 
     template <unsigned int dim>
     std::vector<std::vector<size_type>>
-    EnrichmentIdsPartition::overlappingEnrichedIdsInCells() const
+    EnrichmentIdsPartition<dim>::overlappingEnrichedIdsInCells() const
     {
       return d_overlappingEnrichedIdsInCells;
     }
 
     template <unsigned int dim>
     std::pair<size_type,size_type> 
-    EnrichmentIdsPartition::locallyOwnedEnrichedIds() const
+    EnrichmentIdsPartition<dim>::locallyOwnedEnrichedIds() const
     {
       return d_locallyOwnedEnrichedIds;
     }
 
     template <unsigned int dim>
     std::vector<size_type> 
-    EnrichmentIdsPartition::ghostEnrichedIds() const
+    EnrichmentIdsPartition<dim>::ghostEnrichedIds() const
     {
       return d_ghostEnrichedIds;
     }
 
     template <unsigned int dim>
     std::map<size_type,size_type>
-    EnrichmentIdsPartition::enrichedIdToNewAtomIdMap() const
+    EnrichmentIdsPartition<dim>::enrichedIdToNewAtomIdMap() const
     {
       return d_enrichedIdToNewAtomIdMap;
     }
 
     template <unsigned int dim>
     std::map<size_type,size_type>
-    EnrichmentIdsPartition::enrichedIdToQuantumIdMap() const
+    EnrichmentIdsPartition<dim>::enrichedIdToQuantumIdMap() const
     {
       return d_enrichedIdToQuantumIdMap;
     }

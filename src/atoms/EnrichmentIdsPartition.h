@@ -26,9 +26,15 @@
 #ifndef dftefeEnrichmentIdsPartition_h
 #define dftefeEnrichmentIdsPartition_h
 
+#include <utils/Point.h>
 #include <utils/TypeConfig.h>
-#include <vector>
+#include <set>
 #include <string>
+#include <vector>
+#include <atoms/AtomIdsPartition.h>
+#include <atoms/AtomSphericalDataContainer.h>
+#include <atoms/EnrichmentIdsPartition.h>
+#include <utils/Exceptions.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <map>
@@ -58,15 +64,15 @@ namespace dftefe
        * @param[in] comm MPI_Comm object if defined with MPI
        * @return 
        */
-      EnrichmentIdsPartition( const AtomIdsPartition &                         atomIdsPartition,
-                              const AtomSphericalDataContainer &               atomSphericalDataContainer,
+      EnrichmentIdsPartition( const AtomSphericalDataContainer &               atomSphericalDataContainer,
+                              const AtomIdsPartition<dim> &                    atomIdsPartition,
                               const std::vector<std::string> &                 atomSymbol,
                               const std::vector<utils::Point> &                atomCoordinates,
                               const std::string                                fieldName,                   
                               const std::vector<double> &                      minbound,  
                               const std::vector<double> &                      maxbound,
                               const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
-                              const MPIComm &                                  comm); 
+                              const utils::mpi::MPIComm &                      comm); 
 
       /**
        * @brief Destructor
@@ -148,5 +154,4 @@ namespace dftefe
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace atoms
 } // end of namespace dftefe
-#include <atoms/EnrichmentIdsPartition.t.cpp>
 #endif // dftefeEnrichement_h

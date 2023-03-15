@@ -26,6 +26,7 @@
 #ifndef dftefeAtomIdsPartition_h
 #define dftefeAtomIdsPartition_h
 
+#include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <vector>
 #include <string>
@@ -63,7 +64,7 @@ namespace dftefe
                         const std::vector<double> &                      maxbound,
                         const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
                         const double                                     tolerance,
-                        const MPIComm &                                  comm,
+                        const utils::mpi::MPIComm &                      comm,
                         const size_type                                  nProcs);
 
       /**
@@ -149,5 +150,4 @@ namespace dftefe
     }; // end of class AtomIdsPartition
   }    // end of namespace atoms
 } // end of namespace dftefe
-#include <atoms/AtomIdsPartition.t.cpp>
 #endif // dftefeAtomIdsPartition_h

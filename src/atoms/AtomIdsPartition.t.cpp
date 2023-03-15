@@ -23,6 +23,7 @@
  * @author Avirup Sircar
  */
 
+#include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <string>
 #include <set>
@@ -36,12 +37,12 @@ namespace dftefe
   namespace atoms
   {
     template <unsigned int dim>
-    AtomIdsPartition::AtomIdsPartition( const std::vector<utils::Point> &                atomCoordinates,                    
+    AtomIdsPartition<dim>::AtomIdsPartition( const std::vector<utils::Point> &                atomCoordinates,                    
                                         const std::vector<double> &                      minbound,  
                                         const std::vector<double> &                      maxbound,
                                         const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
                                         const double                                     tolerance,
-                                        const MPIComm &                                  comm,
+                                        const utils::mpi::MPIComm &                      comm,
                                         const size_type                                  nProcs)
       : d_atomCoordinates(atomCoordinates)
       , d_minbound(minbound)
@@ -56,7 +57,7 @@ namespace dftefe
 
     template <unsigned int dim>
     void
-    AtomIdsPartition::getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const
+    AtomIdsPartition<dim>::getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const
     {
       atomIds.resize(0);
       size_type              Id = 0;
@@ -109,7 +110,7 @@ namespace dftefe
    
     template<unsigned int dim>
     void
-    AtomIdsPartition::getOverlappingAtomIdsInCells(std::vector<std::vector<size_type>> & overlappingAtomIdsInCells) const
+    AtomIdsPartition<dim>::getOverlappingAtomIdsInCells(std::vector<std::vector<size_type>> & overlappingAtomIdsInCells) const
     {
       overlappingAtomIdsInCells.resize(0);
       std::vector<double> minCellBound;
@@ -172,7 +173,7 @@ namespace dftefe
 
     template<unsigned int dim>
     void
-    AtomIdsPartition::getLocalAtomIds() 
+    AtomIdsPartition<dim>::getLocalAtomIds() 
     {
       std::set<size_type> atomIdsInProcessorTmp; 
       std::vector<std::vector<size_type>> overlappingAtomIdsInCells;
@@ -230,7 +231,7 @@ namespace dftefe
 
     template<unsigned int dim>
     void
-    AtomIdsPartition::renumberAtomIds() 
+    AtomIdsPartition<dim>::renumberAtomIds() 
     {
       /*Here implemet the vector of renumbered atom ids
        * MPI. This is done by asigning a vector of 1...number_atomids to each proc with init -1 and init the 
@@ -277,35 +278,35 @@ namespace dftefe
 
     template<unsigned int dim>
     std::vector<size_type>
-    AtomIdsPartition::nAtomIdsInProcessor() const
+    AtomIdsPartition<dim>::nAtomIdsInProcessor() const
     {
       return d_nAtomIdsInProcessor;
     }
 
     template<unsigned int dim>
     std::vector<size_type>
-    AtomIdsPartition::nAtomIdsInProcessorCumulative() const
+    AtomIdsPartition<dim>::nAtomIdsInProcessorCumulative() const
     {
       return d_nAtomIdsInProcessorCumulative;
     }
 
     template<unsigned int dim>
     std::vector<size_type>
-    AtomIdsPartition::oldAtomIds() const
+    AtomIdsPartition<dim>::oldAtomIds() const
     {
       return d_oldAtomIds;
     }
 
     template<unsigned int dim>
     std::vector<size_type>
-    AtomIdsPartition::newAtomIds() const
+    AtomIdsPartition<dim>::newAtomIds() const
     {
       return d_newAtomIds;
     }
 
     template<unsigned int dim>
     std::vector<size_type>
-    AtomIdsPartition::locallyOwnedAtomIds() const
+    AtomIdsPartition<dim>::locallyOwnedAtomIds() const
     {
       return d_atomIdsInProcessor;
     }
