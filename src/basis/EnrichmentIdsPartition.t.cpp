@@ -28,9 +28,9 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <atoms/AtomIdsPartition.h>
+#include <basis/AtomIdsPartition.h>
 #include <atoms/AtomSphericalDataContainer.h>
-#include <atoms/EnrichmentIdsPartition.h>
+#include <basis/EnrichmentIdsPartition.h>
 #include <utils/Exceptions.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
@@ -41,7 +41,7 @@ namespace dftefe
   namespace atoms
   {
     template <unsigned int dim>
-    EnrichmentIdsPartition::EnrichmentIdsPartition( const AtomSphericalDataContainer &               atomSphericalDataContainer,
+    EnrichmentIdsPartition::EnrichmentIdsPartition( const atoms::AtomSphericalDataContainer &        atomSphericalDataContainer,
                                                     const AtomIdsPartition<dim> &                    atomIdsPartition,
                                                     const std::vector<std::string> &                 atomSymbol,
                                                     const std::vector<utils::Point> &                atomCoordinates,
@@ -321,5 +321,5 @@ namespace dftefe
       return d_enrichedIdToQuantumIdMap;
     }
 
-  } // end of namespace atoms
+  } // end of namespace basis
 } // end of namespace dftefe

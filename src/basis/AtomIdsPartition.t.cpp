@@ -28,13 +28,13 @@
 #include <string>
 #include <set>
 #include <vector>
-#include <atoms/AtomIdsPartition.h>
+#include <basis/AtomIdsPartition.h>
 #include <utils/Exceptions.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 namespace dftefe
 {
-  namespace atoms
+  namespace basis
   {
     template <unsigned int dim>
     AtomIdsPartition<dim>::AtomIdsPartition( const std::vector<utils::Point> &                atomCoordinates,                    
@@ -312,5 +312,5 @@ namespace dftefe
     }
 
 
-  } // end of namespace atoms
+  } // end of namespace basis
 } // end of namespace dftefe

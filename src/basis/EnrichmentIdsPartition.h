@@ -31,16 +31,16 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <atoms/AtomIdsPartition.h>
+#include <basis/AtomIdsPartition.h>
 #include <atoms/AtomSphericalDataContainer.h>
-#include <atoms/EnrichmentIdsPartition.h>
+#include <basis/EnrichmentIdsPartition.h>
 #include <utils/Exceptions.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <map>
 namespace dftefe
 {
-  namespace atoms
+  namespace basis
   {
     /**
      * @brief Class to get the gost and locally owned enriched ids from the renumbered atom ids in Atom Partition 
@@ -64,7 +64,7 @@ namespace dftefe
        * @param[in] comm MPI_Comm object if defined with MPI
        * @return 
        */
-      EnrichmentIdsPartition( const AtomSphericalDataContainer &               atomSphericalDataContainer,
+      EnrichmentIdsPartition( const atoms::AtomSphericalDataContainer &        atomSphericalDataContainer,
                               const AtomIdsPartition<dim> &                    atomIdsPartition,
                               const std::vector<std::string> &                 atomSymbol,
                               const std::vector<utils::Point> &                atomCoordinates,
@@ -152,6 +152,6 @@ namespace dftefe
       std::map<size_type,size_type>                       d_enrichedIdToQuantumIdMap;
 
     }; // end of class EnrichmentIdsPartition
-  }    // end of namespace atoms
+  }    // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefeEnrichement_h

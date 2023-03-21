@@ -34,7 +34,7 @@
 #include <utils/MPIWrapper.h>
 namespace dftefe
 {
-  namespace atoms
+  namespace basis
   {
     /**
      * @brief Class to get the renumbered Ids of the locally owned Atom ids 
@@ -148,6 +148,6 @@ namespace dftefe
             std::vector<size_type>                          d_newAtomIds;
             std::vector<size_type>                          d_atomIdsInProcessor;
     }; // end of class AtomIdsPartition
-  }    // end of namespace atoms
+  }    // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefeAtomIdsPartition_h
