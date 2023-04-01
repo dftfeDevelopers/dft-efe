@@ -141,13 +141,17 @@ namespace dftefe
             const std::vector<double>                       d_minbound;
             const std::vector<double>                       d_maxbound;
             const std::vector<std::vector<utils::Point>>    d_cellVerticesVector;
-            const double                                    d_tolerance;
+            const double                                    d_tol;
             std::vector<size_type>                          d_nAtomIdsInProcessor;
             std::vector<size_type>                          d_nAtomIdsInProcessorCumulative;
             std::vector<size_type>                          d_oldAtomIds;
             std::vector<size_type>                          d_newAtomIds;
             std::vector<size_type>                          d_atomIdsInProcessor;
+            const utils::mpi::MPIComm                       d_comm;
+            const size_type                                 d_nProcs;
+            bool                                            hasrenumberedAtomIds;
     }; // end of class AtomIdsPartition
   }    // end of namespace basis
 } // end of namespace dftefe
+#include "AtomIdsPartition.t.cpp"
 #endif // dftefeAtomIdsPartition_h

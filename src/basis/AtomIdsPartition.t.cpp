@@ -49,6 +49,9 @@ namespace dftefe
       , d_maxbound(maxbound)
       , d_cellVerticesVector(cellVerticesVector)
       , d_tol(tolerance)
+      , d_comm(comm)
+      , d_nProcs(nProcs)
+      , hasrenumberedAtomIds(false)
     {}
 
     // get atom ids overlapping with a box according to a tolerance , eg:- the processor ;  atom ids start from 0
@@ -61,39 +64,43 @@ namespace dftefe
     {
       atomIds.resize(0);
       size_type              Id = 0;
-      boolean                flag;
+      bool                   flag;
 
       for (auto it : d_atomCoordinates)
+      {
+        flag = true;
+        for (unsigned int i = 0; i < dim; i++)
         {
-          flag = true;
-          for (unsigned int i = 0; i < dim; i++)
-          {
-            double a = d_minbound[i];
-            double b = d_maxbound[i];
-            double c = it[i]; 
-            DFTEFE_Assert(b>=a);
-            if ((a-d_tol >= c) || (c >= b+d_tol))
-              {flag = false;break;}
-          }
-          if (flag)
-            atomIds.push_back(Id);
-          Id++;
+          double a = d_minbound[i];
+          double b = d_maxbound[i];
+          double c = it[i]; 
+          DFTEFE_Assert(b>=a);
+          if ((a-d_tol >= c) || (c >= b+d_tol))
+            {flag = false;break;}
         }
+        if (flag)
+          atomIds.push_back(Id);
+        Id++;
+      }
 
-      size_type rank;
-      int err = utils::mpi::MPICommRank(comm, &rank);
+
+      int rank;
+      int err = utils::mpi::MPICommRank(d_comm, &rank);
       std::pair<bool, std::string> mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      size_type nAtoms = atomCoordinates.size();
+      size_type nAtoms = d_atomCoordinates.size();
       std::vector<int> processorIdTmp;
+      std::vector<int> processorIds;
       processorIdTmp.resize(nAtoms,-1);
-      for ( Id : atomIds )
+      processorIds.resize(nAtoms,-1);
+      for (auto Id : atomIds )
       {
           processorIdTmp[Id] = rank;
       }
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(&processorIdTmp[0], &processorId[0], processorIdTmp.size(),
-      utils::mpi::MPIUnsigned, utils::mpi::MPIMax, comm);
+
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(processorIdTmp.data(), processorIds.data(),
+        processorIdTmp.size(), utils::mpi::MPIInt, utils::mpi::MPIMax, d_comm);
       mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
 
@@ -101,7 +108,7 @@ namespace dftefe
       auto iter = processorIds.begin();
       for( ; iter!=processorIds.end() ; iter++)
         if ( *(iter) == rank )
-          atomIds.pushback(iter - processorIds.begin());
+          atomIds.push_back(iter - processorIds.begin());
     }
 
     // get the vector of atom ids overlapping with a cell given the cell vertices, 
@@ -141,13 +148,12 @@ namespace dftefe
 
         atomIdVector.resize(0,0);
 
-
         for (auto i : atomIds) 
         {
           auto it = d_atomCoordinates.begin();
           it = it+i;
           flag = true;
-          for (unsigned int k = 0; k < dim; i++)
+          for (unsigned int k = 0; k < dim; k++)
           {
             // assert for the cell and processor bounds
             DFTEFE_AssertWithMsg(minCellBound[k]>=d_minbound[k] && maxCellBound[k]>=d_minbound[k]
@@ -175,9 +181,10 @@ namespace dftefe
     void
     AtomIdsPartition<dim>::getLocalAtomIds() 
     {
-      std::set<size_type> atomIdsInProcessorTmp; 
+      std::set<size_type> atomIdsInProcessorTmp;
       std::vector<std::vector<size_type>> overlappingAtomIdsInCells;
       getOverlappingAtomIdsInCells(overlappingAtomIdsInCells);
+
       auto iter = overlappingAtomIdsInCells.begin();
       for( ; iter != overlappingAtomIdsInCells.end() ; iter++)
       {
@@ -194,7 +201,7 @@ namespace dftefe
 
     template<unsigned int dim>
     void
-    AtomIdsPartition::getNAtomIdsInProcessor() 
+    AtomIdsPartition<dim>::getNAtomIdsInProcessor() 
     {
       // get the number of atom ids in each proc.  
       // also get the cumulative number of atomids in a processor.
@@ -202,30 +209,32 @@ namespace dftefe
       // each proc set it as no of atom ids.
       // do mpiallreduce
 
-      size_type rank;
-      int err = utils::mpi::MPICommRank(comm, &rank);
+      int rank;
+      int err = utils::mpi::MPICommRank(d_comm, &rank);
       std::pair<bool, std::string> mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
 
+      getLocalAtomIds();
       std::vector<size_type> nAtomIdsInProcessorTmp;
-      nAtomIdsInProcessorTmp.resize(nProcs , 0);
-      d_nAtomIdsInProcessor.resize(nProcs , 0);
+      nAtomIdsInProcessorTmp.resize(d_nProcs , 0);
+      d_nAtomIdsInProcessor.resize(d_nProcs , 0);
       nAtomIdsInProcessorTmp[rank] = d_atomIdsInProcessor.size();
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(&nAtomIdsInProcessorTmp[0], &d_nAtomIdsInProcessor[0], nAtomIdsInProcessorTmp.size(),
-       utils::mpi::MPIUnsigned, utils::mpi::MPIMax, comm);
+
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(nAtomIdsInProcessorTmp.data(), d_nAtomIdsInProcessor.data(),
+       nAtomIdsInProcessorTmp.size(), utils::mpi::MPIUnsigned, utils::mpi::MPIMax, d_comm);
       mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
       nAtomIdsInProcessorTmp.clear();
 
       size_type count = 1;
-      d_nAtomIdsInProcessorCumulative.resize(nProcs,0);
+      d_nAtomIdsInProcessorCumulative.resize(d_nProcs,0);
       auto iter = d_nAtomIdsInProcessor.begin();
       d_nAtomIdsInProcessorCumulative[0] = d_nAtomIdsInProcessor[0];
       for( ; iter != d_nAtomIdsInProcessor.end() ; iter++)
       {
         d_nAtomIdsInProcessorCumulative[count] = d_nAtomIdsInProcessorCumulative[count-1] + d_nAtomIdsInProcessor[count];
         count = count+1;
-      }
+      }   
     }
 
 
@@ -240,14 +249,17 @@ namespace dftefe
       //get the set of local atom ids
       //store a vector of size (nAtomIds, -1)
 
-      size_type rank;
-      int err = utils::mpi::MPICommRank(comm, &rank);
+      hasrenumberedAtomIds = true;
+
+      int rank;
+      int err = utils::mpi::MPICommRank(d_comm, &rank);
       std::pair<bool, std::string> mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      std::vector<int> newAtomIdsTmp;
+      getNAtomIdsInProcessor();
+      std::vector<size_type> newAtomIdsTmp;
       size_type nAtomIds = d_atomCoordinates.size();
-      newAtomIdsTmp.resize(nAtomIds,-1);
+      newAtomIdsTmp.resize(nAtomIds,1e6);
       d_oldAtomIds.resize(nAtomIds,0);
       d_newAtomIds.resize(nAtomIds,0);
       size_type newIds = 0;
@@ -261,8 +273,8 @@ namespace dftefe
       }
       
       //store the vector of new atom ids
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(&newAtomIdsTmp[0], &d_newAtomIds[0], newAtomIdsTmp.size(),
-       utils::mpi::MPIUnsigned, utils::mpi::MPIMax, comm);
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(newAtomIdsTmp.data(), d_newAtomIds.data(), newAtomIdsTmp.size(),
+       utils::mpi::MPIUnsigned, utils::mpi::MPIMin, d_comm);
       mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
       newAtomIdsTmp.clear(); 
@@ -280,6 +292,9 @@ namespace dftefe
     std::vector<size_type>
     AtomIdsPartition<dim>::nAtomIdsInProcessor() const
     {
+      utils::throwException(hasrenumberedAtomIds,
+                            "Cannot access nAtomIdsInProcessor() without calling"
+                            "renumberAtomIds() first.");
       return d_nAtomIdsInProcessor;
     }
 
@@ -287,6 +302,9 @@ namespace dftefe
     std::vector<size_type>
     AtomIdsPartition<dim>::nAtomIdsInProcessorCumulative() const
     {
+      utils::throwException(hasrenumberedAtomIds,
+                            "Cannot access nAtomIdsInProcessorCumulative() without calling"
+                            "renumberAtomIds() first.");
       return d_nAtomIdsInProcessorCumulative;
     }
 
@@ -294,6 +312,9 @@ namespace dftefe
     std::vector<size_type>
     AtomIdsPartition<dim>::oldAtomIds() const
     {
+      utils::throwException(hasrenumberedAtomIds,
+                            "Cannot access oldAtomIds() without calling"
+                            "renumberAtomIds() first.");
       return d_oldAtomIds;
     }
 
@@ -301,6 +322,9 @@ namespace dftefe
     std::vector<size_type>
     AtomIdsPartition<dim>::newAtomIds() const
     {
+      utils::throwException(hasrenumberedAtomIds,
+                            "Cannot access newAtomIds() without calling"
+                            "renumberAtomIds() first.");
       return d_newAtomIds;
     }
 
@@ -308,9 +332,11 @@ namespace dftefe
     std::vector<size_type>
     AtomIdsPartition<dim>::locallyOwnedAtomIds() const
     {
+      utils::throwException(hasrenumberedAtomIds,
+                            "Cannot access locallyOwnedAtomIds() without calling"
+                            "renumberAtomIds() first.");
       return d_atomIdsInProcessor;
     }
-
 
   } // end of namespace basis
 } // end of namespace dftefe

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(reframe_linear_algebra_test)
+project(reframe_test)
 set(CMAKE_CXX_STANDARD 17)
 
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
@@ -10,8 +10,9 @@ message(${MAIN_PROJECT_DIR})
 include_directories(${MAIN_PROJECT_DIR}/src)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/basis/lib/buildUtils)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/lib/buildBasis)
-add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
-add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/basis/lib/buildAtoms)
+#add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
+#add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
 
 
 #add_executable(TestTriangulationDealiiSerial TestTriangulationDealiiSerial.cpp )
@@ -23,6 +24,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestConstraintMatrix TestConstraintMatrix.cpp )
-target_link_libraries(TestConstraintMatrix PUBLIC dft-efe-quadrature dft-efe-basis dft-efe-utils dft-efe-linalg)
+add_executable(TestAtomIdsPartitionParallel TestAtomIdsPartitionParallel.cpp )
+target_link_libraries(TestAtomIdsPartitionParallel PUBLIC dft-efe-basis dft-efe-utils dft-efe-atoms)
 endif()
