@@ -6,12 +6,10 @@ endif()
 
 # Add source files here
 set(DFT-EFE-ATOMS-SOURCES
-    AtomFieldDataSpherical.cpp
-    AtomSphericalElectronicData.cpp
-    AtomIdsPartition.cpp
+    #AtomIdsPartition.cpp
     AtomSphericalData.cpp
     AtomSphericalDataContainer.cpp
-    EnrichmentIdsPartition.cpp
+    #EnrichmentIdsPartition.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})

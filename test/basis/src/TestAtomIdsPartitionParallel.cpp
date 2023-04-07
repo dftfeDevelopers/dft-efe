@@ -27,6 +27,8 @@
 #include <basis/TriangulationBase.h>
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/AtomIdsPartition.h>
+#include <basis/FEBasisManagerDealii.h>
+#include <basis/FEBasisManager.h>
 
 // Header for the utils class
 #include <utils/PointImpl.h>
@@ -39,12 +41,17 @@
 // Header for the dealii
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/dofs/dof_handler.h>
+#include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/fe_values.h>
+#include <deal.II/dofs/dof_tools.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <memory>
+#include <cfloat>
 
 int main()
 {
@@ -67,8 +74,6 @@ int main()
 
     std::vector<std::vector<dftefe::utils::Point>> cellVerticesVector;
     std::vector<dftefe::utils::Point> cellVertices;
-    std::vector<double> maxbound(dim,0.);
-    std::vector<double> minbound(dim,0.);
 
     // Set up Triangulation
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
@@ -77,9 +82,9 @@ int main()
     std::vector<bool>                 isPeriodicFlags(dim, false);
     std::vector<dftefe::utils::Point> domainVectors(dim, dftefe::utils::Point(dim, 0.));
 
-    double xmin = 5.0;
-    double ymin = 5.0;
-    double zmin = 5.0;
+    double xmin = 3.0;
+    double ymin = 3.0;
+    double zmin = 3.0;
 
     domainVectors[0][0] = xmin;
     domainVectors[1][1] = ymin;
@@ -90,50 +95,76 @@ int main()
     triangulationBase->createUniformParallelepiped(subdivisions, domainVectors, isPeriodicFlags);
     triangulationBase->finalizeTriangulationConstruction();
 
-    /*dftefe::size_type numLocallyOwnedCells  = triangulationBase->nLocallyOwnedCells();
+    dftefe::size_type feOrder = 1;
 
-    auto triaCellIter = triangulationBase->beginLocal();
+    //Create the febasismanager object
+    std::shared_ptr<dftefe::basis::FEBasisManager> feBM =
+        std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase,feOrder);
+
+    dftefe::size_type numLocallyOwnedCells  = feBM->nLocallyOwnedCells();
+
+    std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------"<<numLocallyOwnedCells;
+
+    auto feBMCellIter = feBM->beginLocallyOwnedCells();
 
     //get the cellvertices vector
-    for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
+    for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
     {
-        (*triaCellIter)->getVertices(cellVertices);
+        (*feBMCellIter)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
     }
 
-    auto cellIter = cellVerticesVector.begin();
-    double maxtmp = -DBL_MAX , mintmp = DBL_MAX;
+        std::vector<double> minbound;
+        std::vector<double> maxbound;
+        maxbound.resize(dim,0);
+        minbound.resize(dim,0);
+
+        
     for( unsigned int k=0;k<dim;k++)
     {
+        double maxtmp = -DBL_MAX,mintmp = DBL_MAX;
+        auto cellIter = cellVerticesVector.begin();
         for ( ; cellIter != cellVerticesVector.end(); ++cellIter)
         {
-            auto cellVerticesIter = cellIter->begin();
-                for( ; cellVerticesIter != cellIter->end(); ++cellVerticesIter)
-                {
-                    if(maxtmp<*(cellVerticesIter->begin()+k)) maxtmp = *(cellVerticesIter->begin()+k);
-                    if(mintmp>*(cellVerticesIter->begin()+k)) mintmp = *(cellVerticesIter->begin()+k);
-                }
+
+            auto cellVertices = cellIter->begin(); 
+            for( ; cellVertices != cellIter->end(); ++cellVertices)
+            {
+                if(maxtmp<=*(cellVertices->begin()+k)) maxtmp = *(cellVertices->begin()+k);
+                if(mintmp>=*(cellVertices->begin()+k)) mintmp = *(cellVertices->begin()+k);
+            }
+
         }
         maxbound[k]=maxtmp;
         minbound[k]=mintmp;
     }
 
-    //get the  atomCoordinates vector   
+    // read the input file and create atomsymbol vector and atom coordinates vector.
     std::vector<dftefe::utils::Point> atomCoordinatesVec;
-    std::vector<double> atomCoordinate{2.5,2.5,2.5};
-    std::vector<double> atomCoordinate1{2.,2.,2.};
-    std::vector<double> atomCoordinate2{0.1,0.1,0.1};
-    atomCoordinatesVec.push_back(atomCoordinate);
-    atomCoordinatesVec.push_back(atomCoordinate1);
-    atomCoordinatesVec.push_back(atomCoordinate2);
-
+    std::string inputFileName = "AtomData.in";
+    std::ifstream fstream;
+    fstream.open(inputFileName);
+    std::vector<double> coordinates;
+    coordinates.resize(dim,0.);
+    std::vector<std::string> atomSymbol;
+    std::string symbol;
+    atomSymbol.resize(0);
+    std::string line;
+    while (std::getline(fstream, line)){
+        std::stringstream ss(line);
+        ss >> symbol; 
+        for(unsigned int i=0 ; i<dim ; i++){
+            ss >> coordinates[i]; 
+        }
+        atomCoordinatesVec.push_back(coordinates);
+        atomSymbol.push_back(symbol);
+    }
         
     // assume the tolerance value
     double tolerance = 1e-6;
 
     // Use the atomidsPartition object
 
-    bool testPass = false;
     std::vector<dftefe::size_type> nAtoms;
 
     std::shared_ptr<dftefe::basis::AtomIdsPartition<dim>> atomIdsPartition =
@@ -144,52 +175,22 @@ int main()
                                                         tolerance,
                                                         mpi_communicator,
                                                         numProcs);
-    std::cout<<"--------------Hello Tester-----------------";
-    std::vector<dftefe::size_type> atomIds;
-    atomIdsPartition->getOverlappingAtomIdsInBox(atomIds);
 
-    for (auto i:atomIds)
-        std::cout<<i<<"\n";
-
-    std::vector<std::vector<dftefe::size_type>> overlappingAtomIdsInCells;
-    atomIdsPartition->getOverlappingAtomIdsInCells(overlappingAtomIdsInCells);
-
-    std::cout<<"\n";
-    auto iter2 = overlappingAtomIdsInCells.begin();
-    for( ; iter2 != overlappingAtomIdsInCells.end() ; iter2++)
-    {
-      std::cout<<"{";
-        auto iter1 = iter2->begin();
-        for( ; iter1 != iter2->end() ; iter1++)
-        {
-            std::cout<<*(iter1)<<",";
-        }
-        std::cout<<"}, ";
-    }
-
-    std::cout<<"\n--------------Hi, Welcome to TestAtomPartitionParallel-------------------\n";
-
-    atomIdsPartition->renumberAtomIds();
     for( auto i:atomIdsPartition->oldAtomIds())
-        std::cout<<i<<",";
+        std::cout<<"oldAtomIds of "<<rank<<"->"<<i<<"\n";
     std::cout<<"\n";
     for( auto i:atomIdsPartition->newAtomIds())
-        std::cout<<i<<",";
-    std::cout<<"\n";
+        std::cout<<"newAtomIds of "<<rank<<"->"<<i<<"\n";
+    std::cout<<rank<<"->"<<"\n";
     for( auto i:atomIdsPartition->nAtomIdsInProcessorCumulative())
-        std::cout<<i<<",";
+        std::cout<<"nAtomIdsInProcessorCumulative of "<<rank<<"->"<<i<<"\n";
     std::cout<<"\n";
     for( auto i:atomIdsPartition->nAtomIdsInProcessor())
-        std::cout<<i<<",";
+        std::cout<<"nAtomIdsInProcessor "<<"->"<<i<<",";
     std::cout<<"\n";
     for( auto i:atomIdsPartition->locallyOwnedAtomIds())
-        std::cout<<i<<",";
+        std::cout<<"locallyOwnedAtomIds of "<<rank<<"->"<<i<<"\n";
 
-    /*if(nAtoms[0] == 1)
-        testPass = true;
-
-    std::cout<<" test status = "<<testPass<<"\n";
-    return testPass; */
-
+    dftefe::utils::mpi::MPIFinalize();
 #endif
 }

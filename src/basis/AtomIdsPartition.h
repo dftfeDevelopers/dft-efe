@@ -37,11 +37,11 @@ namespace dftefe
   namespace basis
   {
     /**
-     * @brief Class to get the renumbered Ids of the locally owned Atom ids 
+     * @brief Class to get the renumbered Ids of the locally owned Atom ids
      * returns the vector of no of atoms in each processor and the vector of
      * old atom ids. so oldatomid(0) = 2 and so on. So also newatomid(2) = 0;
      * but you do not need to store as oldatomid vector is same as newatomid
-     * i.e. memory layout should be  'locally owned enriched ids' should be 
+     * i.e. memory layout should be  'locally owned enriched ids' should be
      * consecutive integers.
      */
     template <unsigned int dim>
@@ -49,62 +49,30 @@ namespace dftefe
     {
     public:
       /**
-       * @brief Constructor takes as coordinates of the atomids from the input file with the processor maximum and 
+       * @brief Constructor takes as coordinates of the atomids from the input file with the processor maximum and
        * minimum bounds. It also takes the cell vertices vector.
        * @param[in] atomCoordinates Vector of Coordinates of the atoms
        * @param[in] minbound Minimum boundary of the processor
        * @param[in] maxbound Maximum boundary of the processor
-       * @param[in] cellVerticesVector vector of vectors of all the coordinates of the locally owned cells in the processor
+       * @param[in] cellVerticesVector vector of vectors of all the coordinates
+       * of the locally owned cells in the processor
        * @param[in] tolerance set the tolerance for partitioning the atomids
        * @param[in] comm MPI_Comm object if defined with MPI
        * @param[in] nProcs Number of processors if defined with MPI
        */
-      AtomIdsPartition( const std::vector<utils::Point> &                atomCoordinates,                    
-                        const std::vector<double> &                      minbound,  
-                        const std::vector<double> &                      maxbound,
-                        const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
-                        const double                                     tolerance,
-                        const utils::mpi::MPIComm &                      comm,
-                        const size_type                                  nProcs);
+      AtomIdsPartition(
+        const std::vector<utils::Point> &             atomCoordinates,
+        const std::vector<double> &                   minbound,
+        const std::vector<double> &                   maxbound,
+        const std::vector<std::vector<utils::Point>> &cellVerticesVector,
+        const double                                  tolerance,
+        const utils::mpi::MPIComm &                   comm,
+        const size_type                               nProcs);
 
       /**
        * @brief Destructor for the class
        */
       ~AtomIdsPartition() = default;
-
-      /**
-       * @brief Function to get the overlapping atom ids in a cuboid box circumscribing the Processor.
-       * This is the first level of refinement.
-       * @param[in, out] atomIds Vector of atomids in the box
-       */
-      void
-      getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const;
-
-      /**
-       * @brief Function to get the vector of vector of overlapping atom ids in the locallyowned cells.
-       * @param[in, out] overlappingAtomIdsInCells Vector of atomids in the locally owned cells.
-       */
-      void
-      getOverlappingAtomIdsInCells(std::vector<std::vector<size_type>> & overlappingAtomIdsInCells) const;
-
-      /**
-       * @brief Function to populate the vector of atom ids in a processor. This gives the number of atomids actually
-       * in a processor in a SORTED order.
-       */
-      void
-      getLocalAtomIds();
-
-      /**
-       * @brief Function to populate the vector of number of Atoms in a processor.
-       */
-      void
-      getNAtomIdsInProcessor();
-
-      /**
-       * @brief Function to renumber the atom ids and populate the old and new atomids vector.
-       */
-      void 
-      renumberAtomIds();
 
       /**
        * @brief Function to return the vector of number of atoms in each processor
@@ -137,19 +105,11 @@ namespace dftefe
       locallyOwnedAtomIds() const;
 
     private:
-            const std::vector<utils::Point>                 d_atomCoordinates;                   
-            const std::vector<double>                       d_minbound;
-            const std::vector<double>                       d_maxbound;
-            const std::vector<std::vector<utils::Point>>    d_cellVerticesVector;
-            const double                                    d_tol;
-            std::vector<size_type>                          d_nAtomIdsInProcessor;
-            std::vector<size_type>                          d_nAtomIdsInProcessorCumulative;
-            std::vector<size_type>                          d_oldAtomIds;
-            std::vector<size_type>                          d_newAtomIds;
-            std::vector<size_type>                          d_atomIdsInProcessor;
-            const utils::mpi::MPIComm                       d_comm;
-            const size_type                                 d_nProcs;
-            bool                                            hasrenumberedAtomIds;
+      std::vector<size_type> d_nAtomIdsInProcessor;
+      std::vector<size_type> d_nAtomIdsInProcessorCumulative;
+      std::vector<size_type> d_oldAtomIds;
+      std::vector<size_type> d_newAtomIds;
+      std::vector<size_type> d_atomIdsInProcessor;
     }; // end of class AtomIdsPartition
   }    // end of namespace basis
 } // end of namespace dftefe

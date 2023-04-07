@@ -17,7 +17,7 @@
 #    License at the top level of DFT-EFE distribution.  If not, see
 #    <https://www.gnu.org/licenses/>.
 
-# @author Vishal Subramanian 
+# @author Avirup Sircar
 
 import reframe as rfm
 import reframe.utility.sanity as sn
@@ -90,7 +90,7 @@ class BuildOnlyTestAtomIdsPartitionSerial(rfm.CompileOnlyRegressionTest):
 @rfm.simple_test
 class BuildAndRunTestAtomIdsPartitionSerial(rfm.RegressionTest):
     target_name = 'TestAtomIdsPartitionSerial'
-    descr = '''A build and run test to verify the accuracy of interpolation to quad points'''
+    descr = '''A build and run test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
@@ -175,7 +175,7 @@ class BuildAndRunTestAtomIdsPartitionSerial(rfm.RegressionTest):
 @rfm.simple_test
 class RunOnlyTestAtomIdsPartitionSerial(rfm.RunOnlyRegressionTest):
     target_name = 'TestAtomIdsPartitionSerial'
-    descr = '''A run only test to verify the accuracy of interpolation'''
+    descr = '''A run only test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name

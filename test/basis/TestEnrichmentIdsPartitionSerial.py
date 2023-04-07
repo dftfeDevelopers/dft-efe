@@ -37,14 +37,14 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestAtomIdsPartitionParallel(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestAtomIdsPartitionParallel'
+class BuildOnlyTestEnrichmentIdsPartitionSerial(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestEnrichmentIdsPartitionSerial'
     build_system = 'CMake'
-    make_opts = ['TestAtomIdsPartitionParallel']
+    make_opts = ['TestEnrichmentIdsPartitionSerial']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'Parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -88,9 +88,9 @@ class BuildOnlyTestAtomIdsPartitionParallel(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
-    target_name = 'TestAtomIdsPartitionParallel'
-    descr = '''A build and run test for atom ids partition'''
+class BuildAndRunTestEnrichmentIdsPartitionSerial(rfm.RegressionTest):
+    target_name = 'TestEnrichmentIdsPartitionSerial'
+    descr = '''A build and run test for Enrichment ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
@@ -98,7 +98,7 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
     executable = "./"+target_name
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'Parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -117,12 +117,12 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 36']
+            self.job.launcher.options = ['-n 2']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
                                                    time_limit = "00:05:00", 
                                                    num_nodes = 1, 
-                                                   num_tasks_per_node = 36,
-                                                   ntasks = 36,
+                                                   num_tasks_per_node = 2,
+                                                   ntasks = 2,
                                                    mem_per_cpu = '2gb')
 
 
@@ -134,11 +134,11 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestAtomIdsPartitionParallel.'''
+        BuildAndRunTestEnrichmentIdsPartitionSerial.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestAtomIdsPartitionParallel.'''
+        BuildAndRunTestEnrichmentIdsPartitionSerial.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestAtomIdsPartitionParallel.'''
+        BuildAndRunTestEnrichmentIdsPartitionSerial.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,15 +173,15 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestAtomIdsPartitionParallel(rfm.RunOnlyRegressionTest):
-    target_name = 'TestAtomIdsPartitionParallel'
-    descr = '''A run only test for atom ids partition'''
+class RunOnlyTestEnrichmentIdsPartitionSerial(rfm.RunOnlyRegressionTest):
+    target_name = 'TestEnrichmentIdsPartitionSerial'
+    descr = '''A run only test for Enrichment ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name
     tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'Parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -194,12 +194,12 @@ class RunOnlyTestAtomIdsPartitionParallel(rfm.RunOnlyRegressionTest):
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 6']
+            self.job.launcher.options = ['-n 2']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
                                                    time_limit = "00:05:00", 
                                                    num_nodes = 1, 
-                                                   num_tasks_per_node = 6,
-                                                   ntasks = 6,
+                                                   num_tasks_per_node = 2,
+                                                   ntasks = 2,
                                                    mem_per_cpu = '2gb')
 
 
@@ -211,11 +211,11 @@ class RunOnlyTestAtomIdsPartitionParallel(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestAtomIdsPartitionParallel.'''
+        RunOnlyTestEnrichmentIdsPartitionSerial.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestAtomIdsPartitionParallel'''
+        RunOnlyTestEnrichmentIdsPartitionSerial'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestAtomIdsPartitionParallel'''
+        RunOnlyTestEnrichmentIdsPartitionSerial'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

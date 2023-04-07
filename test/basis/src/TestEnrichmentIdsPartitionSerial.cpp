@@ -27,6 +27,7 @@
 #include <basis/TriangulationBase.h>
 #include <basis/TriangulationDealiiSerial.h>
 #include <basis/AtomIdsPartition.h>
+#include <basis/EnrichmentIdsPartition.h>
 
 // Header for the utils class
 #include <utils/PointImpl.h>
@@ -138,14 +139,27 @@ int main()
         atomSymbol.push_back(symbol);
     }
 
+    std::map<std::string, std::string> atomSymbolToFilename;
+    for (auto i:atomSymbol )
+    {
+        atomSymbolToFilename[i] = i+".xml";
+    }
+        
     // assume the tolerance value
     double tolerance = 1e-6;
 
-    // Use the atomidsPartition object
+    std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------";
 
-    bool testPass = false;
-    std::vector<dftefe::size_type> nAtoms;
+    // Create the AtomSphericaldataContainer object
 
+    std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
+    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
+    std::shared_ptr<dftefe::atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
+        std::make_shared<dftefe::atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
+                                                        fieldNames,
+                                                        metadataNames);
+    
+    // Create the atomidsPartition object
     std::shared_ptr<dftefe::basis::AtomIdsPartition<dim>> atomIdsPartition =
         std::make_shared<dftefe::basis::AtomIdsPartition<dim>>(atomCoordinatesVec,
                                                         minbound,
@@ -154,22 +168,58 @@ int main()
                                                         tolerance,
                                                         mpi_communicator,
                                                         numProcs);
-    std::cout<<"--------------Hello Tester from rank"<<rank<<"-----------------";
-    std::cout<<"\n--------------Welcome to TestAtomPartitionSerial-------------------\n";
 
-    for( auto i:atomIdsPartition->oldAtomIds())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->newAtomIds())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->nAtomIdsInProcessorCumulative())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->nAtomIdsInProcessor())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->locallyOwnedAtomIds())
-        std::cout<<i<<",";
+    // Create the enrichemntIdsPartition object
+    std::string fieldName = "density";  // Each fieldname will have own set of enrichment ids
+    std::shared_ptr<dftefe::basis::EnrichmentIdsPartition<dim>> enrichmentIdsPartition =
+        std::make_shared<dftefe::basis::EnrichmentIdsPartition<dim>>(atomSphericalDataContainer,
+                                                        atomIdsPartition,
+                                                        atomSymbol,
+                                                        atomCoordinatesVec,
+                                                        fieldName,                   
+                                                        minbound,  
+                                                        maxbound,
+                                                        cellVerticesVector,
+                                                        mpi_communicator);    
+
+    std::cout<<"\nnewAtomIdToEnrichmentIdOffset:\n";
+    std::vector<dftefe::size_type> offset =
+        enrichmentIdsPartition->newAtomIdToEnrichmentIdOffset();
+    for(auto i:offset ) { std::cout<<i<<"\n";}
+
+    std::cout<<"\noverlappingEnrichmentIdsInCells:\n";
+    std::vector<std::vector<dftefe::size_type>> epartition =
+        enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
+    auto iter2 = epartition.begin();
+    for( ; iter2 != epartition.end() ; iter2++)
+    {
+      std::cout<<"{";
+        auto iter1 = iter2->begin();
+        for( ; iter1 != iter2->end() ; iter1++)
+        {
+            std::cout<<*(iter1)<<",";
+        }
+        std::cout<<"}, ";
+    }
+
+    std::cout<<"\nlocallyOwnedEnrichmentIds:\n";
+    std::pair<dftefe::size_type,dftefe::size_type> localeid =
+        enrichmentIdsPartition->locallyOwnedEnrichmentIds();
+    std::cout<<"\n"<<localeid.first<<" "<<localeid.second;
+
+    std::cout<<"\nghostEnrichmentIds:\n";
+    std::vector<dftefe::size_type> ghosteid =
+        enrichmentIdsPartition->ghostEnrichmentIds();
+    for(auto i:ghosteid ) { std::cout<<i<<"\n";}
+
+    std::cout<<"\nenrichmentIdToNewAtomIdMap:\n";
+    std::map<dftefe::size_type,dftefe::size_type> eidtonatomid =
+        enrichmentIdsPartition->enrichmentIdToNewAtomIdMap();
+    for(auto i:eidtonatomid ) { std::cout<<i.first<<"->"<<i.second<<"\n";}   
+
+    std::cout<<"\nenrichmentIdToQuantumIdMap:";
+    std::map<dftefe::size_type,dftefe::size_type> eidtoqid =
+        enrichmentIdsPartition->enrichmentIdToQuantumIdMap();
+    for(auto i:eidtoqid ) { std::cout<<i.first<<"->"<<i.second<<"\n";} 
 
 }

@@ -28,6 +28,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <climits>
 #include <basis/AtomIdsPartition.h>
 #include <atoms/AtomSphericalDataContainer.h>
 #include <basis/EnrichmentIdsPartition.h>
@@ -38,287 +39,421 @@
 
 namespace dftefe
 {
-  namespace atoms
+  namespace basis
   {
-    template <unsigned int dim>
-    EnrichmentIdsPartition::EnrichmentIdsPartition( const atoms::AtomSphericalDataContainer &        atomSphericalDataContainer,
-                                                    const AtomIdsPartition<dim> &                    atomIdsPartition,
-                                                    const std::vector<std::string> &                 atomSymbol,
-                                                    const std::vector<utils::Point> &                atomCoordinates,
-                                                    const std::string                                fieldName,                   
-                                                    const std::vector<double> &                      minbound,  
-                                                    const std::vector<double> &                      maxbound,
-                                                    const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
-                                                    const utils::mpi::MPIComm &                      comm)
-    : d_atomSymbol(atomSymbol)
-    , d_atomCoordinates(atomCoordinates)
-    , d_fieldName(fieldName)
-    , d_minbound(minbound)
-    , d_maxbound(maxbound)
-    , d_cellVerticesVector(cellVerticesVector)
+    namespace EnrichmentIdsPartitionInternal
     {
-      d_rCutoffMax.resize(d_atomSymbol.size(), 0.);
-      size_type count = 0;
-      for (auto it : d_atomSymbol)
+      /*Function to populate the vector of offset . It considers the newAtomIds.
+       * For example getNewAtomIdToEnrichmentIdOffset(0) = the no of enrichment
+       * fns in new atom id 0... getNewAtomIdToEnrichmentIdOffset(1) = the no of
+       * enrichment fns in new atom id 0 + enrichment fns in new atom id 1...
+       * and so on.*/
+      template <unsigned int dim>
+      void
+      getNewAtomIdToEnrichmentIdOffset(
+        std::vector<size_type> &newAtomIdToEnrichmentIdOffset,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                                     atomSphericalDataContainer,
+        std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition,
+        const std::vector<std::string> &             atomSymbol,
+        const std::string                            fieldName,
+        const utils::mpi::MPIComm &                  comm)
       {
-        cutoff.resize(0, 0.);
-        for (auto i : atomSphericalDataContainer.getSphericalData(it,d_fieldName))  
-        {
-          atomEnrichmentId.resize(0, 0);
-          cutoff.push_back(i.cutoff + i.cutoff / i.smoothness);
-        }
-        double maxcutoff = std::max_element(cutoff.begin(), cutoff.end());
-        d_rCutoffMax[count] = maxcutoff;
-        count=count+1;
-      }
-    }
+        // find newAtomIdToEnrichmentIdOffset vector
+        std::vector<size_type> newAtomIdToEnrichmentIdOffsetTmp;
+        size_type              nAtomIds = atomSymbol.size();
+        newAtomIdToEnrichmentIdOffsetTmp.resize(nAtomIds, UINT_MAX);
+        newAtomIdToEnrichmentIdOffset.resize(nAtomIds, UINT_MAX);
 
-    template <unsigned int dim>
-    void
-    EnrichmentIdsPartition<dim>::getNewAtomIdToEnrichedIdOffset() const
-    {
-      // find newAtomIdToEnrichedIdOffset vector
-      std::vector<int> newAtomIdToEnrichedIdOffsetTmp;
-      size_type nAtomIds = d_atomSymbol.size();
-      newAtomIdToEnrichedIdOffsetTmp.resize(nAtomIds,-1);
-
-      std::vector<size_type> localAtomIds = atomIdsPartition.locallyOwnedAtomIds();
-      std::vector<size_type> newAtomIds = atomIdsPartition.newAtomIds();
-      std::vector<size_type> oldAtomIds = atomIdsPartition.oldAtomIds();
-      for( auto i:localAtomIds )
-      {
-        size_type newId = newAtomIds[i];
-        size_type offset = 0;
-        for( size_type j=0; j<=newId; j++)
-        {
-          size_type oldId = oldAtomIds[j];
-          offset = offset + atomSphericalDataContainer.nSphericalData(d_atomSymbol[oldId],d_fieldName);
-        }
-        newAtomIdToEnrichedIdOffsetTmp[newId] = offset;
-      }
-
-      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(&newAtomIdToEnrichedIdOffsetTmp[0], 
-        &d_newAtomIdToEnrichedIdOffset[0], newAtomIdToEnrichedIdOffsetTmp.size(), utils::mpi::MPIUnsigned, utils::mpi::MPIMax, comm);
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first, "MPI Error:" + mpiIsSuccessAndMsg.second);
-      newAtomIdToEnrichedIdOffsetTmp.clear(); 
-    }
-
-    template <unsigned int dim>
-    void
-    EnrichmentIdsPartition<dim>::getLocalEnrichedIds() const
-    {
-      std::vector<size_type> localAtomIds = atomIdsPartition.locallyOwnedAtomIds();
-      std::vector<size_type> newAtomIds = atomIdsPartition.newAtomIds();
-      size_type front = newAtomIds[localAtomIds.front()];
-      size_type back = newAtomIds[localAtomIds.back()];
-      if(newAtomIds[front] == 0)
-        d_locallyOwnedEnrichedIds.first = 0;
-      else
-        d_locallyOwnedEnrichedIds.first = d_newAtomIdToEnrichedIdOffset[front-1];
-      d_locallyOwnedEnrichedIds.second = d_newAtomIdToEnrichedIdOffset[back];
-    }
-
-    // get atom ids with their maximum enrichment ids overlapping with a box , eg:- the processor
-
-    template <unsigned int dim>
-    void
-    EnrichmentIdsPartition<dim>::getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const
-    {
-      atomIds.resize(0);
-      size_type           Id = 0;
-      bool                flag;
-
-      for (auto it : d_atomCoordinates)
-        {
-          flag = false;
-          for (unsigned int i = 0; i < dim; i++)
+        std::vector<size_type> localAtomIds =
+          atomIdsPartition->locallyOwnedAtomIds();
+        std::vector<size_type> newAtomIds = atomIdsPartition->newAtomIds();
+        std::vector<size_type> oldAtomIds = atomIdsPartition->oldAtomIds();
+        for (auto i : localAtomIds)
           {
-            double a = d_minbound[i];
-            double b = d_maxbound[i];
-            double c = it[i] - d_rCutoffMax[Id];
-            double d = it[i] + d_rCutoffMax[Id];
-
-            DFTEFE_Assert(b>=a);
-            DFTEFE_Assert(d>=c);
-            if (!((c<=a && d<=a) || (c>=b && d>=b)))
-              flag = true;
+            size_type newId  = newAtomIds[i];
+            size_type offset = 0;
+            for (size_type j = 0; j <= newId; j++)
+              {
+                size_type oldId = oldAtomIds[j];
+                offset =
+                  offset +
+                  atomSphericalDataContainer->nSphericalData(atomSymbol[oldId],
+                                                             fieldName);
+              }
+            newAtomIdToEnrichmentIdOffsetTmp[newId] = offset;
           }
-          if (flag)
-            atomIds.push_back(Id);
-          Id++;
-        }
-    }
 
-    // get the vector of enriched ids overlapping with a cell given the cell vertices, 
-    // these vectors are theselves stored as a vector eg. {{10,19,100},{50,150},...}
-    // where each integer is an enrichment id.
-   
-    template<unsigned int dim>
-    void
-    EnrichmentIdsPartition<dim>::getOverlappingEnrichedIdsInCells() const
-    {
-      std::vector<size_type> newAtomIds = atomIdsPartition.newAtomIds();
-      std::vector<double> minCellBound;
-      std::vector<double> maxCellBound;
-      std::vector<size_type> enrichedIdVector;
-      std::vector<size_type> atomIds;
-
-      auto cellIter = d_cellVerticesVector.begin();
-      for ( ; cellIter != d_cellVerticesVector.end(); ++cellIter)
-      {
-        maxCellBound.resize(dim,0);
-        minCellBound.resize(dim,0); 
-        for( unsigned int k=0;k<dim;k++)
-        {
-          auto cellVertices = cellIter->begin();
-          double maxtmp = *(cellVertices->begin()+k),mintmp = *(cellVertices->begin()+k);
-          for( ; cellVertices != cellIter->end(); ++cellVertices)
-          {
-            if(maxtmp<*(cellVertices->begin()+k)) maxtmp = *(cellVertices->begin()+k);
-            if(mintmp>*(cellVertices->begin()+k)) mintmp = *(cellVertices->begin()+k);
-          }
-          maxCellBound[k]=maxtmp;
-          minCellBound[k]=mintmp;
-        }
-
-        enrichedIdVector.resize(0);
-        atomIds.resize(0);
-        getOverlappingAtomIdsInBox(atomIds);
-
-
-        for (auto i : atomIds)
-        {
-          auto it = d_atomCoordinates.begin();
-          auto iter = d_atomSymbol.begin();
-          it = it+i;
-          iter = iter+i;
-          auto qNumberIter = atomSphericalDataContainer.getQNumbers(*(iter)).begin();
-          size_type count = 0;
-          for ( ; qNumberIter != atomSphericalDataContainer.getQNumbers(*(iter)).end() ; qNumberIter++)
-          {
-            bool flag = false;
-            // get the sphericaldata struct for the given atom_symbol, field and qnumbers
-            auto sphericalData = atomSphericalDataContainer.getSphericalData(*(iter), d_fieldName, *(qNumberIter));
-            double cutoff = sphericalData.cutoff + sphericalData.cutoff / sphericalData.smoothness;
-            for (unsigned int k = 0; k < dim; i++)
-            {
-              // assert for the cell and processor bounds
-              DFTEFE_AssertWithMsg(minCellBound[k]>=d_minbound[k] && maxCellBound[k]>=d_minbound[k]
-                && minCellBound[k]<=d_maxbound[k] && maxCellBound[k]<=d_maxbound[k]
-                ,"Cell Vertices are outside the processor maximum and minimum bounds");
-              double a = minCellBound[k];
-              double b = maxCellBound[k];
-              double c = (*it)[k] - cutoff;
-              double d = (*it)[k] + cutoff;
-
-              DFTEFE_Assert(b>=a);
-              DFTEFE_Assert(d>=c);
-              if (!((c<=a && d<=a) || (c>=b && d>=b)))
-                flag = true;
-            }
-            if (flag)
-            {
-              if(newAtomIds[i] != 0)
-                size_type enrichedId = d_newAtomIdToEnrichedIdOffset[newAtomIds[i]-1]+count;
-              else
-                size_type enrichedId = count;
-              enrichedIdVector.push_back(enrichedId);
-            }
-            count = count+1;
-          }
-        }
-      d_overlappingEnrichedIdsInCells.push_back(enrichedIdVector);
+        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          newAtomIdToEnrichmentIdOffsetTmp.data(),
+          newAtomIdToEnrichmentIdOffset.data(),
+          newAtomIdToEnrichmentIdOffsetTmp.size(),
+          utils::mpi::MPIUnsigned,
+          utils::mpi::MPIMin,
+          comm);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::throwException(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+        newAtomIdToEnrichmentIdOffsetTmp.clear();
       }
-    }
 
-    // if an enrichemnet id  overlapping in the processor is outside the locallyowned range of enrichedids
-    // then it is ghost enriched id
+      /**
+       * Function to populate the pair local enrichment ids in the processor. It
+       * returns the pair [a,b) where all the enrichment ids in a to b-1 are
+       * there in that processor.
+       */
 
-    template <unsigned int dim>
-    void
-    EnrichmentIdsPartition<dim>::getGhostEnrichedIds() const
-    {
-      std::set<size_type> enrichedIdsInProcessorTmp;
-      auto iter = d_overlappingEnrichedIdsInCells.begin();
-      for( ; iter != d_overlappingEnrichedIdsInCells.end() ; iter++)
+      template <unsigned int dim>
+      void
+      getLocalEnrichmentIds(
+        std::pair<size_type, size_type> &locallyOwnedEnrichmentIds,
+        const std::vector<size_type> &   newAtomIdToEnrichmentIdOffset,
+        std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition)
       {
-        auto it = iter->begin();
-        for ( ; it != iter->end() ; it++)
-        {
-          enrichedIdsInProcessorTmp.insert(*(it));
-        }
-      }
-      for(auto i:enrichedIdsInProcessorTmp)
-        d_enrichedIdsInProcessor.push_back(i);
-      enrichedIdsInProcessorTmp.clear();
-
-      // define the map from enriched id to newatomid and quantum number id.
-      // the map is local to a processor bust stores info of all ghost and local eids of the processor.
-      for(auto i:d_enrichedIdsInProcessor )
-      {
-        auto j = d_newAtomIdToEnrichedIdOffset.begin();        
-        for ( ; j!=d_newAtomIdToEnrichedIdOffset.end() ; j++)
-        {
-          if(*(j) > i)
+        std::vector<size_type> localAtomIds =
+          atomIdsPartition->locallyOwnedAtomIds();
+        std::vector<size_type> newAtomIds = atomIdsPartition->newAtomIds();
+        if (localAtomIds.size() != 0)
           {
-            newAtomId = j-d_newAtomIdToEnrichedIdOffset.begin();
-            if(newAtomId ! = 0)
-              qIdPosition = i-d_newAtomIdToEnrichedIdOffset[newAtomId];
+            size_type front = newAtomIds[localAtomIds.front()];
+            size_type back  = newAtomIds[localAtomIds.back()];
+            if (front == 0)
+              locallyOwnedEnrichmentIds.first = 0;
             else
-              qIdPosition = i;
-            break;
+              locallyOwnedEnrichmentIds.first =
+                newAtomIdToEnrichmentIdOffset[front - 1];
+            locallyOwnedEnrichmentIds.second =
+              newAtomIdToEnrichmentIdOffset[back];
           }
-        }
-        d_enrichedIdToNewAtomIdMap.insert(i , newAtomId);
-        d_enrichedIdToQuantumIdMap.insert(i , qIdPosition);
-        if( i<d_locallyOwnedEnrichedIds.first || i>=d_locallyOwnedEnrichedIds.second)
-        {
-          d_ghostEnrichedIds.push_back(i);
-        }
       }
+
+      /**
+       * Function to populate the vector of overlapping atom ids based on the
+       * maximum cutoff of each atoms enrichment id in a field.*/
+
+      template <unsigned int dim>
+      void
+      getOverlappingAtomIdsInBox(
+        std::vector<size_type> &         atomIds,
+        const std::vector<double> &      rCutoffMax,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      minbound,
+        const std::vector<double> &      maxbound)
+      {
+        atomIds.resize(0);
+        size_type Id = 0;
+        bool      flag;
+
+        for (auto it : atomCoordinates)
+          {
+            flag = false;
+            for (unsigned int i = 0; i < dim; i++)
+              {
+                double a = minbound[i];
+                double b = maxbound[i];
+                double c = it[i] - rCutoffMax[Id];
+                double d = it[i] + rCutoffMax[Id];
+
+                DFTEFE_Assert(b >= a);
+                DFTEFE_Assert(d >= c);
+                if (!((c < a && d < a) || (c > b && d > b)))
+                  flag = true;
+                else
+                  {
+                    flag = false;
+                    break;
+                  }
+              }
+            if (flag)
+              atomIds.push_back(Id);
+            Id++;
+          }
+      }
+
+      // get the vector of enrichment ids overlapping with a cell given the cell
+      // vertices, these vectors are theselves stored as a vector eg.
+      // {{10,19,100},{50,150},...} where each integer is an enrichment id.
+      /**
+       * Function to populate the vector of overlapping enrichment ids in cells.
+       */
+
+      template <unsigned int dim>
+      void
+      getOverlappingEnrichmentIdsInCells(
+        std::vector<std::vector<size_type>> &overlappingEnrichmentIdsInCells,
+        const std::vector<size_type> &       atomIds,
+        const std::vector<size_type> &       newAtomIdToEnrichmentIdOffset,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                                     atomSphericalDataContainer,
+        std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition,
+        const std::vector<std::string> &             atomSymbol,
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::string                            fieldName,
+        const std::vector<double> &                  minbound,
+        const std::vector<double> &                  maxbound,
+        const std::vector<std::vector<utils::Point>> &cellVerticesVector)
+      {
+        std::vector<size_type> newAtomIds = atomIdsPartition->newAtomIds();
+        std::vector<double>    minCellBound;
+        std::vector<double>    maxCellBound;
+        std::vector<size_type> enrichmentIdVector;
+        size_type              enrichmentId;
+
+        auto cellIter = cellVerticesVector.begin();
+        for (; cellIter != cellVerticesVector.end(); ++cellIter)
+          {
+            maxCellBound.resize(dim, 0);
+            minCellBound.resize(dim, 0);
+            for (unsigned int k = 0; k < dim; k++)
+              {
+                auto   cellVertices = cellIter->begin();
+                double maxtmp       = *(cellVertices->begin() + k),
+                       mintmp       = *(cellVertices->begin() + k);
+                for (; cellVertices != cellIter->end(); ++cellVertices)
+                  {
+                    if (maxtmp < *(cellVertices->begin() + k))
+                      maxtmp = *(cellVertices->begin() + k);
+                    if (mintmp > *(cellVertices->begin() + k))
+                      mintmp = *(cellVertices->begin() + k);
+                  }
+                maxCellBound[k] = maxtmp;
+                minCellBound[k] = mintmp;
+              }
+
+            enrichmentIdVector.resize(0);
+
+            for (auto i : atomIds)
+              {
+                auto it   = atomCoordinates.begin();
+                auto iter = atomSymbol.begin();
+                it        = it + i;
+                iter      = iter + i;
+                std::vector<std::vector<int>> qNumberVector =
+                  atomSphericalDataContainer->getQNumbers(*(iter), fieldName);
+                auto      qNumberIter = qNumberVector.begin();
+                size_type count       = 0;
+                for (; qNumberIter != qNumberVector.end(); qNumberIter++)
+                  {
+                    bool flag = false;
+                    // get the sphericaldata struct for the given atom_symbol,
+                    // field and qnumbers
+                    auto sphericalData =
+                      atomSphericalDataContainer->getSphericalData(
+                        *(iter), fieldName, *(qNumberIter));
+                    double cutoff =
+                      sphericalData.cutoff +
+                      sphericalData.cutoff / sphericalData.smoothness;
+                    for (unsigned int k = 0; k < dim; k++)
+                      {
+                        // assert for the cell and processor bounds
+                        DFTEFE_AssertWithMsg(
+                          minCellBound[k] >= minbound[k] &&
+                            maxCellBound[k] >= minbound[k] &&
+                            minCellBound[k] <= maxbound[k] &&
+                            maxCellBound[k] <= maxbound[k],
+                          "Cell Vertices are outside the processor maximum and minimum bounds");
+                        double a = minCellBound[k];
+                        double b = maxCellBound[k];
+                        double c = (*it)[k] - cutoff;
+                        double d = (*it)[k] + cutoff;
+
+                        DFTEFE_Assert(b >= a);
+                        DFTEFE_Assert(d >= c);
+                        if (!((c < a && d < a) || (c > b && d > b)))
+                          flag = true;
+                        else
+                          {
+                            flag = false;
+                            break;
+                          }
+                      }
+                    if (flag)
+                      {
+                        if (newAtomIds[i] != 0)
+                          enrichmentId =
+                            newAtomIdToEnrichmentIdOffset[newAtomIds[i] - 1] +
+                            count;
+                        else
+                          enrichmentId = count;
+                        enrichmentIdVector.push_back(enrichmentId);
+                      }
+                    count = count + 1;
+                  }
+              }
+            overlappingEnrichmentIdsInCells.push_back(enrichmentIdVector);
+          }
+      }
+
+      // if an enrichemnet id  overlapping in the processor is outside the
+      // locallyowned range of enrichmentids then it is ghost enrichment id
+      /**
+       * Function to return the ghost enrichment ids in the processor.
+       */
+
+      template <unsigned int dim>
+      void
+      getGhostEnrichmentIds(
+        std::vector<size_type> &               enrichmentIdsInProcessor,
+        std::map<size_type, size_type> &       enrichmentIdToNewAtomIdMap,
+        std::map<size_type, size_type> &       enrichmentIdToQuantumIdMap,
+        std::vector<size_type> &               ghostEnrichmentIds,
+        const std::pair<size_type, size_type> &locallyOwnedEnrichmentIds,
+        const std::vector<std::vector<size_type>>
+          &                           overlappingEnrichmentIdsInCells,
+        const std::vector<size_type> &newAtomIdToEnrichmentIdOffset)
+      {
+        std::set<size_type> enrichmentIdsInProcessorTmp;
+        size_type           newAtomId, qIdPosition;
+        auto                iter = overlappingEnrichmentIdsInCells.begin();
+        for (; iter != overlappingEnrichmentIdsInCells.end(); iter++)
+          {
+            auto it = iter->begin();
+            for (; it != iter->end(); it++)
+              {
+                enrichmentIdsInProcessorTmp.insert(*(it));
+              }
+          }
+        for (auto i : enrichmentIdsInProcessorTmp)
+          enrichmentIdsInProcessor.push_back(i);
+        enrichmentIdsInProcessorTmp.clear();
+
+        // define the map from enrichment id to newatomid and quantum number id.
+        // the map is local to a processor bust stores info of all ghost and
+        // local eids of the processor.
+        for (auto i : enrichmentIdsInProcessor)
+          {
+            auto j = newAtomIdToEnrichmentIdOffset.begin();
+            for (; j != newAtomIdToEnrichmentIdOffset.end(); j++)
+              {
+                if (*(j) > i)
+                  {
+                    newAtomId = j - newAtomIdToEnrichmentIdOffset.begin();
+                    if (newAtomId != 0)
+                      qIdPosition =
+                        i - newAtomIdToEnrichmentIdOffset[newAtomId - 1];
+                    else
+                      qIdPosition = i;
+                    break;
+                  }
+              }
+            enrichmentIdToNewAtomIdMap.insert({i, newAtomId});
+            enrichmentIdToQuantumIdMap.insert({i, qIdPosition});
+            if (i < locallyOwnedEnrichmentIds.first ||
+                i >= locallyOwnedEnrichmentIds.second)
+              {
+                ghostEnrichmentIds.push_back(i);
+              }
+          }
+      }
+    } // end of namespace EnrichmentIdsPartitionInternal
+
+    template <unsigned int dim>
+    EnrichmentIdsPartition<dim>::EnrichmentIdsPartition(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                                    atomSphericalDataContainer,
+      std::shared_ptr<const AtomIdsPartition<dim>>  atomIdsPartition,
+      const std::vector<std::string> &              atomSymbol,
+      const std::vector<utils::Point> &             atomCoordinates,
+      const std::string                             fieldName,
+      const std::vector<double> &                   minbound,
+      const std::vector<double> &                   maxbound,
+      const std::vector<std::vector<utils::Point>> &cellVerticesVector,
+      const utils::mpi::MPIComm &                   comm)
+    {
+      std::vector<double>    rCutoffMax;
+      std::vector<size_type> atomIds;
+      rCutoffMax.resize(atomSymbol.size(), 0.);
+      size_type           count = 0;
+      std::vector<double> cutoff;
+      for (auto it : atomSymbol)
+        {
+          cutoff.resize(0, 0.);
+          for (auto i :
+               atomSphericalDataContainer->getSphericalData(it, fieldName))
+            {
+              cutoff.push_back(i.cutoff + i.cutoff / i.smoothness);
+            }
+          double maxcutoff  = *(std::max_element(cutoff.begin(), cutoff.end()));
+          rCutoffMax[count] = maxcutoff;
+          count             = count + 1;
+        }
+
+      EnrichmentIdsPartitionInternal::getNewAtomIdToEnrichmentIdOffset<dim>(
+        d_newAtomIdToEnrichmentIdOffset,
+        atomSphericalDataContainer,
+        atomIdsPartition,
+        atomSymbol,
+        fieldName,
+        comm);
+      EnrichmentIdsPartitionInternal::getLocalEnrichmentIds<dim>(
+        d_locallyOwnedEnrichmentIds,
+        d_newAtomIdToEnrichmentIdOffset,
+        atomIdsPartition);
+      EnrichmentIdsPartitionInternal::getOverlappingAtomIdsInBox<dim>(
+        atomIds, rCutoffMax, atomCoordinates, minbound, maxbound);
+      EnrichmentIdsPartitionInternal::getOverlappingEnrichmentIdsInCells<dim>(
+        d_overlappingEnrichmentIdsInCells,
+        atomIds,
+        d_newAtomIdToEnrichmentIdOffset,
+        atomSphericalDataContainer,
+        atomIdsPartition,
+        atomSymbol,
+        atomCoordinates,
+        fieldName,
+        minbound,
+        maxbound,
+        cellVerticesVector);
+      EnrichmentIdsPartitionInternal::getGhostEnrichmentIds<dim>(
+        d_enrichmentIdsInProcessor,
+        d_enrichmentIdToNewAtomIdMap,
+        d_enrichmentIdToQuantumIdMap,
+        d_ghostEnrichmentIds,
+        d_locallyOwnedEnrichmentIds,
+        d_overlappingEnrichmentIdsInCells,
+        d_newAtomIdToEnrichmentIdOffset);
     }
 
     template <unsigned int dim>
     std::vector<size_type>
-    EnrichmentIdsPartition<dim>::newAtomIdToEnrichedIdOffset() const
+    EnrichmentIdsPartition<dim>::newAtomIdToEnrichmentIdOffset() const
     {
-      return d_newAtomIdToEnrichedIdOffset;
+      return d_newAtomIdToEnrichmentIdOffset;
     }
 
     template <unsigned int dim>
     std::vector<std::vector<size_type>>
-    EnrichmentIdsPartition<dim>::overlappingEnrichedIdsInCells() const
+    EnrichmentIdsPartition<dim>::overlappingEnrichmentIdsInCells() const
     {
-      return d_overlappingEnrichedIdsInCells;
+      return d_overlappingEnrichmentIdsInCells;
     }
 
     template <unsigned int dim>
-    std::pair<size_type,size_type> 
-    EnrichmentIdsPartition<dim>::locallyOwnedEnrichedIds() const
+    std::pair<size_type, size_type>
+    EnrichmentIdsPartition<dim>::locallyOwnedEnrichmentIds() const
     {
-      return d_locallyOwnedEnrichedIds;
+      return d_locallyOwnedEnrichmentIds;
     }
 
     template <unsigned int dim>
-    std::vector<size_type> 
-    EnrichmentIdsPartition<dim>::ghostEnrichedIds() const
+    std::vector<size_type>
+    EnrichmentIdsPartition<dim>::ghostEnrichmentIds() const
     {
-      return d_ghostEnrichedIds;
+      return d_ghostEnrichmentIds;
     }
 
     template <unsigned int dim>
-    std::map<size_type,size_type>
-    EnrichmentIdsPartition<dim>::enrichedIdToNewAtomIdMap() const
+    std::map<size_type, size_type>
+    EnrichmentIdsPartition<dim>::enrichmentIdToNewAtomIdMap() const
     {
-      return d_enrichedIdToNewAtomIdMap;
+      return d_enrichmentIdToNewAtomIdMap;
     }
 
     template <unsigned int dim>
-    std::map<size_type,size_type>
-    EnrichmentIdsPartition<dim>::enrichedIdToQuantumIdMap() const
+    std::map<size_type, size_type>
+    EnrichmentIdsPartition<dim>::enrichmentIdToQuantumIdMap() const
     {
-      return d_enrichedIdToQuantumIdMap;
+      return d_enrichmentIdToQuantumIdMap;
     }
 
   } // end of namespace basis

@@ -43,9 +43,11 @@ namespace dftefe
   namespace basis
   {
     /**
-     * @brief Class to get the gost and locally owned enriched ids from the renumbered atom ids in Atom Partition 
-     * i.e. memory layout should be 'locally owned enriched ids which would be contiguous' -> 'ghost enriched ids'
-     * The class gives us the vector of cell enriched Ids, locallyowned enriched ids range, ghost enriched ids.
+     * @brief Class to get the gost and locally owned enrichment ids from the renumbered atom ids in Atom Partition
+     * i.e. memory layout should be 'locally owned enrichment ids which would be
+     * contiguous' -> 'ghost enrichment ids' The class gives us the vector of
+     * cell enrichment Ids, locallyowned enrichment ids range, ghost enrichment
+     * ids.
      */
     template <unsigned int dim>
     class EnrichmentIdsPartition
@@ -53,105 +55,69 @@ namespace dftefe
     public:
       /**
        * @brief Constructor takes as coordinates of the atomids , vector of aomsymbol from the input file with the
-       * processor maximum and minimum bounds. It also takes the cell vertices vector and the fieldname.
+       * processor maximum and minimum bounds. It also takes the cell vertices
+       * vector and the fieldname.
        * @param[in] atomIdsPartition Object of class AtomIdsPartition
-       * @param[in] atomSphericalDataContainer Object of class AtomSphericalDataContainer
+       * @param[in] atomSphericalDataContainer Object of class
+       * AtomSphericalDataContainer
        * @param[in] atomCoordinates Vector of Coordinates of the atoms
        * @param[in] fieldName Fieldname wanted
        * @param[in] minbound Minimum boundary of the processor
        * @param[in] maxbound Maximum boundary of the processor
-       * @param[in] cellVerticesVector vector of vectors of all the coordinates of the locally owned cells in the processor
+       * @param[in] cellVerticesVector vector of vectors of all the coordinates
+       * of the locally owned cells in the processor
        * @param[in] comm MPI_Comm object if defined with MPI
-       * @return 
+       * @return
        */
-      EnrichmentIdsPartition( const atoms::AtomSphericalDataContainer &        atomSphericalDataContainer,
-                              const AtomIdsPartition<dim> &                    atomIdsPartition,
-                              const std::vector<std::string> &                 atomSymbol,
-                              const std::vector<utils::Point> &                atomCoordinates,
-                              const std::string                                fieldName,                   
-                              const std::vector<double> &                      minbound,  
-                              const std::vector<double> &                      maxbound,
-                              const std::vector<std::vector<utils::Point>> &   cellVerticesVector,
-                              const utils::mpi::MPIComm &                      comm); 
+      EnrichmentIdsPartition(
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                                     atomSphericalDataContainer,
+        std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition,
+        const std::vector<std::string> &             atomSymbol,
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::string                            fieldName,
+        const std::vector<double> &                  minbound,
+        const std::vector<double> &                  maxbound,
+        const std::vector<std::vector<utils::Point>> &cellVerticesVector,
+        const utils::mpi::MPIComm &                   comm);
 
       /**
        * @brief Destructor
        */
       ~EnrichmentIdsPartition() = default;
 
-      /**
-       * @brief Function to populate the vector of offset . It considers the newAtomIds.
-       * For example getNewAtomIdToEnrichedIdOffset(0) = the no of enrichment fns in new atom id 0...
-       * getNewAtomIdToEnrichedIdOffset(1) = the no of enrichment fns in new atom id 0 + enrichment fns in new atom id 1...
-       * and so on.
-       */
-      void
-      getNewAtomIdToEnrichedIdOffset() const;
-
-      /**
-       * @brief Function to populate the pair local enrichment ids in the processor. It returns the pair [a,b) where all
-       * the enriched ids in a to b-1 are there in that processor.
-       */
-      void
-      getLocalEnrichedIds() const;
-
-      /**
-       * @brief Function to populate the vector of overlapping atom ids based on the maximum cutoff of each atoms enriched 
-       * id in a field.
-       */
-      void
-      getOverlappingAtomIdsInBox(std::vector<size_type> & atomIds) const;
-
-      /**
-       * @brief Function to populate the vector of overlapping enriched ids in cells.
-       */
-      void
-      getOverlappingEnrichedIdsInCells() const;
-
-      /**
-       * @brief Function to return the ghost enriched ids in the processor.
-       */
-      void
-      getGhostEnrichedIds() const;
-
       std::vector<size_type>
-      newAtomIdToEnrichedIdOffset() const;
+      newAtomIdToEnrichmentIdOffset() const;
 
       std::vector<std::vector<size_type>>
-      overlappingEnrichedIdsInCells() const;
+      overlappingEnrichmentIdsInCells() const;
 
-      std::pair<size_type,size_type> 
-      locallyOwnedEnrichedIds() const;
+      std::pair<size_type, size_type>
+      locallyOwnedEnrichmentIds() const;
 
-      std::vector<size_type> 
-      ghostEnrichedIds() const;
+      std::vector<size_type>
+      ghostEnrichmentIds() const;
 
-      std::map<size_type,size_type>
-      enrichedIdToNewAtomIdMap() const;
+      std::map<size_type, size_type>
+      enrichmentIdToNewAtomIdMap() const;
 
-      std::map<size_type,size_type>
-      enrichedIdToQuantumIdMap() const;
+      std::map<size_type, size_type>
+      enrichmentIdToQuantumIdMap() const;
 
       /** The data members are as follows.
-      */
+       */
 
     private:
-      const std::vector<std::string>                      d_atomSymbol;
-      const std::vector<utils::Point>                     d_atomCoordinates;
-      const std::string                                   d_fieldName;
-      const std::vector<double>                           d_minbound;
-      const std::vector<double>                           d_maxbound;
-      const std::vector<std::vector<utils::Point>>        d_cellVerticesVector;
-      std::vector<size_type>                              d_newAtomIdToEnrichedIdOffset;
-      std::vector<std::vector<size_type>>                 d_overlappingEnrichedIdsInCells;
-      std::vector<double>                                 d_rCutoffMax;
-      std::vector<size_type>                              d_enrichedIdsInProcessor;
-      std::pair<size_type,size_type>                      d_locallyOwnedEnrichedIds;
-      std::vector<size_type>                              d_ghostEnrichedIds;
-      std::map<size_type,size_type>                       d_enrichedIdToNewAtomIdMap;
-      std::map<size_type,size_type>                       d_enrichedIdToQuantumIdMap;
+      std::vector<size_type>              d_newAtomIdToEnrichmentIdOffset;
+      std::vector<std::vector<size_type>> d_overlappingEnrichmentIdsInCells;
+      std::vector<size_type>              d_enrichmentIdsInProcessor;
+      std::pair<size_type, size_type>     d_locallyOwnedEnrichmentIds;
+      std::vector<size_type>              d_ghostEnrichmentIds;
+      std::map<size_type, size_type>      d_enrichmentIdToNewAtomIdMap;
+      std::map<size_type, size_type>      d_enrichmentIdToQuantumIdMap;
 
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace basis
 } // end of namespace dftefe
+#include "EnrichmentIdsPartition.t.cpp"
 #endif // dftefeEnrichement_h

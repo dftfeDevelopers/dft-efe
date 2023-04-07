@@ -513,7 +513,7 @@ namespace dftefe
       //
       for (size_type iMeta = 0; iMeta < metadataNames.size(); ++iMeta)
         {
-          const std::string        metadataName = metadataNames[iMeta];
+          const std::string metadataName = metadataNames[iMeta];
           // get symbol
           xPathInfo.xpath = getXPath(rootElementName, ns, metadataName);
           AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
@@ -634,7 +634,7 @@ namespace dftefe
                               " not while parsing the XML file:" + d_fileName);
       return it->second;
     }
-  
+
 
     const SphericalData &
     AtomSphericalData::getSphericalData(const std::string       fieldName,
@@ -648,9 +648,9 @@ namespace dftefe
       utils::throwException(iter != d_qNumbersToIdMap.end(),
                             "Unable to find the field " + fieldName +
                               " while parsing the XML file " + d_fileName);
-      auto iterQNumberToId = (iter->second).find(qNumbers);   
+      auto iterQNumberToId = (iter->second).find(qNumbers);
       if (iterQNumberToId != (iter->second).end())
-        return *((it->second).begin()+iterQNumberToId->second);
+        return *((it->second).begin() + iterQNumberToId->second);
       else
         {
           std::string s = "";

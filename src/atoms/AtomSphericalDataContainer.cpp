@@ -29,6 +29,7 @@
 #include <string>
 #include <atoms/AtomSphericalData.h>
 #include <atoms/SphericalData.h>
+#include <atoms/AtomSphericalDataContainer.h>
 namespace dftefe
 {
   namespace atoms
@@ -42,10 +43,12 @@ namespace dftefe
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
     {
-      for (auto x : d_atomsymboltofilename)
+      auto iter = d_atomSymbolToFilename.begin();
+      for (; iter != d_atomSymbolToFilename.end(); iter++)
         {
-          d_mapAtomSymbolToatomSphericalData[x.first] =
-            AtomsphericalData(x.second, d_fieldNames, d_metadataNames);
+          d_mapAtomSymbolToAtomSphericalData.insert(
+            {iter->first,
+             AtomSphericalData(iter->second, d_fieldNames, d_metadataNames)});
         }
     }
 
@@ -54,34 +57,51 @@ namespace dftefe
       std::string       atomSymbol,
       const std::string fieldName) const
     {
-      auto it = d_mapAtomSymbolToatomSphericalData.find(atomSymbol);
+      auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
       utils::throwException<utils::InvalidArgument>(
-        it != d_mapAtomSymbolToatomSphericalData.end(),
+        it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getSphericalData");
-      return it->getSphericalData(fieldName);
+      return (it->second).getSphericalData(fieldName);
     }
 
     const SphericalData &
     AtomSphericalDataContainer::getSphericalData(
-      std::string                       atomSymbol,
-      const std::string fieldName const std::vector<int> &qNumbers) const
+      std::string             atomSymbol,
+      const std::string       fieldName,
+      const std::vector<int> &qNumbers) const
     {
-      auto it = d_mapAtomSymbolToatomSphericalData.find(atomSymbol);
+      auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
       utils::throwException<utils::InvalidArgument>(
-        it != d_mapAtomSymbolToatomSphericalData.end(),
+        it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getSphericalData");
-      return it->getSphericalData(fieldName, qNumbers);
+      return (it->second).getSphericalData(fieldName, qNumbers);
     }
 
     std::string
     AtomSphericalDataContainer::getMetadata(std::string atomSymbol,
                                             std::string metadataName) const
     {
-      auto it = d_mapAtomSymbolToatomSphericalData.find(atomSymbol);
+      auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
       utils::throwException<utils::InvalidArgument>(
-        it != d_mapAtomSymbolToatomSphericalData.end(),
+        it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getMetadata");
-      return it->getMetadata(metadataName);
+      return (it->second).getMetadata(metadataName);
+    }
+
+    std::vector<std::vector<int>>
+    AtomSphericalDataContainer::getQNumbers(std::string       atomSymbol,
+                                            const std::string fieldName) const
+    {
+      auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
+      utils::throwException<utils::InvalidArgument>(
+        it != d_mapAtomSymbolToAtomSphericalData.end(),
+        "Cannot find the atom symbol provided to AtomSphericalDataContainer::getQNumbers");
+      std::vector<SphericalData> sphericalDataVec =
+        (it->second).getSphericalData(fieldName);
+      std::vector<std::vector<int>> qNumberVec;
+      for (auto i : sphericalDataVec)
+        qNumberVec.push_back(i.qNumbers);
+      return qNumberVec;
     }
 
     size_type
@@ -90,11 +110,11 @@ namespace dftefe
       const std::string       fieldName,
       const std::vector<int> &qNumbers) const
     {
-      auto it = d_mapAtomSymbolToatomSphericalData.find(atomSymbol);
+      auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
       utils::throwException<utils::InvalidArgument>(
-        it != d_mapAtomSymbolToatomSphericalData.end(),
+        it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getQNumberID");
-      return it->getQNumberID(fieldname, qNumbers);
+      return (it->second).getQNumberID(fieldName, qNumbers);
     }
 
     size_type
@@ -102,11 +122,17 @@ namespace dftefe
       std::string       atomSymbol,
       const std::string fieldName) const
     {
-      auto it = d_mapAtomSymbolToatomSphericalData.find(atomSymbol);
+      auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
       utils::throwException<utils::InvalidArgument>(
-        it != d_mapAtomSymbolToatomSphericalData.end(),
+        it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::nSphericalDataContainer");
-      return it->nSphericalData(fieldname);
+      return (it->second).nSphericalData(fieldName);
+    }
+
+    std::map<std::string, std::string>
+    AtomSphericalDataContainer::atomSymbolToFileMap() const
+    {
+      return d_atomSymbolToFilename;
     }
   } // end of namespace atoms
 } // end of namespace dftefe

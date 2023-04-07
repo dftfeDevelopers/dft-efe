@@ -11,12 +11,14 @@ set(DFT-EFE-BASIS-SOURCES
 	LinearCellMappingDealii.cpp
 	ParentToChildCellsManagerDealii.cpp
         TriangulationDealiiParallel.cpp
-		ConstraintsInternal.cpp
-		ConstraintsInternal.cu
-        FEConstraintsDealii.cpp
-        FEConstraintsBase.cpp
-        FEBasisDataStorageDealii.cpp
-        FEBasisHandlerDealii.cpp)
+	#ConstraintsInternal.cpp
+	#ConstraintsInternal.cu
+	#FEConstraintsDealii.cpp
+	#FEConstraintsBase.cpp
+	#FEBasisDataStorageDealii.cpp
+	#FEBasisHandlerDealii.cpp
+	AtomIdsPartition.cpp
+	EnrichmentIdsPartition.cpp)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
@@ -45,12 +47,13 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 if (NOT TARGET dft-efe-quadrature)
-  add_subdirectory(../quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
+ add_subdirectory(../quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
 endif()
 
-if (NOT TARGET dft-efe-linalg)
-  add_subdirectory(../linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
-endif()
+#if (NOT TARGET dft-efe-linalg)
+# add_subdirectory(../linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebra)
+#endif()
 
-target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg  ${DFTEFE_MPI_LIBRARIES})
+#target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg  ${DFTEFE_MPI_LIBRARIES})
+target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature ${DFTEFE_MPI_LIBRARIES})
 endif()

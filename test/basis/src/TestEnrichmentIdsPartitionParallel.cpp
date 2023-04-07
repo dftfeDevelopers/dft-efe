@@ -25,8 +25,11 @@
 
 // For the Base class
 #include <basis/TriangulationBase.h>
-#include <basis/TriangulationDealiiSerial.h>
+#include <basis/TriangulationDealiiParallel.h>
 #include <basis/AtomIdsPartition.h>
+#include <basis/FEBasisManagerDealii.h>
+#include <basis/FEBasisManager.h>
+#include <basis/EnrichmentIdsPartition.h>
 
 // Header for the utils class
 #include <utils/PointImpl.h>
@@ -39,15 +42,22 @@
 // Header for the dealii
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/dofs/dof_handler.h>
+#include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/fe_values.h>
+#include <deal.II/dofs/dof_tools.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <memory>
+#include <cfloat>
 
 int main()
 {
+#ifdef DFTEFE_WITH_MPI
+
     const unsigned int dim = 3;
 
     dftefe::utils::mpi::MPIComm mpi_communicator = dftefe::utils::mpi::MPICommWorld;
@@ -65,12 +75,10 @@ int main()
 
     std::vector<std::vector<dftefe::utils::Point>> cellVerticesVector;
     std::vector<dftefe::utils::Point> cellVertices;
-    std::vector<double> maxbound(dim,0.);
-    std::vector<double> minbound(dim,0.);
 
     // Set up Triangulation
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
-        std::make_shared<dftefe::basis::TriangulationDealiiSerial<dim>>();
+        std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(mpi_communicator);
     std::vector<unsigned int>         subdivisions = {5, 5, 5};
     std::vector<bool>                 isPeriodicFlags(dim, false);
     std::vector<dftefe::utils::Point> domainVectors(dim, dftefe::utils::Point(dim, 0.));
@@ -82,36 +90,51 @@ int main()
     domainVectors[0][0] = xmin;
     domainVectors[1][1] = ymin;
     domainVectors[2][2] = zmin;
-    // initialize the vector domain
 
     // Initialize the triangulation
     triangulationBase->initializeTriangulationConstruction();
     triangulationBase->createUniformParallelepiped(subdivisions, domainVectors, isPeriodicFlags);
     triangulationBase->finalizeTriangulationConstruction();
 
-    dftefe::size_type numLocallyOwnedCells  = triangulationBase->nLocallyOwnedCells();
+    dftefe::size_type feOrder = 1;
 
-    auto triaCellIter = triangulationBase->beginLocal();
+    //Create the febasismanager object
+    std::shared_ptr<dftefe::basis::FEBasisManager> feBM =
+        std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase,feOrder);
+
+    dftefe::size_type numLocallyOwnedCells  = feBM->nLocallyOwnedCells();
+
+    std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------"<<numLocallyOwnedCells;
+
+    auto feBMCellIter = feBM->beginLocallyOwnedCells();
 
     //get the cellvertices vector
-    for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
+    for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
     {
-        (*triaCellIter)->getVertices(cellVertices);
+        (*feBMCellIter)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
     }
 
-    auto cellIter = cellVerticesVector.begin();
-    double maxtmp = -DBL_MAX , mintmp = DBL_MAX;
+        std::vector<double> minbound;
+        std::vector<double> maxbound;
+        maxbound.resize(dim,0);
+        minbound.resize(dim,0);
+
+        
     for( unsigned int k=0;k<dim;k++)
     {
+        double maxtmp = -DBL_MAX,mintmp = DBL_MAX;
+        auto cellIter = cellVerticesVector.begin();
         for ( ; cellIter != cellVerticesVector.end(); ++cellIter)
         {
-            auto cellVerticesIter = cellIter->begin();
-                for( ; cellVerticesIter != cellIter->end(); ++cellVerticesIter)
-                {
-                    if(maxtmp<*(cellVerticesIter->begin()+k)) maxtmp = *(cellVerticesIter->begin()+k);
-                    if(mintmp>*(cellVerticesIter->begin()+k)) mintmp = *(cellVerticesIter->begin()+k);
-                }
+
+            auto cellVertices = cellIter->begin(); 
+            for( ; cellVertices != cellIter->end(); ++cellVertices)
+            {
+                if(maxtmp<=*(cellVertices->begin()+k)) maxtmp = *(cellVertices->begin()+k);
+                if(mintmp>=*(cellVertices->begin()+k)) mintmp = *(cellVertices->begin()+k);
+            }
+
         }
         maxbound[k]=maxtmp;
         minbound[k]=mintmp;
@@ -137,15 +160,26 @@ int main()
         atomCoordinatesVec.push_back(coordinates);
         atomSymbol.push_back(symbol);
     }
-
+        
+    std::map<std::string, std::string> atomSymbolToFilename;
+    for (auto i:atomSymbol )
+    {
+        atomSymbolToFilename[i] = i+".xml";
+    }
+        
     // assume the tolerance value
     double tolerance = 1e-6;
 
-    // Use the atomidsPartition object
+    // Create the AtomSphericaldataContainer object
 
-    bool testPass = false;
-    std::vector<dftefe::size_type> nAtoms;
-
+    std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
+    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
+    std::shared_ptr<dftefe::atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
+        std::make_shared<dftefe::atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
+                                                        fieldNames,
+                                                        metadataNames);
+    
+    // Create the atomidsPartition object
     std::shared_ptr<dftefe::basis::AtomIdsPartition<dim>> atomIdsPartition =
         std::make_shared<dftefe::basis::AtomIdsPartition<dim>>(atomCoordinatesVec,
                                                         minbound,
@@ -154,22 +188,60 @@ int main()
                                                         tolerance,
                                                         mpi_communicator,
                                                         numProcs);
-    std::cout<<"--------------Hello Tester from rank"<<rank<<"-----------------";
-    std::cout<<"\n--------------Welcome to TestAtomPartitionSerial-------------------\n";
 
-    for( auto i:atomIdsPartition->oldAtomIds())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->newAtomIds())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->nAtomIdsInProcessorCumulative())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->nAtomIdsInProcessor())
-        std::cout<<i<<",";
-    std::cout<<"\n";
-    for( auto i:atomIdsPartition->locallyOwnedAtomIds())
-        std::cout<<i<<",";
+    // Create the enrichemntIdsPartition object
+    std::string fieldName = "orbital";  // Each fieldname will have own set of enrichment ids
+    std::shared_ptr<dftefe::basis::EnrichmentIdsPartition<dim>> enrichmentIdsPartition =
+        std::make_shared<dftefe::basis::EnrichmentIdsPartition<dim>>(atomSphericalDataContainer,
+                                                        atomIdsPartition,
+                                                        atomSymbol,
+                                                        atomCoordinatesVec,
+                                                        fieldName,                   
+                                                        minbound,  
+                                                        maxbound,
+                                                        cellVerticesVector,
+                                                        mpi_communicator);    
 
+    std::cout<<"\nnewAtomIdToEnrichmentIdOffset:\n";
+    std::vector<dftefe::size_type> offset =
+        enrichmentIdsPartition->newAtomIdToEnrichmentIdOffset();
+    for(auto i:offset ) { std::cout<<"rank "<<rank<<" : "<<i<<"\n";}
+
+    std::cout<<"\nrank "<<rank<<"->overlappingEnrichmentIdsInCells:\n";
+    std::vector<std::vector<dftefe::size_type>> epartition =
+        enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
+    auto iter2 = epartition.begin();
+    for( ; iter2 != epartition.end() ; iter2++)
+    {
+      std::cout<<"{";
+        auto iter1 = iter2->begin();
+        for( ; iter1 != iter2->end() ; iter1++)
+        {
+            std::cout<<*(iter1)<<",";
+        }
+        std::cout<<"}, ";
+    }
+
+    std::cout<<"\nlocallyOwnedEnrichmentIds:\n";
+    std::pair<dftefe::size_type,dftefe::size_type> localeid =
+        enrichmentIdsPartition->locallyOwnedEnrichmentIds();
+    std::cout<<"rank "<<rank<<" : "<<localeid.first<<" "<<localeid.second<<"\n";
+
+    std::cout<<"\nghostEnrichmentIds:\n";
+    std::vector<dftefe::size_type> ghosteid =
+        enrichmentIdsPartition->ghostEnrichmentIds();
+    for(auto i:ghosteid ) { std::cout<<"rank "<<rank<<" : "<<i<<"\n";}
+
+    std::cout<<"\nenrichmentIdToNewAtomIdMap:\n";
+    std::map<dftefe::size_type,dftefe::size_type> eidtonatomid =
+        enrichmentIdsPartition->enrichmentIdToNewAtomIdMap();
+    for(auto i:eidtonatomid ) { std::cout<<"rank "<<rank<<":"<<i.first<<"->"<<i.second<<"\n";}   
+
+    std::cout<<"\nenrichmentIdToQuantumIdMap:";
+    std::map<dftefe::size_type,dftefe::size_type> eidtoqid =
+        enrichmentIdsPartition->enrichmentIdToQuantumIdMap();
+    for(auto i:eidtoqid ) { std::cout<<"rank "<<rank<<":"<<i.first<<"->"<<i.second<<"\n";} 
+
+    dftefe::utils::mpi::MPIFinalize();
+#endif
 }

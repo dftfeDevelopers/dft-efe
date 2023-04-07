@@ -96,22 +96,25 @@ namespace dftefe
       nSphericalData(std::string atomSymbol, std::string fieldName) const;
 
       std::vector<std::vector<int>>
-      getQNumbers(std::string atomSymbol) const;
+      getQNumbers(std::string atomSymbol, const std::string fieldName) const;
 
       size_type
       getQNumberID(std::string             atomSymbol,
                    const std::string       fieldName,
                    const std::vector<int> &qNumbers) const;
 
+      std::map<std::string, std::string>
+      atomSymbolToFileMap() const; // Name is fine ??
+      // added a d_atomSymbolToFilename return function
+
     private:
       std::map<std::string, std::string> d_atomSymbolToFilename;
       std::vector<std::string>           d_fieldNames;
       std::vector<std::string>           d_metadataNames;
       std::map<std::string, AtomSphericalData>
-        d_mapAtomSymbolToatomSphericalData;
+        d_mapAtomSymbolToAtomSphericalData;
 
     }; // end of class AtomSphericalDataContainer
   }    // end of namespace atoms
 } // end of namespace dftefe
-#include <atoms/AtomSphericalDataContainer.cpp>
 #endif // dftefeAtomSphericalDataContainer_h

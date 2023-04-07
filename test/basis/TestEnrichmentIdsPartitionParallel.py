@@ -37,10 +37,10 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestAtomIdsPartitionParallel(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestAtomIdsPartitionParallel'
+class BuildOnlyTestEnrichmentIdsPartitionParallel(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestEnrichmentIdsPartitionParallel'
     build_system = 'CMake'
-    make_opts = ['TestAtomIdsPartitionParallel']
+    make_opts = ['TestEnrichmentIdsPartitionParallel']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -88,8 +88,8 @@ class BuildOnlyTestAtomIdsPartitionParallel(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
-    target_name = 'TestAtomIdsPartitionParallel'
+class BuildAndRunTestEnrichmentIdsPartitionParallel(rfm.RegressionTest):
+    target_name = 'TestEnrichmentIdsPartitionParallel'
     descr = '''A build and run test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -134,11 +134,11 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestAtomIdsPartitionParallel.'''
+        BuildAndRunTestEnrichmentIdsPartitionParallel.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestAtomIdsPartitionParallel.'''
+        BuildAndRunTestEnrichmentIdsPartitionParallel.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestAtomIdsPartitionParallel.'''
+        BuildAndRunTestEnrichmentIdsPartitionParallel.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,8 +173,8 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestAtomIdsPartitionParallel(rfm.RunOnlyRegressionTest):
-    target_name = 'TestAtomIdsPartitionParallel'
+class RunOnlyTestEnrichmentIdsPartitionParallel(rfm.RunOnlyRegressionTest):
+    target_name = 'TestEnrichmentIdsPartitionParallel'
     descr = '''A run only test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -211,11 +211,11 @@ class RunOnlyTestAtomIdsPartitionParallel(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestAtomIdsPartitionParallel.'''
+        RunOnlyTestEnrichmentIdsPartitionParallel.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestAtomIdsPartitionParallel'''
+        RunOnlyTestEnrichmentIdsPartitionParallel'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestAtomIdsPartitionParallel'''
+        RunOnlyTestEnrichmentIdsPartitionParallel'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

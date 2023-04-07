@@ -154,7 +154,7 @@ namespace dftefe
         "Mismatch of dimension for dealii and the domainVectors");
 
       // TODO check if this is correct
-      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels() > 1,
+      DFTEFE_AssertWithMsg(d_triangulationDealii.n_global_levels() == 1,
                            "Cannot mark periodic faces after refinement."
                            "This has to be done at the coarsest level");
 
