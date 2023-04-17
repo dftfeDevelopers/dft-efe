@@ -31,24 +31,24 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     Field<ValueTypeBasisCoeff, memorySpace>::Field(
       std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                                                   basisHandler,
-      const std::string                            constraintsName,
-      const size_type                              numVectors,
-      std::shared_ptr<
-        dftefe::linearAlgebra::LinAlgOpContext<memorySpace> >linAlgOpContext)
+                        basisHandler,
+      const std::string constraintsName,
+      const size_type   numVectors,
+      std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
+        linAlgOpContext)
     {
-      reinit(basisHandler, constraintsName,numVectors, linAlgOpContext);
+      reinit(basisHandler, constraintsName, numVectors, linAlgOpContext);
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
     Field<ValueTypeBasisCoeff, memorySpace>::reinit(
       std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                                                   basisHandler,
-      const std::string                            constraintsName,
-      const size_type                              numVectors,
-      std::shared_ptr<
-        dftefe::linearAlgebra::LinAlgOpContext<memorySpace> >linAlgOpContext)
+                        basisHandler,
+      const std::string constraintsName,
+      const size_type   numVectors,
+      std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
+        linAlgOpContext)
     {
       d_basisHandler     = basisHandler;
       d_constraintsName  = constraintsName;
@@ -61,7 +61,7 @@ namespace dftefe
 
       d_vector = std::make_shared<
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>>(
-        mpiPatternP2P, d_linAlgOpContext,numVectors, ValueTypeBasisCoeff());
+        mpiPatternP2P, d_linAlgOpContext, numVectors, ValueTypeBasisCoeff());
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
@@ -70,7 +70,8 @@ namespace dftefe
     {
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         d_basisHandler->getConstraints(d_constraintsName);
-      constraints.distributeParentToChild(*d_vector, d_vector->getNumberComponents());
+      constraints.distributeParentToChild(*d_vector,
+                                          d_vector->getNumberComponents());
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
@@ -79,7 +80,8 @@ namespace dftefe
     {
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         d_basisHandler->getConstraints(d_constraintsName);
-      constraints.distributeChildToParent(*d_vector,d_vector->getNumberComponents());
+      constraints.distributeChildToParent(*d_vector,
+                                          d_vector->getNumberComponents());
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>

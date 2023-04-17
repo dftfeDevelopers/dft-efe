@@ -71,8 +71,8 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &quadValuesContainer) const
     {
-      const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData
-        = field.getVector();
+      const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+        &               vectorData      = field.getVector();
       const std::string constraintsName = field.getConstraintsName();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
@@ -94,7 +94,8 @@ namespace dftefe
                       memorySpace,
                       dim>::
       interpolate(
-        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                   vectorData,
         const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -337,8 +338,8 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const
     {
-      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData
-        = f.getVector();
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData =
+        f.getVector();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         f.getBasisHandler();
       const std::string constraintsName = f.getConstraintsName();
@@ -359,15 +360,16 @@ namespace dftefe
                       ValueTypeBasisData,
                       memorySpace,
                       dim>::
-    integrateWithBasisValues(
-      const quadrature::QuadratureValuesContainer<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData>,
-        memorySpace> &                            inp,
-      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-      const std::string &                                   constraintsName,
-      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &       vectorData) const
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const std::string &                                   constraintsName,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &vectorData) const
 
     {
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
@@ -634,7 +636,8 @@ namespace dftefe
 
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         feBasisHandler.getConstraints(constraintsName);
-      constraints.distributeChildToParent(vectorData,vectorData.getNumberComponents());
+      constraints.distributeChildToParent(vectorData,
+                                          vectorData.getNumberComponents());
     }
 
 

@@ -77,7 +77,7 @@ namespace dftefe
         }
     }
 
-        template <unsigned int dim>
+    template <unsigned int dim>
     void
     convertToDftefePoint(
       const std::map<global_size_type, dealii::Point<dim, double>>

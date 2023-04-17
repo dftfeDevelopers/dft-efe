@@ -367,17 +367,16 @@ namespace dftefe
     }
 
     template <size_type dim>
-    void FEBasisManagerDealii<dim>::    
-    getBasisCenters(std::map<global_size_type, utils::Point> &dofCoords) const
+    void
+    FEBasisManagerDealii<dim>::getBasisCenters(
+      std::map<global_size_type, utils::Point> &dofCoords) const
     {
       // TODO if the creation of linear mapping is inefficient, then this has to
       // be improved
-      std::map<global_size_type, dealii::Point<dim, double>>
-        dealiiDofCoords;
-      dealii::MappingQ1<dim, dim> mappingQ1;
-      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(mappingQ1,
-                                                             *(d_dofHandler.get()),
-                                                     dealiiDofCoords);
+      std::map<global_size_type, dealii::Point<dim, double>> dealiiDofCoords;
+      dealii::MappingQ1<dim, dim>                            mappingQ1;
+      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
+        mappingQ1, *(d_dofHandler.get()), dealiiDofCoords);
 
       convertToDftefePoint<dim>(dealiiDofCoords, dofCoords);
     }

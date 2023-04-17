@@ -78,7 +78,7 @@ namespace dftefe
       virtual void
       distributeChildToParent(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-                 &       vectorData,
+          &       vectorData,
         size_type blockSize) const = 0;
       virtual void
       distributeParentToChild(
