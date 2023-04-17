@@ -83,15 +83,7 @@ namespace dftefe
 
       void
       interpolate(
-        const linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &v,
-        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &quadValuesContainer) const override;
-
-      void
-      interpolate(
-        const MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
         const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -99,13 +91,6 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &quadValuesContainer) const override;
-      void
-      interpolate(
-        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &V,
-        const FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &feBasisHandler,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &quadValuesContainer) const override;
 
       void
       integrateWithBasisValues(
@@ -123,7 +108,7 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const std::string &                                   constraintsName,
-        MultiVector<ValueTypeBasisCoeff, memorySpace> &       vectorData)
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &       vectorData)
         const override;
 
 
@@ -134,7 +119,7 @@ namespace dftefe
       //          &                                         inp,
       //        const quadrature::QuadratureRuleAttributes
       //        &quadratureRuleAttributes, const
-      //        FEBasisHandler<ValueTypeBasisCoeff, memorySpace> &
+      //        FEBasisHandler<ValueTypeBasisCoeff, memorySpace,dim> &
       //        feBasisHandler, linearAlgebra::Vector<ValueTypeBasisCoeff,
       //        memorySpace> &v) const override;
 

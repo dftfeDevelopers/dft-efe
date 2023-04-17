@@ -432,7 +432,7 @@ namespace dftefe
        * @return d_numVectors
        */
       size_type
-      getNumberComponents();
+      getNumberComponents() const;
 
       void
       updateGhostValues(const size_type communicationChannel = 0);

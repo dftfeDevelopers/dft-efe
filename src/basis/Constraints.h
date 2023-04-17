@@ -29,7 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MPIPatternP2P.h>
 
-#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
 namespace dftefe
 {
   namespace basis
@@ -77,17 +77,14 @@ namespace dftefe
 
       virtual void
       distributeChildToParent(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize = 1) const = 0;
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+                 &       vectorData,
+        size_type blockSize) const = 0;
       virtual void
       distributeParentToChild(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
         size_type blockSize) const = 0;
-      virtual void
-      setConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize = 1) const = 0;
 
       virtual void
       setConstrainedNodesToZero(

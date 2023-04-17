@@ -31,6 +31,7 @@
 #include <basis/BasisManager.h>
 #include <basis/TriangulationBase.h>
 #include <basis/FECellBase.h>
+#include <map>
 namespace dftefe
 {
   namespace basis

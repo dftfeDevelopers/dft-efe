@@ -167,13 +167,13 @@ namespace dftefe
             } // Face loop
         }     // cell locally owned
     }
-
+/*
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues)
+      setInhomogeneousDirichletBC(utils::ScalarSpatialFunctionReal &boundaryValues)
     {
       dealii::IndexSet locallyRelevantDofs;
       dealii::DoFTools::extract_locally_relevant_dofs(
@@ -214,7 +214,7 @@ namespace dftefe
                       if (dofs_touched[nodeId])
                         continue;
                       auto inhomoValue =
-                        boundaryValues.values(boundaryCoord[nodeId]);
+                        boundaryValues(boundaryCoord[nodeId]);
                       dofs_touched[nodeId] = true;
                       if (!isConstrained(nodeId))
                         {
@@ -225,7 +225,7 @@ namespace dftefe
             } // Face loop
         }     // cell locally owned
     }
-
+*/
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -566,7 +566,8 @@ namespace dftefe
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+                 &       vectorData,
         size_type blockSize) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
@@ -578,25 +579,6 @@ namespace dftefe
                                            d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues,
                                            d_constraintsInhomogenities);
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      distributeChildToParent(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize) const
-    {
-      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
-        constraintsDistributeChildToParent(vectorData,
-                                           blockSize,
-                                           d_rowConstraintsIdsLocal,
-                                           d_rowConstraintsSizes,
-                                           d_columnConstraintsIdsLocal,
-                                           d_constraintRowSizesAccumulated,
-                                           d_columnConstraintsValues);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -617,21 +599,6 @@ namespace dftefe
                                            d_columnConstraintsIdsLocal,
                                            d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues);
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize) const
-    {
-      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
-        constraintsSetConstrainedNodesToZero(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal);
     }
 
     template <typename ValueTypeBasisCoeff,
