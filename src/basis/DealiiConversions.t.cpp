@@ -77,5 +77,24 @@ namespace dftefe
         }
     }
 
+    template <unsigned int dim>
+    void
+    convertToDftefePoint(
+      const std::map<global_size_type, dealii::Point<dim, double>>
+        &                                       dealiiPoints,
+      std::map<global_size_type, utils::Point> &points)
+    {
+      auto         iter = dealiiPoints.begin();
+      utils::Point pointTmp(dim);
+      for (; iter != dealiiPoints.end(); iter++)
+        {
+          std::copy((iter->second).begin_raw(),
+                    (iter->second).end_raw(),
+                    pointTmp.begin());
+          // points[iter->first] = pointTmp;
+          points.insert({iter->first, pointTmp});
+        }
+    }
+
   } // namespace basis
 } // namespace dftefe

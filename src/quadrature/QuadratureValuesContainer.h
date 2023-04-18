@@ -145,8 +145,7 @@ namespace dftefe
       end(const size_type cellId) const;
 
       ValueType
-      dotProduct(const linearAlgebra::LinAlgOpContext<memorySpace>
-                   &linAlgOpContext) const;
+      dotProduct() const;
 
     private:
       size_type                      d_numberComponents;

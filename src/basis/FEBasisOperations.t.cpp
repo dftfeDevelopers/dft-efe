@@ -71,7 +71,8 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &quadValuesContainer) const
     {
-      auto              vectorData      = field.getVector();
+      const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+        &               vectorData      = field.getVector();
       const std::string constraintsName = field.getConstraintsName();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         field.getBasisHandler();
@@ -93,7 +94,8 @@ namespace dftefe
                       memorySpace,
                       dim>::
       interpolate(
-        const MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                   vectorData,
         const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -276,7 +278,7 @@ namespace dftefe
           ValueTypeUnion                               alpha = 1.0;
           ValueTypeUnion                               beta  = 0.0;
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-            vectorData.getLinAlgOpContext();
+            *(vectorData.getLinAlgOpContext().get());
 
           const ValueTypeBasisData *B =
             (d_feBasisDataStorage->getBasisDataInAllCells(
@@ -336,7 +338,8 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const
     {
-      auto vectorData = f.getVector();
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData =
+        f.getVector();
       const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
         f.getBasisHandler();
       const std::string constraintsName = f.getConstraintsName();
@@ -348,16 +351,25 @@ namespace dftefe
                                vectorData);
     }
 
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     void
-    integrateWithBasisValues(
-      const quadrature::QuadratureValuesContainer<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData>,
-        memorySpace> &                            inp,
-      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-      const std::string &                                   constraintsName,
-      MultiVector<ValueTypeBasisCoeff, memorySpace> &       vectorData) const
+    FEBasisOperations<ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      memorySpace,
+                      dim>::
+      integrateWithBasisValues(
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const std::string &                                   constraintsName,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &vectorData) const
 
     {
       const quadrature::QuadratureRuleContainer &quadRuleContainer =
@@ -395,7 +407,7 @@ namespace dftefe
 
 
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-        vectorData.getLinAlgOpContext();
+        *(vectorData.getLinAlgOpContext().get());
       auto jxwStorage =
         d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
 
@@ -603,7 +615,7 @@ namespace dftefe
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,
                                        numCellsInBlockDofsMemSpace,
-                                       vecorData.begin());
+                                       vectorData.begin());
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
@@ -624,7 +636,8 @@ namespace dftefe
 
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         feBasisHandler.getConstraints(constraintsName);
-      constraints.distributeChildToParent(vectorData);
+      constraints.distributeChildToParent(vectorData,
+                                          vectorData.getNumberComponents());
     }
 
 

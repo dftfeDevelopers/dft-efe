@@ -31,7 +31,7 @@
 #include <utils/MemoryStorage.h>
 #include <utils/MemorySpaceType.h>
 
-#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
 
 namespace dftefe
 {
@@ -44,8 +44,9 @@ namespace dftefe
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const size_type                                          blockSize,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &             vectorData,
+        const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
@@ -60,8 +61,9 @@ namespace dftefe
 
       static void
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const size_type                                          blockSize,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &             vectorData,
+        const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal,
         const utils::MemoryStorage<size_type, memorySpace> &rowConstraintsSizes,
@@ -74,8 +76,9 @@ namespace dftefe
 
       static void
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        const size_type                                          blockSize,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &             vectorData,
+        const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal);
     };
@@ -89,9 +92,10 @@ namespace dftefe
     public:
       static void
       constraintsDistributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff,
-                              dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        const size_type                                            blockSize,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &             vectorData,
+        const size_type blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
@@ -112,9 +116,10 @@ namespace dftefe
 
       static void
       constraintsDistributeChildToParent(
-        linearAlgebra::Vector<ValueTypeBasisCoeff,
-                              dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        const size_type                                            blockSize,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &             vectorData,
+        const size_type blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal,
@@ -132,9 +137,10 @@ namespace dftefe
 
       static void
       constraintsSetConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueTypeBasisCoeff,
-                              dftefe::utils::MemorySpace::DEVICE> &vectorData,
-        const size_type                                            blockSize,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &             vectorData,
+        const size_type blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &rowConstraintsIdsLocal);

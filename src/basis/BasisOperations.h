@@ -32,6 +32,7 @@
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/MultiVector.h>
 namespace dftefe
 {
   namespace basis
@@ -67,7 +68,8 @@ namespace dftefe
 
       virtual void
       interpolate(
-        const MultiVector<ValueTypeBasisCoeff, memorySpace> & vectorData,
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                   vectorData,
         const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -95,7 +97,8 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const std::string &                                   constraintsName,
-        MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData) const = 0;
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &vectorData) const = 0;
       // virtual void
       // integrateWithBasisValues(
       //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,

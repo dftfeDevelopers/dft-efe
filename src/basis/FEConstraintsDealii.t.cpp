@@ -167,65 +167,66 @@ namespace dftefe
             } // Face loop
         }     // cell locally owned
     }
-
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setInhomogeneousDirichletBC(ScalarSpatialFunctionReal &boundaryValues)
-    {
-      dealii::IndexSet locallyRelevantDofs;
-      dealii::DoFTools::extract_locally_relevant_dofs(
-        *(d_feBasisManager->getDoFHandler()), locallyRelevantDofs);
-
-      const unsigned int vertices_per_cell =
-        dealii::GeometryInfo<dim>::vertices_per_cell;
-      const unsigned int dofs_per_cell =
-        d_feBasisManager->getDoFHandler()->get_fe().dofs_per_cell;
-      const unsigned int faces_per_cell =
-        dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face =
-        d_feBasisManager->getDoFHandler()->get_fe().dofs_per_face;
-
-      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
-      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-      std::map<global_size_type, utils::Point> boundaryCoord;
-      d_feBasisManager->getBasisCenters(boundaryCoord);
-
-      std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(), false);
-      auto              cell = d_feBasisManager->beginLocallyOwnedCells(),
-           endc              = d_feBasisManager->endLocallyOwnedCells();
-      for (; cell != endc; ++cell)
+    /*
+        template <typename ValueTypeBasisCoeff,
+                  dftefe::utils::MemorySpace memorySpace,
+                  size_type                  dim>
+        void
+        FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+          setInhomogeneousDirichletBC(utils::ScalarSpatialFunctionReal
+       &boundaryValues)
         {
-          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          dealii::IndexSet locallyRelevantDofs;
+          dealii::DoFTools::extract_locally_relevant_dofs(
+            *(d_feBasisManager->getDoFHandler()), locallyRelevantDofs);
 
-          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+          const unsigned int vertices_per_cell =
+            dealii::GeometryInfo<dim>::vertices_per_cell;
+          const unsigned int dofs_per_cell =
+            d_feBasisManager->getDoFHandler()->get_fe().dofs_per_cell;
+          const unsigned int faces_per_cell =
+            dealii::GeometryInfo<dim>::faces_per_cell;
+          const unsigned int dofs_per_face =
+            d_feBasisManager->getDoFHandler()->get_fe().dofs_per_face;
+
+          std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
+          std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
+          std::map<global_size_type, utils::Point> boundaryCoord;
+          d_feBasisManager->getBasisCenters(boundaryCoord);
+
+          std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(),
+       false); auto              cell =
+       d_feBasisManager->beginLocallyOwnedCells(), endc              =
+       d_feBasisManager->endLocallyOwnedCells(); for (; cell != endc; ++cell)
             {
-              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
-              if (boundaryId == 0)
-                {
-                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
-                       ++iFaceDof)
-                    {
-                      const dealii::types::global_dof_index nodeId =
-                        iFaceGlobalDofIndices[iFaceDof];
-                      if (dofs_touched[nodeId])
-                        continue;
-                      auto inhomoValue =
-                        boundaryValues.values(boundaryCoord[nodeId]);
-                      dofs_touched[nodeId] = true;
-                      if (!isConstrained(nodeId))
-                        {
-                          setInhomogeneity(nodeId, inhomoValue);
-                        } // non-hanging node check
-                    }     // Face dof loop
-                }
-            } // Face loop
-        }     // cell locally owned
-    }
+              (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
 
+              for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+                {
+                  (*cell)->getFaceDoFGlobalIndices(iFace,
+       iFaceGlobalDofIndices); const size_type boundaryId =
+       (*cell)->getFaceBoundaryId(iFace); if (boundaryId == 0)
+                    {
+                      for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                           ++iFaceDof)
+                        {
+                          const dealii::types::global_dof_index nodeId =
+                            iFaceGlobalDofIndices[iFaceDof];
+                          if (dofs_touched[nodeId])
+                            continue;
+                          auto inhomoValue =
+                            boundaryValues(boundaryCoord[nodeId]);
+                          dofs_touched[nodeId] = true;
+                          if (!isConstrained(nodeId))
+                            {
+                              setInhomogeneity(nodeId, inhomoValue);
+                            } // non-hanging node check
+                        }     // Face dof loop
+                    }
+                } // Face loop
+            }     // cell locally owned
+        }
+    */
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -566,7 +567,8 @@ namespace dftefe
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeParentToChild(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
         size_type blockSize) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
@@ -578,25 +580,6 @@ namespace dftefe
                                            d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues,
                                            d_constraintsInhomogenities);
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      distributeChildToParent(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize) const
-    {
-      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
-        constraintsDistributeChildToParent(vectorData,
-                                           blockSize,
-                                           d_rowConstraintsIdsLocal,
-                                           d_rowConstraintsSizes,
-                                           d_columnConstraintsIdsLocal,
-                                           d_constraintRowSizesAccumulated,
-                                           d_columnConstraintsValues);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -617,21 +600,6 @@ namespace dftefe
                                            d_columnConstraintsIdsLocal,
                                            d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues);
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setConstrainedNodesToZero(
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &vectorData,
-        size_type blockSize) const
-    {
-      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
-        constraintsSetConstrainedNodesToZero(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal);
     }
 
     template <typename ValueTypeBasisCoeff,
