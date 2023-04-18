@@ -23,7 +23,7 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
 namespace dftefe
 {
   namespace basis
@@ -31,20 +31,24 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     Field<ValueTypeBasisCoeff, memorySpace>::Field(
       std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                                                   basisHandler,
-      const std::string                            constraintsName,
-      linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
+                        basisHandler,
+      const std::string constraintsName,
+      const size_type   numVectors,
+      std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
+        linAlgOpContext)
     {
-      reinit(basisHandler, constraintsName, linAlgOpContext);
+      reinit(basisHandler, constraintsName, numVectors, linAlgOpContext);
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
     Field<ValueTypeBasisCoeff, memorySpace>::reinit(
       std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                                                   basisHandler,
-      const std::string                            constraintsName,
-      linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
+                        basisHandler,
+      const std::string constraintsName,
+      const size_type   numVectors,
+      std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
+        linAlgOpContext)
     {
       d_basisHandler     = basisHandler;
       d_constraintsName  = constraintsName;
@@ -56,8 +60,8 @@ namespace dftefe
       //
 
       d_vector = std::make_shared<
-        linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace>>(
-        mpiPatternP2P, d_linAlgOpContext, ValueTypeBasisCoeff());
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>>(
+        mpiPatternP2P, d_linAlgOpContext, numVectors, ValueTypeBasisCoeff());
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
@@ -66,7 +70,8 @@ namespace dftefe
     {
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         d_basisHandler->getConstraints(d_constraintsName);
-      constraints.distributeParentToChild(*d_vector);
+      constraints.distributeParentToChild(*d_vector,
+                                          d_vector->getNumberComponents());
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
@@ -75,15 +80,24 @@ namespace dftefe
     {
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         d_basisHandler->getConstraints(d_constraintsName);
-      constraints.distributeChildToParent(*d_vector);
+      constraints.distributeChildToParent(*d_vector,
+                                          d_vector->getNumberComponents());
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
-    const linearAlgebra::Vector<ValueTypeBasisCoeff, memorySpace> &
+    linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
     Field<ValueTypeBasisCoeff, memorySpace>::getVector()
     {
       return *d_vector;
     }
+
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
+    Field<ValueTypeBasisCoeff, memorySpace>::getVector() const
+    {
+      return *d_vector;
+    }
+
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     const BasisHandler<ValueTypeBasisCoeff, memorySpace> &
@@ -177,7 +191,7 @@ namespace dftefe
     linearAlgebra::LinAlgOpContext<memorySpace> &
     Field<ValueTypeBasisCoeff, memorySpace>::getLinAlgOpContext() const
     {
-      return *d_linAlgOpContext;
+      return *(d_linAlgOpContext.get());
     }
   } // end of namespace basis
 } // end of namespace dftefe

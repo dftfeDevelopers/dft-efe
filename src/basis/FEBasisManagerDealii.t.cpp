@@ -375,9 +375,8 @@ namespace dftefe
       // be improved
       std::map<global_size_type, dealii::Point<dim, double>> dealiiDofCoords;
       dealii::MappingQ1<dim, dim>                            mappingQ1;
-      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(mappingQ1,
-                                                             *d_dofHandler,
-                                                             dealiiDofCoords);
+      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
+        mappingQ1, *(d_dofHandler.get()), dealiiDofCoords);
 
       convertToDftefePoint<dim>(dealiiDofCoords, dofCoords);
     }

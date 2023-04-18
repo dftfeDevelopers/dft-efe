@@ -34,7 +34,6 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 
->>>>>>> operator
 namespace dftefe
 {
   namespace linearAlgebra

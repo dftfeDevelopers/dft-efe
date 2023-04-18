@@ -58,8 +58,12 @@ main()
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST>
     *blasQueuePtr = &blasQueue;
-  dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>
-    linAlgOpContext(blasQueuePtr);
+
+  std::shared_ptr<
+    dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>
+    linAlgOpContextPtr = std::make_shared<
+      dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(
+      blasQueuePtr);
 
   // Set up Triangulation
   const unsigned int                                dim = 3;
@@ -203,11 +207,15 @@ main()
 
   // set up Field
 
+  const unsigned int numComponents = 1; // hard coded to 1
   dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData(
-    basisHandler, constraintName, &linAlgOpContext);
+    basisHandler, constraintName, numComponents, linAlgOpContextPtr);
 
   dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST>
-    outputFieldData(basisHandler, constraintName, &linAlgOpContext);
+    outputFieldData(basisHandler,
+                    constraintName,
+                    numComponents,
+                    linAlgOpContextPtr);
 
   // populate the value of the Field
 
