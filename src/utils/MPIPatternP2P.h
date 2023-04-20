@@ -280,8 +280,7 @@ namespace dftefe
          d_ghostIndices.
          * This is done to use size_type which is unsigned int instead of
          * global_size_type which is long unsigned it. This helps in reducing
-         the
-         * volume of data transfered during MPI calls.
+         * the volume of data transfered during MPI calls.
 
          * @note In the case that the locally owned ranges across all the
          * processors are ordered as per the processor Id, this vector is
