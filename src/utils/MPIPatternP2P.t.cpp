@@ -180,7 +180,7 @@ namespace dftefe
           else
             return x.Id < y.Id;
         }
-        
+
         std::vector<size_type>
         getOverlappingRangeIds(const std::vector<global_size_type> &ranges)
         {
@@ -205,7 +205,7 @@ namespace dftefe
                   rangeMetaDataVec.push_back(right);
                 }
             }
-          
+
           std::sort(rangeMetaDataVec.begin(),
                     rangeMetaDataVec.end(),
                     compareRangeMetaData);
@@ -370,6 +370,7 @@ namespace dftefe
         std::vector<size_type> flattenedLocalGhostIndicesTmp(0);
         auto                   it = ghostProcIdToLocalGhostIndices.begin();
         unsigned int           iGhostProc = 0;
+        size_type              offset     = 0;
         for (; it != ghostProcIdToLocalGhostIndices.end(); ++it)
           {
             d_ghostProcIds[iGhostProc] = it->first;
@@ -382,13 +383,15 @@ namespace dftefe
                               std::to_string(d_ghostProcIds[iGhostProc]) +
                               " does not form a contiguous set.";
             throwException<LogicError>(isContiguous, msg);
-            d_numGhostIndicesInGhostProcs[iGhostProc] =
-              localGhostIndicesInGhostProc.size();
 
-            d_localGhostIndicesRanges[2 * iGhostProc] =
-              *(localGhostIndicesInGhostProc.begin());
+            const size_type nLocalGhostInGhostProc =
+              localGhostIndicesInGhostProc.size();
+            d_numGhostIndicesInGhostProcs[iGhostProc] = nLocalGhostInGhostProc;
+
+            d_localGhostIndicesRanges[2 * iGhostProc] = offset;
             d_localGhostIndicesRanges[2 * iGhostProc + 1] =
-              *(localGhostIndicesInGhostProc.end() - 1) + 1;
+              offset + nLocalGhostInGhostProc;
+
             //
             // Append localGhostIndicesInGhostProc to
             // flattenedLocalGhostIndicesTmp
@@ -396,6 +399,8 @@ namespace dftefe
             std::copy(localGhostIndicesInGhostProc.begin(),
                       localGhostIndicesInGhostProc.end(),
                       back_inserter(flattenedLocalGhostIndicesTmp));
+
+            offset += nLocalGhostInGhostProc;
             ++iGhostProc;
           }
 

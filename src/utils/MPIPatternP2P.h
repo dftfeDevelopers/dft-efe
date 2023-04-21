@@ -41,17 +41,81 @@ namespace dftefe
        * (i.e., which entries/nodes to receive from which processor and
        * which entries/nodes to send to which processor).
        *
-       *
        * + <b>Assumptions</b>
        *    1. It assumes that a a sparse communication pattern. That is,
        *       a given processor only communicates with a few processors.
        *       This object should be avoided if the communication pattern
        *       is dense (e.g., all-to-all communication)
-       *    2. It assumes that the each processor owns a set of \em continuous
-       *       integers (indices). Further, the ownership is exclusive (i.e.,
-       *       no index is owned by more than one processor). In other words,
-       *       the different sets of owning indices across all the processors
-       *       are disjoint.
+       *    2. It assumes that the each processor owns multiple sets of
+       *       \em continuous integers (indices) that are disjoint to each
+       *       other. This means the following. Let there be \f$N$\f unique
+       *       integers (indices) across \f$p$\f processors. Let each
+       *       processor own \f$k$\f different (\em possibly empty) ranges of
+       *       integers. Let us denote the \f$l$\f-th range
+       * (\f$l=1,2,\ldots,k$\f) in the \f$i$\f-th processor as \f$R_l^i =
+       * [a_l^i, b_l^i)$\f, where the open interval \f$[a,b)$\f is the list of
+       * integers \f$[a,b) = {a,a+1,a+2,\ldots,b-1}$\f (i.e., \f$a$\f is
+       * included but \f$b$\f is not). Then \f$R_l^i$\f mus satisfy the
+       * following: a. \f$R_l^i \cap R_m^j = \emptyset$\f, if either \f$l \neq
+       * m$\f or \f$i \neq j$\f. That is no index can be owned by two or more
+       * processors. Further, within a processor, no index can belong to two or
+       * more ranges owned by that processor. b.
+       * \f$\bigcup\limits{l=1,i=1}^{l=k,i=p} R_l^i=[n_0,n_0+N)$\f. That is, the
+       * union of all the ranges across all the ranges must form a set of
+       * \f$N$\f contiguous integers \f$\{n_0, \n_0+1, n_0+2, \ldots,
+       * n_0+N-1\}$\f, where \f$n_0$\f can be any non-negative integer. The
+       * usual case is \f$n_0=0$\f.
+       *    3. The \f$i$\f-processor has a set of \f$G_i$\f integers that are
+       *       ordered in increasing manner and are not owned by it. We term
+       *       this set as the ghost set. To elaborate, the ghost set for the
+       *       \f$i$\f-th processor is given by \f$U^i=\{u_1^i,u_2^i,
+       * u_{G_i\}^i}$\f, where \f$u_1^i < u_2^i < u_3^i < \ldots <  u_{G_i}^i$\f
+       * and \f$U^i \cap R_l^i$=\emptyset\f. The latter condition implies that
+       * no integer (index) in the ghost set in a processor should belong to any
+       * of its owned ranges of integers (indices) (i.e., each integer (index)
+       * in the ghost set  of a processor must be owned by some other processor
+       * and not the same processor). Note that there is no requirement for the
+       * ghost set of integers to be contiguous.
+       *
+       *   @note The reason we allow for \f$k$\f owned ranges in each processor
+       *    is to seamlessly handle cases where the \f$N$\f indices from across
+       *    all the processors is a concatenation of $k$ different sets of
+       *    contiguous integers. For example, let there be a two vectors
+       *    \$\mathbf{v}_1$\f and  \$\mathbf{v}_2$\f of sizes \f$N_1$\f and
+       *    \f$N_2$\f, respectively, that are partitioned across the same set
+       *    of processors. Let \f$r_1^i=[n_1^i, m_1^i)$\f and \f$$r_2^i=[n_2^i,
+       * m_2^i)$\f be the locally owned range for \f$\mathbf{v}_1$\f and
+       * \f$\mathbf{v}_2$\f in the \f$i$\f-th processor, respectively.
+       * Similarly, let \f$X^i=\{x_1^i,x_2^i,\ldots,x_{nx_i}^i\}$\f and
+       *    \f$Y^i=\{y_1^i,y_2^i,\ldots,y_{ny_i}^i\}$\f be two ordered
+       *    (increasing and non-repeating) sets that define the ghost set of
+       * indices in the \f$i$\f-th processor for \$\mathbf{v}_1$\f and
+       * \$\mathbf{v}_2$\f, respectively. Then, we can construct a composite
+       * vector \f$\mathbf{w}$\f of size \f$N=N_1+N_2$\f by concatenating
+       *    \f$\mathbf{v}_1$\f and \f$\mathbf{v}_2$\f. If we are to partition
+       * across the same set of processors in a manner that preserves the
+       * partitioning of the \f$\mathbf{v}_1$\f and \f$\mathbf{v}_2$\f parts of
+       * it, then for a given processor id (say \f$i$\f) we need to provide two
+       * owned ranges: \f$R_1^i=[n_1^i,m_1^i)$\f and \f$R_2^i=[N_1 + n_2^i, N_1
+       * + m_2^i)$\f (note that the second range is offset by the total size of
+       * the first vector(\f$N_1$\f)). Further, the ghost set for
+       * \f$\mathbf{w}$\f in the \f$i$\f-th processor (say \f$U^i$\f) becomes
+       * the concatenation of the ghost sets of \f$\mathbf{v}_1$\f and
+       * \f$\mathbf{v}_2$\f. That is \f$U_i=\{x_1^i,x_2^i,\ldots,x_{nx_i}^i\}
+       * \cup \{N_1 + y_1^i, N_1 + y_2^i, \ldots, y_{ny_i}^i\}$\f (note that the
+       * second ghost set is offset by the total size of the first vector
+       * (\f$N_1$\f)). The above process can be extended to a composition of
+       * \f$k$\f vectors instead of 2 vectors.
+       *
+       *    A typical scenario where such a composite vector arises while
+       * dealing with direct sums of two or more vector spaces. For instance,
+       * let there be a function expressed as a linear combination of two
+       * mutually orthogonal basis sets, where each basis set is partitioned
+       * across the same set of processors. Then, instead of paritioning two
+       * vectors each containing the linear coefficients of one of the basis
+       * sets, it is more logistically simpler to construct a composite vector
+       * that concatenates the two vectors and partition it in a way that
+       * preserves the original partitioning of the individual vectors.
        *
        * @tparam memorySpace Defines the MemorySpace (i.e., HOST or
        * DEVICE) in which the various data members of this object must reside.
@@ -74,25 +138,36 @@ namespace dftefe
          * @brief Constructor. This constructor is the typical way of
          * creation of an MPI pattern.
          *
-         * @param[in] locallyOwnedRange A pair of non-negtive integers
-         * \f$(a,b)\f$ which defines a range of indices (continuous)
-         * that are owned by the current processor.
-         * @note It is an open interval where \f$a\f$ is included,
-         * but \f$b\f$ is not included.
+         * @param[in] locallyOwnedRanges A vector containing different
+         * non-overlapping ranges of non-negative integers that are owned by
+         * the current processor. If the current processor id is \f$i$\f then
+         * the \f$l$\f-the entry in \p locallyOwnedRanges denotes the
+         * pair \f$a_l^i$\f and \f$b_l^i$\f that define the range \f$R_l^i$\f
+         * defined above (see top of this page).
+         * @note The pair \f$a_l^i$\f and \f$b_l^i$\f define an open interval,
+         * where \f$a_l^i\f$ is included, but \f$b_l^i\f$ is not included.
          *
-         * @param[in] ghostIndices An ordered set of non-negtive indices
-         * specifyin the ghost indices for the current processor.
+         * @param[in] ghostIndices An ordered (in increasing manner) set of
+         * non-negtive indices specifying the ghost indices for the current
+         * processor. If the current processor id is \f$i$\f then
+         * \p ghostIndices is the set \f$U^i$\f defined above
+         * (see top of this page)
          * @note the vector must be ordered
          * (i.e., ordered in increasing order and non-repeating)
          *
          * @param[in] mpiComm The MPI communicator object which defines the
          * set of processors for which the MPI pattern needs to be created.
          *
-         * @throw Throws exception if \p mpiComm is in an invalid state, if
-         * the \p locallyOwnedRange across all the processors are not disjoint,
-         * if \p ghostIndices are not ordered (if it is not strictly
-         * increasing), or if some sanity checks with respect to MPI sends and
-         * receives fail.
+         * @throw Throws exception if:
+         * 1. \p mpiComm is in an invalid state, or
+         * 2. the ranges within \p locallyOwnedRanges across all the processors
+         *    are not disjoint, or
+         * 3. \p ghostIndices are not ordered (if it is not strictly
+         *    increasing), or
+         * 4. \p ghostIndices have any overlap with locallyOwnedRanges
+         *    (i.e., an index is simultaneously owned and ghost for a processor)
+         * 5. some sanity checks with respect to MPI sends and
+         *    receives fail.
          *
          * @note Care is taken to create a dummy MPIPatternP2P while not linking
          * to an MPI library. This allows the user code to seamlessly link and
@@ -121,12 +196,14 @@ namespace dftefe
          */
         MPIPatternP2P(const size_type size);
 
+        size_type
+        nLocallyOwnedRanges() const;
 
-        // void
-        // reinit(){};
+        std::vector<std::pair<global_size_type, global_size_type>>
+        getLocallyOwnedRanges() const;
 
-        std::pair<global_size_type, global_size_type>
-        getLocallyOwnedRange() const;
+        size_type
+        localOwnedSize(size_type rangeId) const;
 
         size_type
         localOwnedSize() const;
@@ -135,7 +212,7 @@ namespace dftefe
         localGhostSize() const;
 
         bool
-        inLocallyOwnedRange(const global_size_type globalId) const;
+        inLocallyOwnedRanges(const global_size_type globalId) const;
 
         bool
         isGhostEntry(const global_size_type globalId) const;
@@ -300,23 +377,21 @@ namespace dftefe
 
         /**
          * @brief A vector of size 2 times the number of ghost processors
-         * to store the range of local ghost indices that are owned by the
-         * ghost processors. In other words, it stores the list
-         * \f$L=\{a_1,b_1, a_2, b_2, \ldots, a_G, b_G\}\f$, where
-         * \f$a_i\f$ and \f$b_i\f$is are the start local ghost index
-         * and one-past-the-last local ghost index of the current processor
-         * that is owned by the \f$i\f$-th ghost processor
-         * (i.e., d_ghostProcIds[i]). Put it differently, \f$[a_i,b_i)\f$ form
-         * an open interval, where \f$a_i\f$ is included but \f$b_i\f$ is not
-         * included.
+         * to store the range of indices in the above
+         * \p d_flattenedLocalGhostIndices array that contain the local ghost
+         * indices owned by the ghost processors. To elaborate, it stores the
+         * list \f$L=\{a_1,b_1, a_2, b_2, \ldots, a_G, b_G\}\f$, such that the
+         * part of \p d_flattenedLocalGhostIndices lying between the indices
+         * [\f$a_i\f$, \f$b_i\f$) defines the local ghost indices that are owned
+         * by the \f$i\f$-th ghost processor (i.e., d_ghostProcIds[i]).
+         * In other words, the set {\p d_flattenedLocalGhostIndices[\f$a_i$\f],
+         * d_flattenedLocalGhostIndices[\f$a_{i+1}$\f], ..., \p
+         * d_flattenedLocalGhostIndices[\f$b_{i-1}$\f]} defines the local ghost
+         * indices that are owned by the \f$i\f$-th ghost processor (i.e.,
+         * d_ghostProcIds[i]).
          *
-         * @note Given the fact that the locally owned indices of each processor
-         * are contiguous and the global ghost indices (i.e., d_ghostIndices) is
-         * ordered, it is sufficient to just store the range of local ghost
-         * indices for each ghost procId. The actual global ghost indices
-         * belonging to the \f$i\f$-th ghost processor can be fetched from
-         * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying
-         * bewteen d_ghostIndices[a_i] and d_ghostIndices[b_i].
+         * @note \f$[a_i,b_i)\f$ forms an open interval, where \f$a_i\f$ is
+         * included but \f$b_i\f$ is not included.
          */
         std::vector<size_type> d_localGhostIndicesRanges;
 
