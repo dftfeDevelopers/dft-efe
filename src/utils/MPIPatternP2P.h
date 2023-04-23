@@ -199,11 +199,8 @@ namespace dftefe
         size_type
         nLocallyOwnedRanges() const;
 
-        std::vector<std::pair<global_size_type, global_size_type>>
-        getLocallyOwnedRanges() const;
-
-        size_type
-        localOwnedSize(size_type rangeId) const;
+        std::pair<global_size_type, global_size_type>
+        getLocallyOwnedRange() const;
 
         size_type
         localOwnedSize() const;
@@ -212,7 +209,7 @@ namespace dftefe
         localGhostSize() const;
 
         bool
-        inLocallyOwnedRanges(const global_size_type globalId) const;
+        inLocallyOwnedRange(const global_size_type globalId) const;
 
         bool
         isGhostEntry(const global_size_type globalId) const;

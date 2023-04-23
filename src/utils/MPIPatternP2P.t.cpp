@@ -45,6 +45,148 @@ namespace dftefe
     {
       namespace
       {
+        template <typename T>
+        bool
+        comparePairsByFirst(const T &a, const T &b)
+        {
+          if (a.first == b.first)
+            return a.second < b.second;
+          else
+            return a.first < b.first;
+        }
+
+        template <typename T>
+        bool
+        comparePairsBySecond(const T &a, const T &b)
+        {
+          if (a.second == b.second)
+            return a.first < b.first;
+          else
+            return a.second < b.second;
+        }
+
+        void
+        arrangeRanges(
+          const std::vector<std::pair<global_size_type, global_size_type>>
+            &  ranges,
+          bool compareByFirst,
+          bool ignoreEmptyRanges,
+          std::vector<std::pair<global_size_type, global_size_type>>
+            &                     rangesSorted,
+          std::vector<size_type> &indexPermutation)
+        {
+          const size_type               nRanges = ranges.size();
+          std::vector<global_size_type> points(nRanges, 0);
+          std::vector<
+            std::pair<size_type, std::pair<global_size_type, global_size_type>>>
+            idAndRanges;
+          idAndRanges.reserve(nRanges);
+          for (unsigned int i = 0; i < nRanges; ++i)
+            {
+              if (ignoreEmptyRanges == false)
+                {
+                  idAndRanges.push_back(std::make_pair(i, ranges[i]));
+                }
+              else
+                {
+                  const size_type rangeSize =
+                    ranges[i].second - ranges[i].first;
+                  if (rangeSize != 0)
+                    {
+                      idAndRanges.push_back(std::make_pair(i, ranges[i]));
+                    }
+                }
+            }
+
+          if (compareByFirst)
+            {
+              std::sort(idAndRanges.begin(),
+                        idAndRanges.end(),
+                        [](auto &left, auto &right) {
+                          return comparePairsByFirst(left.second, right.second);
+                        });
+            }
+
+          else
+            {
+              std::sort(idAndRanges.begin(),
+                        idAndRanges.end(),
+                        [](auto &left, auto &right) {
+                          return comparePairsBySecond(left.second,
+                                                      right.second);
+                        });
+            }
+
+          const size_type nNonEmptyRanges = idAndRanges.size();
+          rangesSorted.resize(nNonEmptyRanges);
+          indexPermutation.resize(nNonEmptyRanges);
+          for (unsigned int i = 0; i < nNonEmptyRanges; ++i)
+            {
+              indexPermutation[i] = idAndRanges[i].first;
+              rangesSorted[i]     = idAndRanges[i].second;
+            }
+        }
+
+        void
+        findRange(
+          const std::vector<std::pair<global_size_type, global_size_type>>
+            &                     ranges,
+          const global_size_type &val,
+          bool &                  found,
+          size_type &             rangeId)
+        {
+          const size_type               nRanges = ranges.size();
+          std::vector<global_size_type> rangesFlattened(2 * nRanges);
+          for (size_type i = 0; i < nRanges; ++i)
+            {
+              rangesFlattened[2 * i]     = ranges[i].first;
+              rangesFlattened[2 * i + 1] = ranges[i].second;
+            }
+
+          found = false;
+          /*
+           * The logic used for finding an index is as follows:
+           * 1. Find the first the element in rangesFlattened
+           *    which is greater than (strictly greater) the input val.
+           *    Let's call this element upVal and its position in
+           rangesFlattened as upPos.
+           *    The complexity of finding it is O(log(nRanges))
+           * 2. Since rangesFlattened stores pairs of startId and endId
+           *    (endId not inclusive) of contiguous ranges,
+           *    any index for which upPos is even (i.e., it corresponds to a
+           *    startId) cannot belong to the input ranges. Why? Consider two
+           consequtive
+           *    ranges [k1,k2) and [k3,k4) where k1 < k2 <= k3 < k4 (NOTE: k2
+           can be equal to k3).
+           *    If upVal for val corresponds to k3 (i.e., startId of a range),
+           then
+           *    (a) val does not lie in the [k3,k4) as val < upVal (=k3).
+           *    (b) val cannot lie in [k1,k2), because if it lies in [k1,k2),
+           *    then upVal should have been be k2 (not k3)
+           *  3. If upPos is odd (i.e, it corresponds to an endId), then check
+           if the rangeId = upPos/2 (integer part of it) is a non-empty. If
+           rangeId is an non-empty, set found = true, else set found = false If
+           the ranthe rangeId
+           *  to which val belongs to is upPos/2 (integer part of it)
+           */
+
+          auto up = std::upper_bound(rangesFlattened.begin(),
+                                     rangesFlattened.end(),
+                                     val);
+          if (up != rangesFlattened.end())
+            {
+              size_type upPos = std::distance(rangesFlattened.begin(), up);
+              if (upPos % 2 == 1)
+                {
+                  rangeId = upPos / 2;
+                  if ((rangesFlattened[2 * rangeId + 1] -
+                       rangesFlattened[2 * rangeId]) != 0)
+                    found = true;
+                }
+            }
+        }
+
+
         void
         getAllOwnedRanges(const global_size_type         ownedRangeStart,
                           const global_size_type         ownedRangeEnd,
@@ -75,6 +217,85 @@ namespace dftefe
                                            mpiComm);
         }
 
+        // void
+        // getGhostProcIdToLocalGhostIndicesMap(
+        //  const std::vector<global_size_type> &ghostIndices,
+        //  const std::vector<global_size_type> &allOwnedRanges,
+        //  std::map<size_type, std::vector<size_type>>
+        //    &            ghostProcIdToLocalGhostIndices,
+        //  const MPIComm &mpiComm)
+        //{
+        //  int         nprocs = 1;
+        //  int         err    = MPICommSize(mpiComm, &nprocs);
+        //  std::string errMsg = "Error occured while using MPI_Comm_size. "
+        //                       "Error code: " +
+        //                       std::to_string(err);
+        //  throwException(err == MPISuccess, errMsg);
+
+        //  //
+        //  // NOTE: The locally owned ranges need not be ordered as per the
+        //  // processor ranks. That is ranges for processor 0, 1, ...., P-1
+        //  given
+        //  // by [N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P) need not
+        //  // honor the fact that N_0, N_1, ..., N_P are increasing. However,
+        //  it
+        //  // is more efficient to perform search operations in a sorted
+        //  vector.
+        //  // Thus, we perform a sort on the end of each locally owned range
+        //  and
+        //  // also keep track of the indices during the sort
+        //  //
+
+        //  std::vector<std::pair<size_type, global_size_type>>
+        //    procIdAndOwnedEndIdPairs(0);
+        //  for (unsigned int i = 0; i < nprocs; ++i)
+        //    {
+        //      // only add procs whose locallyOwnedRange is greater than zero
+        //      if (allOwnedRanges[2 * i + 1] - allOwnedRanges[2 * i] > 0)
+        //        {
+        //          procIdAndOwnedEndIdPairs.push_back(
+        //            std::make_pair(i, allOwnedRanges[2 * i + 1]));
+        //        }
+        //    }
+
+        //  // sort based on end id of the locally owned range
+        //  std::sort(procIdAndOwnedEndIdPairs.begin(),
+        //            procIdAndOwnedEndIdPairs.end(),
+        //            [](auto &left, auto &right) {
+        //              return left.second < right.second;
+        //            });
+
+        //  const size_type nProcsWithNonZeroRange =
+        //    procIdAndOwnedEndIdPairs.size();
+        //  std::vector<global_size_type> locallyOwnedRangesEnd(
+        //    nProcsWithNonZeroRange, 0);
+        //  std::vector<size_type> locallyOwnedRangesEndProcIds(
+        //    nProcsWithNonZeroRange, 0);
+        //  for (unsigned int i = 0; i < nProcsWithNonZeroRange; ++i)
+        //    {
+        //      locallyOwnedRangesEndProcIds[i] =
+        //        procIdAndOwnedEndIdPairs[i].first;
+        //      locallyOwnedRangesEnd[i] = procIdAndOwnedEndIdPairs[i].second;
+        //    }
+
+        //  const size_type numGhosts = ghostIndices.size();
+        //  for (unsigned int iGhost = 0; iGhost < numGhosts; ++iGhost)
+        //    {
+        //      global_size_type ghostIndex = ghostIndices[iGhost];
+        //      auto        up  =
+        //      std::upper_bound(locallyOwnedRangesEnd.begin(),
+        //                                 locallyOwnedRangesEnd.end(),
+        //                                 ghostIndex);
+        //      std::string msg = "Ghost index " + std::to_string(ghostIndex) +
+        //                        " not found in any of the processors";
+        //      throwException(up != locallyOwnedRangesEnd.end(), msg);
+        //      size_type upPos =
+        //        std::distance(locallyOwnedRangesEnd.begin(), up);
+        //      size_type procId = locallyOwnedRangesEndProcIds[upPos];
+        //      ghostProcIdToLocalGhostIndices[procId].push_back(iGhost);
+        //    }
+        //}
+
         void
         getGhostProcIdToLocalGhostIndicesMap(
           const std::vector<global_size_type> &ghostIndices,
@@ -99,52 +320,35 @@ namespace dftefe
           // Thus, we perform a sort on the end of each locally owned range and
           // also keep track of the indices during the sort
           //
-
-          std::vector<std::pair<size_type, global_size_type>>
-            procIdAndOwnedEndIdPairs(0);
-          for (unsigned int i = 0; i < nprocs; ++i)
+          std::vector<std::pair<global_size_type, global_size_type>>
+            allOwnedRangesPaired(nprocs);
+          for (size_type iProc = 0; iProc < nprocs; ++iProc)
             {
-              // only add procs whose locallyOwnedRange is greater than zero
-              if (allOwnedRanges[2 * i + 1] - allOwnedRanges[2 * i] > 0)
-                {
-                  procIdAndOwnedEndIdPairs.push_back(
-                    std::make_pair(i, allOwnedRanges[2 * i + 1]));
-                }
+              allOwnedRangesPaired[iProc].first = allOwnedRanges[2 * iProc];
+              allOwnedRangesPaired[iProc].second =
+                allOwnedRanges[2 * iProc + 1];
             }
 
-          // sort based on end id of the locally owned range
-          std::sort(procIdAndOwnedEndIdPairs.begin(),
-                    procIdAndOwnedEndIdPairs.end(),
-                    [](auto &left, auto &right) {
-                      return left.second < right.second;
-                    });
-
-          const size_type nProcsWithNonZeroRange =
-            procIdAndOwnedEndIdPairs.size();
-          std::vector<global_size_type> locallyOwnedRangesEnd(
-            nProcsWithNonZeroRange, 0);
-          std::vector<size_type> locallyOwnedRangesEndProcIds(
-            nProcsWithNonZeroRange, 0);
-          for (unsigned int i = 0; i < nProcsWithNonZeroRange; ++i)
-            {
-              locallyOwnedRangesEndProcIds[i] =
-                procIdAndOwnedEndIdPairs[i].first;
-              locallyOwnedRangesEnd[i] = procIdAndOwnedEndIdPairs[i].second;
-            }
+          std::vector<std::pair<global_size_type, global_size_type>>
+                                 allOwnedRangesPairedSorted(0);
+          std::vector<size_type> procIdPermutation(0);
+          arrangeRanges(allOwnedRangesPaired,
+                        true,  // compareByFirst
+                        false, // ignore emoty ranges
+                        allOwnedRangesPairedSorted,
+                        procIdPermutation);
 
           const size_type numGhosts = ghostIndices.size();
           for (unsigned int iGhost = 0; iGhost < numGhosts; ++iGhost)
             {
               global_size_type ghostIndex = ghostIndices[iGhost];
-              auto        up  = std::upper_bound(locallyOwnedRangesEnd.begin(),
-                                         locallyOwnedRangesEnd.end(),
-                                         ghostIndex);
+              bool             found;
+              size_type        rangeId;
+              findRange(allOwnedRangesPairedSorted, ghostIndex, found, rangeId);
               std::string msg = "Ghost index " + std::to_string(ghostIndex) +
                                 " not found in any of the processors";
-              throwException(up != locallyOwnedRangesEnd.end(), msg);
-              size_type upPos =
-                std::distance(locallyOwnedRangesEnd.begin(), up);
-              size_type procId = locallyOwnedRangesEndProcIds[upPos];
+              throwException(found, msg);
+              size_type procId = procIdPermutation[rangeId];
               ghostProcIdToLocalGhostIndices[procId].push_back(iGhost);
             }
         }
