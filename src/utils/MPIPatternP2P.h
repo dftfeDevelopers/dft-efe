@@ -46,7 +46,7 @@ namespace dftefe
        *    intervals of non-negative integers given as
        * \f$[N_l^{start},N_l^{end})\f$, \f$l=0,1,2,\ldots,K-1\f$. We term these
        * intervals as <b>\p global-ranges</b> and the index \f$l\f$ as <b>\p
-       * range-id </b>. Here, \f$[a,b)\f$ denotes a half-open interval where
+       * rangeId </b>. Here, \f$[a,b)\f$ denotes a half-open interval where
        * \f$a\f$ is included, but \f$b\f$ is not included. Instead of
        * partitioning each of the global interval separately, we are interested
        * in partitioning all of them simultaneously across the the same set of
@@ -123,10 +123,10 @@ namespace dftefe
        *       is dense (e.g., all-to-all communication)
        *    2. The \f$R_l^i\f$ must satisfy the following
        *       -# \f$R_l^i = [a_l^i, b_l^i) \in [N_l^{start},N_l^{end})\f$. That
-       * is the \f$l^{th}\f$ \p locall-owned-range in a processor must a sub-set
-       *          of the \f$l^{th}\f$ \p global-interbal.
+       * is the \f$l^{th}\f$ \p locally-owned-range in a processor must a
+       * sub-set of the \f$l^{th}\f$ \p global-interval.
        *       -# \f$\bigcup_{i=0}^{p-1}R_l^i=[N_l^{start}, N_l^{end}]\f$. That
-       * is, for a given \p range-id \f$l\f$, the union of the \f$l^{th}\f$ \p
+       * is, for a given \p rangeId \f$l\f$, the union of the \f$l^{th}\f$ \p
        * locally-owned-range from each processor should equate the \f$l^{th}\f$
        * \p global-range.
        *       -# \f$R_l^i \cap R_m^j = \emptyset\f$, if either \f$l \neq
@@ -519,12 +519,12 @@ namespace dftefe
         /**
          * A vector of size \p d_nGlobalRanges storing the cumulative start and
          * end point of each \p locally-owned-ranges. That is
-         * d_locallyOwnedRangesCumulativePairs[l].first = \sum^{j=0}^{l-1} (b_j
-         * - a_j)\f$, and d_locallyOwnedRangesCumulativePairs[l].second =
-         * \sum^{j=0}^{l} (b_j - a_j)\f$ where \f$a_j\f$ and \f$b_j\f$ are
+         * d_locallyOwnedRangesCumulativePairs[l].first = \sum^{j=0}^{l-1}
+         * (b_j-a_j)\f$, and d_locallyOwnedRangesCumulativePairs[l].second =
+         * \sum_{j=0}^{l} (b_j-a_j)\f$ where \f$a_j\f$ and \f$b_j\f$ are
          * d_locallyOwnedRanges[j].first and d_locallyOwnedRanges[j].second In
          * other words, if we concatenate the indices defined by all the \p
-         * d_locallOwnedRanges in sequence,
+         * d_locallyOwnedRanges in sequence,
          * d_nLocallyOwnedRangesCumulativeEndIds[l] tells us where the start and
          * end point of the \f$l^{th}\f$ locally-owned-range will lie in the
          * concatenated list
@@ -619,7 +619,7 @@ namespace dftefe
          * indices owned by the \f$i^{th}\f$ ghost processor is given by:
          * \f$s_i=\f$ {\p d_flattenedLocalGhostIndices[\f$n\f$],
          * d_flattenedLocalGhostIndices[\f$n+1\f$], ..., \p
-         * d_flattenedLocalGhostIndices[\f$m-1\f$]}.
+         * d_flattenedLocalGhostIndices[\f$m-1\f$].
          */
         std::vector<size_type> d_localGhostIndicesRanges;
 
@@ -629,7 +629,7 @@ namespace dftefe
          * processor. For the \f$i^{th}\f$ ghost processor (i.e., the one whose
          * rank/id is given by d_ghostProcIds[i]) and \f$l^{th}\f$ \p
          * locally-owned-range, d_ghostProcLocallyOwnedRangesCumulative[i][l] =
-         * \sum^{j=0}^{l-1} (b_j^i - a_j^i)\f$, where \f$a_j^i\f$ and
+         * \f$\sum_{j=0}^{l-1} (b_j^i - a_j^i)\f$, where \f$a_j^i\f$ and
          * \f$b_j^i\f$ define the \f$j^{th}\f$ \p locally-owned-range in the
          * \f$i^{th}\f$ ghost processor (i.e., processor with rank/id given by
          * d_ghostProcIds[i]) In other words, if we concatenate the indices
