@@ -41,7 +41,15 @@ if(ENABLE_MPI)
 	target_link_libraries(TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIds PUBLIC dft-efe-utils)
 	set_target_properties(TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIds PROPERTIES OUTPUT_NAME "TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIds" SUFFIX ".x")
 	
-	add_executable(TestMPIPatternP2PTargetData TestMPIPatternP2PTargetData.cpp)
+    add_executable(TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIdsComposite TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIdsComposite.cpp)
+	target_link_libraries(TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIdsComposite PUBLIC dft-efe-utils)
+	set_target_properties(TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIdsComposite PROPERTIES OUTPUT_NAME "TestMPIPatternP2PGhostDataPermuteSomeZeroLocalIdsComposite" SUFFIX ".x")
+    
+    add_executable(TestMPIPatternP2PTargetDataPermuteSomeZeroLocalIdsComposite TestMPIPatternP2PTargetDataPermuteSomeZeroLocalIdsComposite.cpp)
+	target_link_libraries(TestMPIPatternP2PTargetDataPermuteSomeZeroLocalIdsComposite PUBLIC dft-efe-utils)
+	set_target_properties(TestMPIPatternP2PTargetDataPermuteSomeZeroLocalIdsComposite PROPERTIES OUTPUT_NAME "TestMPIPatternP2PTargetDataPermuteSomeZeroLocalIdsComposite" SUFFIX ".x")
+	
+    add_executable(TestMPIPatternP2PTargetData TestMPIPatternP2PTargetData.cpp)
 	target_link_libraries(TestMPIPatternP2PTargetData PUBLIC dft-efe-utils)
 	set_target_properties(TestMPIPatternP2PTargetData PROPERTIES OUTPUT_NAME "TestMPIPatternP2PTargetData" SUFFIX ".x")
 
