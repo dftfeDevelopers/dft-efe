@@ -11,8 +11,8 @@ include_directories(${MAIN_PROJECT_DIR}/src)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/basis/lib/buildUtils)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/lib/buildBasis)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/basis/lib/buildAtoms)
-#add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
-#add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
 
 
 #add_executable(TestTriangulationDealiiSerial TestTriangulationDealiiSerial.cpp )
@@ -24,6 +24,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/basis/li
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestAtomIdsPartitionParallel TestAtomIdsPartitionParallel.cpp )
-target_link_libraries(TestAtomIdsPartitionParallel PUBLIC dft-efe-basis dft-efe-utils dft-efe-atoms)
+add_executable(TestEnrichmentIdsPartitionParallel TestEnrichmentIdsPartitionParallel.cpp )
+target_link_libraries(TestEnrichmentIdsPartitionParallel PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

@@ -661,6 +661,7 @@ namespace dftefe
                                 "Unable to find the qNumbers " + s + " for " +
                                   " the field " + fieldName +
                                   " while parsing the XML file " + d_fileName);
+          return *((it->second).begin() + iterQNumberToId->second);
         }
     }
 

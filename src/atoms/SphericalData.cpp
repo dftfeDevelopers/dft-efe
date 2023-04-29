@@ -20,29 +20,25 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#include<utils/Exceptions.h>
-#include<atoms/AtomSphericalData.h>
-#include<string>
-#include<iostream>
-int main()
+#include "SphericalData.h"
+#include <utils/Spline.h>
+
+namespace dftefe
 {
-  std::string atomFileName = "TestAtom.xml";
-  std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-  std::vector<int> qNumbers{2, 1, -1};
-  dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-  dftefe::atoms::SphericalData sphericalDataObj = atomTest.getSphericalData("orbital", qNumbers);
-  std::vector<double> pointvec{2, 2, 0.};
-  std::vector<double> originvec{0. ,0. ,0.};
-  dftefe::utils::Point point(pointvec);
-  dftefe::utils::Point origin(originvec);
-  double polarAngleTolerance = 1e-6;
-  double  cutoffTolerance = 1e-6;
-  sphericalDataObj.initSpline();
-  std::cout<<sphericalDataObj.getValue<3>(point,origin,polarAngleTolerance)<<"\n";
-  std::vector<double> x = sphericalDataObj.getDerivativeValue<3>(point,origin,polarAngleTolerance, cutoffTolerance);
-  std::cout<<x[0]<<","<<x[1]<<","<<x[2];
-}
+  namespace atoms
+  {
+
+    SphericalData::SphericalData()
+    {}   
+
+    void 
+    SphericalData::initSpline()
+    {
+      d_spline = std::make_shared<const utils::Spline>(this->radialPoints, this->radialValues);
+    }               
+
+  } //end of atoms namespace
+}//end of dftefe namespace

@@ -28,19 +28,48 @@
 
 #include <utils/TypeConfig.h>
 #include <vector>
+#include <utils/Point.h>
+#include <utils/Spline.h>
+#include <memory>
+
 namespace dftefe
 {
   namespace atoms
   {
-    struct SphericalData
+    class SphericalData
     {
-      std::vector<int>    qNumbers;
-      std::vector<double> radialPoints;
-      std::vector<double> radialValues;
-      double              cutoff;
-      double              smoothness;
+      public:
+        std::vector<int>    qNumbers;
+        std::vector<double> radialPoints;
+        std::vector<double> radialValues;
+        double              cutoff;
+        double              smoothness;
+        
+        SphericalData();
+
+        ~SphericalData() = default;
+
+        void 
+        initSpline();
+
+        template <unsigned int dim>
+        double
+        getValue(const utils::Point &point, 
+                const utils::Point &origin,
+                const double polarAngleTolerance) const;
+
+        template <unsigned int dim>
+        std::vector<double> 
+        getDerivativeValue(const utils::Point &point, 
+                          const utils::Point &origin, 
+                          const double polarAngleTolerance, 
+                          const double cutoffTolerance) const;
+
+      private:
+        std::shared_ptr<const utils::Spline> d_spline;
     };
 
   } // end of namespace atoms
 } // end of namespace dftefe
+#include <atoms/SphericalData.t.cpp>
 #endif // dftefeSphericalData_h

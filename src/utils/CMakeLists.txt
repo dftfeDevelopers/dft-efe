@@ -32,7 +32,8 @@ set(DFT-EFE-UTILS-SOURCES
 	RandNumGen.cpp
   MPICommunicatorP2PKernels.cpp
   MPICommunicatorP2PKernels.cu
-  MPIErrorCodeHandler.cpp)
+  MPIErrorCodeHandler.cpp
+  Spline.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
