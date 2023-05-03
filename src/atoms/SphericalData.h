@@ -60,10 +60,17 @@ namespace dftefe
 
         template <unsigned int dim>
         std::vector<double> 
-        getDerivativeValue(const utils::Point &point, 
+        getGradientValue(const utils::Point &point, 
                           const utils::Point &origin, 
                           const double polarAngleTolerance, 
                           const double cutoffTolerance) const;
+
+        /*template <unsigned int dim>
+        std::vector<std::vector<double>> 
+        getHessianValue(const utils::Point &point, 
+                          const utils::Point &origin, 
+                          const double polarAngleTolerance, 
+                          const double cutoffTolerance) const;*/
 
       private:
         std::shared_ptr<const utils::Spline> d_spline;

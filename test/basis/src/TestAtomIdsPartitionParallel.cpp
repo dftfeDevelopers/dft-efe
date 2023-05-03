@@ -90,9 +90,31 @@ int main()
     domainVectors[1][1] = ymin;
     domainVectors[2][2] = zmin;
 
-    // Initialize the triangulation
+    // initialize the triangulation
     triangulationBase->initializeTriangulationConstruction();
-    triangulationBase->createUniformParallelepiped(subdivisions, domainVectors, isPeriodicFlags);
+    triangulationBase->createUniformParallelepiped(subdivisions,
+                                                    domainVectors,
+                                                    isPeriodicFlags);
+
+    //triangulationBase->initializeTriangulationConstruction();
+
+    auto triaCellIter = triangulationBase->beginLocal();
+
+    for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
+    {
+    dftefe::utils::Point centerPoint(dim, 0.0); 
+    (*triaCellIter)->center(centerPoint);
+    double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);
+    dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
+    dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
+    dist = std::sqrt(dist);
+    if ( (centerPoint[0] < 1.0) || (dist < 1.0) )
+    {
+        (*triaCellIter)->setRefineFlag();
+    }
+    }
+
+    triangulationBase->executeCoarseningAndRefinement();
     triangulationBase->finalizeTriangulationConstruction();
 
     dftefe::size_type feOrder = 1;
@@ -101,11 +123,11 @@ int main()
     std::shared_ptr<dftefe::basis::FEBasisManager> feBM =
         std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase,feOrder);
 
-    dftefe::size_type numLocallyOwnedCells  = feBM->nLocallyOwnedCells();
+    dftefe::size_type numLocallyOwnedCells  = triangulationBase->nLocallyOwnedCells();
 
-    std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------"<<numLocallyOwnedCells;
+    std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------"<<numLocallyOwnedCells<<"\n";
 
-    auto feBMCellIter = feBM->beginLocallyOwnedCells();
+    /*auto feBMCellIter = feBM->beginLocallyOwnedCells();
 
     //get the cellvertices vector
     for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
@@ -189,7 +211,7 @@ int main()
         std::cout<<"nAtomIdsInProcessor "<<"->"<<i<<",";
     std::cout<<"\n";
     for( auto i:atomIdsPartition->locallyOwnedAtomIds())
-        std::cout<<"locallyOwnedAtomIds of "<<rank<<"->"<<i<<"\n";
+        std::cout<<"locallyOwnedAtomIds of "<<rank<<"->"<<i<<"\n";*/
 
     dftefe::utils::mpi::MPIFinalize();
 #endif

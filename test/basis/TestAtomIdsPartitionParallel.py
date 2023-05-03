@@ -117,12 +117,12 @@ class BuildAndRunTestAtomIdsPartitionParallel(rfm.RegressionTest):
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 36']
+            self.job.launcher.options = ['-n 6']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
                                                    time_limit = "00:05:00", 
                                                    num_nodes = 1, 
-                                                   num_tasks_per_node = 36,
-                                                   ntasks = 36,
+                                                   num_tasks_per_node = 6,
+                                                   ntasks = 6,
                                                    mem_per_cpu = '2gb')
 
 

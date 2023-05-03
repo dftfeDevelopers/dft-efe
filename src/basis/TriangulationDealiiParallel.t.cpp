@@ -48,11 +48,23 @@ namespace dftefe
       unsigned int iCell = 0;
       d_triaVectorCell.resize(nLocallyOwnedCells());
 
-      for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_levels();
+      // for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_levels();
+      //      iLevel++)
+      //   {
+      //     for (auto &cellPtr :
+      //          d_triangulationDealii.active_cell_iterators_on_level(iLevel))
+      //       {
+      //         d_triaVectorCell[iCell] =
+      //           std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
+      //         iCell++;
+      //       }
+      //   }
+
+         for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_global_levels();
            iLevel++)
         {
-          for (auto &cellPtr :
-               d_triangulationDealii.active_cell_iterators_on_level(iLevel))
+          auto cellPtr = d_triangulationDealii.begin_active(iLevel); 
+          for ( ; cellPtr != d_triangulationDealii.end_active(iLevel); cellPtr++)
             {
               d_triaVectorCell[iCell] =
                 std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
@@ -221,7 +233,7 @@ namespace dftefe
     TriangulationDealiiParallel<dim>::nLocallyOwnedCells() const
     {
       // TODO check if this is correct
-      return d_triangulationDealii.n_active_cells();
+      return d_triangulationDealii.n_locally_owned_active_cells();
     }
 
     template <unsigned int dim>
