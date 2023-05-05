@@ -95,7 +95,7 @@ int main()
     triangulationBase->createUniformParallelepiped(subdivisions,
                                                     domainVectors,
                                                     isPeriodicFlags);
-
+    triangulationBase->finalizeTriangulationConstruction();
     //triangulationBase->initializeTriangulationConstruction();
 
     auto triaCellIter = triangulationBase->beginLocal();

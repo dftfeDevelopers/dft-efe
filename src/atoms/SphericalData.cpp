@@ -30,15 +30,15 @@ namespace dftefe
 {
   namespace atoms
   {
-
     SphericalData::SphericalData()
-    {}   
+    {}
 
-    void 
+    void
     SphericalData::initSpline()
     {
-      d_spline = std::make_shared<const utils::Spline>(this->radialPoints, this->radialValues);
-    }               
+      d_spline = std::make_shared<const utils::Spline>(this->radialPoints,
+                                                       this->radialValues);
+    }
 
-  } //end of atoms namespace
-}//end of dftefe namespace
+  } // namespace atoms
+} // namespace dftefe
