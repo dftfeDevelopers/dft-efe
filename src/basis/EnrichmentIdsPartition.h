@@ -42,6 +42,11 @@ namespace dftefe
 {
   namespace basis
   {
+    struct EnrichmentIdAttribute
+    {
+      size_type atomId;
+      size_type localIdInAtom;
+    };
     /**
      * @brief Class to get the gost and locally owned enrichment ids from the renumbered atom ids in Atom Partition
      * i.e. memory layout should be 'locally owned enrichment ids which would be
@@ -79,7 +84,7 @@ namespace dftefe
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
-        const utils::mpi::MPIComm &                   comm);
+        const utils::mpi::MPIComm &                  comm);
 
       /**
        * @brief Destructor
@@ -98,11 +103,17 @@ namespace dftefe
       std::vector<size_type>
       ghostEnrichmentIds() const;
 
-      std::map<size_type, size_type>
-      enrichmentIdToNewAtomIdMap() const;
+      size_type
+      getAtomId(const size_type enrichmentId) const;
 
-      std::map<size_type, size_type>
-      enrichmentIdToQuantumIdMap() const;
+      EnrichmentIdAttribute
+      getEnrichmentIdAttribute(const size_type enrichmentId) const; 
+
+      // std::map<size_type, size_type>
+      // enrichmentIdToNewAtomIdMap() const;
+
+      // std::map<size_type, size_type>
+      // enrichmentIdToQuantumIdMap() const;
 
       /** The data members are as follows.
        */
@@ -113,7 +124,7 @@ namespace dftefe
       std::vector<size_type>              d_enrichmentIdsInProcessor;
       std::pair<size_type, size_type>     d_locallyOwnedEnrichmentIds;
       std::vector<size_type>              d_ghostEnrichmentIds;
-      std::map<size_type, size_type>      d_enrichmentIdToNewAtomIdMap;
+      std::map<size_type, size_type>      d_enrichmentIdToOldAtomIdMap;
       std::map<size_type, size_type>      d_enrichmentIdToQuantumIdMap;
 
     }; // end of class EnrichmentIdsPartition

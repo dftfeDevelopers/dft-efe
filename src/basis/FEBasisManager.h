@@ -96,6 +96,10 @@ namespace dftefe
       getCellDofsGlobalIds(
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const = 0;
+      virtual void
+      getCellDofsLocalIds(
+        size_type                      cellId,
+        std::vector<global_size_type> &vecGlobalNodeId) const;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual FECellIterator

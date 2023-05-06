@@ -130,8 +130,8 @@ namespace dftefe
       return retValue;
     }
 
-    /*template <size_type dim>
-    std::vector<std::vector<double>>
+    template <size_type dim>
+    std::vector<double>
     SphericalData::getHessianValue(const utils::Point &point, 
                             const utils::Point &origin,
                             const double polarAngleTolerance, 
@@ -154,6 +154,7 @@ namespace dftefe
       double radialDerivativeValue = d_spline->deriv(1 , r);
       double cutoffValue = smoothCutoffValue(r, cutoff, smoothness);
       double cutoffDerv = smoothCutoffDerivative(r, cutoff, smoothness, cutoffTolerance);
+      double cutoffDerv2 = smoothCutoffDerivative2(r, cutoff, smoothness, cutoffTolerance);
 
       DFTEFE_AssertWithMsg(qNumbers.size() == 3,
                   "All quantum numbers not given");
@@ -188,13 +189,13 @@ namespace dftefe
       }
 
       std::vector<double> retValue;
-      retValue.resize(dim,0.);
+      retValue.resize(dim*dim,0.);
       retValue[0] = dValueDR * (sin(theta)*cos(phi)) + dValueDThetaByr * (cos(theta)*cos(phi)) - sin(phi) * dValueDPhiByrsinTheta;
       retValue[1] = dValueDR * (sin(theta)*sin(phi)) + dValueDThetaByr * (cos(theta)*sin(phi)) + cos(phi) * dValueDPhiByrsinTheta;
       retValue[2] = dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
 
       return retValue;
-    }*/
+    }
 
   }
 }

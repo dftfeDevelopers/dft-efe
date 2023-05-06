@@ -119,7 +119,7 @@ int main()
   
   std::vector<std::shared_ptr<dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>>
     constraintsBaseVec(constraintsVec.size(), nullptr);
-  std::copy(constraintsVec.begin(), constraintsVec.end(), constraintsBaseVec.begin()); 
+  std::copy(constraintsVec.begin(), constraintsVec.end(), constraintsBaseVec.begin());
 
   std::map<std::string,
            std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;

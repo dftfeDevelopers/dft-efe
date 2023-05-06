@@ -285,7 +285,7 @@ namespace dftefe
           }
       }
 
-      // if an enrichemnet id  overlapping in the processor is outside the
+      // if an Enrichmenet id  overlapping in the processor is outside the
       // locallyowned range of enrichmentids then it is ghost enrichment id
       /**
        * Function to return the ghost enrichment ids in the processor.
@@ -294,8 +294,9 @@ namespace dftefe
       template <unsigned int dim>
       void
       getGhostEnrichmentIds(
+        std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition,
         std::vector<size_type> &               enrichmentIdsInProcessor,
-        std::map<size_type, size_type> &       enrichmentIdToNewAtomIdMap,
+        std::map<size_type, size_type> &       enrichmentIdToOldAtomIdMap,
         std::map<size_type, size_type> &       enrichmentIdToQuantumIdMap,
         std::vector<size_type> &               ghostEnrichmentIds,
         const std::pair<size_type, size_type> &locallyOwnedEnrichmentIds,
@@ -303,6 +304,7 @@ namespace dftefe
           &                           overlappingEnrichmentIdsInCells,
         const std::vector<size_type> &newAtomIdToEnrichmentIdOffset)
       {
+        std::vector<size_type> oldAtomIds = atomIdsPartition->oldAtomIds();
         std::set<size_type> enrichmentIdsInProcessorTmp;
         size_type           newAtomId, qIdPosition;
         auto                iter = overlappingEnrichmentIdsInCells.begin();
@@ -337,7 +339,7 @@ namespace dftefe
                     break;
                   }
               }
-            enrichmentIdToNewAtomIdMap.insert({i, newAtomId});
+            enrichmentIdToOldAtomIdMap.insert({i, oldAtomIds[newAtomId]});
             enrichmentIdToQuantumIdMap.insert({i, qIdPosition});
             if (i < locallyOwnedEnrichmentIds.first ||
                 i >= locallyOwnedEnrichmentIds.second)
@@ -405,8 +407,9 @@ namespace dftefe
         maxbound,
         cellVerticesVector);
       EnrichmentIdsPartitionInternal::getGhostEnrichmentIds<dim>(
+        atomIdsPartition,
         d_enrichmentIdsInProcessor,
-        d_enrichmentIdToNewAtomIdMap,
+        d_enrichmentIdToOldAtomIdMap,
         d_enrichmentIdToQuantumIdMap,
         d_ghostEnrichmentIds,
         d_locallyOwnedEnrichmentIds,
@@ -442,19 +445,42 @@ namespace dftefe
       return d_ghostEnrichmentIds;
     }
 
-    template <unsigned int dim>
-    std::map<size_type, size_type>
-    EnrichmentIdsPartition<dim>::enrichmentIdToNewAtomIdMap() const
+    size_type
+    getAtomId(const size_type enrichmentId) const
     {
-      return d_enrichmentIdToNewAtomIdMap;
+      auto it = d_enrichmentIdToOldAtomIdMap.find(enrichmentId);
+      utils::throwException<utils::InvalidArgument>(
+        it != d_enrichmentIdToOldAtomIdMap.end(),
+        "Cannot find the enrichmentId in locally Owned or Ghost Enrichment Ids of the processor");
+      return it->second;
     }
 
-    template <unsigned int dim>
-    std::map<size_type, size_type>
-    EnrichmentIdsPartition<dim>::enrichmentIdToQuantumIdMap() const
+    EnrichmentIdAttribute
+    getEnrichmentIdAttribute(const size_type enrichmentId) const
     {
-      return d_enrichmentIdToQuantumIdMap;
+      auto it = d_enrichmentIdToQuantumIdMap.find(enrichmentId);
+      utils::throwException<utils::InvalidArgument>(
+        it != d_enrichmentIdToQuantumIdMap.end(),
+        "Cannot find the enrichmentId in locally Owned or Ghost Enrichment Ids of the processor");
+      EnrichmentIdAttribute retStruct;
+      retStruct.atomId = (d_enrichmentIdToOldAtomIdMap.find(enrichmentId))->second;
+      retStruct.localIdInAtom = it->second;
+      return retStruct;
     }
+
+    // template <unsigned int dim>
+    // std::map<size_type, size_type>
+    // EnrichmentIdsPartition<dim>::enrichmentIdToNewAtomIdMap() const
+    // {
+    //   return d_enrichmentIdToNewAtomIdMap;
+    // }
+
+    // template <unsigned int dim>
+    // std::map<size_type, size_type>
+    // EnrichmentIdsPartition<dim>::enrichmentIdToQuantumIdMap() const
+    // {
+    //   return d_enrichmentIdToQuantumIdMap;
+    // }
 
   } // end of namespace basis
 } // end of namespace dftefe
