@@ -48,7 +48,8 @@ namespace dftefe
       unsigned int iCell = 0;
       d_triaVectorCell.resize(nLocallyOwnedCells());
 
-      // for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_levels();
+      // for (unsigned int iLevel = 0; iLevel <
+      // d_triangulationDealii.n_levels();
       //      iLevel++)
       //   {
       //     for (auto &cellPtr :
@@ -60,16 +61,29 @@ namespace dftefe
       //       }
       //   }
 
-         for (unsigned int iLevel = 0; iLevel < d_triangulationDealii.n_global_levels();
+      for (unsigned int iLevel = 0;
+           iLevel < d_triangulationDealii.n_global_levels();
            iLevel++)
         {
-          auto cellPtr = d_triangulationDealii.begin_active(iLevel); 
-          for ( ; cellPtr != d_triangulationDealii.end_active(iLevel); cellPtr++)
+          for (auto cellPtr = d_triangulationDealii.begin_active(iLevel);
+               cellPtr != d_triangulationDealii.end_active(iLevel);
+               cellPtr++)
             {
-              d_triaVectorCell[iCell] =
-                std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
-              iCell++;
+              if (cellPtr->is_locally_owned())
+                {
+                  d_triaVectorCell[iCell] =
+                    std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
+                  iCell++;
+                }
             }
+          //          auto cellPtr = d_triangulationDealii.begin_active(iLevel);
+          //          for ( ; cellPtr !=
+          //          d_triangulationDealii.end_active(iLevel); cellPtr++)
+          //            {
+          //              d_triaVectorCell[iCell] =
+          //                std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
+          //              iCell++;
+          //            }
         }
 
       utils::throwException(
@@ -221,10 +235,10 @@ namespace dftefe
     void
     TriangulationDealiiParallel<dim>::executeCoarseningAndRefinement()
     {
-      utils::throwException<utils::LogicError>(
-        isInitialized && !isFinalized,
-        "Cannot execute coarsening or refinement of triangulation without calling"
-        "initializeTriangulationConstruction");
+//      utils::throwException<utils::LogicError>(
+//        isInitialized && !isFinalized,
+//        "Cannot execute coarsening or refinement of triangulation without calling"
+//        "initializeTriangulationConstruction");
       d_triangulationDealii.execute_coarsening_and_refinement();
     }
 

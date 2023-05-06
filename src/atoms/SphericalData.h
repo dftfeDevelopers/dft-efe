@@ -38,32 +38,25 @@ namespace dftefe
   {
     class SphericalData
     {
-      public:
-        std::vector<int>    qNumbers;
-        std::vector<double> radialPoints;
-        std::vector<double> radialValues;
-        double              cutoff;
-        double              smoothness;
-        
-        SphericalData();
+    public:
+      std::vector<int>    qNumbers;
+      std::vector<double> radialPoints;
+      std::vector<double> radialValues;
+      double              cutoff;
+      double              smoothness;
 
-        ~SphericalData() = default;
+      SphericalData();
 
-        void 
-        initSpline();
+      ~SphericalData() = default;
 
-        template <unsigned int dim>
-        double
-        getValue(const utils::Point &point, 
-                const utils::Point &origin,
-                const double polarAngleTolerance) const;
+      void
+      initSpline();
 
-        template <unsigned int dim>
-        std::vector<double> 
-        getGradientValue(const utils::Point &point, 
-                          const utils::Point &origin, 
-                          const double polarAngleTolerance, 
-                          const double cutoffTolerance) const;
+      template <unsigned int dim>
+      double
+      getValue(const utils::Point &point,
+               const utils::Point &origin,
+               const double        polarAngleTolerance) const;
 
         template <unsigned int dim>
         sstd::vector<double>
@@ -72,8 +65,15 @@ namespace dftefe
                           const double polarAngleTolerance, 
                           const double cutoffTolerance) const;
 
-      private:
-        std::shared_ptr<const utils::Spline> d_spline;
+      /*template <unsigned int dim>
+      std::vector<std::vector<double>>
+      getHessianValue(const utils::Point &point,
+                        const utils::Point &origin,
+                        const double polarAngleTolerance,
+                        const double cutoffTolerance) const;*/
+
+    private:
+      std::shared_ptr<const utils::Spline> d_spline;
     };
 
   } // end of namespace atoms
