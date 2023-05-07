@@ -103,11 +103,19 @@ namespace dftefe
       std::vector<size_type>
       ghostEnrichmentIds() const;
 
+      // Works with the global enrichmentid
+
       size_type
       getAtomId(const size_type enrichmentId) const;
 
       EnrichmentIdAttribute
-      getEnrichmentIdAttribute(const size_type enrichmentId) const; 
+      getEnrichmentIdAttribute(const size_type enrichmentId) const;
+
+      size_type
+      nLocallyOwnedEnrichmentIds() const;
+
+      size_type
+      nTotalEnrichmentIds() const;
 
       // std::map<size_type, size_type>
       // enrichmentIdToNewAtomIdMap() const;

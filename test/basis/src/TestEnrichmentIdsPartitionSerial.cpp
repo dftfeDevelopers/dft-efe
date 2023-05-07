@@ -166,8 +166,7 @@ int main()
                                                         maxbound,
                                                         cellVerticesVector,
                                                         tolerance,
-                                                        mpi_communicator,
-                                                        numProcs);
+                                                        mpi_communicator);
 
     // Create the enrichemntIdsPartition object
     std::string fieldName = "density";  // Each fieldname will have own set of enrichment ids

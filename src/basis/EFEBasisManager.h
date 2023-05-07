@@ -75,8 +75,8 @@ namespace dftefe
         virtual bool
         isHPRefined() const = 0;
 
-        virtual std::pair<global_size_type, global_size_type>
-        getLocallyOwnedRange() const = 0;
+        std::vector<std::pair<global_size_type, global_size_type>>
+        getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const = 0;
 
         virtual size_type
         nLocalNodes() const = 0;
@@ -88,10 +88,6 @@ namespace dftefe
         getGlobalNodeIds() const = 0;
         virtual void
         getCellDofsGlobalIds(
-        size_type                      cellId,
-        std::vector<global_size_type> &vecGlobalNodeId) const = 0;
-        virtual void
-        getCellDofsLocalIds(
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const = 0;
         virtual std::vector<size_type>

@@ -36,6 +36,11 @@ namespace dftefe
 {
   namespace basis
   {
+    // add attribute to the classical and enriched ids for locallyOwnedRanges()
+    enum  basisIdAttribute{
+      CLASSICAL,
+      ENRICHED
+    };
     /**
      * An abstract class to handle finite element (FE) basis related operations,
      * such as evaluating the value and gradients of any basis function at a
@@ -81,8 +86,8 @@ namespace dftefe
       virtual bool
       isHPRefined() const = 0;
 
-      virtual std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange() const = 0;
+      std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const = 0;
 
       virtual size_type
       nLocalNodes() const = 0;
@@ -96,10 +101,6 @@ namespace dftefe
       getCellDofsGlobalIds(
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const = 0;
-      virtual void
-      getCellDofsLocalIds(
-        size_type                      cellId,
-        std::vector<global_size_type> &vecGlobalNodeId) const;
       virtual std::vector<size_type>
       getBoundaryIds() const = 0;
       virtual FECellIterator

@@ -362,9 +362,12 @@ namespace dftefe
       const std::vector<double> &                   maxbound,
       const std::vector<std::vector<utils::Point>> &cellVerticesVector,
       const double                                  tolerance,
-      const utils::mpi::MPIComm &                   comm,
-      const size_type                               nProcs)
+      const utils::mpi::MPIComm &                   comm)
     {
+      // Get the number of processes
+      size_type nProcs;
+      utils::mpi::MPICommSize(comm, &nProcs);
+
       std::vector<std::vector<size_type>> overlappingAtomIdsInCells;
       std::vector<size_type>              atomIds;
       AtomIdsPartitionInternal::getOverlappingAtomIdsInBox<dim>(

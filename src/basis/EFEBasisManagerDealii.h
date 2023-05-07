@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeFEBasisManagerDealii_h
-#define dftefeFEBasisManagerDealii_h
+#ifndef dftefeEFEBasisManagerDealii_h
+#define dftefeEFEBasisManagerDealii_h
 
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
@@ -47,12 +47,6 @@ namespace dftefe
     {
     public:
 
-      // add attribute to the classical and enriched ids for accessing locallyowned ranges
-      enum  basisIdAttribute{
-        classical,
-        enriched
-      };
-
       EFEBasisManagerDealii(
         std::shared_ptr<const TriangulationBase>     triangulation,
         std::shared_ptr<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer,
@@ -60,7 +54,8 @@ namespace dftefe
         const double                                 atomPartitionTolerance,
         const std::vector<std::string> &             atomSymbol,
         const std::vector<utils::Point> &            atomCoordinates,
-        const std::string                            fieldName);
+        const std::string                            fieldName,
+        const utils::mpi::MPIComm &                  comm);
 
       double
       getBasisFunctionValue(const size_type     basisId,
@@ -98,8 +93,8 @@ namespace dftefe
       size_type
       nLocalNodes() const override;
 
-      std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange() const override;
+      std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const override;
 
       global_size_type
       nGlobalNodes() const override;
@@ -112,11 +107,6 @@ namespace dftefe
 
       void
       getCellDofsGlobalIds(
-        size_type                      cellId,
-        std::vector<global_size_type> &vecGlobalNodeId) const override;
-
-      void
-      getCellDofsLocalIds(
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const override;
 
@@ -146,10 +136,10 @@ namespace dftefe
       unsigned int
       getDim() const override;;
 
-      virtual size_type
+      size_type
       nCumulativeLocallyOwnedCellDofs() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocalCellDofs() const override;
 
       // This assumes a linear cell mapping
@@ -166,14 +156,14 @@ namespace dftefe
       const dealii::FiniteElement<dim> &
       getReferenceFE(const size_type cellId) const;
 
-      // Enrichment functions with dealii mesh. The argument type is the processor local enriched ids.
+      // Enrichment functions with dealii mesh. The enrichedid is the cell local id.
       double
       getEnrichmentValue(size_type enrichmentId) const override;
 
-      virtual std::vector<double>
+      std::vector<double>
       getEnrichmentDerivative(size_type enrichmentId) const override;
 
-      virtual std::vector<double>
+      std::vector<double>
       getEnrichmentHessian(size_type enrichmentd) const override;
 
     private:
@@ -187,10 +177,17 @@ namespace dftefe
       size_type d_numCumulativeLocalCellDofs;
       std::shared_ptr<const EnrichmentIdsPartition> d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition> d_atomIdsPartition;
+      std::vector<std::vector<size_type>> d_overlappingEnrichmentIdsInCells;
+      std::shared_ptr<const atoms::AtomSphericalDataContainer> d_atomSphericalDataContainer;
+      std::vector<std::string>             d_atomSymbolVec;
+      std::vector<utils::Point>            d_atomCoordinatesVec;
+      std::string                          d_fieldName;
+      std::shared_ptr<atoms::sphericalData> d_sphericalData;
 
-    }; // end of FEBasisManagerDealii
+
+    }; // end of EFEBasisManagerDealii
   }    // end of namespace basis
 } // end of namespace dftefe
 #include "EFEBasisManagerDealii.t.cpp"
-#endif // dftefeFEBasisManagerDealii_h
+#endif // dftefeEFEBasisManagerDealii_h
 //

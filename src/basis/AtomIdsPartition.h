@@ -66,8 +66,7 @@ namespace dftefe
         const std::vector<double> &                   maxbound,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
         const double                                  tolerance,
-        const utils::mpi::MPIComm &                   comm,
-        const size_type                               nProcs);
+        const utils::mpi::MPIComm &                   comm);
 
       /**
        * @brief Destructor for the class

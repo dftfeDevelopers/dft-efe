@@ -213,15 +213,41 @@ namespace dftefe
       return d_dofHandler->n_dofs();
     }
 
+    // template <size_type dim>
+    // std::pair<global_size_type, global_size_type>
+    // FEBasisManagerDealii<dim>::getLocallyOwnedRange() const
+    // {
+    //   auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+    //   global_size_type startId        = *(dealiiIndexSet.begin());
+    //   global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+    //   std::pair<global_size_type, global_size_type> returnValue =
+    //     std::make_pair(startId, endId);
+    //   return returnValue;
+    // }
+
     template <size_type dim>
-    std::pair<global_size_type, global_size_type>
-    FEBasisManagerDealii<dim>::getLocallyOwnedRange() const
+    std::vector<std::pair<global_size_type, global_size_type>>
+    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const
     {
-      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
-      global_size_type startId        = *(dealiiIndexSet.begin());
-      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-      std::pair<global_size_type, global_size_type> returnValue =
-        std::make_pair(startId, endId);
+      std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
+      for (auto i:basisIdAttributeVec )
+      {
+        if (i == CLASSICAL)
+        {
+          auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+          global_size_type startId        = *(dealiiIndexSet.begin());
+          global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+          std::pair<global_size_type, global_size_type> classicalRange =
+            std::make_pair(startId, endId);
+          returnValue.push_back(classicalRange);
+        }
+        else
+        {
+          utils::throwException(
+            false,
+            "The basis attribute can be 'classical' only.");
+        }
+      }
       return returnValue;
     }
 

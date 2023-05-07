@@ -88,8 +88,8 @@ namespace dftefe
       size_type
       nLocalNodes() const;
 
-      std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange() const;
+      std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const;
 
       global_size_type
       nGlobalNodes() const;

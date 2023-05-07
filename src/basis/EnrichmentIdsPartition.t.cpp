@@ -468,6 +468,18 @@ namespace dftefe
       return retStruct;
     }
 
+    size_type
+    nLocallyOwnedEnrichmentIds() const
+    {
+      return ( d_locallyOwnedEnrichmentIds.second - d_locallyOwnedEnrichmentIds.first);
+    }
+
+    size_type
+    nTotalEnrichmentIds() const
+    {
+      return d_newAtomIdToEnrichmentIdOffset.back();
+    }
+
     // template <unsigned int dim>
     // std::map<size_type, size_type>
     // EnrichmentIdsPartition<dim>::enrichmentIdToNewAtomIdMap() const
