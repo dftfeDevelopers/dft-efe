@@ -53,13 +53,6 @@ namespace dftefe
             const BasisManager &
                 getBasisManager() const override;
 
-            // void
-            // evaluateBasisData(
-            //     std::shared_ptr<const quadrature::QuadratureRuleContainer>
-            //                                         quadratureRuleContainer,
-            //     const QuadratureRuleAttributes &    quadratureRuleAttributes,
-            //     const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj) override;
-
             void
             evaluateBasisData(
                 const quadrature::QuadratureRuleAttributes & quadratureRuleAttributes,

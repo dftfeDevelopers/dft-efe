@@ -50,11 +50,6 @@ namespace dftefe
     typedef std::map<BasisStorageAttributes, bool>
       BasisStorageAttributesBoolMap;
 
-    typedef std::map<quadrature::QuadratureRuleAttributes,
-                     BasisStorageAttributesBoolMap>
-      QuadAttrToBasisStorageAttrMap;
-
-
     /**
      * @brief An abstract class to store and access data for a given basis,
      * such as the basis function values on a quadrature grid, the overlap
@@ -85,13 +80,34 @@ namespace dftefe
 
       virtual void
       evaluateBasisData(
-        std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                                            quadratureContainer,
-        const QuadratureRuleAttributes &    quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj) = 0;
+          const quadrature::QuadratureRuleAttributes & quadratureRuleAttributes,
+          const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
       virtual void
-      deleteBasisData(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) = 0;
+      evaluateBasisData(
+          const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
+          std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
+          const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
+      virtual void
+      evaluateBasisData(
+              const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
+              std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
+              const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
+      virtual void
+      evaluateBasisData(
+          const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
+          std::shared_ptr<const QuadratureRule>  baseQuadratureRuleAdaptive,
+          std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> & functions,
+          const std::vector<double> & tolerances,
+          const std::vector<double> & integralThresholds,
+          const double               smallestCellVolume,
+          const unsigned int         maxRecursion,
+          const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
+      virtual void
+      deleteBasisData() = 0;
 
       //      virtual std::shared_ptr<const quadrature::QuadratureRuleContainer>
       //      getCellQuadratureRuleContainer(
@@ -114,17 +130,14 @@ namespace dftefe
       // functions to get data for a basis function on all quad points in a cell
       virtual Storage
       getBasisDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const = 0;
       virtual Storage
       getBasisGradientDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const = 0;
       virtual Storage
       getBasisHessianDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const = 0;
 
@@ -132,69 +145,53 @@ namespace dftefe
       // cell
       virtual Storage
       getBasisDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
       virtual Storage
       getBasisGradientDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
       virtual Storage
       getBasisHessianDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
 
       virtual Storage
-      getJxWInCell(const QuadratureRuleAttributes &quadratureRuleAttributes,
-                   const size_type                 cellId) const = 0;
+      getJxWInCell(const size_type                 cellId) const = 0;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
       virtual const Storage &
-      getBasisDataInAllCells(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getBasisDataInAllCells() const = 0;
       virtual const Storage &
-      getBasisGradientDataInAllCells(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getBasisGradientDataInAllCells() const = 0;
       virtual const Storage &
-      getBasisHessianDataInAllCells(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getBasisHessianDataInAllCells() const = 0;
 
       virtual const Storage &
-      getJxWInAllCells(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getJxWInAllCells() const = 0;
 
       // get overlap of two basis functions in a cell
       virtual Storage
-      getBasisOverlap(const QuadratureRuleAttributes &quadratureRuleAttributes,
-                      const size_type                 cellId,
+      getBasisOverlap(const size_type                 cellId,
                       const size_type                 basisId1,
                       const size_type                 basisId2) const = 0;
 
       // get overlap of all the basis functions in a cell
       virtual Storage
-      getBasisOverlapInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const = 0;
-
-      // get overlap of all the basis functions in all cells
-      virtual const Storage &
-      getBasisOverlapInAllCells(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getBasisOverlapInCell(const size_type                 cellId) const = 0;
 
       // get the laplace operator in a cell
       virtual Storage
-      getBasisGradNiGradNjInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const = 0;
+      getBasisGradNiGradNjInCell(const size_type                 cellId) const = 0;
 
       // get laplace operator in all cells
       virtual const Storage &
-      getBasisGradNiGradNjInAllCells(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getBasisGradNiGradNjInAllCells() const = 0;
+
+      // get overlap of all the basis functions in all cells
+      virtual const Storage &
+      getBasisOverlapInAllCells() const = 0;
 
       virtual const quadrature::QuadratureRuleContainer &
-      getQuadratureRuleContainer(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
+      getQuadratureRuleContainer() const = 0;
 
     }; // end of BasisDataStorage
   }    // end of namespace basis
