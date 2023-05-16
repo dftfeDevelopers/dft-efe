@@ -11,6 +11,7 @@ set(DFT-EFE-ATOMS-SOURCES
     SmoothCutoffFunctions.cpp
     AtomSphericalData.cpp
     AtomSphericalDataContainer.cpp
+    BoostAutoDiff.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})

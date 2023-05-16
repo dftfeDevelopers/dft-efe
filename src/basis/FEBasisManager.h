@@ -37,7 +37,7 @@ namespace dftefe
   namespace basis
   {
     // add attribute to the classical and enriched ids for locallyOwnedRanges()
-    enum  basisIdAttribute{
+    enum class BasisIdAttribute{
       CLASSICAL,
       ENRICHED
     };
@@ -86,8 +86,11 @@ namespace dftefe
       virtual bool
       isHPRefined() const = 0;
 
-      std::vector<std::pair<global_size_type, global_size_type>>
-      getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const = 0;
+      virtual std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges() const = 0;
+
+      virtual std::map< BasisIdAttribute basisIdAttribute , std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRangeMap() const = 0;
 
       virtual size_type
       nLocalNodes() const = 0;

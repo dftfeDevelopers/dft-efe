@@ -20,26 +20,41 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#include<utils/Exceptions.h>
-#include<atoms/AtomSphericalData.h>
-#include<string>
-#include<iostream>
-int main()
+#include <vector>
+#include <utils/Point.h>
+
+namespace dftefe
 {
-  std::string atomFileName = "TestAtom.xml";
-  std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-  std::vector<int> qNumbers{2, 1, 0};
-  dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-  dftefe::atoms::SphericalData sphericalDataObj = atomTest.getSphericalData("orbital", qNumbers);
-  std::vector<double> pointvec{0, 0, 2.};
-  std::vector<double> originvec{0. ,0. ,0.};
-  dftefe::utils::Point point(pointvec);
-  dftefe::utils::Point origin(originvec);
-  std::cout<<sphericalDataObj.getGradientValue<3>(point,origin)[0]<<"\n";
-  std::cout<<sphericalDataObj.getGradientValue<3>(point,origin)[1]<<"\n";
-  std::cout<<sphericalDataObj.getGradientValue<3>(point,origin)[2]<<"\n";
+    namespace atoms
+    {
+        double getValueBoostAutoDiff(const utils::Point &point,
+                    const utils::Point &origin,
+                    const std::vector<double> & coeffVec,
+                    const double smoothness,
+                    const double cutoff,
+                    const int l, 
+                    const int m,
+                    const double polarAngleTolerance);
+
+        std::vector<double> getGradientValueBoostAutoDiff(const utils::Point &point,
+                    const utils::Point &origin,
+                    const std::vector<double> & coeffVec,
+                    const double smoothness,
+                    const double cutoff,
+                    const int l, 
+                    const int m,
+                    const double polarAngleTolerance);
+
+        std::vector<double> getHessianValueBoostAutoDiff(const utils::Point &point,
+                    const utils::Point &origin,
+                    const std::vector<double> & coeffVec,
+                    const double smoothness,
+                    const double cutoff,
+                    const int l, 
+                    const int m,
+                    const double polarAngleTolerance);
+    }
 }

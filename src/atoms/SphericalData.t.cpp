@@ -30,130 +30,314 @@
 #include "SphericalHarmonicFunctions.h"
 #include "SmoothCutoffFunctions.h"
 #include <utils/Spline.h>
+#include "BoostAutoDiff.h"
 #include <cmath>
 
 namespace dftefe
 {
   namespace atoms
   {
-    template <size_type dim>
-    double
-    SphericalData::getValue(const utils::Point &point,
-                            const utils::Point &origin,
-                            const double        polarAngleTolerance) const
+    namespace SphericalDataInternal
     {
-      utils::throwException(dim == 3,
-                            "getValue() defined only for 3 dimensional case");
-      // do the spline interpolation in the radial points
-      std::vector<double> atomCenteredPoint;
-      atomCenteredPoint.resize(dim, 0.);
-      DFTEFE_AssertWithMsg(point.size() == dim && origin.size() == dim,
-                           "Dimension mismatch between the point and origin.");
-      double r, theta, phi;
-      for (unsigned int i = 0; i < dim; i++)
-        {
-          atomCenteredPoint[i] = point[i] - origin[i];
-        }
-      convertCartesianToSpherical(
-        atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-      double radialValue = d_spline->operator()(r);
-      DFTEFE_AssertWithMsg(qNumbers.size() == 3,
-                           "All quantum numbers not given");
-      int    n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
-      auto   Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
-      double retValue =
-        radialValue * Ylm * smoothCutoffValue(r, cutoff, smoothness);
-      return retValue;
-    }
+      template <size_type dim>
+      void
+      getValueAnalytical(const utils::Point &point,
+                        const utils::Point &origin,
+                        const double cutoff,
+                        const double smoothness,
+                        const std::vector<int> & qNumbers,
+                        std::shared_ptr<const utils::Spline> spline,
+                        const double        polarAngleTolerance,
+                        double & value) 
+      {
+        // do the spline interpolation in the radial points
+        std::vector<double> atomCenteredPoint;
+        atomCenteredPoint.resize(dim, 0.);
+        double r, theta, phi;
+        for (unsigned int i = 0; i < dim; i++)
+          {
+            atomCenteredPoint[i] = point[i] - origin[i];
+          }
+        convertCartesianToSpherical(
+          atomCenteredPoint, r, theta, phi, polarAngleTolerance);
+        double radialValue = (*spline)(r);
+        int    n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
+        auto   Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
+        value =
+          radialValue * Ylm * smoothCutoffValue(r, cutoff, smoothness);
+      }
 
-    template <size_type dim>
-    std::vector<double>
-    SphericalData::getGradientValue(const utils::Point &point,
-                                    const utils::Point &origin,
-                                    const double        polarAngleTolerance,
-                                    const double        cutoffTolerance) const
-    {
-      utils::throwException(
-        dim == 3, "getDerivativeValue() defined only for 3 dimensional case");
-      // do the spline interpolation in the radial points
-      std::vector<double> atomCenteredPoint;
-      atomCenteredPoint.resize(dim, 0.);
-      DFTEFE_AssertWithMsg(point.size() == dim && origin.size() == dim,
-                           "Dimension mismatch between the point and origin.");
-      double r, theta, phi;
-      for (unsigned int i = 0; i < dim; i++)
-        {
-          atomCenteredPoint[i] = point[i] - origin[i];
-        }
-      convertCartesianToSpherical(
-        atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-      double radialValue           = d_spline->operator()(r);
-      double radialDerivativeValue = d_spline->deriv(1, r);
-      double cutoffValue           = smoothCutoffValue(r, cutoff, smoothness);
-      double cutoffDerv =
-        smoothCutoffDerivative(r, cutoff, smoothness, cutoffTolerance);
+      template <size_type dim>
+      void
+      getGradientValueAnalytical(const utils::Point &point,
+                                const utils::Point &origin,
+                                const double cutoff,
+                                const double smoothness,
+                                const std::vector<int> & qNumbers,
+                                std::shared_ptr<const utils::Spline> spline,
+                                const double        polarAngleTolerance,
+                                const double        cutoffTolerance,
+                                std::vector<double> & gradient) 
+      {
+        // do the spline interpolation in the radial points
+        std::vector<double> atomCenteredPoint;
+        atomCenteredPoint.resize(dim, 0.);
+        double r, theta, phi;
+        for (unsigned int i = 0; i < dim; i++)
+          {
+            atomCenteredPoint[i] = point[i] - origin[i];
+          }
+        convertCartesianToSpherical(
+          atomCenteredPoint, r, theta, phi, polarAngleTolerance);
+        utils::throwException(
+          r != 0, "Value undefined at nucleus");
+        double radialValue           = (*spline)(r);
+        double radialDerivativeValue = spline->deriv(1, r);
+        double cutoffValue           = smoothCutoffValue(r, cutoff, smoothness);
+        double cutoffDerv =
+          smoothCutoffDerivative(r, cutoff, smoothness, cutoffTolerance);
 
-      DFTEFE_AssertWithMsg(qNumbers.size() == 3,
-                           "All quantum numbers not given");
-      int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
+        int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
 
-      auto Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
-      auto dYlmDTheta =
-        Clm(l, m) * Dm(m) * dPlmDTheta(l, m, theta) * Qm(m, phi);
+        auto Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
+        auto dYlmDTheta =
+          Clm(l, m) * Dm(m) * dPlmDTheta(l, m, theta) * Qm(m, phi);
 
-      // Here used the Legendre differential equation for calculating
-      // P_lm/sin(theta) given in the paper
-      // https://doi.org/10.1016/S1464-1895(00)00101-0 Pt. no. 3 of
-      // verification.
+        // Here used the Legendre differential equation for calculating
+        // P_lm/sin(theta) given in the paper
+        // https://doi.org/10.1016/S1464-1895(00)00101-0 Pt. no. 3 of
+        // verification.
 
-      double dYlmDPhiBysinTheta = 0.;
-      if (m != 0)
-        {
-          dYlmDPhiBysinTheta =
-            Clm(l, m) * Dm(m) *
-            (sin(theta) * d2PlmDTheta2(l, m, theta) +
-             cos(theta) * dPlmDTheta(l, m, theta) +
-             sin(theta) * l * (l + 1) * Plm(l, m, cos(theta))) *
-            (1 / (m * m)) * dQmDPhi(m, phi);
-        }
+        double dYlmDPhiBysinTheta = 0.;
+        if (m != 0)
+          {
+            dYlmDPhiBysinTheta =
+              Clm(l, m) * Dm(m) *
+              (sin(theta) * d2PlmDTheta2(l, m, theta) +
+              cos(theta) * dPlmDTheta(l, m, theta) +
+              sin(theta) * l * (l + 1) * Plm(l, m, cos(theta))) *
+              (1 / (m * m)) * dQmDPhi(m, phi);
+          }
 
-      auto dValueDR =
-        (radialDerivativeValue * cutoffValue + cutoffDerv * radialValue) * Ylm;
-      double dValueDThetaByr = 0.;
-      if (r != 0)
-        {
-          dValueDThetaByr = (radialValue / r) * cutoffValue * dYlmDTheta;
-        }
-      double dValueDPhiByrsinTheta = 0.;
-      if (r != 0)
-        {
-          dValueDPhiByrsinTheta =
-            (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
-        }
+        auto dValueDR =
+          (radialDerivativeValue * cutoffValue + cutoffDerv * radialValue) * Ylm;
+        double dValueDThetaByr = 0.;
+            dValueDThetaByr = (radialValue / r) * cutoffValue * dYlmDTheta;
+        double dValueDPhiByrsinTheta = 0.;
+            dValueDPhiByrsinTheta =
+              (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
 
-      std::vector<double> retValue;
-      retValue.resize(dim, 0.);
-      retValue[0] = dValueDR * (sin(theta) * cos(phi)) +
-                    dValueDThetaByr * (cos(theta) * cos(phi)) -
-                    sin(phi) * dValueDPhiByrsinTheta;
-      retValue[1] = dValueDR * (sin(theta) * sin(phi)) +
-                    dValueDThetaByr * (cos(theta) * sin(phi)) +
-                    cos(phi) * dValueDPhiByrsinTheta;
-      retValue[2] = dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
+        gradient.resize(dim, 0.);
+        gradient[0] = dValueDR * (sin(theta) * cos(phi)) +
+                      dValueDThetaByr * (cos(theta) * cos(phi)) -
+                      sin(phi) * dValueDPhiByrsinTheta;
+        gradient[1] = dValueDR * (sin(theta) * sin(phi)) +
+                      dValueDThetaByr * (cos(theta) * sin(phi)) +
+                      cos(phi) * dValueDPhiByrsinTheta;
+        gradient[2] = dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
+      }
 
-      return retValue;
-    }
+      template <size_type dim>
+      void
+      getHessianValueAnalytical(const utils::Point &point,
+                              const utils::Point &origin,
+                              const double cutoff,
+                              const double smoothness,
+                              const std::vector<int> & qNumbers,
+                              std::shared_ptr<const utils::Spline> spline,
+                              const double        polarAngleTolerance,
+                              const double        cutoffTolerance,
+                              std::vector<double> & gradient) 
+      {
+        utils::throwException(false ,
+                  "Hessian matirx using analytical expressions is Not Yet Implemented");
+      }
 
-    template <size_type dim>
-    std::vector<double>
-    SphericalData::getHessianValue(const utils::Point &point,
-                            const utils::Point &origin,
-                            const double polarAngleTolerance,
-                            const double cutoffTolerance) const
-    {
-      utils::throwException(false ,
-                "Not Yet Implemented");
-    }
+      template <size_type dim>
+      void
+      getValueAutoDiff(const utils::Point &point,
+                      const utils::Point &origin,
+                      const double cutoff,
+                      const double smoothness,
+                      const std::vector<int> & qNumbers,
+                      std::shared_ptr<const utils::Spline> spline,
+                      const double        polarAngleTolerance,
+                      double & value)
+      {
+        double r, theta, phi;
+        std::vector<double> atomCenteredPoint;
+        atomCenteredPoint.resize(dim, 0.);
+        for (unsigned int i = 0; i < dim; i++)
+          {
+            atomCenteredPoint[i] = point[i] - origin[i];
+          }
+        convertCartesianToSpherical(
+          atomCenteredPoint, r, theta, phi, polarAngleTolerance);
+        std::vector<double> coeffVec(0);
+        coeffVec = spline->coefficients(r);
+        int l = qNumbers[1], m = qNumbers[2];
+        value = getValueBoostAutoDiff(point, origin, coeffVec, smoothness, cutoff, l, m, polarAngleTolerance);
+      }
 
+      template <size_type dim>
+      void
+      getGradientValueAutoDiff(const utils::Point &point,
+                              const utils::Point &origin,
+                              const double cutoff,
+                              const double smoothness,
+                              const std::vector<int> & qNumbers,
+                              std::shared_ptr<const utils::Spline> spline,
+                              const double        polarAngleTolerance,
+                              std::vector<double> & gradient) 
+      {
+        double r, theta, phi;
+        std::vector<double> atomCenteredPoint;
+        atomCenteredPoint.resize(dim, 0.);
+        for (unsigned int i = 0; i < dim; i++)
+          {
+            atomCenteredPoint[i] = point[i] - origin[i];
+          }
+        convertCartesianToSpherical(
+          atomCenteredPoint, r, theta, phi, polarAngleTolerance);
+        utils::throwException(
+          r != 0, "Value undefined at nucleus");
+        std::vector<double> coeffVec(0);
+        coeffVec = spline->coefficients(r);
+        int l = qNumbers[1], m = qNumbers[2];
+        gradient = getGradientValueBoostAutoDiff(point, origin, coeffVec, smoothness, cutoff, l, m, polarAngleTolerance);
+      }
+
+      template <size_type dim>
+      void
+      getHessianValueAutoDiff(const utils::Point &point,
+                              const utils::Point &origin,
+                              const double cutoff,
+                              const double smoothness,
+                              const std::vector<int> & qNumbers,
+                              std::shared_ptr<const utils::Spline> spline,
+                              const double        polarAngleTolerance,
+                              std::vector<double> & hessian)
+      {
+        double r, theta, phi;
+        std::vector<double> atomCenteredPoint;
+        atomCenteredPoint.resize(dim, 0.);
+        for (unsigned int i = 0; i < dim; i++)
+          {
+            atomCenteredPoint[i] = point[i] - origin[i];
+          }
+        convertCartesianToSpherical(
+          atomCenteredPoint, r, theta, phi, polarAngleTolerance);
+        utils::throwException(
+          r != 0, "Value undefined at nucleus");
+        std::vector<double> coeffVec(0);
+        coeffVec = spline->coefficients(r);
+        int l = qNumbers[1], m = qNumbers[2];
+        hessian = getHessianValueBoostAutoDiff(point, origin, coeffVec, smoothness, cutoff, l, m, polarAngleTolerance);
+      }
+    } // end of SphericalDataInternal
+
+      template <size_type dim>
+      double
+      SphericalData::getValue(const utils::Point &point,
+                              const utils::Point &origin,
+                              const double        polarAngleTolerance)
+      {
+        utils::throwException(
+          dim == 3, "getDerivativeValue() defined only for 3 dimensional case");
+        DFTEFE_AssertWithMsg(point.size() == dim && origin.size() == dim,
+                            "Dimension mismatch between the point and origin.");
+        DFTEFE_AssertWithMsg(qNumbers.size() == 3,
+                            "All quantum numbers not given");
+        // SphericalDataInternal::getValueAnalytical<dim>(point,
+        //                       origin,
+        //                       cutoff,
+        //                       smoothness,
+        //                       qNumbers,
+        //                       d_spline,
+        //                       polarAngleTolerance,
+        //                       d_value);
+
+        SphericalDataInternal::getValueAutoDiff<dim>(point,
+                              origin,
+                              cutoff,
+                              smoothness,
+                              qNumbers,
+                              d_spline,
+                              polarAngleTolerance,
+                              d_value);
+        return d_value;
+      }
+
+      template <size_type dim>
+      std::vector<double>
+      SphericalData::getGradientValue(const utils::Point &point,
+                                      const utils::Point &origin,
+                                      const double        polarAngleTolerance,
+                                      const double        cutoffTolerance)
+      {
+        utils::throwException(
+          dim == 3, "getDerivativeValue() defined only for 3 dimensional case");
+        DFTEFE_AssertWithMsg(point.size() == dim && origin.size() == dim,
+                            "Dimension mismatch between the point and origin.");
+        DFTEFE_AssertWithMsg(qNumbers.size() == 3,
+                            "All quantum numbers not given");
+        // SphericalDataInternal::getGradientValueAnalytical<dim>(point,
+        //                       origin,
+        //                       cutoff,
+        //                       smoothness,
+        //                       qNumbers,
+        //                       d_spline,
+        //                       polarAngleTolerance,
+        //                       cutoffTolerance,
+        //                       d_gradient);
+
+        SphericalDataInternal::getGradientValueAutoDiff<dim>(point,
+                              origin,
+                              cutoff,
+                              smoothness,
+                              qNumbers,
+                              d_spline,
+                              polarAngleTolerance,
+                              d_gradient);
+        DFTEFE_AssertWithMsg(d_gradient.size() == dim,
+                            "Gradient vector should be of length dim");
+        return d_gradient;
+      }
+
+      template <size_type dim>
+      std::vector<double>
+      SphericalData::getHessianValue(const utils::Point &point,
+                              const utils::Point &origin,
+                              const double polarAngleTolerance,
+                              const double cutoffTolerance)
+      {
+        utils::throwException(
+          dim == 3, "getDerivativeValue() defined only for 3 dimensional case");
+        DFTEFE_AssertWithMsg(point.size() == dim && origin.size() == dim,
+                            "Dimension mismatch between the point and origin.");
+        DFTEFE_AssertWithMsg(qNumbers.size() == 3,
+                            "All quantum numbers not given");
+        // SphericalDataInternal::getHessianValueAnalytical<dim>(point,
+        //                       origin,
+        //                       cutoff,
+        //                       smoothness,
+        //                       qNumbers,
+        //                       d_spline,
+        //                       polarAngleTolerance,
+        //                       cutoffTolerance,
+        //                       d_hessian);
+
+        SphericalDataInternal::getHessianValueAutoDiff<dim>(point,
+                              origin,
+                              cutoff,
+                              smoothness,
+                              qNumbers,
+                              d_spline,
+                              polarAngleTolerance,
+                              d_hessian);
+        DFTEFE_AssertWithMsg(d_hessian.size() == dim*dim,
+                            "Hessian vector should be of length dim*dim");
+        return d_hessian;
+      }
   } // namespace atoms
 } // namespace dftefe

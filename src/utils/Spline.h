@@ -60,58 +60,35 @@ namespace dftefe
         second_deriv = 2
       };
 
-    protected:
-      std::vector<double> m_x, m_y; // x,y coordinates of points
+    private:
+      std::vector<double> d_x, d_y; // x,y coordinates of points
       // interpolation parameters
       // f(x) = a_i + b_i*(x-x_i) + c_i*(x-x_i)^2 + d_i*(x-x_i)^3
       // where a_i = y_i, or else it won't go through grid points
-      std::vector<double> m_b, m_c, m_d; // spline coefficients
-      double              m_c0;          // for left extrapolation
-      spline_type         m_type;
-      bd_type             m_left, m_right;
-      double              m_left_value, m_right_value;
-      bool                m_made_monotonic;
+      std::vector<double> d_b, d_c, d_d; // spline coefficients
+      double              d_c0;          // for left extrapolation
+      spline_type         d_type;
+      bd_type             d_left, d_right;
+      double              d_left_value, d_right_value;
+      bool                d_made_monotonic;
       void
       set_coeffs_from_b(); // calculate c_i, d_i from b_i
       size_t
-      find_closest(double x) const; // closest idx so that m_x[idx]<=x
+      find_closest(double x) const; // closest idx so that d_x[idx]<=x
 
     public:
       // default constructor: set boundary condition to be zero curvature
       // at both ends, i.e. natural splines
-      Spline()
-        : m_type(cspline)
-        , m_left(second_deriv)
-        , m_right(second_deriv)
-        , m_left_value(0.0)
-        , m_right_value(0.0)
-        , m_made_monotonic(false)
-      {
-        ;
-      }
+      Spline();
+
       Spline(const std::vector<double> &X,
              const std::vector<double> &Y,
-             spline_type                type           = cspline,
-             bool                       make_monotonic = false,
-             bd_type                    left           = second_deriv,
-             double                     left_value     = 0.0,
-             bd_type                    right          = second_deriv,
-             double                     right_value    = 0.0)
-        : m_type(type)
-        , m_left(left)
-        , m_right(right)
-        , m_left_value(left_value)
-        , m_right_value(right_value)
-        , m_made_monotonic(
-            false) // false correct here: make_monotonic() sets it
-      {
-        this->set_points(X, Y, m_type);
-        if (make_monotonic)
-          {
-            this->make_monotonic();
-          }
-      }
-
+            spline_type                type           = cspline,
+            bool                       make_monotonic = false,
+            bd_type                    left           = second_deriv,
+            double                     left_value     = 0.0,
+            bd_type                    right          = second_deriv,
+            double                     right_value    = 0.0);
 
       // modify boundary conditions: if called it must be before set_points()
       void
@@ -139,6 +116,8 @@ namespace dftefe
       // evaluates the spline at point x
       double
       operator()(double x) const;
+      std::vector<double>
+      coefficients(double x) const;
       double
       deriv(int order, double x) const;
 
@@ -146,24 +125,24 @@ namespace dftefe
       std::vector<double>
       get_x() const
       {
-        return m_x;
+        return d_x;
       }
       std::vector<double>
       get_y() const
       {
-        return m_y;
+        return d_y;
       }
       double
       get_x_min() const
       {
-        assert(!m_x.empty());
-        return m_x.front();
+        assert(!d_x.empty());
+        return d_x.front();
       }
       double
       get_x_max() const
       {
-        assert(!m_x.empty());
-        return m_x.back();
+        assert(!d_x.empty());
+        return d_x.back();
       }
 
       // spline info string, i.e. spline type, boundary conditions etc.
@@ -177,8 +156,8 @@ namespace dftefe
       class band_matrix
       {
       private:
-        std::vector<std::vector<double>> m_upper; // upper band
-        std::vector<std::vector<double>> m_lower; // lower band
+        std::vector<std::vector<double>> d_upper; // upper band
+        std::vector<std::vector<double>> d_lower; // lower band
       public:
         band_matrix(){};                        // constructor
         band_matrix(int dim, int n_u, int n_l); // constructor
@@ -190,19 +169,19 @@ namespace dftefe
         int
         num_upper() const
         {
-          return (int)m_upper.size() - 1;
+          return (int)d_upper.size() - 1;
         }
         int
         num_lower() const
         {
-          return (int)m_lower.size() - 1;
+          return (int)d_lower.size() - 1;
         }
         // access operator
         double &
         operator()(int i, int j); // write
         double
         operator()(int i, int j) const; // read
-        // we can store an additional diagonal (in m_lower)
+        // we can store an additional diagonal (in d_lower)
         double &
         saved_diag(int i);
         double

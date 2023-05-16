@@ -156,7 +156,6 @@ namespace dftefe
         return pow(-1.0, m) * boost::math::legendre_p(l, m, x);
     }
 
-
     double
     dPlmDTheta(const int l, const int m, const double theta)
     {

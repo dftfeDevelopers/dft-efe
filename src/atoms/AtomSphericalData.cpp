@@ -431,6 +431,7 @@ namespace dftefe
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
             sphericalData.cutoff     = cutoffInfo[0];
             sphericalData.smoothness = cutoffInfo[1];
+            sphericalDataVec[i].initSpline();
           }
 
         utils::throwException(
@@ -579,11 +580,11 @@ namespace dftefe
         {
           const std::string fieldName = fieldNames[iField];
           xPathInfo.xpath = getXPath(rootElementName, ns, fieldName);
-          std::vector<SphericalData>            sphericaldata(0);
+          std::vector<SphericalData>            sphericalDataVec(0);
           std::map<std::vector<int>, size_type> qNumbersToIdMap;
-          getSphericalDataFromXMLNode(sphericaldata, d_radialPoints, xPathInfo);
-          storeQNumbersToDataIdMap(sphericaldata, qNumbersToIdMap);
-          d_sphericalData[fieldName]   = sphericaldata;
+          getSphericalDataFromXMLNode(sphericalDataVec, d_radialPoints, xPathInfo);
+          storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
+          d_sphericalData[fieldName]   = sphericalDataVec;
           d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;
         }
 

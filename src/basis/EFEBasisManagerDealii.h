@@ -94,7 +94,10 @@ namespace dftefe
       nLocalNodes() const override;
 
       std::vector<std::pair<global_size_type, global_size_type>>
-      getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const override;
+      getLocallyOwnedRanges() const override;
+
+      std::map<BasisIdAttribute,size_type>
+      getBasisIdAttributeRangeId() const override;
 
       global_size_type
       nGlobalNodes() const override;

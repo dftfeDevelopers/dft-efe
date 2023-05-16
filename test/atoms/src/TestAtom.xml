@@ -10,7 +10,7 @@
     <values>
       1.5 2.5 3.5 4.5 5.5
     </values>
-    <cutoffInfo>1e15 1.0</cutoffInfo>
+    <cutoffInfo>1.0 1.0</cutoffInfo>
   </density>
   <vhartree>
     <qNumbers>1 0 0</qNumbers>
@@ -48,7 +48,7 @@
     <cutoffInfo>3.5 1.1</cutoffInfo>
   </orbital>
   <orbital>
-    <qNumbers>2 1 -1</qNumbers>
+    <qNumbers>2 1 0</qNumbers>
     <values>
       -4.4 -5.4 -6.4 -7.4 -8.4
     </values>

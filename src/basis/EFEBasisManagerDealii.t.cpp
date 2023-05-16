@@ -297,34 +297,32 @@ namespace dftefe
       return (d_dofHandler->n_dofs() + d_enrichmentIdsPartition->nTotalEnrichmentIds()) ;
     }
 
-    template <size_type dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const
+    getLocallyOwnedRanges()
     {
       std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
-      for (auto i:basisIdAttributeVec )
-      {
-        if (i == CLASSICAL)
-        {
-          auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
-          global_size_type startId        = *(dealiiIndexSet.begin());
-          global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-          std::pair<global_size_type, global_size_type> classicalRange =
-            std::make_pair(startId, endId);
-          returnValue.push_back(classicalRange);
-        }
-        else if (i == ENRICHED)
-        {
-          // returns size_type instead of global_size_type
-          returnValue.push_back(d_enrichmentIdsPartition->locallyOwnedEnrichmentIds());
-        }
-        else
-        {
-          utils::throwException(
-            false,
-            "The basis attribute can be either 'classical' or 'enriched'.");
-        }
-      }
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      std::pair<global_size_type, global_size_type> classicalRange =
+        std::make_pair(startId, endId);
+
+      returnValue.push_back(classicalRange);
+      returnValue.push_back(d_enrichmentIdsPartition->locallyOwnedEnrichmentIds());
+
+      return returnValue;
+    }
+
+    std::map < BasisIdAttribute basisIdAttribute , std::pair<global_size_type, global_size_type> >
+    getLocallyOwnedRangeMap()
+    {
+      std::map < BasisIdAttribute basisIdAttribute , std::pair<global_size_type, global_size_type> > returnValue;
+
+      std::vector<std::pair<global_size_type, global_size_type>> locallyOwnedRangeVec(0);
+      locallyOwnedRangeVec = getLocallyOwnedRanges();
+      returnValue[BasisIdAttribute::CLASSICAL] = locallyOwnedRangeVec[0];
+      returnValue[BasisIdAttribute::ENRICHED] =  locallyOwnedRangeVec[1];
+
       return returnValue;
     }
 
@@ -360,8 +358,28 @@ namespace dftefe
       std::vector<global_size_type> &vecGlobalNodeId) const
     {
       vecGlobalNodeId.resize(nCellDofs(cellId), 0);
+      vecGlobalClassicalNodeId.resize(d_dofHandler->get_fe().n_dofs_per_cell(), 0);
 
-      d_locallyOwnedCells[cellId]->cellNodeIdtoGlobalNodeId(vecGlobalNodeId);
+      d_locallyOwnedCells[cellId]->cellNodeIdtoGlobalNodeId(vecGlobalClassicalNodeId);
+
+      size_type count = 0, classicalcount = 0, enrichedcount = 0;
+      std::vector<global_size_type> vecGlobalEnrichedNodeId(0);
+      vecGlobalEnrichedNodeId = d_overlappingEnrichmentIdsInCells[cellId];
+
+      for( auto i:vecGlobalNodeId )
+      {
+        if ( i < d_dofHandler->get_fe().n_dofs_per_cell())
+        {
+          vecGlobalNodeId[count] = vecGlobalClassicalNodeId[classicalcount];
+          classicalcount += 1;
+        }
+        else
+        {
+          vecGlobalNodeId[count] = vecGlobalEnrichedNodeId[enrichedcount];
+          enrichedcount += 1;
+        }
+        count = count + 1;
+      }
     }
 
     template <size_type dim>

@@ -56,24 +56,27 @@ namespace dftefe
       double
       getValue(const utils::Point &point,
                const utils::Point &origin,
-               const double        polarAngleTolerance) const;
+               const double        polarAngleTolerance = 1e-6);
 
       template <unsigned int dim>
-      sstd::vector<double>
+      std::vector<double>
       getGradientValue(const utils::Point &point, 
                         const utils::Point &origin, 
-                        const double polarAngleTolerance, 
-                        const double cutoffTolerance) const;
+                        const double polarAngleTolerance = 1e-6, 
+                        const double cutoffTolerance = 1e-6);
 
       template <unsigned int dim>
       std::vector<double>
       getHessianValue(const utils::Point &point,
                         const utils::Point &origin,
-                        const double polarAngleTolerance,
-                        const double cutoffTolerance) const;
+                        const double polarAngleTolerance = 1e-6,
+                        const double cutoffTolerance = 1e-6);
 
     private:
       std::shared_ptr<const utils::Spline> d_spline;
+      double                               d_value;
+      std::vector<double>                  d_gradient;
+      std::vector<double>                  d_hessian;
     };
 
   } // end of namespace atoms

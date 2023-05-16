@@ -91,30 +91,30 @@ namespace dftefe
        */
       ~EnrichmentIdsPartition() = default;
 
-      std::vector<size_type>
+      std::vector<global_size_type>
       newAtomIdToEnrichmentIdOffset() const;
 
-      std::vector<std::vector<size_type>>
+      std::vector<std::vector<global_size_type>>
       overlappingEnrichmentIdsInCells() const;
 
-      std::pair<size_type, size_type>
+      std::pair<global_size_type, global_size_type>
       locallyOwnedEnrichmentIds() const;
 
-      std::vector<size_type>
+      std::vector<global_size_type>
       ghostEnrichmentIds() const;
 
       // Works with the global enrichmentid
 
       size_type
-      getAtomId(const size_type enrichmentId) const;
+      getAtomId(const global_size_type enrichmentId) const;
 
       EnrichmentIdAttribute
-      getEnrichmentIdAttribute(const size_type enrichmentId) const;
+      getEnrichmentIdAttribute(const global_size_type enrichmentId) const;
 
       size_type
       nLocallyOwnedEnrichmentIds() const;
 
-      size_type
+      global_size_type
       nTotalEnrichmentIds() const;
 
       // std::map<size_type, size_type>
@@ -127,13 +127,13 @@ namespace dftefe
        */
 
     private:
-      std::vector<size_type>              d_newAtomIdToEnrichmentIdOffset;
-      std::vector<std::vector<size_type>> d_overlappingEnrichmentIdsInCells;
-      std::vector<size_type>              d_enrichmentIdsInProcessor;
-      std::pair<size_type, size_type>     d_locallyOwnedEnrichmentIds;
-      std::vector<size_type>              d_ghostEnrichmentIds;
-      std::map<size_type, size_type>      d_enrichmentIdToOldAtomIdMap;
-      std::map<size_type, size_type>      d_enrichmentIdToQuantumIdMap;
+      std::vector<global_size_type>                     d_newAtomIdToEnrichmentIdOffset;
+      std::vector<std::vector<global_size_type>>        d_overlappingEnrichmentIdsInCells;
+      std::vector<size_type>                            d_enrichmentIdsInProcessor;
+      std::pair<global_size_type, global_size_type>     d_locallyOwnedEnrichmentIds;
+      std::vector<global_size_type>                     d_ghostEnrichmentIds;
+      std::map<global_size_type, size_type>             d_enrichmentIdToOldAtomIdMap;
+      std::map<global_size_type, size_type>             d_enrichmentIdToQuantumIdMap;
 
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace basis
