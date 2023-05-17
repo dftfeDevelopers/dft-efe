@@ -362,10 +362,33 @@ namespace dftefe
         size_type
         localGhostSize() const;
 
-        bool
+        /**
+         * @brief For a given globalId, returns whether it lies in any of the \p locally-owned-ranges
+         * and if true the index of the \p global-range it belongs to
+         * @param[in] globalId The input global index
+         * @returns A pair where:
+         * (a) First entry contains a boolean which is true if the \p globalId
+         * belongs to any of the \p locally-owned-ranges, or else is false.
+         * (b) Second entry contains the index of the \p global-range to which
+         * \p globaId belongs. This value is meaningful only if the first entry
+         * is true, or else its value is undefined.
+         */
+        std::pair<bool, size_type>
         inLocallyOwnedRanges(const global_size_type globalId) const;
 
-        bool
+        /**
+         * @brief For a given globalId, returns whether it belongs to the current processor's
+         * \p ghost-set and if true the index of the \p global-range it belongs
+         * to
+         * @param[in] globalId The input global index
+         * @returns A pair where:
+         * (a) First entry contains a boolean which is true if the \p globalId
+         * belongs to the \p ghost-set, or else is false.
+         * (b) Second entry contains the index of the \p global-range to which
+         * \p globaId belongs. This value is meaningful only if the first entry
+         * is true, or else its value is undefined.
+         */
+        std::pair<bool, size_type>
         isGhostEntry(const global_size_type globalId) const;
 
         size_type
@@ -377,7 +400,7 @@ namespace dftefe
         /**
          * @brief For a given global index, returns a pair containing the local index in the procesor
          * and the index of the \p global-range it belongs to
-         * param[in] globalId The input global index
+         * @param[in] globalId The input global index
          * @returns A pair where the first entry contains the local index in the procesor for \p globalId
          * and second entry contains the index of the \p global-range to which
          * it belongs.
