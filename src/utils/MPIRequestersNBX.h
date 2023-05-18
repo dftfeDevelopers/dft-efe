@@ -199,7 +199,7 @@ namespace dftefe
         /**
          * Requests for receiving requests.
          */
-        std::vector<MPIRequest> d_recvRequests;
+        std::vector<std::unique_ptr<MPI_Request>> d_recvRequests;
 
         //
         // request for barrier

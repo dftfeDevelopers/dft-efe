@@ -2023,24 +2023,32 @@ namespace dftefe
       {
         bool      found = false;
         size_type rangeIdSorted;
-
         MPIPatternP2PInternal::findRange(d_locallyOwnedRangesSorted,
                                          globalId,
                                          found,
                                          rangeIdSorted);
+        size_type rangeId = 0;
+        if (found)
+          rangeId = d_locallyOwnedRangesIdPermutation[rangeIdSorted];
 
-        return found;
+        std::pair<bool, size_type> returnValue = std::make_pair(found, rangeId);
+        return returnValue;
       }
 
       template <dftefe::utils::MemorySpace memorySpace>
-      bool
+      std::pair<bool, size_type>
       MPIPatternP2P<memorySpace>::isGhostEntry(
         const global_size_type globalId) const
       {
         bool      found = false;
         size_type localId;
         d_ghostIndicesOptimizedIndexSet.getPosition(globalId, localId, found);
-        return found;
+        size_type rangeId = 0;
+        if (found)
+          rangeId = d_ghostIndicesRangeId[localId];
+
+        std::pair<bool, size_type> returnValue = std::make_pair(found, rangeId);
+        return returnValue;
       }
 
       template <dftefe::utils::MemorySpace memorySpace>
