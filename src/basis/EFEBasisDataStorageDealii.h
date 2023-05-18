@@ -23,6 +23,19 @@
  * @author Avirup Sircar
  */
 
+#include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
+#include <utils/MemoryStorage.h>
+#include <basis/BasisDataStorage.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/EFEBasisDataStorage.h>
+#include <basis/EFEBasisManagerDealii.h>
+#include <basis/EFEBasisManager.h>
+#include <basis/LinearCellMappingDealii.h>
+#include <quadrature/QuadratureRuleGauss.h>
+#include <quadrature/QuadratureRuleGLL.h>
+#include <quadrature/QuadratureRuleAdaptive.h>
+
 #ifndef dftefeEFEBasisDataStorageDealii_h
 #define dftefeEFEBasisDataStorageDealii_h
 
@@ -165,7 +178,7 @@ namespace dftefe
             getQuadratureRuleContainer() const override;
 
             private:
-            bool                                              d_evaluateBasisData;
+            bool  d_evaluateBasisData;
             std::shared_ptr<const EFEBasisManagerDealii<dim>> d_efeBM;
             std::shared_ptr<const quadrature::QuadratureRuleContainer> d_quadratureRuleContainer;
             std::shared_ptr<Storage> d_basisQuadStorage;
@@ -181,6 +194,8 @@ namespace dftefe
             std::vector<size_type> d_cellStartIdsBasisGradientQuadStorage;
             std::vector<size_type> d_cellStartIdsBasisHessianQuadStorage;
             std::vector<size_type> d_cellStartIdsGradNiGradNj;
-        }
+        };
     } // end of namespace basis
 } //end of namespace dftefe
+#include <basis/EFEBasisDataStorageDealii.t.cpp>
+#endif

@@ -28,7 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
-#include <basis/BasisManager.h>
+#include <basis/FEBasisManager.h>
 #include <basis/TriangulationBase.h>
 #include <basis/FECellBase.h>
 #include <map>
@@ -78,7 +78,7 @@ namespace dftefe
         virtual std::vector<std::pair<global_size_type, global_size_type>>
         getLocallyOwnedRanges() const = 0;
 
-        virtual std::map< BasisIdAttribute basisIdAttribute , std::pair<global_size_type, global_size_type>>
+        virtual std::map< BasisIdAttribute , size_type>
         getLocallyOwnedRangeMap() const = 0;
 
         virtual size_type
@@ -128,13 +128,19 @@ namespace dftefe
 
         // Enrichment functions. The argument type is the processor local enriched ids.
         virtual double
-        getEnrichmentValue(size_type enrichmentId) const = 0;
+        getEnrichmentValue(const size_type cellId,
+          const size_type cellLocalEnrichmentId,
+          const dftefe::utils::Point & point) const = 0;
 
         virtual std::vector<double>
-        getEnrichmentDerivative(size_type enrichmentId) const = 0;
+        getEnrichmentDerivative( const size_type cellId,
+          const size_type cellLocalEnrichmentId,
+          const dftefe::utils::Point & point) const = 0;
 
         virtual std::vector<double>
-        getEnrichmentHessian(size_type enrichmentd) const = 0;
+        getEnrichmentHessian( const size_type cellId,
+          const size_type cellLocalEnrichmentId,
+          const dftefe::utils::Point & point) const = 0;
 
     }; // end of FEBasisManager
   }    // end of namespace basis

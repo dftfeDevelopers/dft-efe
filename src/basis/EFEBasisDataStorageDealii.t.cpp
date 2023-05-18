@@ -23,6 +23,26 @@
  * @author Avirup Sircar
  */
 
+#include <utils/Point.h>
+#include <utils/TypeConfig.h>
+#include <vector>
+#include <climits>
+#include <utils/Exceptions.h>
+#include <utils/MathFunctions.h>
+#include "DealiiConversions.h"
+#include <basis/TriangulationCellDealii.h>
+#include <deal.II/base/quadrature.h>
+#include <deal.II/base/quadrature_lib.h>
+#include <deal.II/fe/fe_values.h>
+#include <quadrature/QuadratureAttributes.h>
+#include <quadrature/QuadratureRule.h>
+#include <quadrature/QuadratureRuleContainer.h>
+#include <basis/AtomIdsPartition.h>
+#include <atoms/AtomSphericalDataContainer.h>
+#include <basis/EnrichmentIdsPartition.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
+
 namespace dftefe
 {
     namespace basis

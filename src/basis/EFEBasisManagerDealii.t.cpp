@@ -313,16 +313,29 @@ namespace dftefe
       return returnValue;
     }
 
-    std::map < BasisIdAttribute basisIdAttribute , std::pair<global_size_type, global_size_type> >
+    std::map < BasisIdAttribute basisIdAttribute , size_type >
     getLocallyOwnedRangeMap()
     {
-      std::map < BasisIdAttribute basisIdAttribute , std::pair<global_size_type, global_size_type> > returnValue;
+      std::map < BasisIdAttribute basisIdAttribute , size_type > returnValue;
 
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      std::pair<global_size_type, global_size_type> classicalRange = std::make_pair(startId, endId);
+      std::pair<global_size_type, global_size_type> enrichedRange = d_enrichmentIdsPartition->locallyOwnedEnrichmentIds();
       std::vector<std::pair<global_size_type, global_size_type>> locallyOwnedRangeVec(0);
       locallyOwnedRangeVec = getLocallyOwnedRanges();
-      returnValue[BasisIdAttribute::CLASSICAL] = locallyOwnedRangeVec[0];
-      returnValue[BasisIdAttribute::ENRICHED] =  locallyOwnedRangeVec[1];
 
+      if( classicalRange.first == locallyOwnedRangeVec[0].first)
+      {
+        returnValue[BasisIdAttribute::CLASSICAL] = 0;
+        returnValue[BasisIdAttribute::ENRICHED] = 1;
+      }
+      else
+      {
+        returnValue[BasisIdAttribute::CLASSICAL] = 1;
+        returnValue[BasisIdAttribute::ENRICHED] = 0;
+      }
       return returnValue;
     }
 
@@ -391,7 +404,6 @@ namespace dftefe
         "getBoundaryIds() in EFEBasisManagerDealii is not be implemented.");
       std::vector<size_type> vec;
       return vec;
-      //// implement this now ?
     }
 
     template <size_type dim>
@@ -491,6 +503,7 @@ namespace dftefe
     EFEBasisManagerDealii<dim>::getBasisCenters(
       std::map<global_size_type, utils::Point> &dofCoords) const
     {
+      // --------- CHANGE THIS ---------------
       // TODO if the creation of linear mapping is inefficient, then this has to
       // be improved
       std::map<global_size_type, dealii::Point<dim, double>> dealiiDofCoords;

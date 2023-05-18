@@ -198,7 +198,7 @@ namespace dftefe
                                                     d_feConstraintsDealiiOptMap;
       utils::mpi::MPIComm                           d_mpiComm;
       bool                                          d_isDistributed;
-      std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
+      std::vector<std::pair<global_size_type, global_size_type>> d_locallyOwnedRanges; // changed
       std::vector<size_type>                        d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;

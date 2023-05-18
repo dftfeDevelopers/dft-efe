@@ -40,6 +40,21 @@ namespace dftefe
               size_type                  dim>
     class EFEBasisHandler : public FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
     {
+      //
+      // typedefs
+      //
+    public:
+      using SizeTypeVector =
+        typename BasisHandler<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector;
+      using GlobalSizeTypeVector =
+        typename BasisHandler<ValueTypeBasisCoeff,
+                              memorySpace>::GlobalSizeTypeVector;
+      using LocalIndexIter       = typename SizeTypeVector::iterator;
+      using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
+      using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
+      using const_GlobalIndexIter =
+        typename GlobalSizeTypeVector::const_iterator;
+
     public:
       ~EFEBasisHandler() = default;
 
@@ -56,7 +71,7 @@ namespace dftefe
       getMPIPatternP2P(const std::string constraintsName) const = 0;
 
       virtual std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange(const std::string constraintsName) const = 0;
+      getLocallyOwnedRanges(const std::string constraintsName) const = 0;
 
       virtual const GlobalSizeTypeVector &
       getGhostIndices(const std::string constraintsName) const = 0;
@@ -71,7 +86,7 @@ namespace dftefe
       nGhost(const std::string constraintsName) const = 0;
 
       virtual bool
-      inLocallyOwnedRange(const global_size_type globalId,
+      inLocallyOwnedRanges(const global_size_type globalId,
                           const std::string      constraintsName) const = 0;
 
       virtual bool
@@ -104,30 +119,30 @@ namespace dftefe
       virtual size_type
       nCumulativeLocallyOwnedCellDofs() const = 0;
 
-      virtual FEBasisHandler::const_GlobalIndexIter
+      virtual EFEBasisHandler::const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(
         const std::string constraintsName) const = 0;
 
-      virtual FEBasisHandler::const_GlobalIndexIter
+      virtual EFEBasisHandler::const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsBegin(
         const size_type   cellId,
         const std::string constraintsName) const = 0;
 
-      virtual FEBasisHandler::const_GlobalIndexIter
+      virtual EFEBasisHandler::const_GlobalIndexIter
       locallyOwnedCellGlobalDofIdsEnd(
         const size_type   cellId,
         const std::string constraintsName) const = 0;
 
-      virtual FEBasisHandler::const_LocalIndexIter
+      virtual EFEBasisHandler::const_LocalIndexIter
       locallyOwnedCellLocalDofIdsBegin(
         const std::string constraintsName) const = 0;
 
-      virtual FEBasisHandler::const_LocalIndexIter
+      virtual EFEBasisHandler::const_LocalIndexIter
       locallyOwnedCellLocalDofIdsBegin(
         const size_type   cellId,
         const std::string constraintsName) const = 0;
 
-      virtual FEBasisHandler::const_LocalIndexIter
+      virtual EFEBasisHandler::const_LocalIndexIter
       locallyOwnedCellLocalDofIdsEnd(
         const size_type   cellId,
         const std::string constraintsName) const = 0;

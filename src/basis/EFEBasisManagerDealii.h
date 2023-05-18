@@ -28,7 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
-#include <basis/FEBasisManager.h>
+#include <basis/EFEBasisManager.h>
 #include <memory>
 #include <deal.II/fe/fe_q.h>
 
@@ -93,10 +93,10 @@ namespace dftefe
       size_type
       nLocalNodes() const override;
 
-      std::vector<std::pair<global_size_type, global_size_type>>
+      std::vector<std::pair<global_size_type , global_size_type>>
       getLocallyOwnedRanges() const override;
 
-      std::map<BasisIdAttribute,size_type>
+      std::map<BasisIdAttribute , size_type>
       getBasisIdAttributeRangeId() const override;
 
       global_size_type
@@ -161,13 +161,19 @@ namespace dftefe
 
       // Enrichment functions with dealii mesh. The enrichedid is the cell local id.
       double
-      getEnrichmentValue(size_type enrichmentId) const override;
+      getEnrichmentValue(const size_type cellId,
+          const size_type cellLocalEnrichmentId,
+          const dftefe::utils::Point & point) const override;
 
       std::vector<double>
-      getEnrichmentDerivative(size_type enrichmentId) const override;
+      getEnrichmentDerivative(const size_type cellId,
+          const size_type cellLocalEnrichmentId,
+          const dftefe::utils::Point & point) const override;
 
       std::vector<double>
-      getEnrichmentHessian(size_type enrichmentd) const override;
+      getEnrichmentHessian(const size_type cellId,
+          const size_type cellLocalEnrichmentId,
+          const dftefe::utils::Point & point) const override;
 
     private:
 
