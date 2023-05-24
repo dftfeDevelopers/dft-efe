@@ -175,6 +175,15 @@ namespace dftefe
           const size_type cellLocalEnrichmentId,
           const dftefe::utils::Point & point) const override;
 
+      std::vector<global_size_type>
+      getGhostEnrichmentIds() const override;
+
+      global_size_type
+      nGlobalClassicalNodes() const override;
+
+      global_size_type
+      nGlobalEnrichedNodes() const override;
+
     private:
 
       std::shared_ptr<const TriangulationBase> d_triangulation;

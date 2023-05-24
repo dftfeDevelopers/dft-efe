@@ -126,7 +126,7 @@ namespace dftefe
         virtual unsigned int
         getDim() const = 0;
 
-        // Enrichment functions. The argument type is the processor local enriched ids.
+        // Enrichment specific functions. 
         virtual double
         getEnrichmentValue(const size_type cellId,
           const size_type cellLocalEnrichmentId,
@@ -141,6 +141,18 @@ namespace dftefe
         getEnrichmentHessian( const size_type cellId,
           const size_type cellLocalEnrichmentId,
           const dftefe::utils::Point & point) const = 0;
+
+        virtual std::vector<global_size_type>
+        getGhostEnrichmentIds() const = 0;
+
+        virtual std::vector<global_size_type>
+        getGhostEnrichmentIds() const = 0;
+
+        virtual global_size_type
+        nGlobalClassicalNodes() const = 0;
+
+        virtual global_size_type
+        nGlobalEnrichedNodes() const = 0;
 
     }; // end of FEBasisManager
   }    // end of namespace basis

@@ -503,7 +503,6 @@ namespace dftefe
     EFEBasisManagerDealii<dim>::getBasisCenters(
       std::map<global_size_type, utils::Point> &dofCoords) const
     {
-      // --------- CHANGE THIS ---------------
       // TODO if the creation of linear mapping is inefficient, then this has to
       // be improved
       std::map<global_size_type, dealii::Point<dim, double>> dealiiDofCoords;
@@ -512,6 +511,14 @@ namespace dftefe
         mappingQ1, *(d_dofHandler.get()), dealiiDofCoords);
 
       convertToDftefePoint<dim>(dealiiDofCoords, dofCoords);
+
+      // add for the enrichment case 
+      std::pair<global_size_type, global_size_type> locallyOwnedEnrichmentIds 
+        = d_enrichmentIdsPartition->locallyOwnedEnrichmentIds();
+      
+      for (global_size_type i = locallyOwnedEnrichmentIds.first ; i <  locallyOwnedEnrichmentIds.second ; 
+            i++ )
+        dofCoords[i+d_dofHandler->n_dofs()] = d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i)];
     }
 
     template <size_type dim>
@@ -529,6 +536,7 @@ namespace dftefe
     }
 
     // Enrichment functions with dealii mesh. The enrichedid is the cell local id.
+    template <size_type dim>
     double
     getEnrichmentValue(
       const size_type cellId,
@@ -574,6 +582,7 @@ namespace dftefe
       return retValue;
     }
 
+    template <size_type dim>
     std::vector<double>
     getEnrichmentDerivative(
       const size_type cellId,
@@ -620,6 +629,7 @@ namespace dftefe
       return retValue;
     }
 
+    template <size_type dim>
     std::vector<double>
     getEnrichmentHessian(     
       const size_type cellId,
@@ -664,6 +674,27 @@ namespace dftefe
         "The requested cell does not have any enrichment ids overlapping with it.");
       }
       return retValue;
+    }
+
+    template <size_type dim>
+    std::vector<global_size_type>
+    getGhostEnrichmentIds() const
+    {
+      return d_enrichmentIdsPartition->ghostEnrichmentIds();
+    }
+
+    template <size_type dim>
+    global_size_type
+    EFEBasisManagerDealii<dim>::nGlobalClassicalNodes() const
+    {
+      return (d_dofHandler->n_dofs()) ;
+    }
+
+    template <size_type dim>
+    global_size_type
+    EFEBasisManagerDealii<dim>::nGlobalEnrichedNodes() const
+    {
+      return (d_enrichmentIdsPartition->nTotalEnrichmentIds()) ;
     }
 
   } // namespace basis

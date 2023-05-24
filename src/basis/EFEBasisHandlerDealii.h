@@ -107,7 +107,7 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;
 
-      std::pair<global_size_type, global_size_type>
+      std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRange(const std::string constraintsName) const override;
 
       size_type
@@ -124,11 +124,11 @@ namespace dftefe
       size_type
       nGhost(const std::string constraintsName) const override;
 
-      bool
-      inLocallyOwnedRange(const global_size_type globalId,
+      std::pair<bool, size_type>
+      inLocallyOwnedRanges(const global_size_type globalId,
                           const std::string constraintsName) const override;
 
-      bool
+      std::pair<bool, size_type>
       isGhostEntry(const global_size_type ghostId,
                    const std::string      constraintsName) const override;
 
