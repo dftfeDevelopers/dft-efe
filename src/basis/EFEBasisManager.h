@@ -78,8 +78,8 @@ namespace dftefe
         virtual std::vector<std::pair<global_size_type, global_size_type>>
         getLocallyOwnedRanges() const = 0;
 
-        virtual std::map< BasisIdAttribute , size_type>
-        getLocallyOwnedRangeMap() const = 0;
+        virtual std::map<BasisIdAttribute , size_type>
+        getBasisAttributeToRangeIdMap() const = 0;
 
         virtual size_type
         nLocalNodes() const = 0;
@@ -152,7 +152,7 @@ namespace dftefe
         nGlobalClassicalNodes() const = 0;
 
         virtual global_size_type
-        nGlobalEnrichedNodes() const = 0;
+        nGlobalEnrichmentNodes() const = 0;
 
     }; // end of FEBasisManager
   }    // end of namespace basis

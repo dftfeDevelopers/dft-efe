@@ -227,27 +227,26 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const
+    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
     {
       std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
-      for (auto i:basisIdAttributeVec )
-      {
-        if (i == CLASSICAL)
-        {
-          auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
-          global_size_type startId        = *(dealiiIndexSet.begin());
-          global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-          std::pair<global_size_type, global_size_type> classicalRange =
-            std::make_pair(startId, endId);
-          returnValue.push_back(classicalRange);
-        }
-        else
-        {
-          utils::throwException(
-            false,
-            "The basis attribute can be 'classical' only.");
-        }
-      }
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      std::pair<global_size_type, global_size_type> classicalRange =
+        std::make_pair(startId, endId);
+
+      returnValue.push_back(classicalRange);
+
+      return returnValue;
+    }
+
+    template <size_type dim>
+    std::map < BasisIdAttribute basisIdAttribute , size_type >
+    getBasisAttributeToRangeIdMap()
+    {
+      std::map < BasisIdAttribute basisIdAttribute , size_type > returnValue;
+      returnValue[BasisIdAttribute::CLASSICAL] = 0;
       return returnValue;
     }
 

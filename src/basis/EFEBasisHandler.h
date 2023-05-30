@@ -58,7 +58,7 @@ namespace dftefe
     public:
       ~EFEBasisHandler() = default;
 
-      bool
+      virtual bool
       isDistributed() const = 0;
 
       virtual const BasisManager &
@@ -70,7 +70,7 @@ namespace dftefe
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const = 0;
 
-      virtual std::pair<global_size_type, global_size_type>
+      virtual std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges(const std::string constraintsName) const = 0;
 
       virtual const GlobalSizeTypeVector &
@@ -85,11 +85,11 @@ namespace dftefe
       virtual size_type
       nGhost(const std::string constraintsName) const = 0;
 
-      virtual bool
+      virtual std::pair<bool, size_type>
       inLocallyOwnedRanges(const global_size_type globalId,
                           const std::string      constraintsName) const = 0;
 
-      virtual bool
+      virtual std::pair<bool, size_type>
       isGhostEntry(const global_size_type ghostId,
                    const std::string      constraintsName) const = 0;
 
@@ -146,6 +146,12 @@ namespace dftefe
       locallyOwnedCellLocalDofIdsEnd(
         const size_type   cellId,
         const std::string constraintsName) const = 0;
+
+      virtual void
+      getCellDofsLocalIds(
+        const size_type                      cellId,
+        const std::string            constraintsName,
+        std::vector<size_type>       &vecLocalNodeId) const = 0;
     };
 
   } // end of namespace basis

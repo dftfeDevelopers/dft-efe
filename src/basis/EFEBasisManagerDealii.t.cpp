@@ -48,23 +48,21 @@ namespace dftefe
           std::make_shared<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer),
         d_atomSymbolVec(atomSymbolVec),
         d_atomCoordinatesVec(atomCoordinatesVec),
-        d_fieldName(fieldName)
+        d_fieldName(fieldName),
+        d_comm(comm),
+        d_atomPartitionTolerance(atomPartitionTolerance)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
       reinit(triangulation, 
-        feOrder, 
-        atomPartitionTolerance,
-        comm);
+        feOrder);
     }
 
     template <size_type dim>
     void
     EFEBasisManagerDealii<dim>::reinit(
         std::shared_ptr<const TriangulationBase>     triangulation,
-        const size_type                              feOrder,
-        const double                                 atomPartitionTolerance,
-        const utils::mpi::MPIComm &                  comm)
+        const size_type                              feOrder)
     {
       // Create Classical FE dof_handler
       dealii::FE_Q<dim>                       feElem(feOrder);
@@ -186,8 +184,8 @@ namespace dftefe
         minbound,
         maxbound,
         cellVerticesVector,
-        atomPartitionTolerance,
-        comm );
+        d_atomPartitionTolerance,
+        d_comm );
 
       // Create enrichmentIdsPartition Object.
       d_enrichmentIdsPartition = make_shared<const enrichmentIdsPartition>(
@@ -199,7 +197,7 @@ namespace dftefe
         minbound,
         maxbound,
         cellVerticesVector,
-        comm );
+        d_comm );
 
       d_overlappingEnrichmentIdsInCells = d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
     }
@@ -297,6 +295,7 @@ namespace dftefe
       return (d_dofHandler->n_dofs() + d_enrichmentIdsPartition->nTotalEnrichmentIds()) ;
     }
 
+    template <size_type dim>
     std::vector<std::pair<global_size_type, global_size_type>>
     getLocallyOwnedRanges()
     {
@@ -313,8 +312,9 @@ namespace dftefe
       return returnValue;
     }
 
+    template <size_type dim>
     std::map < BasisIdAttribute basisIdAttribute , size_type >
-    getLocallyOwnedRangeMap()
+    getBasisAttributeToRangeIdMap()
     {
       std::map < BasisIdAttribute basisIdAttribute , size_type > returnValue;
 

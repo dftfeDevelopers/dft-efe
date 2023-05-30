@@ -77,59 +77,62 @@ namespace dftefe
       size_type
       nGlobalCells() const override;
       size_type
-      getFEOrder(size_type cellId) const;
+      getFEOrder(size_type cellId) const override;
 
       size_type
-      nCellDofs(size_type cellId) const;
+      nCellDofs(size_type cellId) const override;
 
       bool
-      isHPRefined() const;
+      isHPRefined() const override;
 
       size_type
-      nLocalNodes() const;
+      nLocalNodes() const override;
 
       std::vector<std::pair<global_size_type, global_size_type>>
-      getLocallyOwnedRanges(std::vector<basisIdAttribute> &basisIdAttributeVec) const;
+      getLocallyOwnedRanges() const override;
+
+      std::map<BasisIdAttribute , size_type>
+      getBasisAttributeToRangeIdMap() const override;
 
       global_size_type
-      nGlobalNodes() const;
+      nGlobalNodes() const override;
 
       std::vector<size_type>
-      getLocalNodeIds(size_type cellId) const;
+      getLocalNodeIds(size_type cellId) const override;
 
       std::vector<size_type>
-      getGlobalNodeIds() const;
+      getGlobalNodeIds() const override;
 
       void
       getCellDofsGlobalIds(
         size_type                      cellId,
-        std::vector<global_size_type> &vecGlobalNodeId) const;
+        std::vector<global_size_type> &vecGlobalNodeId) const override;
 
       std::vector<size_type>
-      getBoundaryIds() const;
+      getBoundaryIds() const override;
 
       FECellIterator
-      beginLocallyOwnedCells();
+      beginLocallyOwnedCells() override;
 
       FECellIterator
-      endLocallyOwnedCells();
+      endLocallyOwnedCells() override;
 
       const_FECellIterator
-      beginLocallyOwnedCells() const;
+      beginLocallyOwnedCells() const override;
 
       const_FECellIterator
-      endLocallyOwnedCells() const;
+      endLocallyOwnedCells() const override;
 
       FECellIterator
-      beginLocalCells();
+      beginLocalCells() override;
       FECellIterator
-      endLocalCells();
+      endLocalCells() override;
       const_FECellIterator
-      beginLocalCells() const;
+      beginLocalCells() const override;
       const_FECellIterator
-      endLocalCells() const;
+      endLocalCells() const override;
       unsigned int
-      getDim() const;
+      getDim() const override;
 
       virtual size_type
       nCumulativeLocallyOwnedCellDofs() const override;

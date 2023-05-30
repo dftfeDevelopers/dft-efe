@@ -92,7 +92,7 @@ namespace dftefe
           const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
 
       virtual void
-      deleteBasisData() = 0;
+      deleteBasisData(const QuadratureRuleAttributes  &quadratureRuleAttributes) = 0;
 
 
 
@@ -115,14 +115,17 @@ namespace dftefe
       // functions to get data for a basis function on all quad points in a cell
       virtual Storage
       getBasisDataInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const = 0;
       virtual Storage
       getBasisGradientDataInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const = 0;
       virtual Storage
       getBasisHessianDataInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
         const size_type                 cellId,
         const size_type                 basisId) const = 0;
 
@@ -130,53 +133,61 @@ namespace dftefe
       // cell
       virtual Storage
       getBasisDataInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
       virtual Storage
       getBasisGradientDataInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
       virtual Storage
       getBasisHessianDataInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
         const size_type                 cellId) const = 0;
 
       virtual Storage
-      getJxWInCell(const size_type                 cellId) const = 0;
+      getJxWInCell(
+        const QuadratureRuleAttributes  &quadratureRuleAttributes,
+        const size_type                 cellId) const = 0;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
       virtual const Storage &
-      getBasisDataInAllCells() const = 0;
+      getBasisDataInAllCells(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
       virtual const Storage &
-      getBasisGradientDataInAllCells() const = 0;
+      getBasisGradientDataInAllCells(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
       virtual const Storage &
-      getBasisHessianDataInAllCells() const = 0;
+      getBasisHessianDataInAllCells(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
 
       virtual const Storage &
-      getJxWInAllCells() const = 0;
+      getJxWInAllCells(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
 
       // get overlap of two basis functions in a cell
       virtual Storage
-      getBasisOverlap(const size_type                 cellId,
+      getBasisOverlap(const QuadratureRuleAttributes  &quadratureRuleAttributes,
+                      const size_type                 cellId,
                       const size_type                 basisId1,
                       const size_type                 basisId2) const = 0;
 
       // get overlap of all the basis functions in a cell
       virtual Storage
-      getBasisOverlapInCell(const size_type                 cellId) const = 0;
+      getBasisOverlapInCell(const QuadratureRuleAttributes  &quadratureRuleAttributes,
+                      const size_type                 cellId) const = 0;
 
       // get the laplace operator in a cell
       virtual Storage
-      getBasisGradNiGradNjInCell(const size_type                 cellId) const = 0;
+      getBasisGradNiGradNjInCell(const QuadratureRuleAttributes  &quadratureRuleAttributes,
+                      const size_type                 cellId) const = 0;
 
       // get laplace operator in all cells
       virtual const Storage &
-      getBasisGradNiGradNjInAllCells() const = 0;
+      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
 
       // get overlap of all the basis functions in all cells
       virtual const Storage &
-      getBasisOverlapInAllCells() const = 0;
+      getBasisOverlapInAllCells(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
 
       virtual const quadrature::QuadratureRuleContainer &
-      getQuadratureRuleContainer() const = 0;
+      getQuadratureRuleContainer(const QuadratureRuleAttributes  &quadratureRuleAttributes) const = 0;
 
     }; // end of FEBasisDataStorage
   }    // end of namespace basis

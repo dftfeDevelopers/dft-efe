@@ -108,7 +108,7 @@ namespace dftefe
       getMPIPatternP2P(const std::string constraintsName) const override;
 
       std::vector<std::pair<global_size_type, global_size_type>>
-      getLocallyOwnedRange(const std::string constraintsName) const override;
+      getLocallyOwnedRanges(const std::string constraintsName) const override;
 
       size_type
       nLocallyOwned(const std::string constraintsName) const override;
@@ -184,6 +184,12 @@ namespace dftefe
       locallyOwnedCellLocalDofIdsEnd(
         const size_type   cellId,
         const std::string constraintsName) const override;
+
+      void
+      getCellDofsLocalIds(
+        const size_type                      cellId,
+        const std::string            constraintsName,
+        std::vector<size_type>       &vecLocalNodeId) const override;
 
       //
       // dealii specific functions

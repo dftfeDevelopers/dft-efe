@@ -69,7 +69,7 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) override;
+            const size_type                          feOrder) override;
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -97,7 +97,7 @@ namespace dftefe
       getLocallyOwnedRanges() const override;
 
       std::map<BasisIdAttribute , size_type>
-      getBasisIdAttributeRangeId() const override;
+      getBasisAttributeToRangeIdMap() const override;
 
       global_size_type
       nGlobalNodes() const override;
@@ -117,27 +117,27 @@ namespace dftefe
       getBoundaryIds() const override;
 
       FEBasisManager::FECellIterator
-      beginLocallyOwnedCells() override;;
+      beginLocallyOwnedCells() override;
 
       FEBasisManager::FECellIterator
-      endLocallyOwnedCells() override;;
+      endLocallyOwnedCells() override;
 
       FEBasisManager::const_FECellIterator
-      beginLocallyOwnedCells() const override;;
+      beginLocallyOwnedCells() const override;
 
       FEBasisManager::const_FECellIterator
-      endLocallyOwnedCells() const override;;
+      endLocallyOwnedCells() const override;
 
       FEBasisManager::FECellIterator
-      beginLocalCells() override;;
+      beginLocalCells() override;
       FEBasisManager::FECellIterator
-      endLocalCells() override;;
+      endLocalCells() override;
       FEBasisManager::const_FECellIterator
-      beginLocalCells() const override;;
+      beginLocalCells() const override;
       FEBasisManager::const_FECellIterator
-      endLocalCells() const override;;
+      endLocalCells() const override;
       unsigned int
-      getDim() const override;;
+      getDim() const override;
 
       size_type
       nCumulativeLocallyOwnedCellDofs() const override;
@@ -182,7 +182,7 @@ namespace dftefe
       nGlobalClassicalNodes() const override;
 
       global_size_type
-      nGlobalEnrichedNodes() const override;
+      nGlobalEnrichmentNodes() const override;
 
     private:
 
@@ -201,6 +201,8 @@ namespace dftefe
       std::vector<utils::Point>            d_atomCoordinatesVec;
       std::string                          d_fieldName;
       std::shared_ptr<atoms::sphericalData> d_sphericalData;
+      const double                          d_atomPartitionTolerance;
+      const utils::mpi::MPIComm             d_comm;
 
 
     }; // end of EFEBasisManagerDealii

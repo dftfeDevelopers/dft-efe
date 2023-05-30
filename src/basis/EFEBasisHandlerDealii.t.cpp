@@ -316,7 +316,7 @@ namespace dftefe
           d_efeBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
       size_type iConstraint = 0;
-      size_type classicalAttributeId = d_efeBMDealii->getBasisIdAttributeRangeId()[BasisIdAttribute::CLASSICAL];
+      size_type classicalAttributeId = d_efeBMDealii->getBasisAttributeToRangeIdMap()[BasisIdAttribute::CLASSICAL];
       for (auto it = feConstraintsDealiiMap.begin();
            it != feConstraintsDealiiMap.end();
            ++it)
@@ -488,7 +488,7 @@ namespace dftefe
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
           d_efeBMDealii.get(), feConstraintsDealiiMap, dealiiMatrixFree);
 
-      size_type classicalAttributeId = d_efeBMDealii->getBasisIdAttributeRangeId()[BasisIdAttribute::CLASSICAL];
+      size_type classicalAttributeId = d_efeBMDealii->getBasisAttributeToRangeIdMap()[BasisIdAttribute::CLASSICAL];
       size_type iConstraint = 0;
       for (auto it = feConstraintsDealiiMap.begin();
            it != feConstraintsDealiiMap.end();
@@ -517,7 +517,7 @@ namespace dftefe
           //
           // populate d_mpiPatternP2PMap
           //
-
+          //
           // create std vector of sizes
           std::vector<size_type> locallyOwnedRangesSizeVec(0);
           for (auto i:d_locallyOwnedRanges)
@@ -985,5 +985,25 @@ namespace dftefe
     {
       return *d_efeBMDealii;
     }
+
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    EFEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getCellDofsLocalIds(
+      const size_type                      cellId,
+      const std::string            constraintsName,
+      std::vector<size_type>       &vecLocalNodeId) const
+    {
+      std::vector<global_size_type> vecGlobalNodeId(0);
+      std::vector<size_type> vecLocalNodeId(0);
+      d_efeBMDealii->getCellDofsGlobalIds(cellId, vecGlobalNodeId);
+      for(auto i:vecGlobalNodeId)
+      {
+        vecLocalNodeId.push_back(globalToLocalIndex(i, constraintsName));
+      }
+    }
+
   } // end of namespace basis
 } // end of namespace dftefe
