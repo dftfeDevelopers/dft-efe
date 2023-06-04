@@ -2017,7 +2017,7 @@ namespace dftefe
 
 
       template <dftefe::utils::MemorySpace memorySpace>
-      bool
+      std::pair<bool, size_type>
       MPIPatternP2P<memorySpace>::inLocallyOwnedRanges(
         const global_size_type globalId) const
       {

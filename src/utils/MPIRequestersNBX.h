@@ -30,6 +30,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIRequestersBase.h>
 #include <vector>
+#include <memory>
 #include <set>
 namespace dftefe
 {
@@ -194,7 +195,7 @@ namespace dftefe
          * Buffers for receiving requests.
          *
          */
-        std::vector<int> d_recvBuffers;
+        std::vector<std::unique_ptr<int>> d_recvBuffers;
 
         /**
          * Requests for receiving requests.

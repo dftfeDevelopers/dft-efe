@@ -17,6 +17,7 @@ set(DFT-EFE-BASIS-SOURCES
 	FEConstraintsBase.cpp
 	FEBasisDataStorageDealii.cpp
 	FEBasisHandlerDealii.cpp
+	FEBasisManagerDealii.cpp
 	AtomIdsPartition.cpp
 	EnrichmentIdsPartition.cpp)
 
