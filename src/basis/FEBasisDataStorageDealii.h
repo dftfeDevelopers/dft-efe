@@ -82,13 +82,13 @@ namespace dftefe
       void
       evaluateBasisData(
               const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-              std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
+              std::vector<std::shared_ptr<const quadrature::QuadratureRule>> quadratureRuleVec,
               const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) override;
 
       void
       evaluateBasisData(
           const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-          std::shared_ptr<const QuadratureRule>  baseQuadratureRuleAdaptive,
+          std::shared_ptr<const quadrature::QuadratureRule>  baseQuadratureRuleAdaptive,
           std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> & functions,
           const std::vector<double> & tolerances,
           const std::vector<double> & integralThresholds,

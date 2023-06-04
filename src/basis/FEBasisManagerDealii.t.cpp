@@ -227,7 +227,7 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
+    FEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
     {
       std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
       auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
@@ -242,10 +242,10 @@ namespace dftefe
     }
 
     template <size_type dim>
-    std::map < BasisIdAttribute basisIdAttribute , size_type >
+    std::map < BasisIdAttribute, size_type >
     getBasisAttributeToRangeIdMap()
     {
-      std::map < BasisIdAttribute basisIdAttribute , size_type > returnValue;
+      std::map < BasisIdAttribute , size_type > returnValue;
       returnValue[BasisIdAttribute::CLASSICAL] = 0;
       return returnValue;
     }

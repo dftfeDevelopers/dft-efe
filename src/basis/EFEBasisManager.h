@@ -145,9 +145,6 @@ namespace dftefe
         virtual std::vector<global_size_type>
         getGhostEnrichmentIds() const = 0;
 
-        virtual std::vector<global_size_type>
-        getGhostEnrichmentIds() const = 0;
-
         virtual global_size_type
         nGlobalClassicalNodes() const = 0;
 

@@ -445,8 +445,9 @@ namespace dftefe
       return d_ghostEnrichmentIds;
     }
 
+    template <unsigned int dim>
     size_type
-    getAtomId(const global_size_type enrichmentId) const
+    EnrichmentIdsPartition<dim>::getAtomId(const global_size_type enrichmentId) const
     {
       auto it = d_enrichmentIdToOldAtomIdMap.find(enrichmentId);
       utils::throwException<utils::InvalidArgument>(
@@ -455,8 +456,9 @@ namespace dftefe
       return it->second;
     }
 
+    template <unsigned int dim>
     EnrichmentIdAttribute
-    getEnrichmentIdAttribute(const global_size_type enrichmentId) const
+    EnrichmentIdsPartition<dim>::getEnrichmentIdAttribute(const global_size_type enrichmentId) const
     {
       auto it = d_enrichmentIdToQuantumIdMap.find(enrichmentId);
       utils::throwException<utils::InvalidArgument>(
@@ -468,14 +470,16 @@ namespace dftefe
       return retStruct;
     }
 
+    template <unsigned int dim>
     size_type
-    nLocallyOwnedEnrichmentIds() const
+    EnrichmentIdsPartition<dim>::nLocallyOwnedEnrichmentIds() const
     {
       return ( d_locallyOwnedEnrichmentIds.second - d_locallyOwnedEnrichmentIds.first);
     }
 
+    template <unsigned int dim>
     global_size_type
-    nTotalEnrichmentIds() const
+    EnrichmentIdsPartition<dim>::nTotalEnrichmentIds() const
     {
       return d_newAtomIdToEnrichmentIdOffset.back();
     }

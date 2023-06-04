@@ -179,7 +179,7 @@ namespace dftefe
       }
 
       // Create atomIdsPartition Object.
-      d_atomIdsPartition = make_shared<const atomIdsPartition>(
+      d_atomIdsPartition = std::make_shared<const atomIdsPartition<dim>>(
         d_atomCoordinatesVec,
         minbound,
         maxbound,
@@ -188,7 +188,7 @@ namespace dftefe
         d_comm );
 
       // Create enrichmentIdsPartition Object.
-      d_enrichmentIdsPartition = make_shared<const enrichmentIdsPartition>(
+      d_enrichmentIdsPartition = std::make_shared<const enrichmentIdsPartition<dim>>(
         d_atomSphericalDataContainer,
         d_atomIdsPartition,
         d_atomSymbolVec,

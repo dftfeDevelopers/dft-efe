@@ -31,6 +31,12 @@
 #include <basis/EFEBasisManager.h>
 #include <memory>
 #include <deal.II/fe/fe_q.h>
+#include <basis/AtomIdsPartition.h>
+#include <atoms/AtomSphericalDataContainer.h>
+#include <basis/EnrichmentIdsPartition.h>
+#include <utils/Exceptions.h>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 
 /// dealii includes
 #include <deal.II/dofs/dof_handler.h>
@@ -193,14 +199,14 @@ namespace dftefe
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
-      std::shared_ptr<const EnrichmentIdsPartition> d_enrichmentIdsPartition;
-      std::shared_ptr<const AtomIdsPartition> d_atomIdsPartition;
+      std::shared_ptr<const EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;
+      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::vector<std::vector<size_type>> d_overlappingEnrichmentIdsInCells;
       std::shared_ptr<const atoms::AtomSphericalDataContainer> d_atomSphericalDataContainer;
       std::vector<std::string>             d_atomSymbolVec;
       std::vector<utils::Point>            d_atomCoordinatesVec;
       std::string                          d_fieldName;
-      std::shared_ptr<atoms::sphericalData> d_sphericalData;
+      std::shared_ptr<atoms::SphericalData> d_sphericalData;
       const double                          d_atomPartitionTolerance;
       const utils::mpi::MPIComm             d_comm;
 

@@ -43,7 +43,7 @@ namespace dftefe
   {
     namespace mpi
     {
-      namespace MPIPatternP2PInternal
+      namespace 
       {
         template <typename T>
         bool
@@ -802,7 +802,7 @@ namespace dftefe
             }
         }
 
-      } // namespace MPIPatternP2PInternal
+      } // namespace 
 
 #ifdef DFTEFE_WITH_MPI
 
@@ -920,23 +920,23 @@ namespace dftefe
 
         // check if all processors have the same number of d_nGlobalRanges
         // If not, throw an exception
-        MPIPatternP2PInternal::checkNumRanges(d_nGlobalRanges, d_mpiComm);
+        checkNumRanges(d_nGlobalRanges, d_mpiComm);
 
         //
         // store d_allOwnedRanges
         d_allOwnedRanges.clear();
-        MPIPatternP2PInternal::getAllOwnedRanges(d_locallyOwnedRanges,
+        getAllOwnedRanges(d_locallyOwnedRanges,
                                                  d_allOwnedRanges,
                                                  d_mpiComm);
 
         // store d_globalRanges
-        MPIPatternP2PInternal::getGlobalRangesStartAndEnd(d_allOwnedRanges,
+        getGlobalRangesStartAndEnd(d_allOwnedRanges,
                                                           d_globalRanges);
 
         // check assumptions on global ranges
-        MPIPatternP2PInternal::checkGlobalRanges(d_globalRanges);
+        checkGlobalRanges(d_globalRanges);
 
-        MPIPatternP2PInternal::checkOwnedRangesAssumptions(d_locallyOwnedRanges,
+        checkOwnedRangesAssumptions(d_locallyOwnedRanges,
                                                            d_allOwnedRanges,
                                                            d_myRank);
 
@@ -955,20 +955,20 @@ namespace dftefe
           }
 
         // sort d_locallyOwnedRanges
-        MPIPatternP2PInternal::arrangeRanges(
+        arrangeRanges(
           d_locallyOwnedRanges,
           true,  // compareByFirst
           false, // do not ignore empty ranges
           d_locallyOwnedRangesSorted,
           d_locallyOwnedRangesIdPermutation);
 
-        MPIPatternP2PInternal::checkGhostIndicesAssumptions(
+        checkGhostIndicesAssumptions(
           d_ghostIndices, d_locallyOwnedRangesSorted, d_myRank);
 
         // get the global range id for each ghost index
         // throws an exception if any ghost index is not present in
         // any of the global ranges.
-        MPIPatternP2PInternal::getGhostIndicesRangeId(d_ghostIndices,
+        getGhostIndicesRangeId(d_ghostIndices,
                                                       d_globalRanges,
                                                       d_ghostIndicesRangeId);
 
@@ -995,7 +995,7 @@ namespace dftefe
 
         std::map<size_type, std::vector<size_type>>
           ghostProcIdToLocalGhostIndices;
-        MPIPatternP2PInternal::getGhostProcIdToLocalGhostIndicesMap(
+        getGhostProcIdToLocalGhostIndicesMap(
           d_ghostIndices,
           d_allOwnedRanges,
           d_ghostIndicesRangeId,
@@ -1394,7 +1394,7 @@ namespace dftefe
 
         d_globalRanges = d_locallyOwnedRanges;
 
-        MPIPatternP2PInternal::checkOwnedRangesAssumptions(d_locallyOwnedRanges,
+        checkOwnedRangesAssumptions(d_locallyOwnedRanges,
                                                            d_allOwnedRanges,
                                                            d_myRank);
 
@@ -1536,7 +1536,7 @@ namespace dftefe
           }
 
         d_globalRanges = d_locallyOwnedRanges;
-        MPIPatternP2PInternal::checkOwnedRangesAssumptions(d_locallyOwnedRanges,
+        checkOwnedRangesAssumptions(d_locallyOwnedRanges,
                                                            d_allOwnedRanges,
                                                            d_myRank);
 
@@ -1555,7 +1555,7 @@ namespace dftefe
           }
 
         // sort d_locallyOwnedRanges
-        MPIPatternP2PInternal::arrangeRanges(
+        arrangeRanges(
           d_locallyOwnedRanges,
           true,  // compareByFirst
           false, // do not ignore empty ranges
@@ -1838,7 +1838,7 @@ namespace dftefe
           {
             bool      found;
             size_type rangeId;
-            MPIPatternP2PInternal::findRange(
+            findRange(
               d_locallyOwnedRangesCumulativePairs, localId, found, rangeId);
             if (found)
               {
@@ -1886,7 +1886,7 @@ namespace dftefe
           {
             bool      found;
             size_type rangeId;
-            MPIPatternP2PInternal::findRange(
+            findRange(
               d_locallyOwnedRangesCumulativePairs, localId, found, rangeId);
             if (found)
               {
@@ -1936,7 +1936,7 @@ namespace dftefe
         bool      found       = false;
         size_type rangeId, rangeIdSorted;
 
-        MPIPatternP2PInternal::findRange(d_locallyOwnedRangesSorted,
+        findRange(d_locallyOwnedRangesSorted,
                                          globalId,
                                          found,
                                          rangeIdSorted);
@@ -1978,7 +1978,7 @@ namespace dftefe
         bool                            found = false;
         size_type                       rangeId, rangeIdSorted;
 
-        MPIPatternP2PInternal::findRange(d_locallyOwnedRangesSorted,
+        findRange(d_locallyOwnedRangesSorted,
                                          globalId,
                                          found,
                                          rangeIdSorted);
@@ -2023,7 +2023,7 @@ namespace dftefe
       {
         bool      found = false;
         size_type rangeIdSorted;
-        MPIPatternP2PInternal::findRange(d_locallyOwnedRangesSorted,
+        findRange(d_locallyOwnedRangesSorted,
                                          globalId,
                                          found,
                                          rangeIdSorted);

@@ -608,7 +608,7 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::pair<global_size_type, global_size_type>
+    std::vector<std::pair<global_size_type, global_size_type>>
     FEBasisHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getLocallyOwnedRanges(const std::string constraintsName) const
     {
@@ -967,7 +967,6 @@ namespace dftefe
       std::vector<size_type>       &vecLocalNodeId) const
     {
       std::vector<global_size_type> vecGlobalNodeId(0);
-      std::vector<size_type> vecLocalNodeId(0);
       d_feBMDealii->getCellDofsGlobalIds(cellId, vecGlobalNodeId);
       for(auto i:vecGlobalNodeId)
       {

@@ -32,6 +32,7 @@
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/fe/fe_values.h>
 #include <quadrature/QuadratureAttributes.h>
+#include <basis/ParentToChildCellsManagerDealii.h>
 namespace dftefe
 {
   namespace basis
@@ -907,13 +908,13 @@ namespace dftefe
               size_type          dim>
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       FEBasisDataStorageDealii(
-        std::shared_ptr<const BasisManager> feBM,
+        std::shared_ptr<const BasisManager> feBM)
         //        std::vector<std::shared_ptr<Constraints<ValueTypeBasisCoeff,
         //        memorySpace>>>
         //          constraintsVec,
-        const std::vector<quadrature::QuadratureRuleAttributes>
-          &                                 quadratureRuleAttribuesVec,
-        const QuadAttrToBasisStorageAttrMap quadAttrToBasisStorageAttrMap)
+        // const std::vector<quadrature::QuadratureRuleAttributes>
+        //   &                                 quadratureRuleAttributesVec,
+        // const QuadAttrToBasisStorageAttrMap quadAttrToBasisStorageAttrMap
       : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
     {
@@ -923,7 +924,7 @@ namespace dftefe
         d_feBM != nullptr,
         " Could not cast the FEBasisManager to FEBasisManagerDealii in FEBasisDataStorageDealii");
       //      const size_type numConstraints  = constraintsVec.size();
-      const size_type numQuadRuleType = quadratureRuleAttribuesVec.size();
+      // const size_type numQuadRuleType = quadratureRuleAttributesVec.size();
       std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler =
         d_feBM->getDoFHandler();
       const size_type numLocallyOwnedCells = d_feBM->nLocallyOwnedCells();
@@ -1069,7 +1070,7 @@ namespace dftefe
                   const quadrature::QuadratureRuleAttributes & quadratureRuleAttributes,
                   const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)            
       {
-          d_quadratureRuleAttributes = quadratureRuleAttribues;
+          d_quadratureRuleAttributes = quadratureRuleAttributes;
           d_evaluateBasisData = true;
           /**
           * @note We assume a linear mapping from the reference cell
@@ -1078,9 +1079,9 @@ namespace dftefe
           LinearCellMappingDealii<dim> linearCellMappingDealii;
 
           size_type num1DQuadPoints =
-              quadratureRuleAttribues.getNum1DPoints();
+              quadratureRuleAttributes.getNum1DPoints();
           quadrature::QuadratureFamily quadFamily =
-              quadratureRuleAttribues.getQuadratureFamily();
+              quadratureRuleAttributes.getQuadratureFamily();
 
           if (quadFamily == quadrature::QuadratureFamily::GAUSS)
           {
@@ -1089,7 +1090,7 @@ namespace dftefe
                   dim, num1DQuadPoints);
               d_quadratureRuleContainer =
                   std::make_shared<quadrature::QuadratureRuleContainer>(
-                  quadratureRuleAttribues,
+                  quadratureRuleAttributes,
                   quadratureRule,
                   d_feBM->getTriangulation(),
                   linearCellMappingDealii);
@@ -1101,7 +1102,7 @@ namespace dftefe
                   dim, num1DQuadPoints);
               d_quadratureRuleContainer =
                   std::make_shared<quadrature::QuadratureRuleContainer>(
-                  quadratureRuleAttribues,
+                  quadratureRuleAttributes,
                   quadratureRule,
                   d_feBM->getTriangulation(),
                   linearCellMappingDealii);
@@ -1222,7 +1223,7 @@ namespace dftefe
               std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
               const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
       {
-          d_quadratureRuleAttributes = quadratureRuleAttribues;
+          d_quadratureRuleAttributes = quadratureRuleAttributes;
           d_evaluateBasisData = true;
           /**
           * @note We assume a linear mapping from the reference cell
@@ -1231,7 +1232,7 @@ namespace dftefe
           LinearCellMappingDealii<dim> linearCellMappingDealii;
 
           quadrature::QuadratureFamily quadFamily =
-              quadratureRuleAttribues.getQuadratureFamily();
+              quadratureRuleAttributes.getQuadratureFamily();
 
           if (quadFamily == quadrature::QuadratureFamily::GAUSS_VARIABLE ||
               quadFamily == quadrature::QuadratureFamily::GLL_VARIABLE ||
@@ -1353,10 +1354,10 @@ namespace dftefe
       FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       evaluateBasisData(
               const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-              std::vector<std::shared_ptr<const QuadratureRule>> quadratureRuleVec,
+              std::vector<std::shared_ptr<const quadrature::QuadratureRule>> quadratureRuleVec,
               const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
       {
-          d_quadratureRuleAttributes = quadratureRuleAttribues;
+          d_quadratureRuleAttributes = quadratureRuleAttributes;
           d_evaluateBasisData = true;
           /**
           * @note We assume a linear mapping from the reference cell
@@ -1364,18 +1365,18 @@ namespace dftefe
           */
           LinearCellMappingDealii<dim> linearCellMappingDealii;
 
-          storeQuadRealPointsBool |=
-              basisStorageAttributesBoolMap
-              .find(BasisStorageAttributes::StoreQuadRealPoints)
-              ->second;
+          // storeQuadRealPointsBool |=
+          //     basisStorageAttributesBoolMap
+          //     .find(BasisStorageAttributes::StoreQuadRealPoints)
+          //     ->second;
           quadrature::QuadratureFamily quadFamily =
-              quadratureRuleAttribues.getQuadratureFamily();
+              quadratureRuleAttributes.getQuadratureFamily();
 
           if (quadFamily == quadrature::QuadratureFamily::GAUSS_VARIABLE ||
               quadFamily == quadrature::QuadratureFamily::GLL_VARIABLE)
               d_quadratureRuleContainer =
                   std::make_shared<quadrature::QuadratureRuleContainer>(
-                  quadratureRuleAttribues,
+                  quadratureRuleAttributes,
                   quadratureRuleVec,
                   d_feBM->getTriangulation(),
                   linearCellMappingDealii);
@@ -1462,7 +1463,7 @@ namespace dftefe
                                                       dim>(d_feBM,
                                                           basisGradNiGradNj,
                                                           quadratureRuleAttributes,
-                                                          quadratureRuleContainer);
+                                                          d_quadratureRuleContainer);
               d_basisGradNiGradNj = basisGradNiGradNj;
           }
 
@@ -1494,7 +1495,7 @@ namespace dftefe
       FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       evaluateBasisData(
               const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-              std::shared_ptr<const QuadratureRule>  baseQuadratureRuleAdaptive,
+              std::shared_ptr<const quadrature::QuadratureRule>  baseQuadratureRuleAdaptive,
               std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> & functions,
               const std::vector<double> & tolerances,
               const std::vector<double> & integralThresholds,
@@ -1502,28 +1503,27 @@ namespace dftefe
               const unsigned int         maxRecursion,
               const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
       {
-          d_quadratureRuleAttributes = quadratureRuleAttribues;
+          d_quadratureRuleAttributes = quadratureRuleAttributes;
           d_evaluateBasisData = true;
           /**
           * @note We assume a linear mapping from the reference cell
           * to the real cell.
           */
           LinearCellMappingDealii<dim> linearCellMappingDealii;
-          std::shared_ptr<ParentToChildCellsManagerBase> parentToChildCellsManagerDealii = 
-              std::make_shared<parentToChildCellsManagerDealii<dim>>();
+          ParentToChildCellsManagerDealii<dim> parentToChildCellsManagerDealii;
 
           quadrature::QuadratureFamily quadFamily =
-              quadratureRuleAttribues.getQuadratureFamily();
+              quadratureRuleAttributes.getQuadratureFamily();
 
           if (quadFamily == quadrature::QuadratureFamily::ADAPTIVE)
           {
               d_quadratureRuleContainer =
                   std::make_shared<quadrature::QuadratureRuleContainer>(
-                  quadratureRuleAttribues,
+                  quadratureRuleAttributes,
                   baseQuadratureRuleAdaptive,
                   d_feBM->getTriangulation(),
                   linearCellMappingDealii,
-                  *(parentToChildCellsManagerDealii),
+                  parentToChildCellsManagerDealii,
                   functions,
                   tolerances,
                   integralThresholds,
@@ -1613,7 +1613,7 @@ namespace dftefe
                                                       dim>(d_feBM,
                                                           basisGradNiGradNj,
                                                           quadratureRuleAttributes,
-                                                          quadratureRuleContainer);
+                                                          d_quadratureRuleContainer);
               d_basisGradNiGradNj = basisGradNiGradNj;
           }
 
@@ -1667,7 +1667,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()"); 
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given."); 
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)->second,
@@ -1686,7 +1686,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");  
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given."); 
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second,
@@ -1705,7 +1705,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()"); 
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");  
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreHessian)->second,
@@ -1725,7 +1725,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()"); 
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");  
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)->second,
@@ -1746,7 +1746,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");  
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");  
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)->second,
@@ -1779,7 +1779,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()"); 
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");  
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second,
@@ -1812,7 +1812,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");   
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");   
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreHessian)->second,
@@ -1845,7 +1845,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");   
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");  
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)->second,
@@ -1989,7 +1989,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()"); 
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second,
@@ -2009,7 +2009,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");  
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");    
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second,
@@ -2041,7 +2041,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");   
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");     
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second,
@@ -2068,7 +2068,7 @@ namespace dftefe
       deleteBasisData(const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes)
       {
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given."); 
           utils::throwException(
               (d_basisQuadStorage).use_count() == 1,
@@ -2153,9 +2153,9 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");  
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");              
-          return (d_quadratureRuleContainer);
+          return *d_quadratureRuleContainer;
       }
 
       template <typename ValueTypeBasisData,
@@ -2170,7 +2170,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()"); 
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");   
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second,
@@ -2200,7 +2200,7 @@ namespace dftefe
                 d_evaluateBasisData,
                 "Cannot call function before calling evaluateBasisData()");   
           utils::throwException<utils::InvalidArgument>(
-                d_quadratureRuleAttributes == quadratureRuleAttribues,
+                d_quadratureRuleAttributes == quadratureRuleAttributes,
                 "Incorrect quadratureRuleAttributes given.");   
           utils::throwException(
               d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second,
