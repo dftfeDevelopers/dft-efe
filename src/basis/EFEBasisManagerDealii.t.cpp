@@ -39,6 +39,8 @@ namespace dftefe
         std::shared_ptr<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer,
         const size_type                              feOrder,
         const double                                 atomPartitionTolerance,
+        const double                                 polarAngleTolerance,
+        const double                                 cutoffTolerance,
         const std::vector<std::string> &             atomSymbolVec,
         const std::vector<utils::Point> &            atomCoordinatesVec,
         const std::string                            fieldName,
@@ -49,7 +51,9 @@ namespace dftefe
         d_atomCoordinatesVec(atomCoordinatesVec),
         d_fieldName(fieldName),
         d_comm(comm),
-        d_atomPartitionTolerance(atomPartitionTolerance)
+        d_atomPartitionTolerance(atomPartitionTolerance),
+        d_polarAngleTolerance(polarAngleTolerance),
+        d_cutoffTolerance(cutoffTolerance)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
@@ -550,7 +554,6 @@ namespace dftefe
       {
         if(d_overlappingEnrichmentIdsInCells[cellId].size() > cellLocalEnrichmentId)
         {
-          double  polarAngleTolerance = 0; //Change it
           size_type globalEnrichmentId = d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId];
           size_type atomId = d_enrichmentIdsPartition->getAtomId(globalEnrichmentId);
           size_type qNumberId = 
@@ -566,7 +569,7 @@ namespace dftefe
               d_fieldName, 
               qNumbers));
           d_sphericalData->initSpline();
-          retValue = d_sphericalData->getValue<dim>(point, origin, polarAngleTolerance);
+          retValue = d_sphericalData->getValue<dim>(point, origin, d_polarAngleTolerance);
         }
         else
         {
@@ -596,8 +599,6 @@ namespace dftefe
       {
         if(d_overlappingEnrichmentIdsInCells[cellId].size() > cellLocalEnrichmentId)
         {
-          double  polarAngleTolerance = 0; //Change it
-          double  cutoffTolerance = 0; //Change it
           size_type globalEnrichmentId = d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId];
           size_type atomId = d_enrichmentIdsPartition->getAtomId(globalEnrichmentId);
           size_type qNumberId = 
@@ -613,7 +614,7 @@ namespace dftefe
               d_fieldName, 
               qNumbers));
           d_sphericalData->initSpline();
-          retValue = d_sphericalData->getGradientValue<dim>(point, origin, polarAngleTolerance, cutoffTolerance);
+          retValue = d_sphericalData->getGradientValue<dim>(point, origin, d_polarAngleTolerance, d_cutoffTolerance);
         }
         else
         {
@@ -643,8 +644,6 @@ namespace dftefe
       {
         if(d_overlappingEnrichmentIdsInCells[cellId].size() > cellLocalEnrichmentId)
         {
-          double  polarAngleTolerance = 0; //Change it
-          double  cutoffTolerance = 0; //Change it
           size_type globalEnrichmentId = d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId];
           size_type atomId = d_enrichmentIdsPartition->getAtomId(globalEnrichmentId);
           size_type qNumberId = 
@@ -660,7 +659,7 @@ namespace dftefe
               d_fieldName, 
               qNumbers));
           d_sphericalData->initSpline();
-          retValue = d_sphericalData->getHessianValue<dim>(point, origin, polarAngleTolerance, cutoffTolerance);
+          retValue = d_sphericalData->getHessianValue<dim>(point, origin, d_polarAngleTolerance, d_cutoffTolerance);
         }
         else
         {
