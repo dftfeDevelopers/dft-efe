@@ -26,7 +26,7 @@
 #ifndef dftefeEFEBasisHandler_h
 #define dftefeEFEBasisHandler_h
 
-#include <basis/BasisHandler.h>
+#include <basis/FEBasisHandler.h>
 namespace dftefe
 {
   namespace basis
@@ -38,7 +38,8 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class EFEBasisHandler : public FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
+    class EFEBasisHandler
+      : public FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
     {
       //
       // typedefs

@@ -44,8 +44,7 @@ namespace dftefe
         const std::string                            fieldName,
         const utils::mpi::MPIComm &                  comm)
       : d_isHPRefined(false),
-        d_atomSphericalDataContainer(
-          std::make_shared<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer),
+        d_atomSphericalDataContainer(atomSphericalDataContainer),
         d_atomSymbolVec(atomSymbolVec),
         d_atomCoordinatesVec(atomCoordinatesVec),
         d_fieldName(fieldName),
@@ -144,6 +143,8 @@ namespace dftefe
       // This implies we pass mpi communicator here also.
       // So we only work with local enrichement ids which are created.
 
+      std::vector<utils::Point> cellVertices(0);
+      std::vector<std::vector<utils::Point>> cellVerticesVector(0);
       cell = d_dofHandler->begin_active();
 
       for (; cell != endc; cell++)
@@ -179,7 +180,7 @@ namespace dftefe
       }
 
       // Create atomIdsPartition Object.
-      d_atomIdsPartition = std::make_shared<const atomIdsPartition<dim>>(
+      d_atomIdsPartition = std::make_shared<const AtomIdsPartition<dim>>(
         d_atomCoordinatesVec,
         minbound,
         maxbound,
@@ -188,7 +189,7 @@ namespace dftefe
         d_comm );
 
       // Create enrichmentIdsPartition Object.
-      d_enrichmentIdsPartition = std::make_shared<const enrichmentIdsPartition<dim>>(
+      d_enrichmentIdsPartition = std::make_shared<const EnrichmentIdsPartition<dim>>(
         d_atomSphericalDataContainer,
         d_atomIdsPartition,
         d_atomSymbolVec,
@@ -297,7 +298,7 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    getLocallyOwnedRanges()
+    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
     {
       std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
       auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
@@ -313,10 +314,10 @@ namespace dftefe
     }
 
     template <size_type dim>
-    std::map < BasisIdAttribute basisIdAttribute , size_type >
-    getBasisAttributeToRangeIdMap()
+    std::map < BasisIdAttribute , size_type >
+    EFEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
     {
-      std::map < BasisIdAttribute basisIdAttribute , size_type > returnValue;
+      std::map < BasisIdAttribute , size_type > returnValue;
 
       auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
       global_size_type startId        = *(dealiiIndexSet.begin());
@@ -370,6 +371,7 @@ namespace dftefe
       size_type                      cellId,
       std::vector<global_size_type> &vecGlobalNodeId) const
     {
+      std::vector<global_size_type> vecGlobalClassicalNodeId;
       vecGlobalNodeId.resize(nCellDofs(cellId), 0);
       vecGlobalClassicalNodeId.resize(d_dofHandler->get_fe().n_dofs_per_cell(), 0);
 
@@ -538,13 +540,13 @@ namespace dftefe
     // Enrichment functions with dealii mesh. The enrichedid is the cell local id.
     template <size_type dim>
     double
-    getEnrichmentValue(
+    EFEBasisManagerDealii<dim>::getEnrichmentValue(
       const size_type cellId,
       const size_type cellLocalEnrichmentId,
       const dftefe::utils::Point & point) const
     {
       double retValue = 0;
-      if(!= d_overlappingEnrichmentIdsInCells[cellId].empty())
+      if(! d_overlappingEnrichmentIdsInCells[cellId].empty())
       {
         if(d_overlappingEnrichmentIdsInCells[cellId].size() > cellLocalEnrichmentId)
         {
@@ -556,15 +558,15 @@ namespace dftefe
           std::string atomSymbol = d_atomSymbolVec[atomId];
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           std::vector<int> qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol, d_fieldName);
-          std::allocator<atoms::sphericalData> alloc;
+          std::allocator<atoms::SphericalData> alloc;
           d_sphericalData =
-            std::allocate_shared<atoms::sphericalData> 
+            std::allocate_shared<atoms::SphericalData> 
             (alloc, d_atomSphericalDataContainer->getSphericalData(
               atomSymbol,
               d_fieldName, 
-              qNumbers[qNumberId]));
+              qNumbers));
           d_sphericalData->initSpline();
-          retValue = d_sphericalData->getValue(point, origin, polarAngleTolerance);
+          retValue = d_sphericalData->getValue<dim>(point, origin, polarAngleTolerance);
         }
         else
         {
@@ -584,13 +586,13 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<double>
-    getEnrichmentDerivative(
+    EFEBasisManagerDealii<dim>::getEnrichmentDerivative(
       const size_type cellId,
       const size_type cellLocalEnrichmentId,
       const dftefe::utils::Point & point) const 
     {
       std::vector<double> retValue(0);
-      if(!= d_overlappingEnrichmentIdsInCells[cellId].empty())
+      if(! d_overlappingEnrichmentIdsInCells[cellId].empty())
       {
         if(d_overlappingEnrichmentIdsInCells[cellId].size() > cellLocalEnrichmentId)
         {
@@ -603,15 +605,15 @@ namespace dftefe
           std::string atomSymbol = d_atomSymbolVec[atomId];
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           std::vector<int> qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol, d_fieldName);
-          std::allocator<atoms::sphericalData> alloc;
+          std::allocator<atoms::SphericalData> alloc;
           d_sphericalData =
-            std::allocate_shared<atoms::sphericalData> 
+            std::allocate_shared<atoms::SphericalData> 
             (alloc, d_atomSphericalDataContainer->getSphericalData(
               atomSymbol,
               d_fieldName, 
-              qNumbers[qNumberId]));
+              qNumbers));
           d_sphericalData->initSpline();
-          retValue = d_sphericalData->getGradientValue(point, origin, polarAngleTolerance, cutoffTolerance);
+          retValue = d_sphericalData->getGradientValue<dim>(point, origin, polarAngleTolerance, cutoffTolerance);
         }
         else
         {
@@ -631,13 +633,13 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<double>
-    getEnrichmentHessian(     
+    EFEBasisManagerDealii<dim>::getEnrichmentHessian(     
       const size_type cellId,
       const size_type cellLocalEnrichmentId,
       const dftefe::utils::Point & point) const
     {
       std::vector<double> retValue(0);
-      if(!= d_overlappingEnrichmentIdsInCells[cellId].empty())
+      if(! d_overlappingEnrichmentIdsInCells[cellId].empty())
       {
         if(d_overlappingEnrichmentIdsInCells[cellId].size() > cellLocalEnrichmentId)
         {
@@ -650,15 +652,15 @@ namespace dftefe
           std::string atomSymbol = d_atomSymbolVec[atomId];
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           std::vector<int> qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol, d_fieldName);
-          std::allocator<atoms::sphericalData> alloc;
+          std::allocator<atoms::SphericalData> alloc;
           d_sphericalData =
-            std::allocate_shared<atoms::sphericalData> 
+            std::allocate_shared<atoms::SphericalData> 
             (alloc, d_atomSphericalDataContainer->getSphericalData(
               atomSymbol,
               d_fieldName, 
-              qNumbers[qNumberId]));
+              qNumbers));
           d_sphericalData->initSpline();
-          retValue = d_sphericalData->getHessianValue(point, origin, polarAngleTolerance, cutoffTolerance);
+          retValue = d_sphericalData->getHessianValue<dim>(point, origin, polarAngleTolerance, cutoffTolerance);
         }
         else
         {
@@ -678,7 +680,7 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<global_size_type>
-    getGhostEnrichmentIds() const
+    EFEBasisManagerDealii<dim>::getGhostEnrichmentIds() const
     {
       return d_enrichmentIdsPartition->ghostEnrichmentIds();
     }
@@ -692,7 +694,7 @@ namespace dftefe
 
     template <size_type dim>
     global_size_type
-    EFEBasisManagerDealii<dim>::nGlobalEnrichedNodes() const
+    EFEBasisManagerDealii<dim>::nGlobalEnrichmentNodes() const
     {
       return (d_enrichmentIdsPartition->nTotalEnrichmentIds()) ;
     }

@@ -997,7 +997,6 @@ namespace dftefe
       std::vector<size_type>       &vecLocalNodeId) const
     {
       std::vector<global_size_type> vecGlobalNodeId(0);
-      std::vector<size_type> vecLocalNodeId(0);
       d_efeBMDealii->getCellDofsGlobalIds(cellId, vecGlobalNodeId);
       for(auto i:vecGlobalNodeId)
       {

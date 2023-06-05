@@ -46,7 +46,7 @@ namespace dftefe
 {
     namespace basis
     {
-        namespace EFEBasisDataStorgeDealiiInternal
+        namespace EFEBasisDataStorageDealiiInternal
         {
             //This class stores the enriched FE basis data for a h-refined
             // FE mesh and uniform or non-uniform quadrature Gauss/variable/Adaptive
@@ -71,6 +71,7 @@ namespace dftefe
                 typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                 &                                         basisOverlap,
                 const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+                std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
                 std::vector<size_type> &                    nQuadPointsInCell,
                 std::vector<size_type> &cellStartIdsBasisQuadStorage,
                 std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
@@ -141,6 +142,8 @@ namespace dftefe
                 size_type basisValuesSize = 0;
                 size_type basisOverlapSize = 0;
 
+                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
+
                 for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
                     ++locallyOwnedCellIter)
                 {
@@ -196,7 +199,7 @@ namespace dftefe
                 basisOverlapTmp.resize(basisOverlapSize,
                                     ValueTypeBasisData(0));
 
-                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
+                locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 std::shared_ptr<FECellDealii<dim>> feCellDealii =
                 std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
                 utils::throwException(
@@ -208,7 +211,7 @@ namespace dftefe
                 auto basisHessianQuadStorageTmpIter = basisHessianQuadStorageTmp.begin();
                 auto basisOverlapTmpIter = basisOverlapTmp.begin();
 
-                size_type cellIndex           = 0;
+                cellIndex           = 0;
                 size_type cumulativeQuadPoints = 0;
                 for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
                     ++locallyOwnedCellIter)
@@ -221,6 +224,9 @@ namespace dftefe
                     feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
                     *locallyOwnedCellIter);
                     dealiiFEValues.reinit(feCellDealii->getDealiiFECellIter());
+
+                    std::vector<dftefe::utils::Point> quadRealPointsVec =
+                        quadratureRuleContainer->getCellRealPoints(cellIndex);
 
                     if (basisStorageAttributesBoolMap
                         .find(BasisStorageAttributes::StoreValues)
@@ -350,7 +356,7 @@ namespace dftefe
                                 {
                                     auto shapeGrad =
                                     efeBM->getEnrichmentDerivative
-                                        (cellIndex, jNode - classicalDofsPerCell, 
+                                        (cellIndex, iNode - classicalDofsPerCell, 
                                         quadRealPointsVec[qPoint]);
                                     // enriched gradient function call
                                     for (unsigned int iDim = 0; iDim < dim; iDim++)
@@ -404,7 +410,7 @@ namespace dftefe
                                 {
                                     auto shapeHessian =
                                     efeBM->getEnrichmentHessian
-                                        (cellIndex, jNode - classicalDofsPerCell, 
+                                        (cellIndex, iNode - classicalDofsPerCell, 
                                         quadRealPointsVec[qPoint]);                                    
                                     // enriched hessian function
                                     for (unsigned int iDim = 0; iDim < dim; iDim++)
@@ -471,7 +477,8 @@ namespace dftefe
                 std::shared_ptr<
                 typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                 &                                         basisGradNiGradNj,
-                const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes)
+                const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+                std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer)
 
             {
                 const quadrature::QuadratureFamily quadratureFamily =
@@ -524,6 +531,7 @@ namespace dftefe
                 size_type cellIndex = 0;
                 size_type basisStiffnessSize = 0;
 
+                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
                     ++locallyOwnedCellIter)
                 {
@@ -539,14 +547,14 @@ namespace dftefe
                 basisStiffnessSize);
                 basisGradNiGradNjTmp.resize(basisStiffnessSize,
                                             ValueTypeBasisData(0));
-                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
+                locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 std::shared_ptr<FECellDealii<dim>> feCellDealii =
                 std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
                 utils::throwException(
                 feCellDealii != nullptr,
                 "Dynamic casting of FECellBase to FECellDealii not successful");
                 auto      basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
-                size_type cellIndex                = 0;
+                cellIndex                = 0;
                 size_type cumulativeQuadPoints = 0;
                 for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
                     ++locallyOwnedCellIter)
@@ -559,13 +567,9 @@ namespace dftefe
                     feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
                     *locallyOwnedCellIter);
                     dealiiFEValues.reinit(feCellDealii->getDealiiFECellIter());
-                    //
-                    // NOTE: For a h-refined (i.e., uniform FE order) mesh with the same
-                    // quadraure rule in all elements, the classical FE basis values
-                    // remain the same across as in the reference cell (unit
-                    // n-dimensional cell). Thus, to optimize on memory we only store
-                    // the classical FE basis values on the first cell
-                    //
+
+                    std::vector<dftefe::utils::Point> quadRealPointsVec =
+                        quadratureRuleContainer->getCellRealPoints(cellIndex);
 
                     for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                     {
@@ -642,7 +646,7 @@ namespace dftefe
             }
 
             template <typename ValueTypeBasisData,
-                      utils::MemorySpace memorySpace    
+                      utils::MemorySpace memorySpace,    
                       size_type         dim>
             void
             storeValuesHRefinedAdaptiveQuad(
@@ -668,7 +672,7 @@ namespace dftefe
                 const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
             {
                 // Assert if QuadFamily is not having variable quadpoints in each cell
-                const quuadrature::QuadratureFamily quadratureFamily = 
+                const quadrature::QuadratureFamily quadratureFamily = 
                     quadratureRuleAttributes.getQuadratureFamily();
                 if((quadratureFamily != quadrature::QuadratureFamily::GAUSS_VARIABLE)||
                     (quadratureFamily != quadrature::QuadratureFamily::GLL_VARIABLE) ||
@@ -715,6 +719,7 @@ namespace dftefe
                 size_type basisOverlapSize = 0;
                 size_type nQuadPointInCell = 0;
 
+                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
                     ++locallyOwnedCellIter)
                 {
@@ -791,7 +796,7 @@ namespace dftefe
                 auto      basisOverlapTmpIter = basisOverlapTmp.begin();
 
                 // Init cell iters and storage iters                
-                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
+                locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 std::shared_ptr<FECellDealii<dim>> feCellDealii =
                 std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
                 utils::throwException(
@@ -852,7 +857,6 @@ namespace dftefe
                         .find(BasisStorageAttributes::StoreValues)
                         ->second)
                     {
-                        d_dofHandler->get_fe().n_dofs_per_cell();
                         cellStartIdsBasisQuadStorage[cellIndex] =
                         cumulativeQuadPoints * dofsPerCell;
                         for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
@@ -978,7 +982,7 @@ namespace dftefe
                                 {
                                     auto shapeGrad =
                                     efeBM->getEnrichmentDerivative
-                                        (cellIndex, jNode - classicalDofsPerCell, 
+                                        (cellIndex, iNode - classicalDofsPerCell, 
                                         quadRealPointsVec[qPoint]);
                                     // enriched gradient function call
                                     for (unsigned int iDim = 0; iDim < dim; iDim++)
@@ -1032,7 +1036,7 @@ namespace dftefe
                                 {
                                     auto shapeHessian =
                                     efeBM->getEnrichmentHessian
-                                        (cellIndex, jNode - classicalDofsPerCell, 
+                                        (cellIndex, iNode - classicalDofsPerCell, 
                                         quadRealPointsVec[qPoint]);                                    
                                     // enriched hessian function
                                     for (unsigned int iDim = 0; iDim < dim; iDim++)
@@ -1138,6 +1142,7 @@ namespace dftefe
                 size_type cellIndex = 0;
                 size_type basisStiffnessSize = 0;
 
+                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
                     ++locallyOwnedCellIter)
                 {
@@ -1153,7 +1158,7 @@ namespace dftefe
                 basisGradNiGradNjTmp.resize(basisStiffnessSize,
                                             ValueTypeBasisData(0));
 
-                auto locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
+                locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
                 std::shared_ptr<FECellDealii<dim>> feCellDealii =
                 std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
                 utils::throwException(
@@ -1161,7 +1166,7 @@ namespace dftefe
                 "Dynamic casting of FECellBase to FECellDealii not successful");
 
                 auto      basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
-                size_type cellIndex                = 0;
+                cellIndex                = 0;
 
                 // get the dealii FiniteElement object
                 std::shared_ptr<const dealii::DoFHandler<dim>> dealiiDofHandler =
@@ -1197,6 +1202,9 @@ namespace dftefe
                     feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
                     *locallyOwnedCellIter);
                     dealiiFEValues.reinit(feCellDealii->getDealiiFECellIter());
+
+                    std::vector<dftefe::utils::Point> quadRealPointsVec =
+                        quadratureRuleContainer->getCellRealPoints(cellIndex);
 
                     for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                     {
@@ -1271,7 +1279,7 @@ namespace dftefe
                 basisGradNiGradNj->data(),
                 basisGradNiGradNjTmp.data());
             }
-        } // End of efebasisdatastorageinternal
+        } // End of Efebasisdatastorageinternal
 
 
         template <typename ValueTypeBasisData,
@@ -1388,6 +1396,7 @@ namespace dftefe
                 basisHessianQuadStorage,
                 basisOverlap,
                 quadratureRuleAttributes,
+                d_quadratureRuleContainer,
                 nQuadPointsInCell,
                 cellStartIdsBasisQuadStorage,
                 cellStartIdsBasisGradientQuadStorage,
@@ -1436,7 +1445,7 @@ namespace dftefe
                     storeGradNiNjHRefinedSameQuadEveryCell<ValueTypeBasisData,
                                                         memorySpace,
                                                         dim>(
-                    d_efeBM, basisGradNiNj, quadratureRuleAttributes);
+                    d_efeBM, basisGradNiNj, quadratureRuleAttributes, d_quadratureRuleContainer);
 
                 d_basisGradNiGradNj = basisGradNiNj;
             }
