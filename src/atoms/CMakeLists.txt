@@ -12,6 +12,7 @@ set(DFT-EFE-ATOMS-SOURCES
     AtomSphericalData.cpp
     AtomSphericalDataContainer.cpp
     BoostAutoDiff.cpp
+    AtomSevereFunction.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})

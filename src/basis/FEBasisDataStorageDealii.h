@@ -70,31 +70,39 @@ namespace dftefe
 
       void
       evaluateBasisData(
-          const quadrature::QuadratureRuleAttributes & quadratureRuleAttributes,
-          const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) override;
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        override;
 
       void
       evaluateBasisData(
-          const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-          std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
-          const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) override;
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                                            quadratureRuleContainer,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        override;
 
       void
       evaluateBasisData(
-              const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-              std::vector<std::shared_ptr<const quadrature::QuadratureRule>> quadratureRuleVec,
-              const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) override;
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        std::vector<std::shared_ptr<const quadrature::QuadratureRule>>
+                                            quadratureRuleVec,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        override;
 
       void
       evaluateBasisData(
-          const quadrature::QuadratureRuleAttributes &  quadratureRuleAttributes,
-          std::shared_ptr<const quadrature::QuadratureRule>  baseQuadratureRuleAdaptive,
-          std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> & functions,
-          const std::vector<double> & tolerances,
-          const std::vector<double> & integralThresholds,
-          const double               smallestCellVolume,
-          const unsigned int         maxRecursion,
-          const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) override;
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        std::shared_ptr<const quadrature::QuadratureRule>
+          baseQuadratureRuleAdaptive,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+          &                                 functions,
+        const std::vector<double> &         tolerances,
+        const std::vector<double> &         integralThresholds,
+        const double                        smallestCellVolume,
+        const unsigned int                  maxRecursion,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        override;
 
 
       // void
@@ -102,7 +110,8 @@ namespace dftefe
       //   std::shared_ptr<const quadrature::QuadratureRuleContainer>
       //                                       quadratureRuleContainer,
       //   const QuadratureRuleAttributes &    quadratureRuleAttributes,
-      //   const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj) override;
+      //   const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj)
+      //   override;
 
       void
       deleteBasisData(
@@ -214,24 +223,25 @@ namespace dftefe
                                    &quadratureRuleAttributes) const override;
 
     private:
-    bool  d_evaluateBasisData;
-    std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBM;
-    std::shared_ptr<const quadrature::QuadratureRuleContainer> d_quadratureRuleContainer;
-    const QuadratureRuleAttributes d_quadratureRuleAttributes;
-    const BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
-    std::shared_ptr<Storage> d_basisQuadStorage;
-    std::shared_ptr<Storage> d_JxWStorage;
-    std::shared_ptr<Storage> d_basisGradNiGradNj;
-    std::shared_ptr<Storage> d_basisGradientQuadStorage;
-    std::shared_ptr<Storage> d_basisHessianQuadStorage;
-    std::shared_ptr<Storage> d_basisOverlap;
-    std::vector<size_type> d_dofsInCell;
-    std::vector<size_type> d_cellStartIdsBasisOverlap;
-    std::vector<size_type> d_nQuadPointsIncell;
-    std::vector<size_type> d_cellStartIdsBasisQuadStorage;
-    std::vector<size_type> d_cellStartIdsBasisGradientQuadStorage;
-    std::vector<size_type> d_cellStartIdsBasisHessianQuadStorage;
-    std::vector<size_type> d_cellStartIdsGradNiGradNj;
+      bool                                             d_evaluateBasisData;
+      std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBM;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                                          d_quadratureRuleContainer;
+      const QuadratureRuleAttributes      d_quadratureRuleAttributes;
+      const BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
+      std::shared_ptr<Storage>            d_basisQuadStorage;
+      std::shared_ptr<Storage>            d_JxWStorage;
+      std::shared_ptr<Storage>            d_basisGradNiGradNj;
+      std::shared_ptr<Storage>            d_basisGradientQuadStorage;
+      std::shared_ptr<Storage>            d_basisHessianQuadStorage;
+      std::shared_ptr<Storage>            d_basisOverlap;
+      std::vector<size_type>              d_dofsInCell;
+      std::vector<size_type>              d_cellStartIdsBasisOverlap;
+      std::vector<size_type>              d_nQuadPointsIncell;
+      std::vector<size_type>              d_cellStartIdsBasisQuadStorage;
+      std::vector<size_type> d_cellStartIdsBasisGradientQuadStorage;
+      std::vector<size_type> d_cellStartIdsBasisHessianQuadStorage;
+      std::vector<size_type> d_cellStartIdsGradNiGradNj;
 
     }; // end of FEBasisDataStorageDealii
   }    // end of namespace basis

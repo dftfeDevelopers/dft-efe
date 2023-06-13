@@ -219,8 +219,9 @@ namespace dftefe
     // {
     //   auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
     //   global_size_type startId        = *(dealiiIndexSet.begin());
-    //   global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-    //   std::pair<global_size_type, global_size_type> returnValue =
+    //   global_size_type endId = startId +
+    //   d_dofHandler->n_locally_owned_dofs(); std::pair<global_size_type,
+    //   global_size_type> returnValue =
     //     std::make_pair(startId, endId);
     //   return returnValue;
     // }
@@ -242,10 +243,10 @@ namespace dftefe
     }
 
     template <size_type dim>
-    std::map < BasisIdAttribute, size_type >
+    std::map<BasisIdAttribute, size_type>
     getBasisAttributeToRangeIdMap()
     {
-      std::map < BasisIdAttribute , size_type > returnValue;
+      std::map<BasisIdAttribute, size_type> returnValue;
       returnValue[BasisIdAttribute::CLASSICAL] = 0;
       return returnValue;
     }

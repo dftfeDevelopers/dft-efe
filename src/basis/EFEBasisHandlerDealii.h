@@ -126,7 +126,7 @@ namespace dftefe
 
       std::pair<bool, size_type>
       inLocallyOwnedRanges(const global_size_type globalId,
-                          const std::string constraintsName) const override;
+                           const std::string constraintsName) const override;
 
       std::pair<bool, size_type>
       isGhostEntry(const global_size_type ghostId,
@@ -187,9 +187,9 @@ namespace dftefe
 
       void
       getCellDofsLocalIds(
-        const size_type                      cellId,
-        const std::string            constraintsName,
-        std::vector<size_type>       &vecLocalNodeId) const override;
+        const size_type         cellId,
+        const std::string       constraintsName,
+        std::vector<size_type> &vecLocalNodeId) const override;
 
       //
       // dealii specific functions
@@ -201,11 +201,12 @@ namespace dftefe
         std::string,
         std::shared_ptr<
           const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
-                                                    d_feConstraintsDealiiOptMap;
-      utils::mpi::MPIComm                           d_mpiComm;
-      bool                                          d_isDistributed;
-      std::vector<std::pair<global_size_type, global_size_type>> d_locallyOwnedRanges; // changed
-      std::vector<size_type>                        d_locallyOwnedCellStartIds;
+                          d_feConstraintsDealiiOptMap;
+      utils::mpi::MPIComm d_mpiComm;
+      bool                d_isDistributed;
+      std::vector<std::pair<global_size_type, global_size_type>>
+                             d_locallyOwnedRanges; // changed
+      std::vector<size_type> d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 

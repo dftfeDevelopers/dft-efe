@@ -37,7 +37,8 @@ namespace dftefe
   namespace basis
   {
     // add attribute to the classical and enriched ids for locallyOwnedRanges()
-    enum class BasisIdAttribute{
+    enum class BasisIdAttribute
+    {
       CLASSICAL,
       ENRICHED
     };
@@ -89,7 +90,7 @@ namespace dftefe
       virtual std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const = 0;
 
-      virtual std::map<BasisIdAttribute , size_type>
+      virtual std::map<BasisIdAttribute, size_type>
       getBasisAttributeToRangeIdMap() const = 0;
 
       virtual size_type

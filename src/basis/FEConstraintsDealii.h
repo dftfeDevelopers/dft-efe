@@ -82,12 +82,12 @@ namespace dftefe
       void
       copyConstraintsData(
         const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
-        const size_type                              classicalId) override;
+        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
+        const size_type classicalId) override;
       void
       populateConstraintsData(
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
-        const size_type                              classicalId) override;
+        const size_type                               classicalId) override;
 
 
       void

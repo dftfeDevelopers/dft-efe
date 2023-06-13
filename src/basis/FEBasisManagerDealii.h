@@ -91,7 +91,7 @@ namespace dftefe
       std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const override;
 
-      std::map<BasisIdAttribute , size_type>
+      std::map<BasisIdAttribute, size_type>
       getBasisAttributeToRangeIdMap() const override;
 
       global_size_type

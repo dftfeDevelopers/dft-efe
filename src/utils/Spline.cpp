@@ -39,8 +39,8 @@ namespace dftefe
     // spline implementation
     // -----------------------
 
-      // default constructor: set boundary condition to be zero curvature
-      // at both ends, i.e. natural splines
+    // default constructor: set boundary condition to be zero curvature
+    // at both ends, i.e. natural splines
     Spline::Spline()
       : d_type(cspline)
       , d_left(second_deriv)
@@ -52,20 +52,19 @@ namespace dftefe
       ;
     }
     Spline::Spline(const std::vector<double> &X,
-            const std::vector<double> &Y,
-            spline_type                type,
-            bool                       make_monotonic,
-            bd_type                    left,
-            double                     left_value,
-            bd_type                    right,
-            double                     right_value)
+                   const std::vector<double> &Y,
+                   spline_type                type,
+                   bool                       make_monotonic,
+                   bd_type                    left,
+                   double                     left_value,
+                   bd_type                    right,
+                   double                     right_value)
       : d_type(type)
       , d_left(left)
       , d_right(right)
       , d_left_value(left_value)
       , d_right_value(right_value)
-      , d_made_monotonic(
-          false) // false correct here: make_monotonic() sets it
+      , d_made_monotonic(false) // false correct here: make_monotonic() sets it
     {
       this->set_points(X, Y, d_type);
       if (d_made_monotonic)

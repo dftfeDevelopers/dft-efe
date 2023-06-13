@@ -504,13 +504,14 @@ namespace dftefe
 
 
           // Hadamard product for inp and JxW
-          //      hadamardProduct(numCumulativeDofsQuadCellsInBlock,
-          //                      numComponents,
-          //                      inp.data(),
-          //                      jxwStorage.data() +
-          //                      quadRuleContainer.getCellQuadStartId[cellStartId],
-          //                      inpJxW.begin(),
-          //                      linAlgOpContext);
+          linearAlgebra::blasLapack::hadamardProduct(
+            numCumulativeDofsQuadCellsInBlock,
+            numComponents,
+            inp.data(),
+            jxwStorage.data() +
+              quadRuleContainer.getCellQuadStartId(cellStartId),
+            inpJxW.begin(),
+            linAlgOpContext);
 
           // TODO check if these are right ?? Why is the B Transposed
           std::vector<linearAlgebra::blasLapack::Op> transA(

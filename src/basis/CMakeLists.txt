@@ -21,6 +21,7 @@ set(DFT-EFE-BASIS-SOURCES
 	EFEBasisDataStorageDealii.cpp
 	EFEBasisHandlerDealii.cpp
 	EFEBasisManagerDealii.cpp
+	FEBasisOperations.cpp
 	AtomIdsPartition.cpp
 	EnrichmentIdsPartition.cpp)
 

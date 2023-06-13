@@ -24,22 +24,22 @@
  */
 
 #ifndef dftefeEFEBasisManagerDealii_h
-#define dftefeEFEBasisManagerDealii_h
+#  define dftefeEFEBasisManagerDealii_h
 
-#include <utils/TypeConfig.h>
-#include <utils/Point.h>
-#include <basis/EFEBasisManager.h>
-#include <memory>
-#include <deal.II/fe/fe_q.h>
-#include <basis/AtomIdsPartition.h>
-#include <atoms/AtomSphericalDataContainer.h>
-#include <basis/EnrichmentIdsPartition.h>
-#include <utils/Exceptions.h>
-#include <utils/MPITypes.h>
-#include <utils/MPIWrapper.h>
+#  include <utils/TypeConfig.h>
+#  include <utils/Point.h>
+#  include <basis/EFEBasisManager.h>
+#  include <memory>
+#  include <deal.II/fe/fe_q.h>
+#  include <basis/AtomIdsPartition.h>
+#  include <atoms/AtomSphericalDataContainer.h>
+#  include <basis/EnrichmentIdsPartition.h>
+#  include <utils/Exceptions.h>
+#  include <utils/MPITypes.h>
+#  include <utils/MPIWrapper.h>
 
 /// dealii includes
-#include <deal.II/dofs/dof_handler.h>
+#  include <deal.II/dofs/dof_handler.h>
 namespace dftefe
 {
   namespace basis
@@ -52,18 +52,18 @@ namespace dftefe
     class EFEBasisManagerDealii : public EFEBasisManager
     {
     public:
-
       EFEBasisManagerDealii(
-        std::shared_ptr<const TriangulationBase>     triangulation,
-        std::shared_ptr<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer,
-        const size_type                              feOrder,
-        const double                                 atomPartitionTolerance,
-        const double                                 polarAngleTolerance,
-        const double                                 cutoffTolerance,
-        const std::vector<std::string> &             atomSymbol,
-        const std::vector<utils::Point> &            atomCoordinates,
-        const std::string                            fieldName,
-        const utils::mpi::MPIComm &                  comm);
+        std::shared_ptr<const TriangulationBase> triangulation,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const size_type                  feOrder,
+        const double                     atomPartitionTolerance,
+        const double                     polarAngleTolerance,
+        const double                     cutoffTolerance,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::string                fieldName,
+        const utils::mpi::MPIComm &      comm);
 
       double
       getBasisFunctionValue(const size_type     basisId,
@@ -77,7 +77,7 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
-            const size_type                          feOrder) override;
+             const size_type                          feOrder) override;
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -101,10 +101,10 @@ namespace dftefe
       size_type
       nLocalNodes() const override;
 
-      std::vector<std::pair<global_size_type , global_size_type>>
+      std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const override;
 
-      std::map<BasisIdAttribute , size_type>
+      std::map<BasisIdAttribute, size_type>
       getBasisAttributeToRangeIdMap() const override;
 
       global_size_type
@@ -167,21 +167,22 @@ namespace dftefe
       const dealii::FiniteElement<dim> &
       getReferenceFE(const size_type cellId) const;
 
-      // Enrichment functions with dealii mesh. The enrichedid is the cell local id.
+      // Enrichment functions with dealii mesh. The enrichedid is the cell local
+      // id.
       double
-      getEnrichmentValue(const size_type cellId,
-          const size_type cellLocalEnrichmentId,
-          const dftefe::utils::Point & point) const override;
+      getEnrichmentValue(const size_type             cellId,
+                         const size_type             cellLocalEnrichmentId,
+                         const dftefe::utils::Point &point) const override;
 
       std::vector<double>
-      getEnrichmentDerivative(const size_type cellId,
-          const size_type cellLocalEnrichmentId,
-          const dftefe::utils::Point & point) const override;
+      getEnrichmentDerivative(const size_type             cellId,
+                              const size_type             cellLocalEnrichmentId,
+                              const dftefe::utils::Point &point) const override;
 
       std::vector<double>
-      getEnrichmentHessian(const size_type cellId,
-          const size_type cellLocalEnrichmentId,
-          const dftefe::utils::Point & point) const override;
+      getEnrichmentHessian(const size_type             cellId,
+                           const size_type             cellLocalEnrichmentId,
+                           const dftefe::utils::Point &point) const override;
 
       std::vector<global_size_type>
       getGhostEnrichmentIds() const override;
@@ -193,7 +194,6 @@ namespace dftefe
       nGlobalEnrichmentNodes() const override;
 
     private:
-
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
       bool                                     d_isHPRefined;
@@ -201,13 +201,15 @@ namespace dftefe
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
-      std::shared_ptr<const EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;
+      std::shared_ptr<const EnrichmentIdsPartition<dim>>
+                                                   d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::vector<std::vector<size_type>> d_overlappingEnrichmentIdsInCells;
-      std::shared_ptr<const atoms::AtomSphericalDataContainer> d_atomSphericalDataContainer;
-      std::vector<std::string>             d_atomSymbolVec;
-      std::vector<utils::Point>            d_atomCoordinatesVec;
-      std::string                          d_fieldName;
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                            d_atomSphericalDataContainer;
+      std::vector<std::string>              d_atomSymbolVec;
+      std::vector<utils::Point>             d_atomCoordinatesVec;
+      std::string                           d_fieldName;
       std::shared_ptr<atoms::SphericalData> d_sphericalData;
       const double                          d_atomPartitionTolerance;
       const utils::mpi::MPIComm             d_comm;
@@ -218,6 +220,6 @@ namespace dftefe
     }; // end of EFEBasisManagerDealii
   }    // end of namespace basis
 } // end of namespace dftefe
-#include "EFEBasisManagerDealii.t.cpp"
+#  include "EFEBasisManagerDealii.t.cpp"
 #endif // dftefeEFEBasisManagerDealii_h
 //

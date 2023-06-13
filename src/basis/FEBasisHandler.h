@@ -87,7 +87,7 @@ namespace dftefe
 
       virtual std::pair<bool, size_type>
       inLocallyOwnedRanges(const global_size_type globalId,
-                          const std::string      constraintsName) const = 0;
+                           const std::string      constraintsName) const = 0;
 
       virtual std::pair<bool, size_type>
       isGhostEntry(const global_size_type ghostId,
@@ -148,10 +148,9 @@ namespace dftefe
         const std::string constraintsName) const = 0;
 
       virtual void
-      getCellDofsLocalIds(
-        const size_type                      cellId,
-        const std::string            constraintsName,
-        std::vector<size_type> &vecLocalNodeId) const = 0;
+      getCellDofsLocalIds(const size_type         cellId,
+                          const std::string       constraintsName,
+                          std::vector<size_type> &vecLocalNodeId) const = 0;
     };
 
   } // end of namespace basis

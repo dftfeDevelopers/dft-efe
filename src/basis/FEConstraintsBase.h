@@ -90,7 +90,7 @@ namespace dftefe
       virtual void
       populateConstraintsData(
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
-        const size_type                              classicalId) = 0;
+        const size_type                               classicalId) = 0;
 
       virtual void
       distributeChildToParent(

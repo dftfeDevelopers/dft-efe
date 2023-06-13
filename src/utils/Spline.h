@@ -83,12 +83,12 @@ namespace dftefe
 
       Spline(const std::vector<double> &X,
              const std::vector<double> &Y,
-            spline_type                type           = cspline,
-            bool                       make_monotonic = false,
-            bd_type                    left           = second_deriv,
-            double                     left_value     = 0.0,
-            bd_type                    right          = second_deriv,
-            double                     right_value    = 0.0);
+             spline_type                type           = cspline,
+             bool                       make_monotonic = false,
+             bd_type                    left           = second_deriv,
+             double                     left_value     = 0.0,
+             bd_type                    right          = second_deriv,
+             double                     right_value    = 0.0);
 
       // modify boundary conditions: if called it must be before set_points()
       void

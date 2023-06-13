@@ -235,10 +235,10 @@ namespace dftefe
     void
     TriangulationDealiiParallel<dim>::executeCoarseningAndRefinement()
     {
-//      utils::throwException<utils::LogicError>(
-//        isInitialized && !isFinalized,
-//        "Cannot execute coarsening or refinement of triangulation without calling"
-//        "initializeTriangulationConstruction");
+      //      utils::throwException<utils::LogicError>(
+      //        isInitialized && !isFinalized,
+      //        "Cannot execute coarsening or refinement of triangulation
+      //        without calling" "initializeTriangulationConstruction");
       d_triangulationDealii.execute_coarsening_and_refinement();
     }
 

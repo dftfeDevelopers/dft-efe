@@ -28,33 +28,36 @@
 
 namespace dftefe
 {
-    namespace atoms
-    {
-        double getValueBoostAutoDiff(const utils::Point &point,
-                    const utils::Point &origin,
-                    const std::vector<double> & coeffVec,
-                    const double smoothness,
-                    const double cutoff,
-                    const int l, 
-                    const int m,
-                    const double polarAngleTolerance);
+  namespace atoms
+  {
+    double
+    getValueBoostAutoDiff(const utils::Point &       point,
+                          const utils::Point &       origin,
+                          const std::vector<double> &coeffVec,
+                          const double               smoothness,
+                          const double               cutoff,
+                          const int                  l,
+                          const int                  m,
+                          const double               polarAngleTolerance);
 
-        std::vector<double> getGradientValueBoostAutoDiff(const utils::Point &point,
-                    const utils::Point &origin,
-                    const std::vector<double> & coeffVec,
-                    const double smoothness,
-                    const double cutoff,
-                    const int l, 
-                    const int m,
-                    const double polarAngleTolerance);
+    std::vector<double>
+    getGradientValueBoostAutoDiff(const utils::Point &       point,
+                                  const utils::Point &       origin,
+                                  const std::vector<double> &coeffVec,
+                                  const double               smoothness,
+                                  const double               cutoff,
+                                  const int                  l,
+                                  const int                  m,
+                                  const double polarAngleTolerance);
 
-        std::vector<double> getHessianValueBoostAutoDiff(const utils::Point &point,
-                    const utils::Point &origin,
-                    const std::vector<double> & coeffVec,
-                    const double smoothness,
-                    const double cutoff,
-                    const int l, 
-                    const int m,
-                    const double polarAngleTolerance);
-    }
-}
+    std::vector<double>
+    getHessianValueBoostAutoDiff(const utils::Point &       point,
+                                 const utils::Point &       origin,
+                                 const std::vector<double> &coeffVec,
+                                 const double               smoothness,
+                                 const double               cutoff,
+                                 const int                  l,
+                                 const int                  m,
+                                 const double polarAngleTolerance);
+  } // namespace atoms
+} // namespace dftefe

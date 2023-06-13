@@ -582,7 +582,9 @@ namespace dftefe
           xPathInfo.xpath = getXPath(rootElementName, ns, fieldName);
           std::vector<SphericalData>            sphericalDataVec(0);
           std::map<std::vector<int>, size_type> qNumbersToIdMap;
-          getSphericalDataFromXMLNode(sphericalDataVec, d_radialPoints, xPathInfo);
+          getSphericalDataFromXMLNode(sphericalDataVec,
+                                      d_radialPoints,
+                                      xPathInfo);
           storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
           d_sphericalData[fieldName]   = sphericalDataVec;
           d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;

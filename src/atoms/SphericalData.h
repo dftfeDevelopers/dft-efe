@@ -45,7 +45,8 @@ namespace dftefe
       double              cutoff;
       double              smoothness;
 
-      SphericalData();
+      SphericalData(); // const double polarAngleTolerance =
+                       // SphericalDataDefaults::POL_ANG_TOL
 
       ~SphericalData() = default;
 
@@ -60,17 +61,17 @@ namespace dftefe
 
       template <unsigned int dim>
       std::vector<double>
-      getGradientValue(const utils::Point &point, 
-                        const utils::Point &origin, 
-                        const double polarAngleTolerance = 1e-6, 
-                        const double cutoffTolerance = 1e-6);
+      getGradientValue(const utils::Point &point,
+                       const utils::Point &origin,
+                       const double        polarAngleTolerance = 1e-6,
+                       const double        cutoffTolerance     = 1e-6);
 
       template <unsigned int dim>
       std::vector<double>
       getHessianValue(const utils::Point &point,
-                        const utils::Point &origin,
-                        const double polarAngleTolerance = 1e-6,
-                        const double cutoffTolerance = 1e-6);
+                      const utils::Point &origin,
+                      const double        polarAngleTolerance = 1e-6,
+                      const double        cutoffTolerance     = 1e-6);
 
     private:
       std::shared_ptr<const utils::Spline> d_spline;

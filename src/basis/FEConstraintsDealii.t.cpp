@@ -279,11 +279,11 @@ namespace dftefe
         const size_type                                      classicalId)
     {
       this->clear();
-      std::vector<std::pair<global_size_type, global_size_type>> locallyOwnedRanges = 
-        mpiPattern.getLocallyOwnedRanges();
+      std::vector<std::pair<global_size_type, global_size_type>>
+        locallyOwnedRanges = mpiPattern.getLocallyOwnedRanges();
 
       auto locallyOwnedRange = locallyOwnedRanges[classicalId];
-      //auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+      // auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
       bool printWarning = false;
       for (auto locallyOwnedId = locallyOwnedRange.first;
@@ -307,7 +307,8 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first).first))
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -322,7 +323,9 @@ namespace dftefe
             }
         }
 
-      auto ghostIndices = mpiPattern.getGhostIndices(); // can be optimized .. checking enriched ghosts also
+      auto ghostIndices =
+        mpiPattern.getGhostIndices(); // can be optimized .. checking enriched
+                                      // ghosts also
 
       for (auto ghostIter = ghostIndices.begin();
            ghostIter != ghostIndices.end();
@@ -345,7 +348,8 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first).first))
+                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -374,7 +378,7 @@ namespace dftefe
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       populateConstraintsData(
         const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
-        const size_type                              classicalId)
+        const size_type                               classicalId)
     {
       bool printWarning = false;
 
@@ -389,11 +393,11 @@ namespace dftefe
 
       std::vector<size_type> rowConstraintsSizesTmp;
 
-      std::vector<std::pair<global_size_type, global_size_type>> locallyOwnedRanges = 
-        mpiPattern.getLocallyOwnedRanges();
+      std::vector<std::pair<global_size_type, global_size_type>>
+        locallyOwnedRanges = mpiPattern.getLocallyOwnedRanges();
 
       auto locallyOwnedRange = locallyOwnedRanges[classicalId];
-      //auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+      // auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
       size_type columnIdStart = 0;
 
@@ -412,7 +416,8 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first).first))
+                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -462,7 +467,8 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first).first))
+                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
