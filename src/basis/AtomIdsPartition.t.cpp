@@ -247,7 +247,7 @@ namespace dftefe
         std::vector<size_type> &   nAtomIdsInProcessor,
         std::vector<size_type> &   nAtomIdsInProcessorCumulative,
         const utils::mpi::MPIComm &comm,
-        const size_type            nProcs)
+        const int            nProcs)
       {
         // get the number of atom ids in each proc.
         // also get the cumulative number of atomids in a processor.
@@ -299,7 +299,7 @@ namespace dftefe
                       std::vector<size_type> &atomIdsInProcessor,
                       const std::vector<utils::Point> &atomCoordinates,
                       const utils::mpi::MPIComm &      comm,
-                      const size_type                  nProcs)
+                      const int                  nProcs)
       {
         /*Here implemet the vector of renumbered atom ids
          * MPI. This is done by asigning a vector of 1...number_atomids to each
@@ -365,7 +365,7 @@ namespace dftefe
       const utils::mpi::MPIComm &                   comm)
     {
       // Get the number of processes
-      size_type nProcs;
+      int nProcs;
       utils::mpi::MPICommSize(comm, &nProcs);
 
       std::vector<std::vector<size_type>> overlappingAtomIdsInCells;

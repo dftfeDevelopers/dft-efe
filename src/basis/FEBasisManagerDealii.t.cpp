@@ -244,7 +244,7 @@ namespace dftefe
 
     template <size_type dim>
     std::map<BasisIdAttribute, size_type>
-    getBasisAttributeToRangeIdMap()
+    FEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
     {
       std::map<BasisIdAttribute, size_type> returnValue;
       returnValue[BasisIdAttribute::CLASSICAL] = 0;

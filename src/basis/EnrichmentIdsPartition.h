@@ -130,7 +130,7 @@ namespace dftefe
       std::vector<global_size_type> d_newAtomIdToEnrichmentIdOffset;
       std::vector<std::vector<global_size_type>>
                              d_overlappingEnrichmentIdsInCells;
-      std::vector<size_type> d_enrichmentIdsInProcessor;
+      std::vector<global_size_type> d_enrichmentIdsInProcessor;
       std::pair<global_size_type, global_size_type> d_locallyOwnedEnrichmentIds;
       std::vector<global_size_type>                 d_ghostEnrichmentIds;
       std::map<global_size_type, size_type> d_enrichmentIdToOldAtomIdMap;

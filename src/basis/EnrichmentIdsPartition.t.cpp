@@ -308,7 +308,7 @@ namespace dftefe
         const std::vector<global_size_type> &newAtomIdToEnrichmentIdOffset)
       {
         std::vector<size_type> oldAtomIds = atomIdsPartition->oldAtomIds();
-        std::set<size_type>    enrichmentIdsInProcessorTmp;
+        std::set<global_size_type>    enrichmentIdsInProcessorTmp;
         size_type              newAtomId, qIdPosition;
         auto                   iter = overlappingEnrichmentIdsInCells.begin();
         for (; iter != overlappingEnrichmentIdsInCells.end(); iter++)

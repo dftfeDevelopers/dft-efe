@@ -253,12 +253,12 @@ int main()
                                                         mpi_communicator);    
 
     std::cout<<"\nnewAtomIdToEnrichmentIdOffset:\n";
-    std::vector<dftefe::size_type> offset =
+    std::vector<dftefe::global_size_type> offset =
         enrichmentIdsPartition->newAtomIdToEnrichmentIdOffset();
     for(auto i:offset ) { std::cout<<"rank "<<rank<<" : "<<i<<"\n";}
 
     std::cout<<"\nrank "<<rank<<"->overlappingEnrichmentIdsInCells:\n";
-    std::vector<std::vector<dftefe::size_type>> epartition =
+    std::vector<std::vector<dftefe::global_size_type>> epartition =
         enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
     auto iter2 = epartition.begin();
     for( ; iter2 != epartition.end() ; iter2++)
@@ -273,24 +273,24 @@ int main()
     }
 
     std::cout<<"\nlocallyOwnedEnrichmentIds:\n";
-    std::pair<dftefe::size_type,dftefe::size_type> localeid =
+    std::pair<dftefe::global_size_type,dftefe::global_size_type> localeid =
         enrichmentIdsPartition->locallyOwnedEnrichmentIds();
     std::cout<<"rank "<<rank<<" : "<<localeid.first<<" "<<localeid.second<<"\n";
 
     std::cout<<"\nghostEnrichmentIds:\n";
-    std::vector<dftefe::size_type> ghosteid =
+    std::vector<dftefe::global_size_type> ghosteid =
         enrichmentIdsPartition->ghostEnrichmentIds();
     for(auto i:ghosteid ) { std::cout<<"rank "<<rank<<" : "<<i<<"\n";}
 
-    std::cout<<"\nenrichmentIdToNewAtomIdMap:\n";
-    std::map<dftefe::size_type,dftefe::size_type> eidtonatomid =
-        enrichmentIdsPartition->enrichmentIdToNewAtomIdMap();
-    for(auto i:eidtonatomid ) { std::cout<<"rank "<<rank<<":"<<i.first<<"->"<<i.second<<"\n";}   
+    // std::cout<<"\nenrichmentIdToNewAtomIdMap:\n";
+    // std::map<dftefe::size_type,dftefe::size_type> eidtonatomid =
+    //     enrichmentIdsPartition->enrichmentIdToNewAtomIdMap();
+    // for(auto i:eidtonatomid ) { std::cout<<"rank "<<rank<<":"<<i.first<<"->"<<i.second<<"\n";}   
 
-    std::cout<<"\nenrichmentIdToQuantumIdMap:";
-    std::map<dftefe::size_type,dftefe::size_type> eidtoqid =
-        enrichmentIdsPartition->enrichmentIdToQuantumIdMap();
-    for(auto i:eidtoqid ) { std::cout<<"rank "<<rank<<":"<<i.first<<"->"<<i.second<<"\n";} 
+    // std::cout<<"\nenrichmentIdToQuantumIdMap:";
+    // std::map<dftefe::size_type,dftefe::size_type> eidtoqid =
+    //     enrichmentIdsPartition->enrichmentIdToQuantumIdMap();
+    // for(auto i:eidtoqid ) { std::cout<<"rank "<<rank<<":"<<i.first<<"->"<<i.second<<"\n";} 
 
     dftefe::utils::mpi::MPIFinalize();
 #endif
