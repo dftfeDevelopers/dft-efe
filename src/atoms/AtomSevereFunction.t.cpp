@@ -36,16 +36,12 @@ namespace dftefe
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
-      const double                     polarAngleTolerance,
-      const double                     cutoffTolerance,
       const size_type                  derivativeType)
       : d_enrichmentIdsPartition(enrichmentIdsPartition)
       , d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_atomSymbolVec(atomSymbolVec)
       , d_atomCoordinatesVec(atomCoordinatesVec)
       , d_fieldName(fieldName)
-      , d_polarAngleTolerance(polarAngleTolerance)
-      , d_cutoffTolerance(cutoffTolerance)
       , d_derivativeType(derivativeType)
     {}
 
@@ -73,16 +69,13 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
+              d_sphericalData = 
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
-                                                               qNumbers));
+                                                               qNumbers);
               retValue = retValue +
-                         d_sphericalData->getValue<dim>(point,
-                                                        origin,
-                                                        d_polarAngleTolerance);
+                         d_sphericalData->getValue(point,origin) * 
+                          d_sphericalData->getValue(point,origin);
             }
           for (auto i : ghostEnrichmentIds)
             {
@@ -95,16 +88,13 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
+              d_sphericalData = 
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
-                                                               qNumbers));
+                                                               qNumbers);
               retValue = retValue +
-                         d_sphericalData->getValue<dim>(point,
-                                                        origin,
-                                                        d_polarAngleTolerance);
+                         d_sphericalData->getValue(point,origin) * 
+                          d_sphericalData->getValue(point,origin);
             }
         }
       if (d_derivativeType == 2)
@@ -122,18 +112,15 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
+              d_sphericalData = 
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
-                                                               qNumbers));
-              retValue =
-                retValue +
-                d_sphericalData->getGradientValue<dim>(point,
-                                                       origin,
-                                                       d_polarAngleTolerance,
-                                                       d_cutoffTolerance);
+                                                               qNumbers);
+              for( size_type j = 0; j<dim ; j++)
+              {
+                retValue = retValue + d_sphericalData->getGradientValue(point, origin)[j] *
+                                    d_sphericalData->getGradientValue(point, origin)[j] ;
+              }
             }
           for (auto i : ghostEnrichmentIds)
             {
@@ -146,18 +133,15 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
+              d_sphericalData = 
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
-                                                               qNumbers));
-              retValue =
-                retValue +
-                d_sphericalData->getGradientValue<dim>(point,
-                                                       origin,
-                                                       d_polarAngleTolerance,
-                                                       d_cutoffTolerance);
+                                                               qNumbers);
+              for( size_type j = 0; j<dim ; j++)
+              {
+                retValue = retValue + d_sphericalData->getGradientValue(point, origin)[j] *
+                                    d_sphericalData->getGradientValue(point, origin)[j] ;
+              }
             }
         }
       else
@@ -196,17 +180,13 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  std::allocator<atoms::SphericalData> alloc;
-                  d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                    alloc,
+                  d_sphericalData = 
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
-                                                                   qNumbers));
+                                                                   qNumbers);
                   retValue[j] =
-                    retValue[j] +
-                    d_sphericalData->getValue<dim>(points[j],
-                                                   origin,
-                                                   d_polarAngleTolerance);
+                    retValue[j] + d_sphericalData->getValue(points[j],origin) * 
+                          d_sphericalData->getValue(points[j],origin);
                 }
               for (auto i : ghostEnrichmentIds)
                 {
@@ -219,17 +199,13 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  std::allocator<atoms::SphericalData> alloc;
-                  d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                    alloc,
+                  d_sphericalData = 
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
-                                                                   qNumbers));
+                                                                   qNumbers);
                   retValue[j] =
-                    retValue[j] +
-                    d_sphericalData->getValue<dim>(points[j],
-                                                   origin,
-                                                   d_polarAngleTolerance);
+                    retValue[j] + d_sphericalData->getValue(points[j],origin) * 
+                          d_sphericalData->getValue(points[j],origin);
                 }
             }
           if (d_derivativeType == 2)
@@ -247,18 +223,15 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  std::allocator<atoms::SphericalData> alloc;
-                  d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                    alloc,
+                  d_sphericalData = 
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
-                                                                   qNumbers));
-                  retValue[j] =
-                    retValue[j] + d_sphericalData->getGradientValue<dim>(
-                                    points[j],
-                                    origin,
-                                    d_polarAngleTolerance,
-                                    d_cutoffTolerance);
+                                                                   qNumbers);
+                  for( size_type k = 0; k<dim ; k++)
+                  {
+                    retValue[j] = retValue[j] + d_sphericalData->getGradientValue(points[j], origin)[k] *
+                                        d_sphericalData->getGradientValue(points[j], origin)[k] ;
+                  }
                 }
               for (auto i : ghostEnrichmentIds)
                 {
@@ -271,18 +244,15 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  std::allocator<atoms::SphericalData> alloc;
-                  d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                    alloc,
+                  d_sphericalData = 
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
-                                                                   qNumbers));
-                  retValue[j] =
-                    retValue[j] + d_sphericalData->getGradientValue<dim>(
-                                    points[j],
-                                    origin,
-                                    d_polarAngleTolerance,
-                                    d_cutoffTolerance);
+                                                                   qNumbers);
+                  for( size_type k = 0; k<dim ; k++)
+                  {
+                    retValue[j] = retValue[j] + d_sphericalData->getGradientValue(points[j], origin)[k] *
+                                        d_sphericalData->getGradientValue(points[j], origin)[k] ;
+                  }
                 }
             }
           else

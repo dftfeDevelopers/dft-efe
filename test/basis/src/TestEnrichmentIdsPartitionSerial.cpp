@@ -182,7 +182,7 @@ int main()
                                                         mpi_communicator);    
 
     std::cout<<"\nnewAtomIdToEnrichmentIdOffset:\n";
-    std::vector<dftefe::size_type> offset =
+    std::vector<dftefe::global_size_type> offset =
         enrichmentIdsPartition->newAtomIdToEnrichmentIdOffset();
     for(auto i:offset ) { std::cout<<i<<"\n";}
 
@@ -202,7 +202,7 @@ int main()
     }
 
     std::cout<<"\nlocallyOwnedEnrichmentIds:\n";
-    std::pair<dftefe::size_type,dftefe::size_type> localeid =
+    std::pair<dftefe::global_size_type,dftefe::size_type> localeid =
         enrichmentIdsPartition->locallyOwnedEnrichmentIds();
     std::cout<<"\n"<<localeid.first<<" "<<localeid.second;
 

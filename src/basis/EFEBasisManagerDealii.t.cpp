@@ -40,8 +40,6 @@ namespace dftefe
                                        atomSphericalDataContainer,
       const size_type                  feOrder,
       const double                     atomPartitionTolerance,
-      const double                     polarAngleTolerance,
-      const double                     cutoffTolerance,
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
@@ -53,8 +51,6 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_comm(comm)
       , d_atomPartitionTolerance(atomPartitionTolerance)
-      , d_polarAngleTolerance(polarAngleTolerance)
-      , d_cutoffTolerance(cutoffTolerance)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
@@ -583,17 +579,13 @@ namespace dftefe
               std::string      atomSymbol = d_atomSymbolVec[atomId];
               utils::Point     origin(d_atomCoordinatesVec[atomId]);
               std::vector<int> qNumbers =
-                d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers));
-              retValue = d_sphericalData->getValue<dim>(point,
-                                                        origin,
-                                                        d_polarAngleTolerance);
+              d_atomSphericalDataContainer->getQNumbers(atomSymbol,
+                                                      d_fieldName);
+              d_sphericalData =
+              d_atomSphericalDataContainer->getSphericalData(atomSymbol,
+                                                            d_fieldName,
+                                                            qNumbers);
+              retValue = d_sphericalData->getValue(point,origin);
             }
           else
             {
@@ -638,14 +630,11 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
+              d_sphericalData = 
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
-                                                               qNumbers));
-              retValue = d_sphericalData->getGradientValue<dim>(
-                point, origin, d_polarAngleTolerance, d_cutoffTolerance);
+                                                               qNumbers);
+              retValue = d_sphericalData->getGradientValue(point, origin);
             }
           else
             {
@@ -690,14 +679,11 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              std::allocator<atoms::SphericalData> alloc;
-              d_sphericalData = std::allocate_shared<atoms::SphericalData>(
-                alloc,
+              d_sphericalData = 
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
-                                                               qNumbers));
-              retValue = d_sphericalData->getHessianValue<dim>(
-                point, origin, d_polarAngleTolerance, d_cutoffTolerance);
+                                                               qNumbers);
+              retValue = d_sphericalData->getHessianValue(point, origin);
             }
           else
             {

@@ -84,7 +84,7 @@ namespace dftefe
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
-        const utils::mpi::MPIComm &                   comm);
+        const utils::mpi::MPIComm &                  comm);
 
       /**
        * @brief Destructor

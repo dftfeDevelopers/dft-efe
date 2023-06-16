@@ -244,8 +244,8 @@ namespace dftefe
                       atomSphericalDataContainer->getSphericalData(
                         *(iter), fieldName, *(qNumberIter));
                     double cutoff =
-                      sphericalData.cutoff +
-                      sphericalData.cutoff / sphericalData.smoothness;
+                      sphericalData->getCutoff() +
+                      sphericalData->getCutoff() / sphericalData->getSmoothness();
                     for (unsigned int k = 0; k < dim; k++)
                       {
                         // assert for the cell and processor bounds
@@ -377,7 +377,7 @@ namespace dftefe
           for (auto i :
                atomSphericalDataContainer->getSphericalData(it, fieldName))
             {
-              cutoff.push_back(i.cutoff + i.cutoff / i.smoothness);
+              cutoff.push_back(i->getCutoff() + i->getCutoff() / i->getSmoothness());
             }
           double maxcutoff  = *(std::max_element(cutoff.begin(), cutoff.end()));
           rCutoffMax[count] = maxcutoff;

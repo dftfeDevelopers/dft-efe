@@ -24,7 +24,7 @@
  */
 
 #ifndef dftefeEFEBasisManagerDealii_h
-#  define dftefeEFEBasisManagerDealii_h
+#define dftefeEFEBasisManagerDealii_h
 
 #  include <utils/TypeConfig.h>
 #  include <utils/Point.h>
@@ -58,8 +58,6 @@ namespace dftefe
                                          atomSphericalDataContainer,
         const size_type                  feOrder,
         const double                     atomPartitionTolerance,
-        const double                     polarAngleTolerance,
-        const double                     cutoffTolerance,
         const std::vector<std::string> & atomSymbol,
         const std::vector<utils::Point> &atomCoordinates,
         const std::string                fieldName,
@@ -213,8 +211,6 @@ namespace dftefe
       std::shared_ptr<atoms::SphericalData> d_sphericalData;
       const double                          d_atomPartitionTolerance;
       const utils::mpi::MPIComm             d_comm;
-      double                                d_polarAngleTolerance;
-      double                                d_cutoffTolerance;
 
 
     }; // end of EFEBasisManagerDealii

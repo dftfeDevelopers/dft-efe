@@ -345,7 +345,7 @@ namespace dftefe
 
       void
       processSphericalDataFromXMLNodeData(
-        std::vector<SphericalData> &    sphericalDataVec,
+        std::vector<std::shared_ptr<SphericalData>> & sphericalDataVec,
         const std::vector<std::string> &radialValueStrings,
         const std::vector<std::string> &qNumberStrings,
         const std::vector<std::string> &cutOffInfoStrings,
@@ -367,40 +367,41 @@ namespace dftefe
 
         sphericalDataVec.resize(N);
 
+        // Make enum classes for analytial and numerical sphericalData ?
+
         std::set<std::vector<int>> qNumbersSet;
         bool                       convSuccess = false;
         for (size_type i = 0; i < N; ++i)
           {
-            SphericalData &sphericalData = sphericalDataVec[i];
-            sphericalData.radialPoints   = radialPoints;
-
+            std::vector<double> radialValues(0);
             convSuccess = splitStringToDoubles(radialValueStrings[i],
-                                               sphericalData.radialValues,
+                                               radialValues,
                                                numPoints);
             utils::throwException(convSuccess,
                                   "Error while converting values in " +
                                     xPathInfo.xpath + " element in " +
                                     xPathInfo.fileName + " to double");
             utils::throwException(
-              sphericalData.radialValues.size() == numPoints,
+              radialValues.size() == numPoints,
               "Mismatch in number of points specified and number of points "
               "provided in " +
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
 
+            std::vector<int> qNumbers(0);
             convSuccess =
-              splitStringToInts(qNumberStrings[i], sphericalData.qNumbers, 3);
+              splitStringToInts(qNumberStrings[i], qNumbers, 3);
             utils::throwException(convSuccess,
                                   "Error while converting quantum numbers in " +
                                     xPathInfo.xpath + " element in " +
                                     xPathInfo.fileName + " to double");
             utils::throwException(
-              sphericalData.qNumbers.size() == 3,
+              qNumbers.size() == 3,
               "Expected three quantum number (i.e., n, l, m) in \"qNumbers\" "
               "child element in " +
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            int n = sphericalData.qNumbers[0];
-            int l = sphericalData.qNumbers[1];
-            int m = sphericalData.qNumbers[2];
+            int n = qNumbers[0];
+            int l = qNumbers[1];
+            int m = qNumbers[2];
             utils::throwException(
               n > 0,
               "Principal (n) quantum number less than 1 found in " +
@@ -415,7 +416,7 @@ namespace dftefe
               "Magnetic quantum number (m) found outside of -l and +l "
               "(l = angular quantum number) in " +
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            qNumbersSet.insert(sphericalData.qNumbers);
+            qNumbersSet.insert(qNumbers);
 
             std::vector<double> cutoffInfo(0);
             convSuccess =
@@ -429,9 +430,15 @@ namespace dftefe
               "Expected two values (cutoff and smoothness factor) in "
               " \"cutoffInfo\" child element in " +
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            sphericalData.cutoff     = cutoffInfo[0];
-            sphericalData.smoothness = cutoffInfo[1];
-            sphericalDataVec[i].initSpline();
+            double cutoff     = cutoffInfo[0];
+            double smoothness = cutoffInfo[1];
+
+            sphericalDataVec[i] = std::make_shared<SphericalDataNumerical>(qNumbers,
+                                                                    radialPoints,
+                                                                    radialValues,
+                                                                    cutoff,
+                                                                    smoothness);
+
           }
 
         utils::throwException(
@@ -454,7 +461,7 @@ namespace dftefe
 
       void
       getSphericalDataFromXMLNode(
-        std::vector<SphericalData> &                sphericalDataVec,
+        std::vector<std::shared_ptr<SphericalData>> & sphericalDataVec,
         const std::vector<double> &                 radialPoints,
         const AtomSphericalDataXMLLocal::XPathInfo &xPathInfo)
       {
@@ -474,17 +481,15 @@ namespace dftefe
 
       void
       storeQNumbersToDataIdMap(
-        const std::vector<SphericalData> &     sphericalDataVec,
+        const std::vector<std::shared_ptr<SphericalData>> &     sphericalDataVec,
         std::map<std::vector<int>, size_type> &qNumbersToDataIdMap)
       {
         size_type N = sphericalDataVec.size();
         for (size_type i = 0; i < N; ++i)
           {
-            qNumbersToDataIdMap[sphericalDataVec[i].qNumbers] = i;
+            qNumbersToDataIdMap[sphericalDataVec[i]->getQNumbers()] = i;
           }
       }
-
-
     } // namespace
 
     AtomSphericalData::AtomSphericalData(
@@ -531,6 +536,11 @@ namespace dftefe
 
       bool convSuccess = false;
 
+// ---------------------This class constructor is only designed for SphericalDataNumerical for now------------------------
+
+      int                          numRadialPoints;
+      std::vector<double>                radialPoints;
+
       //
       // get number of radial points
       //
@@ -541,7 +551,6 @@ namespace dftefe
                               " element in " + fileName);
       // remove leading or trailing whitespace
       utils::stringOps::trim(nodeStrings[0]);
-      int numRadialPoints;
       convSuccess = utils::stringOps::strToInt(nodeStrings[0], numRadialPoints);
       utils::throwException(convSuccess,
                             "Error while converting " + xPathInfo.xpath +
@@ -549,9 +558,7 @@ namespace dftefe
       utils::throwException(numRadialPoints > 0,
                             "Non-positive integer found for" + xPathInfo.xpath +
                               " element in " + fileName);
-      d_numRadialPoints = (size_type)numRadialPoints;
 
-      //
       // get radial points
       //
       xPathInfo.xpath = getXPath(rootElementName, ns, "r");
@@ -559,16 +566,16 @@ namespace dftefe
       utils::throwException(nodeStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
-      d_radialPoints.resize(0);
+      radialPoints.resize(0);
       convSuccess =
         AtomSphericalDataXMLLocal::splitStringToDoubles(nodeStrings[0],
-                                                        d_radialPoints,
-                                                        d_numRadialPoints);
+                                                        radialPoints,
+                                                        numRadialPoints);
       utils::throwException(convSuccess,
                             "Error while converting " + xPathInfo.xpath +
                               " element in " + fileName + " to double");
       utils::throwException(
-        d_radialPoints.size() == d_numRadialPoints,
+        radialPoints.size() == numRadialPoints,
         "Mismatch in number of radial points specified and the number of "
         " radial points provided in " +
           fileName);
@@ -580,10 +587,10 @@ namespace dftefe
         {
           const std::string fieldName = fieldNames[iField];
           xPathInfo.xpath = getXPath(rootElementName, ns, fieldName);
-          std::vector<SphericalData>            sphericalDataVec(0);
+          std::vector<std::shared_ptr<SphericalData>>  sphericalDataVec(0);
           std::map<std::vector<int>, size_type> qNumbersToIdMap;
           getSphericalDataFromXMLNode(sphericalDataVec,
-                                      d_radialPoints,
+                                      radialPoints,
                                       xPathInfo);
           storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
           d_sphericalData[fieldName]   = sphericalDataVec;
@@ -616,19 +623,7 @@ namespace dftefe
       return d_metadataNames;
     }
 
-    size_type
-    AtomSphericalData::nRadialPoints() const
-    {
-      return d_numRadialPoints;
-    }
-
-    const std::vector<double> &
-    AtomSphericalData::getRadialPoints() const
-    {
-      return d_radialPoints;
-    }
-
-    const std::vector<SphericalData> &
+    const std::vector<std::shared_ptr<SphericalData>>
     AtomSphericalData::getSphericalData(const std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
@@ -639,7 +634,7 @@ namespace dftefe
     }
 
 
-    const SphericalData &
+    const std::shared_ptr<SphericalData>
     AtomSphericalData::getSphericalData(const std::string       fieldName,
                                         const std::vector<int> &qNumbers) const
     {

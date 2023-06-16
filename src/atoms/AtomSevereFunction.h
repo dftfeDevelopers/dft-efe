@@ -49,8 +49,6 @@ namespace dftefe
         const std::vector<std::string> & atomSymbol,
         const std::vector<utils::Point> &atomCoordinates,
         const std::string                fieldName,
-        const double                     polarAngleTolerance,
-        const double                     cutoffTolerance,
         const size_type                  derivativeType); // give arguments here
       double
       operator()(const utils::Point &point) const override;
@@ -66,8 +64,6 @@ namespace dftefe
       std::vector<utils::Point>             d_atomCoordinatesVec;
       std::string                           d_fieldName;
       std::shared_ptr<atoms::SphericalData> d_sphericalData;
-      double                                d_polarAngleTolerance;
-      double                                d_cutoffTolerance;
       size_type                             d_derivativeType;
     };
 

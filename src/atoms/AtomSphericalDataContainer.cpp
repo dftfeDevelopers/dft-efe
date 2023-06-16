@@ -52,7 +52,7 @@ namespace dftefe
         }
     }
 
-    const std::vector<SphericalData> &
+    const std::vector<std::shared_ptr<SphericalData>>
     AtomSphericalDataContainer::getSphericalData(
       std::string       atomSymbol,
       const std::string fieldName) const
@@ -64,7 +64,7 @@ namespace dftefe
       return (it->second).getSphericalData(fieldName);
     }
 
-    const SphericalData &
+    const std::shared_ptr<SphericalData>
     AtomSphericalDataContainer::getSphericalData(
       std::string             atomSymbol,
       const std::string       fieldName,
@@ -96,11 +96,11 @@ namespace dftefe
       utils::throwException<utils::InvalidArgument>(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getQNumbers");
-      std::vector<SphericalData> sphericalDataVec =
+      std::vector<std::shared_ptr<SphericalData>> sphericalDataVec =
         (it->second).getSphericalData(fieldName);
       std::vector<std::vector<int>> qNumberVec;
       for (auto i : sphericalDataVec)
-        qNumberVec.push_back(i.qNumbers);
+        qNumberVec.push_back(i->getQNumbers());
       return qNumberVec;
     }
 

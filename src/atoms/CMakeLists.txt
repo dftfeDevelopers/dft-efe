@@ -6,7 +6,8 @@ endif()
 
 # Add source files here
 set(DFT-EFE-ATOMS-SOURCES
-    SphericalData.cpp
+    SphericalDataNumerical.cpp
+    Defaults.cpp
     SphericalHarmonicFunctions.cpp
     SmoothCutoffFunctions.cpp
     AtomSphericalData.cpp

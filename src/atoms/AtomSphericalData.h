@@ -28,6 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <atoms/SphericalData.h>
+#include <atoms/SphericalDataNumerical.h>
 #include <memory>
 #include <map>
 #include <vector>
@@ -69,16 +70,10 @@ namespace dftefe
       std::vector<std::string>
       getMetadataNames() const;
 
-      size_type
-      nRadialPoints() const;
-
-      const std::vector<double> &
-      getRadialPoints() const;
-
-      const std::vector<SphericalData> &
+      const std::vector<std::shared_ptr<SphericalData>>
       getSphericalData(const std::string fieldName) const;
 
-      const SphericalData &
+      const std::shared_ptr<SphericalData>
       getSphericalData(const std::string       fieldName,
                        const std::vector<int> &qNumbers) const;
 
@@ -96,12 +91,10 @@ namespace dftefe
       std::string                                       d_fileName;
       std::vector<std::string>                          d_fieldNames;
       std::vector<std::string>                          d_metadataNames;
-      std::map<std::string, std::vector<SphericalData>> d_sphericalData;
+      std::map<std::string, std::vector<std::shared_ptr<SphericalData>>> d_sphericalData;
       std::map<std::string, std::map<std::vector<int>, size_type>>
                                          d_qNumbersToIdMap;
       std::map<std::string, std::string> d_metadata;
-      size_type                          d_numRadialPoints;
-      std::vector<double>                d_radialPoints;
     };
   } // end of namespace atoms
 } // end of namespace dftefe

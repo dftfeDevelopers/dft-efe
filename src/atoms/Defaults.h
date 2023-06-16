@@ -20,26 +20,38 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#include<utils/Exceptions.h>
-#include<atoms/AtomSphericalData.h>
-#include<string>
-#include<iostream>
-int main()
+#ifndef dftefeSphericalDataDefaults_h
+#define dftefeSphericalDataDefaults_h
+
+#include <utils/TypeConfig.h>
+
+namespace dftefe
 {
-  std::string atomFileName = "TestAtom.xml";
-  std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-  std::vector<int> qNumbers{2, 1, 0};
-  dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-  auto sphericalDataObj = atomTest.getSphericalData("orbital", qNumbers);
-  std::vector<double> pointvec{0, 0, 2.};
-  std::vector<double> originvec{0. ,0. ,0.};
-  dftefe::utils::Point point(pointvec);
-  dftefe::utils::Point origin(originvec);
-  std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
-  // std::cout<<sphericalDataObj->getGradientValue(point,origin)[1]<<"\n";
-  // std::cout<<sphericalDataObj->getGradientValue(point,origin)[2]<<"\n";
-}
+  namespace atoms
+  {
+    class SphericalDataDefaults
+    {
+    public:
+      //
+      // The polar angle tolerance
+      //
+      static const double POL_ANG_TOL;
+
+      //
+      // The tolerance in the derivative calcuation of the 
+      // smooth cutoff function ananlytically
+      //
+      static const double CUTOFF_TOL;
+
+      //
+      // The spherical data are defined for a 3 dimensional case only for now.
+      //
+      static const size_type DEFAULT_DIM;
+
+    }; // end of class SphericalDataDefaults
+  }    // end of namespace atoms
+} // end of namespace dftefe
+#endif // dftefeSphericalDataDefaults_h

@@ -20,26 +20,20 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
-
-#include<utils/Exceptions.h>
-#include<atoms/AtomSphericalData.h>
-#include<string>
-#include<iostream>
-int main()
+#include <atoms/Defaults.h>
+#include <limits.h>
+#include <utils/TypeConfig.h>
+namespace dftefe
 {
-  std::string atomFileName = "TestAtom.xml";
-  std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-  std::vector<int> qNumbers{2, 1, 0};
-  dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-  auto sphericalDataObj = atomTest.getSphericalData("orbital", qNumbers);
-  std::vector<double> pointvec{0, 0, 2.};
-  std::vector<double> originvec{0. ,0. ,0.};
-  dftefe::utils::Point point(pointvec);
-  dftefe::utils::Point origin(originvec);
-  std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
-  // std::cout<<sphericalDataObj->getGradientValue(point,origin)[1]<<"\n";
-  // std::cout<<sphericalDataObj->getGradientValue(point,origin)[2]<<"\n";
-}
+  namespace atoms
+  {
+    /**
+     * @brief Setting all the SphericalDataDefaults
+     */
+    const double SphericalDataDefaults::POL_ANG_TOL       = 1e-6;
+    const double SphericalDataDefaults::CUTOFF_TOL        = 1e-6;
+    const size_type SphericalDataDefaults::DEFAULT_DIM    = 3;
+  } // end of namespace atoms
+} // end of namespace dftefe

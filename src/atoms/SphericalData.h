@@ -39,48 +39,32 @@ namespace dftefe
     class SphericalData
     {
     public:
-      std::vector<int>    qNumbers;
-      std::vector<double> radialPoints;
-      std::vector<double> radialValues;
-      double              cutoff;
-      double              smoothness;
-
-      SphericalData(); // const double polarAngleTolerance =
-                       // SphericalDataDefaults::POL_ANG_TOL
 
       ~SphericalData() = default;
 
-      void
-      initSpline();
-
-      template <unsigned int dim>
-      double
+      virtual double
       getValue(const utils::Point &point,
-               const utils::Point &origin,
-               const double        polarAngleTolerance = 1e-6);
+               const utils::Point &origin) = 0;
 
-      template <unsigned int dim>
-      std::vector<double>
+      virtual std::vector<double>
       getGradientValue(const utils::Point &point,
-                       const utils::Point &origin,
-                       const double        polarAngleTolerance = 1e-6,
-                       const double        cutoffTolerance     = 1e-6);
+                       const utils::Point &origin) = 0;
 
-      template <unsigned int dim>
-      std::vector<double>
+      virtual std::vector<double>
       getHessianValue(const utils::Point &point,
-                      const utils::Point &origin,
-                      const double        polarAngleTolerance = 1e-6,
-                      const double        cutoffTolerance     = 1e-6);
+                      const utils::Point &origin) = 0;
 
-    private:
-      std::shared_ptr<const utils::Spline> d_spline;
-      double                               d_value;
-      std::vector<double>                  d_gradient;
-      std::vector<double>                  d_hessian;
+      virtual std::vector<int>
+      getQNumbers() const = 0;
+
+      virtual double
+      getCutoff() const = 0;
+
+      virtual double
+      getSmoothness() const = 0;
+                      
     };
 
   } // end of namespace atoms
 } // end of namespace dftefe
-#include <atoms/SphericalData.t.cpp>
 #endif // dftefeSphericalData_h
