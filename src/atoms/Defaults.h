@@ -41,7 +41,7 @@ namespace dftefe
       static const double POL_ANG_TOL;
 
       //
-      // The tolerance in the derivative calcuation of the 
+      // The tolerance in the derivative calcuation of the
       // smooth cutoff function ananlytically
       //
       static const double CUTOFF_TOL;

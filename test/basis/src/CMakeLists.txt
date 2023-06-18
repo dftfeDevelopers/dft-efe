@@ -24,6 +24,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestEnrichmentIdsPartitionParallel TestEnrichmentIdsPartitionParallel.cpp )
-target_link_libraries(TestEnrichmentIdsPartitionParallel PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+add_executable(TestConstraintMatrix TestConstraintMatrix.cpp )
+target_link_libraries(TestConstraintMatrix PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

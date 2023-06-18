@@ -348,7 +348,7 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
                           .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
@@ -416,7 +416,7 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
                           .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
@@ -467,7 +467,7 @@ namespace dftefe
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
                   if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
                           .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;

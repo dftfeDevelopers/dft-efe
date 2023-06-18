@@ -39,12 +39,10 @@ namespace dftefe
     class SphericalData
     {
     public:
-
       ~SphericalData() = default;
 
       virtual double
-      getValue(const utils::Point &point,
-               const utils::Point &origin) = 0;
+      getValue(const utils::Point &point, const utils::Point &origin) = 0;
 
       virtual std::vector<double>
       getGradientValue(const utils::Point &point,
@@ -62,7 +60,6 @@ namespace dftefe
 
       virtual double
       getSmoothness() const = 0;
-                      
     };
 
   } // end of namespace atoms

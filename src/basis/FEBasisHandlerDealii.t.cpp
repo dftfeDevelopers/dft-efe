@@ -279,6 +279,7 @@ namespace dftefe
         cumulativeCellDofs, 0);
       FEBasisHandlerDealiiInternal::getLocallyOwnedCellGlobalIndices<dim>(
         d_feBMDealii.get(), locallyOwnedCellGlobalIndicesTmp);
+      d_locallyOwnedCellGlobalIndices.resize(cumulativeCellDofs);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         cumulativeCellDofs,
         d_locallyOwnedCellGlobalIndices.data(),
@@ -341,9 +342,9 @@ namespace dftefe
             feBasisConstraintsDealiiOpt = std::make_shared<
               FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
           feBasisConstraintsDealiiOpt->copyConstraintsData(
-            it->second.get(), mpiPatternP2P.get(), classicalAttributeId);
+            *(it->second), *mpiPatternP2P, classicalAttributeId);
           feBasisConstraintsDealiiOpt->populateConstraintsData(
-            mpiPatternP2P.get(), classicalAttributeId);
+            *mpiPatternP2P, classicalAttributeId);
           d_feConstraintsDealiiOptMap[constraintName] =
             feBasisConstraintsDealiiOpt;
 
@@ -373,6 +374,8 @@ namespace dftefe
 
           iConstraint++;
         }
+
+      d_feBMDealii->getBasisCenters(d_supportPoints);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -553,9 +556,11 @@ namespace dftefe
       //
       // FIXME: Assumes linear mapping from reference cell to real cell
       //
-      dealii::MappingQ1<dim> mappingDealii;
-      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
-        mappingDealii, *(d_feBMDealii->getDoFHandler()), d_supportPoints);
+      // dealii::MappingQ1<dim> mappingDealii;
+      // dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
+      //   mappingDealii, *(d_feBMDealii->getDoFHandler()), d_supportPoints);
+
+      d_feBMDealii->getBasisCenters(d_supportPoints);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -696,8 +701,10 @@ namespace dftefe
       //     }
       // convertToDftefePoint<dim>(d_supportPoints[globalId], basisCenter);
       //   convertToDftefePoint<dim>(dealiiPoint, basisCenter);
-      convertToDftefePoint<dim>(d_supportPoints.find(globalId)->second,
-                                basisCenter);
+
+      // convertToDftefePoint<dim>(d_supportPoints.find(globalId)->second,
+      //                           basisCenter);
+      basisCenter = d_supportPoints.find(globalId)->second;
     }
 
     template <typename ValueTypeBasisCoeff,

@@ -243,9 +243,9 @@ namespace dftefe
                     auto sphericalData =
                       atomSphericalDataContainer->getSphericalData(
                         *(iter), fieldName, *(qNumberIter));
-                    double cutoff =
-                      sphericalData->getCutoff() +
-                      sphericalData->getCutoff() / sphericalData->getSmoothness();
+                    double cutoff = sphericalData->getCutoff() +
+                                    sphericalData->getCutoff() /
+                                      sphericalData->getSmoothness();
                     for (unsigned int k = 0; k < dim; k++)
                       {
                         // assert for the cell and processor bounds
@@ -307,10 +307,10 @@ namespace dftefe
           &                                  overlappingEnrichmentIdsInCells,
         const std::vector<global_size_type> &newAtomIdToEnrichmentIdOffset)
       {
-        std::vector<size_type> oldAtomIds = atomIdsPartition->oldAtomIds();
-        std::set<global_size_type>    enrichmentIdsInProcessorTmp;
-        size_type              newAtomId, qIdPosition;
-        auto                   iter = overlappingEnrichmentIdsInCells.begin();
+        std::vector<size_type>     oldAtomIds = atomIdsPartition->oldAtomIds();
+        std::set<global_size_type> enrichmentIdsInProcessorTmp;
+        size_type                  newAtomId, qIdPosition;
+        auto iter = overlappingEnrichmentIdsInCells.begin();
         for (; iter != overlappingEnrichmentIdsInCells.end(); iter++)
           {
             auto it = iter->begin();
@@ -377,7 +377,8 @@ namespace dftefe
           for (auto i :
                atomSphericalDataContainer->getSphericalData(it, fieldName))
             {
-              cutoff.push_back(i->getCutoff() + i->getCutoff() / i->getSmoothness());
+              cutoff.push_back(i->getCutoff() +
+                               i->getCutoff() / i->getSmoothness());
             }
           double maxcutoff  = *(std::max_element(cutoff.begin(), cutoff.end()));
           rCutoffMax[count] = maxcutoff;

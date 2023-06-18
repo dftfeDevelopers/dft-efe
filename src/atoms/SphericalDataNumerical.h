@@ -41,15 +41,15 @@ namespace dftefe
     class SphericalDataNumerical : public SphericalData
     {
     public:
-
-      SphericalDataNumerical( const std::vector<int>                     qNumbers,
-                              const std::vector<double>                  radialPoints,
-                              const std::vector<double>                  radialValues,
-                              const double                               cutoff,
-                              const double                               smoothness,
-                              const double polarAngleTolerance = SphericalDataDefaults::POL_ANG_TOL,
-                              const double cutoffTolerance = SphericalDataDefaults::CUTOFF_TOL,
-                              const size_type dim = SphericalDataDefaults::DEFAULT_DIM);
+      SphericalDataNumerical(
+        const std::vector<int>    qNumbers,
+        const std::vector<double> radialPoints,
+        const std::vector<double> radialValues,
+        const double              cutoff,
+        const double              smoothness,
+        const double polarAngleTolerance = SphericalDataDefaults::POL_ANG_TOL,
+        const double cutoffTolerance     = SphericalDataDefaults::CUTOFF_TOL,
+        const size_type dim              = SphericalDataDefaults::DEFAULT_DIM);
 
       ~SphericalDataNumerical() = default;
 
@@ -57,8 +57,7 @@ namespace dftefe
       initSpline();
 
       double
-      getValue(const utils::Point &point,
-               const utils::Point &origin) override;
+      getValue(const utils::Point &point, const utils::Point &origin) override;
 
       std::vector<double>
       getGradientValue(const utils::Point &point,

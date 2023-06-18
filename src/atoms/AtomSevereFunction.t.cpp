@@ -69,13 +69,12 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              d_sphericalData = 
+              d_sphericalData =
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
                                                                qNumbers);
-              retValue = retValue +
-                         d_sphericalData->getValue(point,origin) * 
-                          d_sphericalData->getValue(point,origin);
+              retValue = retValue + d_sphericalData->getValue(point, origin) *
+                                      d_sphericalData->getValue(point, origin);
             }
           for (auto i : ghostEnrichmentIds)
             {
@@ -88,13 +87,12 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              d_sphericalData = 
+              d_sphericalData =
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
                                                                qNumbers);
-              retValue = retValue +
-                         d_sphericalData->getValue(point,origin) * 
-                          d_sphericalData->getValue(point,origin);
+              retValue = retValue + d_sphericalData->getValue(point, origin) *
+                                      d_sphericalData->getValue(point, origin);
             }
         }
       if (d_derivativeType == 2)
@@ -112,15 +110,17 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              d_sphericalData = 
+              d_sphericalData =
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
                                                                qNumbers);
-              for( size_type j = 0; j<dim ; j++)
-              {
-                retValue = retValue + d_sphericalData->getGradientValue(point, origin)[j] *
-                                    d_sphericalData->getGradientValue(point, origin)[j] ;
-              }
+              for (size_type j = 0; j < dim; j++)
+                {
+                  retValue =
+                    retValue +
+                    d_sphericalData->getGradientValue(point, origin)[j] *
+                      d_sphericalData->getGradientValue(point, origin)[j];
+                }
             }
           for (auto i : ghostEnrichmentIds)
             {
@@ -133,15 +133,17 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              d_sphericalData = 
+              d_sphericalData =
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
                                                                qNumbers);
-              for( size_type j = 0; j<dim ; j++)
-              {
-                retValue = retValue + d_sphericalData->getGradientValue(point, origin)[j] *
-                                    d_sphericalData->getGradientValue(point, origin)[j] ;
-              }
+              for (size_type j = 0; j < dim; j++)
+                {
+                  retValue =
+                    retValue +
+                    d_sphericalData->getGradientValue(point, origin)[j] *
+                      d_sphericalData->getGradientValue(point, origin)[j];
+                }
             }
         }
       else
@@ -180,13 +182,13 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  d_sphericalData = 
+                  d_sphericalData =
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
                                                                    qNumbers);
-                  retValue[j] =
-                    retValue[j] + d_sphericalData->getValue(points[j],origin) * 
-                          d_sphericalData->getValue(points[j],origin);
+                  retValue[j] = retValue[j] +
+                                d_sphericalData->getValue(points[j], origin) *
+                                  d_sphericalData->getValue(points[j], origin);
                 }
               for (auto i : ghostEnrichmentIds)
                 {
@@ -199,13 +201,13 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  d_sphericalData = 
+                  d_sphericalData =
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
                                                                    qNumbers);
-                  retValue[j] =
-                    retValue[j] + d_sphericalData->getValue(points[j],origin) * 
-                          d_sphericalData->getValue(points[j],origin);
+                  retValue[j] = retValue[j] +
+                                d_sphericalData->getValue(points[j], origin) *
+                                  d_sphericalData->getValue(points[j], origin);
                 }
             }
           if (d_derivativeType == 2)
@@ -223,15 +225,19 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  d_sphericalData = 
+                  d_sphericalData =
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
                                                                    qNumbers);
-                  for( size_type k = 0; k<dim ; k++)
-                  {
-                    retValue[j] = retValue[j] + d_sphericalData->getGradientValue(points[j], origin)[k] *
-                                        d_sphericalData->getGradientValue(points[j], origin)[k] ;
-                  }
+                  for (size_type k = 0; k < dim; k++)
+                    {
+                      retValue[j] =
+                        retValue[j] +
+                        d_sphericalData->getGradientValue(points[j],
+                                                          origin)[k] *
+                          d_sphericalData->getGradientValue(points[j],
+                                                            origin)[k];
+                    }
                 }
               for (auto i : ghostEnrichmentIds)
                 {
@@ -244,15 +250,19 @@ namespace dftefe
                   std::vector<int> qNumbers =
                     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                               d_fieldName);
-                  d_sphericalData = 
+                  d_sphericalData =
                     d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                    d_fieldName,
                                                                    qNumbers);
-                  for( size_type k = 0; k<dim ; k++)
-                  {
-                    retValue[j] = retValue[j] + d_sphericalData->getGradientValue(points[j], origin)[k] *
-                                        d_sphericalData->getGradientValue(points[j], origin)[k] ;
-                  }
+                  for (size_type k = 0; k < dim; k++)
+                    {
+                      retValue[j] =
+                        retValue[j] +
+                        d_sphericalData->getGradientValue(points[j],
+                                                          origin)[k] *
+                          d_sphericalData->getGradientValue(points[j],
+                                                            origin)[k];
+                    }
                 }
             }
           else

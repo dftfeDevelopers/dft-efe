@@ -32,8 +32,8 @@ namespace dftefe
     /**
      * @brief Setting all the SphericalDataDefaults
      */
-    const double SphericalDataDefaults::POL_ANG_TOL       = 1e-6;
-    const double SphericalDataDefaults::CUTOFF_TOL        = 1e-6;
-    const size_type SphericalDataDefaults::DEFAULT_DIM    = 3;
+    const double    SphericalDataDefaults::POL_ANG_TOL = 1e-6;
+    const double    SphericalDataDefaults::CUTOFF_TOL  = 1e-6;
+    const size_type SphericalDataDefaults::DEFAULT_DIM = 3;
   } // end of namespace atoms
 } // end of namespace dftefe

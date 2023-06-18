@@ -1345,9 +1345,14 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     EFEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      EFEBasisDataStorageDealii(std::shared_ptr<const BasisManager> efeBM)
+      EFEBasisDataStorageDealii(
+        std::shared_ptr<const BasisManager>         efeBM,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
       : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
+      , d_quadratureRuleAttributes(quadratureRuleAttributes)
+      , d_basisStorageAttributesBoolMap(basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = false;
       d_efeBM =
@@ -1385,9 +1390,7 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
-      d_basisStorageAttributesBoolMap = basisStorageAttributesBoolMap;
-      d_quadratureRuleAttributes      = quadratureRuleAttributes;
-      d_evaluateBasisData             = true;
+      d_evaluateBasisData = true;
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1538,9 +1541,7 @@ namespace dftefe
                                             quadratureRuleContainer,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
-      d_basisStorageAttributesBoolMap = basisStorageAttributesBoolMap;
-      d_quadratureRuleAttributes      = quadratureRuleAttributes;
-      d_evaluateBasisData             = true;
+      d_evaluateBasisData = true;
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1671,9 +1672,7 @@ namespace dftefe
                                             quadratureRuleVec,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
-      d_basisStorageAttributesBoolMap = basisStorageAttributesBoolMap;
-      d_quadratureRuleAttributes      = quadratureRuleAttributes;
-      d_evaluateBasisData             = true;
+      d_evaluateBasisData = true;
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1813,9 +1812,7 @@ namespace dftefe
         const unsigned int                  maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
-      d_basisStorageAttributesBoolMap = basisStorageAttributesBoolMap;
-      d_quadratureRuleAttributes      = quadratureRuleAttributes;
-      d_evaluateBasisData             = true;
+      d_evaluateBasisData = true;
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1966,7 +1963,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
-      return (d_basisQuadStorage);
+      return *(d_basisQuadStorage);
     }
 
     template <typename ValueTypeBasisData,
@@ -1988,7 +1985,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreGradient)
           ->second,
         "Basis Gradients are not evaluated for the given QuadratureRuleAttributes");
-      return (d_basisGradientQuadStorage);
+      return *(d_basisGradientQuadStorage);
     }
 
     template <typename ValueTypeBasisData,
@@ -2010,7 +2007,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreHessian)
           ->second,
         "Basis Hessians are not evaluated for the given QuadratureRuleAttributes");
-      return (d_basisHessianQuadStorage);
+      return *(d_basisHessianQuadStorage);
     }
 
     template <typename ValueTypeBasisData,
@@ -2031,7 +2028,7 @@ namespace dftefe
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
           ->second,
         "JxW values are not stored for the given QuadratureRuleAttributes");
-      return (d_JxWStorage);
+      return *(d_JxWStorage);
     }
 
 
@@ -2321,7 +2318,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreOverlap)
           ->second,
         "Basis overlap values are not evaluated for the given QuadratureRuleAttributes");
-      return (d_basisOverlap);
+      return *(d_basisOverlap);
     }
 
     template <typename ValueTypeBasisData,
@@ -2549,7 +2546,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreGradNiGradNj)
           ->second,
         "Basis Grad Ni Grad Nj values are not evaluated for the given QuadratureRuleAttributes");
-      return (d_basisGradNiGradNj);
+      return *(d_basisGradNiGradNj);
     }
 
     template <typename ValueTypeBasisData,

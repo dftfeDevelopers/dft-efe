@@ -84,7 +84,7 @@ namespace dftefe
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
-        const utils::mpi::MPIComm &                  comm);
+        const utils::mpi::MPIComm &                   comm);
 
       /**
        * @brief Destructor
@@ -129,7 +129,7 @@ namespace dftefe
     private:
       std::vector<global_size_type> d_newAtomIdToEnrichmentIdOffset;
       std::vector<std::vector<global_size_type>>
-                             d_overlappingEnrichmentIdsInCells;
+                                    d_overlappingEnrichmentIdsInCells;
       std::vector<global_size_type> d_enrichmentIdsInProcessor;
       std::pair<global_size_type, global_size_type> d_locallyOwnedEnrichmentIds;
       std::vector<global_size_type>                 d_ghostEnrichmentIds;

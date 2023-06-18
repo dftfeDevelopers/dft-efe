@@ -579,13 +579,13 @@ namespace dftefe
               std::string      atomSymbol = d_atomSymbolVec[atomId];
               utils::Point     origin(d_atomCoordinatesVec[atomId]);
               std::vector<int> qNumbers =
-              d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                      d_fieldName);
+                d_atomSphericalDataContainer->getQNumbers(atomSymbol,
+                                                          d_fieldName);
               d_sphericalData =
-              d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                            d_fieldName,
-                                                            qNumbers);
-              retValue = d_sphericalData->getValue(point,origin);
+                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
+                                                               d_fieldName,
+                                                               qNumbers);
+              retValue = d_sphericalData->getValue(point, origin);
             }
           else
             {
@@ -630,7 +630,7 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              d_sphericalData = 
+              d_sphericalData =
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
                                                                qNumbers);
@@ -679,7 +679,7 @@ namespace dftefe
               std::vector<int> qNumbers =
                 d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                           d_fieldName);
-              d_sphericalData = 
+              d_sphericalData =
                 d_atomSphericalDataContainer->getSphericalData(atomSymbol,
                                                                d_fieldName,
                                                                qNumbers);

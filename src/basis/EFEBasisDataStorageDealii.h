@@ -63,7 +63,10 @@ namespace dftefe
       using Storage =
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
-      EFEBasisDataStorageDealii(std::shared_ptr<const BasisManager> efeBM);
+      EFEBasisDataStorageDealii(
+        std::shared_ptr<const BasisManager>         efeBM,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap);
 
       ~EFEBasisDataStorageDealii() = default;
 
@@ -212,22 +215,22 @@ namespace dftefe
       bool                                              d_evaluateBasisData;
       std::shared_ptr<const EFEBasisManagerDealii<dim>> d_efeBM;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                                          d_quadratureRuleContainer;
-      const QuadratureRuleAttributes      d_quadratureRuleAttributes;
-      const BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
-      std::shared_ptr<Storage>            d_basisQuadStorage;
-      std::shared_ptr<Storage>            d_JxWStorage;
-      std::shared_ptr<Storage>            d_basisGradNiGradNj;
-      std::shared_ptr<Storage>            d_basisGradientQuadStorage;
-      std::shared_ptr<Storage>            d_basisHessianQuadStorage;
-      std::shared_ptr<Storage>            d_basisOverlap;
-      std::vector<size_type>              d_dofsInCell;
-      std::vector<size_type>              d_cellStartIdsBasisOverlap;
-      std::vector<size_type>              d_nQuadPointsIncell;
-      std::vector<size_type>              d_cellStartIdsBasisQuadStorage;
-      std::vector<size_type> d_cellStartIdsBasisGradientQuadStorage;
-      std::vector<size_type> d_cellStartIdsBasisHessianQuadStorage;
-      std::vector<size_type> d_cellStartIdsGradNiGradNj;
+                                    d_quadratureRuleContainer;
+      QuadratureRuleAttributes      d_quadratureRuleAttributes;
+      BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
+      std::shared_ptr<Storage>      d_basisQuadStorage;
+      std::shared_ptr<Storage>      d_JxWStorage;
+      std::shared_ptr<Storage>      d_basisGradNiGradNj;
+      std::shared_ptr<Storage>      d_basisGradientQuadStorage;
+      std::shared_ptr<Storage>      d_basisHessianQuadStorage;
+      std::shared_ptr<Storage>      d_basisOverlap;
+      std::vector<size_type>        d_dofsInCell;
+      std::vector<size_type>        d_cellStartIdsBasisOverlap;
+      std::vector<size_type>        d_nQuadPointsIncell;
+      std::vector<size_type>        d_cellStartIdsBasisQuadStorage;
+      std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
+      std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
+      std::vector<size_type>        d_cellStartIdsGradNiGradNj;
     };
   } // end of namespace basis
 } // end of namespace dftefe

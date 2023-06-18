@@ -88,10 +88,11 @@ namespace dftefe
       nSphericalData(std::string fieldName) const;
 
     private:
-      std::string                                       d_fileName;
-      std::vector<std::string>                          d_fieldNames;
-      std::vector<std::string>                          d_metadataNames;
-      std::map<std::string, std::vector<std::shared_ptr<SphericalData>>> d_sphericalData;
+      std::string              d_fileName;
+      std::vector<std::string> d_fieldNames;
+      std::vector<std::string> d_metadataNames;
+      std::map<std::string, std::vector<std::shared_ptr<SphericalData>>>
+        d_sphericalData;
       std::map<std::string, std::map<std::vector<int>, size_type>>
                                          d_qNumbersToIdMap;
       std::map<std::string, std::string> d_metadata;

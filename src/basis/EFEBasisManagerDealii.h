@@ -24,7 +24,7 @@
  */
 
 #ifndef dftefeEFEBasisManagerDealii_h
-#define dftefeEFEBasisManagerDealii_h
+#  define dftefeEFEBasisManagerDealii_h
 
 #  include <utils/TypeConfig.h>
 #  include <utils/Point.h>

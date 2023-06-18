@@ -300,6 +300,7 @@ namespace dftefe
       //
       std::vector<global_size_type> locallyOwnedCellGlobalIndicesTmp(
         cumulativeCellDofs, 0);
+      d_locallyOwnedCellGlobalIndices.resize(cumulativeCellDofs);
       EFEBasisHandlerDealiiInternal::getLocallyOwnedCellGlobalIndices<dim>(
         d_efeBMDealii.get(), locallyOwnedCellGlobalIndicesTmp);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -369,9 +370,9 @@ namespace dftefe
             feBasisConstraintsDealiiOpt = std::make_shared<
               FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
           feBasisConstraintsDealiiOpt->copyConstraintsData(
-            it->second.get(), mpiPatternP2P.get(), classicalAttributeId);
+            *(it->second), *mpiPatternP2P, classicalAttributeId);
           feBasisConstraintsDealiiOpt->populateConstraintsData(
-            mpiPatternP2P.get(), classicalAttributeId);
+            *mpiPatternP2P, classicalAttributeId);
           d_feConstraintsDealiiOptMap[constraintName] =
             feBasisConstraintsDealiiOpt;
 
@@ -401,6 +402,8 @@ namespace dftefe
 
           iConstraint++;
         }
+
+      d_efeBMDealii->getBasisCenters(d_supportPoints);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -585,9 +588,7 @@ namespace dftefe
       //
       // FIXME: Assumes linear mapping from reference cell to real cell
       //
-      dealii::MappingQ1<dim> mappingDealii;
-      dealii::DoFTools::map_dofs_to_support_points<dim, dim>(
-        mappingDealii, *(d_efeBMDealii->getDoFHandler()), d_supportPoints);
+      d_efeBMDealii->getBasisCenters(d_supportPoints);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -721,21 +722,8 @@ namespace dftefe
     {
       global_size_type globalId = localToGlobalIndex(localId, constraintsName);
 
-      //  TODO MAke this more efficient
-      //     dealii::Point<dim,double> dealiiPoint;
-      //     for ( size_type iDim = 0; iDim < dim ; iDim++)
-      //     {
-      //        dealiiPoint[iDim] = d_supportPoints[globalId][iDim];
-      //     }
-      // convertToDftefePoint<dim>(d_supportPoints[globalId], basisCenter);
-      //   convertToDftefePoint<dim>(dealiiPoint, basisCenter);
-      // convertToDftefePoint<dim>(d_supportPoints.find(globalId)->second,
-      //                           basisCenter);
-
-      std::map<global_size_type, utils::Point> dofCoords;
-      d_efeBMDealii->getBasisCenters(dofCoords);
-      if (dofCoords.find(globalId) != dofCoords.end())
-        basisCenter = dofCoords.find(globalId)->second;
+      if (d_supportPoints.find(globalId) != d_supportPoints.end())
+        basisCenter = d_supportPoints.find(globalId)->second;
       else
         utils::throwException(
           false,

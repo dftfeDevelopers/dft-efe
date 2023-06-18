@@ -345,12 +345,12 @@ namespace dftefe
 
       void
       processSphericalDataFromXMLNodeData(
-        std::vector<std::shared_ptr<SphericalData>> & sphericalDataVec,
-        const std::vector<std::string> &radialValueStrings,
-        const std::vector<std::string> &qNumberStrings,
-        const std::vector<std::string> &cutOffInfoStrings,
-        const std::vector<double> &     radialPoints,
-        const XPathInfo &               xPathInfo)
+        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
+        const std::vector<std::string> &             radialValueStrings,
+        const std::vector<std::string> &             qNumberStrings,
+        const std::vector<std::string> &             cutOffInfoStrings,
+        const std::vector<double> &                  radialPoints,
+        const XPathInfo &                            xPathInfo)
       {
         const size_type numPoints = radialPoints.size();
         const size_type N         = radialValueStrings.size();
@@ -388,8 +388,7 @@ namespace dftefe
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
 
             std::vector<int> qNumbers(0);
-            convSuccess =
-              splitStringToInts(qNumberStrings[i], qNumbers, 3);
+            convSuccess = splitStringToInts(qNumberStrings[i], qNumbers, 3);
             utils::throwException(convSuccess,
                                   "Error while converting quantum numbers in " +
                                     xPathInfo.xpath + " element in " +
@@ -433,12 +432,8 @@ namespace dftefe
             double cutoff     = cutoffInfo[0];
             double smoothness = cutoffInfo[1];
 
-            sphericalDataVec[i] = std::make_shared<SphericalDataNumerical>(qNumbers,
-                                                                    radialPoints,
-                                                                    radialValues,
-                                                                    cutoff,
-                                                                    smoothness);
-
+            sphericalDataVec[i] = std::make_shared<SphericalDataNumerical>(
+              qNumbers, radialPoints, radialValues, cutoff, smoothness);
           }
 
         utils::throwException(
@@ -461,9 +456,9 @@ namespace dftefe
 
       void
       getSphericalDataFromXMLNode(
-        std::vector<std::shared_ptr<SphericalData>> & sphericalDataVec,
-        const std::vector<double> &                 radialPoints,
-        const AtomSphericalDataXMLLocal::XPathInfo &xPathInfo)
+        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
+        const std::vector<double> &                  radialPoints,
+        const AtomSphericalDataXMLLocal::XPathInfo & xPathInfo)
       {
         std::vector<std::string> radialValuesStrings(0);
         std::vector<std::string> qNumbersStrings(0);
@@ -481,8 +476,8 @@ namespace dftefe
 
       void
       storeQNumbersToDataIdMap(
-        const std::vector<std::shared_ptr<SphericalData>> &     sphericalDataVec,
-        std::map<std::vector<int>, size_type> &qNumbersToDataIdMap)
+        const std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
+        std::map<std::vector<int>, size_type> &            qNumbersToDataIdMap)
       {
         size_type N = sphericalDataVec.size();
         for (size_type i = 0; i < N; ++i)
@@ -536,10 +531,11 @@ namespace dftefe
 
       bool convSuccess = false;
 
-// ---------------------This class constructor is only designed for SphericalDataNumerical for now------------------------
+      // ---------------------This class constructor is only designed for
+      // SphericalDataNumerical for now------------------------
 
-      int                          numRadialPoints;
-      std::vector<double>                radialPoints;
+      int                 numRadialPoints;
+      std::vector<double> radialPoints;
 
       //
       // get number of radial points
@@ -587,8 +583,8 @@ namespace dftefe
         {
           const std::string fieldName = fieldNames[iField];
           xPathInfo.xpath = getXPath(rootElementName, ns, fieldName);
-          std::vector<std::shared_ptr<SphericalData>>  sphericalDataVec(0);
-          std::map<std::vector<int>, size_type> qNumbersToIdMap;
+          std::vector<std::shared_ptr<SphericalData>> sphericalDataVec(0);
+          std::map<std::vector<int>, size_type>       qNumbersToIdMap;
           getSphericalDataFromXMLNode(sphericalDataVec,
                                       radialPoints,
                                       xPathInfo);

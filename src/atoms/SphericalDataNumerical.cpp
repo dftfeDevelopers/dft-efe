@@ -162,7 +162,7 @@ namespace dftefe
                        const double                         polarAngleTolerance,
                        double &                             value)
       {
-        size_type dim = point.size();
+        size_type           dim = point.size();
         double              r, theta, phi;
         std::vector<double> atomCenteredPoint;
         atomCenteredPoint.resize(dim, 0.);
@@ -195,7 +195,7 @@ namespace dftefe
                                const double         polarAngleTolerance,
                                std::vector<double> &gradient)
       {
-        size_type dim = point.size();
+        size_type           dim = point.size();
         double              r, theta, phi;
         std::vector<double> atomCenteredPoint;
         atomCenteredPoint.resize(dim, 0.);
@@ -227,9 +227,9 @@ namespace dftefe
                               const std::vector<int> &             qNumbers,
                               std::shared_ptr<const utils::Spline> spline,
                               const double         polarAngleTolerance,
-                              std::vector<double>  &hessian)
+                              std::vector<double> &hessian)
       {
-        size_type dim = point.size();
+        size_type           dim = point.size();
         double              r, theta, phi;
         std::vector<double> atomCenteredPoint;
         atomCenteredPoint.resize(dim, 0.);
@@ -255,26 +255,25 @@ namespace dftefe
     } // namespace SphericalDataInternal
 
     SphericalDataNumerical::SphericalDataNumerical(
-                            const std::vector<int>     qNumbers,
-                            const std::vector<double>  radialPoints,
-                            const std::vector<double>  radialValues,
-                            const double               cutoff,
-                            const double               smoothness,
-                            const double               polarAngleTolerance,
-                            const double               cutoffTolerance,
-                            const size_type            dim) :
-                            d_qNumbers(qNumbers),
-                            d_radialPoints(radialPoints),
-                            d_radialValues(radialValues),
-                            d_cutoff(cutoff),
-                            d_smoothness(smoothness),
-                            d_polarAngleTolerance(polarAngleTolerance),
-                            d_cutoffTolerance(cutoffTolerance),
-                            d_dim(dim)
+      const std::vector<int>    qNumbers,
+      const std::vector<double> radialPoints,
+      const std::vector<double> radialValues,
+      const double              cutoff,
+      const double              smoothness,
+      const double              polarAngleTolerance,
+      const double              cutoffTolerance,
+      const size_type           dim)
+      : d_qNumbers(qNumbers)
+      , d_radialPoints(radialPoints)
+      , d_radialValues(radialValues)
+      , d_cutoff(cutoff)
+      , d_smoothness(smoothness)
+      , d_polarAngleTolerance(polarAngleTolerance)
+      , d_cutoffTolerance(cutoffTolerance)
+      , d_dim(dim)
     {
-      utils::throwException<utils::InvalidArgument>(
-        d_dim == 3,
-        "Dimension has to be 3.");
+      utils::throwException<utils::InvalidArgument>(d_dim == 3,
+                                                    "Dimension has to be 3.");
       initSpline();
     }
 
@@ -287,41 +286,41 @@ namespace dftefe
 
     double
     SphericalDataNumerical::getValue(const utils::Point &point,
-                            const utils::Point &origin)
+                                     const utils::Point &origin)
     {
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
       SphericalDataInternal::getValueAnalytical(point,
-                            origin,
-                            d_cutoff,
-                            d_smoothness,
-                            d_qNumbers,
-                            d_spline,
-                            d_polarAngleTolerance,
-                            d_value);
+                                                origin,
+                                                d_cutoff,
+                                                d_smoothness,
+                                                d_qNumbers,
+                                                d_spline,
+                                                d_polarAngleTolerance,
+                                                d_value);
 
       return d_value;
     }
 
     std::vector<double>
     SphericalDataNumerical::getGradientValue(const utils::Point &point,
-                                    const utils::Point &origin)
+                                             const utils::Point &origin)
     {
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
       SphericalDataInternal::getGradientValueAnalytical(point,
-                            origin,
-                            d_cutoff,
-                            d_smoothness,
-                            d_qNumbers,
-                            d_spline,
-                            d_polarAngleTolerance,
-                            d_cutoffTolerance,
-                            d_gradient);
+                                                        origin,
+                                                        d_cutoff,
+                                                        d_smoothness,
+                                                        d_qNumbers,
+                                                        d_spline,
+                                                        d_polarAngleTolerance,
+                                                        d_cutoffTolerance,
+                                                        d_gradient);
 
       DFTEFE_AssertWithMsg(d_gradient.size() == d_dim,
                            "Gradient vector should be of length dim");
@@ -330,7 +329,7 @@ namespace dftefe
 
     std::vector<double>
     SphericalDataNumerical::getHessianValue(const utils::Point &point,
-                                   const utils::Point &origin)
+                                            const utils::Point &origin)
     {
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getHessianValue() has a dimension mismatch");
@@ -338,13 +337,13 @@ namespace dftefe
                            "All quantum numbers not given");
 
       SphericalDataInternal::getHessianValueAutoDiff(point,
-                                                      origin,
-                                                      d_cutoff,
-                                                      d_smoothness,
-                                                      d_qNumbers,
-                                                      d_spline,
-                                                      d_polarAngleTolerance,
-                                                      d_hessian);
+                                                     origin,
+                                                     d_cutoff,
+                                                     d_smoothness,
+                                                     d_qNumbers,
+                                                     d_spline,
+                                                     d_polarAngleTolerance,
+                                                     d_hessian);
       DFTEFE_AssertWithMsg(d_hessian.size() == d_dim * d_dim,
                            "Hessian vector should be of length dim*dim");
       return d_hessian;
@@ -357,13 +356,13 @@ namespace dftefe
     }
 
     double
-    SphericalDataNumerical::getCutoff() const 
+    SphericalDataNumerical::getCutoff() const
     {
       return d_cutoff;
     }
 
     double
-    SphericalDataNumerical::getSmoothness() const 
+    SphericalDataNumerical::getSmoothness() const
     {
       return d_smoothness;
     }
