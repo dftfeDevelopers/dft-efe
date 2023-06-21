@@ -504,12 +504,33 @@ namespace dftefe
 
 
           // Hadamard product for inp and JxW
+          linearAlgebra::blasLapack::blockedHadamardProduct(
+            numCumulativeDofsQuadCellsInBlock,
+            numComponents,
+            inp.begin(cellStartId),
+            jxwStorage.data() +
+              quadRuleContainer.getCellQuadStartId(cellStartId),
+            inpJxW.begin(),
+            linAlgOpContext);
+
+          // utils::MemoryStorage<ValueTypeUnion, memorySpace> jxwStorageMultivector(
+          //   numComponents * numCumulativeDofsQuadCellsInBlock,
+          //   ValueTypeUnion());
+
+          // for(size_type i = 0 ; i < numCumulativeDofsQuadCellsInBlock ; i++)
+          // {
+          //   jxwStorage.copyTo(jxwStorageMultivector,
+          //    numComponents,
+          //    i,
+          //    i*numComponents);
+          // }
+
+          // // Hadamard product for inp and JxW
           // linearAlgebra::blasLapack::hadamardProduct(
-          //   numCumulativeDofsQuadCellsInBlock,
-          //   numComponents,
-          //   inp.data(),
-          //   jxwStorage.data() +
-          //     quadRuleContainer.getCellQuadStartId(cellStartId),
+          //   numCumulativeDofsQuadCellsInBlock * numComponents,
+          //   inp.begin(cellStartId),
+          //   jxwStorageMultivector.data() +
+          //     quadRuleContainer.getCellQuadStartId(cellStartId)*numComponents,
           //   inpJxW.begin(),
           //   linAlgOpContext);
 

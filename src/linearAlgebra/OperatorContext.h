@@ -82,9 +82,9 @@ namespace dftefe
        * prior to calling this function
        *
        */
-      virtual void
-      apply(Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<ValueTypeUnion, memorySpace> &  y) const = 0;
+      // virtual void
+      // apply(Vector<ValueTypeOperand, memorySpace> &x,
+      //       Vector<ValueTypeUnion, memorySpace> &  y) const = 0;
 
       /*
        * @brief Function to apply the operator on an input Vector \p X and store
@@ -102,7 +102,7 @@ namespace dftefe
        *
        */
       virtual void
-      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
+      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<ValueTypeUnion, memorySpace> &  Y) const = 0;
     };
   } // end of namespace linearAlgebra

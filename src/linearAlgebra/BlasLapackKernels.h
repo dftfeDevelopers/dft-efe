@@ -58,6 +58,22 @@ namespace dftefe
                         const ValueType1 *                   x,
                         const ValueType2 *                   y,
                         scalar_type<ValueType1, ValueType2> *z);
+
+        /*
+         * @brief Template for performing \f$ blockedOutput_ij = blockedInput_ij * singleVectorInput_i$
+         * @param[in] size size of the blocked Input array
+         * @param[in] numComponets no of componets
+         * @param[in] blockedInput blocked array
+         * @param[in] singleVectorInput array
+         * @param[out] blockedOutput blocked array
+         */
+        static void
+        blockedHadamardProduct(const size_type                      vecSize,
+                        const size_type                      numComponents,
+                        const ValueType1 *                   blockedInput,
+                        const ValueType2 *                   singleVectorInput,
+                        scalar_type<ValueType1, ValueType2> *blockedOutput);
+                        
         static void
         hadamardProduct(size_type                            size,
                         const ValueType1 *                   x,

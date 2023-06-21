@@ -26,7 +26,7 @@
 
 #include <utils/MemoryTransfer.h>
 #include <utils/Exceptions.h>
-#include <BlasLapack.h>
+#include <linearAlgebra/BlasLapack.h>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -36,52 +36,56 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       PreconditionerJacobi(
-        const Vector<ValueTypeOperator, memorySpaceSrc> &diagonal)
-      : d_digonalInv(diagonal)
+        const Vector<ValueTypeOperator, memorySpace> &diagonal)
+      : d_diagonalInv(diagonal)
       , d_pcType(PreconditionerType::JACOBI)
 
     {
       blasLapack::reciprocalX(diagonal.localSize(),
                               1.0,
-                              digonal.data(),
+                              diagonal.data(),
                               d_diagonalInv.data(),
                               *(diagonal.getLinAlgOpContext()));
     }
 
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace>
-    void
-    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      apply(Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<ValueTypeUnion, memorySpace> &  y) const
-    {
-      blaslapack::hadamardProduct(d_digonalInv.localSize(),
-                                  d_digonalInv.data(),
-                                  x.data(),
-                                  y.data(),
-                                  *(d_digonalInv.getLinAlgOpContext()));
-    }
+    // template <typename ValueTypeOperator,
+    //           typename ValueTypeOperand,
+    //           utils::MemorySpace memorySpace>
+    // void
+    // PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+    //   apply(Vector<ValueTypeOperand, memorySpace> &x,
+    //         Vector<ValueTypeUnion, memorySpace> &  y) const
+    // {
+    //   blaslapack::hadamardProduct(d_diagonalInv.localSize(),
+    //                               d_diagonalInv.data(),
+    //                               x.data(),
+    //                               y.data(),
+    //                               *(d_diagonalInv.getLinAlgOpContext()));
+    // }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     void
     PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
+      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<ValueTypeUnion, memorySpace> &  Y) const
     {
-      utils::throwException(
-        false,
-        "apply() in PreconditionerJacobi for MultiVector is not "
-        "implemented yet.");
+      linearAlgebra::blasLapack::blockedHadamardProduct(
+        d_diagonalInv.localSize(),
+        X.getNumberComponents(),
+        X.data(),
+        d_diagonalInv.data(),
+        Y.data(),
+        *(d_diagonalInv.getLinAlgOpContext()));
     }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
+    PreconditionerType
     PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>
-      : getPreconditionerType() const
+      :: getPreconditionerType() const
     {
       return d_pcType;
     }

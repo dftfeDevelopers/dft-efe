@@ -140,6 +140,28 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        blockedHadamardProduct(const size_type                      vecSize,
+                        const size_type                      numComponents,
+                        const ValueType1 *                   blockedInput,
+                        const ValueType2 *                   singleVectorInput,
+                        scalar_type<ValueType1, ValueType2> *blockedOutput)
+      {
+        for (size_type i = 0; i < vecSize; ++i)
+          {
+            for (size_type j = 0; j < numComponents; ++j)
+            {
+              blockedOutput[i * numComponents+j] = 
+                ((scalar_type<ValueType1, ValueType2>)blockedInput[i * numComponents+j]) *
+                ((scalar_type<ValueType1, ValueType2>)singleVectorInput[i]);
+            }
+          }
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
         hadamardProduct(const size_type                      size,
                         const ValueType1 *                   x,
                         const ValueType2 *                   y,

@@ -77,10 +77,10 @@ namespace dftefe
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
-      Vector<ValueType, memorySpace> b     = linearSolverFunction.getRhs();
+      MultiVector<ValueType, memorySpace> b     = linearSolverFunction.getRhs();
       const double                   bNorm = b.l2Norm();
 
-      Vector<ValueTypeOperand, memorySpace> x =
+      MultiVector<ValueTypeOperand, memorySpace> x =
         linearSolverFunction.getInitialGuess();
 
       // get handle to Ax

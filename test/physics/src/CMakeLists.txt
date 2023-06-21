@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.20)
+project(reframe_test)
+set(CMAKE_CXX_STANDARD 17)
+
+set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
+message(${MAIN_PROJECT_DIR})
+
+#add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
+#add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
+include_directories(${MAIN_PROJECT_DIR}/src)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/basis/lib/buildUtils)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/lib/buildBasis)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/basis/lib/buildAtoms)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physics/lib/physics)
+
+
+#add_executable(TestTriangulationDealiiSerial TestTriangulationDealiiSerial.cpp )
+#target_link_libraries(TestTriangulationDealiiSerial PUBLIC dft-efe-basis dft-efe-utils)
+#add_executable(TestBasisStorageSerialTria TestBasisStorageSerialTria.cpp )
+#target_link_libraries(TestBasisStorageSerialTria PUBLIC dft-efe-basis dft-efe-utils)
+#add_executable(TestBasisHandler TestBasisHandler.cpp )
+#target_link_libraries(TestBasisHandler PUBLIC dft-efe-basis dft-efe-utils)
+
+if(ENABLE_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
+add_executable(TestPoissonProblemClassical TestPoissonProblemClassical.cpp )
+target_link_libraries(TestPoissonProblemClassical PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+endif()

@@ -138,6 +138,27 @@ namespace dftefe
                       const ValueType2 *                   y,
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context);
+
+        /*
+         * @brief Template for performing \f$ blockedOutput_ij = blockedInput_ij * singleVectorInput_i$
+         * @param[in] size size of the blocked Input array
+         * @param[in] numComponets no of componets
+         * @param[in] blockedInput blocked array
+         * @param[in] singleVectorInput array
+         * @param[out] blockedOutput blocked array
+         */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+        void
+        blockedHadamardProduct(const size_type                      vecSize,
+                        const size_type                      numComponents,
+                        const ValueType1 *                   blockedInput,
+                        const ValueType2 *                   singleVectorInput,
+                        scalar_type<ValueType1, ValueType2> *blockedOutput,
+                        LinAlgOpContext<memorySpace> &       context);
+
+
       /**
        * @brief Template for performing \f$ z_i = op(x_i) * op(y_i)$
        * where op represents either identity or complex conjugate
