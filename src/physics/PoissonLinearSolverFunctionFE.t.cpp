@@ -64,55 +64,54 @@ namespace dftefe
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
-                                  dim>::
-    PoissonLinearSolverFunctionFE(
+                                  dim>::PoissonLinearSolverFunctionFE(
       std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
         feBasisHandler,
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,ValueTypeBasisData,memorySpace,dim>>
+      std::shared_ptr<const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim>>
         feBasisOperations,
-      std::shared_ptr<const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+      std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
         feBasisDataStorage,
-      const quadrature::QuadratureValuesContainer<linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-        ValueTypeBasisData>, memorySpace> 
+      const quadrature::QuadratureValuesContainer<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+        ValueTypeOperand>, memorySpace> 
         & inp,
-      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes
+      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
       const std::string                                    constraintsName,
       const linearAlgebra::PreconditionerType              pcType,
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                     mpiPatternP2P,
-      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                 maxCellTimesNumVecs)
       : d_feBasisHandler(feBasisHandler)
       , d_feBasisDataStorage(feBasisDataStorage)
       , d_b(mpiPatternP2P,linAlgOpContext,inp.getNumberComponents(),utils::Types<ValueType>::zero)
       , d_constraintsName(constraintsName)
       , d_pcType(pcType)
-      , d_x(b.getMPIPatternP2P(),b.getLinAlgOpContext(),inp.getNumberComponents(),utils::Types<ValueType>::zero)
+      , d_x(d_b.getMPIPatternP2P(),d_b.getLinAlgOpContext(),inp.getNumberComponents(),utils::Types<ValueType>::zero)
       , d_mpiPatternP2P(mpiPatternP2P)
     {
-      feOperations.integrateWithBasisValues(
+      feBasisOperations->integrateWithBasisValues(
         inp,
         quadratureRuleAttributes,
         d_feBasisHandler.get(),
         constraintsName,
         d_b);
 
-      d_AxContext = std::make_shared<dftefe::physics::LaplaceOperatorContextFE
+      d_AxContext = std::make_shared<physics::LaplaceOperatorContextFE
         <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( d_feBasisHandler.get(),
         d_feBasisDataStorage.get(),
         constraintsName,
         quadratureRuleAttributes,
         maxCellTimesNumVecs);
 
-      Vector<ValueTypeOperator, memorySpace> diagonal(mpiPatternP2P,
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(mpiPatternP2P,
              linAlgOpContext,
              1.0);   // TODO
 
-      if (d_pcType == linearAlgbera::PreconditionerType::JACOBI)
-        d_PCContext = std::make_shared<dftefe::linearAlgbera::PreconditionerJacobi
+      if (d_pcType == linearAlgebra::PreconditionerType::JACOBI)
+        d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
           <ValueTypeOperator, ValueTypeOperand, memorySpace>>(diagonal);
-      else if (d_pcType == linearAlgbera::PreconditionerType::NONE)
-        d_PCContext = std::make_shared<dftefe::linearAlgbera::PreconditionerJacobi
+      else if (d_pcType == linearAlgebra::PreconditionerType::NONE)
+        d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
           <ValueTypeOperator, ValueTypeOperand, memorySpace>>(diagonal);
       else
       utils::throwException(
@@ -124,7 +123,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+    const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -137,7 +136,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+    const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -155,7 +154,7 @@ namespace dftefe
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::setSolution(const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                    <ValueTypeOperand,ValueTypeOperator>, memorySpace>
+                                    <ValueTypeOperator,ValueTypeOperand>, memorySpace>
                                    &x)
     {
       d_x = x;
@@ -165,8 +164,8 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                    <ValueTypeOperand,ValueTypeOperator>, memorySpace> &
+    linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
+                                    <ValueTypeOperator,ValueTypeOperand>, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -179,7 +178,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    Vector<ValueType, memorySpace>
+    linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -192,7 +191,8 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    virtual Vector<ValueTypeOperand, memorySpace>
+    linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
+                                    <ValueTypeOperator,ValueTypeOperand>, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,

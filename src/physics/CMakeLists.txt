@@ -21,10 +21,6 @@ set(DFT-EFE-PHYSICS-SOURCES
 
 add_library(dft-efe-physics SHARED ${DFT-EFE-PHYSICS-SOURCES})
 
-include_directories(../)
-
-#add_library(dft-efe-physics SHARED ${DFT-EFE-QUADRATURE-SOURCES})
-
 if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()

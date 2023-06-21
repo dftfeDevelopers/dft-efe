@@ -31,8 +31,12 @@
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
-#include <linearAlgebra/AbstractMatrix.h>
 #include <linearAlgebra/OperatorContext.h>
+#include <basis/FEBasisHandlerDealii.h>
+#include <basis/FEBasisDataStorageDealii.h>
+#include <quadrature/QuadratureAttributes.h>
+#include <memory>
+
 namespace dftefe
 {
   namespace physics
@@ -73,11 +77,11 @@ namespace dftefe
        */
       LaplaceOperatorContextFE(
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
-        const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &                             feBasisDataStorage,
+          & feBasisHandler,
+        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & feBasisDataStorage,
         const std::string               constraintsName,
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 maxCellTimesNumVecs);
 
       // void
@@ -86,16 +90,15 @@ namespace dftefe
 
       void
       apply(const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-            linearAlgebra::MultiVector<ValueType>,
-            memorySpace > &Y) const override;
+            linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
 
     private:
       const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-        *d_feBasisHandler;
-      const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *                             d_feBasisDataStorage;
+                                      *d_feBasisHandler;
+      const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+                                      *d_feBasisDataStorage;
       const std::string               d_constraintsName;
-      const QuadratureRuleAttributes &d_quadratureRuleAttributes;
+      const quadrature::QuadratureRuleAttributes &d_quadratureRuleAttributes;
       const size_type                 d_maxCellTimesNumVecs;
     }; // end of class LaplaceOperatorContextFE
   }    // end of namespace physics

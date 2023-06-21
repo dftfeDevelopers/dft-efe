@@ -85,9 +85,10 @@ namespace dftefe
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
                 utils::MemorySpace memorySpace>
+      void
       computeAxCellWiseLocal(
         const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &                     gradNiGradNjAllCells,
+          &                     gradNiGradNjInAllCells,
         const ValueTypeOperand *x,
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand> *
@@ -146,11 +147,11 @@ namespace dftefe
 
             // allocate memory for cell-wise data for x
             utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
-              cellsInBlockNumCumulativeDoFs * numComponents,
-              utils::Types<ValueType>::zero);
+              cellsInBlockNumCumulativeDoFs * numVecs,
+              utils::Types<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>>::zero);
 
             // copy x to cell-wise data
-            FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
+            basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
               copyFieldToCellWiseData(x,
                                       numVecs,
                                       cellLocalIdsStartPtr + cellLocalIdsOffset,
@@ -195,12 +196,12 @@ namespace dftefe
                                                          numVecs);
 
             // allocate memory for cell-wise data for y
-            utils::MemoryStorage<ValueType, memorySpace> yCellValues(
-              cellsInBlockNumCumulativeDoFs * numComponents,
-              utils::Types<ValueType>::zero);
+            utils::MemoryStorage<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace> yCellValues(
+              cellsInBlockNumCumulativeDoFs * numVecs,
+              utils::Types<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>>::zero);
 
-            ValueType alpha = 1.0;
-            ValueType beta  = 0.0;
+              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> alpha = 1.0;
+              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> beta  = 0.0;
 
             ValueTypeOperator *A = gradNiGradNjInAllCells.data() + AStartOffset;
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
@@ -226,7 +227,7 @@ namespace dftefe
               ldcSizes.data(),
               linAlgOpContext);
 
-            FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
+            basis::FECellWiseDataOperations<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace>::
               addCellWiseDataToFieldData(yCellValues,
                                          numVecs,
                                          cellLocalIdsStartPtr +
@@ -257,11 +258,11 @@ namespace dftefe
       LaplaceOperatorContextFE(
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
-        const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &                             feBasisDataStorage,
         const std::string               constraintsName,
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 maxCellTimesFieldBlock)
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                 maxCellTimesNumVecs)
       : d_feBasisHandler(&feBasisHandler)
       , d_feBasisDataStorage(&feBasisDataStorage)
       , d_constraintsName(constraintsName)
@@ -349,7 +350,7 @@ namespace dftefe
         d_feBasisHandler->nLocallyOwnedCells();
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = feBasisHandler.nLocallyOwnedCellDofs(iCell);
+        numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
 
       auto itCellLocalIdsBegin =
         d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsName);
@@ -357,7 +358,7 @@ namespace dftefe
       const size_type numVecs = X.numberVectors();
       
       // get handle to constraints
-      const Constraints<ValueType, memorySpace> &constraints =
+      const basis::Constraints<ValueType, memorySpace> &constraints =
         d_feBasisHandler->getConstraints(d_constraintsName);
 
       // update the child nodes based on the parent nodes
@@ -377,7 +378,7 @@ namespace dftefe
       // (A = discrete Laplace operator)
       //
       LaplaceOperatorContextFEInternal::computeAxCellWiseLocal(
-        gradNiGradNjAllCells,
+        gradNiGradNjInAllCells,
         X.begin(),
         Y.begin(),
         numVecs,

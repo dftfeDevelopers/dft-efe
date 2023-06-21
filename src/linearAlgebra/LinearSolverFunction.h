@@ -89,15 +89,15 @@ namespace dftefe
       getPCContext() const = 0;
 
       virtual void
-      setSolution(const Vector<ValueTypeOperand, memorySpace> &x) = 0;
+      setSolution(const MultiVector<ValueTypeOperand, memorySpace> &x) = 0;
 
-      virtual const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &
+      virtual MultiVector<ValueType, memorySpace> &
       getSolution() const = 0;
 
-      virtual Vector<ValueType, memorySpace>
+      virtual MultiVector<ValueTypeOperand, memorySpace> &
       getRhs() const = 0;
 
-      virtual Vector<ValueTypeOperand, memorySpace>
+      virtual MultiVector<ValueType, memorySpace> &
       getInitialGuess() const = 0;
 
       virtual const utils::mpi::MPIComm &

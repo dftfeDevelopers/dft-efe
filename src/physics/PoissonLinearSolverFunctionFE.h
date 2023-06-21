@@ -29,6 +29,17 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/LinearSolverFunction.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <physics/LaplaceOperatorContextFE.h>
+#include <linearAlgebra/PreconditionerJacobi.h>
+#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisOperations.h>
+#include <basis/FEBasisDataStorage.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <vector>
+#include <memory>
+
 namespace dftefe
 {
   namespace physics
@@ -88,38 +99,32 @@ namespace dftefe
       */
       PoissonLinearSolverFunctionFE(
         std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>> feBasisHandler,
-        std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,ValueTypeBasisData,memorySpace,dim>> feBasisOperations,
-        std::shared_ptr<const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>> feBasisDataStorage,
-        const quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &                            inp,
+        std::shared_ptr<const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim>> feBasisOperations,
+        std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>> feBasisDataStorage,
+        const quadrature::QuadratureValuesContainer<ValueType, memorySpace> & inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const std::string                                    constraintsName,
         const linearAlgebra::PreconditionerType              pcType,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                      mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
         const size_type                 maxCellTimesNumVecs);
 
-      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+      const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
       getAxContext() const override;
 
-      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+      const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
       getPCContext() const override;
 
       void
-      setSolution(const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                    <ValueTypeOperand,ValueTypeOperator>, memorySpace> &x) override;
+      setSolution(const linearAlgebra::MultiVector<ValueType, memorySpace> &x) override;
 
-      const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                    <ValueTypeOperand,ValueTypeOperator>, memorySpace> &
+      linearAlgebra::MultiVector<ValueType, memorySpace> &
       getSolution() const override;
 
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
       getRhs() const override;
 
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+      linearAlgebra::MultiVector<ValueType, memorySpace> &
       getInitialGuess() const override;
 
       const utils::mpi::MPIComm &
@@ -127,10 +132,10 @@ namespace dftefe
 
     private:
       std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>> d_feBasisHandler;
-      std::share_ptr<const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>> d_feBasisDataStorage;
-      std::shared_ptr<const linearAlgbera::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>> d_AxContext;
-      std::shared_ptr<const linearAlgbera::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>> d_PCContext;
-      linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperand,ValueTypeOperator>, memorySpace> d_x;
+      std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>> d_feBasisDataStorage;
+      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>> d_AxContext;
+      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>> d_PCContext;
+      linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> d_b;
       std::string                                          d_constraintsName;
       linearAlgebra::PreconditionerType                    d_pcType;
