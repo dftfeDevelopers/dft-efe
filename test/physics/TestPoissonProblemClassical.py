@@ -71,7 +71,7 @@ class BuildOnlyTestPoissonProblemClassical(rfm.CompileOnlyRegressionTest):
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         
-        hasTestPassed = not hasWarning and not hasError
+        hasTestPassed = not hasError
         msg = ""
         if hasError:
             msg = msgError

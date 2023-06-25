@@ -99,7 +99,7 @@ namespace dftefe
       */
       PoissonLinearSolverFunctionFE(
         std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>> feBasisHandler,
-        std::shared_ptr<const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim>> feBasisOperations,
+        const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim> & feBasisOperations,
         std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>> feBasisDataStorage,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace> & inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
@@ -119,12 +119,12 @@ namespace dftefe
       setSolution(const linearAlgebra::MultiVector<ValueType, memorySpace> &x) override;
 
       linearAlgebra::MultiVector<ValueType, memorySpace> &
-      getSolution() const override;
+      getSolution() override;
 
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
+      const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
       getRhs() const override;
 
-      linearAlgebra::MultiVector<ValueType, memorySpace> &
+      const linearAlgebra::MultiVector<ValueType, memorySpace> &
       getInitialGuess() const override;
 
       const utils::mpi::MPIComm &

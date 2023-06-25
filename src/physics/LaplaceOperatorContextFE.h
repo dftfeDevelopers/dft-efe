@@ -89,7 +89,7 @@ namespace dftefe
       //       linearAlgberba::Vector<ValueType, memorySpace> &y) const override;
 
       void
-      apply(const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+      apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
             linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
 
     private:

@@ -143,7 +143,8 @@ namespace dftefe
         std::vector<dealii::Quadrature<dim>> dealiiQuadratureTypeVec(
           1, dealii::QGauss<dim>(1));
         dealiiMatrixFree.clear();
-        dealiiMatrixFree.reinit(dofHandlerVec,
+        dealii::MappingQ1<dim> mappingDealii;
+        dealiiMatrixFree.reinit(mappingDealii, dofHandlerVec,
                                 dealiiAffineConstraintsVec,
                                 dealiiQuadratureTypeVec,
                                 dealiiAdditionalData);

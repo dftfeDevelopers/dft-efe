@@ -524,6 +524,39 @@ namespace dftefe
         MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
                     memorySpace> &                      w);
 
+
+    /**
+     * @brief Perform \f$ w = au + bv \f$
+     * @param[in] a vector
+     * @param[in] u first MultiVector on the right
+     * @param[in] b vector
+     * @param[in] v second MultiVector on the right
+     * @param[out] w resulting MultiVector
+     *
+     * @tparam ValueType1 DataType (double, float, complex<double>, etc.) of
+     *  u vector
+     * @tparam ValueType2 DataType (double, float, complex<double>, etc.) of
+     *  v vector
+     * @tparam memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the vector must reside.
+     * @note The datatype of the scalars a, b, and the resultant MultiVector w is
+     * decided through a union of ValueType1 and ValueType2
+     * (e.g., union of double and complex<double> is complex<double>)
+     */
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    void
+    add(
+        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> & a,
+        const MultiVector<ValueType1, memorySpace> &    u,
+        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> & b,
+        const MultiVector<ValueType2, memorySpace> &    v,
+        MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
+                    memorySpace> &   w);
+
+
+
     /**
      * @brief Perform \f$d_I$\f = dot product of op(\f$\mathbf{u}_I$\f)
      * and op(\f$\mathbf{v}_I$\f),

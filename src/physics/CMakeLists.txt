@@ -4,16 +4,6 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-
-if(ENABLE_MPI)
-	add_compile_definitions(DFTEFE_WITH_MPI)
-	if (NOT MPI_FOUND)
-		find_package(MPI REQUIRED)
-		target_include_directories(dft-efe-physics PUBLIC ${MPI_CXX_INCLUDE_PATH})
-		set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
-	endif()
-endif()
-
 # Add source files here
 set(DFT-EFE-PHYSICS-SOURCES
 	PoissonLinearSolverFunctionFE.cpp
@@ -35,6 +25,15 @@ endif()
 
 if (NOT TARGET dft-efe-quadrature)
  add_subdirectory(../quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
+endif()
+
+if(ENABLE_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
+	if (NOT MPI_FOUND)
+		find_package(MPI REQUIRED)
+		target_include_directories(dft-efe-physics PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+	endif()
 endif()
 
 include_directories(../)

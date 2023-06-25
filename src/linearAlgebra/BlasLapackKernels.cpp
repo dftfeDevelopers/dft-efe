@@ -273,6 +273,31 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
+              const size_type                      vecSize,
+              const size_type                            numVec,
+              const scalar_type<ValueType1, ValueType2> *  alpha,
+              const ValueType1 *                   x,
+              const scalar_type<ValueType1, ValueType2> *  beta,
+              const ValueType2 *                   y,
+              scalar_type<ValueType1, ValueType2> *z)
+      {
+        for (size_type i = 0; i < vecSize; ++i)
+          {
+            for (size_type j = 0; j < numVec; ++j)
+              {
+                z[i*numVec + j] = ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)x[i*numVec + j]) +
+                ((scalar_type<ValueType1, ValueType2>)beta[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)y[i*numVec + j]);
+              }
+          }
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::dotMultiVector(
         const size_type                      vecSize,
         const size_type                      numVec,

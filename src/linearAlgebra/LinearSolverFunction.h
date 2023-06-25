@@ -92,12 +92,12 @@ namespace dftefe
       setSolution(const MultiVector<ValueTypeOperand, memorySpace> &x) = 0;
 
       virtual MultiVector<ValueType, memorySpace> &
-      getSolution() const = 0;
+      getSolution() = 0;
 
-      virtual MultiVector<ValueTypeOperand, memorySpace> &
+      virtual const MultiVector<ValueTypeOperand, memorySpace> &
       getRhs() const = 0;
 
-      virtual MultiVector<ValueType, memorySpace> &
+      virtual const MultiVector<ValueType, memorySpace> &
       getInitialGuess() const = 0;
 
       virtual const utils::mpi::MPIComm &

@@ -203,7 +203,7 @@ namespace dftefe
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> alpha = 1.0;
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> beta  = 0.0;
 
-            ValueTypeOperator *A = gradNiGradNjInAllCells.data() + AStartOffset;
+            const ValueTypeOperator *A = gradNiGradNjInAllCells.data() + AStartOffset;
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
@@ -234,6 +234,8 @@ namespace dftefe
                                            cellLocalIdsOffset,
                                          cellsInBlockNumDoFs,
                                          y);
+
+            std::cout << "cell Start id :" << cellStartId << ", Size x :" << cellsInBlockNumCumulativeDoFs * numVecs<< "locallyownedcells" << numLocallyOwnedCells << "\n";
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -280,7 +282,7 @@ namespace dftefe
     //   ValueTypeOperand,
     //   memorySpace,
     //   dim>::apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
-    //               linearAlgebra::Vector<ValueType, memorySpace> &y) const
+    //               linearAlgebra::Vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &y) const
     // {
     //   const size_type numLocallyOwnedCells =
     //     d_feBasisHandler->nLocallyOwnedCells();
@@ -294,7 +296,7 @@ namespace dftefe
     //   const size_type numVecs = 1;
       
     //   // get handle to constraints
-    //   const Constraints<ValueType, memorySpace> &constraints =
+    //   const Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraints =
     //     d_feBasisHandler->getConstraints(d_constraintsName);
 
     //   // update the child nodes based on the parent nodes
@@ -343,8 +345,8 @@ namespace dftefe
                              ValueTypeOperand,
                              memorySpace,
                              dim>::
-      apply(const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-            linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
+      apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+            linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &Y) const
     {
       const size_type numLocallyOwnedCells =
         d_feBasisHandler->nLocallyOwnedCells();
@@ -355,14 +357,14 @@ namespace dftefe
       auto itCellLocalIdsBegin =
         d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsName);
 
-      const size_type numVecs = X.numberVectors();
+      const size_type numVecs = X.getNumberComponents();
       
       // get handle to constraints
-      const basis::Constraints<ValueType, memorySpace> &constraints =
+      const basis::Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraints =
         d_feBasisHandler->getConstraints(d_constraintsName);
 
       // update the child nodes based on the parent nodes
-      constraints.distributeParentToChild(X);
+      constraints.distributeParentToChild(X, numVecs);
 
       // access cell-wise discrete Laplace operator
       auto gradNiGradNjInAllCells =
@@ -370,8 +372,6 @@ namespace dftefe
           d_quadratureRuleAttributes);
 
       const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
-      linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-        *(X.getLinAlgOpContext());
 
       //
       // perform Ax on the local part of A and x
@@ -386,7 +386,7 @@ namespace dftefe
         numCellDofs,
         itCellLocalIdsBegin,
         cellBlockSize,
-        linAlgOpContext);
+        *(X.getLinAlgOpContext()));
 
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
@@ -394,7 +394,7 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      constraints.distributeChildToParent(Y);
+      constraints.distributeChildToParent(Y, numVecs);
     }
 
   } // end of namespace physics

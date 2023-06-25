@@ -67,8 +67,8 @@ namespace dftefe
                                   dim>::PoissonLinearSolverFunctionFE(
       std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
         feBasisHandler,
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim>>
-        feBasisOperations,
+      const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim>
+        & feBasisOperations,
       std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
         feBasisDataStorage,
       const quadrature::QuadratureValuesContainer<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -83,29 +83,30 @@ namespace dftefe
       const size_type                 maxCellTimesNumVecs)
       : d_feBasisHandler(feBasisHandler)
       , d_feBasisDataStorage(feBasisDataStorage)
-      , d_b(mpiPatternP2P,linAlgOpContext,inp.getNumberComponents(),utils::Types<ValueType>::zero)
+      , d_b(mpiPatternP2P,linAlgOpContext,inp.getNumberComponents())
       , d_constraintsName(constraintsName)
       , d_pcType(pcType)
-      , d_x(d_b.getMPIPatternP2P(),d_b.getLinAlgOpContext(),inp.getNumberComponents(),utils::Types<ValueType>::zero)
-      , d_mpiPatternP2P(mpiPatternP2P)
+      , d_x(mpiPatternP2P,linAlgOpContext,inp.getNumberComponents())
     {
-      feBasisOperations->integrateWithBasisValues(
+      feBasisOperations.integrateWithBasisValues(
         inp,
         quadratureRuleAttributes,
-        d_feBasisHandler.get(),
+        *d_feBasisHandler,
         constraintsName,
         d_b);
 
+        d_mpiPatternP2P = mpiPatternP2P;
+
       d_AxContext = std::make_shared<physics::LaplaceOperatorContextFE
-        <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( d_feBasisHandler.get(),
-        d_feBasisDataStorage.get(),
+        <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( *d_feBasisHandler,
+        *d_feBasisDataStorage,
         constraintsName,
         quadratureRuleAttributes,
         maxCellTimesNumVecs);
 
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(mpiPatternP2P,
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(d_mpiPatternP2P,
              linAlgOpContext,
-             1.0);   // TODO
+             (ValueTypeOperator)1.0);   // TODO
 
       if (d_pcType == linearAlgebra::PreconditionerType::JACOBI)
         d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
@@ -129,7 +130,7 @@ namespace dftefe
                                   memorySpace,
                                   dim>::getAxContext() const
     {
-      return d_AxContext.get();
+      return *d_AxContext;
     }
 
     template <typename ValueTypeOperator,
@@ -142,7 +143,7 @@ namespace dftefe
                                   memorySpace,
                                   dim>::getPCContext() const
     {
-      return d_PCContext.get();
+      return *d_PCContext;
     }
 
     template <typename ValueTypeOperator,
@@ -169,7 +170,7 @@ namespace dftefe
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
-                                  dim>::getSolution() const
+                                  dim>::getSolution() 
     {
       return d_x;
     }
@@ -178,7 +179,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
+    const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -191,7 +192,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
+    const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
                                     <ValueTypeOperator,ValueTypeOperand>, memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,

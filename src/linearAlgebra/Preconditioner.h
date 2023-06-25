@@ -108,7 +108,7 @@ namespace dftefe
        *
        */
       virtual void
-      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
+      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<ValueTypeUnion, memorySpace> &  Y) const = 0;
 
       virtual PreconditionerType

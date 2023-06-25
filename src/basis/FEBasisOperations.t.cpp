@@ -496,7 +496,7 @@ namespace dftefe
 
           std::cout << "numCumulativeDofsCellsInBlock = "
                     << numCumulativeDofsCellsInBlock
-                    << " numComponents  = " << numComponents << "\n";
+                    << " numComponents  = " << numComponents << "locallyownedcells =" << numLocallyOwnedCells << "\n";
 
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,

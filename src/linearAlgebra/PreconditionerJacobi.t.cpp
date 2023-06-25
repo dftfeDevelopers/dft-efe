@@ -68,7 +68,7 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
+      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<ValueTypeUnion, memorySpace> &  Y) const
     {
       linearAlgebra::blasLapack::blockedHadamardProduct(

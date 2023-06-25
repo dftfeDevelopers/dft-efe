@@ -133,6 +133,24 @@ namespace dftefe
               scalar_type<ValueType1, ValueType2> *z);
 
         /**
+         * @brief Template for performing \f$ z = \alpha x + \beta y \f$
+         * @param[in] size size of the array
+         * @param[in] \f$ alpha \f$ vector
+         * @param[in] x array
+         * @param[in] \f$ beta \f$ vector
+         * @param[in] y array
+         * @param[out] z array
+         */
+        static void
+        axpby(const size_type                      vecSize,
+              const size_type                            numVec,
+              const scalar_type<ValueType1, ValueType2> *  alpha,
+              const ValueType1 *                   x,
+              const scalar_type<ValueType1, ValueType2> *  beta,
+              const ValueType2 *                   y,
+              scalar_type<ValueType1, ValueType2> *z);
+
+        /**
          * @brief Template for computing dot products numVec vectors in a multi Vector
          * @param[in] vecSize size of each vector
          * @param[in] numVec number of vectors in the multi Vector
