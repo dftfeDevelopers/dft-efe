@@ -49,10 +49,10 @@ int main()
   std::cout<<" Entering test constraint matrix\n";
   // Set up linAlgcontext
 
-  dftefe::utils::mpi::MPIComm mpi_communicator = dftefe::utils::mpi::MPICommWorld;
+  //dftefe::utils::mpi::MPIComm mpi_communicator = dftefe::utils::mpi::MPICommWorld;
 
   // initialize the MPI environment
-  dftefe::utils::mpi::MPIInit(NULL, NULL);
+  //dftefe::utils::mpi::MPIInit(NULL, NULL);
 
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
@@ -157,7 +157,7 @@ int main()
   // // Set up BasisHandler
   std::shared_ptr<dftefe::basis::BasisHandler<double, dftefe::utils::MemorySpace::HOST>> basisHandler =
     std::make_shared<dftefe::basis::FEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, constraintsMap, mpi_communicator);
+    (basisManager, constraintsMap);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
@@ -271,5 +271,5 @@ int main()
   std::cout<<" test status = "<<testPass<<"\n";
   return testPass;
 
-  dftefe::utils::mpi::MPIFinalize();
+  //dftefe::utils::mpi::MPIFinalize();
 }

@@ -67,6 +67,9 @@ namespace dftefe
        */
 
       void
+      clearRefineFlag() override;
+
+      void
       getParametricPoint(const dftefe::utils::Point &realPoint,
                          const CellMappingBase &     cellMapping,
                          dftefe::utils::Point &parametricPoint) const override;

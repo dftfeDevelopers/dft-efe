@@ -1,5 +1,5 @@
 #include <basis/TriangulationBase.h>
-#include <basis/TriangulationDealiiSerial.h>
+#include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/FEBasisManagerDealii.h>
@@ -69,20 +69,14 @@ int main()
   std::cout<<" Entering test poisson problem classical \n";
   // Set up linAlgcontext
 
-  //dftefe::utils::mpi::MPIComm mpi_communicator = dftefe::utils::mpi::MPICommWorld;
-
-  // initialize the MPI environment
-  //dftefe::utils::mpi::MPIInit(NULL, NULL);
-
   // Required to solve : \nabla^2 V_H = g(r,r_c) Solve using CG in linearAlgebra
   // In the weak form the eqn is:
   // (N_i,N_j)*V_H = (N_i, g(r,r_c))
   // Input to CG are : linearSolverFnction. Reqd to create a derived class of the base.
   // For the nabla : LaplaceOperatorContextFE to get \nabla^2(A)*x = y
-
-  //
-  // initialize MPI
-  //
+  
+  //initialize MPI
+  
   int mpiInitFlag = 0;
   dftefe::utils::mpi::MPIInitialized(&mpiInitFlag);
   if(!mpiInitFlag)
@@ -90,18 +84,18 @@ int main()
     dftefe::utils::mpi::MPIInit(NULL, NULL);
   }
 
+  dftefe::utils::mpi::MPIComm comm = dftefe::utils::mpi::MPICommWorld;
+
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
 
   std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext =   
     std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
 
-  //dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>        linAlgOpContext(blasQueuePtr);
-
   // Set up Triangulation
   const unsigned int dim = 3;
-  std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
-    std::make_shared<dftefe::basis::TriangulationDealiiSerial<dim>>();
+    std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
+        std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
   std::vector<unsigned int>         subdivisions = {5, 5, 5};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
@@ -115,7 +109,11 @@ int main()
   double Ry = 2.5;
   double Rz = 2.5;
   unsigned int numComponents = 1;
-  double hMin = 0.1;
+  double hMin = 0.5;
+  dftefe::size_type maxIter = 2e5;
+  double absoluteTol = 1e-3;
+  double relativeTol = 1e-5;
+  double divergenceTol = 1e2;
 
   domainVectors[0][0] = xmax;
   domainVectors[1][1] = ymax;
@@ -126,14 +124,17 @@ int main()
   triangulationBase->createUniformParallelepiped(subdivisions,
                                                  domainVectors,
                                                  isPeriodicFlags);
+  triangulationBase->finalizeTriangulationConstruction();
 
-  bool flag = true;
-  while(flag)
+  int flag = 1;
+  int mpiReducedFlag = 1;
+  while(mpiReducedFlag)
   {
-    flag = false;
+    flag = 0;
     auto triaCellIter = triangulationBase->beginLocal();
     for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
     {
+      (*triaCellIter)->clearRefineFlag();
       dftefe::utils::Point centerPoint(dim, 0.0); 
       (*triaCellIter)->center(centerPoint);
       double dist = (centerPoint[0] - Rx)* (centerPoint[0] - Rx);  
@@ -143,14 +144,24 @@ int main()
       if (dist < 2*rc && (*triaCellIter)->diameter() > hMin)
       {
         (*triaCellIter)->setRefineFlag();
-        flag = true;
+        flag = 1;
       }
     }
     triangulationBase->executeCoarseningAndRefinement();
+    triangulationBase->finalizeTriangulationConstruction();
     // Mpi_allreduce that all the flags are 1 (mpi_max)
+    int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+      &flag,
+      &mpiReducedFlag,
+      1,
+      dftefe::utils::mpi::MPIInt,
+      dftefe::utils::mpi::MPIMax,
+      comm);
+    std::pair<bool, std::string> mpiIsSuccessAndMsg =
+      dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
+    dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
+                          "MPI Error:" + mpiIsSuccessAndMsg.second);
   }
-
-  triangulationBase->finalizeTriangulationConstruction();
 
   // initialize the basis Manager
 
@@ -159,6 +170,8 @@ int main()
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
+
+  std::cout << "Locally owned cells : " <<basisManager->nLocallyOwnedCells() << "\n";
         
   // Set the constraints
 
@@ -207,9 +220,9 @@ int main()
                       if (!constraintsVec[1]->isConstrained(nodeId))
                         {
                           basisCenter = dofCoords.find(nodeId)->second;
-                          double constraintValue = 1/std::sqrt(basisCenter[0]*basisCenter[0] + 
-                            basisCenter[1]*basisCenter[1] + 
-                            basisCenter[2]*basisCenter[2]);
+                          double constraintValue = 1/std::sqrt((basisCenter[0]-Rx)*(basisCenter[0]-Rx) + 
+                            (basisCenter[1]-Ry)*(basisCenter[1]-Ry) + 
+                            (basisCenter[2]-Rz)*(basisCenter[2]-Rz));
                           constraintsVec[1]->setInhomogeneity(nodeId, constraintValue);
                         } // non-hanging node check
                     }     // Face dof loop
@@ -253,7 +266,7 @@ int main()
   // // Set up BasisHandler
   std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisHandler =
     std::make_shared<dftefe::basis::FEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, constraintsMap);
+    (basisManager, constraintsMap, comm);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
@@ -273,8 +286,6 @@ int main()
    dens = std::make_shared<
     dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>(
       mpiPatternP2PRho, linAlgOpContext, numComponents, double());
-
-  //dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData( basisHandler, constraintName, 1, linAlgOpContext);
 
   //populate the value of the Potential at the nodes for the analytic expressions
 
@@ -307,6 +318,37 @@ int main()
   vh->updateGhostValues();
   constraintsVec[1]->distributeParentToChild(*vh, numComponents);
 
+  //populate the value of the Density at the nodes for the analytic expressions
+
+  numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
+  itField  = dens->begin();
+  dftefe::utils::Point nodeLoc1(dim,0.0);
+  for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
+    {
+      // get cell dof global ids
+      std::vector<dftefe::global_size_type> cellGlobalNodeIds;
+      basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+
+      // loop over nodes of a cell
+      for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+        {
+          // If node not constrained then get the local id and coordinates of the node
+          dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
+         if( !constraintsVec[0]->isConstrained(globalId))
+         {
+            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintPotential) ;
+            basisHandler->getBasisCenters(localId,constraintRho,nodeLoc1);
+            *(itField + localId )  = rho(nodeLoc1[0], nodeLoc1[1], nodeLoc1[2], Rx, Ry, Rz, rc);
+         }
+        }
+    }
+
+  // update the ghost values before calling apply Constraints
+  // For a serial run, updating ghost values has no effect
+
+  dens->updateGhostValues();
+  constraintsVec[0]->distributeParentToChild(*dens, numComponents);
+
   // create the quadrature Value Container
 
   std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
@@ -330,6 +372,8 @@ int main()
     }
   }
 
+  feBasisOp.interpolate( *dens, constraintRho, *basisHandler, quadAttr, quadValuesContainer);
+
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> linearSolverFunction =
@@ -342,17 +386,41 @@ int main()
                                                     feBasisData,
                                                     quadValuesContainer,
                                                     quadAttr,
+                                                    constraintRho,
                                                     constraintPotential,
                                                     dftefe::linearAlgebra::PreconditionerType::JACOBI ,
-                                                    mpiPatternP2PPotential,
                                                     linAlgOpContext,
                                                     50);
 
+  // std::shared_ptr<const dftefe::linearAlgebra::OperatorContext<double, double, dftefe::utils::MemorySpace::HOST>> 
+  // AxContext = std::make_shared<dftefe::physics::LaplaceOperatorContextFE
+  //   <double, double, dftefe::utils::MemorySpace::HOST, dim>>( *basisHandler,
+  //                                                           *feBasisData,
+  //                                                           constraintPotential,
+  //                                                           quadAttr,
+  //                                                           50);
+  
+// dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST> y(
+//       mpiPatternP2PPotential, linAlgOpContext, numComponents, double());
+// dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST> z(
+//       mpiPatternP2PPotential, linAlgOpContext, numComponents, double());
+// dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST> z1(
+//       mpiPatternP2PPotential, linAlgOpContext, numComponents, double());
+
+//   AxContext->apply(*vh, y);
+//   AxContext->apply(y, z);
+//   AxContext->apply(z, z1);
+
+//   std::cout << "y:" << y.l2Norms()[0] << "\n";
+//   std::cout << "z:" << z.l2Norms()[0] << "\n";
+//   std::cout << "z1:" << z1.l2Norms()[0] << "\n";
+
+  // for (unsigned int i = 0 ; i < vh->locallyOwnedSize() ; i++)
+  // {
+  //   std::cout << "vh[" <<i<<"] : "<< *(vh->data()+i) << ",";
+  // }
+
   dftefe::linearAlgebra::LinearAlgebraProfiler profiler;
-  dftefe::size_type maxIter = 1000;
-  double absoluteTol = 1e-2;
-  double relativeTol = 1e-2;
-  double divergenceTol = 1e-2;
 
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverImpl<double,
                                                    double,
@@ -372,32 +440,10 @@ int main()
    solution = linearSolverFunction->getSolution();
    constraintsVec[1]->distributeParentToChild(solution, numComponents);
 
-   std::cout<<"solution norm"<<solution.l2Norms()[0]<<"potential analytical norm"<<vh->l2Norms()[0];
-
-  // // Interpolate the nodal data to the quad points
-  // // feBasisOp.interpolate( fieldData, quadAttr, quadValuesContainer);
-
-
-  // // const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
-
-  // // bool testPass = true;
-  // // dftefe::size_type count = 0;
-  // // for( auto it  = quadValuesContainer.begin() ; it != quadValuesContainer.end() ; it++ )
-  // //   {
-  // //     double xLoc = locQuadPoints[count][0];
-  // //     double yLoc = locQuadPoints[count][1];
-  // //     double zLoc = locQuadPoints[count][2];
-
-  // //     double analyticValue = interpolatePolynomial (feDegree, xLoc, yLoc, zLoc,xmin,ymin,zmin);
-  // //     count++;
-  // //   }
-
-  // // std::cout<<" test status = "<<testPass<<"\n";
-  // // return testPass;
-
-  //
-  // gracefully end MPI
-  //
+   std::cout<<"solution norm: "<<solution.l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0];
+  
+  //gracefully end MPI
+  
   int mpiFinalFlag = 0;
   dftefe::utils::mpi::MPIFinalized(&mpiFinalFlag);
   if(!mpiFinalFlag)

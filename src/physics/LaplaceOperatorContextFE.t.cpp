@@ -60,8 +60,8 @@ namespace dftefe
 
         for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
           {
-            mSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell];
-            nSizesSTL[iCell]   = numVecs;
+            mSizesSTL[iCell]   = numVecs; 
+            nSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell]; 
             kSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell];
             ldaSizesSTL[iCell] = mSizesSTL[iCell];
             ldbSizesSTL[iCell] = nSizesSTL[iCell];
@@ -90,9 +90,7 @@ namespace dftefe
         const utils::MemoryStorage<ValueTypeOperator, memorySpace>
           &                     gradNiGradNjInAllCells,
         const ValueTypeOperand *x,
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                 ValueTypeOperand> *
-            y,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand> *y,
         const size_type                              numVecs,
         const size_type                              numLocallyOwnedCells,
         const std::vector<size_type> &               numCellDofs,
@@ -121,9 +119,9 @@ namespace dftefe
         // Hence, we specify the layout to be row major
         //
         linearAlgebra::blasLapack::Layout layout =
-          linearAlgebra::blasLapack::Layout::RowMajor;
+          linearAlgebra::blasLapack::Layout::ColMajor;
 
-        size_type AStartOffset       = 0;
+        size_type BStartOffset       = 0;
         size_type cellLocalIdsOffset = 0;
         for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
              cellStartId += cellBlockSize)
@@ -162,7 +160,7 @@ namespace dftefe
             std::vector<linearAlgebra::blasLapack::Op> transA(
               numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
             std::vector<linearAlgebra::blasLapack::Op> transB(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+              numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -203,7 +201,8 @@ namespace dftefe
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> alpha = 1.0;
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> beta  = 0.0;
 
-            const ValueTypeOperator *A = gradNiGradNjInAllCells.data() + AStartOffset;
+            const ValueTypeOperator *B = gradNiGradNjInAllCells.data() + BStartOffset;
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> *C = yCellValues.begin();
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
@@ -218,12 +217,12 @@ namespace dftefe
               nSizes.data(),
               kSizes.data(),
               alpha,
-              A,
-              ldaSizes.data(),
               xCellValues.data(),
+              ldaSizes.data(),
+              B,
               ldbSizes.data(),
               beta,
-              yCellValues.data(),
+              C,
               ldcSizes.data(),
               linAlgOpContext);
 
@@ -235,11 +234,9 @@ namespace dftefe
                                          cellsInBlockNumDoFs,
                                          y);
 
-            std::cout << "cell Start id :" << cellStartId << ", Size x :" << cellsInBlockNumCumulativeDoFs * numVecs<< "locallyownedcells" << numLocallyOwnedCells << "\n";
-
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
-                AStartOffset +=
+                BStartOffset +=
                   cellsInBlockNumDoFsSTL[iCell] * cellsInBlockNumDoFsSTL[iCell];
                 cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
               }
@@ -271,70 +268,6 @@ namespace dftefe
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {}
-
-    // template <typename ValueTypeOperator,
-    //           typename ValueTypeOperand,
-    //           utils::MemorySpace memorySpace,
-    //           size_type          dim>
-    // void
-    // LaplaceOperatorContextFE<
-    //   ValueTypeOperator,
-    //   ValueTypeOperand,
-    //   memorySpace,
-    //   dim>::apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
-    //               linearAlgebra::Vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &y) const
-    // {
-    //   const size_type numLocallyOwnedCells =
-    //     d_feBasisHandler->nLocallyOwnedCells();
-    //   std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
-    //   for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-    //     numCellDofs[iCell] = feBasisHandler.nLocallyOwnedCellDofs(iCell);
-
-    //   auto itCellLocalIdsBegin =
-    //     d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsName);
-
-    //   const size_type numVecs = 1;
-      
-    //   // get handle to constraints
-    //   const Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraints =
-    //     d_feBasisHandler->getConstraints(d_constraintsName);
-
-    //   // update the child nodes based on the parent nodes
-    //   constraints.distributeParentToChild(x);
-
-
-    //   // access cell-wise discrete Laplace operator
-    //   auto gradNiGradNjInAllCells =
-    //     d_feBasisDataStorage->getBasisGradNiGradNjInAllCells(
-    //       d_quadratureRuleAttributes);
-
-    //   const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
-    //   linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
-    //     *(x.getLinAlgOpContext());
-
-    //   //
-    //   // perform Ax on the local part of A and x
-    //   // (A = discrete Laplace operator)
-    //   //
-    //   LaplaceOperatorContextFEInternal::computeAxCellWiseLocal(
-    //     gradNiGradNjAllCells,
-    //     x.begin(),
-    //     y.begin(),
-    //     numVecs,
-    //     numLocallyOwnedCells,
-    //     numCellDofs,
-    //     itCellLocalIdsBegin,
-    //     cellBlockSize,
-    //     linAlgOpContext);
-
-    //   // Function to add the values to the local node from its corresponding
-    //   // ghost nodes from other processors.
-    //   y.accumulateAddLocallyOwned();
-
-    //   // function to do a static condensation to send the constraint nodes to
-    //   // its parent nodes
-    //   constraints.distributeChildToParent(y);
-    // }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
@@ -372,6 +305,7 @@ namespace dftefe
           d_quadratureRuleAttributes);
 
       const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+      Y.setValue(0.0);
 
       //
       // perform Ax on the local part of A and x

@@ -75,36 +75,40 @@ namespace dftefe
         ValueTypeOperand>, memorySpace> 
         & inp,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const std::string                                    constraintsName,
+      const std::string                                    constraintsNameRhs,
+      const std::string                                    constraintsNameLhs,
       const linearAlgebra::PreconditionerType              pcType,
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                    mpiPatternP2P,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                 maxCellTimesNumVecs)
       : d_feBasisHandler(feBasisHandler)
       , d_feBasisDataStorage(feBasisDataStorage)
-      , d_b(mpiPatternP2P,linAlgOpContext,inp.getNumberComponents())
-      , d_constraintsName(constraintsName)
+      , d_b(feBasisHandler->getMPIPatternP2P(constraintsNameRhs),linAlgOpContext,inp.getNumberComponents())
       , d_pcType(pcType)
-      , d_x(mpiPatternP2P,linAlgOpContext,inp.getNumberComponents())
+      , d_x(feBasisHandler->getMPIPatternP2P(constraintsNameLhs),linAlgOpContext,inp.getNumberComponents())
+      , d_initial(feBasisHandler->getMPIPatternP2P(constraintsNameLhs),linAlgOpContext,inp.getNumberComponents())
     {
       feBasisOperations.integrateWithBasisValues(
         inp,
         quadratureRuleAttributes,
         *d_feBasisHandler,
-        constraintsName,
+        constraintsNameRhs,
         d_b);
 
-        d_mpiPatternP2P = mpiPatternP2P;
+        // for (unsigned int h = 0 ; h < d_b.locallyOwnedSize() ; h++)
+        // {
+        //   std::cout << "b[" << h <<"]:"<< *(d_b.data()+h) << ", ";
+        // }
+
+        d_mpiPatternP2PLhs = feBasisHandler->getMPIPatternP2P(constraintsNameLhs);
 
       d_AxContext = std::make_shared<physics::LaplaceOperatorContextFE
         <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( *d_feBasisHandler,
         *d_feBasisDataStorage,
-        constraintsName,
+        constraintsNameLhs,
         quadratureRuleAttributes,
         maxCellTimesNumVecs);
 
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(d_mpiPatternP2P,
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(d_mpiPatternP2PLhs,
              linAlgOpContext,
              (ValueTypeOperator)1.0);   // TODO
 
@@ -199,7 +203,7 @@ namespace dftefe
                                   memorySpace,
                                   dim>::getInitialGuess() const
     {
-      return d_x;
+		   return d_initial;
     }
 
     template <typename ValueTypeOperator,
@@ -212,7 +216,7 @@ namespace dftefe
                                   memorySpace,
                                   dim>::getMPIComm() const
     {
-      return d_mpiPatternP2P->mpiCommunicator();
+      return d_mpiPatternP2PLhs->mpiCommunicator();
     }
 
   } // end of namespace physics

@@ -103,9 +103,9 @@ namespace dftefe
         std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>> feBasisDataStorage,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace> & inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const std::string                                    constraintsName,
+        const std::string                                    constraintsNameRhs,
+        const std::string                                    constraintsNameLhs,
         const linearAlgebra::PreconditionerType              pcType,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
         const size_type                 maxCellTimesNumVecs);
 
@@ -137,9 +137,9 @@ namespace dftefe
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>> d_PCContext;
       linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> d_b;
-      std::string                                          d_constraintsName;
       linearAlgebra::PreconditionerType                    d_pcType;
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2PLhs;
+      const linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace physics
 } // end of namespace dftefe

@@ -108,6 +108,13 @@ namespace dftefe
 
     template <unsigned int dim>
     void
+    TriangulationCellDealii<dim>::clearRefineFlag()
+    {
+      d_cellItr->clear_refine_flag();
+    }
+
+    template <unsigned int dim>
+    void
     TriangulationCellDealii<dim>::getParametricPoint(
       const dftefe::utils::Point &realPoint,
       const CellMappingBase &     cellMapping,

@@ -77,8 +77,7 @@ namespace dftefe
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
-      MultiVector<ValueType, memorySpace> b;
-      b = (linearSolverFunction.getRhs());
+      const MultiVector<ValueType, memorySpace> &b = linearSolverFunction.getRhs();
 
       std::vector<double> bNorm(0);
       bNorm = b.l2Norms();
@@ -86,9 +85,9 @@ namespace dftefe
       size_type numComponents = b.getNumberComponents();
 
       MultiVector<ValueTypeOperand, memorySpace> x;
-      x = (linearSolverFunction.getInitialGuess());
+      x = linearSolverFunction.getInitialGuess();
       MultiVector<ValueTypeOperand, memorySpace> xConverged;
-      xConverged = (linearSolverFunction.getInitialGuess());
+      xConverged = linearSolverFunction.getInitialGuess();
 
       // get handle to Ax
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
@@ -122,18 +121,19 @@ namespace dftefe
       size_type precision = d_profiler.getPrecision();
       Error     err       = Error::OTHER_ERROR;
       size_type iter      = 0;
-      size_type i = 0,j = 0;
-      std::vector<bool> convergeFlag(numComponents, false);
+      std::vector<bool> convergeFlag(0);
+      convergeFlag.resize(numComponents, false);
       bool divergeFlag = false;
       bool allConverged = false;
-      std::vector<ValueType> ones(numComponents, (ValueType)1.0);
-      std::vector<ValueType> nOnes(numComponents, (ValueType)-1.0);
+      std::vector<ValueType> ones(0);
+      ones.resize(numComponents, (ValueType)1.0);
+      std::vector<ValueType> nOnes(0);
+      nOnes.resize(numComponents, (ValueType)-1.0);
 
       for (; iter <= d_maxIter; ++iter)
       {
         // register start of the iteration
         d_profiler.registerIterStart(iter);
-
         if (iter == 0)
         {
           //
@@ -152,6 +152,11 @@ namespace dftefe
           // p = z
           //
           p = z;
+
+          // for (unsigned int h = 0 ; h < z.locallyOwnedSize() ; h++)
+          // {
+          //   std::cout << "z[" <<iter << "," << h <<"] : "<< *(z.data()+h) << ",";
+          // }
         }
 
         else
@@ -177,7 +182,7 @@ namespace dftefe
 
           //ValueType alpha = zDotr / pDotw;
           std::vector<ValueType> alpha(0), nAlpha(0);
-          for (i = 0 ; i < numComponents ; i++)
+          for (size_type i = 0 ; i < numComponents ; i++)
           {
             alpha.push_back(zDotr[i] / pDotw[i]);
             nAlpha.push_back(-zDotr[i] / pDotw[i]);
@@ -202,7 +207,7 @@ namespace dftefe
 
           //ValueType beta = zDotrNew / zDotr;
           std::vector<ValueType> beta(0);
-          for (i = 0 ; i < numComponents ; i++)
+          for (size_type i = 0 ; i < numComponents ; i++)
             beta.push_back(zDotrNew[i] / zDotr[i]);
 
           // p = z + beta*p
@@ -213,15 +218,17 @@ namespace dftefe
         rNorm = r.l2Norms();
         //rNorm = r.l2Norm();
 
+        std::cout << rNorm[0] << "\n";
+
         std::string msg;
-        for ( i = 0 ; i < numComponents ; i++ )
+        for (size_type i = 0 ; i < numComponents ; i++ )
         {
           if (rNorm[i] < std::max(d_absoluteTol, bNorm[i] * d_relativeTol) && convergeFlag[i]==false)
           {
             err = Error::SUCCESS;
             convergeFlag[i] = true;
             //copy x to xConverged of the ith comp vector
-            for(j = 0 ; j < x.locallyOwnedSize() ; j++)
+            for(size_type j = 0 ; j < x.locallyOwnedSize() ; j++)
             *(xConverged.data() + j*numComponents + i) = *(x.data() + j*numComponents + i);
           }
 
