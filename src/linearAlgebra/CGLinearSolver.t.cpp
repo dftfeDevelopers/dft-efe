@@ -141,7 +141,7 @@ namespace dftefe
           // However, for the 0-th iteration we use it to store Ax
           // to avoid allocating memory for another Vector
           AxContext.apply(x, w);
-          add(ones, b, nOnes, w, r); //TODO
+          add(ones, b, nOnes, w, r); 
 
           //
           // z = preconditioned r
@@ -189,10 +189,10 @@ namespace dftefe
           }
 
           // x = x + alpha*p
-          add(ones, x, alpha, p, x); //TODO
+          add(ones, x, alpha, p, x); 
 
           // r = r - alpha*w
-          add(ones, r, nAlpha, w, r); //TODO
+          add(ones, r, nAlpha, w, r); 
 
           // z = preconditioned r
           pcContext.apply(r, z);
@@ -211,7 +211,7 @@ namespace dftefe
             beta.push_back(zDotrNew[i] / zDotr[i]);
 
           // p = z + beta*p
-          add(ones, z, beta, p, p); //TODO
+          add(ones, z, beta, p, p); 
         }
 
         std::vector<double> rNorm(0);
@@ -399,7 +399,7 @@ namespace dftefe
     //	betaold = beta;
     //
     //	//
-    //	//TODO: Check for indefinite matrix
+    //	: Check for indefinite matrix
     //	//
     //
     //	// a = beta/ (p^Hw)

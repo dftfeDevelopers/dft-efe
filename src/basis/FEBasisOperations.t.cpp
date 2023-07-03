@@ -476,27 +476,27 @@ namespace dftefe
                     numCellQuad.begin() + cellEndId,
                     numCellsInBlockQuad.begin());
 
-          std::vector<size_type> numCellsInBlockDofsQuad(numCellsInBlock, 0);
+          // std::vector<size_type> numCellsInBlockDofsQuad(numCellsInBlock, 0);
 
-          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-            {
-              numCellsInBlockDofsQuad[iCell] =
-                numCellsInBlockQuad[iCell] * numCellsInBlockDofs[iCell];
-            }
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     numCellsInBlockDofsQuad[iCell] =
+          //       numCellsInBlockQuad[iCell] * numCellsInBlockDofs[iCell];
+          //   }
 
-          const size_type numCumulativeDofsQuadCellsInBlock =
-            std::accumulate(numCellsInBlockDofsQuad.begin(),
-                            numCellsInBlockDofsQuad.end(),
+          const size_type numCumulativeQuadCellsInBlock =
+            std::accumulate(numCellsInBlockQuad.begin(),
+                            numCellsInBlockQuad.end(),
                             0);
 
 
           utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
-            numComponents * numCumulativeDofsQuadCellsInBlock,
+            numComponents * numCumulativeQuadCellsInBlock,
             ValueTypeUnion());
 
-          std::cout << "numCumulativeDofsCellsInBlock = "
-                    << numCumulativeDofsCellsInBlock
-                    << " numComponents  = " << numComponents << "locallyownedcells =" << numLocallyOwnedCells << "\n";
+          // std::cout << "numCumulativeDofsCellsInBlock = "
+          //           << numCumulativeDofsCellsInBlock
+          //           << " numComponents  = " << numComponents << "locallyownedcells =" << numLocallyOwnedCells << "\n";
 
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,
@@ -505,25 +505,13 @@ namespace dftefe
 
           // Hadamard product for inp and JxW
           linearAlgebra::blasLapack::blockedHadamardProduct(
-            numCumulativeDofsQuadCellsInBlock,
+            numCumulativeQuadCellsInBlock,
             numComponents,
             inp.begin(cellStartId),
             jxwStorage.data() +
               quadRuleContainer.getCellQuadStartId(cellStartId),
-            inpJxW.begin(),
+            inpJxW.data(),
             linAlgOpContext);
-
-          // utils::MemoryStorage<ValueTypeUnion, memorySpace> jxwStorageMultivector(
-          //   numComponents * numCumulativeDofsQuadCellsInBlock,
-          //   ValueTypeUnion());
-
-          // for(size_type i = 0 ; i < numCumulativeDofsQuadCellsInBlock ; i++)
-          // {
-          //   jxwStorage.copyTo(jxwStorageMultivector,
-          //    numComponents,
-          //    i,
-          //    i*numComponents);
-          // }
 
           // // Hadamard product for inp and JxW
           // linearAlgebra::blasLapack::hadamardProduct(
@@ -538,7 +526,7 @@ namespace dftefe
           std::vector<linearAlgebra::blasLapack::Op> transA(
             numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -556,7 +544,7 @@ namespace dftefe
               nSizesTmp[iCell]       = numCellsInBlockDofs[iCell];
               kSizesTmp[iCell]       = numCellsInBlockQuad[iCell];
               ldaSizesTmp[iCell]     = mSizesTmp[iCell];
-              ldbSizesTmp[iCell]     = nSizesTmp[iCell];
+              ldbSizesTmp[iCell]     = kSizesTmp[iCell];
               ldcSizesTmp[iCell]     = mSizesTmp[iCell];
               strideATmp[iCell]      = mSizesTmp[iCell] * kSizesTmp[iCell];
               strideCTmp[iCell]      = mSizesTmp[iCell] * nSizesTmp[iCell];
@@ -650,16 +638,14 @@ namespace dftefe
             }
         }
 
-
-
-      // Function to add the values to the local node from its corresponding
-      // ghost nodes from other processors.
-      vectorData.accumulateAddLocallyOwned();
-
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         feBasisHandler.getConstraints(constraintsName);
       constraints.distributeChildToParent(vectorData,
                                           vectorData.getNumberComponents());
+
+      // Function to add the values to the local node from its corresponding
+      // ghost nodes from other processors.
+      vectorData.accumulateAddLocallyOwned();
     }
 
 

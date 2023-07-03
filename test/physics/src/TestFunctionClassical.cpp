@@ -40,27 +40,16 @@
 // operand - V_H
 // memoryspace - HOST
 
-double rho(double x, double y, double z, double Rx, double Ry, double Rz, double rc)
-{
-  // The function should have homogeneous dirichlet BC
-  double r = std::sqrt( (x-Rx)*(x-Rx) + (y-Ry)*(y-Ry) + (z-Rz)*(z-Rz) );
-  double ret = 0;
-  if( r > rc )
-    return 0;
-  else
-    return -21*std::pow((r-rc),3)*(6*r*r + 3*r*rc + rc*rc)/(5*M_PI*std::pow(rc,8));
-}
-
-double potential(double x, double y, double z, double Rx, double Ry, double Rz, double rc)
+double rho(double x, double y, double z)
 {
   // The function should have inhomogeneous dirichlet BC
-  double r = std::sqrt( (x-Rx)*(x-Rx) + (y-Ry)*(y-Ry) + (z-Rz)*(z-Rz) );
-  if( r > rc )
-    return 1/r;
-  else
-    return (9*std::pow(r,7)-30*std::pow(r,6)*rc
-      +28*std::pow(r,5)*std::pow(rc,2)-14*std::pow(r,2)*std::pow(rc,5)
-        +12*std::pow(rc,7))/(5*std::pow(rc,8));
+    return 1;
+}
+
+double potential(double x, double y, double z)
+{
+  // The function should have inhomogeneous dirichlet BC
+    return ((x)*(x) + (y)*(y) + (z)*(z))/6.0;
 }
 
 int main()
@@ -96,21 +85,16 @@ int main()
   const unsigned int dim = 3;
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
         std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {10, 10, 10};
+  std::vector<unsigned int>         subdivisions = {5, 5, 5};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
-  double xmax = 10.0;
-  double ymax = 10.0;
-  double zmax = 10.0;
-  double rc = 0.5;
-  double Rx = 5.;
-  double Ry = 5.;
-  double Rz = 5.;
+  double xmax = 5.0;
+  double ymax = 5.0;
+  double zmax = 5.0;
   unsigned int numComponents = 1;
-  double hMin = 0.5;
-  dftefe::size_type maxIter = 2e7;
+  dftefe::size_type maxIter = 2e5;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
   double divergenceTol = 1e10;
@@ -126,43 +110,6 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
-  int flag = 1;
-  int mpiReducedFlag = 1;
-  while(mpiReducedFlag)
-  {
-    flag = 0;
-    auto triaCellIter = triangulationBase->beginLocal();
-    for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
-    {
-      (*triaCellIter)->clearRefineFlag();
-      dftefe::utils::Point centerPoint(dim, 0.0); 
-      (*triaCellIter)->center(centerPoint);
-      double dist = (centerPoint[0] - Rx)* (centerPoint[0] - Rx);  
-      dist += (centerPoint[1] - Ry)* (centerPoint[1] - Ry);
-      dist += (centerPoint[2] - Rz)* (centerPoint[2] - Rz);
-      dist = std::sqrt(dist);
-      if (dist < 2*rc && (*triaCellIter)->diameter() > hMin)
-      {
-        (*triaCellIter)->setRefineFlag();
-        flag = 1;
-      }
-    }
-    triangulationBase->executeCoarseningAndRefinement();
-    triangulationBase->finalizeTriangulationConstruction();
-    // Mpi_allreduce that all the flags are 1 (mpi_max)
-    int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
-      &flag,
-      &mpiReducedFlag,
-      1,
-      dftefe::utils::mpi::MPIInt,
-      dftefe::utils::mpi::MPIMax,
-      comm);
-    std::pair<bool, std::string> mpiIsSuccessAndMsg =
-      dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
-    dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
-                          "MPI Error:" + mpiIsSuccessAndMsg.second);
-  }
-
   // initialize the basis Manager
 
   unsigned int feDegree = 3;
@@ -175,8 +122,8 @@ int main()
         
   // Set the constraints
 
-  std::string constraintRho = "HomogenousWithHanging";
-  std::string constraintPotential = "InHomogenousWithHanging";
+  std::string constraintRho = "InHomogenousWithHangingRho";
+  std::string constraintPotential = "InHomogenousWithHangingPotential";
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
     constraintsVec;
   constraintsVec.resize(2, std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>());
@@ -196,16 +143,16 @@ int main()
       std::vector<dftefe::global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<dftefe::global_size_type> iFaceGlobalDofIndices(dofs_per_face);
       std::vector<bool> dofs_touched(basisManager->nGlobalNodes(), false);
-      auto              cell = basisManager->beginLocallyOwnedCells(),
-      endc              = basisManager->endLocallyOwnedCells();
-      dftefe::utils::Point basisCenter(0);
-      for (; cell != endc; ++cell)
+      dofs_touched.resize(basisManager->nGlobalNodes(), false);
+      auto              icell = basisManager->beginLocallyOwnedCells();
+      dftefe::utils::Point basisCenter(dim, 0);
+      for (; icell != basisManager->endLocallyOwnedCells(); ++icell)
         {
-          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          (*icell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
           for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
             {
-              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-              const dftefe::size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
+              (*icell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
+              const dftefe::size_type boundaryId = (*icell)->getFaceBoundaryId(iFace);
               if (boundaryId == 0)
                 {
                   for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
@@ -220,9 +167,9 @@ int main()
                         {
                           basisCenter = dofCoords.find(nodeId)->second;
                           double constraintValue = 0;
-                            // 1/std::sqrt((basisCenter[0]-Rx)*(basisCenter[0]-Rx) + 
-                            // (basisCenter[1]-Ry)*(basisCenter[1]-Ry) + 
-                            // (basisCenter[2]-Rz)*(basisCenter[2]-Rz));
+                            // ((basisCenter[0])*(basisCenter[0]) + 
+                            // (basisCenter[1])*(basisCenter[1]) + 
+                            // (basisCenter[2])*(basisCenter[2]))/6.;  
                           constraintsVec[1]->setInhomogeneity(nodeId, constraintValue);
                         } // non-hanging node check
                     }     // Face dof loop
@@ -307,7 +254,7 @@ int main()
          {
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintPotential) ;
             basisHandler->getBasisCenters(localId,constraintPotential,nodeLoc);
-            *(itField + localId )  = potential(nodeLoc[0], nodeLoc[1], nodeLoc[2], Rx, Ry, Rz, rc);
+            *(itField + localId )  = potential(nodeLoc[0], nodeLoc[1], nodeLoc[2]);
          }
         }
     }
@@ -338,7 +285,7 @@ int main()
          {
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintPotential) ;
             basisHandler->getBasisCenters(localId,constraintRho,nodeLoc1);
-            *(itField + localId )  = rho(nodeLoc1[0], nodeLoc1[1], nodeLoc1[2], Rx, Ry, Rz, rc);
+            *(itField + localId )  = rho(nodeLoc1[0], nodeLoc1[1], nodeLoc1[2]);
          }
         }
     }
@@ -365,7 +312,7 @@ int main()
     dftefe::size_type quadId = 0;
     for (auto j : quadRuleContainer.getCellRealPoints(i))
     {
-      double a = rho( j[0], j[1], j[2], Rx, Ry, Rz, rc);
+      double a = rho( j[0], j[1], j[2]);
       double *b = &a;
       quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
       quadId = quadId + 1;
@@ -397,6 +344,24 @@ int main()
 
   // (linearSolverFunction->getAxContext()).apply(*vh, y); 
 
+  // for (unsigned int i = 0 ; i < y.locallyOwnedSize() ; i++)
+  // {
+  //   std::cout << "rhs[" <<i<<"]:"<< *((linearSolverFunction->getRhs()).data()+i) << ", ";
+  // }
+  // std::cout << "\n" << "\n";
+
+  // for (unsigned int i = 0 ; i < vh->locallyOwnedSize() ; i++)
+  // {
+  //   std::cout << "poential[" <<i<<"]:"<< *(vh->data()+i) << ", ";
+  // }
+  // std::cout << "\n" <<"\n";
+
+  // for (unsigned int i = 0 ; i < y.locallyOwnedSize() ; i++)
+  // {
+  //   std::cout << "lhs[" <<i<<"]:"<< *(y.data()+i) << ", ";
+  // }
+  // std::cout << "\n" << "\n";
+
   // std::cout << "lhs:" << y.l2Norms()[0] << "\n";
   // std::cout << "rhs:" << (linearSolverFunction->getRhs()).l2Norms()[0] << "\n";
   
@@ -413,11 +378,6 @@ int main()
 //   std::cout << "y:" << y.l2Norms()[0] << "\n";
 //   std::cout << "z:" << z.l2Norms()[0] << "\n";
 //   std::cout << "z1:" << z1.l2Norms()[0] << "\n";
-
-  // for (unsigned int i = 0 ; i < vh->locallyOwnedSize() ; i++)
-  // {
-  //   std::cout << "vh[" <<i<<"] : "<< *(vh->data()+i) << ",";
-  // }
 
   dftefe::linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -439,7 +399,7 @@ int main()
    solution = linearSolverFunction->getSolution();
    constraintsVec[1]->distributeParentToChild(solution, numComponents);
 
-   std::cout<<"solution norm: "<<solution.l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0];
+   std::cout<<"solution norm: "<<solution.l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0]<<"\n";
   
   //gracefully end MPI
   

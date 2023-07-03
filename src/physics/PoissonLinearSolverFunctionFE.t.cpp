@@ -94,11 +94,6 @@ namespace dftefe
         constraintsNameRhs,
         d_b);
 
-        // for (unsigned int h = 0 ; h < d_b.locallyOwnedSize() ; h++)
-        // {
-        //   std::cout << "b[" << h <<"]:"<< *(d_b.data()+h) << ", ";
-        // }
-
         d_mpiPatternP2PLhs = feBasisHandler->getMPIPatternP2P(constraintsNameLhs);
 
       d_AxContext = std::make_shared<physics::LaplaceOperatorContextFE

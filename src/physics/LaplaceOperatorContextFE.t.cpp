@@ -64,7 +64,7 @@ namespace dftefe
             nSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell]; 
             kSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell];
             ldaSizesSTL[iCell] = mSizesSTL[iCell];
-            ldbSizesSTL[iCell] = nSizesSTL[iCell];
+            ldbSizesSTL[iCell] = kSizesSTL[iCell];
             ldcSizesSTL[iCell] = mSizesSTL[iCell];
             strideASTL[iCell]  = mSizesSTL[iCell] * kSizesSTL[iCell];
             strideBSTL[iCell]  = kSizesSTL[iCell] * nSizesSTL[iCell];
@@ -160,7 +160,7 @@ namespace dftefe
             std::vector<linearAlgebra::blasLapack::Op> transA(
               numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
             std::vector<linearAlgebra::blasLapack::Op> transB(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -296,6 +296,7 @@ namespace dftefe
       const basis::Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraints =
         d_feBasisHandler->getConstraints(d_constraintsName);
 
+      X.updateGhostValues();
       // update the child nodes based on the parent nodes
       constraints.distributeParentToChild(X, numVecs);
 
@@ -322,13 +323,14 @@ namespace dftefe
         cellBlockSize,
         *(X.getLinAlgOpContext()));
 
+      // function to do a static condensation to send the constraint nodes to
+      // its parent nodes
+      constraints.distributeChildToParent(Y, numVecs);
+
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
 
-      // function to do a static condensation to send the constraint nodes to
-      // its parent nodes
-      constraints.distributeChildToParent(Y, numVecs);
     }
 
   } // end of namespace physics
