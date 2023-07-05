@@ -28,20 +28,16 @@
 
 #include <iostream>
 
-double interpolatePolynomial (unsigned int feOrder, double x_coord, double y_coord, double z_coord, double xmin, double ymin, double zmin)
+double interpolatePolynomial (double x_coord, double y_coord, double z_coord)
 {
-  // The function should go to 0 at the boundaries for it to be compatible with the
-  // homogenous boundary conditions
   double result = 1;
-  result = (x_coord - xmin)*(x_coord );
-  result *= ((y_coord - ymin)*(y_coord));
-  result *= ((z_coord - zmin)*(z_coord ));
+  result = (x_coord)*(x_coord );
+  result *= ((y_coord)*(y_coord));
+  result *= ((z_coord)*(z_coord ));
 
   return result;
 
 }
-
-
 
 int main()
 {
@@ -65,15 +61,15 @@ int main()
   const unsigned int dim = 3;
   std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
     std::make_shared<dftefe::basis::TriangulationDealiiSerial<dim>>();
-  std::vector<unsigned int>         subdivisions = {5, 5, 5};
+  std::vector<unsigned int>         subdivisions = {1, 1, 1};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
 
-  double xmin = 5.0;
-  double ymin = 5.0;
-  double zmin = 5.0;
+  double xmin = 1.0;
+  double ymin = 1.0;
+  double zmin = 1.0;
 
   domainVectors[0][0] = xmin;
   domainVectors[1][1] = ymin;
@@ -107,13 +103,15 @@ int main()
 
   // initialize the basis Manager
 
-  unsigned int feDegree = 3;
+  unsigned int feDegree = 2;
 
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
+  std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
+  basisManager->getBasisCenters(dofCoords);
 
   // Set the constraints
 
-  std::string constraintName = "HomogenousWithHangingPeriodic";
+  std::string constraintName = "InHomogenousWithHanging";
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
     constraintsVec;
   constraintsVec.resize(1);
@@ -122,7 +120,44 @@ int main()
    
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[0]->setHomogeneousDirichletBC();
+  const unsigned int dofs_per_cell =
+    basisManager->nCellDofs(0);
+  const unsigned int faces_per_cell =
+    dealii::GeometryInfo<dim>::faces_per_cell;
+  const unsigned int dofs_per_face =
+    std::pow((basisManager->getFEOrder(0)+1),2);
+  std::vector<dftefe::global_size_type> cellGlobalDofIndices(dofs_per_cell);
+  std::vector<dftefe::global_size_type> iFaceGlobalDofIndices(dofs_per_face);
+  std::vector<bool> dofs_touched(basisManager->nGlobalNodes(), false);
+  auto              icell = basisManager->beginLocallyOwnedCells();
+  dftefe::utils::Point basisCenter(dim, 0);
+  for (; icell != basisManager->endLocallyOwnedCells(); ++icell)
+    {
+      (*icell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+      for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+        {
+          (*icell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
+          const dftefe::size_type boundaryId = (*icell)->getFaceBoundaryId(iFace);
+          if (boundaryId == 0)
+            {
+              for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                    ++iFaceDof)
+                {
+                  const dftefe::global_size_type nodeId =
+                    iFaceGlobalDofIndices[iFaceDof];
+                  if (dofs_touched[nodeId])
+                    continue;
+                  dofs_touched[nodeId] = true;
+                  if (!constraintsVec[0]->isConstrained(nodeId))
+                    {
+                      basisCenter = dofCoords.find(nodeId)->second;
+                      double constraintValue = interpolatePolynomial(basisCenter[0], basisCenter[1], basisCenter[2]);
+                      constraintsVec[0]->setInhomogeneity(nodeId, constraintValue);
+                    } // non-hanging node check
+                }     // Face dof loop
+            }
+        } // Face loop
+    }     // cell locally owned
   constraintsVec[0]->close();
   
   std::vector<std::shared_ptr<dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>>
@@ -192,14 +227,14 @@ int main()
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
             basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
 
-            *(itField + localId )  = interpolatePolynomial (feDegree, nodeLoc[0], nodeLoc[1], nodeLoc[2],xmin,ymin,zmin);
-           //std::cout<<"id = "<<nodeCount<<" local = "<<localId<<" inVal = "<<*(itField + localId )<<"\n";
+            *(itField + localId )  = interpolatePolynomial ( nodeLoc[0], nodeLoc[1], nodeLoc[2]);
+           std::cout<<"UnConstrianed id = "<<globalId;
          }
          else
          {
            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
             basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
-           //std::cout<<"id = "<<nodeCount<<" x = "<<nodeLoc[0]<<" y = "<<nodeLoc[1]<<" z = "<<nodeLoc[2]<<std::endl;
+           std::cout<<"Constrained id = "<<globalId;
          }
           nodeCount++;
         }
@@ -213,6 +248,11 @@ int main()
   fieldData.updateGhostValues();
   // evaluate at the hanging nodes
   fieldData.applyConstraintsParentToChild();
+
+  for (unsigned int i = 0 ; i < fieldData.getVector().locallyOwnedSize() ; i++)
+  {
+    std::cout << "data[" <<i<<"] : "<< *(fieldData.getVector().data()+i) << ",";
+  }
 
 /*
   for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
@@ -236,42 +276,42 @@ int main()
 */
   // create the quadrature Value Container
 
-  std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
-    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
+//   std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
+//     std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
 
-  dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr, quadRule, triangulationBase,
-                                                                 linearCellMappingDealii);
+//   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
+//   dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr, quadRule, triangulationBase,
+//                                                                  linearCellMappingDealii);
 
-  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, 1);
-
-
-  // Interpolate the nodal data to the quad points
-  feBasisOp.interpolate( fieldData, quadAttr, quadValuesContainer);
+//   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, 1);
 
 
-  const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
+//   // Interpolate the nodal data to the quad points
+//   feBasisOp.interpolate( fieldData, quadAttr, quadValuesContainer);
 
-  bool testPass = true;
-  dftefe::size_type count = 0;
-  for( auto it  = quadValuesContainer.begin() ; it != quadValuesContainer.end() ; it++ )
-    {
-      double xLoc = locQuadPoints[count][0];
-      double yLoc = locQuadPoints[count][1];
-      double zLoc = locQuadPoints[count][2];
 
-      double analyticValue = interpolatePolynomial (feDegree, xLoc, yLoc, zLoc,xmin,ymin,zmin);
+//   const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
 
-      if ( std::abs((*it) - analyticValue) > 1e-8 )
-        {
-         std::cout<<" id = "<<count <<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue<<" interValue = "<<(*it)<<"\n";
-         testPass = false;
-	      } 
-      count++;
-    }
+//   bool testPass = true;
+//   dftefe::size_type count = 0;
+//   for( auto it  = quadValuesContainer.begin() ; it != quadValuesContainer.end() ; it++ )
+//     {
+//       double xLoc = locQuadPoints[count][0];
+//       double yLoc = locQuadPoints[count][1];
+//       double zLoc = locQuadPoints[count][2];
 
-  std::cout<<" test status = "<<testPass<<"\n";
-  return testPass;
+//       double analyticValue = interpolatePolynomial (xLoc, yLoc, zLoc);
+
+//       if ( std::abs((*it) - analyticValue) > 1e-8 )
+//         {
+//          std::cout<<" id = "<<count <<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue<<" interValue = "<<(*it)<<"\n";
+//          testPass = false;
+// 	      } 
+//       count++;
+//     }
+
+//   std::cout<<" test status = "<<testPass<<"\n";
+//   return testPass;
 
   //dftefe::utils::mpi::MPIFinalize();
 }

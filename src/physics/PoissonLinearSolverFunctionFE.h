@@ -105,6 +105,7 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const std::string                                    constraintsNameRhs,
         const std::string                                    constraintsNameLhs,
+        const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> & rhsAddOnVector,
         const linearAlgebra::PreconditionerType              pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
         const size_type                 maxCellTimesNumVecs);

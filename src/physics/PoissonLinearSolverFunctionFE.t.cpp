@@ -31,31 +31,6 @@ namespace dftefe
     //
     // Constructor
     //
-    // template <typename ValueTypeOperator,
-    //           typename ValueTypeOperand,
-    //           utils::MemorySpace memorySpace,
-    //           size_type          dim>
-    // PoissonLinearSolverFunctionFE<ValueTypeOperator,
-    //                               ValueTypeOperand,
-    //                               memorySpace,
-    //                               dim>::
-    //   PoissonLinearSolverFunctionFE(
-    //     const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-    //       &feBasisHandler,
-    //     const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-    //       &                                                  feBasisDataStorage,
-    //     const linearAlgebra::Vector<ValueType, memorySpace> &b,
-    //     const std::string                                    constraintsName,
-    //     const linearAlgebra::PreconditionerType              pcType)
-    //   : d_feBasisHandler(&feBasisHandler)
-    //   , d_feBasisDataStorage(&feBasisDataStorage)
-    //   , d_b(b)
-    //   , d_constraintsName(constraintsName)
-    //   , d_pcType(pcType)
-    //   , d_x(b.getMPIPatternP2P(),
-    //         b.getLinAlgOpContext(),
-    //         utils::Types<ValueType>::zero)
-    // {}
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
@@ -77,6 +52,7 @@ namespace dftefe
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
       const std::string                                    constraintsNameRhs,
       const std::string                                    constraintsNameLhs,
+      const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> & rhsAddOnVector,
       const linearAlgebra::PreconditionerType              pcType,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
       const size_type                 maxCellTimesNumVecs)
@@ -87,14 +63,7 @@ namespace dftefe
       , d_x(feBasisHandler->getMPIPatternP2P(constraintsNameLhs),linAlgOpContext,inp.getNumberComponents())
       , d_initial(feBasisHandler->getMPIPatternP2P(constraintsNameLhs),linAlgOpContext,inp.getNumberComponents())
     {
-      feBasisOperations.integrateWithBasisValues(
-        inp,
-        quadratureRuleAttributes,
-        *d_feBasisHandler,
-        constraintsNameRhs,
-        d_b);
-
-        d_mpiPatternP2PLhs = feBasisHandler->getMPIPatternP2P(constraintsNameLhs);
+      d_mpiPatternP2PLhs = feBasisHandler->getMPIPatternP2P(constraintsNameLhs);
 
       d_AxContext = std::make_shared<physics::LaplaceOperatorContextFE
         <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( *d_feBasisHandler,
@@ -117,6 +86,29 @@ namespace dftefe
       utils::throwException(
         false,
         "Unknown PreConditionerType");
+
+      // Compute RHS
+
+      std::vector<ValueTypeOperand> ones(0);
+      ones.resize(inp.getNumberComponents(), (ValueTypeOperand)1.0);
+
+      d_b.setValue(0.0);
+      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
+
+      feBasisOperations.integrateWithBasisValues(
+        inp,
+        quadratureRuleAttributes,
+        *d_feBasisHandler,
+        constraintsNameRhs,
+        b);
+
+      linearAlgebra::add(ones, b, ones, rhsAddOnVector, d_b);
+
+//  for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+//   {
+//     std::cout << "d_b[" <<i<<"] : "<< *(d_b.data()+i) << "," << "b[" <<i<<"] : "<< *(b.data()+i)<<"\n";
+//   }
+
     }
 
     template <typename ValueTypeOperator,

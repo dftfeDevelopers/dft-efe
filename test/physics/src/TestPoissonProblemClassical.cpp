@@ -179,7 +179,9 @@ int main()
   std::string constraintPotential = "InHomogenousWithHanging";
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
     constraintsVec;
-  constraintsVec.resize(2, std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>());
+  constraintsVec.resize(2);
+  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
+   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
 
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(basisManager);
