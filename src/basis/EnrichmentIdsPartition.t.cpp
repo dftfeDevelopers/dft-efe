@@ -88,7 +88,7 @@ namespace dftefe
           newAtomIdToEnrichmentIdOffsetTmp.data(),
           newAtomIdToEnrichmentIdOffset.data(),
           newAtomIdToEnrichmentIdOffsetTmp.size(),
-          utils::mpi::MPIUnsigned,
+          utils::mpi::MPIUnsignedLong,
           utils::mpi::MPIMin,
           comm);
         std::pair<bool, std::string> mpiIsSuccessAndMsg =

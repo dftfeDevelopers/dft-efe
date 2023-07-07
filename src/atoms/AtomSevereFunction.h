@@ -63,7 +63,6 @@ namespace dftefe
       std::vector<std::string>              d_atomSymbolVec;
       std::vector<utils::Point>             d_atomCoordinatesVec;
       std::string                           d_fieldName;
-      std::shared_ptr<atoms::SphericalData> d_sphericalData;
       size_type                             d_derivativeType;
     };
 

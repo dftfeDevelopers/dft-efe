@@ -143,7 +143,8 @@ namespace dftefe
         std::vector<dealii::Quadrature<dim>> dealiiQuadratureTypeVec(
           1, dealii::QGauss<dim>(1));
         dealiiMatrixFree.clear();
-        dealiiMatrixFree.reinit(dofHandlerVec,
+        dealii::MappingQ1<dim> mappingDealii;
+        dealiiMatrixFree.reinit(mappingDealii, dofHandlerVec,
                                 dealiiAffineConstraintsVec,
                                 dealiiQuadratureTypeVec,
                                 dealiiAdditionalData);
@@ -168,11 +169,7 @@ namespace dftefe
 
         // get the enriched ghost ids
         std::vector<global_size_type> ghostIndicesEnriched(0);
-        ghostIndicesEnriched = efeBMDealii->getGhostEnrichmentIds();
-
-        // shift the ghost ids by total no of classical dofs
-        for (auto &i : ghostIndicesEnriched)
-          i = i + efeBMDealii->nGlobalClassicalNodes();
+        ghostIndicesEnriched = efeBMDealii->getGhostEnrichmentIdsShifted();
 
         ghostIndices.clear();
         ghostIndices.insert(ghostIndices.begin(),

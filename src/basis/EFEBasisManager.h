@@ -143,10 +143,7 @@ namespace dftefe
                            const dftefe::utils::Point &point) const = 0;
 
       virtual std::vector<global_size_type>
-      getGhostEnrichmentIds() const = 0;
-
-      virtual global_size_type
-      nGlobalClassicalNodes() const = 0;
+      getGhostEnrichmentIdsShifted() const = 0;
 
       virtual global_size_type
       nGlobalEnrichmentNodes() const = 0;

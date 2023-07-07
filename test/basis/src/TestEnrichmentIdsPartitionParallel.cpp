@@ -75,7 +75,9 @@ int main()
 
     std::vector<std::vector<dftefe::utils::Point>> cellVerticesVector;
     std::vector<dftefe::utils::Point> cellVertices;
-    std::string inputFileName = "/home/avirup/dft-efe/test/basis/src/AtomData.in";
+    std::string sourceDir = "/home/avirup/dft-efe/test/basis/src/";
+    std::string atomDataFile = "AtomData.in"
+    std::string inputFileName = sourceDir + atomDataFile ;
     std::fstream fstream;
 
     // Set up Triangulation
@@ -110,7 +112,7 @@ int main()
 
     auto feBMCellIter = feBM->beginLocallyOwnedCells();
     unsigned int atomcount = 0;
-    fstream.open(inputFileName, std::fstream::out | std::fstream::trunc);
+    //fstream.open(inputFileName, std::fstream::out | std::fstream::trunc);
     dealii::Point<dim> coords;
     //get the cellvertices vector
     for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
@@ -118,53 +120,53 @@ int main()
         (*feBMCellIter)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
 
-        std::shared_ptr<dftefe::basis::FECellDealii<dim>> fecelldealiiobjptr = 
-            std::dynamic_pointer_cast<dftefe::basis::FECellDealii<dim>>(*feBMCellIter);
+        // std::shared_ptr<dftefe::basis::FECellDealii<dim>> fecelldealiiobjptr = 
+        //     std::dynamic_pointer_cast<dftefe::basis::FECellDealii<dim>>(*feBMCellIter);
 
-        dealii::DoFHandler<dim>::active_cell_iterator dealiicelliter =
-            fecelldealiiobjptr->getDealiiFECellIter();
+        // dealii::DoFHandler<dim>::active_cell_iterator dealiicelliter =
+        //     fecelldealiiobjptr->getDealiiFECellIter();
 
-        for (auto face_index : dealii::GeometryInfo<dim>::face_indices())
-        {
-            auto neighboriter = 
-                dealiicelliter->neighbor(face_index);
-            if(neighboriter->state() == dealii::IteratorState::valid && neighboriter->is_ghost())
-            {
-                for(auto vertex_index : dealiicelliter->face(face_index)->vertex_indices())
-                {
-                    bool flag = true;
-                    coords = dealiicelliter->face(face_index)->vertex(vertex_index);
-                    for(unsigned int i = 0; i < dim ; i++)
-                    {
-                        if(coords[i]>=domainVectors[i][i] || coords[i]<=0)
-                        {
-                            flag = false;
-                            break;
-                        }
-                    }
-                    if(flag)
-                    {
-                        atomcount += 1;
+        // for (auto face_index : dealii::GeometryInfo<dim>::face_indices())
+        // {
+        //     auto neighboriter = 
+        //         dealiicelliter->neighbor(face_index);
+        //     if(neighboriter->state() == dealii::IteratorState::valid && neighboriter->is_ghost())
+        //     {
+        //         for(auto vertex_index : dealiicelliter->face(face_index)->vertex_indices())
+        //         {
+        //             bool flag = true;
+        //             coords = dealiicelliter->face(face_index)->vertex(vertex_index);
+        //             for(unsigned int i = 0; i < dim ; i++)
+        //             {
+        //                 if(coords[i]>=domainVectors[i][i] || coords[i]<=0)
+        //                 {
+        //                     flag = false;
+        //                     break;
+        //                 }
+        //             }
+        //             if(flag)
+        //             {
+        //                 atomcount += 1;
 
-                    }
-                    if(atomcount >=1) break;
-                }
-            }
-            if(atomcount >=1) break;
-        }
-        if(atomcount >=1) break;
+        //             }
+        //             if(atomcount >=1) break;
+        //         }
+        //     }
+        //     if(atomcount >=1) break;
+        // }
+        // if(atomcount >=1) break;
     }
 
-    dftefe::utils::mpi::MPIBarrier(mpi_communicator);
-    if(rank == 0)
-    {
-        fstream <<"C ";
-        for(unsigned int i = 0; i < dim ; i++)
-            fstream <<coords[i]<<" ";
-        fstream <<"\n";
-    }
+    // dftefe::utils::mpi::MPIBarrier(mpi_communicator);
+    // if(rank == 0)
+    // {
+    //     fstream <<"C ";
+    //     for(unsigned int i = 0; i < dim ; i++)
+    //         fstream <<coords[i]<<" ";
+    //     fstream <<"\n";
+    // }
 
-    fstream.close();
+    //fstream.close();
 
     fstream.open(inputFileName, std::fstream::in);
 
@@ -215,7 +217,7 @@ int main()
     std::map<std::string, std::string> atomSymbolToFilename;
     for (auto i:atomSymbol )
     {
-        atomSymbolToFilename[i] = i+".xml";
+        atomSymbolToFilename[i] = sourceDir + i + ".xml";
     }
         
     // assume the tolerance value
@@ -240,7 +242,7 @@ int main()
                                                         mpi_communicator);
 
     // Create the enrichemntIdsPartition object
-    std::string fieldName = "density";  // Each fieldname will have own set of enrichment ids
+    std::string fieldName = "orbital";  // Each fieldname will have own set of enrichment ids
     std::shared_ptr<dftefe::basis::EnrichmentIdsPartition<dim>> enrichmentIdsPartition =
         std::make_shared<dftefe::basis::EnrichmentIdsPartition<dim>>(atomSphericalDataContainer,
                                                         atomIdsPartition,
@@ -255,7 +257,7 @@ int main()
     std::cout<<"\nnewAtomIdToEnrichmentIdOffset:\n";
     std::vector<dftefe::global_size_type> offset =
         enrichmentIdsPartition->newAtomIdToEnrichmentIdOffset();
-    for(auto i:offset ) { std::cout<<"rank "<<rank<<" : "<<i<<"\n";}
+    //for(auto i:offset ) { std::cout<<"rank "<<rank<<" : "<<i<<"\n";}
 
     std::cout<<"\nrank "<<rank<<"->overlappingEnrichmentIdsInCells:\n";
     std::vector<std::vector<dftefe::global_size_type>> epartition =

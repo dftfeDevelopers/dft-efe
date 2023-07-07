@@ -183,10 +183,7 @@ namespace dftefe
                            const dftefe::utils::Point &point) const override;
 
       std::vector<global_size_type>
-      getGhostEnrichmentIds() const override;
-
-      global_size_type
-      nGlobalClassicalNodes() const override;
+      getGhostEnrichmentIdsShifted() const override;
 
       global_size_type
       nGlobalEnrichmentNodes() const override;
@@ -202,13 +199,15 @@ namespace dftefe
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
                                                    d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
-      std::vector<std::vector<size_type>> d_overlappingEnrichmentIdsInCells;
+      std::vector<std::vector<global_size_type>> d_overlappingEnrichmentIdsInCells;
+      std::vector<std::vector<global_size_type>> d_overlappingEnrichmentIdsInCellsShifted;
+      std::pair<global_size_type, global_size_type> d_enrichedIdsPairShifted;
+      std::vector<global_size_type> d_ghostEnrichmentIdsShifted;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                             d_atomSphericalDataContainer;
       std::vector<std::string>              d_atomSymbolVec;
       std::vector<utils::Point>             d_atomCoordinatesVec;
       std::string                           d_fieldName;
-      std::shared_ptr<atoms::SphericalData> d_sphericalData;
       const double                          d_atomPartitionTolerance;
       const utils::mpi::MPIComm             d_comm;
 

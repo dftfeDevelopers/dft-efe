@@ -216,9 +216,10 @@ namespace dftefe
 
         std::vector<double> rNorm(0);
         rNorm = r.l2Norms();
-        //rNorm = r.l2Norm();
 
-        std::cout << rNorm[0] << "\n";
+        for(unsigned int i = 0 ; i < numComponents ; i++ )
+          std::cout << rNorm[i] << ",";
+        std::cout << "\n";
 
         std::string msg;
         for (size_type i = 0 ; i < numComponents ; i++ )
