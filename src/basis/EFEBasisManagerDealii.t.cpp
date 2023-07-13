@@ -363,7 +363,7 @@ namespace dftefe
       std::pair<global_size_type, global_size_type> classicalRange =
         std::make_pair(startId, endId);
       std::pair<global_size_type, global_size_type> enrichedRange =
-        d_enrichmentIdsPartition->locallyOwnedEnrichmentIds();
+        d_enrichedIdsPairShifted;
       std::vector<std::pair<global_size_type, global_size_type>>
         locallyOwnedRangeVec(0);
       locallyOwnedRangeVec = getLocallyOwnedRanges();

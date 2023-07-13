@@ -91,8 +91,8 @@ namespace dftefe
       virtual void
       setSolution(const MultiVector<ValueTypeOperand, memorySpace> &x) = 0;
 
-      virtual MultiVector<ValueType, memorySpace> &
-      getSolution() = 0;
+      virtual void
+      getSolution(linearAlgebra::MultiVector<ValueType, memorySpace> &solution) = 0;
 
       virtual const MultiVector<ValueTypeOperand, memorySpace> &
       getRhs() const = 0;

@@ -94,7 +94,8 @@ namespace dftefe
         const size_type                              numVecs,
         const size_type                              numLocallyOwnedCells,
         const std::vector<size_type> &               numCellDofs,
-        const size_type *                            cellLocalIdsStartPtr,
+        const size_type *                            cellLocalIdsStartPtrX,
+        const size_type *                            cellLocalIdsStartPtrY,
         const size_type                              cellBlockSize,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
@@ -152,7 +153,7 @@ namespace dftefe
             basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
               copyFieldToCellWiseData(x,
                                       numVecs,
-                                      cellLocalIdsStartPtr + cellLocalIdsOffset,
+                                      cellLocalIdsStartPtrX + cellLocalIdsOffset,
                                       cellsInBlockNumDoFs,
                                       xCellValues);
 
@@ -229,7 +230,7 @@ namespace dftefe
             basis::FECellWiseDataOperations<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace>::
               addCellWiseDataToFieldData(yCellValues,
                                          numVecs,
-                                         cellLocalIdsStartPtr +
+                                         cellLocalIdsStartPtrY +
                                            cellLocalIdsOffset,
                                          cellsInBlockNumDoFs,
                                          y);
@@ -259,12 +260,14 @@ namespace dftefe
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &                             feBasisDataStorage,
-        const std::string               constraintsName,
+        const std::string               constraintsX,
+        const std::string               constraintsY,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                 maxCellTimesNumVecs)
       : d_feBasisHandler(&feBasisHandler)
       , d_feBasisDataStorage(&feBasisDataStorage)
-      , d_constraintsName(constraintsName)
+      , d_constraintsX(constraintsX)
+      , d_constraintsY(constraintsY)
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {}
@@ -287,18 +290,24 @@ namespace dftefe
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
 
-      auto itCellLocalIdsBegin =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsName);
+      auto itCellLocalIdsBeginX =
+        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsX);
+      
+      auto itCellLocalIdsBeginY =
+        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsY);
 
       const size_type numVecs = X.getNumberComponents();
       
       // get handle to constraints
-      const basis::Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraints =
-        d_feBasisHandler->getConstraints(d_constraintsName);
+      const basis::Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraintsX =
+        d_feBasisHandler->getConstraints(d_constraintsX);
+
+      const basis::Constraints<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &constraintsY =
+        d_feBasisHandler->getConstraints(d_constraintsY);
 
       X.updateGhostValues();
       // update the child nodes based on the parent nodes
-      constraints.distributeParentToChild(X, numVecs);
+      constraintsX.distributeParentToChild(X, numVecs);
 
       // access cell-wise discrete Laplace operator
       auto gradNiGradNjInAllCells =
@@ -319,13 +328,14 @@ namespace dftefe
         numVecs,
         numLocallyOwnedCells,
         numCellDofs,
-        itCellLocalIdsBegin,
+        itCellLocalIdsBeginX,
+        itCellLocalIdsBeginY,
         cellBlockSize,
         *(X.getLinAlgOpContext()));
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      constraints.distributeChildToParent(Y, numVecs);
+      constraintsY.distributeChildToParent(Y, numVecs);
 
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
