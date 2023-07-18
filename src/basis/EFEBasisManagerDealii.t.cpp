@@ -54,13 +54,15 @@ namespace dftefe
       , d_comm(comm)
       , d_atomPartitionTolerance(atomPartitionTolerance)
       , d_overlappingEnrichmentIdsInCells(0)
-      , d_overlappingEnrichmentIdsInCellsShifted(0)
-      , d_ghostEnrichmentIdsShifted(0)
+      , d_locallyOwnedRanges(0)
+      , d_globalRanges(0)
+      , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
     {
       d_atomCoordinatesVec = atomCoordinatesVec;
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
+      d_totalRanges = 2; // Classical and Enriched
       // making the classical and enriched dofs in the dealii mesh here
       reinit(triangulation, feOrder);
     }
@@ -207,27 +209,33 @@ namespace dftefe
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
-      // shift the enrichmentids in per cell with the total classical dofs
-      d_overlappingEnrichmentIdsInCellsShifted = d_overlappingEnrichmentIdsInCells;
-      auto iter = d_overlappingEnrichmentIdsInCellsShifted.begin();
-      for( ; iter != d_overlappingEnrichmentIdsInCellsShifted.end() ; iter++)
+      // populate the global ranges range.The range would be as follows,
+      // The order is chosen as : Classical Ranges, Enrichment Range1, Enrichment Range2 ,.... 
+      d_globalRanges.resize(d_totalRanges);
+      d_globalRanges[0].first = 0;
+      d_globalRanges[0].second = d_dofHandler->n_dofs();
+      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
       {
-          auto iter1 = iter->begin();
-          for( ; iter1 != iter->end() ; iter1++)
-          {
-              *(iter1) = *(iter1) + d_dofHandler->n_dofs();
-          }
+        d_globalRanges[rangeId].first = d_globalRanges[rangeId-1].second;
+        d_globalRanges[rangeId].second = d_globalRanges[rangeId].first + d_enrichmentIdsPartition->nTotalEnrichmentIds();
       }
 
-      // add total classical dofs to each of the enriched dofs.
-      d_enrichedIdsPairShifted.first = d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().first + d_dofHandler->n_dofs();
-      d_enrichedIdsPairShifted.second = d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second + d_dofHandler->n_dofs();
-
+      // populate the locally owned ranges range.The range would be as follows,
+      // The order is chosen as : Classical Ranges, Enrichment Range1, Enrichment Range2 ,.... 
+      d_locallyOwnedRanges.resize(d_totalRanges);
+      auto  dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      d_locallyOwnedRanges[0] = std::make_pair(startId, endId);
+      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
+      {
+        d_locallyOwnedRanges[rangeId].first = d_globalRanges[0].second + d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().first;
+        d_locallyOwnedRanges[rangeId].second = d_globalRanges[0].second + d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
+      }
 
       // shift the ghost enriched ids by the total classical dofs
       for(auto i : d_enrichmentIdsPartition->ghostEnrichmentIds())
-        d_ghostEnrichmentIdsShifted.push_back(i + d_dofHandler->n_dofs());
-
+        d_ghostEnrichmentGlobalIds.push_back(i + d_dofHandler->n_dofs());
 
       d_numCumulativeLocallyOwnedCellDofs = 0;
       d_numCumulativeLocalCellDofs        = 0;
@@ -322,33 +330,38 @@ namespace dftefe
     size_type
     EFEBasisManagerDealii<dim>::nLocalNodes() const
     {
-      return (d_dofHandler->n_locally_owned_dofs() +
-              d_enrichmentIdsPartition->nLocallyOwnedEnrichmentIds());
+      global_size_type retValue = 0;
+      for (unsigned int rangeId = 0 ; rangeId < d_totalRanges ; rangeId++ )
+      {
+        retValue = retValue + d_locallyOwnedRanges[rangeId].second - d_locallyOwnedRanges[rangeId].first;
+      }
+      return retValue;
     }
 
     template <size_type dim>
     global_size_type
     EFEBasisManagerDealii<dim>::nGlobalNodes() const
     {
-      return (d_dofHandler->n_dofs() +
-              d_enrichmentIdsPartition->nTotalEnrichmentIds());
+      global_size_type retValue = 0;
+      for (unsigned int rangeId = 0 ; rangeId < d_totalRanges ; rangeId++ )
+      {
+        retValue = retValue + d_globalRanges[rangeId].second - d_globalRanges[rangeId].first;
+      }
+      return retValue;
     }
 
     template <size_type dim>
     std::vector<std::pair<global_size_type, global_size_type>>
     EFEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
     {
-      std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
-      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
-      global_size_type startId        = *(dealiiIndexSet.begin());
-      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-      std::pair<global_size_type, global_size_type> classicalRange =
-        std::make_pair(startId, endId);
+      return d_locallyOwnedRanges;
+    }
 
-      returnValue.push_back(classicalRange);
-      returnValue.push_back(d_enrichedIdsPairShifted);
-
-      return returnValue;
+    template <size_type dim>
+    std::vector<std::pair<global_size_type, global_size_type>>
+    EFEBasisManagerDealii<dim>::getGlobalRanges() const
+    {
+       return d_globalRanges;
     }
 
     template <size_type dim>
@@ -356,14 +369,10 @@ namespace dftefe
     EFEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
     {
       std::map<BasisIdAttribute, size_type> returnValue;
-
-      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
-      global_size_type startId        = *(dealiiIndexSet.begin());
-      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
       std::pair<global_size_type, global_size_type> classicalRange =
-        std::make_pair(startId, endId);
+        d_locallyOwnedRanges[0];
       std::pair<global_size_type, global_size_type> enrichedRange =
-        d_enrichedIdsPairShifted;
+        d_locallyOwnedRanges[1];
       std::vector<std::pair<global_size_type, global_size_type>>
         locallyOwnedRangeVec(0);
       locallyOwnedRangeVec = getLocallyOwnedRanges();
@@ -373,10 +382,11 @@ namespace dftefe
           returnValue[BasisIdAttribute::CLASSICAL] = 0;
           returnValue[BasisIdAttribute::ENRICHED]  = 1;
         }
-      else
+      else // given for completion
         {
-          returnValue[BasisIdAttribute::CLASSICAL] = 1;
-          returnValue[BasisIdAttribute::ENRICHED]  = 0;
+          utils::throwException(
+            false,
+            "The Ranges are not stored as Classical, Enriched1, Enriched2 ... in EFEBasisManager ");
         }
       return returnValue;
     }
@@ -387,7 +397,7 @@ namespace dftefe
     {
       utils::throwException(
         false,
-        "getLocalNodeIds() in EFEBasisManagerDealii is not be implemented.");
+        "getLocalNodeIds() in EFEBasisManagerDealii is not yet implemented.");
       std::vector<size_type> vec;
       return vec;
       /// implement this now
@@ -399,7 +409,7 @@ namespace dftefe
     {
       utils::throwException(
         false,
-        "getGlobalNodeIds() in EFEBasisManagerDealii is not be implemented.");
+        "getGlobalNodeIds() in EFEBasisManagerDealii is not yet implemented.");
       std::vector<size_type> vec;
       return vec;
 
@@ -421,8 +431,8 @@ namespace dftefe
         vecGlobalClassicalNodeId);
 
       size_type classicalcount = 0, enrichedcount = 0;
-      std::vector<global_size_type> vecGlobalEnrichedNodeId(0);
-      vecGlobalEnrichedNodeId = d_overlappingEnrichmentIdsInCellsShifted[cellId];
+      std::vector<global_size_type> vecEnrichedNodeId(0);
+      vecEnrichedNodeId = d_overlappingEnrichmentIdsInCells[cellId];
 
       for (size_type count = 0 ; count < vecGlobalNodeId.size() ; count++)
         {
@@ -433,7 +443,7 @@ namespace dftefe
             }
           else
             {
-              vecGlobalNodeId[count] = vecGlobalEnrichedNodeId[enrichedcount];
+              vecGlobalNodeId[count] = vecEnrichedNodeId[enrichedcount] + d_globalRanges[0].second;
               enrichedcount += 1;
             }
         }
@@ -557,14 +567,15 @@ namespace dftefe
       convertToDftefePoint<dim>(dealiiDofCoords, dofCoords);
 
       // add for the enrichment case
-      std::pair<global_size_type, global_size_type> locallyOwnedEnrichmentIds =
-        d_enrichmentIdsPartition->locallyOwnedEnrichmentIds();
 
-      for (global_size_type i = locallyOwnedEnrichmentIds.first;
-           i < locallyOwnedEnrichmentIds.second;
-           i++)
-        dofCoords.insert({i + d_dofHandler->n_dofs(),
-          d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i)]});
+      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++ )
+      {
+        for (global_size_type i = d_locallyOwnedRanges[rangeId].first;
+            i < d_locallyOwnedRanges[rangeId].second;
+            i++)
+          dofCoords.insert({i,
+            d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i-d_globalRanges[0].second)]});
+      }
     }
 
     template <size_type dim>
@@ -596,14 +607,14 @@ namespace dftefe
           if (d_overlappingEnrichmentIdsInCells[cellId].size() >
               cellLocalEnrichmentId)
             {
-              size_type globalEnrichmentId =
+              size_type enrichmentId =
                 d_overlappingEnrichmentIdsInCells[cellId]
                                                  [cellLocalEnrichmentId];
               size_type atomId =
-                d_enrichmentIdsPartition->getAtomId(globalEnrichmentId);
+                d_enrichmentIdsPartition->getAtomId(enrichmentId);
               size_type qNumberId =
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                   globalEnrichmentId))
+                   enrichmentId))
                   .localIdInAtom;
               std::string      atomSymbol = d_atomSymbolVec[atomId];
               utils::Point     origin(d_atomCoordinatesVec[atomId]);
@@ -645,14 +656,14 @@ namespace dftefe
           if (d_overlappingEnrichmentIdsInCells[cellId].size() >
               cellLocalEnrichmentId)
             {
-              size_type globalEnrichmentId =
+              size_type enrichmentId =
                 d_overlappingEnrichmentIdsInCells[cellId]
                                                  [cellLocalEnrichmentId];
               size_type atomId =
-                d_enrichmentIdsPartition->getAtomId(globalEnrichmentId);
+                d_enrichmentIdsPartition->getAtomId(enrichmentId);
               size_type qNumberId =
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                   globalEnrichmentId))
+                   enrichmentId))
                   .localIdInAtom;
               std::string      atomSymbol = d_atomSymbolVec[atomId];
               utils::Point     origin(d_atomCoordinatesVec[atomId]);
@@ -694,14 +705,14 @@ namespace dftefe
           if (d_overlappingEnrichmentIdsInCells[cellId].size() >
               cellLocalEnrichmentId)
             {
-              size_type globalEnrichmentId =
+              size_type enrichmentId =
                 d_overlappingEnrichmentIdsInCells[cellId]
                                                  [cellLocalEnrichmentId];
               size_type atomId =
-                d_enrichmentIdsPartition->getAtomId(globalEnrichmentId);
+                d_enrichmentIdsPartition->getAtomId(enrichmentId);
               size_type qNumberId =
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                   globalEnrichmentId))
+                   enrichmentId))
                   .localIdInAtom;
               std::string      atomSymbol = d_atomSymbolVec[atomId];
               utils::Point     origin(d_atomCoordinatesVec[atomId]);
@@ -732,9 +743,9 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<global_size_type>
-    EFEBasisManagerDealii<dim>::getGhostEnrichmentIdsShifted() const
+    EFEBasisManagerDealii<dim>::getGhostEnrichmentGlobalIds() const
     {
-      return d_ghostEnrichmentIdsShifted;
+      return d_ghostEnrichmentGlobalIds;
     }
 
     template <size_type dim>

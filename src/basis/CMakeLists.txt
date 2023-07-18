@@ -15,6 +15,8 @@ set(DFT-EFE-BASIS-SOURCES
 	ConstraintsInternal.cu
 	FEConstraintsDealii.cpp
 	FEConstraintsBase.cpp
+	EFEConstraintsDealii.cpp
+	EFEConstraintsBase.cpp
 	FEBasisDataStorageDealii.cpp
 	FEBasisHandlerDealii.cpp
 	FEBasisManagerDealii.cpp

@@ -90,6 +90,9 @@ namespace dftefe
       virtual std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const = 0;
 
+      virtual std::vector<std::pair<global_size_type, global_size_type>>
+      getGlobalRanges() const = 0;
+
       virtual std::map<BasisIdAttribute, size_type>
       getBasisAttributeToRangeIdMap() const = 0;
 

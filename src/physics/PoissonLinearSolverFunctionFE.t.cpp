@@ -50,8 +50,6 @@ namespace dftefe
         ValueTypeOperand>, memorySpace> 
         & inp,
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const std::string                                    constraintsHanging,
-      const std::string                                    constraintsHangingwHomogeneous,
       const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> & inhomogeneousDirichletBCVector,
       const linearAlgebra::PreconditionerType              pcType,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,

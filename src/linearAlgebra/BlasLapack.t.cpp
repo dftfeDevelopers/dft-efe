@@ -119,24 +119,24 @@ namespace dftefe
           hadamardProduct(n, x, y, z);
       }
 
-      template <typename ValueType1,
-                typename ValueType2,
-                dftefe::utils::MemorySpace memorySpace>
-      void
-        blockedHadamardProduct(const size_type                      vecSize,
-                        const size_type                      numComponents,
-                        const ValueType1 *                   blockedInput,
-                        const ValueType2 *                   singleVectorInput,
-                        scalar_type<ValueType1, ValueType2> *blockedOutput,
-                        LinAlgOpContext<memorySpace> &       context)
-      {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        blockedHadamardProduct(vecSize,
-                        numComponents,
-                        blockedInput,
-                        singleVectorInput,
-                        blockedOutput);
-      }
+      // template <typename ValueType1,
+      //           typename ValueType2,
+      //           dftefe::utils::MemorySpace memorySpace>
+      // void
+      //   blockedHadamardProduct(const size_type                      vecSize,
+      //                   const size_type                      numComponents,
+      //                   const ValueType1 *                   blockedInput,
+      //                   const ValueType2 *                   singleVectorInput,
+      //                   scalar_type<ValueType1, ValueType2> *blockedOutput,
+      //                   LinAlgOpContext<memorySpace> &       context)
+      // {
+      //   KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+      //   blockedHadamardProduct(vecSize,
+      //                   numComponents,
+      //                   blockedInput,
+      //                   singleVectorInput,
+      //                   blockedOutput);
+      // }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -193,8 +193,8 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      axpby(const size_type                      vecSize,
-            const size_type                      numVec,
+      axpbyBlocked(const size_type                      n,
+            const size_type                      blockSize,
             const scalar_type<ValueType1, ValueType2> *  alpha,
             const ValueType1 *                   x,
             const scalar_type<ValueType1, ValueType2> *  beta,
@@ -203,7 +203,7 @@ namespace dftefe
             LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
-          vecSize, numVec, alpha, x, beta, y, z);
+          n, blockSize, alpha, x, beta, y, z);
       }
 
 

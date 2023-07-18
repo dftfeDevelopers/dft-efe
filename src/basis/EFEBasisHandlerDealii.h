@@ -30,7 +30,7 @@
 #include <basis/BasisManager.h>
 #include <basis/EFEBasisManagerDealii.h>
 #include <basis/Constraints.h>
-#include <basis/FEConstraintsDealii.h>
+#include <basis/EFEConstraintsDealii.h>
 #include <utils/MPIPatternP2P.h>
 #include <memory>
 #include <map>
@@ -103,6 +103,11 @@ namespace dftefe
 
       const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const override;
+
+      void
+      setConstraints(std::map<std::string, std::shared_ptr
+        <const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+                                   constraintsMap) const override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;
@@ -200,12 +205,12 @@ namespace dftefe
       std::map<
         std::string,
         std::shared_ptr<
-          const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
-                          d_feConstraintsDealiiOptMap;
+          const EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
+                          d_efeConstraintsDealiiOptMap;
       utils::mpi::MPIComm d_mpiComm;
       bool                d_isDistributed;
       std::vector<std::pair<global_size_type, global_size_type>>
-                             d_locallyOwnedRanges; // changed
+                             d_locallyOwnedRanges; 
       std::vector<size_type> d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;

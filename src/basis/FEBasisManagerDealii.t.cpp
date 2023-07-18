@@ -243,6 +243,18 @@ namespace dftefe
     }
 
     template <size_type dim>
+    std::vector<std::pair<global_size_type, global_size_type>>
+    FEBasisManagerDealii<dim>::getGlobalRanges() const
+    {
+      std::vector<std::pair<global_size_type, global_size_type>> retValue(0);
+      retValue.resize(1);
+      retValue[0].first = 0;
+      retValue[0].second = d_dofHandler->n_dofs();
+      return retValue;
+    }
+
+
+    template <size_type dim>
     std::map<BasisIdAttribute, size_type>
     FEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
     {

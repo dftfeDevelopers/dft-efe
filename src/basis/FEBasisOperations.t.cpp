@@ -503,23 +503,25 @@ namespace dftefe
                                   ValueTypeUnion());
 
 
-          // Hadamard product for inp and JxW
-          linearAlgebra::blasLapack::blockedHadamardProduct(
-            numCumulativeQuadCellsInBlock,
-            numComponents,
-            inp.begin(cellStartId),
-            jxwStorage.data() +
-              quadRuleContainer.getCellQuadStartId(cellStartId),
-            inpJxW.data(),
-            linAlgOpContext);
+          // KhatriRao product for inp and JxW
+          linearAlgebra::blasLapack::khatriRaoProduct(
+                       linearAlgebra::blasLapack::Layout::RowMajor,
+                       numCumulativeQuadCellsInBlock,
+                       1,
+                       numComponents,
+                       inp.begin(cellStartId),
+                       jxwStorage.data() + quadRuleContainer.getCellQuadStartId(cellStartId),
+                       inpJxW.data(),
+                       linAlgOpContext);
 
           // // Hadamard product for inp and JxW
-          // linearAlgebra::blasLapack::hadamardProduct(
-          //   numCumulativeDofsQuadCellsInBlock * numComponents,
+          // linearAlgebra::blasLapack::blockedHadamardProduct(
+          //   numCumulativeQuadCellsInBlock,
+          //   numComponents,
           //   inp.begin(cellStartId),
-          //   jxwStorageMultivector.data() +
-          //     quadRuleContainer.getCellQuadStartId(cellStartId)*numComponents,
-          //   inpJxW.begin(),
+          //   jxwStorage.data() +
+          //     quadRuleContainer.getCellQuadStartId(cellStartId),
+          //   inpJxW.data(),
           //   linAlgOpContext);
 
           // TODO check if these are right ?? Why is the B Transposed

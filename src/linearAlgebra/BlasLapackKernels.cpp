@@ -135,27 +135,27 @@ namespace dftefe
           }
       }
 
-      template <typename ValueType1,
-                typename ValueType2,
-                dftefe::utils::MemorySpace memorySpace>
-      void
-      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        blockedHadamardProduct(const size_type                      vecSize,
-                        const size_type                      numComponents,
-                        const ValueType1 *                   blockedInput,
-                        const ValueType2 *                   singleVectorInput,
-                        scalar_type<ValueType1, ValueType2> *blockedOutput)
-      {
-        for (size_type i = 0; i < vecSize; ++i)
-          {
-            for (size_type j = 0; j < numComponents; ++j)
-            {
-              blockedOutput[i * numComponents+j] = 
-                ((scalar_type<ValueType1, ValueType2>)blockedInput[i * numComponents+j]) *
-                ((scalar_type<ValueType1, ValueType2>)singleVectorInput[i]);
-            }
-          }
-      }
+      // template <typename ValueType1,
+      //           typename ValueType2,
+      //           dftefe::utils::MemorySpace memorySpace>
+      // void
+      // KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+      //   blockedHadamardProduct(const size_type                      vecSize,
+      //                   const size_type                      numComponents,
+      //                   const ValueType1 *                   blockedInput,
+      //                   const ValueType2 *                   singleVectorInput,
+      //                   scalar_type<ValueType1, ValueType2> *blockedOutput)
+      // {
+      //   for (size_type i = 0; i < vecSize; ++i)
+      //     {
+      //       for (size_type j = 0; j < numComponents; ++j)
+      //       {
+      //         blockedOutput[i * numComponents+j] = 
+      //           ((scalar_type<ValueType1, ValueType2>)blockedInput[i * numComponents+j]) *
+      //           ((scalar_type<ValueType1, ValueType2>)singleVectorInput[i]);
+      //       }
+      //     }
+      // }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -273,23 +273,23 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
-      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
-              const size_type                      vecSize,
-              const size_type                            numVec,
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
+              const size_type                      size,
+              const size_type                      blockSize,
               const scalar_type<ValueType1, ValueType2> *  alpha,
               const ValueType1 *                   x,
               const scalar_type<ValueType1, ValueType2> *  beta,
               const ValueType2 *                   y,
               scalar_type<ValueType1, ValueType2> *z)
       {
-        for (size_type i = 0; i < vecSize; ++i)
+        for (size_type i = 0; i < size; ++i)
           {
-            for (size_type j = 0; j < numVec; ++j)
+            for (size_type j = 0; j < blockSize; ++j)
               {
-                z[i*numVec + j] = ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
-                  ((scalar_type<ValueType1, ValueType2>)x[i*numVec + j]) +
+                z[i*blockSize + j] = ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)x[i*blockSize + j]) +
                 ((scalar_type<ValueType1, ValueType2>)beta[j]) *
-                  ((scalar_type<ValueType1, ValueType2>)y[i*numVec + j]);
+                  ((scalar_type<ValueType1, ValueType2>)y[i*blockSize + j]);
               }
           }
       }

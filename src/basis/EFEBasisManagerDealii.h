@@ -102,6 +102,9 @@ namespace dftefe
       std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const override;
 
+      std::vector<std::pair<global_size_type, global_size_type>>
+      getGlobalRanges() const override;
+
       std::map<BasisIdAttribute, size_type>
       getBasisAttributeToRangeIdMap() const override;
 
@@ -183,7 +186,7 @@ namespace dftefe
                            const dftefe::utils::Point &point) const override;
 
       std::vector<global_size_type>
-      getGhostEnrichmentIdsShifted() const override;
+      getGhostEnrichmentGlobalIds() const override;
 
       global_size_type
       nGlobalEnrichmentNodes() const override;
@@ -200,9 +203,10 @@ namespace dftefe
                                                    d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::vector<std::vector<global_size_type>> d_overlappingEnrichmentIdsInCells;
-      std::vector<std::vector<global_size_type>> d_overlappingEnrichmentIdsInCellsShifted;
-      std::pair<global_size_type, global_size_type> d_enrichedIdsPairShifted;
-      std::vector<global_size_type> d_ghostEnrichmentIdsShifted;
+      const size_type                                   d_totalRanges;
+      std::vector<std::pair<global_size_type, global_size_type>> d_locallyOwnedRanges;
+      std::vector<std::pair<global_size_type, global_size_type>> d_globalRanges;
+      std::vector<global_size_type> d_ghostEnrichmentGlobalIds;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                             d_atomSphericalDataContainer;
       std::vector<std::string>              d_atomSymbolVec;

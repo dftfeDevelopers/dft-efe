@@ -1,5 +1,5 @@
 #include <basis/TriangulationBase.h>
-#include <basis/TriangulationDealiiSerial.h>
+#include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/EFEBasisManagerDealii.h>
@@ -48,8 +48,8 @@ int main()
   // Set up Triangulation
   const unsigned int dim = 3;
   std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
-    std::make_shared<dftefe::basis::TriangulationDealiiSerial<dim>>();
-  std::vector<unsigned int>         subdivisions = {1, 1, 1};
+    std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
+  std::vector<unsigned int>         subdivisions = {5, 5, 5};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
@@ -138,9 +138,8 @@ int main()
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
 
-  // std::vector<dftefe::global_size_type> vecGlobalNodeId(0);
   //std::cout << (basisManager->getLocallyOwnedRanges()[0]).first << "," << (basisManager->getLocallyOwnedRanges()[0]).second << ";" << (basisManager->getLocallyOwnedRanges()[1]).first << "," << (basisManager->getLocallyOwnedRanges()[1]).second;
-  // std::cout << basisManager->getCellDofsGlobalIds(0, vecGlobalNodeId);
+  
   // Set the constraints
 
   std::string constraintName = "HomogenousWithHanging";
@@ -186,6 +185,12 @@ int main()
   std::shared_ptr<dftefe::basis::BasisHandler<double, dftefe::utils::MemorySpace::HOST>> basisHandler =
     std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisManager, constraintsMap, comm);
+
+  std::vector<std::pair<dftefe::global_size_type, dftefe::global_size_type>> vec = basisHandler->getLocallyOwnedRanges(constraintName);
+  for (auto i:vec )
+  {
+    std::cout<< i.first << "," << i.second << "\n" ;
+  }
 
   // // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);

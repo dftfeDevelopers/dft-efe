@@ -69,15 +69,26 @@ namespace dftefe
     void
     PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &  Y) const
+            MultiVector<ValueTypeUnion, memorySpace> &Y) const
     {
-      linearAlgebra::blasLapack::blockedHadamardProduct(
-        d_diagonalInv.localSize(),
-        X.getNumberComponents(),
-        X.data(),
-        d_diagonalInv.data(),
-        Y.data(),
-        *(d_diagonalInv.getLinAlgOpContext()));
+      // linearAlgebra::blasLapack::blockedHadamardProduct(
+      //   d_diagonalInv.localSize(),
+      //   X.getNumberComponents(),
+      //   X.data(),
+      //   d_diagonalInv.data(),
+      //   Y.data(),
+      //   *(d_diagonalInv.getLinAlgOpContext()));
+
+      linearAlgebra::blasLapack::khatriRaoProduct(
+                    linearAlgebra::blasLapack::Layout::RowMajor,
+                    d_diagonalInv.localSize(),
+                    1,
+                    X.getNumberComponents(),
+                    X.data(),
+                    d_diagonalInv.data(),
+                    Y.data(),
+                    *(d_diagonalInv.getLinAlgOpContext()));
+
     }
 
     template <typename ValueTypeOperator,

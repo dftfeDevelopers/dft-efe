@@ -736,7 +736,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         u.getNumberComponents() == a.size() && a.size() == b.size(),
         "The coefficients are not comptible with the vector local size"); 
-      blasLapack::axpby(u.localSize(),
+      blasLapack::axpbyBlocked(u.localSize(),
                         nv,
                         a.data(),
                         u.data(),

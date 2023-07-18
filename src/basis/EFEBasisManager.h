@@ -78,6 +78,9 @@ namespace dftefe
       virtual std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const = 0;
 
+      virtual std::vector<std::pair<global_size_type, global_size_type>>
+      getGlobalRanges() const = 0;
+
       virtual std::map<BasisIdAttribute, size_type>
       getBasisAttributeToRangeIdMap() const = 0;
 
@@ -143,7 +146,7 @@ namespace dftefe
                            const dftefe::utils::Point &point) const = 0;
 
       virtual std::vector<global_size_type>
-      getGhostEnrichmentIdsShifted() const = 0;
+      getGhostEnrichmentGlobalIds() const = 0;
 
       virtual global_size_type
       nGlobalEnrichmentNodes() const = 0;

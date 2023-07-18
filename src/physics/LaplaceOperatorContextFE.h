@@ -33,6 +33,7 @@
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/FEBasisHandlerDealii.h>
+#include <basis/EFEBasisHandlerDealii.h>
 #include <basis/FEBasisDataStorageDealii.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <memory>
