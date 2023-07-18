@@ -172,6 +172,23 @@ namespace dftefe
           khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      transposedKhatriRaoProduct(const Layout               layout,
+                       const size_type                      sizeI,
+                       const size_type                      sizeJ,
+                       const size_type                      sizeK,
+                       const ValueType1 *                   A,
+                       const ValueType2 *                   B,
+                       scalar_type<ValueType1, ValueType2> *Z,
+                       LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          transposedKhatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
+      }
+
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -202,7 +219,7 @@ namespace dftefe
             scalar_type<ValueType1, ValueType2> *z,
             LinAlgOpContext<memorySpace> &       context)
       {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
           n, blockSize, alpha, x, beta, y, z);
       }
 

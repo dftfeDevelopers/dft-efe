@@ -81,9 +81,9 @@ namespace dftefe
 
       linearAlgebra::blasLapack::khatriRaoProduct(
                     linearAlgebra::blasLapack::Layout::RowMajor,
-                    d_diagonalInv.localSize(),
-                    1,
                     X.getNumberComponents(),
+                    1,
+                    d_diagonalInv.localSize(),
                     X.data(),
                     d_diagonalInv.data(),
                     Y.data(),

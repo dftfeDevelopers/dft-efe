@@ -252,6 +252,39 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        transposedKhatriRaoProduct(const Layout               layout,
+                         const size_type                      sizeI,
+                         const size_type                      sizeJ,
+                         const size_type                      sizeK,
+                         const ValueType1 *                   A,
+                         const ValueType2 *                   B,
+                         scalar_type<ValueType1, ValueType2> *Z)
+      {
+        if (layout == Layout::ColMajor)
+          {
+            for (size_type i = 0; i < sizeI; ++i)
+              for (size_type j = 0; j < sizeJ; ++j)
+                for (size_type k = 0; k < sizeK; ++k)
+                  Z[i * sizeJ * sizeK + j * sizeK + k] =
+                    ((scalar_type<ValueType1, ValueType2>)A[i * sizeK + k]) *
+                    ((scalar_type<ValueType1, ValueType2>)B[j * sizeK + k]);
+          }
+        else if (layout == Layout::RowMajor)
+          {
+            for (size_type k = 0; k < sizeK; ++k)
+              for (size_type i = 0; i < sizeI; ++i)
+                for (size_type j = 0; j < sizeJ; ++j)
+                  Z[k * sizeI * sizeJ + j * sizeJ + i] =
+                    ((scalar_type<ValueType1, ValueType2>)A[k * sizeI + i]) *
+                    ((scalar_type<ValueType1, ValueType2>)B[k * sizeJ + j]);
+          }
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
         const size_type                           size,
         const scalar_type<ValueType1, ValueType2> alpha,

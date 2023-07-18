@@ -107,7 +107,7 @@ namespace dftefe
       void
       setConstraints(std::map<std::string, std::shared_ptr
         <const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-                                   constraintsMap) const override;
+                                   constraintsMap) override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;

@@ -504,11 +504,11 @@ namespace dftefe
 
 
           // KhatriRao product for inp and JxW
-          linearAlgebra::blasLapack::khatriRaoProduct(
+          linearAlgebra::blasLapack::transposedKhatriRaoProduct(
                        linearAlgebra::blasLapack::Layout::RowMajor,
-                       numCumulativeQuadCellsInBlock,
-                       1,
                        numComponents,
+                       1,
+                       numCumulativeQuadCellsInBlock,
                        inp.begin(cellStartId),
                        jxwStorage.data() + quadRuleContainer.getCellQuadStartId(cellStartId),
                        inpJxW.data(),

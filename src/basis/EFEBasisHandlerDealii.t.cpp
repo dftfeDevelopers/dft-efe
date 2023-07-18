@@ -596,7 +596,7 @@ namespace dftefe
       std::map<
         std::string,
         std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-        constraintsMap) const
+        constraintsMap)
     {
       const size_type numConstraints = constraintsMap.size();
       std::map<
