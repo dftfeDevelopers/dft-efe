@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
 
@@ -34,53 +34,28 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      PreconditionerJacobi(
-        const Vector<ValueTypeOperator, memorySpace> &diagonal)
-      : d_diagonalInv(diagonal)
-      , d_pcType(PreconditionerType::JACOBI)
+    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      PreconditionerNone()
+      : d_pcType(PreconditionerType::NONE)
 
-    {
-      blasLapack::reciprocalX(diagonal.localSize(),
-                              1.0,
-                              diagonal.data(),
-                              d_diagonalInv.data(),
-                              *(diagonal.getLinAlgOpContext()));
-    }
+    {}
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     void
-    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<ValueTypeUnion, memorySpace> &Y) const
     {
-      // linearAlgebra::blasLapack::blockedHadamardProduct(
-      //   d_diagonalInv.localSize(),
-      //   X.getNumberComponents(),
-      //   X.data(),
-      //   d_diagonalInv.data(),
-      //   Y.data(),
-      //   *(d_diagonalInv.getLinAlgOpContext()));
-
-      linearAlgebra::blasLapack::khatriRaoProduct(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    1,
-                    X.getNumberComponents(),
-                    d_diagonalInv.localSize(),
-                    d_diagonalInv.data(),
-                    X.data(),
-                    Y.data(),
-                    *(d_diagonalInv.getLinAlgOpContext()));
-
+        Y = X;
     }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     PreconditionerType
-    PreconditionerJacobi<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>
       :: getPreconditionerType() const
     {
       return d_pcType;

@@ -28,6 +28,164 @@ namespace dftefe
 {
   namespace physics
   {
+    namespace PoissonLinearSolverFunctionFEInternal
+    {
+      template <utils::MemorySpace memorySpace>
+      void
+      storeSizes(utils::MemoryStorage<size_type, memorySpace> &nSizes,
+                 const std::vector<size_type> &cellsInBlockNumDoFs)
+      {
+        const size_type        numCellsInBlock = cellsInBlockNumDoFs.size();
+        std::vector<size_type> nSizesSTL(numCellsInBlock, 0);
+
+        for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+          {
+            nSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell]; 
+          }
+
+        nSizes.copyFrom(nSizesSTL);
+      }
+
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace>
+      void
+      computeDiagonalCellWiseLocal(
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &                     gradNiGradNjInAllCells,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand> *y,
+        const size_type                              numLocallyOwnedCells,
+        const std::vector<size_type> &               numCellDofs,
+        const size_type *                            cellLocalIdsStartPtr,
+        const size_type                              cellBlockSize)
+      {
+        //
+        // Perform ye = Diagonal(Ae), where
+        // Ae is the discrete Laplace operator for the e-th cell.
+        // That is, \f$Ae_ij=\int_{\Omega_e} \nabla N_i \cdot \nabla N_j
+        // d\textbf{r} $\f,
+        // (\f$Ae_ij$\f is the integral of the dot product of the gradient of
+        // i-th and j-th basis function in the e-th cell.
+        //
+        // ye is part of output vector (y),
+        // respectively, belonging to e-th cell.
+        //
+
+        size_type BStartOffset       = 0;
+        size_type cellLocalIdsOffset = 0;
+        for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
+             cellStartId += cellBlockSize)
+          {
+            const size_type cellEndId =
+              std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
+            const size_type        numCellsInBlock = cellEndId - cellStartId;
+            std::vector<size_type> cellsInBlockNumDoFsSTL(numCellsInBlock, 0);
+            std::copy(numCellDofs.begin() + cellStartId,
+                      numCellDofs.begin() + cellEndId,
+                      cellsInBlockNumDoFsSTL.begin());
+
+            const size_type cellsInBlockNumCumulativeDoFs =
+              std::accumulate(cellsInBlockNumDoFsSTL.begin(),
+                              cellsInBlockNumDoFsSTL.end(),
+                              0);
+
+            utils::MemoryStorage<size_type, memorySpace> cellsInBlockNumDoFs(
+              numCellsInBlock);
+            cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
+
+
+            utils::MemoryStorage<size_type, memorySpace> nSizes(
+              numCellsInBlock);
+            PoissonLinearSolverFunctionFEInternal::storeSizes<memorySpace>(nSizes, cellsInBlockNumDoFsSTL);
+
+            // allocate memory for cell-wise data for y
+            utils::MemoryStorage<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace> yCellValues(
+              cellsInBlockNumCumulativeDoFs,
+              utils::Types<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>>::zero);
+
+            const ValueTypeOperator *B = gradNiGradNjInAllCells.data() + BStartOffset;
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> *C = yCellValues.begin();
+
+            for ( size_type iCell = 0 ; iCell < numCellsInBlock ; iCell++ )
+            {
+              size_type *nCell = nSizes.data() + iCell;
+              for ( size_type j = 0 ; j < *nCell ; j++ )
+              {
+                *(C + j + iCell * numCellsInBlock) = *(B + iCell * numCellsInBlock + j * (*nCell) + j );
+              }
+            }
+
+            basis::FECellWiseDataOperations<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         1,
+                                         cellLocalIdsStartPtr +
+                                           cellLocalIdsOffset,
+                                         cellsInBlockNumDoFs,
+                                         y);
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                BStartOffset +=
+                  cellsInBlockNumDoFsSTL[iCell] * cellsInBlockNumDoFsSTL[iCell];
+                cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
+              }
+          }
+      }
+
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+        getDiagonal(linearAlgebra::Vector<ValueTypeOperator, memorySpace> &diagonal,
+          std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
+            feBasisHandler,
+          std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+            feBasisDataStorage,
+          const std::string                                    constraintsHangingwHomogeneous,
+          const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+          const size_type                 maxCellTimesNumVecs)
+      {
+
+        const size_type numLocallyOwnedCells =
+          feBasisHandler->nLocallyOwnedCells();
+        std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+        for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+          numCellDofs[iCell] = feBasisHandler->nLocallyOwnedCellDofs(iCell);
+        
+        auto itCellLocalIdsBegin =
+          feBasisHandler->locallyOwnedCellLocalDofIdsBegin(constraintsHangingwHomogeneous);
+
+        // access cell-wise discrete Laplace operator
+        auto gradNiGradNjInAllCells =
+          feBasisDataStorage->getBasisGradNiGradNjInAllCells(
+            quadratureRuleAttributes);
+
+        const size_type cellBlockSize = maxCellTimesNumVecs;
+
+          //
+          // get processor local part of the diagonal
+          //
+        PoissonLinearSolverFunctionFEInternal::computeDiagonalCellWiseLocal
+                <ValueTypeOperator,
+                ValueTypeOperand,
+                memorySpace>(
+          gradNiGradNjInAllCells,
+          diagonal.begin(),
+          numLocallyOwnedCells,
+          numCellDofs,
+          itCellLocalIdsBegin,
+          cellBlockSize);
+
+        // Function to add the values to the local node from its corresponding
+        // ghost nodes from other processors.
+        diagonal.accumulateAddLocallyOwned();
+
+      }
+
+    } // end of namespace PoissonLinearSolverFunctionFEInternal
+
+
     //
     // Constructor
     //
@@ -90,14 +248,30 @@ namespace dftefe
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(d_mpiPatternP2PHangingwHomogeneous,
              linAlgOpContext,
-             (ValueTypeOperator)1.0);   // TODO
+             (ValueTypeOperator)1.0);   
 
       if (d_pcType == linearAlgebra::PreconditionerType::JACOBI)
+      {
+
+        PoissonLinearSolverFunctionFEInternal::getDiagonal
+                <ValueTypeOperator,
+                ValueTypeOperand,
+                memorySpace,
+                dim>(
+            diagonal,
+            feBasisHandler,
+            feBasisDataStorage,
+            constraintsHangingwHomogeneous,
+            quadratureRuleAttributes,
+            maxCellTimesNumVecs);
+
         d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
           <ValueTypeOperator, ValueTypeOperand, memorySpace>>(diagonal);
+
+      }
       else if (d_pcType == linearAlgebra::PreconditionerType::NONE)
-        d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
-          <ValueTypeOperator, ValueTypeOperand, memorySpace>>(diagonal);
+        d_PCContext = std::make_shared<linearAlgebra::PreconditionerNone
+          <ValueTypeOperator, ValueTypeOperand, memorySpace>>();
       else
       utils::throwException(
         false,

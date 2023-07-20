@@ -115,10 +115,6 @@ namespace dftefe
         // For better performance, we evaluate ye for multiple cells at a time
         //
 
-        //
-        // @note: The Ae and xe matrix are stored in row major-format.
-        // Hence, we specify the layout to be row major
-        //
         linearAlgebra::blasLapack::Layout layout =
           linearAlgebra::blasLapack::Layout::ColMajor;
 

@@ -33,6 +33,7 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <physics/LaplaceOperatorContextFE.h>
 #include <linearAlgebra/PreconditionerJacobi.h>
+#include <linearAlgebra/PreconditionerNone.h>
 #include <basis/FEBasisHandler.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/FEBasisDataStorage.h>
