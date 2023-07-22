@@ -81,6 +81,16 @@ namespace dftefe
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal);
+
+
+      static void
+      constraintsSetConstrainedNodes(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &             vectorData,
+        const size_type blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff alpha);
     };
 
 

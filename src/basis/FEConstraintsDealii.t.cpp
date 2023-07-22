@@ -634,6 +634,24 @@ namespace dftefe
                                              d_rowConstraintsIdsLocal);
     }
 
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setConstrainedNodes(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
+        size_type blockSize,
+        ValueTypeBasisCoeff alpha) const
+    {
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
+        constraintsSetConstrainedNodes(vectorData,
+                                             blockSize,
+                                             d_rowConstraintsIdsLocal,
+                                             alpha);
+    }
+
 
   } // namespace basis
 } // namespace dftefe
