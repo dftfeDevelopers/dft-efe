@@ -138,7 +138,7 @@ namespace dftefe
             d_localCells.push_back(cellDealii);
           }
 
-      //----------------ENRICHEMNT ADD
+      //----------------ADD ENRICHEMNT FUNCTIONALITY
       //--------------------------------------------------------//
 
       // Add enriched FE dofs with on top of the classical dofs.
@@ -245,6 +245,124 @@ namespace dftefe
       for (size_type iCell = 0; iCell < d_localCells.size(); ++iCell)
         d_numCumulativeLocalCellDofs += nCellDofs(iCell);
 
+       // get boundary classical global node ids
+
+      const unsigned int dofs_per_cell =
+        getDoFHandler()->get_fe().dofs_per_cell;
+      const unsigned int faces_per_cell =
+        dealii::GeometryInfo<dim>::faces_per_cell;
+      const unsigned int dofs_per_face =
+        getDoFHandler()->get_fe().dofs_per_face;
+
+      d_triangulationBoundaryGlobalNodeIds.resize(d_totalRanges);
+
+      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
+      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
+
+      std::vector<bool> dofs_touched(getDoFHandler()->n_dofs(), false);
+
+      cell = d_dofHandler->begin_active();
+      endc = d_dofHandler->end();
+
+      for (; cell != endc; cell++)
+      {
+        if (cell->is_locally_owned())
+        {
+          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+            {
+              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
+              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
+              if (boundaryId == 0)
+                {
+                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                       ++iFaceDof)
+                    {
+                      const dealii::types::global_dof_index nodeId =
+                        iFaceGlobalDofIndices[iFaceDof];
+                      if (dofs_touched[nodeId])
+                        continue;
+                      dofs_touched[nodeId] = true;
+                      d_triangulationBoundaryGlobalNodeIds[0].push_back(nodeId);
+                    }     // Face dof loop
+                }
+            } // Face loop
+        }     // cell locally owned
+      }
+
+      // get boundary enrichment global node ids assuming parallelopiped triangulation.
+      
+      std::vector<double>    minboundGlobal;
+      minboundGlobal.resize(dim);
+      std::vector<double>    maxboundGlobal;
+      maxboundGlobal.resize(dim);
+      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        minbound.data(),
+        minboundGlobal.data(),
+        minbound.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPIMin,
+        d_comm);
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        maxbound.data(),
+        maxboundGlobal.data(),
+        maxbound.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPIMax,
+        d_comm);
+      mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
+      {
+        for (global_size_type enrichmentId = d_locallyOwnedRanges[rangeId].first ;
+            enrichmentId < d_locallyOwnedRanges[rangeId].second ; 
+              enrichmentId++ )
+        {
+          size_type atomId =
+            d_enrichmentIdsPartition->getAtomId(enrichmentId);
+          size_type qNumberId =
+            (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+              enrichmentId)).localIdInAtom;
+          std::string      atomSymbol = d_atomSymbolVec[atomId];
+          utils::Point     origin(d_atomCoordinatesVec[atomId]);
+          std::vector<std::vector<int>> qNumbers(0);
+          qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
+                                                      d_fieldName);
+          auto sphericalData =
+            d_atomSphericalDataContainer->getSphericalData(atomSymbol,
+                                                          d_fieldName,
+                                                          qNumbers[qNumberId]);
+          double cutoff = sphericalData->getCutoff() +
+            sphericalData->getCutoff() /
+              sphericalData->getSmoothness();
+          
+          bool flag = false;
+          for(unsigned int i = 0 ; i < dim ; i++)
+          {
+            if(origin[i] - minboundGlobal[i] < cutoff || maxboundGlobal[i] - origin[i] < cutoff)
+            {
+              flag = true;
+              break;
+            }
+          }
+          if(flag)
+            d_triangulationBoundaryGlobalNodeIds[rangeId].push_back(enrichmentId);
+        }
+        if(!d_triangulationBoundaryGlobalNodeIds[rangeId].empty())
+        {
+          utils::throwException(
+            false,
+            "Non-Periodic problem cannot have enrichment ids cutting cuboidal triangulation boundary.");          
+        }
+      }
     }
 
     template <size_type dim>
@@ -753,6 +871,13 @@ namespace dftefe
     EFEBasisManagerDealii<dim>::nGlobalEnrichmentNodes() const
     {
       return (d_enrichmentIdsPartition->nTotalEnrichmentIds());
+    }
+
+    template <size_type dim>
+    std::vector<std::vector<global_size_type>>
+    EFEBasisManagerDealii<dim>::getTriangulationBoundaryGlobalNodeIds() const
+    {
+      return d_triangulationBoundaryGlobalNodeIds;
     }
 
   } // namespace basis

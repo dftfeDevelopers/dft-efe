@@ -65,50 +65,40 @@ namespace dftefe
       getBasisManager() const = 0;
 
       virtual const Constraints<ValueTypeBasisCoeff, memorySpace> &
-      getConstraints(const std::string constraintsName) const = 0;
-
-      virtual void
-      setConstraints(std::map<std::string, std::shared_ptr
-        <const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-                                   constraintsMap) = 0;
+      getConstraints() const = 0;
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-      getMPIPatternP2P(const std::string constraintsName) const = 0;
+      getMPIPatternP2P() const = 0;
 
       virtual std::vector<std::pair<global_size_type, global_size_type>>
-      getLocallyOwnedRanges(const std::string constraintsName) const = 0;
+      getLocallyOwnedRanges() const = 0;
 
       virtual const GlobalSizeTypeVector &
-      getGhostIndices(const std::string constraintsName) const = 0;
+      getGhostIndices() const = 0;
 
       virtual size_type
-      nLocal(const std::string constraintsName) const = 0;
+      nLocal() const = 0;
 
       virtual size_type
-      nLocallyOwned(const std::string constraintsName) const = 0;
+      nLocallyOwned() const = 0;
 
       virtual size_type
-      nGhost(const std::string constraintsName) const = 0;
+      nGhost() const = 0;
 
       virtual std::pair<bool, size_type>
-      inLocallyOwnedRanges(const global_size_type globalId,
-                           const std::string      constraintsName) const = 0;
+      inLocallyOwnedRanges(const global_size_type globalId) const = 0;
 
       virtual std::pair<bool, size_type>
-      isGhostEntry(const global_size_type ghostId,
-                   const std::string      constraintsName) const = 0;
+      isGhostEntry(const global_size_type ghostId) const = 0;
 
       virtual size_type
-      globalToLocalIndex(const global_size_type globalId,
-                         const std::string      constraintsName) const = 0;
+      globalToLocalIndex(const global_size_type globalId) const = 0;
 
       virtual global_size_type
-      localToGlobalIndex(const size_type   localId,
-                         const std::string constraintsName) const = 0;
+      localToGlobalIndex(const size_type   localId) const = 0;
 
       virtual void
       getBasisCenters(const size_type       localId,
-                      const std::string     constraintsName,
                       dftefe::utils::Point &basisCenter) const = 0;
 
       //
@@ -125,36 +115,25 @@ namespace dftefe
       nCumulativeLocallyOwnedCellDofs() const = 0;
 
       virtual const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(
-        const std::string constraintsName) const = 0;
+      locallyOwnedCellGlobalDofIdsBegin() const = 0;
 
       virtual const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
+      locallyOwnedCellGlobalDofIdsBegin(const size_type   cellId) const = 0;
 
       virtual const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsEnd(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
+      locallyOwnedCellGlobalDofIdsEnd(const size_type   cellId) const = 0;
 
       virtual const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(
-        const std::string constraintsName) const = 0;
+      locallyOwnedCellLocalDofIdsBegin() const = 0;
 
       virtual const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
+      locallyOwnedCellLocalDofIdsBegin(const size_type   cellId) const = 0;
 
       virtual const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsEnd(
-        const size_type   cellId,
-        const std::string constraintsName) const = 0;
+      locallyOwnedCellLocalDofIdsEnd(const size_type   cellId) const = 0;
 
       virtual void
       getCellDofsLocalIds(const size_type         cellId,
-                          const std::string       constraintsName,
                           std::vector<size_type> &vecLocalNodeId) const = 0;
     };
 

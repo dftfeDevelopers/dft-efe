@@ -157,6 +157,9 @@ namespace dftefe
       const dealii::FiniteElement<dim> &
       getReferenceFE(const size_type cellId) const;
 
+      std::vector<std::vector<global_size_type>>
+      getTriangulationBoundaryGlobalNodeIds() const;
+
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
@@ -165,6 +168,7 @@ namespace dftefe
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
+      std::vector<std::vector<global_size_type>> d_triangulationBoundaryGlobalNodeIds;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis

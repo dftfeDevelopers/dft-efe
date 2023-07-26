@@ -147,6 +147,52 @@ namespace dftefe
 
       for (size_type iCell = 0; iCell < d_localCells.size(); ++iCell)
         d_numCumulativeLocalCellDofs += nCellDofs(iCell);
+
+      // get boundary global node ids
+
+      const unsigned int dofs_per_cell =
+        getDoFHandler()->get_fe().dofs_per_cell;
+      const unsigned int faces_per_cell =
+        dealii::GeometryInfo<dim>::faces_per_cell;
+      const unsigned int dofs_per_face =
+        getDoFHandler()->get_fe().dofs_per_face;
+
+      d_triangulationBoundaryGlobalNodeIds.resize(1);
+
+      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
+      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
+
+      std::vector<bool> dofs_touched(nGlobalNodes(), false);
+
+      cell = d_dofHandler->begin_active();
+      endc = d_dofHandler->end();
+
+      for (; cell != endc; cell++)
+      {
+        if (cell->is_locally_owned())
+        {
+          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+            {
+              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
+              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
+              if (boundaryId == 0)
+                {
+                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                       ++iFaceDof)
+                    {
+                      const dealii::types::global_dof_index nodeId =
+                        iFaceGlobalDofIndices[iFaceDof];
+                      if (dofs_touched[nodeId])
+                        continue;
+                      dofs_touched[nodeId] = true;
+                      d_triangulationBoundaryGlobalNodeIds[0].push_back(nodeId);
+                    }     // Face dof loop
+                }
+            } // Face loop
+        }     // cell locally owned
+      }
+      
     }
 
     template <size_type dim>
@@ -432,6 +478,14 @@ namespace dftefe
     {
       return d_numCumulativeLocalCellDofs;
     }
+
+    template <size_type dim>
+    std::vector<std::vector<global_size_type>>
+    FEBasisManagerDealii<dim>::getTriangulationBoundaryGlobalNodeIds() const
+    {
+      return d_triangulationBoundaryGlobalNodeIds;
+    }
+
 
   } // namespace basis
 } // namespace dftefe

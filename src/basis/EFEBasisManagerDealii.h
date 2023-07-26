@@ -191,6 +191,9 @@ namespace dftefe
       global_size_type
       nGlobalEnrichmentNodes() const override;
 
+      std::vector<std::vector<global_size_type>>
+      getTriangulationBoundaryGlobalNodeIds() const;
+
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
@@ -214,6 +217,7 @@ namespace dftefe
       std::string                           d_fieldName;
       const double                          d_atomPartitionTolerance;
       const utils::mpi::MPIComm             d_comm;
+      std::vector<std::vector<global_size_type>> d_triangulationBoundaryGlobalNodeIds;
 
 
     }; // end of EFEBasisManagerDealii

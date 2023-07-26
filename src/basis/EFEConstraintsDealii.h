@@ -65,11 +65,11 @@ namespace dftefe
       isClosed() const override;
       void
       setHomogeneousDirichletBC() override;
-      /*
-            void
-            setInhomogeneousDirichletBC(
-              utils::ScalarSpatialFunctionReal &boundaryValues) override;
-      */
+    
+      void
+      setInhomogeneousDirichletBC(
+        utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) override;
+      
       const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 
@@ -97,12 +97,6 @@ namespace dftefe
         size_type blockSize) const override;
       void
       distributeParentToChild(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &       vectorData,
-        size_type blockSize) const override;
-
-      void
-      setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
         size_type blockSize) const override;

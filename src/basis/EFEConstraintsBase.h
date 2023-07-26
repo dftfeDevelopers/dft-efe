@@ -64,11 +64,10 @@ namespace dftefe
       virtual void
       setHomogeneousDirichletBC() = 0;
 
-      /*
       virtual void
       setInhomogeneousDirichletBC(
-        utils::ScalarSpatialFunctionReal &boundaryValues) = 0;
-*/
+        utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) = 0;
+
       virtual bool
       isConstrained(global_size_type basisId) const = 0;
 
@@ -100,12 +99,6 @@ namespace dftefe
 
       virtual void
       distributeParentToChild(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &       vectorData,
-        size_type blockSize) const = 0;
-
-      virtual void
-      setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
         size_type blockSize) const = 0;

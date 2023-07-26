@@ -140,6 +140,10 @@ namespace dftefe
 
       virtual unsigned int
       getDim() const = 0;
+
+      virtual std::vector<std::vector<global_size_type>>
+      getTriangulationBoundaryGlobalNodeIds() const = 0;
+
     }; // end of FEBasisManager
   }    // end of namespace basis
 } // end of namespace dftefe

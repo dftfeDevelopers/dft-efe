@@ -30,6 +30,7 @@
 #include <utils/MPIPatternP2P.h>
 
 #include <linearAlgebra/MultiVector.h>
+#include <utils/ScalarSpatialFunction.h>
 namespace dftefe
 {
   namespace basis
@@ -54,6 +55,9 @@ namespace dftefe
       isClosed() const = 0;
       virtual void
       setHomogeneousDirichletBC() = 0;
+      virtual void
+      setInhomogeneousDirichletBC(
+        utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) = 0;
       virtual bool
       isConstrained(global_size_type basisId) const = 0;
 
@@ -84,12 +88,6 @@ namespace dftefe
         size_type blockSize) const = 0;
       virtual void
       distributeParentToChild(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &       vectorData,
-        size_type blockSize) const = 0;
-
-      virtual void
-      setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
         size_type blockSize) const = 0;

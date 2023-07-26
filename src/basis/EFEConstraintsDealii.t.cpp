@@ -122,50 +122,39 @@ namespace dftefe
     EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setHomogeneousDirichletBC()
     {
-      dealii::IndexSet locallyRelevantDofs;
-      dealii::DoFTools::extract_locally_relevant_dofs(
-        *(d_efeBasisManager->getDoFHandler()), locallyRelevantDofs);
-
-      const unsigned int vertices_per_cell =
-        dealii::GeometryInfo<dim>::vertices_per_cell;
-      const unsigned int dofs_per_cell =
-        d_efeBasisManager->getDoFHandler()->get_fe().dofs_per_cell;
-      const unsigned int faces_per_cell =
-        dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face =
-        d_efeBasisManager->getDoFHandler()->get_fe().dofs_per_face;
-
-      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
-      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-
-      std::vector<bool> dofs_touched(d_efeBasisManager->getDoFHandler()->n_dofs(), false);
-      auto              cell = d_efeBasisManager->beginLocallyOwnedCells(),
-           endc              = d_efeBasisManager->endLocallyOwnedCells();
-      for (; cell != endc; ++cell)
+      size_type classicalAttributeId =
+        d_efeBasisManager
+          ->getBasisAttributeToRangeIdMap()[BasisIdAttribute::CLASSICAL];
+      for (auto nodeId : d_efeBasisManager->getTriangulationBoundaryGlobalNodeIds()[classicalAttributeId])
         {
-          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
-          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+          if (!isConstrained(nodeId))
             {
-              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
-              if (boundaryId == 0)
-                {
-                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
-                       ++iFaceDof)
-                    {
-                      const dealii::types::global_dof_index nodeId =
-                        iFaceGlobalDofIndices[iFaceDof];
-                      if (dofs_touched[nodeId])
-                        continue;
-                      dofs_touched[nodeId] = true;
-                      if (!isConstrained(nodeId))
-                        {
-                          setInhomogeneity(nodeId, 0);
-                        } // non-hanging node check
-                    }     // Face dof loop
-                }
-            } // Face loop
-        }     // cell locally owned
+              setInhomogeneity(nodeId, 0);
+            }
+        }
+    }
+    
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setInhomogeneousDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
+    &boundaryValues)
+    {
+      size_type classicalAttributeId =
+        d_efeBasisManager
+          ->getBasisAttributeToRangeIdMap()[BasisIdAttribute::CLASSICAL];
+      std::map<global_size_type, utils::Point> boundaryCoord;
+      d_efeBasisManager->getBasisCenters(boundaryCoord);
+
+      for (auto nodeId : d_efeBasisManager->getTriangulationBoundaryGlobalNodeIds()[classicalAttributeId])
+        {
+          if (!isConstrained(nodeId))
+            {
+              setInhomogeneity(nodeId, boundaryValues(boundaryCoord[nodeId]));
+            }
+        }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -559,22 +548,6 @@ namespace dftefe
                                            d_columnConstraintsValues);
     }
 
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setConstrainedNodesToZero(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &       vectorData,
-        size_type blockSize) const
-    {
-      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
-        constraintsSetConstrainedNodesToZero(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal);
-    }
-
    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
@@ -588,9 +561,9 @@ namespace dftefe
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsSetConstrainedNodes(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal,
-                                             alpha);
+                                        blockSize,
+                                        d_rowConstraintsIdsLocal,
+                                        alpha);
     }
 
 
