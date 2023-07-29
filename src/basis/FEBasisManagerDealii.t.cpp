@@ -192,7 +192,8 @@ namespace dftefe
             } // Face loop
         }     // cell locally owned
       }
-      
+      // Define the constraint matrix
+      // In the new scheme implement the BasisPartitioner
     }
 
     template <size_type dim>

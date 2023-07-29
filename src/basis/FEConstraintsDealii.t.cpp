@@ -10,17 +10,21 @@ namespace dftefe
 {
   namespace basis
   {
-    // default constructor
+    // constructor
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      FEConstraintsDealii()
+      FEConstraintsDealii(std::shared_ptr<const FEBasisManager> feBasis,
+                          utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues,
+                          const std::vector<bool> &periodicFlags)
       : d_isCleared(false)
       , d_isClosed(false)
     {
-      //      d_constraintMatrix =
-      //      dealii::AffineConstraints<ValueTypeBasisCoeff>();
+      clear();
+      makeHangingNodeConstraint(feBasis);
+      setInhomogeneousDirichletBC(boundaryValues);
+      close();
     }
 
 
@@ -115,41 +119,41 @@ namespace dftefe
       return d_constraintMatrix.is_constrained(basisId);
     }
 
+    // template <typename ValueTypeBasisCoeff,
+    //           dftefe::utils::MemorySpace memorySpace,
+    //           size_type                  dim>
+    // void
+    // FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+    //   setHomogeneousDirichletBC()
+    // {
+    //   for (auto nodeId : d_feBasisManager->getTriangulationBoundaryGlobalNodeIds()[0])
+    //     {
+    //       if (!isConstrained(nodeId))
+    //         {
+    //           setInhomogeneity(nodeId, 0);
+    //         }
+    //     }
+    // }
+    
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setHomogeneousDirichletBC()
+      setInhomogeneousDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
+    &boundaryValues)
     {
+      std::map<global_size_type, utils::Point> boundaryCoord;
+      d_feBasisManager->getBasisCenters(boundaryCoord);
+
       for (auto nodeId : d_feBasisManager->getTriangulationBoundaryGlobalNodeIds()[0])
         {
           if (!isConstrained(nodeId))
             {
-              setInhomogeneity(nodeId, 0);
+              setInhomogeneity(nodeId, boundaryValues(boundaryCoord[nodeId]));
             }
         }
     }
-    
-        template <typename ValueTypeBasisCoeff,
-                  dftefe::utils::MemorySpace memorySpace,
-                  size_type                  dim>
-        void
-        FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-          setInhomogeneousDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
-       &boundaryValues)
-        {
-          std::map<global_size_type, utils::Point> boundaryCoord;
-          d_feBasisManager->getBasisCenters(boundaryCoord);
-
-          for (auto nodeId : d_feBasisManager->getTriangulationBoundaryGlobalNodeIds()[0])
-            {
-              if (!isConstrained(nodeId))
-                {
-                  setInhomogeneity(nodeId, boundaryValues(boundaryCoord[nodeId]));
-                }
-            }
-        }
     
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,

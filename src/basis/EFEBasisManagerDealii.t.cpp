@@ -875,7 +875,7 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<std::vector<global_size_type>>
-    EFEBasisManagerDealii<dim>::getTriangulationBoundaryGlobalNodeIds() const
+    EFEBasisManagerDealii<dim>::getBoundaryGlobalNodeIds() const
     {
       return d_triangulationBoundaryGlobalNodeIds;
     }

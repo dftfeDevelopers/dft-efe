@@ -192,7 +192,7 @@ namespace dftefe
       nGlobalEnrichmentNodes() const override;
 
       std::vector<std::vector<global_size_type>>
-      getTriangulationBoundaryGlobalNodeIds() const;
+      getBoundaryGlobalNodeIds() const;
 
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;

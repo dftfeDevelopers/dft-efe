@@ -54,9 +54,7 @@ namespace dftefe
       virtual bool
       isClosed() const = 0;
       virtual void
-      setHomogeneousDirichletBC() = 0;
-      virtual void
-      setInhomogeneousDirichletBC(
+      setDirichletBC(
         utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) = 0;
       virtual bool
       isConstrained(global_size_type basisId) const = 0;

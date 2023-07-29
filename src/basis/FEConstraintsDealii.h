@@ -64,10 +64,7 @@ namespace dftefe
       bool
       isClosed() const override;
       void
-      setHomogeneousDirichletBC() override;
-      
-      void
-      setInhomogeneousDirichletBC(
+      setDirichletBC(
         utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) override;
       
       const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *

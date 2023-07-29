@@ -114,32 +114,13 @@ namespace dftefe
     {
       return d_constraintMatrix.is_constrained(basisId);
     }
-
-    template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setHomogeneousDirichletBC()
-    {
-      size_type classicalAttributeId =
-        d_efeBasisManager
-          ->getBasisAttributeToRangeIdMap()[BasisIdAttribute::CLASSICAL];
-      for (auto nodeId : d_efeBasisManager->getTriangulationBoundaryGlobalNodeIds()[classicalAttributeId])
-        {
-          if (!isConstrained(nodeId))
-            {
-              setInhomogeneity(nodeId, 0);
-            }
-        }
-    }
     
     template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
     EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setInhomogeneousDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
+      setDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
     &boundaryValues)
     {
       size_type classicalAttributeId =

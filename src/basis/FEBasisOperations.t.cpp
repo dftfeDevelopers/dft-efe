@@ -56,33 +56,33 @@ namespace dftefe
         "Could not cast BasisDataStorage to FEBasisDataStorage in the constructor of FEBasisOperations");
     }
 
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    void
-    FEBasisOperations<ValueTypeBasisCoeff,
-                      ValueTypeBasisData,
-                      memorySpace,
-                      dim>::
-      interpolate(
-        const Field<ValueTypeBasisCoeff, memorySpace> &field,
-        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
-        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &quadValuesContainer) const
-    {
-      const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-        &               vectorData      = field.getVector();
-      const std::string constraintsName = field.getConstraintsName();
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
-        field.getBasisHandler();
+    // template <typename ValueTypeBasisCoeff,
+    //           typename ValueTypeBasisData,
+    //           utils::MemorySpace memorySpace,
+    //           size_type          dim>
+    // void
+    // FEBasisOperations<ValueTypeBasisCoeff,
+    //                   ValueTypeBasisData,
+    //                   memorySpace,
+    //                   dim>::
+    //   interpolate(
+    //     const Field<ValueTypeBasisCoeff, memorySpace> &field,
+    //     const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
+    //     quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+    //       &quadValuesContainer) const
+    // {
+    //   const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+    //     &               vectorData      = field.getVector();
+    //   const std::string constraintsName = field.getConstraintsName();
+    //   const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
+    //     field.getBasisHandler();
 
-      interpolate(vectorData,
-                  constraintsName,
-                  basisHandler,
-                  quadratureRuleAttributes,
-                  quadValuesContainer);
-    }
+    //   interpolate(vectorData,
+    //               constraintsName,
+    //               basisHandler,
+    //               quadratureRuleAttributes,
+    //               quadValuesContainer);
+    // }
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -96,7 +96,6 @@ namespace dftefe
       interpolate(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
-        const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<
@@ -129,7 +128,7 @@ namespace dftefe
       const size_type numCumulativeLocallyOwnedCellDofs =
         feBasisHandler.nCumulativeLocallyOwnedCellDofs();
       auto itCellLocalIdsBegin =
-        feBasisHandler.locallyOwnedCellLocalDofIdsBegin(constraintsName);
+        feBasisHandler.locallyOwnedCellLocalDofIdsBegin();
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         numCellDofs[iCell] = feBasisHandler.nLocallyOwnedCellDofs(iCell);
@@ -323,33 +322,33 @@ namespace dftefe
         }
     }
 
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    void
-    FEBasisOperations<ValueTypeBasisCoeff,
-                      ValueTypeBasisData,
-                      memorySpace,
-                      dim>::
-      integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                         inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        Field<ValueTypeBasisCoeff, memorySpace> &   f) const
-    {
-      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData =
-        f.getVector();
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
-        f.getBasisHandler();
-      const std::string constraintsName = f.getConstraintsName();
+    // template <typename ValueTypeBasisCoeff,
+    //           typename ValueTypeBasisData,
+    //           utils::MemorySpace memorySpace,
+    //           size_type          dim>
+    // void
+    // FEBasisOperations<ValueTypeBasisCoeff,
+    //                   ValueTypeBasisData,
+    //                   memorySpace,
+    //                   dim>::
+    //   integrateWithBasisValues(
+    //     const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+    //       &                                         inp,
+    //     const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+    //     Field<ValueTypeBasisCoeff, memorySpace> &   f) const
+    // {
+    //   linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData =
+    //     f.getVector();
+    //   const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler =
+    //     f.getBasisHandler();
+    //   const std::string constraintsName = f.getConstraintsName();
 
-      integrateWithBasisValues(inp,
-                               quadratureRuleAttributes,
-                               basisHandler,
-                               constraintsName,
-                               vectorData);
-    }
+    //   integrateWithBasisValues(inp,
+    //                            quadratureRuleAttributes,
+    //                            basisHandler,
+    //                            constraintsName,
+    //                            vectorData);
+    // }
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -367,7 +366,6 @@ namespace dftefe
           memorySpace> &                            inp,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-        const std::string &                                   constraintsName,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const
 
@@ -421,7 +419,7 @@ namespace dftefe
       const size_type numCumulativeLocallyOwnedCellDofs =
         feBasisHandler.nCumulativeLocallyOwnedCellDofs();
       auto itCellLocalIdsBegin =
-        feBasisHandler.locallyOwnedCellLocalDofIdsBegin(constraintsName);
+        feBasisHandler.locallyOwnedCellLocalDofIdsBegin();
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         numCellDofs[iCell] = feBasisHandler.nLocallyOwnedCellDofs(iCell);
@@ -641,7 +639,7 @@ namespace dftefe
         }
 
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
-        feBasisHandler.getConstraints(constraintsName);
+        feBasisHandler.getConstraints();
       constraints.distributeChildToParent(vectorData,
                                           vectorData.getNumberComponents());
 
