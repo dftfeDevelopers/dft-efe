@@ -105,9 +105,11 @@ namespace dftefe
       getConstraints(const std::string constraintsName) const override;
 
       void
-      setConstraints(std::map<std::string, std::shared_ptr
-        <const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-                                   constraintsMap) override;
+      setConstraints(
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+          constraintsMap) override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;
@@ -210,7 +212,7 @@ namespace dftefe
       utils::mpi::MPIComm d_mpiComm;
       bool                d_isDistributed;
       std::vector<std::pair<global_size_type, global_size_type>>
-                             d_locallyOwnedRanges; 
+                             d_locallyOwnedRanges;
       std::vector<size_type> d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;

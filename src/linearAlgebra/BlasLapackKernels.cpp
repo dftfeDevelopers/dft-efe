@@ -143,15 +143,16 @@ namespace dftefe
       //   blockedHadamardProduct(const size_type                      vecSize,
       //                   const size_type                      numComponents,
       //                   const ValueType1 *                   blockedInput,
-      //                   const ValueType2 *                   singleVectorInput,
+      //                   const ValueType2 * singleVectorInput,
       //                   scalar_type<ValueType1, ValueType2> *blockedOutput)
       // {
       //   for (size_type i = 0; i < vecSize; ++i)
       //     {
       //       for (size_type j = 0; j < numComponents; ++j)
       //       {
-      //         blockedOutput[i * numComponents+j] = 
-      //           ((scalar_type<ValueType1, ValueType2>)blockedInput[i * numComponents+j]) *
+      //         blockedOutput[i * numComponents+j] =
+      //           ((scalar_type<ValueType1, ValueType2>)blockedInput[i *
+      //           numComponents+j]) *
       //           ((scalar_type<ValueType1, ValueType2>)singleVectorInput[i]);
       //       }
       //     }
@@ -253,13 +254,13 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        transposedKhatriRaoProduct(const Layout               layout,
-                         const size_type                      sizeI,
-                         const size_type                      sizeJ,
-                         const size_type                      sizeK,
-                         const ValueType1 *                   A,
-                         const ValueType2 *                   B,
-                         scalar_type<ValueType1, ValueType2> *Z)
+        transposedKhatriRaoProduct(const Layout                         layout,
+                                   const size_type                      sizeI,
+                                   const size_type                      sizeJ,
+                                   const size_type                      sizeK,
+                                   const ValueType1 *                   A,
+                                   const ValueType2 *                   B,
+                                   scalar_type<ValueType1, ValueType2> *Z)
       {
         if (layout == Layout::ColMajor)
           {
@@ -307,22 +308,24 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
-              const size_type                      size,
-              const size_type                      blockSize,
-              const scalar_type<ValueType1, ValueType2> *  alpha,
-              const ValueType1 *                   x,
-              const scalar_type<ValueType1, ValueType2> *  beta,
-              const ValueType2 *                   y,
-              scalar_type<ValueType1, ValueType2> *z)
+        const size_type                            size,
+        const size_type                            blockSize,
+        const scalar_type<ValueType1, ValueType2> *alpha,
+        const ValueType1 *                         x,
+        const scalar_type<ValueType1, ValueType2> *beta,
+        const ValueType2 *                         y,
+        scalar_type<ValueType1, ValueType2> *      z)
       {
         for (size_type i = 0; i < size; ++i)
           {
             for (size_type j = 0; j < blockSize; ++j)
               {
-                z[i*blockSize + j] = ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
-                  ((scalar_type<ValueType1, ValueType2>)x[i*blockSize + j]) +
-                ((scalar_type<ValueType1, ValueType2>)beta[j]) *
-                  ((scalar_type<ValueType1, ValueType2>)y[i*blockSize + j]);
+                z[i * blockSize + j] =
+                  ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
+                    ((scalar_type<ValueType1, ValueType2>)
+                       x[i * blockSize + j]) +
+                  ((scalar_type<ValueType1, ValueType2>)beta[j]) *
+                    ((scalar_type<ValueType1, ValueType2>)y[i * blockSize + j]);
               }
           }
       }

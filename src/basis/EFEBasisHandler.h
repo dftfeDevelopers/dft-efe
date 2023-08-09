@@ -69,9 +69,11 @@ namespace dftefe
       getConstraints(const std::string constraintsName) const = 0;
 
       virtual void
-      setConstraints(std::map<std::string, std::shared_ptr
-        <const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-                                   constraintsMap) = 0;
+      setConstraints(
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+          constraintsMap) = 0;
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const = 0;

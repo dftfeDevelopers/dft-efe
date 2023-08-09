@@ -639,17 +639,16 @@ namespace dftefe
               size_type                  dim>
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setConstrainedNodes(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &       vectorData,
-        size_type blockSize,
-        ValueTypeBasisCoeff alpha) const
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff                      alpha) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsSetConstrainedNodes(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal,
-                                             alpha);
+                                       blockSize,
+                                       d_rowConstraintsIdsLocal,
+                                       alpha);
     }
 
 

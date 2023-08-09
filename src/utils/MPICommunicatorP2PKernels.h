@@ -71,6 +71,22 @@ namespace dftefe
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
         MemoryStorage<ValueType, memorySpace> &dataArray);
+
+      /**
+       * @brief Function template for architecture adaptable insert kernel from recv buffer
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] recvBuffer
+       * @param[in] ownedLocalIndicesForTargetProcs
+       * @param[in] blockSize
+       * @param[out] dataArray
+       */
+      static void
+      insertLocalGhostValuesRecvBufferFromGhostProcs(
+        const MemoryStorage<ValueType, memorySpace> &recvBuffer,
+        const SizeTypeVector &                       ghostLocalIndices,
+        const size_type                              blockSize,
+        MemoryStorage<ValueType, memorySpace> &      dataArray);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -95,6 +111,16 @@ namespace dftefe
           &recvBuffer,
         const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &             ownedLocalIndicesForTargetProcs,
+        const size_type blockSize,
+        MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &dataArray);
+
+      static void
+      insertLocalGhostsRecvBufferFromGhostProcs(
+        const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &recvBuffer,
+        const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
+          &             ghostLocalIndices,
         const size_type blockSize,
         MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &dataArray);

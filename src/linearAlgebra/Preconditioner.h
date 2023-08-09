@@ -49,9 +49,8 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class Preconditioner : public OperatorContext<ValueTypeOperator,
-                                                  ValueTypeOperand,
-                                                 memorySpace>
+    class Preconditioner
+      : public OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
       //
       // typedefs

@@ -59,11 +59,11 @@ namespace dftefe
       std::shared_ptr<const basis::EnrichmentIdsPartition<dim>>
         d_enrichmentIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                            d_atomSphericalDataContainer;
-      std::vector<std::string>              d_atomSymbolVec;
-      std::vector<utils::Point>             d_atomCoordinatesVec;
-      std::string                           d_fieldName;
-      size_type                             d_derivativeType;
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::string               d_fieldName;
+      size_type                 d_derivativeType;
     };
 
   } // namespace atoms

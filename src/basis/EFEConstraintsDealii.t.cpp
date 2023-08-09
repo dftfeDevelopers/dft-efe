@@ -100,7 +100,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::isClosed() const
+    EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::isClosed()
+      const
     {
       return d_isClosed;
     }
@@ -138,9 +139,10 @@ namespace dftefe
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
-      std::vector<bool> dofs_touched(d_efeBasisManager->getDoFHandler()->n_dofs(), false);
-      auto              cell = d_efeBasisManager->beginLocallyOwnedCells(),
-           endc              = d_efeBasisManager->endLocallyOwnedCells();
+      std::vector<bool> dofs_touched(
+        d_efeBasisManager->getDoFHandler()->n_dofs(), false);
+      auto cell = d_efeBasisManager->beginLocallyOwnedCells(),
+           endc = d_efeBasisManager->endLocallyOwnedCells();
       for (; cell != endc; ++cell)
         {
           (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
@@ -575,22 +577,21 @@ namespace dftefe
                                              d_rowConstraintsIdsLocal);
     }
 
-   template <typename ValueTypeBasisCoeff,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
     EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setConstrainedNodes(
-        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &       vectorData,
-        size_type blockSize,
-        ValueTypeBasisCoeff alpha) const
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff                      alpha) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsSetConstrainedNodes(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal,
-                                             alpha);
+                                       blockSize,
+                                       d_rowConstraintsIdsLocal,
+                                       alpha);
     }
 
 

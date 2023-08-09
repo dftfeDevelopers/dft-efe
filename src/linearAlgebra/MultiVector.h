@@ -547,13 +547,12 @@ namespace dftefe
               typename ValueType2,
               utils::MemorySpace memorySpace>
     void
-    add(
-        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> & a,
-        const MultiVector<ValueType1, memorySpace> &    u,
-        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> & b,
-        const MultiVector<ValueType2, memorySpace> &    v,
+    add(const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &a,
+        const MultiVector<ValueType1, memorySpace> &                        u,
+        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &b,
+        const MultiVector<ValueType2, memorySpace> &                        v,
         MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
-                    memorySpace> &   w);
+                    memorySpace> &                                          w);
 
 
 

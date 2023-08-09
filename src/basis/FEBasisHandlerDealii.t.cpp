@@ -144,7 +144,8 @@ namespace dftefe
           1, dealii::QGauss<dim>(1));
         dealiiMatrixFree.clear();
         dealii::MappingQ1<dim> mappingDealii;
-        dealiiMatrixFree.reinit(mappingDealii, dofHandlerVec,
+        dealiiMatrixFree.reinit(mappingDealii,
+                                dofHandlerVec,
                                 dealiiAffineConstraintsVec,
                                 dealiiQuadratureTypeVec,
                                 dealiiAdditionalData);
@@ -674,32 +675,32 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             numGhostIndices, globalSizeVector->data(), ghostIndicesTmp.data());
 
-          this->d_ghostIndicesMap.insert({ constraintName, globalSizeVector });
+          this->d_ghostIndicesMap.insert({constraintName, globalSizeVector});
 
           //
           // push into d_mpiPatternP2PMap
           //
-          if( d_isDistributed == false)
-          {
-            std::vector<size_type> locallyOwnedRangesSizeVec(0);
-            for (auto i : d_locallyOwnedRanges)
-              {
-                locallyOwnedRangesSizeVec.push_back(i.second - i.first);
-              }
-            auto mpiPatternP2P =
-              std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
-                locallyOwnedRangesSizeVec);
+          if (d_isDistributed == false)
+            {
+              std::vector<size_type> locallyOwnedRangesSizeVec(0);
+              for (auto i : d_locallyOwnedRanges)
+                {
+                  locallyOwnedRangesSizeVec.push_back(i.second - i.first);
+                }
+              auto mpiPatternP2P =
+                std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
+                  locallyOwnedRangesSizeVec);
 
-            this->d_mpiPatternP2PMap.insert({ constraintName, mpiPatternP2P });
-          }
+              this->d_mpiPatternP2PMap.insert({constraintName, mpiPatternP2P});
+            }
           else
-          {
-            auto mpiPatternP2P =
-              std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
-                d_locallyOwnedRanges, ghostIndicesTmp, d_mpiComm);
+            {
+              auto mpiPatternP2P =
+                std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
+                  d_locallyOwnedRanges, ghostIndicesTmp, d_mpiComm);
 
-            this->d_mpiPatternP2PMap.insert({ constraintName, mpiPatternP2P });
-          }
+              this->d_mpiPatternP2PMap.insert({constraintName, mpiPatternP2P});
+            }
 
           auto mpiPatternP2P = d_mpiPatternP2PMap[constraintName];
 
@@ -726,7 +727,8 @@ namespace dftefe
             sizeTypeVectorPtr->data(),
             locallyOwnedCellLocalIndicesTmp.data());
 
-          this->d_locallyOwnedCellLocalIndicesMap.insert({ constraintName, sizeTypeVectorPtr });
+          this->d_locallyOwnedCellLocalIndicesMap.insert(
+            {constraintName, sizeTypeVectorPtr});
 
           std::shared_ptr<
             FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
@@ -737,7 +739,8 @@ namespace dftefe
           feBasisConstraintsDealiiOpt->populateConstraintsData(
             *mpiPatternP2P, classicalAttributeId);
 
-          this->d_feConstraintsDealiiOptMap.insert({ constraintName, feBasisConstraintsDealiiOpt });
+          this->d_feConstraintsDealiiOptMap.insert(
+            {constraintName, feBasisConstraintsDealiiOpt});
 
           iConstraint++;
         }
