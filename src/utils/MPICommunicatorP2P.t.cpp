@@ -47,6 +47,10 @@ namespace dftefe
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
             blockSize,
           0.0);
+       d_ghostDataRecvBuffer.resize(
+          d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs().size() *
+            blockSize,
+          0.0);
         d_requestsUpdateGhostValues.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
@@ -89,8 +93,7 @@ namespace dftefe
       {
 #ifdef DFTEFE_WITH_MPI
         // initiate non-blocking receives from ghost processors
-        ValueType *recvArrayStartPtr =
-          dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+        ValueType *recvArrayStartPtr =d_ghostDataRecvBuffer.begin();
 
 #  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)

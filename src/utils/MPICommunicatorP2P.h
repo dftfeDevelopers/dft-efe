@@ -86,6 +86,9 @@ namespace dftefe
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
+        MemoryStorage<ValueType, memorySpace>  d_ghostDataRecvBuffer;
+
+
 #ifdef DFTEFE_WITH_DEVICE
         MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
           d_ghostDataCopyHostPinned;
