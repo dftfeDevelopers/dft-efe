@@ -259,6 +259,9 @@ namespace dftefe
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
+
+                            // std::cout << quadRealPointsVec[qPoint][0] << " " << quadRealPointsVec[qPoint][1] << " " << quadRealPointsVec[qPoint][2] << " " << *basisQuadStorageTmpIter << "\n";
+
                             basisQuadStorageTmpIter++;
                           }
                       }
@@ -687,6 +690,7 @@ namespace dftefe
                               dotProd * dealiiFEValues.JxW(qPoint);
                             // enriched i * enriched j
                           }
+                          //std::cout << *basisGradNiGradNjTmpIter << " ";
                       }
                     basisGradNiGradNjTmpIter++;
                   }

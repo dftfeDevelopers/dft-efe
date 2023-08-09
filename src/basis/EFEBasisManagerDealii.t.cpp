@@ -46,7 +46,7 @@ namespace dftefe
       const std::vector<utils::Point> & atomCoordinatesVec,
       const std::string                fieldName,
       const utils::mpi::MPIComm &      comm)
-      : d_isHPRefined(false)
+      : d_isVariableDofsPerCell(true)
       , d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_atomSymbolVec(atomSymbolVec)
       , d_atomCoordinatesVec(0, utils::Point(dim, 0.0))
@@ -59,10 +59,10 @@ namespace dftefe
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
+      , d_totalRanges(2) // Classical and Enriched
     {
       d_atomCoordinatesVec = atomCoordinatesVec;
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
-      d_totalRanges = 2; // Classical and Enriched
       // making the classical and enriched dofs in the dealii mesh here
       reinit(triangulation, feOrder);
     }
@@ -321,9 +321,9 @@ namespace dftefe
 
     template <size_type dim>
     bool
-    EFEBasisManagerDealii<dim>::isHPRefined() const
+    EFEBasisManagerDealii<dim>::isVariableDofsPerCell() const
     {
-      return d_isHPRefined;
+      return d_isVariableDofsPerCell;
     }
 
     template <size_type dim>
@@ -543,12 +543,6 @@ namespace dftefe
       // is same for all cellId. As a result, we pass index
       // 0 to dealii's dofHandler
       //
-      if (d_isHPRefined)
-        {
-          utils::throwException(
-            false,
-            "Support for hp-refined finite element mesh is not supported yet.");
-        }
       return d_dofHandler->get_fe(0);
     }
 
@@ -573,6 +567,9 @@ namespace dftefe
         for (global_size_type i = d_locallyOwnedRanges[rangeId].first;
             i < d_locallyOwnedRanges[rangeId].second;
             i++)
+          dofCoords.insert({i,
+            d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i-d_globalRanges[0].second)]});
+        for(auto i : d_ghostEnrichmentGlobalIds)
           dofCoords.insert({i,
             d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i-d_globalRanges[0].second)]});
       }

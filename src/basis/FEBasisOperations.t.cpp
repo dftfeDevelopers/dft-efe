@@ -150,7 +150,7 @@ namespace dftefe
       if (quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
           quadratureFamily == quadrature::QuadratureFamily::GLL)
         sameQuadRuleInAllCells = true;
-      bool hpRefined = feBasisManager.isHPRefined();
+      bool variableDofsPerCell = feBasisManager.isVariableDofsPerCell();
 
       // Perform
       // Ce = Ae*Be, where Ce_ij = interpolated value of the i-th component at
@@ -171,7 +171,7 @@ namespace dftefe
       // data), we use the transpose of Be matrix. That is, we perform Ce =
       // Ae*(Be)^T, with Be stored in row major format
       //
-      const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
+      const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
       size_type       cellLocalIdsOffset = 0;
@@ -438,8 +438,8 @@ namespace dftefe
           quadratureFamily == quadrature::QuadratureFamily::GLL)
         sameQuadRuleInAllCells = true;
 
-      bool       hpRefined   = feBasisManager.isHPRefined();
-      const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
+      bool       variableDofsPerCell   = feBasisManager.isVariableDofsPerCell();
+      const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
       size_type cellLocalIdsOffset = 0;
@@ -648,6 +648,7 @@ namespace dftefe
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       vectorData.accumulateAddLocallyOwned();
+      vectorData.updateGhostValues();
     }
 
 

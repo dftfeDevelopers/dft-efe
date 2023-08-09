@@ -125,9 +125,9 @@ int main()
   double xmax = 20.0;
   double ymax = 20.0;
   double zmax = 20.0;
-  double rc = 0.2;
+  double rc = 0.5;
   unsigned int numComponents = 3;
-  double hMin = 0.2;
+  double hMin = 0.4;
   dftefe::size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -145,7 +145,7 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
-  std::string sourceDir = "/home/avirup/dft-efe/test/basis/src/";
+  std::string sourceDir = "/home/avirup/dft-efe/test/physics/src/";
   std::string atomDataFile = "AtomData.in";
   std::string inputFileName = sourceDir + atomDataFile;
   std::fstream fstream;
@@ -448,11 +448,6 @@ int main()
 
   linearSolverFunction->getSolution(*solution);
 
-  std::vector<double> ones(0);
-  ones.resize(numComponents, (double)1.0);
-  std::vector<double> nOnes(0);
-  nOnes.resize(numComponents, (double)-1.0);
-
   //std::cout<<"No of dofs: "<< basisManager->nGlobalNodes()<<" Solution norm: "<<solution->l2Norms()[0]<<","<<solution->l2Norms()[1]<<","<<solution->l2Norms()[2];
 
   // perform integral rho vh 
@@ -468,10 +463,10 @@ int main()
   {
     for (unsigned int j = 0 ; j < numComponents ; j++ )
     {
-      integral[j] += *(i*numComponents+j+iter1) * *(i*numComponents+j+iter2) * JxW[i] * 0.5;
+      integral[j] += *(i*numComponents+j+iter1) * *(i*numComponents+j+iter2) * JxW[i] * 0.5/(4*M_PI);
     }
-      integral[3] += *(i*numComponents+0+iter1) * *(i*numComponents+1+iter2) * JxW[i] * 0.5;
-      integral[4] += *(i*numComponents+1+iter1) * *(i*numComponents+0+iter2) * JxW[i] * 0.5;
+    integral[3] += *(i*numComponents+0+iter1) * *(i*numComponents+1+iter2) * JxW[i] * 0.5/(4*M_PI);
+    integral[4] += *(i*numComponents+1+iter1) * *(i*numComponents+0+iter2) * JxW[i] * 0.5/(4*M_PI);
   }
 
   dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
@@ -482,7 +477,17 @@ int main()
         dftefe::utils::mpi::MPISum,
         comm);
 
-  std::cout << "\nThe integrals are: " << mpiReducedIntegral[0] << "+" << mpiReducedIntegral[1] << "+" << mpiReducedIntegral[3] << "+" << mpiReducedIntegral[4] << "=" << mpiReducedIntegral[0] + mpiReducedIntegral[1] + mpiReducedIntegral[3] + mpiReducedIntegral[4] << ". Error = " << (mpiReducedIntegral[0] + mpiReducedIntegral[1] + mpiReducedIntegral[3] + mpiReducedIntegral[4]) - mpiReducedIntegral[2] <<"\n";
+  double Ig = 10976./(17875*rc);
+  double vg0 = potential(atomCoordinates1[0], atomCoordinates1, rc);
+  double analyticalSelfPotantial = 0.5 * (Ig - vg0) ;
+
+
+    std::cout << "\nThe integrals are: " << mpiReducedIntegral[0] << "+" << mpiReducedIntegral[1]
+    << "+" << mpiReducedIntegral[3] << "+" << mpiReducedIntegral[4] << "=" << mpiReducedIntegral[0] 
+      + mpiReducedIntegral[1] + mpiReducedIntegral[3] + mpiReducedIntegral[4];
+        
+    std::cout << "\nThe error in electrostatic energy: " << (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/10.0;
+
 
   //gracefully end MPI
 

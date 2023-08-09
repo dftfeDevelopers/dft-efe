@@ -85,7 +85,7 @@ namespace dftefe
       virtual size_type
       nCellDofs(size_type cellId) const = 0;
       virtual bool
-      isHPRefined() const = 0;
+      isVariableDofsPerCell() const = 0;
 
       virtual std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const = 0;

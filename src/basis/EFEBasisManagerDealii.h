@@ -94,7 +94,7 @@ namespace dftefe
       nCellDofs(size_type cellId) const override;
 
       bool
-      isHPRefined() const override;
+      isVariableDofsPerCell() const override;
 
       size_type
       nLocalNodes() const override;
@@ -194,7 +194,7 @@ namespace dftefe
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
-      bool                                     d_isHPRefined;
+      bool                                     d_isVariableDofsPerCell;
       std::vector<std::shared_ptr<FECellBase>> d_localCells;
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;

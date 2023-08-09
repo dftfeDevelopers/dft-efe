@@ -168,6 +168,8 @@ namespace dftefe
         // ghost nodes from other processors.
         diagonal.accumulateAddLocallyOwned();
 
+        diagonal.updateGhostValues();
+
       }
 
     } // end of namespace PoissonLinearSolverFunctionFEInternal
@@ -249,6 +251,11 @@ namespace dftefe
             quadratureRuleAttributes,
             maxCellTimesNumVecs);
 
+        // for (unsigned int i = 0 ; i < diagonal.locallyOwnedSize() ; i++)
+        //   {
+        //     std::cout << "diagonal[" <<i<<"] : "<< *(diagonal.data()+i) << " ";
+        //   }        
+
         feBasisHandler->getConstraints(constraintsHangingwHomogeneous).setConstrainedNodes(diagonal, 1, 1.0);
 
         d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
@@ -275,12 +282,12 @@ namespace dftefe
       d_b.setValue(0.0);
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
 
-      feBasisOperations.integrateWithBasisValues(
-        inp,
-        quadratureRuleAttributes,
-        *d_feBasisHandler,
-        constraintsHangingwHomogeneous,
-        b);
+      // feBasisOperations.integrateWithBasisValues(
+      //   inp,
+      //   quadratureRuleAttributes,
+      //   *d_feBasisHandler,
+      //   constraintsHangingwHomogeneous,
+      //   b);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
@@ -288,10 +295,12 @@ namespace dftefe
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
 
-//  for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
-//   {
-//     std::cout << "d_b[" <<i<<"] : "<< *(d_b.data()+i) << "," << "b[" <<i<<"] : "<< *(b.data()+i)<<"\n";
-//   }
+    // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+    //   {
+    //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
+    //   }
+
+    //std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[0] << " d_b-norm: " << d_b.l2Norms()[0] << " b-norm: " << b.l2Norms()[0] << "\n";
 
     }
 

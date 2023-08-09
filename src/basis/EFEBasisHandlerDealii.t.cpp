@@ -30,6 +30,7 @@
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_tools.h>
+#include <string>
 namespace dftefe
 {
   namespace basis
@@ -358,6 +359,33 @@ namespace dftefe
           auto mpiPatternP2P =
             std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
               d_locallyOwnedRanges, ghostIndicesTmp, d_mpiComm);
+
+            int rank;
+  dftefe::utils::mpi::MPICommRank(d_mpiComm, &rank);
+
+      // Get the number of processes
+    int numProcs;
+    dftefe::utils::mpi::MPICommSize(d_mpiComm, &numProcs);
+
+// for(unsigned int iProc = 0 ; iProc < numProcs; iProc++)
+// {
+//   if(iProc == rank)
+//   {
+//     std::cout<<" Proc id = "<<rank<<"\n";
+//     std::cout<<" printing local range \n";
+//     for(unsigned int iRange = 0; iRange <  d_locallyOwnedRanges.size();iRange++)
+//     {
+//       std::cout<<"iRange = "<<iRange<<" start = "<<d_locallyOwnedRanges[iRange].first<<" end = "<<d_locallyOwnedRanges[iRange].second<< " proc local id start = " << mpiPatternP2P->globalToLocal(d_locallyOwnedRanges[iRange].first) << "\n"; //<< " proc local id end = " << mpiPatternP2P->globalToLocal(d_locallyOwnedRanges[iRange].second - 1)  << "\n";
+//     }
+//     std::cout<<" printing ghost\n";
+//     for(unsigned int iRange = 0; iRange <  ghostIndicesTmp.size();iRange++)
+//     {
+//        std::cout<<"iRange = "<<iRange<<" global id = "<<ghostIndicesTmp[iRange]<< " proc local id = " << mpiPatternP2P->globalToLocal(ghostIndicesTmp[iRange]) << "\n";
+//     }
+//   }
+//   std::cout << std::flush ;
+//   dftefe::utils::mpi::MPIBarrier(d_mpiComm);
+// }
           d_mpiPatternP2PMap[constraintName] = mpiPatternP2P;
 
           // Creation of optimized constraint matrix having only
@@ -659,6 +687,7 @@ namespace dftefe
           EFEBasisHandlerDealiiInternal::getGhostIndices<ValueTypeBasisCoeff,
                                                         dim>(dealiiMatrixFree,
                                                              iConstraint,
+                                                             d_efeBMDealii.get(),
                                                              ghostIndicesTmp);
           const size_type numGhostIndices  = ghostIndicesTmp.size();
           auto            globalSizeVector = std::make_shared<
@@ -871,9 +900,11 @@ namespace dftefe
       if (d_supportPoints.find(globalId) != d_supportPoints.end())
         basisCenter = d_supportPoints.find(globalId)->second;
       else
-        utils::throwException(
-          false,
-          "The localId does not have any point in the EFE mesh.");
+      {
+        std::string msg = "The localId does not have any point in the EFE mesh for id no ";
+        msg = msg + std::to_string(globalId);
+        utils::throwException(false, msg);
+      }
     }
 
     template <typename ValueTypeBasisCoeff,
