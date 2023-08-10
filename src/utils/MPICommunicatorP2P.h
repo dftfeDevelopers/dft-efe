@@ -84,7 +84,10 @@ namespace dftefe
 
         size_type d_blockSize;
 
-        MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
+        MemoryStorage<ValueType, memorySpace> d_targetDataBuffer;
+
+        MemoryStorage<ValueType, memorySpace> d_ghostDataBuffer;
+
 
 #ifdef DFTEFE_WITH_DEVICE
         MemoryStorage<ValueType, MemorySpace::HOST_PINNED>
