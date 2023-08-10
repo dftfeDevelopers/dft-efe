@@ -153,16 +153,6 @@ namespace dftefe
                                       cellsInBlockNumDoFs,
                                       xCellValues);
 
-            // for (unsigned int i = 0 ;i < xCellValues.size() ;i ++)
-            // {
-            //   if(std::abs(*(xCellValues.data()+i) - 1.) > 1e-6)
-            //   {
-            //                 std::cout << *(xCellValues.data()+i) << " " << i << "\t";
-
-            //   }
-            // }
-
-
             std::vector<linearAlgebra::blasLapack::Op> transA(
               numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
             std::vector<linearAlgebra::blasLapack::Op> transB(
@@ -232,11 +222,6 @@ namespace dftefe
               ldcSizes.data(),
               linAlgOpContext);
 
-          // for (unsigned int i = 0 ;i < yCellValues.size() ; i++ )
-          // {
-          //   *(yCellValues.data() + i) = 1. ;
-          // }
-
             basis::FECellWiseDataOperations<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace>::
               addCellWiseDataToFieldData(yCellValues,
                                          numVecs,
@@ -244,13 +229,6 @@ namespace dftefe
                                            cellLocalIdsOffset,
                                          cellsInBlockNumDoFs,
                                          y);
-
-          // double sum = 0.;
-          // for (unsigned int i = 0 ;i < yCellValues.size() ; i++ )
-          // {
-          //   std::cout << (yCellValues.data() + i) << "\t";
-          // }
-          //std::cout << "ycell values sum:" <<sum << "\n";
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {

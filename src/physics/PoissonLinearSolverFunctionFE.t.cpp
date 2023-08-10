@@ -250,11 +250,7 @@ namespace dftefe
             constraintsHangingwHomogeneous,
             quadratureRuleAttributes,
             maxCellTimesNumVecs);
-
-        // for (unsigned int i = 0 ; i < diagonal.locallyOwnedSize() ; i++)
-        //   {
-        //     std::cout << "diagonal[" <<i<<"] : "<< *(diagonal.data()+i) << " ";
-        //   }        
+     
 
         feBasisHandler->getConstraints(constraintsHangingwHomogeneous).setConstrainedNodes(diagonal, 1, 1.0);
 
@@ -282,12 +278,12 @@ namespace dftefe
       d_b.setValue(0.0);
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
 
-      // feBasisOperations.integrateWithBasisValues(
-      //   inp,
-      //   quadratureRuleAttributes,
-      //   *d_feBasisHandler,
-      //   constraintsHangingwHomogeneous,
-      //   b);
+      feBasisOperations.integrateWithBasisValues(
+        inp,
+        quadratureRuleAttributes,
+        *d_feBasisHandler,
+        constraintsHangingwHomogeneous,
+        b);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
@@ -299,8 +295,6 @@ namespace dftefe
     //   {
     //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
     //   }
-
-    //std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[0] << " d_b-norm: " << d_b.l2Norms()[0] << " b-norm: " << b.l2Norms()[0] << "\n";
 
     }
 
