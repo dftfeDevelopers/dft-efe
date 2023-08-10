@@ -36,12 +36,13 @@ namespace dftefe
       void
       computeDiagonalCellWiseLocal(
         const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &                     gradNiGradNjInAllCells,
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand> *y,
-        const size_type                              numLocallyOwnedCells,
-        const std::vector<size_type> &               numCellDofs,
-        const size_type *                            cellLocalIdsStartPtr,
-        const size_type                              cellBlockSize)
+          &gradNiGradNjInAllCells,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperand> *y,
+        const size_type               numLocallyOwnedCells,
+        const std::vector<size_type> &numCellDofs,
+        const size_type *             cellLocalIdsStartPtr,
+        const size_type               cellBlockSize)
       {
         //
         // Perform ye = Diagonal(Ae), where
@@ -78,33 +79,44 @@ namespace dftefe
             cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
 
             // allocate memory for cell-wise data for y
-            utils::MemoryStorage<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace> yCellValues(
-              cellsInBlockNumCumulativeDoFs,
-              utils::Types<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>>::zero);
+            utils::MemoryStorage<
+              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                     ValueTypeOperand>,
+              memorySpace>
+              yCellValues(cellsInBlockNumCumulativeDoFs,
+                          utils::Types<linearAlgebra::blasLapack::scalar_type<
+                            ValueTypeOperator,
+                            ValueTypeOperand>>::zero);
 
-            const ValueTypeOperator *BBlock = gradNiGradNjInAllCells.data() + BStartOffset;
-            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand> *C = yCellValues.begin();
+            const ValueTypeOperator *BBlock =
+              gradNiGradNjInAllCells.data() + BStartOffset;
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                   ValueTypeOperand> *C =
+              yCellValues.begin();
 
             size_type BBlockOffset = 0;
-            size_type COffset = 0;
-            for ( size_type iCell = 0 ; iCell < numCellsInBlock ; iCell++ )
-            {
-              size_type nDoFs = cellsInBlockNumDoFsSTL[iCell];
-              for ( size_type j = 0 ; j < nDoFs ; j++ )
+            size_type COffset      = 0;
+            for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
               {
-                *(C + COffset + j) = *(BBlock + BBlockOffset + j*nDoFs + j);
+                size_type nDoFs = cellsInBlockNumDoFsSTL[iCell];
+                for (size_type j = 0; j < nDoFs; j++)
+                  {
+                    *(C + COffset + j) =
+                      *(BBlock + BBlockOffset + j * nDoFs + j);
+                  }
+                COffset += nDoFs;
+                BBlockOffset += nDoFs * nDoFs;
               }
-              COffset += nDoFs;
-              BBlockOffset += nDoFs * nDoFs;
-            }
 
-            basis::FECellWiseDataOperations<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,ValueTypeOperand>, memorySpace>::
-              addCellWiseDataToFieldData(yCellValues,
-                                         1,
-                                         cellLocalIdsStartPtr +
-                                           cellLocalIdsOffset,
-                                         cellsInBlockNumDoFs,
-                                         y);
+            basis::FECellWiseDataOperations<
+              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                     ValueTypeOperand>,
+              memorySpace>::addCellWiseDataToFieldData(yCellValues,
+                                                       1,
+                                                       cellLocalIdsStartPtr +
+                                                         cellLocalIdsOffset,
+                                                       cellsInBlockNumDoFs,
+                                                       y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -120,24 +132,27 @@ namespace dftefe
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
-        getDiagonal(linearAlgebra::Vector<ValueTypeOperator, memorySpace> &diagonal,
-          std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-            feBasisHandler,
-          std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-            feBasisDataStorage,
-          const std::string                                    constraintsHangingwHomogeneous,
-          const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-          const size_type                 maxCellTimesNumVecs)
+      getDiagonal(
+        linearAlgebra::Vector<ValueTypeOperator, memorySpace> &diagonal,
+        std::shared_ptr<
+          const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
+          feBasisHandler,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+                          feBasisDataStorage,
+        const std::string constraintsHangingwHomogeneous,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                             maxCellTimesNumVecs)
       {
-
         const size_type numLocallyOwnedCells =
           feBasisHandler->nLocallyOwnedCells();
         std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
         for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
           numCellDofs[iCell] = feBasisHandler->nLocallyOwnedCellDofs(iCell);
-        
+
         auto itCellLocalIdsBegin =
-          feBasisHandler->locallyOwnedCellLocalDofIdsBegin(constraintsHangingwHomogeneous);
+          feBasisHandler->locallyOwnedCellLocalDofIdsBegin(
+            constraintsHangingwHomogeneous);
 
         // access cell-wise discrete Laplace operator
         auto gradNiGradNjInAllCells =
@@ -146,30 +161,29 @@ namespace dftefe
 
         const size_type cellBlockSize = maxCellTimesNumVecs;
 
-          //
-          // get processor local part of the diagonal
-          //
-        PoissonLinearSolverFunctionFEInternal::computeDiagonalCellWiseLocal
-                <ValueTypeOperator,
-                ValueTypeOperand,
-                memorySpace>(
-          gradNiGradNjInAllCells,
-          diagonal.begin(),
-          numLocallyOwnedCells,
-          numCellDofs,
-          itCellLocalIdsBegin,
-          cellBlockSize);
+        //
+        // get processor local part of the diagonal
+        //
+        PoissonLinearSolverFunctionFEInternal::computeDiagonalCellWiseLocal<
+          ValueTypeOperator,
+          ValueTypeOperand,
+          memorySpace>(gradNiGradNjInAllCells,
+                       diagonal.begin(),
+                       numLocallyOwnedCells,
+                       numCellDofs,
+                       itCellLocalIdsBegin,
+                       cellBlockSize);
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes
-        feBasisHandler->getConstraints(constraintsHangingwHomogeneous).distributeChildToParent(diagonal, 1);
+        feBasisHandler->getConstraints(constraintsHangingwHomogeneous)
+          .distributeChildToParent(diagonal, 1);
 
         // Function to add the values to the local node from its corresponding
         // ghost nodes from other processors.
         diagonal.accumulateAddLocallyOwned();
 
         diagonal.updateGhostValues();
-
       }
 
     } // end of namespace PoissonLinearSolverFunctionFEInternal
@@ -186,87 +200,114 @@ namespace dftefe
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
-                                  dim>::PoissonLinearSolverFunctionFE(
-      std::shared_ptr<const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-        feBasisHandler,
-      const basis::FEBasisOperations<ValueTypeOperator,ValueTypeOperand,memorySpace,dim>
-        & feBasisOperations,
-      std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-        feBasisDataStorage,
-      const quadrature::QuadratureValuesContainer<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-        ValueTypeOperand>, memorySpace> 
-        & inp,
-      const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      const std::string                                    constraintsHanging,
-      const std::string                                    constraintsHangingwHomogeneous,
-      const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> & inhomogeneousDirichletBCVector,
-      const linearAlgebra::PreconditionerType              pcType,
-      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
-      const size_type                 maxCellTimesNumVecs)
+                                  dim>::
+      PoissonLinearSolverFunctionFE(
+        std::shared_ptr<
+          const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
+                                             feBasisHandler,
+        const basis::FEBasisOperations<ValueTypeOperator,
+                                       ValueTypeOperand,
+                                       memorySpace,
+                                       dim> &feBasisOperations,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          feBasisDataStorage,
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &                            inp,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const std::string                           constraintsHanging,
+        const std::string constraintsHangingwHomogeneous,
+        const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+          &                                     inhomogeneousDirichletBCVector,
+        const linearAlgebra::PreconditionerType pcType,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellTimesNumVecs)
       : d_feBasisHandler(feBasisHandler)
       , d_feBasisDataStorage(feBasisDataStorage)
-      , d_b(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),linAlgOpContext,inp.getNumberComponents())
+      , d_b(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),
+            linAlgOpContext,
+            inp.getNumberComponents())
       , d_pcType(pcType)
       , d_constraintsHanging(constraintsHanging)
-      , d_x(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),linAlgOpContext,inp.getNumberComponents())
-      , d_initial(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),linAlgOpContext,inp.getNumberComponents())
-      , d_inhomogeneousDirichletBCVector(feBasisHandler->getMPIPatternP2P(constraintsHanging),linAlgOpContext,inp.getNumberComponents())
+      , d_x(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),
+            linAlgOpContext,
+            inp.getNumberComponents())
+      , d_initial(feBasisHandler->getMPIPatternP2P(
+                    constraintsHangingwHomogeneous),
+                  linAlgOpContext,
+                  inp.getNumberComponents())
+      , d_inhomogeneousDirichletBCVector(feBasisHandler->getMPIPatternP2P(
+                                           constraintsHanging),
+                                         linAlgOpContext,
+                                         inp.getNumberComponents())
     {
       d_inhomogeneousDirichletBCVector = inhomogeneousDirichletBCVector;
-      d_mpiPatternP2PHangingwHomogeneous = feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous);
+      d_mpiPatternP2PHangingwHomogeneous =
+        feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous);
 
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      d_AxContext = std::make_shared<physics::LaplaceOperatorContextFE
-        <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( *d_feBasisHandler,
-        *d_feBasisDataStorage,
-        constraintsHangingwHomogeneous,
-        constraintsHangingwHomogeneous,
-        quadratureRuleAttributes,
-        maxCellTimesNumVecs); // solving the AX = b
+      d_AxContext =
+        std::make_shared<physics::LaplaceOperatorContextFE<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace,
+                                                           dim>>(
+          *d_feBasisHandler,
+          *d_feBasisDataStorage,
+          constraintsHangingwHomogeneous,
+          constraintsHangingwHomogeneous,
+          quadratureRuleAttributes,
+          maxCellTimesNumVecs); // solving the AX = b
 
-      auto AxContextNHDB = std::make_shared<physics::LaplaceOperatorContextFE
-        <ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>( *d_feBasisHandler,
-        *d_feBasisDataStorage,
-        constraintsHanging,
-        constraintsHangingwHomogeneous,
-        quadratureRuleAttributes,
-        maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
+      auto AxContextNHDB =
+        std::make_shared<physics::LaplaceOperatorContextFE<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace,
+                                                           dim>>(
+          *d_feBasisHandler,
+          *d_feBasisDataStorage,
+          constraintsHanging,
+          constraintsHangingwHomogeneous,
+          quadratureRuleAttributes,
+          maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
 
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(d_mpiPatternP2PHangingwHomogeneous,linAlgOpContext);   
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
+        d_mpiPatternP2PHangingwHomogeneous, linAlgOpContext);
 
       if (d_pcType == linearAlgebra::PreconditionerType::JACOBI)
-      {
-        PoissonLinearSolverFunctionFEInternal::getDiagonal
-                <ValueTypeOperator,
-                ValueTypeOperand,
-                memorySpace,
-                dim>(
-            diagonal,
-            feBasisHandler,
-            feBasisDataStorage,
-            constraintsHangingwHomogeneous,
-            quadratureRuleAttributes,
-            maxCellTimesNumVecs);
-     
+        {
+          PoissonLinearSolverFunctionFEInternal::
+            getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
+              diagonal,
+              feBasisHandler,
+              feBasisDataStorage,
+              constraintsHangingwHomogeneous,
+              quadratureRuleAttributes,
+              maxCellTimesNumVecs);
 
-        feBasisHandler->getConstraints(constraintsHangingwHomogeneous).setConstrainedNodes(diagonal, 1, 1.0);
 
-        d_PCContext = std::make_shared<linearAlgebra::PreconditionerJacobi
-          <ValueTypeOperator, ValueTypeOperand, memorySpace>>(diagonal);
+          feBasisHandler->getConstraints(constraintsHangingwHomogeneous)
+            .setConstrainedNodes(diagonal, 1, 1.0);
 
-        diagonal.updateGhostValues();
+          d_PCContext = std::make_shared<
+            linearAlgebra::PreconditionerJacobi<ValueTypeOperator,
+                                                ValueTypeOperand,
+                                                memorySpace>>(diagonal);
 
-      }
+          diagonal.updateGhostValues();
+        }
       else if (d_pcType == linearAlgebra::PreconditionerType::NONE)
-        d_PCContext = std::make_shared<linearAlgebra::PreconditionerNone
-          <ValueTypeOperator, ValueTypeOperand, memorySpace>>();
+        d_PCContext =
+          std::make_shared<linearAlgebra::PreconditionerNone<ValueTypeOperator,
+                                                             ValueTypeOperand,
+                                                             memorySpace>>();
       else
-      utils::throwException(
-        false,
-        "Unknown PreConditionerType");
+        utils::throwException(false, "Unknown PreConditionerType");
 
       // Compute RHS
 
@@ -278,12 +319,11 @@ namespace dftefe
       d_b.setValue(0.0);
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
 
-      feBasisOperations.integrateWithBasisValues(
-        inp,
-        quadratureRuleAttributes,
-        *d_feBasisHandler,
-        constraintsHangingwHomogeneous,
-        b);
+      feBasisOperations.integrateWithBasisValues(inp,
+                                                 quadratureRuleAttributes,
+                                                 *d_feBasisHandler,
+                                                 constraintsHangingwHomogeneous,
+                                                 b);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
@@ -291,22 +331,30 @@ namespace dftefe
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
 
-    // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
-    //   {
-    //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
-    //   }
+      // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+      //   {
+      //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
+      //   }
 
+      // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+      //   {
+      //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
+      //   }
+
+      // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[0] << " d_b-norm: " <<
+      // d_b.l2Norms()[0] << " b-norm: " << b.l2Norms()[0] << "\n";
     }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
-    PoissonLinearSolverFunctionFE<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::getAxContext() const
+    const linearAlgebra::
+      OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+      PoissonLinearSolverFunctionFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::getAxContext() const
     {
       return *d_AxContext;
     }
@@ -315,11 +363,12 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
-    PoissonLinearSolverFunctionFE<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::getPCContext() const
+    const linearAlgebra::
+      OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+      PoissonLinearSolverFunctionFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::getPCContext() const
     {
       return *d_PCContext;
     }
@@ -332,9 +381,11 @@ namespace dftefe
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
-                                  dim>::setSolution(const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                    <ValueTypeOperator,ValueTypeOperand>, memorySpace>
-                                   &x)
+                                  dim>::
+      setSolution(const linearAlgebra::MultiVector<
+                  linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                         ValueTypeOperand>,
+                  memorySpace> &x)
     {
       d_x = x;
     }
@@ -347,19 +398,27 @@ namespace dftefe
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
-                                  dim>::getSolution(linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                      <ValueTypeOperator,ValueTypeOperand>, memorySpace> &solution) 
+                                  dim>::
+      getSolution(linearAlgebra::MultiVector<
+                  linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                         ValueTypeOperand>,
+                  memorySpace> &solution)
     {
-      std::vector<linearAlgebra::blasLapack::scalar_type
-                                      <ValueTypeOperator,ValueTypeOperand>> ones(0);
-      ones.resize(solution.getNumberComponents(), (linearAlgebra::blasLapack::scalar_type
-                                      <ValueTypeOperator,ValueTypeOperand>)1.0);
+      std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                         ValueTypeOperand>>
+        ones(0);
+      ones.resize(
+        solution.getNumberComponents(),
+        (linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                ValueTypeOperand>)1.0);
 
-      dftefe::linearAlgebra::add(ones, d_x, ones, d_inhomogeneousDirichletBCVector, solution);
+      dftefe::linearAlgebra::add(
+        ones, d_x, ones, d_inhomogeneousDirichletBCVector, solution);
 
       solution.updateGhostValues();
 
-      d_feBasisHandler->getConstraints(d_constraintsHanging).distributeParentToChild(solution, solution.getNumberComponents());
+      d_feBasisHandler->getConstraints(d_constraintsHanging)
+        .distributeParentToChild(solution, solution.getNumberComponents());
     }
 
     template <typename ValueTypeOperator,
@@ -374,19 +433,21 @@ namespace dftefe
     {
       return d_b;
     }
-                            
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type
-                                    <ValueTypeOperator,ValueTypeOperand>, memorySpace> &
+    const linearAlgebra::MultiVector<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>,
+      memorySpace> &
     PoissonLinearSolverFunctionFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::getInitialGuess() const
     {
-		   return d_initial;
+      return d_initial;
     }
 
     template <typename ValueTypeOperator,

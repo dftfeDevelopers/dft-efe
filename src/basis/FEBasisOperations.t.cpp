@@ -438,7 +438,7 @@ namespace dftefe
           quadratureFamily == quadrature::QuadratureFamily::GLL)
         sameQuadRuleInAllCells = true;
 
-      bool       variableDofsPerCell   = feBasisManager.isVariableDofsPerCell();
+      bool       variableDofsPerCell = feBasisManager.isVariableDofsPerCell();
       const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
@@ -491,12 +491,12 @@ namespace dftefe
 
 
           utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
-            numComponents * numCumulativeQuadCellsInBlock,
-            ValueTypeUnion());
+            numComponents * numCumulativeQuadCellsInBlock, ValueTypeUnion());
 
           // std::cout << "numCumulativeDofsCellsInBlock = "
           //           << numCumulativeDofsCellsInBlock
-          //           << " numComponents  = " << numComponents << "locallyownedcells =" << numLocallyOwnedCells << "\n";
+          //           << " numComponents  = " << numComponents <<
+          //           "locallyownedcells =" << numLocallyOwnedCells << "\n";
 
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,
@@ -505,14 +505,15 @@ namespace dftefe
 
           // KhatriRao product for inp and JxW
           linearAlgebra::blasLapack::khatriRaoProduct(
-                       layout,
-                       1,
-                       numComponents,
-                       numCumulativeQuadCellsInBlock,
-                       jxwStorage.data() + quadRuleContainer.getCellQuadStartId(cellStartId),
-                       inp.begin(cellStartId),
-                       inpJxW.data(),
-                       linAlgOpContext);
+            layout,
+            1,
+            numComponents,
+            numCumulativeQuadCellsInBlock,
+            jxwStorage.data() +
+              quadRuleContainer.getCellQuadStartId(cellStartId),
+            inp.begin(cellStartId),
+            inpJxW.data(),
+            linAlgOpContext);
 
           // // Hadamard product for inp and JxW
           // linearAlgebra::blasLapack::blockedHadamardProduct(

@@ -260,7 +260,10 @@ namespace dftefe
                                 iNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
 
-                            // std::cout << quadRealPointsVec[qPoint][0] << " " << quadRealPointsVec[qPoint][1] << " " << quadRealPointsVec[qPoint][2] << " " << *basisQuadStorageTmpIter << "\n";
+                            // std::cout << quadRealPointsVec[qPoint][0] << " "
+                            // << quadRealPointsVec[qPoint][1] << " " <<
+                            // quadRealPointsVec[qPoint][2] << " " <<
+                            // *basisQuadStorageTmpIter << "\n";
 
                             basisQuadStorageTmpIter++;
                           }
@@ -376,11 +379,10 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
-                            auto shapeGrad =
-                              efeBM->getEnrichmentDerivative(
-                                cellIndex,
-                                iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]);
+                            auto shapeGrad = efeBM->getEnrichmentDerivative(
+                              cellIndex,
+                              iNode - classicalDofsPerCell,
+                              quadRealPointsVec[qPoint]);
                             // enriched gradient function call
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -436,11 +438,10 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
-                            auto shapeHessian =
-                              efeBM->getEnrichmentHessian(
-                                cellIndex,
-                                iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]);
+                            auto shapeHessian = efeBM->getEnrichmentHessian(
+                              cellIndex,
+                              iNode - classicalDofsPerCell,
+                              quadRealPointsVec[qPoint]);
                             // enriched hessian function
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -626,17 +627,20 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
-                            auto enrichmentDerivative = 
-                                efeBM->getEnrichmentDerivative(
+                            auto enrichmentDerivative =
+                              efeBM->getEnrichmentDerivative(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
-                            auto classicalDerivative = dealiiFEValues.shape_grad(jNode, qPoint);
-                            ValueTypeBasisData dotProd = (ValueTypeBasisData)0.0;
-                            for ( unsigned int k=0 ; k<dim ; k++ )
-                            {
-                              dotProd = dotProd + enrichmentDerivative[k]*classicalDerivative[k];
-                            }
+                            auto classicalDerivative =
+                              dealiiFEValues.shape_grad(jNode, qPoint);
+                            ValueTypeBasisData dotProd =
+                              (ValueTypeBasisData)0.0;
+                            for (unsigned int k = 0; k < dim; k++)
+                              {
+                                dotProd = dotProd + enrichmentDerivative[k] *
+                                                      classicalDerivative[k];
+                              }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * dealiiFEValues.JxW(qPoint);
                             // enriched i * classical j
@@ -649,17 +653,20 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
-                            auto enrichmentDerivative = 
-                                efeBM->getEnrichmentDerivative(
+                            auto enrichmentDerivative =
+                              efeBM->getEnrichmentDerivative(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
-                            auto classicalDerivative = dealiiFEValues.shape_grad(iNode, qPoint);
-                            ValueTypeBasisData dotProd = (ValueTypeBasisData)0.0;
-                            for ( unsigned int k=0 ; k<dim ; k++ )
-                            {
-                              dotProd = dotProd + enrichmentDerivative[k]*classicalDerivative[k];
-                            }
+                            auto classicalDerivative =
+                              dealiiFEValues.shape_grad(iNode, qPoint);
+                            ValueTypeBasisData dotProd =
+                              (ValueTypeBasisData)0.0;
+                            for (unsigned int k = 0; k < dim; k++)
+                              {
+                                dotProd = dotProd + enrichmentDerivative[k] *
+                                                      classicalDerivative[k];
+                              }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * dealiiFEValues.JxW(qPoint);
                             // enriched j * classical i
@@ -671,26 +678,28 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
-                            auto enrichmentDerivativei = 
-                                efeBM->getEnrichmentDerivative(
+                            auto enrichmentDerivativei =
+                              efeBM->getEnrichmentDerivative(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
-                            auto enrichmentDerivativej = 
-                                efeBM->getEnrichmentDerivative(
-                                  cellIndex,
-                                  jNode - classicalDofsPerCell,
-                                  quadRealPointsVec[qPoint]);
-                            ValueTypeBasisData dotProd = (ValueTypeBasisData)0.0;
-                            for ( unsigned int k=0 ; k<dim ; k++ )
-                            {
-                              dotProd = dotProd + enrichmentDerivativei[k]*enrichmentDerivativej[k];
-                            }
+                            auto enrichmentDerivativej =
+                              efeBM->getEnrichmentDerivative(
+                                cellIndex,
+                                jNode - classicalDofsPerCell,
+                                quadRealPointsVec[qPoint]);
+                            ValueTypeBasisData dotProd =
+                              (ValueTypeBasisData)0.0;
+                            for (unsigned int k = 0; k < dim; k++)
+                              {
+                                dotProd = dotProd + enrichmentDerivativei[k] *
+                                                      enrichmentDerivativej[k];
+                              }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * dealiiFEValues.JxW(qPoint);
                             // enriched i * enriched j
                           }
-                          //std::cout << *basisGradNiGradNjTmpIter << " ";
+                        // std::cout << *basisGradNiGradNjTmpIter << " ";
                       }
                     basisGradNiGradNjTmpIter++;
                   }
@@ -1052,11 +1061,10 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
-                            auto shapeGrad =
-                              efeBM->getEnrichmentDerivative(
-                                cellIndex,
-                                iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]);
+                            auto shapeGrad = efeBM->getEnrichmentDerivative(
+                              cellIndex,
+                              iNode - classicalDofsPerCell,
+                              quadRealPointsVec[qPoint]);
                             // enriched gradient function call
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -1109,11 +1117,10 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
-                            auto shapeHessian =
-                              efeBM->getEnrichmentHessian(
-                                cellIndex,
-                                iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]);
+                            auto shapeHessian = efeBM->getEnrichmentHessian(
+                              cellIndex,
+                              iNode - classicalDofsPerCell,
+                              quadRealPointsVec[qPoint]);
                             // enriched hessian function
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -1304,17 +1311,20 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
-                            auto enrichmentDerivative = 
-                                efeBM->getEnrichmentDerivative(
+                            auto enrichmentDerivative =
+                              efeBM->getEnrichmentDerivative(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
-                            auto classicalDerivative = dealiiFEValues.shape_grad(jNode, qPoint);
-                            ValueTypeBasisData dotProd = (ValueTypeBasisData)0.0;
-                            for ( unsigned int k=0 ; k<dim ; k++ )
-                            {
-                              dotProd = dotProd + enrichmentDerivative[k]*classicalDerivative[k];
-                            }
+                            auto classicalDerivative =
+                              dealiiFEValues.shape_grad(jNode, qPoint);
+                            ValueTypeBasisData dotProd =
+                              (ValueTypeBasisData)0.0;
+                            for (unsigned int k = 0; k < dim; k++)
+                              {
+                                dotProd = dotProd + enrichmentDerivative[k] *
+                                                      classicalDerivative[k];
+                              }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * cellJxWValues[qPoint];
                             // enriched i * classical j
@@ -1326,17 +1336,20 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
-                            auto enrichmentDerivative = 
-                                efeBM->getEnrichmentDerivative(
+                            auto enrichmentDerivative =
+                              efeBM->getEnrichmentDerivative(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
-                            auto classicalDerivative = dealiiFEValues.shape_grad(iNode, qPoint);
-                            ValueTypeBasisData dotProd = (ValueTypeBasisData)0.0;
-                            for ( unsigned int k=0 ; k<dim ; k++ )
-                            {
-                              dotProd = dotProd + enrichmentDerivative[k]*classicalDerivative[k];
-                            }
+                            auto classicalDerivative =
+                              dealiiFEValues.shape_grad(iNode, qPoint);
+                            ValueTypeBasisData dotProd =
+                              (ValueTypeBasisData)0.0;
+                            for (unsigned int k = 0; k < dim; k++)
+                              {
+                                dotProd = dotProd + enrichmentDerivative[k] *
+                                                      classicalDerivative[k];
+                              }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * cellJxWValues[qPoint];
                             // enriched j * classical i
@@ -1347,21 +1360,23 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
-                            auto enrichmentDerivativei = 
-                                efeBM->getEnrichmentDerivative(
+                            auto enrichmentDerivativei =
+                              efeBM->getEnrichmentDerivative(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
                                 quadRealPointsVec[qPoint]);
-                            auto enrichmentDerivativej = 
-                                efeBM->getEnrichmentDerivative(
-                                  cellIndex,
-                                  jNode - classicalDofsPerCell,
-                                  quadRealPointsVec[qPoint]);
-                            ValueTypeBasisData dotProd = (ValueTypeBasisData)0.0;
-                            for ( unsigned int k=0 ; k<dim ; k++ )
-                            {
-                              dotProd = dotProd + enrichmentDerivativei[k]*enrichmentDerivativej[k];
-                            }
+                            auto enrichmentDerivativej =
+                              efeBM->getEnrichmentDerivative(
+                                cellIndex,
+                                jNode - classicalDofsPerCell,
+                                quadRealPointsVec[qPoint]);
+                            ValueTypeBasisData dotProd =
+                              (ValueTypeBasisData)0.0;
+                            for (unsigned int k = 0; k < dim; k++)
+                              {
+                                dotProd = dotProd + enrichmentDerivativei[k] *
+                                                      enrichmentDerivativej[k];
+                              }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * cellJxWValues[qPoint];
                             // enriched i * enriched j

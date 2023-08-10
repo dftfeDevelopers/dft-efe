@@ -202,18 +202,20 @@ namespace dftefe
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
                                                    d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
-      std::vector<std::vector<global_size_type>> d_overlappingEnrichmentIdsInCells;
-      const size_type                                   d_totalRanges;
-      std::vector<std::pair<global_size_type, global_size_type>> d_locallyOwnedRanges;
+      std::vector<std::vector<global_size_type>>
+                      d_overlappingEnrichmentIdsInCells;
+      const size_type d_totalRanges;
+      std::vector<std::pair<global_size_type, global_size_type>>
+        d_locallyOwnedRanges;
       std::vector<std::pair<global_size_type, global_size_type>> d_globalRanges;
       std::vector<global_size_type> d_ghostEnrichmentGlobalIds;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                            d_atomSphericalDataContainer;
-      std::vector<std::string>              d_atomSymbolVec;
-      std::vector<utils::Point>             d_atomCoordinatesVec;
-      std::string                           d_fieldName;
-      const double                          d_atomPartitionTolerance;
-      const utils::mpi::MPIComm             d_comm;
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::string               d_fieldName;
+      const double              d_atomPartitionTolerance;
+      const utils::mpi::MPIComm d_comm;
 
 
     }; // end of EFEBasisManagerDealii

@@ -177,7 +177,7 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &rowConstraintsIdsLocal,
+          &                       rowConstraintsIdsLocal,
         const ValueTypeBasisCoeff alpha)
     {
       for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)

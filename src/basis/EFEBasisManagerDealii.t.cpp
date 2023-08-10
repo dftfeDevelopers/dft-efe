@@ -43,7 +43,7 @@ namespace dftefe
       const size_type                  feOrder,
       const double                     atomPartitionTolerance,
       const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> & atomCoordinatesVec,
+      const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
       const utils::mpi::MPIComm &      comm)
       : d_isVariableDofsPerCell(true)
@@ -62,7 +62,7 @@ namespace dftefe
       , d_totalRanges(2) // Classical and Enriched
     {
       d_atomCoordinatesVec = atomCoordinatesVec;
-      d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
+      d_dofHandler         = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
       reinit(triangulation, feOrder);
     }
@@ -146,7 +146,7 @@ namespace dftefe
       // This implies we pass mpi communicator here also.
       // So we only work with local enrichement ids which are created.
 
-      std::vector<utils::Point>              cellVertices(0, utils::Point(dim, 0.0));
+      std::vector<utils::Point> cellVertices(0, utils::Point(dim, 0.0));
       std::vector<std::vector<utils::Point>> cellVerticesVector(0);
       cell = d_dofHandler->begin_active();
 
@@ -184,7 +184,7 @@ namespace dftefe
           minbound[k] = mintmp;
         }
 
-      //Create atomIdsPartition Object.
+      // Create atomIdsPartition Object.
       d_atomIdsPartition =
         std::make_shared<const AtomIdsPartition<dim>>(d_atomCoordinatesVec,
                                                       minbound,
@@ -193,7 +193,7 @@ namespace dftefe
                                                       d_atomPartitionTolerance,
                                                       d_comm);
 
-      //Create enrichmentIdsPartition Object.
+      // Create enrichmentIdsPartition Object.
       d_enrichmentIdsPartition =
         std::make_shared<const EnrichmentIdsPartition<dim>>(
           d_atomSphericalDataContainer,
@@ -210,31 +210,39 @@ namespace dftefe
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
       // populate the global ranges range.The range would be as follows,
-      // The order is chosen as : Classical Ranges, Enrichment Range1, Enrichment Range2 ,.... 
+      // The order is chosen as : Classical Ranges, Enrichment Range1,
+      // Enrichment Range2 ,....
       d_globalRanges.resize(d_totalRanges);
-      d_globalRanges[0].first = 0;
+      d_globalRanges[0].first  = 0;
       d_globalRanges[0].second = d_dofHandler->n_dofs();
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
-      {
-        d_globalRanges[rangeId].first = d_globalRanges[rangeId-1].second;
-        d_globalRanges[rangeId].second = d_globalRanges[rangeId].first + d_enrichmentIdsPartition->nTotalEnrichmentIds();
-      }
+      for (unsigned int rangeId = 1; rangeId < d_totalRanges; rangeId++)
+        {
+          d_globalRanges[rangeId].first = d_globalRanges[rangeId - 1].second;
+          d_globalRanges[rangeId].second =
+            d_globalRanges[rangeId].first +
+            d_enrichmentIdsPartition->nTotalEnrichmentIds();
+        }
 
       // populate the locally owned ranges range.The range would be as follows,
-      // The order is chosen as : Classical Ranges, Enrichment Range1, Enrichment Range2 ,.... 
+      // The order is chosen as : Classical Ranges, Enrichment Range1,
+      // Enrichment Range2 ,....
       d_locallyOwnedRanges.resize(d_totalRanges);
-      auto  dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
       global_size_type startId        = *(dealiiIndexSet.begin());
-      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      global_size_type endId  = startId + d_dofHandler->n_locally_owned_dofs();
       d_locallyOwnedRanges[0] = std::make_pair(startId, endId);
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
-      {
-        d_locallyOwnedRanges[rangeId].first = d_globalRanges[0].second + d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().first;
-        d_locallyOwnedRanges[rangeId].second = d_globalRanges[0].second + d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
-      }
+      for (unsigned int rangeId = 1; rangeId < d_totalRanges; rangeId++)
+        {
+          d_locallyOwnedRanges[rangeId].first =
+            d_globalRanges[0].second +
+            d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().first;
+          d_locallyOwnedRanges[rangeId].second =
+            d_globalRanges[0].second +
+            d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
+        }
 
       // shift the ghost enriched ids by the total classical dofs
-      for(auto i : d_enrichmentIdsPartition->ghostEnrichmentIds())
+      for (auto i : d_enrichmentIdsPartition->ghostEnrichmentIds())
         d_ghostEnrichmentGlobalIds.push_back(i + d_dofHandler->n_dofs());
 
       d_numCumulativeLocallyOwnedCellDofs = 0;
@@ -244,7 +252,6 @@ namespace dftefe
 
       for (size_type iCell = 0; iCell < d_localCells.size(); ++iCell)
         d_numCumulativeLocalCellDofs += nCellDofs(iCell);
-
     }
 
     template <size_type dim>
@@ -331,10 +338,11 @@ namespace dftefe
     EFEBasisManagerDealii<dim>::nLocalNodes() const
     {
       global_size_type retValue = 0;
-      for (unsigned int rangeId = 0 ; rangeId < d_totalRanges ; rangeId++ )
-      {
-        retValue = retValue + d_locallyOwnedRanges[rangeId].second - d_locallyOwnedRanges[rangeId].first;
-      }
+      for (unsigned int rangeId = 0; rangeId < d_totalRanges; rangeId++)
+        {
+          retValue = retValue + d_locallyOwnedRanges[rangeId].second -
+                     d_locallyOwnedRanges[rangeId].first;
+        }
       return retValue;
     }
 
@@ -343,10 +351,11 @@ namespace dftefe
     EFEBasisManagerDealii<dim>::nGlobalNodes() const
     {
       global_size_type retValue = 0;
-      for (unsigned int rangeId = 0 ; rangeId < d_totalRanges ; rangeId++ )
-      {
-        retValue = retValue + d_globalRanges[rangeId].second - d_globalRanges[rangeId].first;
-      }
+      for (unsigned int rangeId = 0; rangeId < d_totalRanges; rangeId++)
+        {
+          retValue = retValue + d_globalRanges[rangeId].second -
+                     d_globalRanges[rangeId].first;
+        }
       return retValue;
     }
 
@@ -361,14 +370,14 @@ namespace dftefe
     std::vector<std::pair<global_size_type, global_size_type>>
     EFEBasisManagerDealii<dim>::getGlobalRanges() const
     {
-       return d_globalRanges;
+      return d_globalRanges;
     }
 
     template <size_type dim>
     std::map<BasisIdAttribute, size_type>
     EFEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
     {
-      std::map<BasisIdAttribute, size_type> returnValue;
+      std::map<BasisIdAttribute, size_type>         returnValue;
       std::pair<global_size_type, global_size_type> classicalRange =
         d_locallyOwnedRanges[0];
       std::pair<global_size_type, global_size_type> enrichedRange =
@@ -430,11 +439,11 @@ namespace dftefe
       d_locallyOwnedCells[cellId]->cellNodeIdtoGlobalNodeId(
         vecGlobalClassicalNodeId);
 
-      size_type classicalcount = 0, enrichedcount = 0;
+      size_type                     classicalcount = 0, enrichedcount = 0;
       std::vector<global_size_type> vecEnrichedNodeId(0);
       vecEnrichedNodeId = d_overlappingEnrichmentIdsInCells[cellId];
 
-      for (size_type count = 0 ; count < vecGlobalNodeId.size() ; count++)
+      for (size_type count = 0; count < vecGlobalNodeId.size(); count++)
         {
           if (count < d_dofHandler->get_fe().n_dofs_per_cell())
             {
@@ -443,7 +452,8 @@ namespace dftefe
             }
           else
             {
-              vecGlobalNodeId[count] = vecEnrichedNodeId[enrichedcount] + d_globalRanges[0].second;
+              vecGlobalNodeId[count] =
+                vecEnrichedNodeId[enrichedcount] + d_globalRanges[0].second;
               enrichedcount += 1;
             }
         }
@@ -562,17 +572,21 @@ namespace dftefe
 
       // add for the enrichment case
 
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++ )
-      {
-        for (global_size_type i = d_locallyOwnedRanges[rangeId].first;
-            i < d_locallyOwnedRanges[rangeId].second;
-            i++)
-          dofCoords.insert({i,
-            d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i-d_globalRanges[0].second)]});
-        for(auto i : d_ghostEnrichmentGlobalIds)
-          dofCoords.insert({i,
-            d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i-d_globalRanges[0].second)]});
-      }
+      for (unsigned int rangeId = 1; rangeId < d_totalRanges; rangeId++)
+        {
+          for (global_size_type i = d_locallyOwnedRanges[rangeId].first;
+               i < d_locallyOwnedRanges[rangeId].second;
+               i++)
+            dofCoords.insert(
+              {i,
+               d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(
+                 i - d_globalRanges[0].second)]});
+          for (auto i : d_ghostEnrichmentGlobalIds)
+            dofCoords.insert(
+              {i,
+               d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(
+                 i - d_globalRanges[0].second)]});
+        }
     }
 
     template <size_type dim>
@@ -613,15 +627,14 @@ namespace dftefe
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                    enrichmentId))
                   .localIdInAtom;
-              std::string      atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point     origin(d_atomCoordinatesVec[atomId]);
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
               std::vector<std::vector<int>> qNumbers(0);
               qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
+                                                                   d_fieldName);
               auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers[qNumberId]);
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
               retValue = sphericalData->getValue(point, origin);
             }
           else
@@ -662,15 +675,14 @@ namespace dftefe
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                    enrichmentId))
                   .localIdInAtom;
-              std::string      atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point     origin(d_atomCoordinatesVec[atomId]);
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
               std::vector<std::vector<int>> qNumbers(0);
               qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
+                                                                   d_fieldName);
               auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers[qNumberId]);
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
               retValue = sphericalData->getGradientValue(point, origin);
             }
           else
@@ -711,15 +723,14 @@ namespace dftefe
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                    enrichmentId))
                   .localIdInAtom;
-              std::string      atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point     origin(d_atomCoordinatesVec[atomId]);
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
               std::vector<std::vector<int>> qNumbers(0);
               qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
+                                                                   d_fieldName);
               auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers[qNumberId]);
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
               retValue = sphericalData->getHessianValue(point, origin);
             }
           else

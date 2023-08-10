@@ -248,7 +248,7 @@ namespace dftefe
     {
       std::vector<std::pair<global_size_type, global_size_type>> retValue(0);
       retValue.resize(1);
-      retValue[0].first = 0;
+      retValue[0].first  = 0;
       retValue[0].second = d_dofHandler->n_dofs();
       return retValue;
     }
@@ -398,9 +398,10 @@ namespace dftefe
       //   {
       //     utils::throwException(
       //       false,
-      //       "Support for hp-refined finite element mesh is not supported yet.");
+      //       "Support for hp-refined finite element mesh is not supported
+      //       yet.");
       //   }
-      
+
       return d_dofHandler->get_fe(0);
     }
 

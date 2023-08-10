@@ -91,13 +91,13 @@ namespace dftefe
        */
       void
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &Y) const override;
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const override;
 
       PreconditionerType
       getPreconditionerType() const override;
 
     private:
-      PreconditionerType                       d_pcType;
+      PreconditionerType d_pcType;
     };
 
 
