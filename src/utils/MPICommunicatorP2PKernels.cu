@@ -130,7 +130,7 @@ namespace dftefe
     void
     MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
       gatherLocallyGhostEntriesSendBufferToGhostProcs(
-        const MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &dataArray,
+        const ValueType * dataArray,
         const MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &             ghostLocalIndicesForGhostProcs,
         const size_type blockSize,
@@ -141,7 +141,7 @@ namespace dftefe
         dftefe::utils::BLOCK_SIZE>>>(
         ghostLocalIndicesForGhostProcs.size() * blockSize,
         blockSize,
-        dftefe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
+        dftefe::utils::makeDataTypeDeviceCompatible(dataArray),
         dftefe::utils::makeDataTypeDeviceCompatible(
           ghostLocalIndicesForGhostProcs.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
@@ -173,12 +173,12 @@ namespace dftefe
     template <typename ValueType>
     void
     MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
-      insertLocalGhostsRecvBufferFromGhostProcs(
+      insertLocalGhostValuesRecvBufferFromGhostProcs(
         const MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &recvBuffer,
         const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &             ghostLocalIndices,
         const size_type blockSize,
-        MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE> &dataArray)
+        ValueType * dataArray)
     {
       insertFromRecvBufferDeviceKernel<<<
         ghostLocalIndices.size() / dftefe::utils::BLOCK_SIZE + 1,
@@ -187,7 +187,7 @@ namespace dftefe
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(ghostLocalIndices.data()),
-        dftefe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+        dftefe::utils::makeDataTypeDeviceCompatible(dataArray));
     }
 
     template class MPICommunicatorP2PKernels<

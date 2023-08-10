@@ -248,11 +248,10 @@ namespace dftefe
             // set the starting reference of the destination to the ghost part
             // of the data. NOTE: It assumes that the ghost part of data follows
             // the owned part
-            MemoryStorage<ValueType, memorySpace> &dataArrayGhost =
-              dataArray.begin() +
+            ValueType * dataArrayGhost = dataArray.data() +
               d_mpiPatternP2P->localOwnedSize() * d_blockSize;
             MPICommunicatorP2PKernels<ValueType, memorySpace>::
-              insertLocalGhostsRecvBufferFromGhostProcs(
+              insertLocalGhostValuesRecvBufferFromGhostProcs(
                 d_ghostDataBuffer,
                 d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs(),
                 d_blockSize,
@@ -331,8 +330,8 @@ namespace dftefe
         // set the starting reference of the source data to the ghost part of
         // the data. NOTE: It assumes that the ghost part of data follows the
         // owned part
-        MemoryStorage<ValueType, memorySpace> &dataArrayGhost =
-          dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+        const ValueType * dataArrayGhost = 
+        dataArray.data() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
         MPICommunicatorP2PKernels<ValueType, memorySpace>::
           gatherLocallyGhostEntriesSendBufferToGhostProcs(

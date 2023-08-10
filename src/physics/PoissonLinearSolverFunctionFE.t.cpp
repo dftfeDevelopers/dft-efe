@@ -319,11 +319,11 @@ namespace dftefe
       d_b.setValue(0.0);
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
 
-      feBasisOperations.integrateWithBasisValues(inp,
-                                                 quadratureRuleAttributes,
-                                                 *d_feBasisHandler,
-                                                 constraintsHangingwHomogeneous,
-                                                 b);
+      // feBasisOperations.integrateWithBasisValues(inp,
+      //                                            quadratureRuleAttributes,
+      //                                            *d_feBasisHandler,
+      //                                            constraintsHangingwHomogeneous,
+      //                                            b);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
