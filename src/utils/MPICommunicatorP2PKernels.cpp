@@ -50,6 +50,21 @@ namespace dftefe
                       j];
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    MPICommunicatorP2PKernels<ValueType, memorySpace>::
+      gatherLocallyGhostEntriesSendBufferToGhostProcs(
+        const MemoryStorage<ValueType, memorySpace> &dataArray,
+        const SizeTypeVector &                 ghostLocalIndicesForGhostProcs,
+        const size_type                        blockSize,
+        MemoryStorage<ValueType, memorySpace> &sendBuffer)
+    {
+      for (size_type i = 0; i < ghostLocalIndicesForGhostProcs.size(); ++i)
+        for (size_type j = 0; j < blockSize; ++j)
+          sendBuffer.data()[i * blockSize + j] =
+            dataArray
+              .data()[ghostLocalIndicesForGhostProcs.data()[i] * blockSize + j];
+    }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void

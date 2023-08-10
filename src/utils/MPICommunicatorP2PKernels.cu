@@ -40,12 +40,11 @@ namespace dftefe
     {
       template <typename ValueType>
       __global__ void
-      gatherSendBufferDeviceKernel(
-        const size_type  totalFlattenedSize,
-        const size_type  blockSize,
-        const ValueType *dataArray,
-        const size_type *ownedLocalIndicesForTargetProcs,
-        ValueType *      sendBuffer)
+      gatherSendBufferDeviceKernel(const size_type  totalFlattenedSize,
+                                   const size_type  blockSize,
+                                   const ValueType *dataArray,
+                                   const size_type *localIndices,
+                                   ValueType *      sendBuffer)
       {
         const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
         for (size_type i = globalThreadId; i < totalFlattenedSize;
@@ -55,8 +54,7 @@ namespace dftefe
             const size_type intraBlockId = i - blockId * blockSize;
 
             sendBuffer[i] =
-              dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                        intraBlockId];
+              dataArray[localIndices[blockId] * blockSize + intraBlockId];
           }
       }
 
@@ -125,6 +123,27 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
+        dftefe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
+    }
+
+    template <typename ValueType>
+    void
+    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
+      gatherLocallyGhostEntriesSendBufferToGhostProcs(
+        const MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &dataArray,
+        const MemoryStorage<size_type, utils::MemorySpace::DEVICE>
+          &             ghostLocalIndicesForGhostProcs,
+        const size_type blockSize,
+        MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &sendBuffer)
+    {
+      gatherSendBufferDeviceKernel<<<
+        ghostLocalIndicesForGhostProcs.size() / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
+        ghostLocalIndicesForGhostProcs.size() * blockSize,
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
+        dftefe::utils::makeDataTypeDeviceCompatible(
+          ghostLocalIndicesForGhostProcs.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
     }
 

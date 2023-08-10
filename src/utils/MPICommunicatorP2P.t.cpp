@@ -43,14 +43,13 @@ namespace dftefe
         , d_blockSize(blockSize)
       {
         d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
-        d_sendRecvBuffer.resize(
+        d_targetDataBuffer.resize(
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
             blockSize,
           0.0);
-       d_ghostDataRecvBuffer.resize(
-          d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs().size() *
-            blockSize,
-          0.0);
+        d_ghostDataBuffer.resize((d_mpiPatternP2P->localGhostSize()) *
+                                   blockSize,
+                                 0.0);
         d_requestsUpdateGhostValues.resize(
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
@@ -93,12 +92,12 @@ namespace dftefe
       {
 #ifdef DFTEFE_WITH_MPI
         // initiate non-blocking receives from ghost processors
-        ValueType *recvArrayStartPtr =d_ghostDataRecvBuffer.begin();
+        ValueType *recvArrayStartPtr = d_ghostDataBuffer.begin();
 
 #  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
-#  endif // defined(DFTEFE_WITH_DEVICE) &&
+#  endif // defined(DFTEFE_WITH_DEVICE) && //
          // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
@@ -150,10 +149,10 @@ namespace dftefe
             dataArray,
             d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
             d_blockSize,
-            d_sendRecvBuffer);
+            d_targetDataBuffer);
 
         // initiate non-blocking sends to target processors
-        ValueType *sendArrayStartPtr = d_sendRecvBuffer.begin();
+        ValueType *sendArrayStartPtr = d_targetDataBuffer.begin();
 
 #  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
@@ -162,7 +161,7 @@ namespace dftefe
               memoryTransfer;
             memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
                                 d_sendRecvBufferHostPinned.begin(),
-                                d_sendRecvBuffer.begin());
+                                d_targetDataBuffer.begin());
 
             sendArrayStartPtr = d_sendRecvBufferHostPinned.begin();
           }
@@ -239,13 +238,25 @@ namespace dftefe
                 MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
                 memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
-                                    dataArray.begin() +
-                                      d_mpiPatternP2P->localOwnedSize() *
-                                        d_blockSize,
+                                    d_ghostDataBuffer.data(),
                                     d_ghostDataCopyHostPinned.data());
               }
-#  endif // defined(DFTEFE_WITH_DEVICE) &&
+#  endif // defined(DFTEFE_WITH_DEVICE) && //
          // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+
+            // copy ghost data receieved to the ghost past of the data
+            // set the starting reference of the destination to the ghost part
+            // of the data. NOTE: It assumes that the ghost part of data follows
+            // the owned part
+            MemoryStorage<ValueType, memorySpace> &dataArrayGhost =
+              dataArray.begin() +
+              d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+            MPICommunicatorP2PKernels<ValueType, memorySpace>::
+              insertLocalGhostsRecvBufferFromGhostProcs(
+                d_ghostDataBuffer,
+                d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs(),
+                d_blockSize,
+                dataArrayGhost);
           }
 #endif // DFTEFE_WITH_MPI
       }
@@ -270,11 +281,11 @@ namespace dftefe
       {
 #ifdef DFTEFE_WITH_MPI
         // initiate non-blocking receives from target processors
-        ValueType *recvArrayStartPtr = d_sendRecvBuffer.begin();
+        ValueType *recvArrayStartPtr = d_targetDataBuffer.begin();
 #  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
           recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
-#  endif // defined(DFTEFE_WITH_DEVICE) &&
+#  endif // defined(DFTEFE_WITH_DEVICE) && //
          // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
@@ -316,10 +327,22 @@ namespace dftefe
           }
 
 
+        // gather ghost data into send buffer
+        // set the starting reference of the source data to the ghost part of
+        // the data. NOTE: It assumes that the ghost part of data follows the
+        // owned part
+        MemoryStorage<ValueType, memorySpace> &dataArrayGhost =
+          dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+
+        MPICommunicatorP2PKernels<ValueType, memorySpace>::
+          gatherLocallyGhostEntriesSendBufferToGhostProcs(
+            dataArrayGhost,
+            d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs(),
+            d_blockSize,
+            d_ghostDataBuffer);
 
         // initiate non-blocking sends to ghost processors
-        ValueType *sendArrayStartPtr =
-          dataArray.begin() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+        ValueType *sendArrayStartPtr = d_ghostDataBuffer.data();
 
 #  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
         if (memorySpace == MemorySpace::DEVICE)
@@ -328,9 +351,7 @@ namespace dftefe
               memoryTransfer;
             memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
                                 d_ghostDataCopyHostPinned.begin(),
-                                dataArray.begin() +
-                                  d_mpiPatternP2P->localOwnedSize() *
-                                    d_blockSize);
+                                d_ghostDataBuffer.begin());
 
             sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
           }
@@ -409,7 +430,7 @@ namespace dftefe
                   memoryTransfer;
                 memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
                                     d_sendRecvBufferHostPinned.data(),
-                                    d_sendRecvBuffer.data());
+                                    d_targetDataBuffer.data());
               }
 #  endif // defined(DFTEFE_WITH_DEVICE) &&
          // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
@@ -418,7 +439,7 @@ namespace dftefe
         // accumulate add into locally owned entries from recv buffer
         MPICommunicatorP2PKernels<ValueType, memorySpace>::
           accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
-            d_sendRecvBuffer,
+            d_targetDataBuffer,
             d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
             d_blockSize,
             dataArray);

@@ -57,6 +57,22 @@ namespace dftefe
         MemoryStorage<ValueType, memorySpace> &sendBuffer);
 
       /**
+       * @brief Function template for architecture adaptable gather kernel to send buffer
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] dataArray data array to locally ghost entries
+       * @param[in] ghostLocalIndicesForGhostProcs
+       * @param[in] blockSize
+       * @param[out] sendBuffer
+       */
+      static void
+      gatherLocallyGhostEntriesSendBufferToGhostProcs(
+        const MemoryStorage<ValueType, memorySpace> &dataArray,
+        const SizeTypeVector &                 ghostLocalIndicesForGhostProcs,
+        const size_type                        blockSize,
+        MemoryStorage<ValueType, memorySpace> &sendBuffer);
+
+      /**
        * @brief Function template for architecture adaptable accumlate kernel from recv buffer
        * @tparam ValueType the type of the number
        * @tparam memorySpace
@@ -101,6 +117,16 @@ namespace dftefe
           &dataArray,
         const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &             ownedLocalIndicesForTargetProcs,
+        const size_type blockSize,
+        MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &sendBuffer);
+
+      static void
+      gatherLocallyGhostEntriesSendBufferToGhostProcs(
+        const MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
+          &dataArray,
+        const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
+          &             ghostLocalIndicesForGhostProcs,
         const size_type blockSize,
         MemoryStorage<ValueType, dftefe::utils::MemorySpace::DEVICE>
           &sendBuffer);
