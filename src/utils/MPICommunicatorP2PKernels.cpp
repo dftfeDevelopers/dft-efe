@@ -54,7 +54,7 @@ namespace dftefe
     void
     MPICommunicatorP2PKernels<ValueType, memorySpace>::
       gatherLocallyGhostEntriesSendBufferToGhostProcs(
-        const MemoryStorage<ValueType, memorySpace> &dataArray,
+        const ValueType *                      dataArray,
         const SizeTypeVector &                 ghostLocalIndicesForGhostProcs,
         const size_type                        blockSize,
         MemoryStorage<ValueType, memorySpace> &sendBuffer)
@@ -62,8 +62,7 @@ namespace dftefe
       for (size_type i = 0; i < ghostLocalIndicesForGhostProcs.size(); ++i)
         for (size_type j = 0; j < blockSize; ++j)
           sendBuffer.data()[i * blockSize + j] =
-            dataArray
-              .data()[ghostLocalIndicesForGhostProcs.data()[i] * blockSize + j];
+            dataArray[ghostLocalIndicesForGhostProcs.data()[i] * blockSize + j];
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -86,15 +85,15 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     MPICommunicatorP2PKernels<ValueType, memorySpace>::
-      insertLocalGhostsRecvBufferFromGhostProcs(
+      insertLocalGhostValuesRecvBufferFromGhostProcs(
         const MemoryStorage<ValueType, memorySpace> &recvBuffer,
         const SizeTypeVector &                       ghostLocalIndices,
         const size_type                              blockSize,
-        MemoryStorage<ValueType, memorySpace> &      dataArray)
+        ValueType *                                  dataArray)
     {
-      for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
+      for (size_type i = 0; i < ghostLocalIndices.size(); ++i)
         for (size_type j = 0; j < blockSize; ++j)
-          dataArray.data()[ghostLocalIndices.data()[i] * blockSize + j] =
+          dataArray[ghostLocalIndices.data()[i] * blockSize + j] =
             recvBuffer.data()[i * blockSize + j];
     }
 
