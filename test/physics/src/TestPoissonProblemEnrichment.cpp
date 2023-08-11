@@ -94,6 +94,10 @@ int main()
   int rank;
   dftefe::utils::mpi::MPICommRank(comm, &rank);
 
+  // Get nProcs
+  int numProcs;
+  dftefe::utils::mpi::MPICommSize(comm, &numProcs);
+
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
 
@@ -114,7 +118,7 @@ int main()
   double zmax = 10.0;
   double rc = 0.5;
   unsigned int numComponents = 1;
-  double hMin = 2.0;
+  double hMin = 1e6;
   dftefe::size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -124,7 +128,7 @@ int main()
   domainVectors[0][0] = xmax;
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
-
+  
   // initialize the triangulation
   triangulationBase->initializeTriangulationConstruction();
   triangulationBase->createUniformParallelepiped(subdivisions,
@@ -224,12 +228,12 @@ int main()
 
   // initialize the basis Manager
 
-  unsigned int feOrder = 1;
+  unsigned int feOrder = 3;
 
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<dim>>(
       triangulationBase ,
       atomSphericalDataContainer ,
-      feOrder ,
+      feOrder,
       atomPartitionTolerance,
       atomSymbol,
       atomCoordinatesVec,
@@ -247,7 +251,7 @@ int main()
   std::string constraintHomwHan = "HomogeneousWithHanging"; // use this to solve the laplace equation
   std::string constraintAllHom = "AllClassicalNodesHomogeneous"; // use this to solve the laplace equation
 
-  std::vector<std::shared_ptr<dftefe::basis::EFEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
+  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
     constraintsVec;
   constraintsVec.resize(3);
   for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
@@ -390,9 +394,6 @@ int main()
             }
         } // Face loop
     }     // cell locally owned
-  vhNHDB->updateGhostValues();
-  basisHandler->getConstraints(constraintHanging).distributeParentToChild(*vhNHDB, numComponents);
-  //vhNHDB->setValue(0.); //--------------CHANGE ---------------
 
   // create the quadrature Value Container
 
@@ -419,70 +420,6 @@ int main()
     }
   }
 
-    //     feBasisOp.integrateWithBasisValues(
-    //     quadValuesContainer,
-    //     quadAttr,
-    //     *basisHandler,
-    //     constraintAllHom,
-    //     *solution);
-
-    //     solution->updateGhostValues();
-
-    // for (unsigned int i = 0 ; i < solution->localSize() ; i++)
-    //   {
-    //     if (*(solution->data()+i) != 0)
-    //     std::cout << rank << " "<< *(solution->data()+i) << " ";
-    //   }
-
-    // std::shared_ptr<const dftefe::basis::EFEBasisManagerDealii<dim>> efeBM =
-    // std::dynamic_pointer_cast<const dftefe::basis::EFEBasisManagerDealii<dim>>(basisManager);
-
-  // std::vector<double> JxW1(0);
-  // double summ = 0;
-  // double dd = 0;
-  // for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
-  // {
-  //   JxW1 = quadRuleContainer.getCellJxW(i);
-  //   int count = 0;
-  //   dd = 0;
-  //   for (auto j : quadRuleContainer.getCellRealPoints(i))
-  //   {
-  //     double a = rho( j, atomCoordinatesVec, rc);
-  //     dd = dd + a * efeBM->getEnrichmentValue( i, 0, j) * JxW1[count];
-  //     count = count + 1;
-  //   }
-  //   // std::cout << dd << " ";
-  //   summ = summ + dd;
-  //   JxW1.resize(0);
-  // }
-  // std::cout << "intWithBasis: "<<summ << "\n";
-
-  // JxW1.resize(0);
-  // summ = 0;
-  // dd = 0;
-  // for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
-  // {
-  //   JxW1 = quadRuleContainer.getCellJxW(i);
-  //   int count = 0;
-  //   dd = 0;
-  //   for (auto j : quadRuleContainer.getCellRealPoints(i))
-  //   {
-  //     auto enrichmentDerivativei = 
-  //         efeBM->getEnrichmentDerivative(i,0,j);
-  //     double dotProd = 0.0;
-  //     for ( unsigned int k=0 ; k<dim ; k++ )
-  //     {
-  //       dotProd = dotProd + enrichmentDerivativei[k]*enrichmentDerivativei[k];
-  //     }
-  //     dd = dd + dotProd * JxW1[count];
-  //     count = count + 1;
-  //   }
-  //   //std::cout << dd << " ";
-  //   summ = summ + dd;
-  //   JxW1.resize(0);
-  // }
-  // std::cout << "gradnigradnj: "<<summ << "\n";
-
 
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                    double,
@@ -499,7 +436,7 @@ int main()
                                                     constraintHanging,
                                                     constraintHomwHan,
                                                     *vhNHDB,
-                                                    dftefe::linearAlgebra::PreconditionerType::NONE,
+                                                    dftefe::linearAlgebra::PreconditionerType::JACOBI,
                                                     linAlgOpContext,
                                                     50);
 
@@ -535,11 +472,6 @@ int main()
 
   feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
 
-//  for (unsigned int i = 0 ; i < solution->locallyOwnedSize() ; i++)
-//   {
-//     std::cout << *(solution->data()+i) << "   ";
-//   }
-
   auto iter1 = quadValuesContainerAnalytical.begin();
   auto iter2 = quadValuesContainerNumerical.begin();
   dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints();
@@ -547,11 +479,6 @@ int main()
   std::vector<double> integral(3, 0.0), mpiReducedIntegral(integral.size(), 0.0);
   const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
   int count = 0;
-
-  std::ofstream myfile;
-  myfile.open ("/home/avirup/dft-efe/test/physics/stage/greatlakes/standard/gnu/BuildAndRunTestPoissonProblemEnrichment/error_pts.txt");
-
-  dftefe::utils::mpi::MPIBarrier(comm);
 
   for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
   {
@@ -562,10 +489,9 @@ int main()
       {
         count = count + 1;
       }
-      myfile << rank << " " << i << ": Analytical: " << *(i+iter1) << " , Numerical: " << *(i+iter2) << " Points: "<<locQuadPoints[i][0] << " " << locQuadPoints[i][1] << " " << locQuadPoints[i][2] << "\n";
+      //std::cout << rank << " " << i << ": Analytical: " << *(i+iter1) << " , Numerical: " << *(i+iter2) << " Points: "<<locQuadPoints[i][0] << " " << locQuadPoints[i][1] << " " << locQuadPoints[i][2] << "\n";
   }
-  dftefe::utils::mpi::MPIBarrier(comm);
-  myfile.close();
+
   std::cout << numQuadraturePoints << " " << count << "\n";
 
   dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(

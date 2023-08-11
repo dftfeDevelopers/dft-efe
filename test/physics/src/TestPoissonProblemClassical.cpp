@@ -98,20 +98,20 @@ int main()
   const unsigned int dim = 3;
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
         std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {20, 20 ,20};
+  std::vector<unsigned int>         subdivisions = {10, 10 ,10};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
-  double xmax = 20.0;
-  double ymax = 20.0;
-  double zmax = 20.0;
+  double xmax = 10.0;
+  double ymax = 10.0;
+  double zmax = 10.0;
   double rc = 0.5;
-  double Rx = 10.0;
-  double Ry = 10.0;
-  double Rz = 10.0;
+  double Rx = 5.;
+  double Ry = 5.;
+  double Rz = 5.;
   unsigned int numComponents = 1;
-  double hMin = 0.5;
+  double hMin = 0.8;
   dftefe::size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -408,6 +408,8 @@ int main()
                                                                  linearCellMappingDealii);
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
+  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
+  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
@@ -460,16 +462,52 @@ int main()
 
    linearSolverFunction->getSolution(*solution);
 
-  std::vector<double> ones(0);
-  ones.resize(numComponents, (double)1.0);
-  std::vector<double> nOnes(0);
-  nOnes.resize(numComponents, (double)-1.0);
+  // std::vector<double> ones(0);
+  // ones.resize(numComponents, (double)1.0);
+  // std::vector<double> nOnes(0);
+  // nOnes.resize(numComponents, (double)-1.0);
 
-    std::cout<<"solution norm: "<<solution->l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0]<<"\n";
+  //   std::cout<<"solution norm: "<<solution->l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0]<<"\n";
 
-  dftefe::linearAlgebra::add(ones, *vh, nOnes, *solution, *error);
+  // dftefe::linearAlgebra::add(ones, *vh, nOnes, *solution, *error);
 
-    std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/vh->l2Norms()[0])<<"\n";
+  //   std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/vh->l2Norms()[0])<<"\n";
+
+  for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
+  {
+    dftefe::size_type quadId = 0;
+    for (auto j : quadRuleContainer.getCellRealPoints(i))
+    {
+      double a = potential( j[0], j[1], j[2], Rx, Ry, Rz, rc);
+      double *b = &a;
+      quadValuesContainerAnalytical.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
+      quadId = quadId + 1;
+    }
+  }
+
+  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
+
+  auto iter1 = quadValuesContainerAnalytical.begin();
+  auto iter2 = quadValuesContainerNumerical.begin();
+  dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints();
+  const std::vector<double> JxW = quadRuleContainer.getJxW();
+  std::vector<double> integral(3, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+  for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
+  {
+      integral[0] += std::pow((*(i+iter1) - *(i+iter2)),2) * JxW[i];
+      integral[1] += std::pow((*(i+iter1)),2) * JxW[i];
+      integral[2] += std::pow((*(i+iter2)),2) * JxW[i];
+  }
+
+  dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+        integral.data(),
+        mpiReducedIntegral.data(),
+        integral.size(),
+        dftefe::utils::mpi::MPIDouble,
+        dftefe::utils::mpi::MPISum,
+        comm);
+
+  std::cout << "The error rms: " << std::sqrt(mpiReducedIntegral[0]) << ", Analytical:" << std::sqrt(mpiReducedIntegral[1])<< ", Numerical:" << std::sqrt(mpiReducedIntegral[2]) << "\n";
 
   //gracefully end MPI
 
