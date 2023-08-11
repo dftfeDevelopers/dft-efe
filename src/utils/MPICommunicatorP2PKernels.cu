@@ -130,7 +130,7 @@ namespace dftefe
     void
     MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
       gatherLocallyGhostEntriesSendBufferToGhostProcs(
-        const ValueType * dataArray,
+        const ValueType *dataArray,
         const MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &             ghostLocalIndicesForGhostProcs,
         const size_type blockSize,
@@ -178,7 +178,7 @@ namespace dftefe
         const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &             ghostLocalIndices,
         const size_type blockSize,
-        ValueType * dataArray)
+        ValueType *     dataArray)
     {
       insertFromRecvBufferDeviceKernel<<<
         ghostLocalIndices.size() / dftefe::utils::BLOCK_SIZE + 1,

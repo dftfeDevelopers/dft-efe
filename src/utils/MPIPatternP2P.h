@@ -434,8 +434,8 @@ namespace dftefe
         const SizeTypeVector &
         getGhostLocalIndicesForGhostProcs() const;
 
-          SizeTypeVector
-          getGhostLocalIndicesForGhostProc(const size_type procId) const;
+        SizeTypeVector
+        getGhostLocalIndicesForGhostProc(const size_type procId) const;
 
         const std::vector<size_type> &
         getGhostLocalIndicesRanges() const;
@@ -448,6 +448,9 @@ namespace dftefe
 
         size_type
         getNumOwnedIndicesForTargetProc(const size_type procId) const;
+
+        size_type
+        getTotalOwnedIndicesForTargetProcs() const;
 
         const SizeTypeVector &
         getOwnedLocalIndicesForTargetProcs() const;

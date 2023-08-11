@@ -54,7 +54,7 @@ namespace dftefe
     void
     MPICommunicatorP2PKernels<ValueType, memorySpace>::
       gatherLocallyGhostEntriesSendBufferToGhostProcs(
-        const ValueType * dataArray,
+        const ValueType *                      dataArray,
         const SizeTypeVector &                 ghostLocalIndicesForGhostProcs,
         const size_type                        blockSize,
         MemoryStorage<ValueType, memorySpace> &sendBuffer)
@@ -89,7 +89,7 @@ namespace dftefe
         const MemoryStorage<ValueType, memorySpace> &recvBuffer,
         const SizeTypeVector &                       ghostLocalIndices,
         const size_type                              blockSize,
-        ValueType *      dataArray)
+        ValueType *                                  dataArray)
     {
       for (size_type i = 0; i < ghostLocalIndices.size(); ++i)
         for (size_type j = 0; j < blockSize; ++j)

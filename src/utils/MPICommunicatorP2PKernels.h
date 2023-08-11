@@ -67,7 +67,7 @@ namespace dftefe
        */
       static void
       gatherLocallyGhostEntriesSendBufferToGhostProcs(
-        const ValueType * dataArray,
+        const ValueType *                      dataArray,
         const SizeTypeVector &                 ghostLocalIndicesForGhostProcs,
         const size_type                        blockSize,
         MemoryStorage<ValueType, memorySpace> &sendBuffer);
@@ -102,7 +102,7 @@ namespace dftefe
         const MemoryStorage<ValueType, memorySpace> &recvBuffer,
         const SizeTypeVector &                       ghostLocalIndices,
         const size_type                              blockSize,
-        ValueType *  dataArray);
+        ValueType *                                  dataArray);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -123,7 +123,7 @@ namespace dftefe
 
       static void
       gatherLocallyGhostEntriesSendBufferToGhostProcs(
-        const ValueType * dataArray,
+        const ValueType *dataArray,
         const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &             ghostLocalIndicesForGhostProcs,
         const size_type blockSize,
@@ -147,7 +147,7 @@ namespace dftefe
         const MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE>
           &             ghostLocalIndices,
         const size_type blockSize,
-        ValueType * dataArray);
+        ValueType *     dataArray);
     };
 #endif
   } // namespace utils
