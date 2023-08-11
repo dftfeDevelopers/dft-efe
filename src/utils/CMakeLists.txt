@@ -49,7 +49,7 @@ if(ENABLE_MPI)
 
 endif()
 
-target_include_directories(dft-efe-utils PRIVATE ${BOOST_DIR}/include)
+target_include_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/include)
 target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib64)
 target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib)
 

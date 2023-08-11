@@ -148,7 +148,7 @@ namespace dftefe
           (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()).data();
 
         const size_type numTotalOwnedIndicesForTargetProcs =
-          d_mpiPatterP2P->getTotalOwnedIndicesForTargetProcs();
+          d_mpiPatternP2P->getTotalOwnedIndicesForTargetProcs();
 
         DiscontiguousDataOperations<ValueType, memorySpace>::
           copyFromDiscontiguousMemory(dataArray.data(),
@@ -260,7 +260,7 @@ namespace dftefe
             const size_type *ghostLocalIndicesForGhostProcsPtr =
               (d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs()).data();
 
-            const size_type numGhostIndices = d_mpiPatternP2P.localGhostSize();
+            const size_type numGhostIndices = d_mpiPatternP2P->localGhostSize();
 
             DiscontiguousDataOperations<ValueType, memorySpace>::
               copyToDiscontiguousMemory(d_ghostDataBuffer.data(),
@@ -348,7 +348,7 @@ namespace dftefe
         const size_type *ghostLocalIndicesForGhostProcsPtr =
           (d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs()).data();
 
-        const size_type numGhostIndices = d_mpiPatternP2P.localGhostSize();
+        const size_type numGhostIndices = d_mpiPatternP2P->localGhostSize();
 
         DiscontiguousDataOperations<ValueType, memorySpace>::
           copyFromDiscontiguousMemory(dataGhostPtr,
@@ -453,12 +453,11 @@ namespace dftefe
           }
 
         // accumulate add into locally owned entries from recv buffer
-        const size_type
-          *ownedLocalIndicesForTargetProcsPtr =
-            (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()).data(),
+        const size_type *ownedLocalIndicesForTargetProcsPtr =
+          (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()).data();
 
-          const size_type numTotalOwnedIndicesForTargetProcs =
-            d_mpiPatterP2P->getTotalOwnedIndicesForTargetProcs();
+        const size_type numTotalOwnedIndicesForTargetProcs =
+          d_mpiPatternP2P->getTotalOwnedIndicesForTargetProcs();
 
         DiscontiguousDataOperations<ValueType, memorySpace>::
           addToDiscontiguousMemory(d_targetDataBuffer.data(),
