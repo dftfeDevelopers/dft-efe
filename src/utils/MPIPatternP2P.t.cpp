@@ -1853,6 +1853,7 @@ namespace dftefe
         return numOwnedIndicesForProc;
       }
 
+
       template <dftefe::utils::MemorySpace memorySpace>
       const typename MPIPatternP2P<memorySpace>::SizeTypeVector &
       MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProcs() const
@@ -1896,6 +1897,13 @@ namespace dftefe
           d_flattenedLocalTargetIndices.begin() + cumulativeIndices);
 
         return returnValue;
+      }
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      size_type
+      MPIPatternP2P<memorySpace>::getTotalOwnedIndicesForTargetProcs() const
+      {
+        return d_flattenedLocalTargetIndices.size();
       }
 
 

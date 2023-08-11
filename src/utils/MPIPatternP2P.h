@@ -449,6 +449,9 @@ namespace dftefe
         size_type
         getNumOwnedIndicesForTargetProc(const size_type procId) const;
 
+        size_type
+        getTotalOwnedIndicesForTargetProcs() const;
+
         const SizeTypeVector &
         getOwnedLocalIndicesForTargetProcs() const;
 
