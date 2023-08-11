@@ -103,11 +103,11 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      copyToDiscontiguosMemory(const ValueType *src,
-                               ValueType *      dst,
-                               const size_type *discontIds,
-                               const size_type  N,
-                               const size_type  nComponents);
+      copyToDiscontiguousMemory(const ValueType *src,
+                                ValueType *      dst,
+                                const size_type *discontIds,
+                                const size_type  N,
+                                const size_type  nComponents);
 
       /**
        * @brief Function to add a source array \p x to a destination array \p y,
@@ -138,11 +138,11 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      addToDiscontiguosMemory(const ValueType *src,
-                              ValueType *      dst,
-                              const size_type *discontIds,
-                              const size_type  N,
-                              const size_type  nComponents);
+      addToDiscontiguousMemory(const ValueType *src,
+                               ValueType *      dst,
+                               const size_type *discontIds,
+                               const size_type  N,
+                               const size_type  nComponents);
     }; // end of class DiscontiguousDataOperations
 
 

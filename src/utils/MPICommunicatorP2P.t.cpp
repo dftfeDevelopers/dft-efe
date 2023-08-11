@@ -24,7 +24,7 @@
  */
 
 #include <utils/MPICommunicatorP2P.h>
-#include <utils/MPICommunicatorP2PKernels.h>
+#include <utils/DiscontiguousDataOperations.h>
 #include <utils/Exceptions.h>
 #include <utils/MPIErrorCodeHandler.h>
 
@@ -144,12 +144,18 @@ namespace dftefe
           }
 
         // gather locally owned entries into a contiguous send buffer
-        MPICommunicatorP2PKernels<ValueType, memorySpace>::
-          gatherLocallyOwnedEntriesSendBufferToTargetProcs(
-            dataArray,
-            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-            d_blockSize,
-            d_targetDataBuffer);
+        const size_type *ownedLocalIndicesForTargetProcsPtr =
+          (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()).data();
+
+        const size_type numTotalOwnedIndicesForTargetProcs =
+          d_mpiPatternP2P->getTotalOwnedIndicesForTargetProcs();
+
+        DiscontiguousDataOperations<ValueType, memorySpace>::
+          copyFromDiscontiguousMemory(dataArray.data(),
+                                      d_targetDataBuffer.data(),
+                                      ownedLocalIndicesForTargetProcsPtr,
+                                      numTotalOwnedIndicesForTargetProcs,
+                                      d_blockSize);
 
         // initiate non-blocking sends to target processors
         ValueType *sendArrayStartPtr = d_targetDataBuffer.begin();
@@ -244,19 +250,24 @@ namespace dftefe
 #  endif // defined(DFTEFE_WITH_DEVICE) && //
          // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
 
-            // copy ghost data receieved to the ghost past of the data
-            // set the starting reference of the destination to the ghost part
+            // Copy ghost buffer receieved to the ghost part of the data.
+            // Set the starting reference of the destination to the ghost part
             // of the data. NOTE: It assumes that the ghost part of data follows
             // the owned part
-            ValueType *dataArrayGhost =
+            ValueType *dataGhostPtr =
               dataArray.data() +
               d_mpiPatternP2P->localOwnedSize() * d_blockSize;
-            MPICommunicatorP2PKernels<ValueType, memorySpace>::
-              insertLocalGhostValuesRecvBufferFromGhostProcs(
-                d_ghostDataBuffer,
-                d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs(),
-                d_blockSize,
-                dataArrayGhost);
+            const size_type *ghostLocalIndicesForGhostProcsPtr =
+              (d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs()).data();
+
+            const size_type numGhostIndices = d_mpiPatternP2P->localGhostSize();
+
+            DiscontiguousDataOperations<ValueType, memorySpace>::
+              copyToDiscontiguousMemory(d_ghostDataBuffer.data(),
+                                        dataGhostPtr,
+                                        ghostLocalIndicesForGhostProcsPtr,
+                                        numGhostIndices,
+                                        d_blockSize);
           }
 #endif // DFTEFE_WITH_MPI
       }
@@ -327,19 +338,24 @@ namespace dftefe
           }
 
 
-        // gather ghost data into send buffer
-        // set the starting reference of the source data to the ghost part of
+        // Gather ghost data into send buffer,
+        // Set the starting reference of the source data to the ghost part of
         // the data. NOTE: It assumes that the ghost part of data follows the
-        // owned part
-        const ValueType *dataArrayGhost =
+        // owned part.
+        const ValueType *dataGhostPtr =
           dataArray.data() + d_mpiPatternP2P->localOwnedSize() * d_blockSize;
 
-        MPICommunicatorP2PKernels<ValueType, memorySpace>::
-          gatherLocallyGhostEntriesSendBufferToGhostProcs(
-            dataArrayGhost,
-            d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs(),
-            d_blockSize,
-            d_ghostDataBuffer);
+        const size_type *ghostLocalIndicesForGhostProcsPtr =
+          (d_mpiPatternP2P->getGhostLocalIndicesForGhostProcs()).data();
+
+        const size_type numGhostIndices = d_mpiPatternP2P->localGhostSize();
+
+        DiscontiguousDataOperations<ValueType, memorySpace>::
+          copyFromDiscontiguousMemory(dataGhostPtr,
+                                      d_ghostDataBuffer.data(),
+                                      ghostLocalIndicesForGhostProcsPtr,
+                                      numGhostIndices,
+                                      d_blockSize);
 
         // initiate non-blocking sends to ghost processors
         ValueType *sendArrayStartPtr = d_ghostDataBuffer.data();
@@ -437,12 +453,18 @@ namespace dftefe
           }
 
         // accumulate add into locally owned entries from recv buffer
-        MPICommunicatorP2PKernels<ValueType, memorySpace>::
-          accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
-            d_targetDataBuffer,
-            d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-            d_blockSize,
-            dataArray);
+        const size_type *ownedLocalIndicesForTargetProcsPtr =
+          (d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()).data();
+
+        const size_type numTotalOwnedIndicesForTargetProcs =
+          d_mpiPatternP2P->getTotalOwnedIndicesForTargetProcs();
+
+        DiscontiguousDataOperations<ValueType, memorySpace>::
+          addToDiscontiguousMemory(d_targetDataBuffer.data(),
+                                   dataArray.data(),
+                                   ownedLocalIndicesForTargetProcsPtr,
+                                   numTotalOwnedIndicesForTargetProcs,
+                                   d_blockSize);
 #endif // DFTEFE_WITH_MPI
       }
 
