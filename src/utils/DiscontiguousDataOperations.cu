@@ -106,9 +106,9 @@ namespace dftefe
                                   const size_type  N,
                                   const size_type  blockSize)
     {
-      copyFromDiscontiguousMemoryDeviceKernel<<<N / dftefe::utils::BLOCK_SIZE +
-                                                  1,
-                                                dftefe::utils::BLOCK_SIZE>>>(
+      copyFromDiscontiguousMemoryDeviceKernel<<<
+        (N * blockSize) / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
         N,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(src),
@@ -125,8 +125,9 @@ namespace dftefe
                                 const size_type  N,
                                 const size_type  blockSize)
     {
-      copyToDiscontiguousMemoryDeviceKernel<<<N / dftefe::utils::BLOCK_SIZE + 1,
-                                              dftefe::utils::BLOCK_SIZE>>>(
+      copyToDiscontiguousMemoryDeviceKernel<<<
+        (N * blockSize) / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
         N,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(src),
@@ -143,8 +144,9 @@ namespace dftefe
                                const size_type  N,
                                const size_type  blockSize)
     {
-      addToDiscontiguousMemoryDeviceKernel<<<N / dftefe::utils::BLOCK_SIZE + 1,
-                                             dftefe::utils::BLOCK_SIZE>>>(
+      addToDiscontiguousMemoryDeviceKernel<<<
+        (N * blockSize) / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
         N,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(src),
