@@ -186,11 +186,19 @@ int main()
   std::shared_ptr<const dftefe::basis::EFEBasisManagerDealii<dim>> efeBM =
   std::dynamic_pointer_cast<const dftefe::basis::EFEBasisManagerDealii<dim>>(basisManager);
 
+  std::cout << "Enrichment ghost global ids in rank " << rank << " are ";
   for (auto i:efeBM->getGhostEnrichmentGlobalIds() )
   {
-    std::cout << "\nenrichment ghost global id in rank " << rank << " is " << i << "\n";
-    std::cout << "\nenrichment local id in rank " << rank << " is " << basisHandler->globalToLocalIndex(i, constraintHanging) << "\n";
+    std::cout << i << ", ";
   }
+  std::cout << "\n";
+  dftefe::utils::mpi::MPIBarrier(comm);
+  std::cout << "Enrichment local ids in rank " << rank << " are ";
+  for (auto i:efeBM->getGhostEnrichmentGlobalIds() )
+  {
+    std::cout << basisHandler->globalToLocalIndex(i, constraintHanging) << ", ";
+  }
+  std::cout << "\n";
   dftefe::utils::mpi::MPIBarrier(comm);
 
   vec->setValue(0.0);

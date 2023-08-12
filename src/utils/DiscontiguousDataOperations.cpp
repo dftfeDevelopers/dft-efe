@@ -47,7 +47,7 @@ namespace dftefe
         {
           size_type        index  = *(discontIds + i);
           const ValueType *srcTmp = src + index * nComponents;
-          ValueType *      dstTmp = i * nComponents;
+          ValueType *      dstTmp = dst + i * nComponents;
           memoryTransfer.copy(nComponents, dstTmp, srcTmp);
         }
     }
@@ -65,7 +65,7 @@ namespace dftefe
       for (size_type i = 0; i < N; ++i)
         {
           size_type        index  = *(discontIds + i);
-          const ValueType *srcTmp = i * nComponents;
+          const ValueType *srcTmp = src + i * nComponents;
           ValueType *      dstTmp = dst + index * nComponents;
           memoryTransfer.copy(nComponents, dstTmp, srcTmp);
         }
@@ -83,7 +83,7 @@ namespace dftefe
       for (size_type i = 0; i < N; ++i)
         {
           size_type        index  = *(discontIds + i);
-          const ValueType *srcTmp = i * nComponents;
+          const ValueType *srcTmp = src + i * nComponents;
           ValueType *      dstTmp = dst + index * nComponents;
           for (size_type j = 0; j < nComponents; ++j)
             *(dstTmp + j) += *(srcTmp + j);

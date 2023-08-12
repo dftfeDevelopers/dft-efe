@@ -585,25 +585,6 @@ namespace dftefe
                       }
                   }
               }
-
-            // int rank;
-            // dftefe::utils::mpi::MPICommRank(mpiComm, &rank);
-            // for(unsigned int iProc = 0 ; iProc < nprocs; iProc++)
-            // {
-            //   if(iProc == rank)
-            //   {
-            //     for( auto it = ghostProcIdToLocalGhostIndices.begin() ; it !=
-            //     ghostProcIdToLocalGhostIndices.end() ; it++)
-            //       for (auto i :  it->second)
-            //         {
-            //           std::cout <<"rank: " << rank << " ghost proc id: " <<
-            //           it->first << " ghostProcIdToLocalGhostIndices.second: "
-            //           << i << "\n";
-            //         }
-            //   }
-            //   std::cout << std::flush ;
-            //   dftefe::utils::mpi::MPIBarrier(mpiComm);
-            // }
           }
 
 
@@ -1017,19 +998,7 @@ namespace dftefe
               d_globalRanges[i].second - d_globalRanges[i].first;
           }
 
-        // for(unsigned int iProc = 0 ; iProc < d_nprocs; iProc++)
-        // {
-        //   if(iProc == d_myRank)
-        //   {
-        //     for (auto i :  d_ghostIndices)
-        //       {
-        //         std::cout <<"rank: " << d_myRank << " ghost Global Indices: "
-        //         << i << "\n";
-        //       }
-        //   }
-        //   std::cout << std::flush ;
-        //   dftefe::utils::mpi::MPIBarrier(mpiComm);
-        // }
+
 
         ///////////////////////////////////////////////////
         //////////// Ghost Data Evaluation Begin //////////
@@ -1080,26 +1049,7 @@ namespace dftefe
             ++iGhostProc;
           }
 
-        int count = 0;
-        for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
-          {
-            if (iProc == d_myRank)
-              {
-                count = 0;
-                for (auto i : d_localGhostIndicesRanges)
-                  {
-                    if (count % 2 == 0)
-                      std::cout << "rank: " << d_myRank
-                                << " d_localGhostIndicesRanges[first]: " << i;
-                    else
-                      std::cout << " d_localGhostIndicesRanges[second]: " << i
-                                << "\n";
-                    count++;
-                  }
-              }
-            std::cout << std::flush;
-            dftefe::utils::mpi::MPIBarrier(mpiComm);
-          }
+
 
         std::string msg = "In rank " + std::to_string(d_myRank) +
                           " mismatch of"
@@ -1119,19 +1069,20 @@ namespace dftefe
                               &flattenedLocalGhostIndicesTmp[0]);
 
 
-        for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
-          {
-            if (iProc == d_myRank)
-              {
-                for (auto i : d_flattenedLocalGhostIndices)
-                  {
-                    std::cout << "rank: " << d_myRank
-                              << " d_flattenedLocalGhostIndices: " << i << "\n";
-                  }
-              }
-            std::cout << std::flush;
-            dftefe::utils::mpi::MPIBarrier(mpiComm);
-          }
+        // for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
+        //   {
+        //     if (iProc == d_myRank)
+        //       {
+        //         for (auto i : d_flattenedLocalGhostIndices)
+        //           {
+        //             std::cout << "rank: " << d_myRank
+        //                       << " d_flattenedLocalGhostIndices: " << i <<
+        //                       "\n";
+        //           }
+        //       }
+        //     std::cout << std::flush;
+        //     dftefe::utils::mpi::MPIBarrier(mpiComm);
+        //   }
 
         d_ghostProcLocallyOwnedRangesCumulative.resize(
           d_numGhostProcs, std::vector<size_type>(d_nGlobalRanges));
@@ -1273,22 +1224,6 @@ namespace dftefe
                                                          [ghostIndexRangeId];
 
 
-                // for(unsigned int iProc = 0 ; iProc < d_nprocs; iProc++)
-                // {
-                //   if(iProc == d_myRank)
-                //   {
-                //         std::cout <<"rank: " << d_myRank << "
-                //         ghostGlobalIndex: " << ghostGlobalIndex << "
-                //         ghostIndexRangeId: " <<
-                //           ghostIndexRangeId << " ghostLocalIndex: "<<
-                //           ghostLocalIndex << "
-                //           localIndicesForGhostProc[startIndex + iIndex]: "
-                //           << localIndicesForGhostProc[startIndex + iIndex] <<
-                //           " ghostProcRangeStart: " << ghostProcRangeStart <<
-                //           "\n";
-                //   }
-                //   std::cout << std::flush ;
-                // }
 
                 // throwException<LogicError>(
                 //        localIndicesForGhostProc[startIndex + iIndex] <
@@ -1374,20 +1309,20 @@ namespace dftefe
                               d_flattenedLocalTargetIndices.begin(),
                               &flattenedLocalTargetIndicesTmp[0]);
 
-        for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
-          {
-            if (iProc == d_myRank)
-              {
-                for (auto i : d_flattenedLocalTargetIndices)
-                  {
-                    std::cout << "rank: " << d_myRank
-                              << " d_flattenedLocalTargetIndices: " << i
-                              << "\n";
-                  }
-              }
-            std::cout << std::flush;
-            dftefe::utils::mpi::MPIBarrier(mpiComm);
-          }
+        // for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
+        //   {
+        //     if (iProc == d_myRank)
+        //       {
+        //         for (auto i : d_flattenedLocalTargetIndices)
+        //           {
+        //             std::cout << "rank: " << d_myRank
+        //                       << " d_flattenedLocalTargetIndices: " << i
+        //                       << "\n";
+        //           }
+        //       }
+        //     std::cout << std::flush;
+        //     dftefe::utils::mpi::MPIBarrier(mpiComm);
+        //   }
 
         ///////////////////////////////////////////////////
         //////////// Target Data Evaluation End ////////
