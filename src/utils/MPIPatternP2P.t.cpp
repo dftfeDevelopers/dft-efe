@@ -1861,15 +1861,6 @@ namespace dftefe
         return d_flattenedLocalTargetIndices;
       }
 
-
-      template <dftefe::utils::MemorySpace memorySpace>
-      const typename MPIPatternP2P<memorySpace>::SizeTypeVector &
-      MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProcs() const
-      {
-        return d_flattenedLocalTargetIndices;
-      }
-
-
       template <dftefe::utils::MemorySpace memorySpace>
       typename MPIPatternP2P<memorySpace>::SizeTypeVector
       MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProc(

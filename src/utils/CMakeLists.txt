@@ -15,6 +15,8 @@ set(DFT-EFE-UTILS-SOURCES
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
 	DeviceComplexUtils.cu
+	DiscontiguousDataOperations.cpp
+	DiscontiguousDataOperations.cu
         MemoryManager.cpp
 	Exceptions.cpp
 	NumberUtils.cpp
