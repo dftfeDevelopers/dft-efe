@@ -418,7 +418,8 @@
     std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
     
     // evaluate basis data
-    feBasisData->evaluateBasisData(quadAttr,  quadRule, functionsVec, tolerances, integralThresholds, smallestCellVolume, maxRecursion, basisAttrMap);
+    feBasisData->evaluateBasisData(quadAttr,  quadRule, functionsVec,
+         tolerances, integralThresholds, smallestCellVolume, maxRecursion, basisAttrMap);
 
     // Set up BasisHandler
     std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisHandler =

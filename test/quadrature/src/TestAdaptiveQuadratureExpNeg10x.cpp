@@ -65,7 +65,9 @@ main()
   const double        smallestCellVolume = 1e-14;
   const unsigned int  maxRecursion       = 100;
 
+  dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
   dftefe::quadrature::QuadratureRuleContainer adaptiveQuadratureContainer(
+      quadAttr,
       quadratureRuleGauss,
       triangulationBase,
       *mapping,
