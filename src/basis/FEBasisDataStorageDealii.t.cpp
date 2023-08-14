@@ -484,10 +484,10 @@ namespace dftefe
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
-        if ((quadratureFamily !=
+        if (!((quadratureFamily ==
              quadrature::QuadratureFamily::GAUSS_VARIABLE) ||
-            (quadratureFamily != quadrature::QuadratureFamily::GLL_VARIABLE) ||
-            (quadratureFamily != quadrature::QuadratureFamily::ADAPTIVE))
+            (quadratureFamily == quadrature::QuadratureFamily::GLL_VARIABLE) ||
+            (quadratureFamily == quadrature::QuadratureFamily::ADAPTIVE)))
           {
             utils::throwException(
               false,
@@ -759,10 +759,10 @@ namespace dftefe
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
-        if ((quadratureFamily !=
+        if (!((quadratureFamily ==
              quadrature::QuadratureFamily::GAUSS_VARIABLE) ||
-            (quadratureFamily != quadrature::QuadratureFamily::GLL_VARIABLE) ||
-            (quadratureFamily != quadrature::QuadratureFamily::ADAPTIVE))
+            (quadratureFamily == quadrature::QuadratureFamily::GLL_VARIABLE) ||
+            (quadratureFamily == quadrature::QuadratureFamily::ADAPTIVE)))
           {
             utils::throwException(
               false,
