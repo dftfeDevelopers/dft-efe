@@ -25,6 +25,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physic
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestPoissonProblemClassicalAdaptiveQuad TestPoissonProblemClassicalAdaptiveQuad.cpp )
-target_link_libraries(TestPoissonProblemClassicalAdaptiveQuad PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+add_executable(TestPoissonProblemEnrichmentAdaptiveQuad TestPoissonProblemEnrichmentAdaptiveQuad.cpp )
+target_link_libraries(TestPoissonProblemEnrichmentAdaptiveQuad PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

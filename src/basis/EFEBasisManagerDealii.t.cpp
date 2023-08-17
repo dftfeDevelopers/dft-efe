@@ -763,5 +763,12 @@ namespace dftefe
       return (d_enrichmentIdsPartition->nTotalEnrichmentIds());
     }
 
+    template <size_type dim>
+    std::shared_ptr<const EnrichmentIdsPartition<dim>>
+    EFEBasisManagerDealii<dim>::getEnrichmentIdsPartition() const
+    {
+      return d_enrichmentIdsPartition;
+    }
+
   } // namespace basis
 } // namespace dftefe

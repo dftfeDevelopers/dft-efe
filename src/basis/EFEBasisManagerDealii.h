@@ -191,6 +191,9 @@ namespace dftefe
       global_size_type
       nGlobalEnrichmentNodes() const override;
 
+      std::shared_ptr<const EnrichmentIdsPartition<dim>>
+      getEnrichmentIdsPartition() const;
+
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;

@@ -44,7 +44,7 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_derivativeType(derivativeType)
     {
-      utils::throwException(derivativeType == 0 || derivativeType == 1 ,
+      utils::throwException(derivativeType == 0 || derivativeType == 1,
                             "The derivative type can only be 0 or 1");
     }
 

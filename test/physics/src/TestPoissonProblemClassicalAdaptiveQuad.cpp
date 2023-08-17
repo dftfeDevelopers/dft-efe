@@ -9,7 +9,9 @@
     #include <basis/FEConstraintsDealii.h>
     #include <basis/FEBasisHandlerDealii.h>
     #include <quadrature/QuadratureAttributes.h>
+    #include <atoms/AtomSevereFunction.h>
     #include <quadrature/QuadratureRuleGauss.h>
+    #include <quadrature/QuadratureRuleAdaptive.h>
     #include <quadrature/QuadratureRuleContainer.h>
     #include <quadrature/QuadratureValuesContainer.h>
     #include <basis/FECellWiseDataOperations.h>
@@ -146,6 +148,8 @@
     triangulationBase->finalizeTriangulationConstruction();
 
     // Enrichment data file consisting of g(r,\theta,\phi) = f(r)*Y_lm(\theta, \phi)
+    std::vector<std::vector<dftefe::utils::Point>> cellVerticesVector;
+    std::vector<dftefe::utils::Point> cellVertices;
     std::string sourceDir = "/home/avirup/dft-efe/test/physics/src/";
     std::string atomDataFile = "AtomData.in";
     std::string inputFileName = sourceDir + atomDataFile;
@@ -157,9 +161,9 @@
     std::vector<dftefe::utils::Point> atomCoordinatesVec;
     std::vector<double> coordinates;
     coordinates.resize(dim,0.);
-    std::vector<std::string> atomSymbol;
+    std::vector<std::string> atomSymbolVec;
     std::string symbol;
-    atomSymbol.resize(0);
+    atomSymbolVec.resize(0);
     std::string line;
     while (std::getline(fstream, line)){
         std::stringstream ss(line);
@@ -168,12 +172,12 @@
             ss >> coordinates[i]; 
         }
         atomCoordinatesVec.push_back(coordinates);
-        atomSymbol.push_back(symbol);
+        atomSymbolVec.push_back(symbol);
     }
     dftefe::utils::mpi::MPIBarrier(comm);
         
     std::map<std::string, std::string> atomSymbolToFilename;
-    for (auto i:atomSymbol )
+    for (auto i:atomSymbolVec )
     {
         atomSymbolToFilename[i] = sourceDir + i + ".xml";
     }
@@ -336,8 +340,8 @@
     // the FEBasisManagerDealii triangulation information-----------------------------------------//
 
     //get the cellvertices vector
-    auto feBMCellIter = feBM->beginLocallyOwnedCells();
-    for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
+    auto feBMCellIter = basisManager->beginLocallyOwnedCells();
+    for( ; feBMCellIter != basisManager->endLocallyOwnedCells(); feBMCellIter++)
     {
         (*feBMCellIter)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
@@ -382,7 +386,7 @@
     std::shared_ptr<dftefe::basis::EnrichmentIdsPartition<dim>> enrichmentIdsPartition =
         std::make_shared<dftefe::basis::EnrichmentIdsPartition<dim>>(atomSphericalDataContainer,
                                                         atomIdsPartition,
-                                                        atomSymbol,
+                                                        atomSymbolVec,
                                                         atomCoordinatesVec,
                                                         fieldName,                   
                                                         minbound,  
@@ -391,9 +395,9 @@
                                                         comm);  
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
-    std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec;
+    std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
     unsigned int numfun = 2;
-    functionsVec.resize(numfun); // Do the first and second derivative of the enrichemnt function
+    functionsVec.resize(numfun); // First and second derivative of the enrichemnt function
     std::vector<double> tolerances(numfun);
     std::vector<double> integralThresholds(numfun);
     for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
@@ -404,12 +408,12 @@
             atomSymbolVec,
             atomCoordinatesVec,
             fieldName,
-            i+1);
-        tolerances[i] = 1e7;
-        integralThresholds[i] = 1e-16;
+            i);
+        tolerances[i] = 1e-10;
+        integralThresholds[i] = 1e-14;
     }
 
-    double smallestCellVolume = 1e-4;
+    double smallestCellVolume = 1e-14;
     unsigned int maxRecursion = 1e3;
 
     // Set up base quadrature rule for adaptive quadrature 
@@ -554,17 +558,20 @@
     // create the quadrature Value Container
 
     dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-    dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr, quadRule, triangulationBase,
-                                                                    linearCellMappingDealii);
+    dftefe::quadrature::QuadratureRuleContainer quadRuleContainer =  
+                feBasisData->getQuadratureRuleContainer(quadAttr);
 
     dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
+    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
+    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
+
 
     for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
     {
     dftefe::size_type quadId = 0;
     for (auto j : quadRuleContainer.getCellRealPoints(i))
     {
-        double a = rho( j[0], j[1], j[2], Rx, Ry, Rz, rc);
+        double a = rho( j, atomCoordinatesVec, rc);
         double *b = &a;
         quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
         quadId = quadId + 1;
@@ -610,16 +617,48 @@
 
     linearSolverFunction->getSolution(*solution);
 
-    std::vector<double> ones(0);
-    ones.resize(numComponents, (double)1.0);
-    std::vector<double> nOnes(0);
-    nOnes.resize(numComponents, (double)-1.0);
+    for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
+    {
+        dftefe::size_type quadId = 0;
+        for (auto j : quadRuleContainer.getCellRealPoints(i))
+        {
+        double a = potential( j, atomCoordinatesVec, rc);
+        double *b = &a;
+        quadValuesContainerAnalytical.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
+        quadId = quadId + 1;
+        }
+    }
 
-    std::cout<<"solution norm: "<<solution->l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0]<<"\n";
+    feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
 
-    dftefe::linearAlgebra::add(ones, *vh, nOnes, *solution, *error);
+    auto iter1 = quadValuesContainerAnalytical.begin();
+    auto iter2 = quadValuesContainerNumerical.begin();
+    dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints();
+    const std::vector<double> JxW = quadRuleContainer.getJxW();
+    std::vector<double> integral(3, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+    int count = 0;
+    for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
+    {
+        integral[0] += std::pow((*(i+iter1) - *(i+iter2)),2) * JxW[i];
+        integral[1] += std::pow((*(i+iter1)),2) * JxW[i];
+        integral[2] += std::pow((*(i+iter2)),2) * JxW[i];
+        if(std::abs(*(i+iter1) - *(i+iter2)) > 1e-2)
+        {
+            count = count + 1;
+        }
+    }
 
-    std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/vh->l2Norms()[0])<<"\n";
+    std::cout << numQuadraturePoints << " " << count << "\n";
+
+    dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+            integral.data(),
+            mpiReducedIntegral.data(),
+            integral.size(),
+            dftefe::utils::mpi::MPIDouble,
+            dftefe::utils::mpi::MPISum,
+            comm);
+
+    std::cout << "The error rms: " << std::sqrt(mpiReducedIntegral[0]) << ", Analytical:" << std::sqrt(mpiReducedIntegral[1])<< ", Numerical:" << std::sqrt(mpiReducedIntegral[2]) << "\n";
 
     //gracefully end MPI
 
