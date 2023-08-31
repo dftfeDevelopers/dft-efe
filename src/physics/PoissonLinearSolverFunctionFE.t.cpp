@@ -336,11 +336,6 @@ namespace dftefe
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
-      //   {
-      //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
-      //   }
-
       // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[0] << " d_b-norm: " <<
       // d_b.l2Norms()[0] << " b-norm: " << b.l2Norms()[0] << "\n";
     }

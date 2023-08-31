@@ -180,10 +180,10 @@ int main()
     while(mpiReducedFlag)
     {
     flag = 0;
-    radiusRefineFlag = false;
     auto triaCellIter = triangulationBase->beginLocal();
     for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
     {
+        radiusRefineFlag = false;
         (*triaCellIter)->clearRefineFlag();
         dftefe::utils::Point centerPoint(dim, 0.0); 
         (*triaCellIter)->center(centerPoint);
