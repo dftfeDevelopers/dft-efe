@@ -483,7 +483,7 @@ int main()
                                                     constraintHanging,
                                                     constraintHomwHan,
                                                     *vhNHDB,
-                                                    dftefe::linearAlgebra::PreconditionerType::NONE,
+                                                    dftefe::linearAlgebra::PreconditionerType::JACOBI,
                                                     linAlgOpContext,
                                                     50);
 

@@ -336,8 +336,10 @@ namespace dftefe
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[0] << " d_b-norm: " <<
-      // d_b.l2Norms()[0] << " b-norm: " << b.l2Norms()[0] << "\n";
+      // for(int i = 0 ; i < inp.getNumberComponents() ; i++)
+      // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i] << " d_b-norm: " <<
+      // d_b.l2Norms()[i] << " b-norm: " << b.l2Norms()[i] << "\t";
+      // std::cout << "\n";
     }
 
     template <typename ValueTypeOperator,

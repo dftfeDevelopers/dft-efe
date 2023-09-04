@@ -423,8 +423,7 @@ int main()
             }
         } // Face loop
     }     // cell locally owned
-  vhNHDB->updateGhostValues();
-  basisHandler->getConstraints(constraintHanging).distributeParentToChild(*vhNHDB, numComponents);
+
 
   // create the quadrature Value Container
 

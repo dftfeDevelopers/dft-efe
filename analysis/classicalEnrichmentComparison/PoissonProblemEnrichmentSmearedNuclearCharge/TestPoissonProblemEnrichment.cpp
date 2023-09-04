@@ -472,7 +472,7 @@ T readParameter(std::string ParamFile, std::string param)
                                                         constraintHomwHan,
                                                         *vhNHDB,
                                                         dftefe::linearAlgebra::PreconditionerType::JACOBI,
-							linAlgOpContext,
+							                            linAlgOpContext,
                                                         50);
 
         dftefe::linearAlgebra::LinearAlgebraProfiler profiler;
