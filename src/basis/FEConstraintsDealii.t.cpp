@@ -139,8 +139,8 @@ namespace dftefe
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
       std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(), false);
-      auto              cell = d_feBasisManager->beginLocallyOwnedCells(),
-           endc              = d_feBasisManager->endLocallyOwnedCells();
+      auto              cell = d_feBasisManager->beginLocalCells(),
+           endc              = d_feBasisManager->endLocalCells();
       for (; cell != endc; ++cell)
         {
           (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);

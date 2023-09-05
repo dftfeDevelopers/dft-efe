@@ -118,9 +118,9 @@ int main()
   std::shared_ptr<const dftefe::basis::TriangulationDealiiParallel<dim>> triDealiiPara =
   std::dynamic_pointer_cast<const dftefe::basis::TriangulationDealiiParallel<dim>>(triangulationBase);
 
-  std::ofstream out("grid.vtk");
-  dealii::GridOut       grid_out;
-  grid_out.write_vtk(triDealiiPara->returnDealiiTria(), out);
+  // std::ofstream out("grid.vtk");
+  // dealii::GridOut       grid_out;
+  // grid_out.write_vtk(triDealiiPara->returnDealiiTria(), out);
 
 
   // initialize the basis Manager
