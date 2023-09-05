@@ -141,8 +141,8 @@ namespace dftefe
 
       std::vector<bool> dofs_touched(
         d_efeBasisManager->getDoFHandler()->n_dofs(), false);
-      auto cell = d_efeBasisManager->beginLocallyOwnedCells(),
-           endc = d_efeBasisManager->endLocallyOwnedCells();
+      auto cell = d_efeBasisManager->beginLocalCells(),
+           endc = d_efeBasisManager->endLocalCells();
       for (; cell != endc; ++cell)
         {
           (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
