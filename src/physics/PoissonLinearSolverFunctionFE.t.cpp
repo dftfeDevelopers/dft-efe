@@ -401,21 +401,20 @@ namespace dftefe
                                                          ValueTypeOperand>,
                   memorySpace> &solution)
     {
-      std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                         ValueTypeOperand>>
-        ones(0);
-      ones.resize(
-        solution.getNumberComponents(),
-        (linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                ValueTypeOperand>)1.0);
+      size_type numComponents = solution.getNumberComponents();
 
-      dftefe::linearAlgebra::add(
-        ones, d_x, ones, d_inhomogeneousDirichletBCVector, solution);
+      for (size_type i = 0 ; i < solution.locallyOwnedSize() ; i++)
+      {
+        for(size_type j = 0 ; j < numComponents ; j++)
+        {
+          solution.data()[i*numComponents + j] = d_x.data()[i*numComponents + j] + d_inhomogeneousDirichletBCVector.data()[i*numComponents + j];
+        }
+      }
 
       solution.updateGhostValues();
 
       d_feBasisHandler->getConstraints(d_constraintsHanging)
-        .distributeParentToChild(solution, solution.getNumberComponents());
+        .distributeParentToChild(solution, numComponents);
     }
 
     template <typename ValueTypeOperator,
