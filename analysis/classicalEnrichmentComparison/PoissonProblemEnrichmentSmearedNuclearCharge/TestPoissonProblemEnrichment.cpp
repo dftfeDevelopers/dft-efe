@@ -113,7 +113,7 @@ T readParameter(std::string ParamFile, std::string param)
         return ret;
     }
 
-    int main()
+    int main(int argc, char** argv)
     {
 
         std::cout<<" Entering test poisson problem enrichement\n";
@@ -146,7 +146,7 @@ T readParameter(std::string ParamFile, std::string param)
         // Read the parameter files and atom coordinate files
         std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
         std::string atomDataFile = "SingleSmearedCharge.in";
-        std::string paramDataFile = "PoissonProblemEnrichmentSmearedNuclearCharge/param.in";
+        std::string paramDataFile = argv[1];
         std::string inputFileName = sourceDir + atomDataFile;
         std::string parameterInputFileName = sourceDir + paramDataFile;
 
@@ -512,7 +512,7 @@ T readParameter(std::string ParamFile, std::string param)
         auto iterRho = quadValuesContainer.begin();
         dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints(), mpinumQuadraturePoints=0;
         const std::vector<double> JxW = quadRuleContainer.getJxW();
-        std::vector<double> integral(5, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+        std::vector<double> integral(6, 0.0), mpiReducedIntegral(integral.size(), 0.0);
         const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
         int count = 0;
 
@@ -526,7 +526,8 @@ T readParameter(std::string ParamFile, std::string param)
                 count = count + 1;
             }
             integral[3] += *(i+iterRho) * *(i+iterPotNumeric) * JxW[i] * 0.5/(4*M_PI);
-	    integral[4] += *(i+iterRho) * JxW[i]/(4*M_PI);
+	        integral[4] += *(i+iterRho) * JxW[i]/(4*M_PI);
+            integral[5] += *(i+iterRho) * *(i+iterPotAnalytic) * JxW[i] * 0.5/(4*M_PI);
         }
 
         dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
@@ -571,7 +572,8 @@ T readParameter(std::string ParamFile, std::string param)
           myfile << "The L2 potential norm: " << std::sqrt(mpiReducedIntegral[0]) << ", Analytical:" << std::sqrt(mpiReducedIntegral[1])
            << ", Numerical:" << std::sqrt(mpiReducedIntegral[2])
            << ", Relative Error: " << std::sqrt(mpiReducedIntegral[0])/std::sqrt(mpiReducedIntegral[1]) << "\n";
-          myfile << "The self energy: "<< analyticalSelfPotantial << " Error in self energy: "
+          myfile << "Integral of self energy with analytic b and rho: "<< mpiReducedIntegral[5] << " Quadrature Error: " << mpiReducedIntegral[5] + analyticalSelfPotantial  <<  "\n";
+          myfile << "The analytic self energy: "<< analyticalSelfPotantial << " Error in self energy: "
             << (mpiReducedIntegral[3] + analyticalSelfPotantial) << ", Relative Error: "
             << (mpiReducedIntegral[3] + analyticalSelfPotantial)/analyticalSelfPotantial << "\n";
         myfile.close();

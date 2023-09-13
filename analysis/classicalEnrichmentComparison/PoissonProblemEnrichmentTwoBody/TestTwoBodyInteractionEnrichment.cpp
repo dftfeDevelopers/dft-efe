@@ -118,8 +118,9 @@ double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> 
   return ret;
 }
 
-int main()
+int main(int argc, char** argv)
 {
+  // argv[1] = "PoissonProblemEnrichmentTwoBody/param.in"
 
   std::cout<<" Entering test two body interaction \n";
 
@@ -153,7 +154,7 @@ int main()
   // Read the parameter files and atom coordinate files
   std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
   std::string atomDataFile = "TwoSmearedCharge.in";
-  std::string paramDataFile = "PoissonProblemEnrichmentTwoBody/param.in";
+  std::string paramDataFile = argv[1];
   std::string inputFileName = sourceDir + atomDataFile;
   std::string parameterInputFileName = sourceDir + paramDataFile;
 
@@ -451,7 +452,9 @@ int main()
                     feBasisData->getQuadratureRuleContainer(quadAttr);
 
         dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
-        dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer1(quadRuleContainer, numComponents);
+        dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
+        dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
+
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
@@ -507,13 +510,29 @@ int main()
 
   // perform integral rho vh 
 
-  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainer1);
+  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
+
+  for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
+  {
+      dftefe::size_type quadId = 0;
+      for (auto j : quadRuleContainer.getCellRealPoints(i))
+      {
+          std::vector<double> a(numComponents, 0);
+          a[0] = potential( j, atomCoordinates1, rc);
+          a[1] = potential( j, atomCoordinates2, rc);
+          a[2] = potential( j, atomCoordinatesVec, rc);
+          double *b = a.data();
+          quadValuesContainerAnalytical.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
+          quadId = quadId + 1;
+      }
+  }
 
   auto iter1 = quadValuesContainer.begin();
-  auto iter2 = quadValuesContainer1.begin();
+  auto iter2 = quadValuesContainerNumerical.begin();
+  auto iter3 = quadValuesContainerAnalytical.begin();
   dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints(), mpinumQuadraturePoints=0;
   const std::vector<double> JxW = quadRuleContainer.getJxW();
-  std::vector<double> integral(7, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+  std::vector<double> integral(9, 0.0), mpiReducedIntegral(integral.size(), 0.0);
   for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
   {
     for (unsigned int j = 0 ; j < numComponents ; j++ )
@@ -524,6 +543,8 @@ int main()
     integral[4] += *(i*numComponents+1+iter1) * *(i*numComponents+0+iter2) * JxW[i] * 0.5/(4*M_PI);
     integral[5] += *(i*numComponents+0+iter1) * JxW[i]/(4*M_PI);
     integral[6] += *(i*numComponents+1+iter1) * JxW[i]/(4*M_PI);
+    integral[7] += *(i*numComponents+0+iter1) * *(i*numComponents+0+iter3) * JxW[i] * 0.5/(4*M_PI);
+    integral[8] += *(i*numComponents+1+iter1) * *(i*numComponents+1+iter3) * JxW[i] * 0.5/(4*M_PI);
   }
 
         dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
@@ -569,6 +590,7 @@ int main()
           myfile << "The electrostatic energy (analy/num) : "<< (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) << "," << (mpiReducedIntegral[2] - (mpiReducedIntegral[0] + mpiReducedIntegral[1]))  << "\n";
           myfile << "The error in electrostatic energy from analytical self potential: " << (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/dist << " Relative error: "<<((mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/dist)*dist<<"\n";
           myfile << "The error in electrostatic energy from numerical self potntial : " << (mpiReducedIntegral[2] - (mpiReducedIntegral[0] + mpiReducedIntegral[1])) - 1.0/dist << " Relative error: "<<((mpiReducedIntegral[2] - (mpiReducedIntegral[0] + mpiReducedIntegral[1])) - 1.0/dist)*dist<<"\n";
+          myfile << "The error in electrostatic energy from analytical self potential using adaptive quad: " << (mpiReducedIntegral[2] - (mpiReducedIntegral[7] + mpiReducedIntegral[8])) - 1.0/dist << " Relative error: "<<((mpiReducedIntegral[2] - (mpiReducedIntegral[7] + mpiReducedIntegral[8])) - 1.0/dist)*dist<<"\n";
         myfile.close();
         }        
 
