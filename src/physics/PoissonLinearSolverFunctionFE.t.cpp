@@ -403,13 +403,15 @@ namespace dftefe
     {
       size_type numComponents = solution.getNumberComponents();
 
-      for (size_type i = 0 ; i < solution.locallyOwnedSize() ; i++)
-      {
-        for(size_type j = 0 ; j < numComponents ; j++)
+      for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
         {
-          solution.data()[i*numComponents + j] = d_x.data()[i*numComponents + j] + d_inhomogeneousDirichletBCVector.data()[i*numComponents + j];
+          for (size_type j = 0; j < numComponents; j++)
+            {
+              solution.data()[i * numComponents + j] =
+                d_x.data()[i * numComponents + j] +
+                d_inhomogeneousDirichletBCVector.data()[i * numComponents + j];
+            }
         }
-      }
 
       solution.updateGhostValues();
 
