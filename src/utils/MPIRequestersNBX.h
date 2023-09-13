@@ -30,6 +30,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIRequestersBase.h>
 #include <vector>
+#include <memory>
 #include <set>
 namespace dftefe
 {
@@ -192,14 +193,18 @@ namespace dftefe
 
         /**
          * Buffers for receiving requests.
-         *
+         * We use a vector of unique pointers because that
+         * guarantees that the buffers themselves
+         * are never moved around in memory, even if the vector is
+         * resized and consequently its elements (the pointers) are moved
+         * around.
          */
-        std::vector<int> d_recvBuffers;
+        std::vector<std::unique_ptr<int>> d_recvBuffers;
 
         /**
          * Requests for receiving requests.
          */
-        std::vector<MPIRequest> d_recvRequests;
+        std::vector<std::unique_ptr<MPIRequest>> d_recvRequests;
 
         //
         // request for barrier

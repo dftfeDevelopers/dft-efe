@@ -51,8 +51,10 @@ int main()
 
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double>>>
     constraintsVec ;
-  constraintsVec.resize(1, std::make_shared<dftefe::basis::FEConstraintsDealii<dim,double>>());
-
+  constraintsVec.resize(1);
+  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
+   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
+   
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(dofHandler);
   constraintsVec[0]->setHomogeneousDirichletBC();

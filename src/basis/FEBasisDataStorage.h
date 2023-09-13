@@ -65,10 +65,35 @@ namespace dftefe
 
       virtual void
       evaluateBasisData(
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
+      virtual void
+      evaluateBasisData(
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                             quadratureRuleContainer,
-        const QuadratureRuleAttributes &    quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap boolBasisStorageFlagsObj) = 0;
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
+      virtual void
+      evaluateBasisData(
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        std::vector<std::shared_ptr<const quadrature::QuadratureRule>>
+                                            quadratureRuleVec,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
+
+      virtual void
+      evaluateBasisData(
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        std::shared_ptr<const quadrature::QuadratureRule>
+          baseQuadratureRuleAdaptive,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+          &                                 functions,
+        const std::vector<double> &         tolerances,
+        const std::vector<double> &         integralThresholds,
+        const double                        smallestCellVolume,
+        const unsigned int                  maxRecursion,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap) = 0;
 
       virtual void
       deleteBasisData(
@@ -176,7 +201,6 @@ namespace dftefe
       virtual const quadrature::QuadratureRuleContainer &
       getQuadratureRuleContainer(
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
-
 
     }; // end of FEBasisDataStorage
   }    // end of namespace basis

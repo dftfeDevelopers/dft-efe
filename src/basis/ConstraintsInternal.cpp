@@ -168,6 +168,30 @@ namespace dftefe
         }
     }
 
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
+    void
+    ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
+      constraintsSetConstrainedNodes(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &             vectorData,
+        const size_type blockSize,
+        const utils::MemoryStorage<size_type, memorySpace>
+          &                       rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff alpha)
+    {
+      for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
+        {
+          const global_size_type startingLocalDofIndexRow =
+            *(rowConstraintsIdsLocal.begin() + i) * blockSize;
+
+          // set constrained nodes to zero
+          std::fill(vectorData.begin() + startingLocalDofIndexRow,
+                    vectorData.begin() + startingLocalDofIndexRow + blockSize,
+                    alpha);
+        }
+    }
+
     template class ConstraintsInternal<double,
                                        dftefe::utils::MemorySpace::HOST>;
     template class ConstraintsInternal<float, dftefe::utils::MemorySpace::HOST>;

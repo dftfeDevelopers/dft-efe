@@ -35,7 +35,15 @@ cmake_dict = {'SLATE_DIR':['', 'Path to SLATE installation',
               'ENABLE_CUDA':['OFF','ON or OFF based on whether to use CUDA/GPU or not',
                              '--ENABLE_CUDA=OFF'],
               'CMAKE_CUDA_FLAGS':['','Additional flags for CUDA',
-                                  '''--CMAKE_CUDA_FLAGS="-arch=sm_70"''']}
+                                  '''--CMAKE_CUDA_FLAGS="-arch=sm_70"'''],
+              'LIBXML_LIBRARIES': ['', 'Path to libxml2 libraries',
+                                  '''--LIBXML_LIBRARIES=
+                                   "-L/path/to/libxml2/libraries -lxml2"
+                                  '''],
+              'LIBXML_PATH': ['', 'Path to libxml2 include director',
+                                  '''--LIBXML_PATH=
+                                   "/path/to/libxml2/include"
+                                  ''']}
 
 def sanityCheck(string):
     if '=' not in string:

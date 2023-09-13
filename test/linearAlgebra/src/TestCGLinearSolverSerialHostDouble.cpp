@@ -31,7 +31,7 @@
  * pre-defined condition number are hard-coded at the beginning of the main() 
  * function. Further, the various tolerances for the CG solver are also 
  * hard-coded at the beginning of the main() function.
- *
+ * The test case is hardcoded for single vector case and NOT FOR MULTIVECTOR.
  */
 
 
@@ -206,8 +206,8 @@ namespace
 	     }
 
 	       void
-		 apply(linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
-		     linearAlgebra::Vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+		 apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
+		     linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
 		     utils::MemorySpace::HOST> &                        y) const override 
 		 {
 		   using ValueType = linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
@@ -217,16 +217,6 @@ namespace
 		     for(unsigned int j = 0; j < d_N; ++j)
 		       *(y.data() + i) += d_A[i*d_N+j]*(*(x.data()+j));
 		   }
-		 }
-
-	       void
-		 apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &X,
-		     linearAlgebra::MultiVector<
-		     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-		     utils::MemorySpace::HOST> &Y) const override
-		 {
-		   utils::throwException(false, "In TestCGLinearSolverSerialHostDouble "
-		       " the OperatorContextA apply() for MultiVector is not implemented");
 		 }
 
 	     private:
@@ -248,8 +238,8 @@ namespace
 	     {}
 
 	       void
-		 apply(linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
-		     linearAlgebra::Vector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+		 apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
+		     linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
 		     utils::MemorySpace::HOST> &                        y) const override 
 		 {
 		   using ValueType = linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
@@ -259,16 +249,6 @@ namespace
 		     //*(y.data() + i)= (*(x.data()+i));
 		     *(y.data() + i)= (1.0/d_diag[i])*(*(x.data()+i));
 		   }
-		 }
-
-	       void
-		 apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &X,
-		     linearAlgebra::MultiVector<
-		     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-		     utils::MemorySpace::HOST> &Y) const override
-		 {
-		   utils::throwException(false, "In TestCGLinearSolverSerialHostDouble "
-		       " the OperatorContextJacobiPC apply() for MultiVector is not implemented");
 		 }
 
 	     private:
@@ -290,8 +270,8 @@ namespace
 	       LinearSolverFunctionTest(const std::vector<ValueTypeOperator> & A, const std::vector<ValueType> & b, const unsigned int N, 
 		   std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>> laoc ):
 		 d_N(N),
-		 d_x(N, laoc, 0.0),
-		 d_b(N, laoc, 0.0)
+		 d_x(N, 1, laoc, 0.0),
+		 d_b(N, 1, laoc, 0.0)
 	     {
 	       d_AxContext = std::make_shared<OperatorContextA<ValueTypeOperator, ValueTypeOperand>>(A,N);
 	       std::vector<ValueTypeOperator> diag(N,ValueTypeOperator(0.0));
@@ -325,29 +305,29 @@ namespace
 		       }
 
 	       void
-		 setSolution(const linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &x) override 
+		 setSolution(const linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &x) override 
 		 {
 		   d_x =x;
 		 }
 
-	       const linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> &
-		 getSolution() const override 
+	       linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &
+		 getSolution() override 
 		 {
 		   return d_x;
 		 }
 
 
-	       linearAlgebra::Vector<ValueType, utils::MemorySpace::HOST>
+	      const  linearAlgebra::MultiVector<ValueType, utils::MemorySpace::HOST> &
 		 getRhs() const override 
 		 {
 		   return d_b;
 		 }
 
-	       linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST>
+	      const linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &
 		 getInitialGuess() const override   
 		 {
-		   linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> z(d_x, 0.0);
-		   return z;
+		   //linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> z(d_x, 0.0);
+		   return d_x;
 		 }
 
 	       const utils::mpi::MPIComm &
@@ -360,8 +340,8 @@ namespace
 	       unsigned int d_N;
 	       std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, utils::MemorySpace::HOST>> d_AxContext;
 	       std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, utils::MemorySpace::HOST>> d_PCContext;
-	       linearAlgebra::Vector<ValueTypeOperand, utils::MemorySpace::HOST> d_x;
-	       linearAlgebra::Vector<ValueType, utils::MemorySpace::HOST> d_b;
+	       linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> d_x;
+	       linearAlgebra::MultiVector<ValueType, utils::MemorySpace::HOST> d_b;
 
 
 	   }; // end of clas LinearSolverFunctionTest
@@ -477,14 +457,17 @@ int main()
   linearAlgebra::CGLinearSolver<double, double, Host> cgls(maxIter, absTol, relTol, resDivTol, linearAlgebra::LinearAlgebraProfiler()); 
   linearAlgebra::Error err = cgls.solve(lsf);
   
-  const linearAlgebra::Vector<double, Host> & xcg = lsf.getSolution();
-  linearAlgebra::Vector<double, utils::MemorySpace::HOST> bVec = lsf.getRhs();
-  const double bNorm = bVec.l2Norm();
+  const linearAlgebra::MultiVector<double, Host> & xcg = lsf.getSolution();
+  const linearAlgebra::MultiVector<double, utils::MemorySpace::HOST> & bVec = lsf.getRhs();
+  const std::vector<double> bNorm = bVec.l2Norms();
   double diffRelL2 = 0.0;
   for(unsigned int i = 0; i < N; ++i)
+  {
     diffRelL2 += pow(x[i] - *(xcg.data()+i), 2.0);
+    std::cout << x[i] << " , " << *(xcg.data()+i) <<"\n";
+  }
 
-  diffRelL2 = sqrt(diffRelL2)/bNorm;
+  diffRelL2 = sqrt(diffRelL2)/bNorm[0];
   utils::throwException(diffRelL2 < diffRelTol, 
       "TestCGLinearSolverSerialHostDouble.cpp failed. "
       "L2 norm tolerance required: " + 

@@ -138,6 +138,27 @@ namespace dftefe
                       const ValueType2 *                   y,
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context);
+
+      //    /*
+      //     * @brief Template for performing \f$ blockedOutput_ij = blockedInput_ij * singleVectorInput_i$
+      //     * @param[in] size size of the blocked Input array
+      //     * @param[in] numComponets no of componets
+      //     * @param[in] blockedInput blocked array
+      //     * @param[in] singleVectorInput array
+      //     * @param[out] blockedOutput blocked array
+      //     */
+      //  template <typename ValueType1,
+      //            typename ValueType2,
+      //            typename dftefe::utils::MemorySpace memorySpace>
+      //    void
+      //    blockedHadamardProduct(const size_type                     n,
+      //                    const size_type                      blockSize,
+      //                    const ValueType1 *                   blockedInput,
+      //                    const ValueType2 * singleVectorInput,
+      //                    scalar_type<ValueType1, ValueType2> *blockedOutput,
+      //                    LinAlgOpContext<memorySpace> &       context);
+
+
       /**
        * @brief Template for performing \f$ z_i = op(x_i) * op(y_i)$
        * where op represents either identity or complex conjugate
@@ -203,6 +224,42 @@ namespace dftefe
 
 
       /**
+       * @brief Template for performing
+       * In column major storage format:
+       * \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
+       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
+       * is  \f$K \times I\f$ matrix, \f${\bf B}\f$ is \f$K \times J\f$, and \f$
+       * {\bf Z} \f$ is \f$ K\times (IJ) \f$ matrix. \f$ a_1 \cdots \a_K \f$
+       * are the rows of \f${\bf A}\f$
+       * In row major storage format:
+       * \f$ {\bf Z}^T={\bf A}^T \odot {\bf B}^T = a_1 \otimes b_1
+       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
+       * is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$, and \f$
+       * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. \f$ a_1 \cdots \a_K \f$
+       * are the columns of \f${\bf A}\f$
+       * @param[in] layout Layout::ColMajor or Layout::RowMajor
+       * @param[in] size size I
+       * @param[in] size size J
+       * @param[in] size size K
+       * @param[in] X array
+       * @param[in] Y array
+       * @param[out] Z array
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      transposedKhatriRaoProduct(const Layout                         layout,
+                                 size_type                            sizeI,
+                                 size_type                            sizeJ,
+                                 size_type                            sizeK,
+                                 const ValueType1 *                   A,
+                                 const ValueType2 *                   B,
+                                 scalar_type<ValueType1, ValueType2> *Z,
+                                 LinAlgOpContext<memorySpace> &       context);
+
+
+      /**
        * @brief Template for performing \f$ z = \alpha x + \beta y \f$
        * @param[in] size size of the array
        * @param[in] \f$ alpha \f$ scalar
@@ -223,6 +280,27 @@ namespace dftefe
             scalar_type<ValueType1, ValueType2> *z,
             LinAlgOpContext<memorySpace> &       context);
 
+      /**
+       * @brief Template for performing \f$ z = \alpha x + \beta y \f$
+       * @param[in] size size of the array
+       * @param[in] \f$ alpha \f$ vector
+       * @param[in] x array
+       * @param[in] \f$ beta \f$ vector
+       * @param[in] y array
+       * @param[out] z array
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      axpbyBlocked(const size_type                            n,
+                   const size_type                            blockSize,
+                   const scalar_type<ValueType1, ValueType2> *alpha,
+                   const ValueType1 *                         x,
+                   const scalar_type<ValueType1, ValueType2> *beta,
+                   const ValueType2 *                         y,
+                   scalar_type<ValueType1, ValueType2> *      z,
+                   LinAlgOpContext<memorySpace> &             context);
 
 
       template <typename ValueType1,

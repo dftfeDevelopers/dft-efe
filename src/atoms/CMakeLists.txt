@@ -6,10 +6,24 @@ endif()
 
 # Add source files here
 set(DFT-EFE-ATOMS-SOURCES
-    AtomFieldDataSpherical.cpp
+    SphericalDataNumerical.cpp
+    Defaults.cpp
+    SphericalHarmonicFunctions.cpp
+    SmoothCutoffFunctions.cpp
+    AtomSphericalData.cpp
+    AtomSphericalDataContainer.cpp
+    BoostAutoDiff.cpp
+    AtomSevereFunction.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})
+
+target_include_directories(dft-efe-atoms PUBLIC ${LIBXML_PATH})
+target_link_libraries(dft-efe-atoms PUBLIC ${LIBXML_LIBRARIES})
+
+target_include_directories(dft-efe-atoms PRIVATE ${BOOST_DIR}/include)
+#target_link_directories(dft-efe-atoms PUBLIC ${BOOST_DIR}/lib64)
+target_link_directories(dft-efe-atoms PUBLIC ${BOOST_DIR}/lib)
 
 include_directories(../)
 

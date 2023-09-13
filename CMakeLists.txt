@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(dft-efe-proj VERSION 0.1)
-#add_executable(dft-efe src/main.cpp)
-add_executable(dft-efe src/TestIntegrateWithShapeFunctions.cpp)
+add_executable(dft-efe src/main.cpp)
+#add_executable(dft-efe src/TestIntegrateWithShapeFunctions.cpp)
 #add_executable(dft-efe src/TestConstraintMatrix.cpp)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -28,7 +28,8 @@ add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebr
 add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
 add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
 add_subdirectory(src/atoms ${CMAKE_CURRENT_BINARY_DIR}/buildAtoms)
-target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature dft-efe-atoms)
+add_subdirectory(src/physics ${CMAKE_CURRENT_BINARY_DIR}/buildPhysics)
+target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature dft-efe-atoms dft-efe-physics)
 include_directories(src)
 
 # Build documentation

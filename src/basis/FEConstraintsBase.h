@@ -85,10 +85,12 @@ namespace dftefe
       virtual void
       copyConstraintsData(
         const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern) = 0;
+        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
+        const size_type                                      classicalId) = 0;
       virtual void
       populateConstraintsData(
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) = 0;
+        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
+        const size_type                               classicalId) = 0;
 
       virtual void
       distributeChildToParent(
@@ -107,6 +109,12 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
         size_type blockSize) const = 0;
+
+      virtual void
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff alpha) const = 0;
       //
       // FE related functions
       //

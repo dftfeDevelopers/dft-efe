@@ -71,7 +71,7 @@ namespace dftefe
        * matrix. The Vector can be serial or distributed.
        */
       PreconditionerJacobi(
-        const Vector<ValueTypeOperator, memoryStorageSrc> &diagonal);
+        const Vector<ValueTypeOperator, memorySpace> &diagonal);
 
       /**
        *@brief Default Destructor
@@ -92,9 +92,9 @@ namespace dftefe
        * prior to calling this function
        *
        */
-      void
-      apply(Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<ValueTypeUnion, memorySpace> &  y) const override;
+      // void
+      // apply(Vector<ValueTypeOperand, memorySpace> &x,
+      //       Vector<ValueTypeUnion, memorySpace> &  y) const override;
 
       /*
        * @brief Function to apply the Jacobi preconditioner on an input Vector \p X
@@ -110,15 +110,15 @@ namespace dftefe
        *
        */
       void
-      apply(const MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &        Y) const override;
+      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const override;
 
       PreconditionerType
-      getPreconditionerType() const = override;
+      getPreconditionerType() const override;
 
     private:
-      Vector<ValueTypeOperator, memoryStorage> d_invDiagonal;
-      PreconditionerType                       d_pcType;
+      Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
+      PreconditionerType                     d_pcType;
     };
 
 

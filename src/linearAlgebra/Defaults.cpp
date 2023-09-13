@@ -45,7 +45,7 @@ namespace dftefe
     const bool              PrintControlDefaults::PRINT_FINAL           = true;
     const bool              PrintControlDefaults::PRINT_TOTAL_WALL_TIME = false;
     const ParallelPrintType PrintControlDefaults::PARALLEL_PRINT_TYPE =
-      ParallelPrintType::ROOT_ONLY;
+      ParallelPrintType::ALL;
     const size_type   PrintControlDefaults::PRECISION = 15;
     const std::string PrintControlDefaults::DELIMITER = "\t";
   } // end of namespace linearAlgebra

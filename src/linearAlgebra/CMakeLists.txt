@@ -26,7 +26,9 @@ if (NOT TARGET dft-efe-linalg)
             MatrixKernels.cpp
             MatrixOperations.cpp
 	    LinearSolver.cpp
-	    CGLinearSolver.cpp)
+	    CGLinearSolver.cpp
+        PreconditionerJacobi.cpp
+        PreconditionerNone.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

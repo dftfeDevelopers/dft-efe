@@ -60,10 +60,12 @@ The process of building and running a test is as follows
 class BuildOnlyTestAtoms(rfm.CompileOnlyRegressionTest):
     descr = 'A build only test using CMake'
     build_system = 'CMake'
-    make_opts = []
-    tagsDict = {'compileOrRun': 'compile'}
+    make_opts = ['TestAtomSphericalData']
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+                'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
-    valid_systems = ['*']
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
     config_opts = cmflags.getConfig()
 
@@ -98,3 +100,88 @@ class BuildOnlyTestAtoms(rfm.CompileOnlyRegressionTest):
             if hasTestPassed:
                 bincpy.BinCpy(os.path.dirname(os.path.abspath(__file__)))
             return sn.assert_true(hasTestPassed, msg=msg)
+
+
+@rfm.simple_test
+class BuildAndRunTestAtoms(rfm.RegressionTest):
+    target_name = 'TestAtomSphericalData'
+    descr = '''A build and run test for AtomSphericalData.cpp'''
+    build_system = 'CMake'
+    make_opts = [target_name]
+    # NOTE: Need to specify the name of the executable, as
+    # ReFrame has no way of knowing that while building from CMake
+    executable = "./"+target_name
+    tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
+        'unit','slowOrFast': 'fast', 'arch': 'cpu',
+                'serialOrParallel': 'serial'}
+    tags = {x.lower() for x in tagsDict.values()}
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
+    valid_prog_environs = ['*']
+    config_opts = cmflags.getConfig()
+
+
+    @run_before('compile')
+    def set_compiler_flags(self):
+        self.build_system.make_opts = self.make_opts
+        self.build_system.config_opts = self.config_opts
+
+
+    @run_before('run')
+    def set_launcher_and_resources(self):
+        if "serial" in self.tags:
+            self.job.launcher = getlauncher('local')()
+
+        if "parallel" in self.tags:
+            self.job.launcher.options = ['-n 2']
+            self.extra_resources = ss.setResources(self.tagsDict['arch'], 
+                                                   time_limit = "00:05:00", 
+                                                   num_nodes = 1, 
+                                                   num_tasks_per_node = 2,
+                                                   ntasks = 2,
+                                                   mem_per_cpu = '2gb')
+
+
+    @sanity_function
+    def validate_test(self):
+        # This test does not generate any output. It throws an exception
+        # if the logic of MPICommunicatorP2P fails to find the ghost data
+        hasAssertFail = True
+        hasThrownException = True
+        hasError = True
+        msgError = '''Found error(s) in
+        BuildAndRunTestAtomSphericalData.'''
+        msgThrownException = '''Found exceptions in 
+        BuildAndRunTestAtomSphericalData.'''
+        msgAssertFail = '''Found assert fail(s) in
+        BuildAndRunTestAtomSphericalData.'''
+        matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasError = False
+
+        matchesOut = evaluate(sn.findall(r'(?i)assert', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)assert', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasAssertFail = False
+        
+        matchesOut = evaluate(sn.findall(r'(?i)throw', evaluate(self.stdout)))
+        matchesErr = evaluate(sn.findall(r'(?i)throw', evaluate(self.stderr)))
+        if len(matchesOut) == 0 and len(matchesErr) == 0:
+            hasThrownException = False
+        
+        hasTestPassed = not any([hasError, hasAssertFail, hasThrownException]) 
+        
+        msg = ""
+        if hasError:
+            msg = msgError
+
+        elif hasAssertFail:
+            msg = msgAssertFail
+
+        elif hasThrownException:
+            msg = msgThrownException
+
+        else:
+            msg=""
+
+        return sn.assert_true(hasTestPassed, msg=msg)

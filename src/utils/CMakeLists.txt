@@ -15,6 +15,8 @@ set(DFT-EFE-UTILS-SOURCES
 	DeviceAPICalls.cu
 	DeviceUtils.cpp
 	DeviceComplexUtils.cu
+	DiscontiguousDataOperations.cpp
+	DiscontiguousDataOperations.cu
         MemoryManager.cpp
 	Exceptions.cpp
 	NumberUtils.cpp
@@ -32,7 +34,8 @@ set(DFT-EFE-UTILS-SOURCES
 	RandNumGen.cpp
   MPICommunicatorP2PKernels.cpp
   MPICommunicatorP2PKernels.cu
-  MPIErrorCodeHandler.cpp)
+  MPIErrorCodeHandler.cpp
+  Spline.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 
@@ -50,7 +53,11 @@ if(ENABLE_MPI)
 endif()
 
 target_include_directories(dft-efe-utils PRIVATE ${BOOST_DIR}/include)
+<<<<<<< HEAD
+#target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib64)
+=======
 target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib64)
+>>>>>>> 8e4b9f7a41e2b7882fc82d447f61c4a7d5528232
 target_link_directories(dft-efe-utils PUBLIC ${BOOST_DIR}/lib)
 
 include_directories(../)

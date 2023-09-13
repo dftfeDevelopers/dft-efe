@@ -51,6 +51,9 @@ namespace dftefe
       setRefineFlag() = 0;
 
       virtual void
+      clearRefineFlag() = 0;
+
+      virtual void
       getParametricPoint(const utils::Point &   realPoint,
                          const CellMappingBase &cellMapping,
                          utils::Point &         parametricPoint) const = 0;

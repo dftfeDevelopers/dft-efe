@@ -82,10 +82,12 @@ namespace dftefe
       void
       copyConstraintsData(
         const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) override;
+        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
+        const size_type classicalId) override;
       void
       populateConstraintsData(
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern) override;
+        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
+        const size_type                               classicalId) override;
 
 
       void
@@ -104,6 +106,12 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
         size_type blockSize) const override;
+
+      void
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff alpha) const override;
 
       //
       // FE related functions

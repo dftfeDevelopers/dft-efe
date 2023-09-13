@@ -32,5 +32,5 @@ int main()
   std::string atomFileName = "TestAtom.data";
   dftefe::atoms::AtomFieldDataSpherical atomFieldDataSphericalRho(atomFileName,
 	     "Rho");
-  utils::DFTEFE_AssertWithMsg(false, "test");
+  DFTEFE_AssertWithMsg(false, "test");
 }

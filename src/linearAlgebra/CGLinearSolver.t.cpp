@@ -77,11 +77,18 @@ namespace dftefe
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
-      Vector<ValueType, memorySpace> b     = linearSolverFunction.getRhs();
-      const double                   bNorm = b.l2Norm();
+      const MultiVector<ValueType, memorySpace> &b =
+        linearSolverFunction.getRhs();
 
-      Vector<ValueTypeOperand, memorySpace> x =
-        linearSolverFunction.getInitialGuess();
+      std::vector<double> bNorm(0);
+      bNorm = b.l2Norms();
+
+      size_type numComponents = b.getNumberComponents();
+
+      MultiVector<ValueTypeOperand, memorySpace> x;
+      x = linearSolverFunction.getInitialGuess();
+      MultiVector<ValueTypeOperand, memorySpace> xConverged;
+      xConverged = linearSolverFunction.getInitialGuess();
 
       // get handle to Ax
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
@@ -102,24 +109,32 @@ namespace dftefe
       // beta = improvement relative to previous step
       //
 
-      Vector<ValueType, memorySpace> r(b, 0.0);
-      Vector<ValueType, memorySpace> w(b, 0.0);
-      Vector<ValueType, memorySpace> z(b, 0.0);
-      Vector<ValueType, memorySpace> p(b, 0.0);
+      MultiVector<ValueType, memorySpace> r(b, 0.0);
+      MultiVector<ValueType, memorySpace> w(b, 0.0);
+      MultiVector<ValueType, memorySpace> z(b, 0.0);
+      MultiVector<ValueType, memorySpace> p(b, 0.0);
 
 
       //
       // CG loop
       //
-      double    rNorm     = 0.0;
-      size_type precision = d_profiler.getPrecision();
-      Error     err       = Error::OTHER_ERROR;
-      size_type iter      = 0;
+      std::vector<double> rNorm(numComponents, 0.0);
+      size_type           precision = d_profiler.getPrecision();
+      Error               err       = Error::OTHER_ERROR;
+      size_type           iter      = 0;
+      std::vector<bool>   convergeFlag(0);
+      convergeFlag.resize(numComponents, false);
+      bool                   divergeFlag  = false;
+      bool                   allConverged = false;
+      std::vector<ValueType> ones(0);
+      ones.resize(numComponents, (ValueType)1.0);
+      std::vector<ValueType> nOnes(0);
+      nOnes.resize(numComponents, (ValueType)-1.0);
+
       for (; iter <= d_maxIter; ++iter)
         {
           // register start of the iteration
           d_profiler.registerIterStart(iter);
-
           if (iter == 0)
             {
               //
@@ -127,7 +142,7 @@ namespace dftefe
               // However, for the 0-th iteration we use it to store Ax
               // to avoid allocating memory for another Vector
               AxContext.apply(x, w);
-              add((ValueType)1.0, b, (ValueType)-1.0, w, r);
+              add(ones, b, nOnes, w, r);
 
               //
               // z = preconditioned r
@@ -138,6 +153,12 @@ namespace dftefe
               // p = z
               //
               p = z;
+
+              // for (unsigned int h = 0 ; h < z.locallyOwnedSize() ; h++)
+              // {
+              //   std::cout << "z[" <<iter << "," << h <<"] : "<< *(z.data()+h)
+              //   << ",";
+              // }
             }
 
           else
@@ -146,7 +167,7 @@ namespace dftefe
               AxContext.apply(p, w);
 
               // z^Hr (dot product of z-conjugate and r)
-              ValueType zDotr;
+              std::vector<ValueType> zDotr(0);
               dot(z,
                   r,
                   zDotr,
@@ -154,68 +175,99 @@ namespace dftefe
                   blasLapack::ScalarOp::Identity);
 
               // p^Hw (dot product of p-conjugate and w)
-              ValueType pDotw;
+              std::vector<ValueType> pDotw(0);
               dot(p,
                   w,
                   pDotw,
                   blasLapack::ScalarOp::Conj,
                   blasLapack::ScalarOp::Identity);
 
-              ValueType alpha = zDotr / pDotw;
+              // ValueType alpha = zDotr / pDotw;
+              std::vector<ValueType> alpha(0), nAlpha(0);
+              for (size_type i = 0; i < numComponents; i++)
+                {
+                  alpha.push_back(zDotr[i] / pDotw[i]);
+                  nAlpha.push_back(-zDotr[i] / pDotw[i]);
+                }
 
               // x = x + alpha*p
-              add((ValueType)1.0, x, alpha, p, x);
+              add(ones, x, alpha, p, x);
 
               // r = r - alpha*w
-              add((ValueType)1.0, r, -alpha, w, r);
+              add(ones, r, nAlpha, w, r);
 
               // z = preconditioned r
               pcContext.apply(r, z);
 
               // updated z^Hr (dot product of new z-conjugate and r)
-              ValueType zDotrNew;
+              std::vector<ValueType> zDotrNew(0);
               dot(z,
                   r,
                   zDotrNew,
                   blasLapack::ScalarOp::Conj,
                   blasLapack::ScalarOp::Identity);
 
-
-
-              ValueType beta = zDotrNew / zDotr;
+              // ValueType beta = zDotrNew / zDotr;
+              std::vector<ValueType> beta(0);
+              for (size_type i = 0; i < numComponents; i++)
+                beta.push_back(zDotrNew[i] / zDotr[i]);
 
               // p = z + beta*p
-              add((ValueType)1.0, z, beta, p, p);
+              add(ones, z, beta, p, p);
             }
 
-          rNorm = r.l2Norm();
+          std::vector<double> rNorm(0);
+          rNorm = r.l2Norms();
 
-          if (rNorm < std::max(d_absoluteTol, bNorm * d_relativeTol))
+          for (unsigned int i = 0; i < numComponents; i++)
+            std::cout << rNorm[i] << ",";
+          std::cout << "\n";
+
+          std::string msg;
+          for (size_type i = 0; i < numComponents; i++)
             {
-              err = Error::SUCCESS;
-              break;
+              if (rNorm[i] <
+                    std::max(d_absoluteTol, bNorm[i] * d_relativeTol) &&
+                  convergeFlag[i] == false)
+                {
+                  err             = Error::SUCCESS;
+                  convergeFlag[i] = true;
+                  // copy x to xConverged of the ith comp vector
+                  for (size_type j = 0; j < x.locallyOwnedSize(); j++)
+                    *(xConverged.data() + j * numComponents + i) =
+                      *(x.data() + j * numComponents + i);
+                }
+
+              if (rNorm[i] > d_divergenceTol && divergeFlag == false)
+                {
+                  err         = Error::RESIDUAL_DIVERGENCE;
+                  divergeFlag = true;
+                }
+
+              msg = "CGLinearSolver[" + std::to_string(iter) + "]";
+              msg += " Abs. residual: " +
+                     CGLinearSolverInternal::toStringWithPrecision(rNorm[i],
+                                                                   precision);
+              msg += " Rel. residual: " +
+                     CGLinearSolverInternal::toStringWithPrecision(rNorm[i] /
+                                                                     bNorm[i],
+                                                                   precision);
+              msg += "For Vector Component No: " + i;
             }
 
-          if (rNorm > d_divergenceTol)
-            {
-              err = Error::RESIDUAL_DIVERGENCE;
-              break;
-            }
+          if (std::all_of(convergeFlag.begin(),
+                          convergeFlag.end(),
+                          [](bool boolVal) { return boolVal; }))
+            allConverged = true;
 
-
-          std::string msg = "CGLinearSolver[" + std::to_string(iter) + "]";
-          msg +=
-            " Abs. residual: " +
-            CGLinearSolverInternal::toStringWithPrecision(rNorm, precision);
-          msg += " Rel. residual: " +
-                 CGLinearSolverInternal::toStringWithPrecision(rNorm / bNorm,
-                                                               precision);
+          if (divergeFlag || allConverged)
+            break;
 
           // register end of the iteration
           d_profiler.registerIterEnd(msg);
         }
 
-      linearSolverFunction.setSolution(x);
+      linearSolverFunction.setSolution(xConverged);
 
       if (iter > d_maxIter)
         {
@@ -228,7 +280,7 @@ namespace dftefe
 
       if (successAndMsg.first)
         {
-          msg = "CGLinear solve converged in " + std::to_string(iter) +
+          msg = "CGLinear solve converged in maximum " + std::to_string(iter) +
                 " iterations";
         }
       else
@@ -356,7 +408,7 @@ namespace dftefe
     //	betaold = beta;
     //
     //	//
-    //	//TODO: Check for indefinite matrix
+    //	: Check for indefinite matrix
     //	//
     //
     //	// a = beta/ (p^Hw)

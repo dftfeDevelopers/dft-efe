@@ -75,11 +75,18 @@ namespace dftefe
       virtual const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
+      virtual void
+      setConstraints(
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+          constraintsMap) = 0;
+
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const = 0;
 
-      virtual std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange(const std::string constraintsName) const = 0;
+      virtual std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges(const std::string constraintsName) const = 0;
 
       virtual const GlobalSizeTypeVector &
       getGhostIndices(const std::string constraintsName) const = 0;
@@ -93,11 +100,11 @@ namespace dftefe
       virtual size_type
       nGhost(const std::string constraintsName) const = 0;
 
-      virtual bool
-      inLocallyOwnedRange(const global_size_type globalId,
-                          const std::string      constraintsName) const = 0;
+      virtual std::pair<bool, size_type>
+      inLocallyOwnedRanges(const global_size_type globalId,
+                           const std::string      constraintsName) const = 0;
 
-      virtual bool
+      virtual std::pair<bool, size_type>
       isGhostEntry(const global_size_type ghostId,
                    const std::string      constraintsName) const = 0;
 

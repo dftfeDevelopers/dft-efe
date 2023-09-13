@@ -104,11 +104,18 @@ namespace dftefe
       const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const override;
 
+      void
+      setConstraints(
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+          constraintsMap) override;
+
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P(const std::string constraintsName) const override;
 
-      std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange(const std::string constraintsName) const override;
+      std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges(const std::string constraintsName) const override;
 
       size_type
       nLocallyOwned(const std::string constraintsName) const override;
@@ -124,11 +131,11 @@ namespace dftefe
       size_type
       nGhost(const std::string constraintsName) const override;
 
-      bool
-      inLocallyOwnedRange(const global_size_type globalId,
-                          const std::string constraintsName) const override;
+      std::pair<bool, size_type>
+      inLocallyOwnedRanges(const global_size_type globalId,
+                           const std::string constraintsName) const override;
 
-      bool
+      std::pair<bool, size_type>
       isGhostEntry(const global_size_type ghostId,
                    const std::string      constraintsName) const override;
 
@@ -185,6 +192,12 @@ namespace dftefe
         const size_type   cellId,
         const std::string constraintsName) const override;
 
+      void
+      getCellDofsLocalIds(
+        const size_type         cellId,
+        const std::string       constraintsName,
+        std::vector<size_type> &vecLocalNodeId) const override;
+
       //
       // dealii specific functions
       //
@@ -195,11 +208,12 @@ namespace dftefe
         std::string,
         std::shared_ptr<
           const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
-                                                    d_feConstraintsDealiiOptMap;
-      utils::mpi::MPIComm                           d_mpiComm;
-      bool                                          d_isDistributed;
-      std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
-      std::vector<size_type>                        d_locallyOwnedCellStartIds;
+                          d_feConstraintsDealiiOptMap;
+      utils::mpi::MPIComm d_mpiComm;
+      bool                d_isDistributed;
+      std::vector<std::pair<global_size_type, global_size_type>>
+                             d_locallyOwnedRanges;
+      std::vector<size_type> d_locallyOwnedCellStartIds;
       GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
@@ -212,7 +226,7 @@ namespace dftefe
       std::map<std::string, std::shared_ptr<SizeTypeVector>>
         d_locallyOwnedCellLocalIndicesMap;
 
-      std::map<global_size_type, dealii::Point<dim>> d_supportPoints;
+      std::map<global_size_type, utils::Point> d_supportPoints;
     };
 
   } // end of namespace basis

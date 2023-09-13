@@ -95,6 +95,5 @@ namespace dftefe
           points.insert({iter->first, pointTmp});
         }
     }
-
   } // namespace basis
 } // namespace dftefe

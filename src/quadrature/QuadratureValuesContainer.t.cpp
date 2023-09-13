@@ -202,7 +202,7 @@ namespace dftefe
     {
       size_type size   = nCellQuadraturePoints(cellId) * d_numberComponents;
       size_type offset = cellStartId(cellId);
-      d_storage.copyFrom<memorySpaceSrc>(values, size, 0, offset);
+      d_storage.template copyFrom<memorySpaceSrc>(values, size, 0, offset);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
@@ -215,7 +215,7 @@ namespace dftefe
     {
       size_type size   = d_numberComponents;
       size_type offset = cellStartId(cellId) + quadId * d_numberComponents;
-      d_storage.copyFrom<memorySpaceSrc>(values, size, 0, offset);
+      d_storage.template copyFrom<memorySpaceSrc>(values, size, 0, offset);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
@@ -227,7 +227,7 @@ namespace dftefe
     {
       size_type size   = nCellQuadraturePoints(cellId) * d_numberComponents;
       size_type offset = cellStartId(cellId);
-      d_storage.copyTo<memorySpaceDst>(values, size, offset, 0);
+      d_storage.template copyTo<memorySpaceDst>(values, size, offset, 0);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
@@ -240,7 +240,7 @@ namespace dftefe
     {
       size_type size   = d_numberComponents;
       size_type offset = cellStartId(cellId) + quadId * d_numberComponents;
-      d_storage.copyTo<memorySpaceDst>(values, size, offset, 0);
+      d_storage.template copyTo<memorySpaceDst>(values, size, offset, 0);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>

@@ -49,9 +49,8 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class Preconditioner : public OperatorContext<ValueTypeOperator,
-                                                  ValueTypeOperand,
-                                                  ValueTypeOperand>
+    class Preconditioner
+      : public OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
       //
       // typedefs
@@ -87,9 +86,9 @@ namespace dftefe
        * prior to calling this function
        *
        */
-      virtual void
-      apply(Vector<ValueTypeOperand, memorySpace> &x,
-            Vector<ValueTypeUnion, memorySpace> &  y) const = 0;
+      // virtual void
+      // apply(Vector<ValueTypeOperand, memorySpace> &x,
+      //       Vector<ValueTypeUnion, memorySpace> &  y) const = 0;
 
       /*
        * @brief Function to apply the pre-conditoner on an input Vector \p X

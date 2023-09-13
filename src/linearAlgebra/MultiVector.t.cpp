@@ -721,6 +721,36 @@ namespace dftefe
               typename ValueType2,
               utils::MemorySpace memorySpace>
     void
+    add(const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &a,
+        const MultiVector<ValueType1, memorySpace> &                        u,
+        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &b,
+        const MultiVector<ValueType2, memorySpace> &                        v,
+        MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
+                    memorySpace> &                                          w)
+    {
+      DFTEFE_AssertWithMsg(u.isCompatible(v),
+                           "u and v Vectors being added are not compatible.");
+      DFTEFE_AssertWithMsg(
+        u.isCompatible(w),
+        "Resultant MultiVector w = u + v is compatible with u.");
+      const size_type nv = u.numVectors();
+      DFTEFE_AssertWithMsg(
+        u.getNumberComponents() == a.size() && a.size() == b.size(),
+        "The coefficients are not comptible with the vector local size");
+      blasLapack::axpbyBlocked(u.localSize(),
+                               nv,
+                               a.data(),
+                               u.data(),
+                               b.data(),
+                               v.data(),
+                               w.data(),
+                               *(w.getLinAlgOpContext()));
+    }
+
+    template <typename ValueType1,
+              typename ValueType2,
+              utils::MemorySpace memorySpace>
+    void
     dot(const MultiVector<ValueType1, memorySpace> &     u,
         const MultiVector<ValueType2, memorySpace> &     v,
         blasLapack::scalar_type<ValueType1, ValueType2> *dotProds,
@@ -775,6 +805,7 @@ namespace dftefe
                            memorySpace>
         dotProdsInMemorySpace(nv, 0.0);
       dot(u, v, dotProdsInMemorySpace.data(), opU, opV);
+      dotProds.resize(nv, (blasLapack::scalar_type<ValueType1, ValueType2>)0.0);
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
         nv, dotProds.data(), dotProdsInMemorySpace.data());
     }

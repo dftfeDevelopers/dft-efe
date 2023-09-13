@@ -139,8 +139,8 @@ namespace dftefe
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
       std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(), false);
-      auto              cell = d_feBasisManager->beginLocallyOwnedCells(),
-           endc              = d_feBasisManager->endLocallyOwnedCells();
+      auto              cell = d_feBasisManager->beginLocalCells(),
+           endc              = d_feBasisManager->endLocalCells();
       for (; cell != endc; ++cell)
         {
           (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
@@ -275,10 +275,15 @@ namespace dftefe
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       copyConstraintsData(
         const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern)
+        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
+        const size_type                                      classicalId)
     {
       this->clear();
-      auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+      std::vector<std::pair<global_size_type, global_size_type>>
+        locallyOwnedRanges = mpiPattern.getLocallyOwnedRanges();
+
+      auto locallyOwnedRange = locallyOwnedRanges[classicalId];
+      // auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
       bool printWarning = false;
       for (auto locallyOwnedId = locallyOwnedRange.first;
@@ -301,8 +306,9 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -317,7 +323,9 @@ namespace dftefe
             }
         }
 
-      auto ghostIndices = mpiPattern.getGhostIndices();
+      auto ghostIndices =
+        mpiPattern.getGhostIndices(); // can be optimized .. checking enriched
+                                      // ghosts also
 
       for (auto ghostIter = ghostIndices.begin();
            ghostIter != ghostIndices.end();
@@ -339,8 +347,9 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -368,7 +377,8 @@ namespace dftefe
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       populateConstraintsData(
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern)
+        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
+        const size_type                               classicalId)
     {
       bool printWarning = false;
 
@@ -383,7 +393,11 @@ namespace dftefe
 
       std::vector<size_type> rowConstraintsSizesTmp;
 
-      auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+      std::vector<std::pair<global_size_type, global_size_type>>
+        locallyOwnedRanges = mpiPattern.getLocallyOwnedRanges();
+
+      auto locallyOwnedRange = locallyOwnedRanges[classicalId];
+      // auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
 
       size_type columnIdStart = 0;
 
@@ -401,8 +415,9 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -451,8 +466,9 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first) ||
-                        mpiPattern.inLocallyOwnedRange((*rowData)[j].first)))
+                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
+                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
+                          .first))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -616,6 +632,23 @@ namespace dftefe
         constraintsSetConstrainedNodesToZero(vectorData,
                                              blockSize,
                                              d_rowConstraintsIdsLocal);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff                      alpha) const
+    {
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
+        constraintsSetConstrainedNodes(vectorData,
+                                       blockSize,
+                                       d_rowConstraintsIdsLocal,
+                                       alpha);
     }
 
 

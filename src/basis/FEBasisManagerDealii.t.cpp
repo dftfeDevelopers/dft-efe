@@ -37,7 +37,7 @@ namespace dftefe
     FEBasisManagerDealii<dim>::FEBasisManagerDealii(
       std::shared_ptr<const TriangulationBase> triangulation,
       const size_type                          feOrder)
-      : d_isHPRefined(false)
+      : d_isVariableDofsPerCell(false)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       reinit(triangulation, feOrder);
@@ -194,9 +194,9 @@ namespace dftefe
 
     template <size_type dim>
     bool
-    FEBasisManagerDealii<dim>::isHPRefined() const
+    FEBasisManagerDealii<dim>::isVariableDofsPerCell() const
     {
-      return d_isHPRefined;
+      return d_isVariableDofsPerCell;
     }
 
     template <size_type dim>
@@ -213,15 +213,53 @@ namespace dftefe
       return d_dofHandler->n_dofs();
     }
 
+    // template <size_type dim>
+    // std::pair<global_size_type, global_size_type>
+    // FEBasisManagerDealii<dim>::getLocallyOwnedRange() const
+    // {
+    //   auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+    //   global_size_type startId        = *(dealiiIndexSet.begin());
+    //   global_size_type endId = startId +
+    //   d_dofHandler->n_locally_owned_dofs(); std::pair<global_size_type,
+    //   global_size_type> returnValue =
+    //     std::make_pair(startId, endId);
+    //   return returnValue;
+    // }
+
     template <size_type dim>
-    std::pair<global_size_type, global_size_type>
-    FEBasisManagerDealii<dim>::getLocallyOwnedRange() const
+    std::vector<std::pair<global_size_type, global_size_type>>
+    FEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
     {
+      std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
       auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
       global_size_type startId        = *(dealiiIndexSet.begin());
       global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-      std::pair<global_size_type, global_size_type> returnValue =
+      std::pair<global_size_type, global_size_type> classicalRange =
         std::make_pair(startId, endId);
+
+      returnValue.push_back(classicalRange);
+
+      return returnValue;
+    }
+
+    template <size_type dim>
+    std::vector<std::pair<global_size_type, global_size_type>>
+    FEBasisManagerDealii<dim>::getGlobalRanges() const
+    {
+      std::vector<std::pair<global_size_type, global_size_type>> retValue(0);
+      retValue.resize(1);
+      retValue[0].first  = 0;
+      retValue[0].second = d_dofHandler->n_dofs();
+      return retValue;
+    }
+
+
+    template <size_type dim>
+    std::map<BasisIdAttribute, size_type>
+    FEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
+    {
+      std::map<BasisIdAttribute, size_type> returnValue;
+      returnValue[BasisIdAttribute::CLASSICAL] = 0;
       return returnValue;
     }
 
@@ -356,12 +394,13 @@ namespace dftefe
       // is same for all cellId. As a result, we pass index
       // 0 to dealii's dofHandler
       //
-      if (d_isHPRefined)
-        {
-          utils::throwException(
-            false,
-            "Support for hp-refined finite element mesh is not supported yet.");
-        }
+      // if (d_isHPRefined)
+      //   {
+      //     utils::throwException(
+      //       false,
+      //       "Support for hp-refined finite element mesh is not supported
+      //       yet.");
+      //   }
 
       return d_dofHandler->get_fe(0);
     }

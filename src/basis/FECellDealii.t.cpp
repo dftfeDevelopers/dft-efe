@@ -46,6 +46,7 @@ namespace dftefe
     {
       const unsigned int nVertices =
         dealii::GeometryInfo<dim>::vertices_per_cell;
+      points.resize(nVertices, utils::Point(dim));
       std::vector<dealii::Point<dim, double>> pointsDealii;
       pointsDealii.resize(nVertices);
       for (unsigned int iVertex = 0; iVertex < nVertices; iVertex++)

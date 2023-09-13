@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<atom xmlns="http://www.dft-efe.com/dft-efe">
+  <symbol>foo</symbol>
+  <Z>10.0</Z>
+  <charge>0.0</charge>
+  <NR>5</NR>
+  <r>0.0 1.1 2.2 3.3 4.4</r>
+  <density>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      1.5 2.5 3.5 4.5 5.5
+    </values>
+    <cutoffInfo>1.0 1.0</cutoffInfo>
+  </density>
+  <vhartree>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -5.5 -6.6 -7.7 -8.8 -9.9
+    </values>
+    <cutoffInfo>2.5 1.1</cutoffInfo>
+  </vhartree>
+  <vnuclear>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </vnuclear>
+  <vtotal>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </vtotal>
+  <orbital>
+    <qNumbers>1 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </orbital>
+  <orbital>
+    <qNumbers>2 0 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>3.5 1.1</cutoffInfo>
+  </orbital>
+  <orbital>
+    <qNumbers>2 1 0</qNumbers>
+    <values>
+      -4.4 -5.4 -6.4 -7.4 -8.4
+    </values>
+    <cutoffInfo>1.5 1.0</cutoffInfo>
+  </orbital>
+</atom>

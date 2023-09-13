@@ -150,7 +150,7 @@ namespace dftefe
       if (quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
           quadratureFamily == quadrature::QuadratureFamily::GLL)
         sameQuadRuleInAllCells = true;
-      bool hpRefined = feBasisManager.isHPRefined();
+      bool variableDofsPerCell = feBasisManager.isVariableDofsPerCell();
 
       // Perform
       // Ce = Ae*Be, where Ce_ij = interpolated value of the i-th component at
@@ -171,7 +171,7 @@ namespace dftefe
       // data), we use the transpose of Be matrix. That is, we perform Ce =
       // Ae*(Be)^T, with Be stored in row major format
       //
-      const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
+      const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
       size_type       cellLocalIdsOffset = 0;
@@ -438,8 +438,8 @@ namespace dftefe
           quadratureFamily == quadrature::QuadratureFamily::GLL)
         sameQuadRuleInAllCells = true;
 
-      bool       hpRefined   = feBasisManager.isHPRefined();
-      const bool zeroStrideB = sameQuadRuleInAllCells && (!hpRefined);
+      bool       variableDofsPerCell = feBasisManager.isVariableDofsPerCell();
+      const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
       size_type cellLocalIdsOffset = 0;
@@ -476,47 +476,60 @@ namespace dftefe
                     numCellQuad.begin() + cellEndId,
                     numCellsInBlockQuad.begin());
 
-          std::vector<size_type> numCellsInBlockDofsQuad(numCellsInBlock, 0);
+          // std::vector<size_type> numCellsInBlockDofsQuad(numCellsInBlock, 0);
 
-          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-            {
-              numCellsInBlockDofsQuad[iCell] =
-                numCellsInBlockQuad[iCell] * numCellsInBlockDofs[iCell];
-            }
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     numCellsInBlockDofsQuad[iCell] =
+          //       numCellsInBlockQuad[iCell] * numCellsInBlockDofs[iCell];
+          //   }
 
-          const size_type numCumulativeDofsQuadCellsInBlock =
-            std::accumulate(numCellsInBlockDofsQuad.begin(),
-                            numCellsInBlockDofsQuad.end(),
+          const size_type numCumulativeQuadCellsInBlock =
+            std::accumulate(numCellsInBlockQuad.begin(),
+                            numCellsInBlockQuad.end(),
                             0);
 
 
           utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
-            numComponents * numCumulativeDofsQuadCellsInBlock,
-            ValueTypeUnion());
+            numComponents * numCumulativeQuadCellsInBlock, ValueTypeUnion());
 
-          std::cout << "numCumulativeDofsCellsInBlock = "
-                    << numCumulativeDofsCellsInBlock
-                    << " numComponents  = " << numComponents << "\n";
+          // std::cout << "numCumulativeDofsCellsInBlock = "
+          //           << numCumulativeDofsCellsInBlock
+          //           << " numComponents  = " << numComponents <<
+          //           "locallyownedcells =" << numLocallyOwnedCells << "\n";
 
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,
                                   ValueTypeUnion());
 
 
-          // Hadamard product for inp and JxW
-          //      hadamardProduct(numCumulativeDofsQuadCellsInBlock,
-          //                      numComponents,
-          //                      inp.data(),
-          //                      jxwStorage.data() +
-          //                      quadRuleContainer.getCellQuadStartId[cellStartId],
-          //                      inpJxW.begin(),
-          //                      linAlgOpContext);
+          // KhatriRao product for inp and JxW
+          linearAlgebra::blasLapack::khatriRaoProduct(
+            layout,
+            1,
+            numComponents,
+            numCumulativeQuadCellsInBlock,
+            jxwStorage.data() +
+              quadRuleContainer.getCellQuadStartId(cellStartId),
+            inp.begin(cellStartId),
+            inpJxW.data(),
+            linAlgOpContext);
+
+          // // Hadamard product for inp and JxW
+          // linearAlgebra::blasLapack::blockedHadamardProduct(
+          //   numCumulativeQuadCellsInBlock,
+          //   numComponents,
+          //   inp.begin(cellStartId),
+          //   jxwStorage.data() +
+          //     quadRuleContainer.getCellQuadStartId(cellStartId),
+          //   inpJxW.data(),
+          //   linAlgOpContext);
 
           // TODO check if these are right ?? Why is the B Transposed
           std::vector<linearAlgebra::blasLapack::Op> transA(
             numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -534,7 +547,7 @@ namespace dftefe
               nSizesTmp[iCell]       = numCellsInBlockDofs[iCell];
               kSizesTmp[iCell]       = numCellsInBlockQuad[iCell];
               ldaSizesTmp[iCell]     = mSizesTmp[iCell];
-              ldbSizesTmp[iCell]     = nSizesTmp[iCell];
+              ldbSizesTmp[iCell]     = kSizesTmp[iCell];
               ldcSizesTmp[iCell]     = mSizesTmp[iCell];
               strideATmp[iCell]      = mSizesTmp[iCell] * kSizesTmp[iCell];
               strideCTmp[iCell]      = mSizesTmp[iCell] * nSizesTmp[iCell];
@@ -628,16 +641,15 @@ namespace dftefe
             }
         }
 
-
-
-      // Function to add the values to the local node from its corresponding
-      // ghost nodes from other processors.
-      vectorData.accumulateAddLocallyOwned();
-
       const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
         feBasisHandler.getConstraints(constraintsName);
       constraints.distributeChildToParent(vectorData,
                                           vectorData.getNumberComponents());
+
+      // Function to add the values to the local node from its corresponding
+      // ghost nodes from other processors.
+      vectorData.accumulateAddLocallyOwned();
+      vectorData.updateGhostValues();
     }
 
 
