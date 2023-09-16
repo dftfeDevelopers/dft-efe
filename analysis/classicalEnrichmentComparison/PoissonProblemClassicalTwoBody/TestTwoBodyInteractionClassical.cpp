@@ -119,7 +119,7 @@ double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> 
   return ret;
 }
 
-int main()
+int main(int argc, char** argv)
 {
 
   std::cout<<" Entering test two body interaction \n";
@@ -154,7 +154,7 @@ int main()
   // Read the parameter files and atom coordinate files
   std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
   std::string atomDataFile = "TwoSmearedCharge.in";
-  std::string paramDataFile = "PoissonProblemClassicalTwoBody/param.in";
+  std::string paramDataFile = argv[1];
   std::string inputFileName = sourceDir + atomDataFile;
   std::string parameterInputFileName = sourceDir + paramDataFile;
 
