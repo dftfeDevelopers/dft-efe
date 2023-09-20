@@ -94,6 +94,18 @@ namespace dftefe
           memorySpace> &quadValuesContainer) const override;
 
       void
+      interpolateWithBasisGradient(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                   vectorData,
+        const std::string &                                   constraintsName,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const override;
+
+      void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &                                         inp,

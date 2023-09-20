@@ -285,6 +285,17 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    double
+    TriangulationDealiiParallel<dim>::maxCellDiameter() const
+    {
+      utils::throwException<utils::LogicError>(
+        isInitialized && !isFinalized,
+        "Cannot execute coarsening or refinement of triangulation without calling"
+        "initializeTriangulationConstruction");
+      dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
+    }
+
+    template <unsigned int dim>
     TriangulationBase::TriangulationCellIterator
     TriangulationDealiiParallel<dim>::beginLocal()
     {

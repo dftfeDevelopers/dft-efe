@@ -65,6 +65,8 @@ namespace dftefe
       executeCoarseningAndRefinement() override;
       unsigned int
       nLocallyOwnedCells() const override;
+      double
+      maxCellDiameter() const override;
       size_type
       nGlobalCells() const override;
       size_type
