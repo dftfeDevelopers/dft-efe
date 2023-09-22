@@ -48,7 +48,8 @@ namespace dftefe
      * A derived class of FEBasisManager to handle the FE basis evaluations
      * through dealii
      */
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace, size_type dim>
     class EFEBasisManagerDealii : public EFEBasisManager
     {
     public:
@@ -194,6 +195,15 @@ namespace dftefe
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
       getEnrichmentIdsPartition() const;
 
+      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>>
+      getEnrichmentClassicalInterface() const;
+
+      bool
+      isOrthogonalized() const;
+
+      bool
+      totalRanges() const;
+
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
@@ -219,7 +229,9 @@ namespace dftefe
       std::string               d_fieldName;
       const double              d_atomPartitionTolerance;
       const utils::mpi::MPIComm d_comm;
-
+      bool                      d_isOrthogonalized;
+      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
+      std::shared_ptr<const linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
 
     }; // end of EFEBasisManagerDealii
   }    // end of namespace basis

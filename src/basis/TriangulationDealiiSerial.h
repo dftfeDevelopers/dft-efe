@@ -64,6 +64,8 @@ namespace dftefe
       endLocal() const override;
       unsigned int
       getDim() const override;
+      std::vector<bool>
+      getPeriodicFlags() const override;
 
       // class specific member function
       const dealii::Triangulation<dim> &
@@ -86,6 +88,7 @@ namespace dftefe
       bool                                                isFinalized;
       dealii::Triangulation<dim>                          d_triangulationDealii;
       std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorCell;
+      std::vector<bool>                                   d_isPeriodicFlags;
 
     }; // end of class TriangulationDealiiSerial
 

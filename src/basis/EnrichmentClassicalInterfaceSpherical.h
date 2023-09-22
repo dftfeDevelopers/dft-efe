@@ -64,9 +64,8 @@ namespace dftefe
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
-      const double                     maxCellDiameter,
-      const std::vector<bool>         & isPeriodicFlags,
-      std::string                       basisInterfaceCoeffConstraint,
+      std::string                      basisInterfaceCoeffConstraint,
+      std::shared_ptr< const linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
       const utils::mpi::MPIComm &      comm);
 
       EnrichmentClassicalInterfaceSpherical(
@@ -77,7 +76,6 @@ namespace dftefe
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
-      const std::vector<bool>         & periodicFlags,
       const utils::mpi::MPIComm &      comm);
 
       /**
@@ -94,6 +92,15 @@ namespace dftefe
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
       getEnrichmentidsPartition() const;
 
+      std::shared_ptr<const AtomIdsPartition<dim>>
+      getAtomIdsPartition() const;
+
+      std::shared_ptr<const FEBasisHandler>
+      getCFEBasisHandler() const;
+
+      std::string
+      getBasisInterfaceCoeffConstraint() const;
+
       linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>
       getBasisInterfaceCoeff() const;
 
@@ -109,6 +116,9 @@ namespace dftefe
                                 d_atomSphericalDataContainer;
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> d_basisInterfaceCoeff;
       const bool d_isOrthogonalized;
+      std::shared_ptr<const FEBasisHandler> d_cfeBasisHandler;
+      const std::string d_basisInterfaceCoeffConstraint;
+
     }; // end of class AtomIdsPartition
   }    // end of namespace basis
 } // end of namespace dftefe

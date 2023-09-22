@@ -65,6 +65,8 @@ namespace dftefe
       endLocal() const = 0;
       virtual unsigned int
       getDim() const = 0;
+      virtual std::vector<bool>
+      getPeriodicFlags() const = 0;
 
     }; // end of class TriangulationBase
   }    // end of namespace basis

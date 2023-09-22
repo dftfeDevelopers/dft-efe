@@ -35,7 +35,7 @@ namespace dftefe
     {
       template <typename ValueTypeBasisData>
       ValueTypeBasisData
-      getPristineEnrichmentValue(std::shared_ptr<const basis::EnrichmentIdsPartition<dim>>
+      getEnrichmentValue(std::shared_ptr<const EnrichmentIdsPartition<dim>>
                                   enrichmentIdsPartition,
                                   std::shared_ptr<const AtomSphericalDataContainer> atomSphericalDataContainer,
                                   const std::vector<std::string> & atomSymbolVec,
@@ -87,7 +87,7 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
-    EnrichmentClassicalInterfaceSpherical<dim>::EnrichmentClassicalInterfaceSpherical(
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::EnrichmentClassicalInterfaceSpherical(
       std::shared_ptr<const FEBasisDataStorage> cfeBasisDataStorage,
       std::shared_ptr<const FEBasisHandler> cfeBasisHandler,
       std::shared_ptr<const quadrature::QuadratureRuleAttributes> l2ProjQuadAttr,
@@ -97,34 +97,25 @@ namespace dftefe
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
-      const double                     maxCellDiameter,
-      const std::vector<bool>         & isPeriodicFlags,
       std::string                       basisInterfaceCoeffConstraint,
+      std::shared_ptr< const linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
       const utils::mpi::MPIComm &      comm)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbolVec)
-      , d_atomCoordinatesVec(0, utils::Point(dim, 0.0))
-      , d_fieldName(fieldName)
-      , d_comm(comm)
-      , d_atomPartitionTolerance(atomPartitionTolerance)
       , d_enrichmentIdsPartition(nullptr)
+      , d_cfeBasisHandler(cfeBasisHandler)
+      , d_basisInterfaceCoeffConstraint(basisInterfaceCoeffConstraint)
       , d_atomIdsPartition(nullptr)
-      , d_totalRanges(2)
     {
       d_isOrthogonalized = true;
-      d_atomCoordinatesVec = atomCoordinatesVec;
-      const size_type d_nEnrichmentRanges = d_totalRanges - 1;
+      const size_type nEnrichmentRanges = 1;
       d_basisInterfaceCoeff(cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint), 
-        linAlgOpContext, d_nEnrichmentRanges, ValueTypeBasisData());
+        linAlgOpContext, nEnrichmentRanges, ValueTypeBasisData());
 
       if(dim != 3)
         utils::throwException(
         false,
         "Dimension should be 3 for Spherical Enrichment Dofs.");
-      if (std::any_of(isPeriodicFlags.begin(), isPeriodicFlags.end(), [](bool i) { return i == true }))
-        utils::throwException(
-        false,
-        "The domain has to be non-periodic only.");
+
       // Partition the enriched dofs based on the BCs and Orthogonalized EFE
 
       std::vector<utils::Point> cellVertices(0, utils::Point(dim, 0.0));
@@ -168,22 +159,22 @@ namespace dftefe
                                                       minbound,
                                                       maxbound,
                                                       cellVerticesVector,
-                                                      d_atomPartitionTolerance,
-                                                      d_comm);
+                                                      atomPartitionTolerance,
+                                                      comm);
 
       // Create enrichmentIdsPartition Object.
       d_enrichmentIdsPartition =
         std::make_shared<const EnrichmentIdsPartition<dim>>(
           d_atomSphericalDataContainer,
           d_atomIdsPartition,
-          d_atomSymbolVec,
-          d_atomCoordinatesVec,
-          d_fieldName,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          fieldName,
           minbound,
           maxbound,
-          maxCellDiameter,
+          cfeBasisDataStorage->getTriangulation()->maxCellDiameter(),
           cellVerticesVector,
-          d_comm);
+          comm);
 
       // For Non-Periodic BC, a sparse vector d_i with hanging with homogenous BC will be formed which 
       // will be solved by Md = integrateWithBasisValues( homogeneous BC).
@@ -196,18 +187,18 @@ namespace dftefe
 
       quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> 
         quadValuesEnrichmentFunction(cfeBasisDataStorage->getQuadratureRuleContainer(l2ProjQuadAttr), 
-        d_nEnrichmentRanges);
+        nEnrichmentRanges);
 
       for(size_type i = 0 ; i < quadValuesEnrichmentFunction.nCells() ; i++)
       {
         size_type quadId = 0;
         for (auto quadPoint : cfeBasisDataStorage->getQuadratureRuleContainer().getCellRealPoints(i))
         {
-          std::vector<ValueTypeBasisData> enrichmentQuadValue(d_nEnrichmentRanges, 0);
-          for ( size_type i = 0 ; i < d_nEnrichmentRanges ; i++)
+          std::vector<ValueTypeBasisData> enrichmentQuadValue(nEnrichmentRanges, 0);
+          for ( size_type i = 0 ; i < nEnrichmentRanges ; i++)
           {
             enrichmentQuadValue[i] = EnrichmentClassicalInterfaceSphericalInternal::
-                                    getPristineEnrichmentValue<ValueTypeBasisData>(
+                                    getEnrichmentValue<ValueTypeBasisData>(
                                                                 d_enrichmentIdsPartition,
                                                                 d_atomSphericalDataContainer,
                                                                 d_atomSymbolVec,
@@ -222,7 +213,7 @@ namespace dftefe
       }
 
       // Set up basis Operations
-      basis::FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage,50);
+      FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
 
       std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
                                                       ValueTypeBasisData,
@@ -261,7 +252,7 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
-    EnrichmentClassicalInterfaceSpherical<dim>::EnrichmentClassicalInterfaceSpherical(
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::EnrichmentClassicalInterfaceSpherical(
       std::shared_ptr<const TriangulationBase> triangulation,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
@@ -269,29 +260,18 @@ namespace dftefe
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
-      const std::vector<bool>         & isPeriodicFlags,
       const utils::mpi::MPIComm &      comm)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbolVec)
-      , d_atomCoordinatesVec(0, utils::Point(dim, 0.0))
-      , d_fieldName(fieldName)
-      , d_comm(comm)
-      , d_atomPartitionTolerance(atomPartitionTolerance)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
-      , d_totalRanges(2)
     {
       d_isOrthogonalized = false;
-      d_atomCoordinatesVec = atomCoordinatesVec;
 
       if(dim != 3)
         utils::throwException(
         false,
         "Dimension should be 3 for Spherical Enrichment Dofs.");
-      if (std::any_of(isPeriodicFlags.begin(), isPeriodicFlags.end(), [](bool i) { return i == true }))
-        utils::throwException(
-        false,
-        "The domain has to be non-periodic only.");
+
       // Partition the enriched dofs based on the BCs and Orthogonalized EFE
 
       std::vector<utils::Point> cellVertices(0, utils::Point(dim, 0.0));
@@ -335,53 +315,84 @@ namespace dftefe
                                                       minbound,
                                                       maxbound,
                                                       cellVerticesVector,
-                                                      d_atomPartitionTolerance,
-                                                      d_comm);
+                                                      atomPartitionTolerance,
+                                                      comm);
 
       // Create enrichmentIdsPartition Object.
       d_enrichmentIdsPartition =
         std::make_shared<const EnrichmentIdsPartition<dim>>(
           d_atomSphericalDataContainer,
           d_atomIdsPartition,
-          d_atomSymbolVec,
-          d_atomCoordinatesVec,
-          d_fieldName,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          fieldName,
           minbound,
           maxbound,
           0,
           cellVerticesVector,
-          d_comm);
+          comm);
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     std::shared_ptr<const atoms::AtomSphericalDataContainer>
-    EnrichmentClassicalInterfaceSpherical<dim>::getAtomSphericalDataContainer() const
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getAtomSphericalDataContainer() const
     {
       return d_atomSphericalDataContainer;
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     std::shared_ptr<const EnrichmentIdsPartition<dim>>
-    EnrichmentClassicalInterfaceSpherical<dim>::getEnrichmentIdsPartition() const
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getEnrichmentIdsPartition() const
     {
       return d_enrichmentIdsPartition;
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
-    linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>
-    EnrichmentClassicalInterfaceSpherical<dim>::getBasisInterfaceCoeff() const
+    std::shared_ptr<const AtomIdsPartition<dim>>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getAtomIdsPartition() const
+    {
+      return d_atomIdsPartition;
+    }
+
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
+    std::shared_ptr<const FEBasisHandler>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getCFEBasisHandler() const
     {
       if( !d_isOrthgonalized )
         utils::throwException(
         false,
-        "Cannot have basis Interface Coefficients for d_isOrthogonalized false.");
+        "Cannot call getCFEBasisHandler() for no orthogonalization of EFE.");
+      else
+      return d_CFEBasisHandler;
+    }
+
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
+    std::string
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getBasisInterfaceCoeffConstraint() const
+    {
+      if( !d_isOrthgonalized )
+        utils::throwException(
+        false,
+        "Cannot call getBasisInterfaceCoeffConstraint() for no orthogonalization of EFE.");
+      else
+      return d_basisInterfaceCoeffConstraint;
+    }
+
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
+    linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getBasisInterfaceCoeff() const
+    {
+      if( !d_isOrthgonalized )
+        utils::throwException(
+        false,
+        "Cannot call getBasisInterfaceCoeff() for no orthogonalization of EFE.");
       else
       return d_basisInterfaceCoeff;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     bool
-    EnrichmentClassicalInterfaceSpherical<dim>::isOrthgonalized() const
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::isOrthgonalized() const
     {
       return d_isOrthgonalized;
     }

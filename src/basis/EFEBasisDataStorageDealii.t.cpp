@@ -214,6 +214,48 @@ namespace dftefe
 
         cellIndex                      = 0;
         size_type cumulativeQuadPoints = 0;
+
+        if(efeBM->isOrthgonalized())
+        {
+
+            BasisStorageAttributesBoolMap basisAttrMap;
+            basisAttrMap[BasisStorageAttributes::StoreValues] = true;
+            basisAttrMap[BasisStorageAttributes::StoreGradient] = true;
+            basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+            basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+            basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+            basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+            basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+            // Set up the FE Basis Data Storage
+            std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+              std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+              (efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+            cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+
+            FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+            dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> 
+              basisClassicalInterfaceQuadValues(*quadratureRuleContainer, efeBM->totalRanges()-1);
+
+            dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> 
+              basisClassicalInterfaceQuadGradients(*quadratureRuleContainer, (efeBM->totalRanges()-1)*dim);
+            
+            cfeBasisOp.interpolate( efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                   efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                   *efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                   quadratureRuleAttributes,  
+                                   basisClassicalInterfaceQuadValues);
+
+            cfeBasisOp.interpolateWithBasisGradient( efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                   efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                   *efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                   quadratureRuleAttributes, 
+                                   basisClassicalInterfaceQuadGradients);
+
+        }
+
         for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
@@ -254,11 +296,21 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;
+                            if(efeBM->isOrthgonalized())
+                            {
+                              for(unsigned int i = 0 ; i < basisClassicalInterfaceQuadValues.getNumberComponents() ; i++)
+                              {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                              }
+                            }
+
                             *basisQuadStorageTmpIter =
                               efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]);
+                                quadRealPointsVec[qPoint])-classicalComponent;
 
                             // std::cout << quadRealPointsVec[qPoint][0] << " "
                             // << quadRealPointsVec[qPoint][1] << " " <<

@@ -332,6 +332,247 @@ namespace dftefe
                       ValueTypeBasisData,
                       memorySpace,
                       dim>::
+      interpolateWithBasisGradient(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+                                                              & vectorData,
+        const std::string &                                   constraintsName,
+        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData>,
+          memorySpace> &quadValuesContainer) const
+
+    {
+      const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
+        &feBasisHandler = dynamic_cast<
+          const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
+          basisHandler);
+      utils::throwException(
+        &feBasisHandler != nullptr,
+        "Could not cast BasisHandler of the input vector to FEBasisHandler in "
+        "FEBasisOperations.interpolate()");
+
+      const BasisManager &basisManager = basisHandler.getBasisManager();
+
+      const FEBasisManager &feBasisManager =
+        dynamic_cast<const FEBasisManager &>(basisManager);
+      utils::throwException(
+        &feBasisManager != nullptr,
+        "Could not cast BasisManager of the input vector to FEBasisManager "
+        "in FEBasisOperations.interpolate()");
+
+      const size_type numComponents = vectorData.getNumberComponents();
+      const size_type numLocallyOwnedCells =
+        feBasisHandler.nLocallyOwnedCells();
+      const size_type numCumulativeLocallyOwnedCellDofs =
+        feBasisHandler.nCumulativeLocallyOwnedCellDofs();
+      auto itCellLocalIdsBegin =
+        feBasisHandler.locallyOwnedCellLocalDofIdsBegin(constraintsName);
+      std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+        numCellDofs[iCell] = feBasisHandler.nLocallyOwnedCellDofs(iCell);
+
+      //
+      // reinit the quadValuesContainer
+      //
+      const quadrature::QuadratureRuleContainer &quadRuleContainer =
+        d_feBasisDataStorage->getQuadratureRuleContainer(
+          quadratureRuleAttributes);
+      quadValuesContainer.reinit(quadRuleContainer,
+                                 numComponents*dim,
+                                 ValueTypeUnion());
+
+      const quadrature::QuadratureFamily quadratureFamily =
+        quadratureRuleAttributes.getQuadratureFamily();
+      bool sameQuadRuleInAllCells = false;
+      if (quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
+          quadratureFamily == quadrature::QuadratureFamily::GLL)
+        sameQuadRuleInAllCells = true;
+      bool variableDofsPerCell = feBasisManager.isVariableDofsPerCell();
+
+      // Perform
+      // Ce = Ae*Be, where Ce_ij = interpolated value of the i-th component at
+      // j-th quad point in e-th cell Ae_ik = i-th vector components at k-th
+      // basis function of e-th cell Be_kj = k-th basis function gradient value at j-th
+      // quad point in e-th cell
+      //
+
+      //
+      // For better performance, we evaluate Ce for multiple cells at a time
+      //
+
+      //
+      // @note: The Be matrix is stored with the quad point as the fastest
+      // index. That is Be_kj (k-th basis function value at j-th quad point in
+      // e-th cell) is stored in a row-major format. Instead of copying it to a
+      // column major format (which is assumed native format for Blas/Lapack
+      // data), we use the transpose of Be matrix. That is, we perform Ce =
+      // Ae*(Be)^T, with Be stored in row major format
+      //
+      const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
+      linearAlgebra::blasLapack::Layout layout =
+        linearAlgebra::blasLapack::Layout::ColMajor;
+      size_type       cellLocalIdsOffset = 0;
+      size_type       BStartOffset       = 0;
+      size_type       CStartOffset       = 0;
+      const size_type cellBlockSize = d_maxCellTimesFieldBlock / numComponents;
+      for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
+           cellStartId += cellBlockSize)
+        {
+          const size_type cellEndId =
+            std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
+          const size_type        numCellsInBlock = cellEndId - cellStartId;
+          std::vector<size_type> numCellsInBlockDofs(numCellsInBlock, 0);
+          std::copy(numCellDofs.begin() + cellStartId,
+                    numCellDofs.begin() + cellEndId,
+                    numCellsInBlockDofs.begin());
+
+          const size_type numCumulativeDofsCellsInBlock =
+            std::accumulate(numCellsInBlockDofs.begin(),
+                            numCellsInBlockDofs.end(),
+                            0);
+          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+            fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+            memoryTransfer;
+
+          utils::MemoryStorage<size_type, memorySpace>
+            numCellsInBlockDofsMemSpace(numCellsInBlock);
+          memoryTransfer.copy(numCellsInBlock,
+                              numCellsInBlockDofsMemSpace.data(),
+                              numCellsInBlockDofs.data());
+          FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
+            copyFieldToCellWiseData(vectorData.begin(),
+                                    numComponents,
+                                    itCellLocalIdsBegin + cellLocalIdsOffset,
+                                    numCellsInBlockDofsMemSpace,
+                                    fieldCellValues);
+
+          std::vector<linearAlgebra::blasLapack::Op> transA(
+            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+          std::vector<linearAlgebra::blasLapack::Op> transB(
+            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+          std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> strideATmp(numCellsInBlock, 0);
+          std::vector<size_type> strideBTmp(numCellsInBlock, 0);
+          std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+
+          for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+            {
+              const size_type cellId = cellStartId + iCell;
+              mSizesTmp[iCell]       = numComponents;
+              nSizesTmp[iCell] =
+                quadValuesContainer.nCellQuadraturePoints(cellId)*dim;
+              kSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
+              ldaSizesTmp[iCell] = mSizesTmp[iCell];
+              ldbSizesTmp[iCell] = nSizesTmp[iCell];
+              ldcSizesTmp[iCell] = mSizesTmp[iCell];
+              strideATmp[iCell]  = mSizesTmp[iCell] * kSizesTmp[iCell];
+              strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
+              if (!zeroStrideB)
+                strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
+            }
+
+          utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> ldaSizes(
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> ldbSizes(
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> ldcSizes(
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
+          memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              ldaSizes.data(),
+                              ldaSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              ldbSizes.data(),
+                              ldbSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              ldcSizes.data(),
+                              ldcSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideA.data(),
+                              strideATmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideB.data(),
+                              strideBTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
+                              strideC.data(),
+                              strideCTmp.data());
+
+          ValueTypeUnion                               alpha = 1.0;
+          ValueTypeUnion                               beta  = 0.0;
+          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
+            *(vectorData.getLinAlgOpContext().get());
+
+          const ValueTypeBasisData *B =
+            (d_feBasisDataStorage->getBasisGradientDataInAllCells(
+               quadratureRuleAttributes))
+              .data() +
+            BStartOffset;
+
+          ValueTypeUnion *C = quadValuesContainer.begin() + CStartOffset;
+          linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
+                                                           ValueTypeBasisData,
+                                                           memorySpace>(
+            layout,
+            numCellsInBlock,
+            transA.data(),
+            transB.data(),
+            strideA.data(),
+            strideB.data(),
+            strideC.data(),
+            mSizes.data(),
+            nSizes.data(),
+            kSizes.data(),
+            alpha,
+            fieldCellValues.data(),
+            ldaSizes.data(),
+            B,
+            ldbSizes.data(),
+            beta,
+            C,
+            ldcSizes.data(),
+            linAlgOpContext);
+
+
+          for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+            {
+              if (!zeroStrideB)
+                {
+                  BStartOffset += kSizesTmp[iCell] * nSizesTmp[iCell];
+                }
+              CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
+              cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
+            }
+        }
+    }
+
+    // Assess i,j,k element by A[i*numvec*dim + j*numvec + k (numvec is the fastest)]
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      memorySpace,
+                      dim>::
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &                                         inp,
