@@ -88,7 +88,7 @@ namespace dftefe
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           cfeBasisDataStorage,
-        FEBasisOperations<ValueTypeBasisOperand, ValurTypeBasisOperator,memorySpace,
+        FEBasisOperations<ValueTypeOperand, ValueTypeOperator,memorySpace,
          dim> cfeBasisOperations,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -146,6 +146,7 @@ namespace dftefe
       linearAlgebra::PreconditionerType d_pcType;
       const linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
       std::string  d_basisInterfaceCoeffConstraint;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
     }; // end of class L2ProjectionLinearSolverFunction
   }    // namespace basis
 } // end of namespace dftefe

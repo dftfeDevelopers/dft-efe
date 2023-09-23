@@ -40,7 +40,7 @@ namespace dftefe
       : d_isVariableDofsPerCell(false)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
-      reinit(triangulation, feOrder);
+      reinit(triangulation, feOrder, std::vector<std::string>(), std::vector<utils::Point>(0, utils::Point(dim, 0.0)));
     }
 
     template <size_type dim>
@@ -74,7 +74,9 @@ namespace dftefe
     void
     FEBasisManagerDealii<dim>::reinit(
       std::shared_ptr<const TriangulationBase> triangulation,
-      const size_type                          feOrder)
+      const size_type                          feOrder,
+      const std::vector<std::string> & atomSymbolVec,
+      const std::vector<utils::Point> & atomCoordinatesVec)
     {
       dealii::FE_Q<dim>                       feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =

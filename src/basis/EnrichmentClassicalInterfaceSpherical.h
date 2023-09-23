@@ -32,6 +32,20 @@
 #include <string>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
+#include <memory>
+#include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
+#include <basis/FEBasisManager.h>
+#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisOperations.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <basis/AtomIdsPartition.h>
+#include <atoms/AtomSphericalDataContainer.h>
+#include <basis/EnrichmentIdsPartition.h>
+#include <basis/TriangulationBase.h>
+#  include <linearAlgebra/LinAlgOpContext.h>
+
 namespace dftefe
 {
   namespace basis
@@ -55,9 +69,9 @@ namespace dftefe
        * @param[in] comm MPI_Comm object if defined with MPI
        */
       EnrichmentClassicalInterfaceSpherical(
-      std::shared_ptr<const FEBasisDataStorage> cfeBasisDataStorage,
-      std::shared_ptr<const FEBasisHandler> cfeBasisHandler,
-      std::shared_ptr<const quadrature::QuadratureRuleAttributes> l2ProjQuadAttr,
+      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage,
+      std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
+      const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
       const double                     atomPartitionTolerance,
@@ -90,12 +104,12 @@ namespace dftefe
       getAtomSphericalDataContainer() const;
 
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
-      getEnrichmentidsPartition() const;
+      getEnrichmentIdsPartition() const;
 
       std::shared_ptr<const AtomIdsPartition<dim>>
       getAtomIdsPartition() const;
 
-      std::shared_ptr<const FEBasisHandler>
+      std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
       getCFEBasisHandler() const;
 
       std::string
@@ -114,13 +128,13 @@ namespace dftefe
                                 d_atomIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
-      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> d_basisInterfaceCoeff;
+      linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> d_basisInterfaceCoeff;
       const bool d_isOrthogonalized;
-      std::shared_ptr<const FEBasisHandler> d_cfeBasisHandler;
+      std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> d_cfeBasisHandler;
       const std::string d_basisInterfaceCoeffConstraint;
 
-    }; // end of class AtomIdsPartition
+    }; // end of class
   }    // end of namespace basis
 } // end of namespace dftefe
-#include "EnrichmentClassicalInterfaceSpherical.t.cpp"
+#include <basis/EnrichmentClassicalInterfaceSpherical.t.cpp>
 #endif // dftefeEnrichmentClassicalInterfaceSpherical_h

@@ -41,6 +41,7 @@
 #include <atoms/AtomSphericalDataContainer.h>
 #include <basis/EnrichmentIdsPartition.h>
 #include <basis/ParentToChildCellsManagerDealii.h>
+#include <basis/Defaults.h>
 
 namespace dftefe
 {
@@ -57,7 +58,7 @@ namespace dftefe
                 size_type          dim>
       void
       storeValuesHRefinedSameQuadEveryCell(
-        std::shared_ptr<const EFEBasisManagerDealii<dim>> efeBM,
+        std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> efeBM,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &basisQuadStorage,
@@ -557,7 +558,7 @@ namespace dftefe
                 size_type          dim>
       void
       storeGradNiNjHRefinedSameQuadEveryCell(
-        std::shared_ptr<const EFEBasisManagerDealii<dim>> efeBM,
+        std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> efeBM,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &                                         basisGradNiGradNj,
@@ -772,7 +773,7 @@ namespace dftefe
                 size_type          dim>
       void
       storeValuesHRefinedAdaptiveQuad(
-        std::shared_ptr<const EFEBasisManagerDealii<dim>> efeBM,
+        std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> efeBM,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &basisQuadStorage,
@@ -1237,7 +1238,7 @@ namespace dftefe
                 size_type          dim>
       void
       storeGradNiGradNjHRefinedAdaptiveQuad(
-        std::shared_ptr<const EFEBasisManagerDealii<dim>> efeBM,
+        std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> efeBM,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &                                         basisGradNiGradNj,
@@ -1467,7 +1468,7 @@ namespace dftefe
     {
       d_evaluateBasisData = false;
       d_efeBM =
-        std::dynamic_pointer_cast<const EFEBasisManagerDealii<dim>>(efeBM);
+        std::dynamic_pointer_cast<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>>(efeBM);
       utils::throwException(
         d_efeBM != nullptr,
         " Could not cast the EFEBasisManager to EFEBasisManagerDealii in EFEBasisDataStorageDealii");

@@ -44,6 +44,7 @@ namespace dftefe
      * of a finite element basis across multiple processors
      */
     template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     class EFEBasisHandlerDealii
@@ -203,11 +204,11 @@ namespace dftefe
       //
 
     private:
-      std::shared_ptr<const EFEBasisManagerDealii<dim>> d_efeBMDealii;
+      std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> d_efeBMDealii;
       std::map<
         std::string,
         std::shared_ptr<
-          const EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>>
+          const EFEConstraintsDealii<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>>>
                           d_efeConstraintsDealiiOptMap;
       utils::mpi::MPIComm d_mpiComm;
       bool                d_isDistributed;

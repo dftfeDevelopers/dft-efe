@@ -23,12 +23,11 @@
  * @author Avirup Sircar
  */
 
-#include <utils/Defaults.h>
 namespace dftefe
 {
   namespace basis
   {
-    namespace L2ProjectionLinearSolverFunctionFEInternal
+    namespace L2ProjectionLinearSolverFunctionInternal
     {
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
@@ -164,7 +163,7 @@ namespace dftefe
         //
         // get processor local part of the diagonal
         //
-        L2ProjectionLinearSolverFunctionFEInternal::computeDiagonalCellWiseLocal<
+        L2ProjectionLinearSolverFunctionInternal::computeDiagonalCellWiseLocal<
           ValueTypeOperator,
           ValueTypeOperand,
           memorySpace>(NiNjInAllCells,
@@ -186,7 +185,7 @@ namespace dftefe
         diagonal.updateGhostValues();
       }
 
-    } // end of namespace L2ProjectionLinearSolverFunctionFEInternal
+    } // end of namespace L2ProjectionLinearSolverFunctionInternal
 
 
     //
@@ -197,18 +196,18 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+    L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::
-      L2ProjectionLinearSolverFunctionFE(
+      L2ProjectionLinearSolverFunction(
         std::shared_ptr<
           const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
                                              cfeBasisHandler,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           cfeBasisDataStorage,
-        FEBasisOperations<ValueTypeBasisOperand, ValurTypeBasisOperator,memorySpace,
+        FEBasisOperations<ValueTypeOperand, ValueTypeOperator,memorySpace,
          dim> cfeBasisOperations,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -243,7 +242,7 @@ namespace dftefe
                                                ValueTypeOperand>;
 
       d_AxContext =
-        std::make_shared<BasisOverlapOperatorContextFE<ValueTypeOperator,
+        std::make_shared<BasisOverlapOperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
                                                            memorySpace,
                                                            dim>>(
@@ -259,7 +258,7 @@ namespace dftefe
 
       if (d_pcType == linearAlgebra::PreconditionerType::JACOBI)
         {
-          L2ProjectionLinearSolverFunctionFEInternal::
+          L2ProjectionLinearSolverFunctionInternal::
             getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
               diagonal,
               d_feBasisHandler,
@@ -319,7 +318,7 @@ namespace dftefe
               size_type          dim>
     const linearAlgebra::
       OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
-      L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+      L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::getAxContext() const
@@ -333,7 +332,7 @@ namespace dftefe
               size_type          dim>
     const linearAlgebra::
       OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
-      L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+      L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::getPCContext() const
@@ -346,7 +345,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+    L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::
@@ -363,7 +362,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+    L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::
@@ -394,7 +393,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
-    L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+    L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::getRhs() const
@@ -410,7 +409,7 @@ namespace dftefe
       linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                              ValueTypeOperand>,
       memorySpace> &
-    L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+    L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::getInitialGuess() const
@@ -423,7 +422,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     const utils::mpi::MPIComm &
-    L2ProjectionLinearSolverFunctionFE<ValueTypeOperator,
+    L2ProjectionLinearSolverFunction<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
                                   dim>::getMPIComm() const

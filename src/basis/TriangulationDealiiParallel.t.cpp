@@ -295,9 +295,9 @@ namespace dftefe
     {
       utils::throwException<utils::LogicError>(
         isInitialized && !isFinalized,
-        "Cannot execute coarsening or refinement of triangulation without calling"
+        "Cannot execute this without calling"
         "initializeTriangulationConstruction");
-      dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
+      return dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
     }
 
     template <unsigned int dim>
@@ -335,7 +335,7 @@ namespace dftefe
       return dim;
     }
 
-    template>unsigned int dim>
+    template<unsigned int dim>
     std::vector<bool>
     TriangulationDealiiParallel<dim>::getPeriodicFlags() const
     {

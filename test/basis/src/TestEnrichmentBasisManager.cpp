@@ -121,12 +121,9 @@ int main()
 
   unsigned int feDegree = 2;
 
-  // make FEBasisManagerDealii for the constraints
-  std::shared_ptr<dftefe::basis::FEBasisManager> febasisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(
-      triangulationBase ,
-      feDegree); 
+  dftefe::quadrature::QuadratureRuleAttributes l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GLL,true,4);
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<dim>>(
+  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
       triangulationBase ,
       atomSphericalDataContainer ,
       feDegree ,
@@ -134,7 +131,9 @@ int main()
       atomSymbol,
       atomCoordinatesVec,
       fieldName,
-      comm);
+      comm,
+      l2ProjQuadAttr,
+      linAlgOpContext);
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
 
@@ -147,7 +146,7 @@ int main()
     constraintsVec;
   constraintsVec.resize(1);
   for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
+   constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
    
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(febasisManager);

@@ -31,6 +31,7 @@
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisOperations.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <basis/EFEBasisManagerDealii.h>
 #include <basis/EFEBasisManager.h>

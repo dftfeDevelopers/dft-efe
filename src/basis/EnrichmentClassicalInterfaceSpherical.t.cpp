@@ -22,10 +22,12 @@
 /*
  * @author Avirup Sircar
  */
-#include <utils/Point.h>
 #include <basis/Defaults.h>
 #include <utils/PointImpl.h>
-#include <basis/EnrichementClassicalInterfaceSpherical.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/LinearSolverFunction.h>
+#include <basis/L2ProjectionLinearSolverFunction.h>
+#include <linearAlgebra/CGLinearSolver.h>
 
 namespace dftefe
 {
@@ -33,11 +35,11 @@ namespace dftefe
   {
     namespace EnrichmentClassicalInterfaceSphericalInternal
     {
-      template <typename ValueTypeBasisData>
+      template <typename ValueTypeBasisData, size_type dim>
       ValueTypeBasisData
-      getEnrichmentValue(std::shared_ptr<const EnrichmentIdsPartition<dim>>
+      getEnrichmentValue(std::shared_ptr<const basis::EnrichmentIdsPartition<dim>>
                                   enrichmentIdsPartition,
-                                  std::shared_ptr<const AtomSphericalDataContainer> atomSphericalDataContainer,
+                                  std::shared_ptr<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer,
                                   const std::vector<std::string> & atomSymbolVec,
                                   const std::vector<utils::Point> &atomCoordinatesVec,
                                   const std::string  fieldName,
@@ -88,9 +90,9 @@ namespace dftefe
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::EnrichmentClassicalInterfaceSpherical(
-      std::shared_ptr<const FEBasisDataStorage> cfeBasisDataStorage,
-      std::shared_ptr<const FEBasisHandler> cfeBasisHandler,
-      std::shared_ptr<const quadrature::QuadratureRuleAttributes> l2ProjQuadAttr,
+      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage,
+      std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
+      const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
       const double                     atomPartitionTolerance,
@@ -155,7 +157,7 @@ namespace dftefe
 
       // Create atomIdsPartition Object.
       d_atomIdsPartition =
-        std::make_shared<const AtomIdsPartition<dim>>(d_atomCoordinatesVec,
+        std::make_shared<const AtomIdsPartition<dim>>(atomCoordinatesVec,
                                                       minbound,
                                                       maxbound,
                                                       cellVerticesVector,
@@ -198,13 +200,13 @@ namespace dftefe
           for ( size_type i = 0 ; i < nEnrichmentRanges ; i++)
           {
             enrichmentQuadValue[i] = EnrichmentClassicalInterfaceSphericalInternal::
-                                    getEnrichmentValue<ValueTypeBasisData>(
+                                    getEnrichmentValue<ValueTypeBasisData, dim>(
                                                                 d_enrichmentIdsPartition,
                                                                 d_atomSphericalDataContainer,
-                                                                d_atomSymbolVec,
-                                                                d_atomCoordinatesVec,
-                                                                d_fieldName,
-                                                                quadPoint)
+                                                                atomSymbolVec,
+                                                                atomCoordinatesVec,
+                                                                fieldName,
+                                                                quadPoint);
           }
           ValueTypeBasisData* quadValuePtr = enrichmentQuadValue.data();
           quadValuesEnrichmentFunction.setCellQuadValues<utils::MemorySpace::HOST> (i, quadId, quadValuePtr);
@@ -218,7 +220,7 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
                                                       ValueTypeBasisData,
                                                       memorySpace>> linearSolverFunction =
-        std::make_shared<physics::L2ProjectionLinearSolverFunctionFE<ValueTypeBasisData,
+        std::make_shared<L2ProjectionLinearSolverFunction<ValueTypeBasisData,
                                                       ValueTypeBasisData,
                                                       memorySpace,
                                                       dim>>
@@ -226,7 +228,7 @@ namespace dftefe
                                                         cfeBasisDataStorage,
                                                         cfeBasisOp,
                                                         quadValuesEnrichmentFunction,
-                                                        l2ProjectectionQuadAttr,
+                                                        l2ProjQuadAttr,
                                                         basisInterfaceCoeffConstraint,
                                                         L2ProjectionDefaults::PC_TYPE,
                                                         linAlgOpContext,
@@ -281,7 +283,7 @@ namespace dftefe
 
       for (; cell != endc; cell++)
       {
-        (cell)->getVertices(cellVertices);
+        (*cell)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
       }
 
@@ -311,7 +313,7 @@ namespace dftefe
 
       // Create atomIdsPartition Object.
       d_atomIdsPartition =
-        std::make_shared<const AtomIdsPartition<dim>>(d_atomCoordinatesVec,
+        std::make_shared<const AtomIdsPartition<dim>>(atomCoordinatesVec,
                                                       minbound,
                                                       maxbound,
                                                       cellVerticesVector,
@@ -355,22 +357,22 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
-    std::shared_ptr<const FEBasisHandler>
+    std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getCFEBasisHandler() const
     {
-      if( !d_isOrthgonalized )
+      if( !d_isOrthogonalized )
         utils::throwException(
         false,
         "Cannot call getCFEBasisHandler() for no orthogonalization of EFE.");
       else
-      return d_CFEBasisHandler;
+      return d_cfeBasisHandler;
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     std::string
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getBasisInterfaceCoeffConstraint() const
     {
-      if( !d_isOrthgonalized )
+      if( !d_isOrthogonalized )
         utils::throwException(
         false,
         "Cannot call getBasisInterfaceCoeffConstraint() for no orthogonalization of EFE.");
@@ -382,7 +384,7 @@ namespace dftefe
     linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getBasisInterfaceCoeff() const
     {
-      if( !d_isOrthgonalized )
+      if( !d_isOrthogonalized )
         utils::throwException(
         false,
         "Cannot call getBasisInterfaceCoeff() for no orthogonalization of EFE.");
@@ -394,7 +396,7 @@ namespace dftefe
     bool
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::isOrthgonalized() const
     {
-      return d_isOrthgonalized;
+      return d_isOrthogonalized;
     }
 
   } // namespace basis

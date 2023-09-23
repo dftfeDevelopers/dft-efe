@@ -37,6 +37,14 @@
 #  include <utils/Exceptions.h>
 #  include <utils/MPITypes.h>
 #  include <utils/MPIWrapper.h>
+#  include <quadrature/QuadratureValuesContainer.h>
+#  include <quadrature/QuadratureRuleContainer.h>
+#  include <quadrature/QuadratureAttributes.h>
+#  include <basis/EnrichmentClassicalInterfaceSpherical.h>
+#  include <basis/FEBasisManagerDealii.h>
+#  include <basis/FEConstraintsDealii.h>
+#  include <basis/FEBasisDataStorageDealii.h>
+#  include <linearAlgebra/LinAlgOpContext.h>
 
 /// dealii includes
 #  include <deal.II/dofs/dof_handler.h>
@@ -53,6 +61,20 @@ namespace dftefe
     class EFEBasisManagerDealii : public EFEBasisManager
     {
     public:
+
+      EFEBasisManagerDealii(
+        std::shared_ptr<const TriangulationBase> triangulation,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                        atomSphericalDataContainer,
+        const size_type                  feOrder,
+        const double                     atomPartitionTolerance,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<utils::Point> &atomCoordinatesVec,
+        const std::string                fieldName,
+        const utils::mpi::MPIComm &      comm,
+        const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
+        std::shared_ptr<const linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
+
       EFEBasisManagerDealii(
         std::shared_ptr<const TriangulationBase> triangulation,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
@@ -76,7 +98,9 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) override;
+             const size_type                          feOrder,
+             const std::vector<std::string> & atomSymbolVec,
+             const std::vector<utils::Point> & atomCoordinatesVec) override;
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -230,6 +254,7 @@ namespace dftefe
       const double              d_atomPartitionTolerance;
       const utils::mpi::MPIComm d_comm;
       bool                      d_isOrthogonalized;
+      const quadrature::QuadratureRuleAttributes d_l2ProjQuadAttr;
       std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
       std::shared_ptr<const linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
 

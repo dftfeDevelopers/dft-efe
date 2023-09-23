@@ -25,7 +25,12 @@ set(DFT-EFE-BASIS-SOURCES
 	EFEBasisManagerDealii.cpp
 	FEBasisOperations.cpp
 	AtomIdsPartition.cpp
-	EnrichmentIdsPartition.cpp)
+	EnrichmentIdsPartition.cpp
+	BasisOverlapOperatorContext.cpp
+	EnrichmentClassicalInterfaceSpherical.cpp
+	L2ProjectionLinearSolverFunction.cpp
+	Defaults.cpp
+	)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
