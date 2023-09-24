@@ -562,7 +562,7 @@ namespace dftefe
         }
     }
 
-    // Assess i,j,k element by A[i*numvec*dim + j*numvec + k (numvec is the fastest)]
+    // Assess i,j,k element by C[i*numvec*dim + j*numvec + k (numvec is the fastest)] cell->dim->numVec (i,j,k)
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,

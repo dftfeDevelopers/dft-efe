@@ -83,6 +83,7 @@ namespace dftefe
         const std::string                            fieldName,
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
+        double                                       additionalCutoff,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
         const utils::mpi::MPIComm &                   comm);
 

@@ -78,7 +78,9 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues,
+        dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
@@ -216,47 +218,6 @@ namespace dftefe
         cellIndex                      = 0;
         size_type cumulativeQuadPoints = 0;
 
-        if(efeBM->isOrthgonalized())
-        {
-
-            BasisStorageAttributesBoolMap basisAttrMap;
-            basisAttrMap[BasisStorageAttributes::StoreValues] = true;
-            basisAttrMap[BasisStorageAttributes::StoreGradient] = true;
-            basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
-            basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
-            basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
-            basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-            basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
-
-            // Set up the FE Basis Data Storage
-            std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
-              std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
-              (efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
-
-            cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
-
-            FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
-            dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> 
-              basisClassicalInterfaceQuadValues(*quadratureRuleContainer, efeBM->totalRanges()-1);
-
-            dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> 
-              basisClassicalInterfaceQuadGradients(*quadratureRuleContainer, (efeBM->totalRanges()-1)*dim);
-            
-            cfeBasisOp.interpolate( efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
-                                   efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
-                                   *efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
-                                   quadratureRuleAttributes,  
-                                   basisClassicalInterfaceQuadValues);
-
-            cfeBasisOp.interpolateWithBasisGradient( efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
-                                   efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
-                                   *efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
-                                   quadratureRuleAttributes, 
-                                   basisClassicalInterfaceQuadGradients);
-
-        }
-
         for (; locallyOwnedCellIter != efeBM->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
@@ -301,10 +262,7 @@ namespace dftefe
                             ValueTypeBasisData classicalComponent = 0;
                             if(efeBM->isOrthgonalized())
                             {
-                              for(unsigned int i = 0 ; i < basisClassicalInterfaceQuadValues.getNumberComponents() ; i++)
-                              {
                                 basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
-                              }
                             }
 
                             *basisQuadStorageTmpIter =
@@ -349,11 +307,18 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;                            
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisOverlapTmpIter +=
-                              efeBM->getEnrichmentValue(
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
+                                quadRealPointsVec[qPoint])-classicalComponent) *
                               dealiiFEValues.shape_value(jNode, qPoint) *
                               dealiiFEValues.JxW(qPoint);
                             // enriched i * classical j
@@ -366,11 +331,18 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisOverlapTmpIter +=
-                              efeBM->getEnrichmentValue(
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
+                                quadRealPointsVec[qPoint])-classicalComponent) *
                               dealiiFEValues.shape_value(iNode, qPoint) *
                               dealiiFEValues.JxW(qPoint);
                             // enriched j * classical i
@@ -382,15 +354,22 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisOverlapTmpIter +=
-                              efeBM->getEnrichmentValue(
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
-                              efeBM->getEnrichmentValue(
+                                quadRealPointsVec[qPoint])-classicalComponent) *
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
+                                quadRealPointsVec[qPoint])-classicalComponent) *
                               dealiiFEValues.JxW(qPoint);
                             // enriched i * enriched j
                           }
@@ -432,6 +411,13 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto shapeGrad = efeBM->getEnrichmentDerivative(
                               cellIndex,
                               iNode - classicalDofsPerCell,
@@ -444,7 +430,7 @@ namespace dftefe
                                   cumulativeQuadPoints * dim * dofsPerCell +
                                   iDim * dofsPerCell * numQuadPointsPerCell +
                                   iNode * numQuadPointsPerCell + qPoint;
-                                *it = shapeGrad[iDim];
+                                *it = shapeGrad[iDim]-classicalComponent[iDim];
                               }
                           }
                       }
@@ -491,6 +477,14 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            if(efeBM->isOrthgonalized())
+                            {
+                              utils::throwException(
+                                false,
+                                "The hessian values are not calculated for OEFE. Contact developers for this.");
+                            }
+
                             auto shapeHessian = efeBM->getEnrichmentHessian(
                               cellIndex,
                               iNode - classicalDofsPerCell,
@@ -564,7 +558,8 @@ namespace dftefe
           &                                         basisGradNiGradNj,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadratureRuleContainer)
+          quadratureRuleContainer,
+        dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
 
       {
         const quadrature::QuadratureFamily quadratureFamily =
@@ -680,6 +675,13 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto enrichmentDerivative =
                               efeBM->getEnrichmentDerivative(
                                 cellIndex,
@@ -691,7 +693,7 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + enrichmentDerivative[k] *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -706,6 +708,13 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto enrichmentDerivative =
                               efeBM->getEnrichmentDerivative(
                                 cellIndex,
@@ -717,7 +726,7 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + enrichmentDerivative[k] *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -731,6 +740,13 @@ namespace dftefe
                              qPoint < numQuadPointsPerCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto enrichmentDerivativei =
                               efeBM->getEnrichmentDerivative(
                                 cellIndex,
@@ -745,8 +761,8 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + enrichmentDerivativei[k] *
-                                                      enrichmentDerivativej[k];
+                                dotProd = dotProd + (enrichmentDerivativei[k]-classicalComponent[k]) *
+                                                      (enrichmentDerivativej[k]-classicalComponent[k]);
                               }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * dealiiFEValues.JxW(qPoint);
@@ -793,7 +809,9 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues,
+        dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
       {
         // Assert if QuadFamily is not having variable quadpoints in each cell
         const quadrature::QuadratureFamily quadratureFamily =
@@ -1002,11 +1020,18 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;                            
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisQuadStorageTmpIter =
                               efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]);
+                                quadRealPointsVec[qPoint])-classicalComponent;
                             basisQuadStorageTmpIter++;
                           }
                       }
@@ -1036,11 +1061,18 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;                            
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisOverlapTmpIter +=
-                              efeBM->getEnrichmentValue(
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
+                                quadRealPointsVec[qPoint])-classicalComponent) *
                               dealiiFEValues.shape_value(jNode, qPoint) *
                               cellJxWValues[qPoint];
                             // enriched i * classical j
@@ -1052,11 +1084,18 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            ValueTypeBasisData classicalComponent = 0;                            
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisOverlapTmpIter +=
-                              efeBM->getEnrichmentValue(
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
+                                quadRealPointsVec[qPoint])-classicalComponent) *
                               dealiiFEValues.shape_value(iNode, qPoint) *
                               cellJxWValues[qPoint];
                             // enriched j * classical i
@@ -1067,15 +1106,22 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+                          
+                            ValueTypeBasisData classicalComponent = 0;                            
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadValues.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                            }
+
                             *basisOverlapTmpIter +=
-                              efeBM->getEnrichmentValue(
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
-                              efeBM->getEnrichmentValue(
+                                quadRealPointsVec[qPoint])-classicalComponent) *
+                              (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint]) *
+                                quadRealPointsVec[qPoint])-classicalComponent) *
                               cellJxWValues[qPoint];
                             // enriched i * enriched j
                           }
@@ -1115,6 +1161,13 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto shapeGrad = efeBM->getEnrichmentDerivative(
                               cellIndex,
                               iNode - classicalDofsPerCell,
@@ -1127,7 +1180,7 @@ namespace dftefe
                                   cumulativeQuadPoints * dim * dofsPerCell +
                                   iDim * dofsPerCell * nQuadPointInCell +
                                   iNode * nQuadPointInCell + qPoint;
-                                *it = shapeGrad[iDim];
+                                *it = shapeGrad[iDim]-classicalComponent[iDim];
                               }
                           }
                       }
@@ -1171,6 +1224,14 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            if(efeBM->isOrthgonalized())
+                            {
+                              utils::throwException(
+                                false,
+                                "The hessian values are not calculated for OEFE. Contact developers for this.");
+                            }
+
                             auto shapeHessian = efeBM->getEnrichmentHessian(
                               cellIndex,
                               iNode - classicalDofsPerCell,
@@ -1244,7 +1305,8 @@ namespace dftefe
           &                                         basisGradNiGradNj,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadratureRuleContainer)
+          quadratureRuleContainer,
+        dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
@@ -1366,6 +1428,13 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto enrichmentDerivative =
                               efeBM->getEnrichmentDerivative(
                                 cellIndex,
@@ -1377,7 +1446,7 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + enrichmentDerivative[k] *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -1391,6 +1460,13 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+                            
                             auto enrichmentDerivative =
                               efeBM->getEnrichmentDerivative(
                                 cellIndex,
@@ -1402,7 +1478,7 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + enrichmentDerivative[k] *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -1415,6 +1491,13 @@ namespace dftefe
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+
+                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            if(efeBM->isOrthgonalized())
+                            {
+                                basisClassicalInterfaceQuadGradients.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
+                            }
+
                             auto enrichmentDerivativei =
                               efeBM->getEnrichmentDerivative(
                                 cellIndex,
@@ -1429,8 +1512,8 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + enrichmentDerivativei[k] *
-                                                      enrichmentDerivativej[k];
+                                dotProd = dotProd + (enrichmentDerivativei[k]-classicalComponent[k]) *
+                                                      (enrichmentDerivativej[k]-classicalComponent[k]);
                               }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * cellJxWValues[qPoint];
@@ -1554,6 +1637,73 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
         basisOverlap;
 
+
+        d_basisClassicalInterfaceQuadValues(*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+
+        d_basisClassicalInterfaceQuadGradients(*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+
+        if(d_efeBM->isOrthgonalized())
+        {            
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolate( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadValues);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+            }
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadGradients);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+            }
+        }
+
       std::vector<size_type> nQuadPointsInCell(0);
       std::vector<size_type> cellStartIdsBasisQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
@@ -1572,7 +1722,9 @@ namespace dftefe
              cellStartIdsBasisQuadStorage,
              cellStartIdsBasisGradientQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap);
+             basisStorageAttributesBoolMap,
+             d_basisClassicalInterfaceQuadValues,
+             d_basisClassicalInterfaceQuadGradients);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1616,7 +1768,8 @@ namespace dftefe
               d_efeBM,
               basisGradNiNj,
               quadratureRuleAttributes,
-              d_quadratureRuleContainer);
+              d_quadratureRuleContainer,
+              d_basisClassicalInterfaceQuadGradients);
 
           d_basisGradNiGradNj = basisGradNiNj;
         }
@@ -1683,6 +1836,74 @@ namespace dftefe
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                              basisOverlap;
+
+
+        d_basisClassicalInterfaceQuadValues(*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+
+        d_basisClassicalInterfaceQuadGradients(*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+
+        if(d_efeBM->isOrthgonalized())
+        {            
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, d_quadratureRuleContainer,  basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolate( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadValues);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+            }
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadGradients);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+            }
+        }
+
       std::vector<size_type> nQuadPointsInCell(0);
       std::vector<size_type> cellStartIdsBasisQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
@@ -1701,7 +1922,9 @@ namespace dftefe
           cellStartIdsBasisQuadStorage,
           cellStartIdsBasisGradientQuadStorage,
           cellStartIdsBasisHessianQuadStorage,
-          basisStorageAttributesBoolMap);
+          basisStorageAttributesBoolMap,
+          d_basisClassicalInterfaceQuadValues,
+          d_basisClassicalInterfaceQuadGradients);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1747,7 +1970,8 @@ namespace dftefe
               d_efeBM,
               basisGradNiGradNj,
               quadratureRuleAttributes,
-              d_quadratureRuleContainer);
+              d_quadratureRuleContainer,
+              d_basisClassicalInterfaceQuadGradients);
           d_basisGradNiGradNj = basisGradNiGradNj;
         }
 
@@ -1818,6 +2042,74 @@ namespace dftefe
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                              basisOverlap;
+
+
+        d_basisClassicalInterfaceQuadValues(*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+
+        d_basisClassicalInterfaceQuadGradients(*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+
+        if(d_efeBM->isOrthgonalized())
+        {            
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, d_quadratureRuleContainer,  basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolate( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadValues);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+            }
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadGradients);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+            }
+        }
+
       std::vector<size_type> nQuadPointsInCell(0);
       std::vector<size_type> cellStartIdsBasisQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
@@ -1836,7 +2128,9 @@ namespace dftefe
           cellStartIdsBasisQuadStorage,
           cellStartIdsBasisGradientQuadStorage,
           cellStartIdsBasisHessianQuadStorage,
-          basisStorageAttributesBoolMap);
+          basisStorageAttributesBoolMap,
+          d_basisClassicalInterfaceQuadValues,
+          d_basisClassicalInterfaceQuadGradients);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1882,7 +2176,8 @@ namespace dftefe
               d_efeBM,
               basisGradNiGradNj,
               quadratureRuleAttributes,
-              d_quadratureRuleContainer);
+              d_quadratureRuleContainer,
+              d_basisClassicalInterfaceQuadGradients);
           d_basisGradNiGradNj = basisGradNiGradNj;
         }
 
@@ -1966,6 +2261,74 @@ namespace dftefe
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                              basisOverlap;
+
+
+        d_basisClassicalInterfaceQuadValues(*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+
+        d_basisClassicalInterfaceQuadGradients(*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+
+        if(d_efeBM->isOrthgonalized())
+        {            
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, d_quadratureRuleContainer,  basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolate( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadValues);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+            }
+            if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
+                basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradient] = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+
+              // Set up the FE Basis Data Storage
+              std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+                std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
+                (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler()->getBasisManager(), quadratureRuleAttributes, basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+
+              FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+              cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
+                                    d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
+                                    *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
+                                    quadratureRuleAttributes,
+                                    d_basisClassicalInterfaceQuadGradients);
+
+              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+            }
+        }
+
       std::vector<size_type> nQuadPointsInCell(0);
       std::vector<size_type> cellStartIdsBasisQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
@@ -1984,7 +2347,9 @@ namespace dftefe
           cellStartIdsBasisQuadStorage,
           cellStartIdsBasisGradientQuadStorage,
           cellStartIdsBasisHessianQuadStorage,
-          basisStorageAttributesBoolMap);
+          basisStorageAttributesBoolMap,
+          d_basisClassicalInterfaceQuadValues,
+          d_basisClassicalInterfaceQuadGradients);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -2030,7 +2395,8 @@ namespace dftefe
               d_efeBM,
               basisGradNiGradNj,
               quadratureRuleAttributes,
-              d_quadratureRuleContainer);
+              d_quadratureRuleContainer,
+              d_basisClassicalInterfaceQuadGradients);
           d_basisGradNiGradNj = basisGradNiGradNj;
         }
 

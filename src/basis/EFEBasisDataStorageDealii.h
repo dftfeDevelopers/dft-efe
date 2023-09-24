@@ -39,6 +39,7 @@
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleGLL.h>
 #include <quadrature/QuadratureRuleAdaptive.h>
+#include <quadrature/QuadratureValuesContainer.h>
 #include <memory>
 #include <map>
 #include <vector>
@@ -214,7 +215,7 @@ namespace dftefe
 
     private:
       bool                                              d_evaluateBasisData;
-      std::shared_ptr<const EFEBasisManagerDealii<dim>> d_efeBM;
+      std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> d_efeBM;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                     d_quadratureRuleContainer;
       QuadratureRuleAttributes      d_quadratureRuleAttributes;
@@ -232,6 +233,8 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
+      dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> d_basisClassicalInterfaceQuadValues;
+      dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> d_basisClassicalInterfaceQuadGradients;
     };
   } // end of namespace basis
 } // end of namespace dftefe
