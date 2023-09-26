@@ -32,6 +32,8 @@
 #include <basis/TriangulationBase.h>
 #include <basis/FECellBase.h>
 #include <map>
+#include <basis/EnrichmentClassicalInterfaceSpherical.h>
+#include <basis/EnrichmentIdsPartition.h>
 
 namespace dftefe
 {
@@ -43,6 +45,8 @@ namespace dftefe
      * function at a point, getting cell and nodal information, etc.
      *
      */
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace, size_type dim>
     class EFEBasisManager : public FEBasisManager
     {
     public:
@@ -153,7 +157,19 @@ namespace dftefe
       virtual global_size_type
       nGlobalEnrichmentNodes() const = 0;
 
-    }; // end of FEBasisManager
+      virtual std::shared_ptr<const EnrichmentIdsPartition<dim>>
+      getEnrichmentIdsPartition() const = 0;
+
+      virtual std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>>
+      getEnrichmentClassicalInterface() const = 0;
+
+      virtual bool
+      isOrthogonalized() const = 0;
+
+      virtual size_type
+      totalRanges() const = 0;
+
+    }; // end of EFEBasisManager
   }    // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeFEBasisManager_h
+#endif // dftefeEFEBasisManager_h

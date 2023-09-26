@@ -29,6 +29,14 @@
 #include "FECellDealii.h"
 #include <utils/Point.h>
 #include <utils/PointImpl.h>
+#include <basis/FEConstraintsBase.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <quadrature/QuadratureRuleContainer.h>
+#include <quadrature/QuadratureAttributes.h>
+#include "FEBasisManagerDealii.h"
+#include "FEConstraintsDealii.h"
+#include "FEBasisDataStorageDealii.h"
+#include "FEBasisHandlerDealii.h"
 
 
 namespace dftefe
@@ -82,7 +90,7 @@ namespace dftefe
       const std::string                fieldName,
       const utils::mpi::MPIComm &      comm,
       const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
-      std::shared_ptr<const linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
       , d_atomSphericalDataContainer(atomSphericalDataContainer)
@@ -97,6 +105,7 @@ namespace dftefe
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
+      , d_enrichClassIntfce(nullptr)
       , d_linAlgOpContext(linAlgOpContext)
       , d_l2ProjQuadAttr(l2ProjQuadAttr)
     {
@@ -192,24 +201,25 @@ namespace dftefe
       if(d_isOrthogonalized)
       {
         // Set the CFE basis data
-        std::shared_ptr<FEBasisManager> basisManager =   std::make_shared<FEBasisManagerDealii<dim>>(triangulation, feOrder);
+        std::shared_ptr<FEBasisManager> cfeBasisManager =   std::make_shared<FEBasisManagerDealii<dim>>(triangulation, feOrder);
         if (std::any_of(triangulation->getPeriodicFlags().begin(), triangulation->getPeriodicFlags().end(), [](bool i) { return i == true; }))
           utils::throwException(
           false,
           "The domain has to be non-periodic only.");
         std::string constraintName = "HangingWithHomogeneous";
-        std::vector<FEConstraintsDealii<ValueTypeBasisData, memorySpace, dim>> constraintsVec;
+        std::vector<std::shared_ptr<FEConstraintsBase<ValueTypeBasisData, memorySpace>>>
+          constraintsVec;
         constraintsVec.resize(1);
         for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-          constraintsVec[i]();
+        constraintsVec[i] = std::make_shared<FEConstraintsDealii<ValueTypeBasisData, memorySpace, dim>>();
         
-        constraintsVec[0].clear();
-        constraintsVec[0].makeHangingNodeConstraint(basisManager);
-        constraintsVec[0].setHomogeneousDirichletBC();
-        constraintsVec[0].close();
+        constraintsVec[0]->clear();
+        constraintsVec[0]->makeHangingNodeConstraint(cfeBasisManager);
+        constraintsVec[0]->setHomogeneousDirichletBC();
+        constraintsVec[0]->close();
 
         std::map<std::string,
-                Constraints<ValueTypeBasisData, memorySpace>> constraintsMap;
+                std::shared_ptr<const Constraints<ValueTypeBasisData, memorySpace>>> constraintsMap;
 
         constraintsMap[constraintName] = constraintsVec[0];
 
@@ -222,10 +232,10 @@ namespace dftefe
         basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
         basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
 
-        // Set up the FE Basis Data Storage
-        std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
+        // Set up the CFE Basis Data Storage
+        std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
           std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
-          (basisManager, d_l2ProjQuadAttr, basisAttrMap);
+          (cfeBasisManager, d_l2ProjQuadAttr, basisAttrMap);
 
         if (d_l2ProjQuadAttr.getQuadratureFamily() == quadrature::QuadratureFamily::GAUSS || d_l2ProjQuadAttr.getQuadratureFamily() == quadrature::QuadratureFamily::GLL)
         {
@@ -236,35 +246,39 @@ namespace dftefe
             false, "QuadratureFamily can be GAUSS or GLL only");
 
         // // Set up BasisHandler
-        std::shared_ptr<BasisHandler<ValueTypeBasisData, memorySpace>> cfeBasisHandler =
+        std::shared_ptr<FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler =
           std::make_shared<FEBasisHandlerDealii<ValueTypeBasisData, memorySpace, dim>>
-          (basisManager, constraintsMap, d_comm);
+          (cfeBasisManager, constraintsMap, d_comm);
 
-        d_enrichClassIntfce(cfeBasisDataStorage,
-                            cfeBasisHandler,
-                            d_l2ProjQuadAttr,
-                            d_atomSphericalDataContainer,
-                            d_atomPartitionTolerance,
-                            d_atomSymbolVec,
-                            d_atomCoordinatesVec,
-                            d_fieldName,
-                            constraintName,
-                            d_linAlgOpContext,
-                            d_comm);
+        d_enrichClassIntfce = std::make_shared<EnrichmentClassicalInterfaceSpherical
+                              <ValueTypeBasisData, memorySpace, dim>>
+                              (cfeBasisDataStorage,
+                              cfeBasisHandler,
+                              cfeBasisManager,
+                              d_l2ProjQuadAttr,
+                              d_atomSphericalDataContainer,
+                              d_atomPartitionTolerance,
+                              atomSymbolVec,
+                              atomCoordinatesVec,
+                              d_fieldName,
+                              constraintName,
+                              d_linAlgOpContext,
+                              d_comm);
       }
       else
       {
-        d_enrichClassIntfce(d_triangulation,
-                            d_atomSphericalDataContainer,
-                            d_atomPartitionTolerance,
-                            d_atomSymbolVec,
-                            d_atomCoordinatesVec,
-                            d_fieldName,
-                            d_comm);
+        d_enrichClassIntfce = std::make_shared<EnrichmentClassicalInterfaceSpherical
+                              <ValueTypeBasisData, memorySpace, dim>>(d_triangulation,
+                              d_atomSphericalDataContainer,
+                              d_atomPartitionTolerance,
+                              atomSymbolVec,
+                              atomCoordinatesVec,
+                              d_fieldName,
+                              d_comm);
       }
 
-      std::shared_ptr<const EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition = d_enrichClassIntfce.getEnrichmentidsPartition();
-      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition = d_enrichClassIntfce.getAtomIdsPartition();
+      std::shared_ptr<const EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition = d_enrichClassIntfce->getEnrichmentIdsPartition();
+      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition = d_enrichClassIntfce->getAtomIdsPartition();
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -886,7 +900,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace, size_type dim>
-    bool
+    size_type
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::totalRanges() const
     {
       return d_totalRanges;

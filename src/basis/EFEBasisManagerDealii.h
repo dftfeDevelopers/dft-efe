@@ -33,17 +33,9 @@
 #  include <deal.II/fe/fe_q.h>
 #  include <basis/AtomIdsPartition.h>
 #  include <atoms/AtomSphericalDataContainer.h>
-#  include <basis/EnrichmentIdsPartition.h>
 #  include <utils/Exceptions.h>
 #  include <utils/MPITypes.h>
 #  include <utils/MPIWrapper.h>
-#  include <quadrature/QuadratureValuesContainer.h>
-#  include <quadrature/QuadratureRuleContainer.h>
-#  include <quadrature/QuadratureAttributes.h>
-#  include <basis/EnrichmentClassicalInterfaceSpherical.h>
-#  include <basis/FEBasisManagerDealii.h>
-#  include <basis/FEConstraintsDealii.h>
-#  include <basis/FEBasisDataStorageDealii.h>
 #  include <linearAlgebra/LinAlgOpContext.h>
 
 /// dealii includes
@@ -58,7 +50,7 @@ namespace dftefe
      */
     template <typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace, size_type dim>
-    class EFEBasisManagerDealii : public EFEBasisManager
+    class EFEBasisManagerDealii : public EFEBasisManager<ValueTypeBasisData, memorySpace, dim>
     {
     public:
 
@@ -73,7 +65,7 @@ namespace dftefe
         const std::string                fieldName,
         const utils::mpi::MPIComm &      comm,
         const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
-        std::shared_ptr<const linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       EFEBasisManagerDealii(
         std::shared_ptr<const TriangulationBase> triangulation,
@@ -217,16 +209,16 @@ namespace dftefe
       nGlobalEnrichmentNodes() const override;
 
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
-      getEnrichmentIdsPartition() const;
+      getEnrichmentIdsPartition() const override;
 
       std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>>
-      getEnrichmentClassicalInterface() const;
+      getEnrichmentClassicalInterface() const override;
 
       bool
-      isOrthogonalized() const;
+      isOrthogonalized() const override;
 
-      bool
-      totalRanges() const;
+      size_type
+      totalRanges() const override;
 
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
@@ -241,7 +233,7 @@ namespace dftefe
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::vector<std::vector<global_size_type>>
                       d_overlappingEnrichmentIdsInCells;
-      const size_type d_totalRanges;
+      size_type d_totalRanges;
       std::vector<std::pair<global_size_type, global_size_type>>
         d_locallyOwnedRanges;
       std::vector<std::pair<global_size_type, global_size_type>> d_globalRanges;
@@ -250,13 +242,13 @@ namespace dftefe
                                 d_atomSphericalDataContainer;
       std::vector<std::string>  d_atomSymbolVec;
       std::vector<utils::Point> d_atomCoordinatesVec;
-      std::string               d_fieldName;
+      const std::string               d_fieldName;
       const double              d_atomPartitionTolerance;
       const utils::mpi::MPIComm d_comm;
       bool                      d_isOrthogonalized;
       const quadrature::QuadratureRuleAttributes d_l2ProjQuadAttr;
       std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
-      std::shared_ptr<const linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
 
     }; // end of EFEBasisManagerDealii
   }    // end of namespace basis

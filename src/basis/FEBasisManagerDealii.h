@@ -139,10 +139,10 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocallyOwnedCellDofs() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocalCellDofs() const override;
 
       // This assumes a linear cell mapping

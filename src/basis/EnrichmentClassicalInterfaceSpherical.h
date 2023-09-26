@@ -71,6 +71,7 @@ namespace dftefe
       EnrichmentClassicalInterfaceSpherical(
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage,
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
+      std::shared_ptr<const FEBasisManager> cfeBasisManager,
       const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
@@ -79,7 +80,7 @@ namespace dftefe
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
       std::string                      basisInterfaceCoeffConstraint,
-      std::shared_ptr< const linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
       const utils::mpi::MPIComm &      comm);
 
       EnrichmentClassicalInterfaceSpherical(
@@ -112,10 +113,13 @@ namespace dftefe
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
       getCFEBasisHandler() const;
 
+      std::shared_ptr<const FEBasisManager>
+      getCFEBasisManager() const;
+
       std::string
       getBasisInterfaceCoeffConstraint() const;
 
-      linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>
+      const linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> &
       getBasisInterfaceCoeff() const;
 
       bool
@@ -129,8 +133,10 @@ namespace dftefe
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
       linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> d_basisInterfaceCoeff;
-      const bool d_isOrthogonalized;
+      bool d_isOrthogonalized;
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> d_cfeBasisHandler;
+      std::shared_ptr<const FEBasisManager> d_cfeBasisManager;
+
       const std::string d_basisInterfaceCoeffConstraint;
 
     }; // end of class

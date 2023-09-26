@@ -246,8 +246,8 @@ namespace dftefe
                                                            ValueTypeOperand,
                                                            memorySpace,
                                                            dim>>(
-          d_feBasisHandler,
-          d_feBasisDataStorage,
+          *d_feBasisHandler,
+          *d_feBasisDataStorage,
           basisInterfaceCoeffConstraint,
           basisInterfaceCoeffConstraint,
           quadratureRuleAttributes,

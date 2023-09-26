@@ -233,8 +233,6 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
-      dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> d_basisClassicalInterfaceQuadValues;
-      dftefe::quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> d_basisClassicalInterfaceQuadGradients;
     };
   } // end of namespace basis
 } // end of namespace dftefe

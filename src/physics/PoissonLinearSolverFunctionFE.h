@@ -102,8 +102,8 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
                                              feBasisHandler,
-        const basis::FEBasisOperations<ValueTypeOperator,
-                                       ValueTypeOperand,
+        const basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
                                        memorySpace,
                                        dim> &feBasisOperations,
         std::shared_ptr<
