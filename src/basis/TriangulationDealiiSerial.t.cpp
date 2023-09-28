@@ -261,10 +261,6 @@ namespace dftefe
     double
     TriangulationDealiiSerial<dim>::maxCellDiameter() const
     {
-      utils::throwException<utils::LogicError>(
-        isInitialized && !isFinalized,
-        "Cannot execute this without calling"
-        "initializeTriangulationConstruction");
       return dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
     }
 

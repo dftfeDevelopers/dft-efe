@@ -2183,7 +2183,7 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const quadrature::QuadratureRuleContainer &
+    std::shared_ptr<const quadrature::QuadratureRuleContainer>
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getQuadratureRuleContainer(const quadrature::QuadratureRuleAttributes
                                    &quadratureRuleAttributes) const
@@ -2194,7 +2194,7 @@ namespace dftefe
       utils::throwException<utils::InvalidArgument>(
         d_quadratureRuleAttributes == quadratureRuleAttributes,
         "Incorrect quadratureRuleAttributes given.");
-      return *d_quadratureRuleContainer;
+      return d_quadratureRuleContainer;
     }
 
     template <typename ValueTypeBasisData,

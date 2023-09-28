@@ -57,12 +57,12 @@ namespace dftefe
     public:
       QuadratureValuesContainer();
       QuadratureValuesContainer(
-        const QuadratureRuleContainer &quadratureRuleContainer,
+        std::shared_ptr<const QuadratureRuleContainer> quadratureRuleContainer,
         const size_type                numberComponents,
         const ValueType                initVal = ValueType());
 
       void
-      reinit(const QuadratureRuleContainer &quadratureRuleContainer,
+      reinit(std::shared_ptr<const QuadratureRuleContainer> quadratureRuleContainer,
              const size_type                numberComponents,
              const ValueType                initVal = ValueType());
 
@@ -95,7 +95,7 @@ namespace dftefe
                         const size_type quadId,
                         ValueType *     values) const;
 
-      const QuadratureRuleContainer &
+      std::shared_ptr<const QuadratureRuleContainer>
       getQuadratureRuleContainer() const;
 
       size_type
@@ -144,15 +144,15 @@ namespace dftefe
       const_iterator
       end(const size_type cellId) const;
 
-      ValueType
-      dotProduct() const;
+      // ValueType
+      // dotProduct() const;
 
     private:
       size_type                      d_numberComponents;
       SizeTypeVector                 d_cellStartIds;
       SizeTypeVector                 d_numCellEntries;
       Storage                        d_storage;
-      const QuadratureRuleContainer *d_quadratureRuleContainer;
+      std::shared_ptr<const QuadratureRuleContainer> d_quadratureRuleContainer;
     }; // end of QuadratureValuesContainer
 
 

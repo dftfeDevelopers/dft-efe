@@ -195,7 +195,7 @@ namespace dftefe
       for(size_type i = 0 ; i < quadValuesEnrichmentFunction.nCells() ; i++)
       {
         size_type quadId = 0;
-        for (auto quadPoint : cfeBasisDataStorage->getQuadratureRuleContainer(l2ProjQuadAttr).getCellRealPoints(i))
+        for (auto quadPoint : cfeBasisDataStorage->getQuadratureRuleContainer(l2ProjQuadAttr)->getCellRealPoints(i))
         {
           ValueTypeBasisData enrichmentQuadValue;
           enrichmentQuadValue = EnrichmentClassicalInterfaceSphericalInternal::
@@ -361,7 +361,7 @@ namespace dftefe
         utils::throwException(
         false,
         "Cannot call getCFEBasisHandler() for no orthogonalization of EFE.");
-      else
+
       return d_cfeBasisHandler;
     }
 
@@ -373,7 +373,7 @@ namespace dftefe
         utils::throwException(
         false,
         "Cannot call getCFEBasisHandler() for no orthogonalization of EFE.");
-      else
+
       return d_cfeBasisManager;
     }
 
@@ -385,7 +385,7 @@ namespace dftefe
         utils::throwException(
         false,
         "Cannot call getBasisInterfaceCoeffConstraint() for no orthogonalization of EFE.");
-      else
+
       return d_basisInterfaceCoeffConstraint;
     }
 
@@ -397,7 +397,7 @@ namespace dftefe
         utils::throwException(
         false,
         "Cannot call getBasisInterfaceCoeff() for no orthogonalization of EFE.");
-      else
+
       return d_basisInterfaceCoeff;
     }
 

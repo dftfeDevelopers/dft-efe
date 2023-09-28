@@ -3,6 +3,7 @@
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/EFEBasisManagerDealii.h>
+#include <basis/BasisManager.h>
 #include <basis/FEConstraintsDealii.h>
 #include <basis/EFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
@@ -121,7 +122,7 @@ int main()
 
   unsigned int feOrder = 2;
 
-  dftefe::quadrature::QuadratureRuleAttributes l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GLL,true,4);
+  const dftefe::quadrature::QuadratureRuleAttributes l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GLL,true,4);
 
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
       triangulationBase ,

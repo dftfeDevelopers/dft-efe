@@ -70,6 +70,7 @@ namespace dftefe
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
+      , d_l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,1)
     {
       d_isOrthogonalized = false;
       d_dofHandler         = std::make_shared<dealii::DoFHandler<dim>>();
@@ -202,10 +203,10 @@ namespace dftefe
       {
         // Set the CFE basis data
         std::shared_ptr<FEBasisManager> cfeBasisManager =   std::make_shared<FEBasisManagerDealii<dim>>(triangulation, feOrder);
-        if (std::any_of(triangulation->getPeriodicFlags().begin(), triangulation->getPeriodicFlags().end(), [](bool i) { return i == true; }))
-          utils::throwException(
-          false,
-          "The domain has to be non-periodic only.");
+        // if ((std::none_of(triangulation->getPeriodicFlags().begin(), triangulation->getPeriodicFlags().end(), [](bool i) { return i; })))
+        //   utils::throwException(
+        //   false,
+        //   "The domain has to be non-periodic only.");
         std::string constraintName = "HangingWithHomogeneous";
         std::vector<std::shared_ptr<FEConstraintsBase<ValueTypeBasisData, memorySpace>>>
           constraintsVec;
@@ -227,9 +228,9 @@ namespace dftefe
         basisAttrMap[BasisStorageAttributes::StoreValues] = true;
         basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
         basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
-        basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+        basisAttrMap[BasisStorageAttributes::StoreOverlap] = true;
         basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
-        basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+        basisAttrMap[BasisStorageAttributes::StoreJxW] = true;
         basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
 
         // Set up the CFE Basis Data Storage
@@ -277,8 +278,8 @@ namespace dftefe
                               d_comm);
       }
 
-      std::shared_ptr<const EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition = d_enrichClassIntfce->getEnrichmentIdsPartition();
-      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition = d_enrichClassIntfce->getAtomIdsPartition();
+      d_enrichmentIdsPartition = d_enrichClassIntfce->getEnrichmentIdsPartition();
+      d_atomIdsPartition = d_enrichClassIntfce->getAtomIdsPartition();
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();

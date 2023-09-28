@@ -79,8 +79,8 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &basisClassicalInterfaceQuadValues,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &basisClassicalInterfaceQuadGradients)
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
@@ -559,7 +559,7 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadratureRuleContainer,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &basisClassicalInterfaceQuadGradients)
 
       {
         const quadrature::QuadratureFamily quadratureFamily =
@@ -810,8 +810,8 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &basisClassicalInterfaceQuadValues,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &basisClassicalInterfaceQuadGradients)
       {
         // Assert if QuadFamily is not having variable quadpoints in each cell
         const quadrature::QuadratureFamily quadratureFamily =
@@ -1306,7 +1306,7 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadratureRuleContainer,
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadGradients)
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &basisClassicalInterfaceQuadGradients)
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
@@ -1639,10 +1639,10 @@ namespace dftefe
 
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -1673,7 +1673,11 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadValues);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+            // std::cout << "basisintcoeff-norm: " << d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff().l2Norms()[0];
+            // ValueTypeBasisData classicalComponent = 0;
+            // basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(0, 0, &classicalComponent);
+            // std::cout << "val at cell 0, quad 0: " << classicalComponent;
+                                                         
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
                 basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
@@ -1702,7 +1706,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadGradients);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+                                         
             }
         }
 
@@ -1841,10 +1845,10 @@ namespace dftefe
 
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -1875,7 +1879,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadValues);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+                                   
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
                 basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
@@ -1904,7 +1908,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadGradients);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+                                         
             }
         }
 
@@ -2049,10 +2053,10 @@ namespace dftefe
 
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -2083,7 +2087,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadValues);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+                                   
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
                 basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
@@ -2112,7 +2116,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadGradients);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+                                         
             }
         }
 
@@ -2270,10 +2274,10 @@ namespace dftefe
 
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (*d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (*d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -2304,7 +2308,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadValues);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                     
+                                   
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
                 basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)->second)
@@ -2333,7 +2337,7 @@ namespace dftefe
                                     quadratureRuleAttributes,
                                     basisClassicalInterfaceQuadGradients);
 
-              cfeBasisDataStorage->deleteBasisData(quadratureRuleAttributes);                           
+                                         
             }
         }
 
@@ -2965,7 +2969,7 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const quadrature::QuadratureRuleContainer &
+    std::shared_ptr<const quadrature::QuadratureRuleContainer>
     EFEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getQuadratureRuleContainer(const quadrature::QuadratureRuleAttributes
                                    &quadratureRuleAttributes) const
@@ -2976,7 +2980,7 @@ namespace dftefe
       utils::throwException<utils::InvalidArgument>(
         d_quadratureRuleAttributes == quadratureRuleAttributes,
         "Incorrect quadratureRuleAttributes given.");
-      return *(d_quadratureRuleContainer);
+      return (d_quadratureRuleContainer);
     }
 
     template <typename ValueTypeBasisData,

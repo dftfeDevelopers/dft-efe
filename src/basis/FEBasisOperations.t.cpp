@@ -137,7 +137,7 @@ namespace dftefe
       //
       // reinit the quadValuesContainer
       //
-      const quadrature::QuadratureRuleContainer &quadRuleContainer =
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer(
           quadratureRuleAttributes);
       quadValuesContainer.reinit(quadRuleContainer,
@@ -376,7 +376,7 @@ namespace dftefe
       //
       // reinit the quadValuesContainer
       //
-      const quadrature::QuadratureRuleContainer &quadRuleContainer =
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer(
           quadratureRuleAttributes);
       quadValuesContainer.reinit(quadRuleContainer,
@@ -613,10 +613,10 @@ namespace dftefe
           &vectorData) const
 
     {
-      const quadrature::QuadratureRuleContainer &quadRuleContainer =
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
         inp.getQuadratureRuleContainer();
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributesInp =
-        quadRuleContainer.getQuadratureRuleAttributes();
+        quadRuleContainer->getQuadratureRuleAttributes();
       utils::throwException(
         quadratureRuleAttributes == quadratureRuleAttributesInp,
         "Mismatch in the underlying QuadratureRuleAttributes of the "
@@ -669,7 +669,7 @@ namespace dftefe
 
       std::vector<size_type> numCellQuad(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellQuad[iCell] = quadRuleContainer.nCellQuadraturePoints(iCell);
+        numCellQuad[iCell] = quadRuleContainer->nCellQuadraturePoints(iCell);
 
 
       bool                               sameQuadRuleInAllCells = false;
@@ -751,7 +751,7 @@ namespace dftefe
             numComponents,
             numCumulativeQuadCellsInBlock,
             jxwStorage.data() +
-              quadRuleContainer.getCellQuadStartId(cellStartId),
+              quadRuleContainer->getCellQuadStartId(cellStartId),
             inp.begin(cellStartId),
             inpJxW.data(),
             linAlgOpContext);
@@ -762,7 +762,7 @@ namespace dftefe
           //   numComponents,
           //   inp.begin(cellStartId),
           //   jxwStorage.data() +
-          //     quadRuleContainer.getCellQuadStartId(cellStartId),
+          //     quadRuleContainer->getCellQuadStartId(cellStartId),
           //   inpJxW.data(),
           //   linAlgOpContext);
 

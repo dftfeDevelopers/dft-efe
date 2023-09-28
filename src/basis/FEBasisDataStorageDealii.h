@@ -221,7 +221,7 @@ namespace dftefe
                                        quadratureRuleAttributes) const override;
 
 
-      const quadrature::QuadratureRuleContainer &
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer(const QuadratureRuleAttributes
                                    &quadratureRuleAttributes) const override;
 

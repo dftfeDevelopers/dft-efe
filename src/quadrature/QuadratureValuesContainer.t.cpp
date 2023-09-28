@@ -34,7 +34,7 @@ namespace dftefe
       template <typename ValueType, utils::MemorySpace memorySpace>
       void
       initialize(
-        const quadrature::QuadratureRuleContainer *quadratureRuleContainer,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
         const size_type                            numberComponents,
         const ValueType                            initVal,
         typename QuadratureValuesContainer<ValueType,
@@ -98,10 +98,10 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     QuadratureValuesContainer<ValueType, memorySpace>::
       QuadratureValuesContainer(
-        const quadrature::QuadratureRuleContainer &quadratureRuleContainer,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
         const size_type                            numberComponents,
         const ValueType                            initVal /*= ValueType()*/)
-      : d_quadratureRuleContainer(&quadratureRuleContainer)
+      : d_quadratureRuleContainer(quadratureRuleContainer)
       , d_numberComponents(numberComponents)
       , d_cellStartIds(0)
       , d_numCellEntries(0)
@@ -119,11 +119,11 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
     QuadratureValuesContainer<ValueType, memorySpace>::reinit(
-      const quadrature::QuadratureRuleContainer &quadratureRuleContainer,
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
       const size_type                            numberComponents,
       const ValueType                            initVal /*= ValueType()*/)
     {
-      d_quadratureRuleContainer = &quadratureRuleContainer;
+      d_quadratureRuleContainer = quadratureRuleContainer;
       QuadratureValuesContainerInternal::initialize<ValueType, memorySpace>(
         d_quadratureRuleContainer,
         d_numberComponents,
@@ -244,11 +244,11 @@ namespace dftefe
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    const QuadratureRuleContainer &
+    std::shared_ptr<const QuadratureRuleContainer>
     QuadratureValuesContainer<ValueType,
                               memorySpace>::getQuadratureRuleContainer() const
     {
-      return *d_quadratureRuleContainer;
+      return d_quadratureRuleContainer;
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
@@ -384,27 +384,27 @@ namespace dftefe
       return (d_storage.begin() + cellStartId(cellId) + nCellEntries(cellId));
     }
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    ValueType
-    QuadratureValuesContainer<ValueType, memorySpace>::dotProduct() const
-    {
-      const std::vector<double> &jxwValues =
-        d_quadratureRuleContainer->getJxW();
+    // template <typename ValueType, utils::MemorySpace memorySpace>
+    // ValueType
+    // QuadratureValuesContainer<ValueType, memorySpace>::dotProduct() const
+    // {
+    //   const std::vector<double> &jxwValues =
+    //     d_quadratureRuleContainer->getJxW();
 
-      utils::MemoryStorage<double, memorySpace> jxwValuesMemorySpace(
-        jxwValues.size());
+    //   utils::MemoryStorage<double, memorySpace> jxwValuesMemorySpace(
+    //     jxwValues.size());
 
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-        jxwValues.size(), jxwValuesMemorySpace.data(), &jxwValues[0]);
+    //   utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+    //     jxwValues.size(), jxwValuesMemorySpace.data(), &jxwValues[0]);
 
-      auto dotValue = dotProductMultiComponent(jxwValues.size(),
-                                               d_numberComponents,
-                                               d_storage.begin(),
-                                               1,
-                                               jxwValuesMemorySpace.begin(),
-                                               1);
-      return dotValue;
-    }
+    //   auto dotValue = dotProductMultiComponent(jxwValues.size(),
+    //                                            d_numberComponents,
+    //                                            d_storage.begin(),
+    //                                            1,
+    //                                            jxwValuesMemorySpace.begin(),
+    //                                            1);
+    //   return dotValue;
+    // }
 
 
     //

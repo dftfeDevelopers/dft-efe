@@ -198,7 +198,7 @@ namespace dftefe
       getBasisOverlapInAllCells(
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
-      virtual const quadrature::QuadratureRuleContainer &
+      virtual std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer(
         const QuadratureRuleAttributes &quadratureRuleAttributes) const = 0;
 
