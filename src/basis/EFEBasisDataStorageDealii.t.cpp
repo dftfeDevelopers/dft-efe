@@ -196,10 +196,15 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage.resize(numLocallyOwnedCells, 0);
           }
 
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
         basisOverlap = std::make_shared<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
           basisOverlapSize);
         basisOverlapTmp.resize(basisOverlapSize, ValueTypeBasisData(0));
+        }
 
         locallyOwnedCellIter = efeBM->beginLocallyOwnedCells();
         std::shared_ptr<FECellDealii<dim>> feCellDealii =
@@ -282,6 +287,10 @@ namespace dftefe
                   }
               }
 
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
                 for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
@@ -377,6 +386,7 @@ namespace dftefe
                     basisOverlapTmpIter++;
                   }
               }
+          }
 
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreGradient)
@@ -543,8 +553,13 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
           basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        }
       }
 
       template <typename ValueTypeBasisData,
@@ -928,10 +943,15 @@ namespace dftefe
 
         // Initialize the host and tmp vector for storing basis overlap values
         // in a flattened array.
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
         basisOverlap = std::make_shared<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
           basisOverlapSize);
         basisOverlapTmp.resize(basisOverlapSize, ValueTypeBasisData(0));
+        }
 
         auto basisQuadStorageTmpIter = basisQuadStorageTmp.begin();
         auto basisGradientQuadStorageTmpIter =
@@ -1038,6 +1058,10 @@ namespace dftefe
                   }
               }
 
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
                 for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
@@ -1129,6 +1153,7 @@ namespace dftefe
                     basisOverlapTmpIter++;
                   }
               }
+          }
 
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreGradient)
@@ -1290,8 +1315,13 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
           basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        }
       }
 
       template <typename ValueTypeBasisData,
@@ -1656,7 +1686,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -1689,7 +1719,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -1757,7 +1787,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+      .find(BasisStorageAttributes::StoreOverlap)
+      ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1862,7 +1897,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -1891,7 +1926,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -1960,7 +1995,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+      .find(BasisStorageAttributes::StoreOverlap)
+      ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        } 
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -2070,7 +2110,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -2099,7 +2139,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -2168,7 +2208,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+            if (basisStorageAttributesBoolMap
+      .find(BasisStorageAttributes::StoreOverlap)
+      ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -2291,7 +2336,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -2320,7 +2365,7 @@ namespace dftefe
               basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
               basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
               basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-              basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
+              
 
               // Set up the FE Basis Data Storage
               std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
@@ -2389,7 +2434,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+            if (basisStorageAttributesBoolMap
+      .find(BasisStorageAttributes::StoreOverlap)
+      ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap

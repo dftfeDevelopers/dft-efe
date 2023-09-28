@@ -43,8 +43,7 @@ namespace dftefe
       StoreHessian,
       StoreOverlap,
       StoreGradNiGradNj,
-      StoreJxW,
-      StoreQuadRealPoints
+      StoreJxW
     };
 
     typedef std::map<BasisStorageAttributes, bool>

@@ -177,11 +177,17 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage.resize(numLocallyOwnedCells, 0);
           }
 
-        basisOverlap = std::make_shared<
-          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
-          numLocallyOwnedCells * dofsPerCell * dofsPerCell);
-        basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
-                               ValueTypeBasisData(0));
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
+          basisOverlap = std::make_shared<
+            typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
+            numLocallyOwnedCells * dofsPerCell * dofsPerCell);
+          basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
+                                ValueTypeBasisData(0));
+        }
+
         auto locallyOwnedCellIter = feBM->beginLocallyOwnedCells();
         std::shared_ptr<FECellDealii<dim>> feCellDealii =
           std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
@@ -226,6 +232,10 @@ namespace dftefe
                   }
               }
 
+          if (basisStorageAttributesBoolMap
+                .find(BasisStorageAttributes::StoreOverlap)
+                ->second)
+          {
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
                 for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
@@ -242,6 +252,7 @@ namespace dftefe
                     basisOverlapTmpIter++;
                   }
               }
+          }
 
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreGradient)
@@ -330,8 +341,13 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        }
       }
 
 
@@ -567,11 +583,17 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage.resize(numLocallyOwnedCells, 0);
           }
 
-        basisOverlap = std::make_shared<
-          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
-          numLocallyOwnedCells * dofsPerCell * dofsPerCell);
-        basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
-                               ValueTypeBasisData(0));
+          if (basisStorageAttributesBoolMap
+                .find(BasisStorageAttributes::StoreOverlap)
+                ->second)
+          {
+            basisOverlap = std::make_shared<
+              typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
+              numLocallyOwnedCells * dofsPerCell * dofsPerCell);
+            basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
+                                  ValueTypeBasisData(0));
+          }
+
         auto locallyOwnedCellIter = feBM->beginLocallyOwnedCells();
         std::shared_ptr<FECellDealii<dim>> feCellDealii =
           std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
@@ -635,6 +657,10 @@ namespace dftefe
                   }
               }
 
+          if (basisStorageAttributesBoolMap
+                .find(BasisStorageAttributes::StoreOverlap)
+                ->second)
+          {
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
                 for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
@@ -651,6 +677,7 @@ namespace dftefe
                     basisOverlapTmpIter++;
                   }
               }
+          }
 
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreGradient)
@@ -741,8 +768,13 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+        {
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        }
       }
 
       template <typename ValueTypeBasisData,
@@ -1174,7 +1206,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1301,7 +1338,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1439,7 +1481,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1587,7 +1634,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap      = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap

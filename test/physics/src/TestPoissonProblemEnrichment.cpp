@@ -230,7 +230,7 @@ int main()
 
   unsigned int feOrder = 3;
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<dim>>(
+  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double, dftefe::utils::MemorySpace::HOST ,dim>>(
       triangulationBase ,
       atomSphericalDataContainer ,
       feOrder,
@@ -255,7 +255,7 @@ int main()
     constraintsVec;
   constraintsVec.resize(3);
   for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
+   constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>();
 
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(basisManager);
@@ -333,7 +333,7 @@ int main()
 
   // Set up BasisHandler
   std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> basisHandler =
-    std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
+    std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisManager, constraintsMap, comm);
 
   // // Set up basis Operations

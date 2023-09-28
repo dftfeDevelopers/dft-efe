@@ -231,7 +231,6 @@ namespace dftefe
         basisAttrMap[BasisStorageAttributes::StoreOverlap] = true;
         basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
         basisAttrMap[BasisStorageAttributes::StoreJxW] = true;
-        basisAttrMap[BasisStorageAttributes::StoreQuadRealPoints] = false;
 
         // Set up the CFE Basis Data Storage
         std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =

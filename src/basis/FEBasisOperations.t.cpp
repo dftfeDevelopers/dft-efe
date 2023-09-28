@@ -137,6 +137,14 @@ namespace dftefe
       //
       // reinit the quadValuesContainer
       //
+      utils::throwException(
+        quadratureRuleAttributes == quadValuesContainer.getQuadratureRuleContainer()->getQuadratureRuleAttributes(),
+        "The quadRuleAttributes do not match with that in the quadValuesContainer");
+
+      utils::throwException(
+        numComponents == quadValuesContainer.getNumberComponents(),
+        "The number of components of input vector do not match with that in the quadValuesContainer");
+
       std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer(
           quadratureRuleAttributes);
@@ -376,6 +384,14 @@ namespace dftefe
       //
       // reinit the quadValuesContainer
       //
+      utils::throwException(
+        quadratureRuleAttributes == quadValuesContainer.getQuadratureRuleContainer()->getQuadratureRuleAttributes(),
+        "The quadRuleAttributes do not match with that in the quadValuesContainer");
+
+      utils::throwException(
+        numComponents*dim == quadValuesContainer.getNumberComponents(),
+        "The number of components of input vector do not match with that in the quadValuesContainer*dim");
+
       std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer(
           quadratureRuleAttributes);

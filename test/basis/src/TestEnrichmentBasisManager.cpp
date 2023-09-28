@@ -138,9 +138,9 @@ int main()
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
 
-  //std::cout << (basisManager->getLocallyOwnedRanges()[0]).first << "," << (basisManager->getLocallyOwnedRanges()[0]).second << ";" << (basisManager->getLocallyOwnedRanges()[1]).first << "," << (basisManager->getLocallyOwnedRanges()[1]).second;
+  std::cout << (basisManager->getLocallyOwnedRanges()[0]).first << "," << (basisManager->getLocallyOwnedRanges()[0]).second << ";" << (basisManager->getLocallyOwnedRanges()[1]).first << "," << (basisManager->getLocallyOwnedRanges()[1]).second;
   
-  // Set the constraints
+  //Set the constraints
 
   std::string constraintName = "HomogenousWithHanging";
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
@@ -166,12 +166,12 @@ int main()
 
   dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = true;
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::BasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
@@ -192,7 +192,7 @@ int main()
     std::cout<< i.first << "," << i.second << "\n" ;
   }
 
-  // // Set up basis Operations
+  // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
 
   dftefe::utils::mpi::MPIFinalize();
