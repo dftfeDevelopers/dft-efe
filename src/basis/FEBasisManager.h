@@ -140,6 +140,9 @@ namespace dftefe
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const = 0;
 
+      virtual size_type
+      totalRanges() const = 0;
+
       virtual unsigned int
       getDim() const = 0;
     }; // end of FEBasisManager

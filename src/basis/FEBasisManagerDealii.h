@@ -144,6 +144,9 @@ namespace dftefe
 
       size_type
       nCumulativeLocalCellDofs() const override;
+    
+      size_type
+      totalRanges() const override;
 
       // This assumes a linear cell mapping
       void
@@ -167,6 +170,7 @@ namespace dftefe
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
+      size_type d_totalRanges;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis

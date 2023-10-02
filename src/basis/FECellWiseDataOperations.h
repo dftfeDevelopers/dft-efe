@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo, Vishal Subramanian, Avirup Sircar
  */
 
 #ifndef dftefeFECellWiseDataOperations_h
@@ -35,62 +35,76 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     class FECellWiseDataOperations
     {
     public:
       static void
       copyFieldToCellWiseData(
-        const ValueTypeBasisCoeff *data,
+        const ValueType *data,
         const size_type            numComponents,
         const size_type *          cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueTypeBasisCoeff,
+        const typename BasisHandler<ValueType,
                                     memorySpace>::SizeTypeVector &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        dftefe::utils::MemoryStorage<ValueType, memorySpace>
           &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        const dftefe::utils::MemoryStorage<ValueType, memorySpace>
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueTypeBasisCoeff,
+        const typename BasisHandler<ValueType,
                                     memorySpace>::SizeTypeVector &numCellDofs,
-        ValueTypeBasisCoeff *                                     data);
+        ValueType *                                     data);
+
+      static void
+      addCellWiseBasisDataToDiagonalData(
+        const ValueType *cellWiseBasisData,
+        const size_type *cellLocalIdsStartPtr,
+        const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
+        ValueType *  data);
 
 
     }; // end of class FECellWiseDataOperations
 
 
 #ifdef DFTEFE_WITH_DEVICE
-    template <typename ValueTypeBasisCoeff>
+    template <typename ValueType>
     class FECellWiseDataOperations
     {
     public:
       static void
       copyFieldToCellWiseData(
-        const ValueTypeBasisCoeff *data,
+        const ValueType *data,
         const size_type            numComponents,
         const size_type *          cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff,
+        const BasisHandler<ValueType,
                            dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
           &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueTypeBasisCoeff,
+        dftefe::utils::MemoryStorage<ValueType,
                                      dftefe::utils::MemorySpace::DEVICE>
           &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueTypeBasisCoeff,
+        const dftefe::utils::MemoryStorage<ValueType,
                                            dftefe::utils::MemorySpace::DEVICE>
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const BasisHandler<ValueTypeBasisCoeff,
+        const BasisHandler<ValueType,
                            dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
           &                  numCellDofs,
-        ValueTypeBasisCoeff *data);
+        ValueType *data);
+
+      static void
+      addCellWiseBasisDataToDiagonalData(
+        const ValueType *cellWiseBasisData,
+        const size_type *cellLocalIdsStartPtr,
+        const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
+        ValueType *  data);
 
 
     }; // end of class FECellWiseDataOperations

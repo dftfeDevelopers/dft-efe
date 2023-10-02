@@ -30,6 +30,7 @@ set(DFT-EFE-BASIS-SOURCES
 	EnrichmentClassicalInterfaceSpherical.cpp
 	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
+	FEOverlapInverseGLLOperatorContext.cpp
 	)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})

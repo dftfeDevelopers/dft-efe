@@ -26,16 +26,16 @@ namespace dftefe
 {
   namespace basis
   {
-    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
+    FECellWiseDataOperations<ValueType, memorySpace>::
       copyFieldToCellWiseData(
-        const ValueTypeBasisCoeff *data,
+        const ValueType *data,
         const size_type            numComponents,
         const size_type *          cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueTypeBasisCoeff,
+        const typename BasisHandler<ValueType,
                                     memorySpace>::SizeTypeVector &numCellDofs,
-        utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &cellWiseStorage)
+        utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
       const size_type numCells               = numCellDofs.size();
@@ -56,17 +56,17 @@ namespace dftefe
         }
     }
 
-    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
+    FECellWiseDataOperations<ValueType, memorySpace>::
       addCellWiseDataToFieldData(
-        const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        const utils::MemoryStorage<ValueType, memorySpace>
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueTypeBasisCoeff,
+        const typename BasisHandler<ValueType,
                                     memorySpace>::SizeTypeVector &numCellDofs,
-        ValueTypeBasisCoeff *                                     data)
+        ValueType *                                     data)
     {
       auto            itCellWiseStorageBegin = cellWiseStorage.begin();
       const size_type numCells               = numCellDofs.size();
@@ -88,6 +88,36 @@ namespace dftefe
                 }
             }
           cumulativeCellDofs += cellDofs;
+        }
+    }
+
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    FECellWiseDataOperations<ValueType, memorySpace>::
+      addCellWiseBasisDataToDiagonalData(
+        const ValueType *cellWiseBasisDataBegin,
+        const size_type *cellLocalIdsStartPtr,
+        const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
+        ValueType*    data)
+    {
+      const size_type numCells               = numCellDofs.size();
+      size_type       cumulativeCellDofs     = 0;
+      size_type       cumulativeCellDofsSquare = 0;
+      for (size_type iCell = 0; iCell < numCells; ++iCell)
+        {
+          const size_type cellDofs = *(numCellDofs.data() + iCell);
+          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
+            {
+              const size_type localId =
+                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof); // proc local id of the cell id
+              auto dstPtr = data + localId;
+              auto srcPtr = cellWiseBasisDataBegin + cumulativeCellDofsSquare +
+                            iDof * cellDofs + iDof;
+              *(dstPtr) += *(srcPtr);
+            }
+          cumulativeCellDofs += cellDofs;
+          cumulativeCellDofsSquare += cellDofs * cellDofs;
         }
     }
 

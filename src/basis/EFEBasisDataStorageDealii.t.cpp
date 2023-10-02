@@ -2372,7 +2372,7 @@ namespace dftefe
                 std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
                 (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisManager(), quadratureRuleAttributes, basisAttrMap);
 
-              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, d_quadratureRuleContainer,  basisAttrMap);
 
               FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
 
