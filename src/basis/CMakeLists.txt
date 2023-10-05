@@ -31,6 +31,7 @@ set(DFT-EFE-BASIS-SOURCES
 	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
 	FEOverlapInverseGLLOperatorContext.cpp
+	EFEOverlapInverseGLLOperatorContext.cpp
 	)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})

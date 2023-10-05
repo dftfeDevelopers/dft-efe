@@ -28,10 +28,17 @@
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
+#include <utils/MemoryStorage.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/EFEBasisHandler.h>
 #include <basis/EFEBasisDataStorage.h>
+#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisManager.h>
+#include <basis/EFEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/FECellWiseDataOperations.h>
 #include <vector>
@@ -72,11 +79,12 @@ namespace dftefe
   private:
     const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
       *d_feBasisHandler;
-    const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-      *d_feBasisDataStorage;
     linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
     const quadrature::QuadratureRuleAttributes d_quadratureRuleAttributes;
     const std::string d_constraints;
+    std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>> d_basisOverlapEnrichmentBlock;
+    size_type d_nglobalEnrichmentIds;
+    std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
 
   }; // end of class BasisOverlapOperatorContext
     }    // namespace basis

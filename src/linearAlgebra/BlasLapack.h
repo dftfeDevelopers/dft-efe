@@ -420,6 +420,20 @@ namespace dftefe
                             scalar_type<ValueType1, ValueType2> *dC,
                             const size_type *                    lddc,
                             LinAlgOpContext<memorySpace> &       context);
+
+     //  /**
+     //   * @brief Matrix inversion
+     //   *
+     //   * @note: Assumes the matrix to be square (no pseudoinverse)
+     //   */
+     //  template <typename ValueType,
+     //            typename dftefe::utils::MemorySpace memorySpace>
+     //  void
+     //  inverse( const size_type                      n,
+     //           ValueType *                          A,
+     //           const size_type                      lda,
+     //           ValueType *                          ipiv);
+
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe

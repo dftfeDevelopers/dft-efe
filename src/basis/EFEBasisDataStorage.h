@@ -29,7 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
-#include <basis/BasisDataStorage.h>
+#include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisManagerDealii.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEConstraintsDealii.h>
