@@ -67,7 +67,6 @@ namespace dftefe
                       dim>::
       interpolate(
         const Field<ValueTypeBasisCoeff, memorySpace> &field,
-        const quadrature::QuadratureRuleAttributes &   quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &quadValuesContainer) const
     {
@@ -80,7 +79,6 @@ namespace dftefe
       interpolate(vectorData,
                   constraintsName,
                   basisHandler,
-                  quadratureRuleAttributes,
                   quadValuesContainer);
     }
 
@@ -98,13 +96,14 @@ namespace dftefe
           &                                                   vectorData,
         const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &quadValuesContainer) const
 
     {
+      quadrature::QuadratureRuleAttributes quadratureRuleAttributes = 
+        d_feBasisDataStorage->getQuadratureRuleContainer()->getQuadratureRuleAttributes();
       const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
         &feBasisHandler = dynamic_cast<
           const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
@@ -146,8 +145,7 @@ namespace dftefe
         "The number of components of input vector do not match with that in the quadValuesContainer");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
-        d_feBasisDataStorage->getQuadratureRuleContainer(
-          quadratureRuleAttributes);
+        d_feBasisDataStorage->getQuadratureRuleContainer();
       quadValuesContainer.reinit(quadRuleContainer,
                                  numComponents,
                                  ValueTypeUnion());
@@ -289,8 +287,7 @@ namespace dftefe
             *(vectorData.getLinAlgOpContext().get());
 
           const ValueTypeBasisData *B =
-            (d_feBasisDataStorage->getBasisDataInAllCells(
-               quadratureRuleAttributes))
+            (d_feBasisDataStorage->getBasisDataInAllCells())
               .data() +
             BStartOffset;
 
@@ -345,13 +342,14 @@ namespace dftefe
                                                               & vectorData,
         const std::string &                                   constraintsName,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &quadValuesContainer) const
 
     {
+      quadrature::QuadratureRuleAttributes quadratureRuleAttributes = 
+        d_feBasisDataStorage->getQuadratureRuleContainer()->getQuadratureRuleAttributes();
       const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim>
         &feBasisHandler = dynamic_cast<
           const FEBasisHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
@@ -393,8 +391,7 @@ namespace dftefe
         "The number of components of input vector do not match with that in the quadValuesContainer*dim");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
-        d_feBasisDataStorage->getQuadratureRuleContainer(
-          quadratureRuleAttributes);
+        d_feBasisDataStorage->getQuadratureRuleContainer();
       quadValuesContainer.reinit(quadRuleContainer,
                                  numComponents*dim,
                                  ValueTypeUnion());
@@ -536,8 +533,7 @@ namespace dftefe
             *(vectorData.getLinAlgOpContext().get());
 
           const ValueTypeBasisData *B =
-            (d_feBasisDataStorage->getBasisGradientDataInAllCells(
-               quadratureRuleAttributes))
+            (d_feBasisDataStorage->getBasisGradientDataInAllCells())
               .data() +
             BStartOffset;
 
@@ -592,7 +588,6 @@ namespace dftefe
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &                                         inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         Field<ValueTypeBasisCoeff, memorySpace> &   f) const
     {
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &vectorData =
@@ -602,7 +597,6 @@ namespace dftefe
       const std::string constraintsName = f.getConstraintsName();
 
       integrateWithBasisValues(inp,
-                               quadratureRuleAttributes,
                                basisHandler,
                                constraintsName,
                                vectorData);
@@ -622,13 +616,14 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &                            inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const std::string &                                   constraintsName,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const
 
     {
+      quadrature::QuadratureRuleAttributes quadratureRuleAttributes = 
+        d_feBasisDataStorage->getQuadratureRuleContainer()->getQuadratureRuleAttributes();
       std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
         inp.getQuadratureRuleContainer();
       const quadrature::QuadratureRuleAttributes &quadratureRuleAttributesInp =
@@ -666,7 +661,7 @@ namespace dftefe
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
         *(vectorData.getLinAlgOpContext().get());
       auto jxwStorage =
-        d_feBasisDataStorage->getJxWInAllCells(quadratureRuleAttributes);
+        d_feBasisDataStorage->getJxWInAllCells();
 
       const size_type numComponents = inp.getNumberComponents();
       utils::throwException(
@@ -850,8 +845,7 @@ namespace dftefe
           ValueTypeUnion beta  = 0.0;
 
           const ValueTypeBasisData *B =
-            (d_feBasisDataStorage->getBasisDataInAllCells(
-               quadratureRuleAttributes))
+            (d_feBasisDataStorage->getBasisDataInAllCells())
               .data() +
             BStartOffset;
 

@@ -255,7 +255,6 @@ namespace dftefe
                               (cfeBasisDataStorage,
                               cfeBasisHandler,
                               cfeBasisManager,
-                              d_l2ProjQuadAttr,
                               d_atomSphericalDataContainer,
                               d_atomPartitionTolerance,
                               atomSymbolVec,

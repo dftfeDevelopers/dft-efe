@@ -140,7 +140,6 @@ namespace dftefe
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                           feBasisDataStorage,
         const std::string basisInterfaceCoeffConstraint,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             maxCellTimesNumVecs)
       {
         const size_type numLocallyOwnedCells =
@@ -155,8 +154,7 @@ namespace dftefe
 
         // access cell-wise discrete Laplace operator
         auto NiNjInAllCells =
-          feBasisDataStorage->getBasisOverlapInAllCells(
-            quadratureRuleAttributes);
+          feBasisDataStorage->getBasisOverlapInAllCells();
 
         const size_type cellBlockSize = maxCellTimesNumVecs;
 
@@ -213,7 +211,6 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
           memorySpace> & inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const std::string basisInterfaceCoeffConstraint,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -250,7 +247,6 @@ namespace dftefe
           *d_feBasisDataStorage,
           basisInterfaceCoeffConstraint,
           basisInterfaceCoeffConstraint,
-          quadratureRuleAttributes,
           maxCellTimesNumVecs);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
@@ -264,7 +260,6 @@ namespace dftefe
               d_feBasisHandler,
               d_feBasisDataStorage,
               basisInterfaceCoeffConstraint,
-              quadratureRuleAttributes,
               maxCellTimesNumVecs);
 
 
@@ -296,7 +291,6 @@ namespace dftefe
       d_b.setValue(0.0);
 
       cfeBasisOperations.integrateWithBasisValues(inp,
-                                                 quadratureRuleAttributes,
                                                  *d_feBasisHandler,
                                                  basisInterfaceCoeffConstraint,
                                                  d_b);

@@ -43,12 +43,10 @@ namespace dftefe
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &feBasisDataStorage,
         const std::string                           constraints,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
         : d_diagonalInv( d_feBasisHandler->getMPIPatternP2P(constraints), linAlgOpContext)
         , d_feBasisHandler(&feBasisHandler)
         , d_feBasisDataStorage(&feBasisDataStorage)
-        , d_quadratureRuleAttributes(quadratureRuleAttributes)
         , d_constraints(constraints)
       {
 
@@ -75,8 +73,7 @@ namespace dftefe
 
       // access cell-wise discrete Laplace operator
       auto NiNjInAllCells =
-        d_feBasisDataStorage->getBasisOverlapInAllCells(
-          quadratureRuleAttributes);
+        d_feBasisDataStorage->getBasisOverlapInAllCells();
 
               std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
               std::copy(numCellDofs.begin(),

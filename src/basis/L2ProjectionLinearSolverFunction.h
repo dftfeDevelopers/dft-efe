@@ -94,7 +94,6 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
           memorySpace> & inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const std::string basisInterfaceCoeffConstraint,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>

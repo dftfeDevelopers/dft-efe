@@ -82,7 +82,6 @@ namespace dftefe
           &                                         feBasisDataStorage,
         const std::string                           constraintsX,
         const std::string                           constraintsY,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             maxCellTimesNumVecs);
 
       // void
@@ -102,7 +101,6 @@ namespace dftefe
         *                                         d_feBasisDataStorage;
       const std::string                           d_constraintsX;
       const std::string                           d_constraintsY;
-      const quadrature::QuadratureRuleAttributes &d_quadratureRuleAttributes;
       const size_type                             d_maxCellTimesNumVecs;
     }; // end of class BasisOverlapOperatorContext
   }    // end of namespace basis

@@ -32,8 +32,13 @@
 
 int main()
 {
+  std::cout<<" Entering test poisson problem classical \n";
 
-  std::cout<<" Entering test overlap matrix classical \n";
+  // Required to solve : \nabla^2 V_H = g(r,r_c) Solve using CG in linearAlgebra
+  // In the weak form the eqn is:
+  // (N_i,N_j)*V_H = (N_i, g(r,r_c))
+  // Input to CG are : linearSolverFnction. Reqd to create a derived class of the base.
+  // For the nabla : LaplaceOperatorContextFE to get \nabla^2(A)*x = y
 
   //initialize MPI
 
@@ -194,12 +199,11 @@ int main()
       *feBasisData,
       constraintHanging,
       constraintHanging,
-      quadAttr,
       50);
 
 
       MContext->apply(*X,*Y);
-  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadAttr, quadValuesContainer);
+  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
@@ -211,12 +215,26 @@ int main()
                                                    (*basisHandler,
                                                     *feBasisData,
                                                     constraintHanging,
-                                                    quadAttr,
                                                     linAlgOpContext);
 
     MInvContext->apply(*Y,*Z);
 
     std::cout << "\n" <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
+
+  std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
+   error = std::make_shared<
+    dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>(
+      mpiPatternP2PHanging, linAlgOpContext, numComponents, double());
+
+  std::vector<double> ones(0);
+  ones.resize(numComponents, (double)1.0);
+  std::vector<double> nOnes(0);
+  nOnes.resize(numComponents, (double)-1.0);
+
+  dftefe::linearAlgebra::add(ones, *X, nOnes, *Z, *error);
+
+    std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/Z->l2Norms()[0])<<"\n";
+
 
   //gracefully end MPI
 

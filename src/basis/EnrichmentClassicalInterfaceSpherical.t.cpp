@@ -93,7 +93,6 @@ namespace dftefe
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage,
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
       std::shared_ptr<const FEBasisManager> cfeBasisManager,
-      const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
       const double                     atomPartitionTolerance,
@@ -190,12 +189,12 @@ namespace dftefe
       // Form the quadValuesContainer for pristine enrichment N_A quadValuesEnrichmentFunction
 
       quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> 
-        quadValuesEnrichmentFunction(cfeBasisDataStorage->getQuadratureRuleContainer(l2ProjQuadAttr), 1) ;
+        quadValuesEnrichmentFunction(cfeBasisDataStorage->getQuadratureRuleContainer(), 1) ;
 
       for(size_type i = 0 ; i < quadValuesEnrichmentFunction.nCells() ; i++)
       {
         size_type quadId = 0;
-        for (auto quadPoint : cfeBasisDataStorage->getQuadratureRuleContainer(l2ProjQuadAttr)->getCellRealPoints(i))
+        for (auto quadPoint : cfeBasisDataStorage->getQuadratureRuleContainer()->getCellRealPoints(i))
         {
           ValueTypeBasisData enrichmentQuadValue;
           enrichmentQuadValue = EnrichmentClassicalInterfaceSphericalInternal::
@@ -225,7 +224,6 @@ namespace dftefe
                                                         cfeBasisDataStorage,
                                                         cfeBasisOp,
                                                         quadValuesEnrichmentFunction,
-                                                        l2ProjQuadAttr,
                                                         basisInterfaceCoeffConstraint,
                                                         L2ProjectionDefaults::PC_TYPE,
                                                         linAlgOpContext,

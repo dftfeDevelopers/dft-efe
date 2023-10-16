@@ -28,20 +28,21 @@
 #include <cmath>
 #include <memory>
 #include <algorithm>
+#include <mkl.h>
 namespace dftefe
 {
   namespace basis
   {
     namespace EFEBlockInverse
     {
-      extern "C" 
-      {
-        // LU decomoposition of a general matrix
-        void dgetrf(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+      // extern "C" 
+      // {
+      //   // LU decomoposition of a general matrix
+      //   void dgetrf(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
 
-        // generate inverse of a matrix given its LU decomposition
-        void dgetri(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
-      }
+      //   // generate inverse of a matrix given its LU decomposition
+      //   void dgetri(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+      // }
 
       void inverse(double* A, int N)
       {
@@ -75,10 +76,8 @@ namespace dftefe
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &feBasisDataStorage,
         const std::string                           constraints,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
         : d_feBasisHandler(&feBasisHandler)
-        , d_quadratureRuleAttributes(quadratureRuleAttributes)
         , d_constraints(constraints)
         , d_linAlgOpContext(linAlgOpContext)
         , d_diagonalInv( d_feBasisHandler->getMPIPatternP2P(constraints), linAlgOpContext)
@@ -114,8 +113,7 @@ namespace dftefe
 
       // access cell-wise discrete Laplace operator
       auto NiNjInAllCells =
-        efebasisDataStorage.getBasisOverlapInAllCells(
-          quadratureRuleAttributes);
+        efebasisDataStorage.getBasisOverlapInAllCells();
 
               std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
               std::copy(numCellDofs.begin(),
@@ -236,8 +234,8 @@ namespace dftefe
           numComponents,
           d_diagonalInv.localSize(),
           d_diagonalInv.data(),
-          X.data(),
-          Y.data(),
+          X.begin(),
+          Y.begin(),
           *(d_diagonalInv.getLinAlgOpContext()));
 
         utils::MemoryStorage<ValueTypeOperand, memorySpace> XenrichedGlobalVec(d_nglobalEnrichmentIds*numComponents),
@@ -253,7 +251,7 @@ namespace dftefe
         //     *(XenrichedGlobalVecSTLTmp.data() + pair.first * numComponents + j) = *(X.data() + i*numComponents + j);
         // }
 
-        XenrichedGlobalVecTmp.template copyFrom<memorySpace>(X.data(),
+        XenrichedGlobalVecTmp.template copyFrom<memorySpace>(X.begin(),
         nlocallyOwnedEnrichmentIds*numComponents,
         nlocallyOwnedClassicalIds*numComponents,
         0);
@@ -290,7 +288,7 @@ namespace dftefe
         d_basisOverlapEnrichmentBlock->data(),
         d_nglobalEnrichmentIds,
         beta,
-        YenrichedGlobalVec.data(),
+        YenrichedGlobalVec.begin(),
         d_nglobalEnrichmentIds,
         *d_linAlgOpContext);
 
@@ -304,9 +302,10 @@ namespace dftefe
         //     *(YenrichedLocallyOwnedVec.data() + i*numComponents + j) = *(YenrichedGlobalVec.data() + pair.first * numComponents + j);
         // }
 
-        YenrichedGlobalVec.template copyTo<memorySpace>(Y.data(),
+        YenrichedGlobalVec.template copyTo<memorySpace>(Y.begin(),
               nlocallyOwnedEnrichmentIds*numComponents,
-              (d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)*numComponents,
+              ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
+              (d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].second)) *numComponents,
               nlocallyOwnedClassicalIds*numComponents);
 
         Y.updateGhostValues();

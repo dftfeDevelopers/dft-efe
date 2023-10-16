@@ -275,13 +275,11 @@ namespace dftefe
           &                                         feBasisDataStorage,
         const std::string                           constraintsX,
         const std::string                           constraintsY,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             maxCellTimesNumVecs)
       : d_feBasisHandler(&feBasisHandler)
       , d_feBasisDataStorage(&feBasisDataStorage)
       , d_constraintsX(constraintsX)
       , d_constraintsY(constraintsY)
-      , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {}
 
@@ -333,8 +331,7 @@ namespace dftefe
 
       // access cell-wise discrete Overlap operator
       auto basisOverlapInAllCells =
-        d_feBasisDataStorage->getBasisOverlapInAllCells(
-          d_quadratureRuleAttributes);
+        d_feBasisDataStorage->getBasisOverlapInAllCells();
 
       const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
       Y.setValue(0.0);

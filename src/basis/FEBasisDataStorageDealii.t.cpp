@@ -1111,6 +1111,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1263,6 +1266,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1398,6 +1404,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1547,6 +1556,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1705,15 +1717,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisDataInAllCells(const quadrature::QuadratureRuleAttributes
-                               &quadratureRuleAttributes) const
+      getBasisDataInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreValues)
@@ -1727,15 +1736,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradientDataInAllCells(const quadrature::QuadratureRuleAttributes
-                                       &quadratureRuleAttributes) const
+      getBasisGradientDataInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradient)
@@ -1749,15 +1755,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisHessianDataInAllCells(const quadrature::QuadratureRuleAttributes
-                                      &quadratureRuleAttributes) const
+      getBasisHessianDataInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreHessian)
@@ -1771,15 +1774,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getJxWInAllCells(const quadrature::QuadratureRuleAttributes
-                         &quadratureRuleAttributes) const
+      getJxWInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
           ->second,
@@ -1794,15 +1794,12 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreValues)
@@ -1831,15 +1828,12 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisGradientDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradient)
@@ -1868,15 +1862,12 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisHessianDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreHessian)
@@ -1905,15 +1896,12 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getJxWInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
           ->second,
@@ -2060,15 +2048,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisOverlapInAllCells(const quadrature::QuadratureRuleAttributes
-                                  &quadratureRuleAttributes) const
+      getBasisOverlapInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreOverlap)
@@ -2083,15 +2068,12 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisOverlapInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreOverlap)
@@ -2116,7 +2098,6 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisOverlap(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId,
         const size_type                             basisId1,
         const size_type                             basisId2) const
@@ -2124,9 +2105,7 @@ namespace dftefe
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreOverlap)
@@ -2151,12 +2130,9 @@ namespace dftefe
               size_type          dim>
     void
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      deleteBasisData(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes)
+      deleteBasisData()
     {
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         (d_basisQuadStorage).use_count() == 1,
         "More than one owner for the basis quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
@@ -2183,9 +2159,7 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
+      getBasisDataInCell(const size_type                             cellId,
         const size_type                             basisId) const
     {
       utils::throwException(
@@ -2201,9 +2175,7 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradientDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
+      getBasisGradientDataInCell(const size_type                             cellId,
         const size_type                             basisId) const
     {
       utils::throwException(
@@ -2220,8 +2192,7 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisHessianDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
+       const size_type                             cellId,
         const size_type                             basisId) const
     {
       utils::throwException(
@@ -2237,15 +2208,12 @@ namespace dftefe
               size_type          dim>
     std::shared_ptr<const quadrature::QuadratureRuleContainer>
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getQuadratureRuleContainer(const quadrature::QuadratureRuleAttributes
-                                   &quadratureRuleAttributes) const
+      getQuadratureRuleContainer() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       return d_quadratureRuleContainer;
     }
 
@@ -2255,15 +2223,12 @@ namespace dftefe
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
       getBasisGradNiGradNjInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const size_type                             cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradNiGradNj)
@@ -2288,15 +2253,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradNiGradNjInAllCells(const quadrature::QuadratureRuleAttributes
-                                       &quadratureRuleAttributes) const
+      getBasisGradNiGradNjInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradNiGradNj)

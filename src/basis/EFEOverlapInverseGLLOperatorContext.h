@@ -68,7 +68,6 @@ namespace dftefe
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &feBasisDataStorage,
         const std::string                           constraints,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
 
     void
@@ -80,7 +79,6 @@ namespace dftefe
     const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
       *d_feBasisHandler;
     linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-    const quadrature::QuadratureRuleAttributes d_quadratureRuleAttributes;
     const std::string d_constraints;
     std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>> d_basisOverlapEnrichmentBlock;
     size_type d_nglobalEnrichmentIds;

@@ -72,7 +72,6 @@ namespace dftefe
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage,
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
       std::shared_ptr<const FEBasisManager> cfeBasisManager,
-      const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
       const double                     atomPartitionTolerance,

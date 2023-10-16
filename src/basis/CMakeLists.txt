@@ -46,6 +46,15 @@ ELSE()
 	target_link_libraries (dft-efe-basis PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
 ENDIF()
 
+find_path(MKLROOT include/mkl_blas.h)
+if(MKLROOT AND EXISTS ${MKLROOT}/include/mkl_blas.h)
+  include_directories(${MKLROOT}/include)
+  link_directories(${MKLROOT}/lib/intel64)
+  set(MKL_LIBRARIES mkl_intel_lp64 mkl_core mkl_sequential)
+else(MKLROOT AND EXISTS ${MKLROOT}/include/mkl_blas.h)
+  message(SEND_ERROR "Cannot find MKL for lapack blas! Please set MKLROOT and configure again.")
+endif(MKLROOT AND EXISTS ${MKLROOT}/include/mkl_blas.h)
+
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
@@ -72,6 +81,6 @@ if (NOT TARGET dft-efe-atoms)
   add_subdirectory(../atoms ${CMAKE_CURRENT_BINARY_DIR}/buildAtoms)
 endif()
 
-target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms ${DFTEFE_MPI_LIBRARIES})
+target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms ${DFTEFE_MPI_LIBRARIES} ${MKL_LIBRARIES})
 #target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature ${DFTEFE_MPI_LIBRARIES})
 endif()

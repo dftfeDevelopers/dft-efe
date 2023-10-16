@@ -3,13 +3,14 @@
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/EFEBasisManagerDealii.h>
-#include <basis/BasisManager.h>
-#include <basis/FEConstraintsDealii.h>
+#include <basis/EFEConstraintsDealii.h>
 #include <basis/EFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/EFEBasisHandlerDealii.h>
 #include <quadrature/QuadratureAttributes.h>
-#include <quadrature/QuadratureRuleGLL.h>
+#include <quadrature/QuadratureRuleGauss.h>
+#include <quadrature/QuadratureRuleAdaptive.h>
+#include <atoms/AtomSevereFunction.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -40,25 +41,30 @@ int main()
   dftefe::utils::mpi::MPIInitialized(&mpiInitFlag);
   if(!mpiInitFlag)
   {
-    dftefe::utils::mpi::MPIInit(NULL, NULL);
+      dftefe::utils::mpi::MPIInit(NULL, NULL);
   }
 
   dftefe::utils::mpi::MPIComm comm = dftefe::utils::mpi::MPICommWorld;
 
+  // Get the rank of the process
   int rank;
   dftefe::utils::mpi::MPICommRank(comm, &rank);
+
+  // Get nProcs
+  int numProcs;
+  dftefe::utils::mpi::MPICommSize(comm, &numProcs);
 
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
 
-  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext =
-    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
+  std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
 
   // Set up Triangulation
   const unsigned int dim = 3;
-    std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
-        std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {5, 5 ,5};
+  std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
+  std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
+  std::vector<unsigned int>         subdivisions = {5, 5, 5};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
@@ -75,8 +81,8 @@ int main()
   // initialize the triangulation
   triangulationBase->initializeTriangulationConstruction();
   triangulationBase->createUniformParallelepiped(subdivisions,
-                                                 domainVectors,
-                                                 isPeriodicFlags);
+                                                  domainVectors,
+                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
   // Enrichment data file consisting of g(r,\theta,\phi) = f(r)*Y_lm(\theta, \phi)
@@ -86,14 +92,14 @@ int main()
   std::fstream fstream;
 
   fstream.open(inputFileName, std::fstream::in);
-  
-  // read the input file and create atomsymbol vector and atom coordinates vector.
+
+  // read the input file and create atomSymbolVec vector and atom coordinates vector.
   std::vector<dftefe::utils::Point> atomCoordinatesVec;
   std::vector<double> coordinates;
   coordinates.resize(dim,0.);
-  std::vector<std::string> atomSymbol;
+  std::vector<std::string> atomSymbolVec;
   std::string symbol;
-  atomSymbol.resize(0);
+  atomSymbolVec.resize(0);
   std::string line;
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
@@ -102,17 +108,17 @@ int main()
           ss >> coordinates[i]; 
       }
       atomCoordinatesVec.push_back(coordinates);
-      atomSymbol.push_back(symbol);
+      atomSymbolVec.push_back(symbol);
   }
   dftefe::utils::mpi::MPIBarrier(comm);
       
   std::map<std::string, std::string> atomSymbolToFilename;
-  for (auto i:atomSymbol )
+  for (auto i:atomSymbolVec )
   {
       atomSymbolToFilename[i] = sourceDir + i + ".xml";
   }
 
-  std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
+  std::vector<std::string> fieldNames{"vnuclear"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
   std::shared_ptr<dftefe::atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
       std::make_shared<dftefe::atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
@@ -128,18 +134,18 @@ int main()
 
   const dftefe::quadrature::QuadratureRuleAttributes l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GLL,true,4);
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
+
+  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double, dftefe::utils::MemorySpace::HOST ,dim>>(
       triangulationBase ,
       atomSphericalDataContainer ,
-      feOrder ,
+      feOrder,
       atomPartitionTolerance,
-      atomSymbol,
+      atomSymbolVec,
       atomCoordinatesVec,
       fieldName,
       comm,
       l2ProjQuadAttr,
       linAlgOpContext);
-      
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
 
@@ -148,19 +154,20 @@ int main()
 
   // Set the constraints
 
-  std::string constraintHanging = "HangingNodeConstraint"; 
+  std::string constraintHanging = "HangingNodeConstraint"; //give BC to rho
+
   std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec;
+  constraintsVec;
   constraintsVec.resize(1);
   for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
+  constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>();
 
   constraintsVec[0]->clear();
   constraintsVec[0]->makeHangingNodeConstraint(basisManager);
   constraintsVec[0]->close();
 
   std::map<std::string,
-           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
+          std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
 
   constraintsMap[constraintHanging] = constraintsVec[0];
 
@@ -249,12 +256,11 @@ int main()
       *feBasisData,
       constraintHanging,
       constraintHanging,
-      quadAttr,
       50);
 
 
       MContext->apply(*X,*Y);
-  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadAttr, quadValuesContainer);
+  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
@@ -266,12 +272,25 @@ int main()
                                                    (*basisHandler,
                                                     *feBasisData,
                                                     constraintHanging,
-                                                    quadAttr,
                                                     linAlgOpContext);
 
-    MInvContext->apply(*Y,*Z);
+     MInvContext->apply(*Y,*Z);
 
     std::cout << "\n" <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
+
+  std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
+   error = std::make_shared<
+    dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>(
+      mpiPatternP2PHanging, linAlgOpContext, numComponents, double());
+
+  std::vector<double> ones(0);
+  ones.resize(numComponents, (double)1.0);
+  std::vector<double> nOnes(0);
+  nOnes.resize(numComponents, (double)-1.0);
+
+  dftefe::linearAlgebra::add(ones, *X, nOnes, *Z, *error);
+
+    std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/Z->l2Norms()[0])<<"\n";
 
   //gracefully end MPI
 

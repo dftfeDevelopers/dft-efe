@@ -111,7 +111,6 @@ namespace dftefe
           feBasisDataStorage,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &                                         inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const std::string                           constraintsHanging,
         const std::string constraintsHangingwHomogeneous,
         const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
