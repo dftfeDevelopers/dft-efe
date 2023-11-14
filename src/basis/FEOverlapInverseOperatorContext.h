@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeFEOverlapInverseGLLOperatorContext_h
-#define dftefeFEOverlapInverseGLLOperatorContext_h
+#ifndef dftefeFEOverlapInverseOperatorContext_h
+#define dftefeFEOverlapInverseOperatorContext_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -46,7 +46,7 @@ namespace dftefe
             typename ValueTypeOperand,
             utils::MemorySpace memorySpace,
             size_type          dim>
-  class FEOverlapInverseGLLOperatorContext
+  class FEOverlapInverseOperatorContext
     : public linearAlgebra::
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
   {
@@ -56,7 +56,7 @@ namespace dftefe
                                               ValueTypeOperand>;
 
   public:
-    FEOverlapInverseGLLOperatorContext(const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+    FEOverlapInverseOperatorContext(const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &feBasisDataStorage,
@@ -79,5 +79,5 @@ namespace dftefe
   }; // end of class BasisOverlapOperatorContext
     }    // namespace basis
 } // end of namespace dftefe
-#include <basis/FEOverlapInverseGLLOperatorContext.t.cpp>
-#endif // dftefeFEOverlapInverseGLLOperatorContext_h
+#include <basis/FEOverlapInverseOperatorContext.t.cpp>
+#endif // dftefeFEOverlapInverseOperatorContext_h

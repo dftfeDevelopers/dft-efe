@@ -64,9 +64,7 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder,
-             const std::vector<std::string> & atomSymbolVec,
-             const std::vector<utils::Point> & atomCoordinatesVec) override;
+             const size_type                          feOrder);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;

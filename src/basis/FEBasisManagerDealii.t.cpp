@@ -75,9 +75,7 @@ namespace dftefe
     void
     FEBasisManagerDealii<dim>::reinit(
       std::shared_ptr<const TriangulationBase> triangulation,
-      const size_type                          feOrder,
-      const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> & atomCoordinatesVec)
+      const size_type                          feOrder)
     {
       dealii::FE_Q<dim>                       feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =

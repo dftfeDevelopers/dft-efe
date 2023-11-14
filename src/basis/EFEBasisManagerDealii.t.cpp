@@ -47,91 +47,43 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace, size_type dim>
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::EFEBasisManagerDealii(
-      std::shared_ptr<const TriangulationBase> triangulation,
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                       atomSphericalDataContainer,
-      const size_type                  feOrder,
-      const double                     atomPartitionTolerance,
-      const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> &atomCoordinatesVec,
-      const std::string                fieldName,
-      const utils::mpi::MPIComm &      comm)
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
+          EnrichmentClassicalInterface,
+        const size_type                  feOrder)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
-      , d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbolVec)
-      , d_atomCoordinatesVec(0, utils::Point(dim, 0.0))
-      , d_fieldName(fieldName)
-      , d_comm(comm)
-      , d_atomPartitionTolerance(atomPartitionTolerance)
       , d_overlappingEnrichmentIdsInCells(0)
       , d_locallyOwnedRanges(0)
       , d_globalRanges(0)
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
-      , d_atomIdsPartition(nullptr)
-      , d_l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,1)
     {
-      d_isOrthogonalized = false;
-      d_dofHandler         = std::make_shared<dealii::DoFHandler<dim>>();
+      d_dofHandler  = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
-      reinit(triangulation, feOrder, atomSymbolVec, atomCoordinatesVec);
-    }
-
-    template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::EFEBasisManagerDealii(
-      std::shared_ptr<const TriangulationBase> triangulation,
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                       atomSphericalDataContainer,
-      const size_type                  feOrder,
-      const double                     atomPartitionTolerance,
-      const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> &atomCoordinatesVec,
-      const std::string                fieldName,
-      const utils::mpi::MPIComm &      comm,
-      const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
-      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
-      : d_isVariableDofsPerCell(true)
-      , d_totalRanges(2) // Classical and Enriched
-      , d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbolVec)
-      , d_atomCoordinatesVec(0, utils::Point(dim, 0.0))
-      , d_fieldName(fieldName)
-      , d_comm(comm)
-      , d_atomPartitionTolerance(atomPartitionTolerance)
-      , d_overlappingEnrichmentIdsInCells(0)
-      , d_locallyOwnedRanges(0)
-      , d_globalRanges(0)
-      , d_ghostEnrichmentGlobalIds(0)
-      , d_enrichmentIdsPartition(nullptr)
-      , d_atomIdsPartition(nullptr)
-      , d_enrichClassIntfce(nullptr)
-      , d_linAlgOpContext(linAlgOpContext)
-      , d_l2ProjQuadAttr(l2ProjQuadAttr)
-    {
-      d_isOrthogonalized = true;
-      d_dofHandler         = std::make_shared<dealii::DoFHandler<dim>>();
-      // making the classical and enriched dofs in the dealii mesh here
-      reinit(triangulation, feOrder, atomSymbolVec, atomCoordinatesVec);
+      reinit(EnrichmentClassicalInterface, feOrder);
     }
 
     template <typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace, size_type dim>
     void
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::reinit(
-      std::shared_ptr<const TriangulationBase> triangulation,
-      const size_type                          feOrder,
-      const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> &atomCoordinatesVec)
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
+        enrichmentClassicalInterface, 
+        const size_type  feOrder)
     {
-      d_atomCoordinatesVec = atomCoordinatesVec;
-      d_atomSymbolVec = atomSymbolVec;
       // Create Classical FE dof_handler
+      d_enrichClassIntfce = enrichmentClassicalInterface;
+      d_isOrthogonalized = enrichmentClassicalInterface->isOrthgonalized();
+      d_atomSphericalDataContainer = enrichmentClassicalInterface->getAtomSphericalDataContainer();
+      d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
+      d_atomCoordinatesVec = enrichmentClassicalInterface->getAtomCoordinatesVec();
+      d_fieldName = enrichmentClassicalInterface->getFieldName();
       dealii::FE_Q<dim>                       feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
         dynamic_cast<const TriangulationDealiiParallel<dim> *>(
-          triangulation.get());
+          enrichmentClassicalInterface->getTriangulation().get());
+
+      // TODO - If remeshing then update triangulation
 
       if (!(dealiiParallelTria == nullptr))
         {
@@ -144,7 +96,7 @@ namespace dftefe
         {
           const TriangulationDealiiSerial<dim> *dealiiSerialTria =
             dynamic_cast<const TriangulationDealiiSerial<dim> *>(
-              triangulation.get());
+              enrichmentClassicalInterface->getTriangulation().get());
 
           if (!(dealiiSerialTria == nullptr))
             {
@@ -160,9 +112,6 @@ namespace dftefe
                 "reinit() in EFEBasisManagerDealii is not able to re cast the Triangulation.");
             }
         }
-
-      // TODO check how to pass the triangulation to dofHandler
-      d_triangulation = triangulation;
 
       typename dealii::DoFHandler<dim>::active_cell_iterator cell =
         d_dofHandler->begin_active();
@@ -192,92 +141,7 @@ namespace dftefe
             d_localCells.push_back(cellDealii);
           }
 
-      //----------------ENRICHEMNT---------------------//
-
-      // Add enriched FE dofs with on top of the classical dofs.
-      // Note that the enriched FE dofs are already partitioned elswhere
-      // This implies we pass mpi communicator here also.
-      // So we only work with local enrichement ids which are created.
-
-      if(d_isOrthogonalized)
-      {
-        // Set the CFE basis data
-        std::shared_ptr<FEBasisManager> cfeBasisManager =   std::make_shared<FEBasisManagerDealii<dim>>(triangulation, feOrder);
-        // if ((std::none_of(triangulation->getPeriodicFlags().begin(), triangulation->getPeriodicFlags().end(), [](bool i) { return i; })))
-        //   utils::throwException(
-        //   false,
-        //   "The domain has to be non-periodic only.");
-        std::string constraintName = "HangingWithHomogeneous";
-        std::vector<std::shared_ptr<FEConstraintsBase<ValueTypeBasisData, memorySpace>>>
-          constraintsVec;
-        constraintsVec.resize(1);
-        for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-        constraintsVec[i] = std::make_shared<FEConstraintsDealii<ValueTypeBasisData, memorySpace, dim>>();
-        
-        constraintsVec[0]->clear();
-        constraintsVec[0]->makeHangingNodeConstraint(cfeBasisManager);
-        constraintsVec[0]->setHomogeneousDirichletBC();
-        constraintsVec[0]->close();
-
-        std::map<std::string,
-                std::shared_ptr<const Constraints<ValueTypeBasisData, memorySpace>>> constraintsMap;
-
-        constraintsMap[constraintName] = constraintsVec[0];
-
-        BasisStorageAttributesBoolMap basisAttrMap;
-        basisAttrMap[BasisStorageAttributes::StoreValues] = true;
-        basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
-        basisAttrMap[BasisStorageAttributes::StoreHessian] = false;
-        basisAttrMap[BasisStorageAttributes::StoreOverlap] = true;
-        basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
-        basisAttrMap[BasisStorageAttributes::StoreJxW] = true;
-
-        // Set up the CFE Basis Data Storage
-        std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorage =
-          std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
-          (cfeBasisManager, d_l2ProjQuadAttr, basisAttrMap);
-
-        if (d_l2ProjQuadAttr.getQuadratureFamily() == quadrature::QuadratureFamily::GAUSS || d_l2ProjQuadAttr.getQuadratureFamily() == quadrature::QuadratureFamily::GLL)
-        {
-          cfeBasisDataStorage->evaluateBasisData(d_l2ProjQuadAttr, basisAttrMap);
-        }
-        else
-          utils::throwException<utils::InvalidArgument>(
-            false, "QuadratureFamily can be GAUSS or GLL only");
-
-        // // Set up BasisHandler
-        std::shared_ptr<FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler =
-          std::make_shared<FEBasisHandlerDealii<ValueTypeBasisData, memorySpace, dim>>
-          (cfeBasisManager, constraintsMap, d_comm);
-
-        d_enrichClassIntfce = std::make_shared<EnrichmentClassicalInterfaceSpherical
-                              <ValueTypeBasisData, memorySpace, dim>>
-                              (cfeBasisDataStorage,
-                              cfeBasisHandler,
-                              cfeBasisManager,
-                              d_atomSphericalDataContainer,
-                              d_atomPartitionTolerance,
-                              atomSymbolVec,
-                              atomCoordinatesVec,
-                              d_fieldName,
-                              constraintName,
-                              d_linAlgOpContext,
-                              d_comm);
-      }
-      else
-      {
-        d_enrichClassIntfce = std::make_shared<EnrichmentClassicalInterfaceSpherical
-                              <ValueTypeBasisData, memorySpace, dim>>(d_triangulation,
-                              d_atomSphericalDataContainer,
-                              d_atomPartitionTolerance,
-                              atomSymbolVec,
-                              atomCoordinatesVec,
-                              d_fieldName,
-                              d_comm);
-      }
-
       d_enrichmentIdsPartition = d_enrichClassIntfce->getEnrichmentIdsPartition();
-      d_atomIdsPartition = d_enrichClassIntfce->getAtomIdsPartition();
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -361,7 +225,7 @@ namespace dftefe
     std::shared_ptr<const TriangulationBase>
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getTriangulation() const
     {
-      return d_triangulation;
+      return d_enrichClassIntfce->getTriangulation();
     }
 
     template <typename ValueTypeBasisData,
@@ -385,7 +249,7 @@ namespace dftefe
     size_type
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalCells() const
     {
-      return d_triangulation->nGlobalCells();
+      return d_enrichClassIntfce->getTriangulation()->nGlobalCells();
     }
 
     // TODO put an assert condition to check if p refined is false

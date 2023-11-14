@@ -66,11 +66,11 @@ namespace dftefe
             typename ValueTypeOperand,
             utils::MemorySpace memorySpace,
             size_type          dim>
-      EFEOverlapInverseGLLOperatorContext<ValueTypeOperator,
+      EFEOverlapInverseOperatorContext<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::
-                                    EFEOverlapInverseGLLOperatorContext
+                                    EFEOverlapInverseOperatorContext
         (const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
@@ -208,7 +208,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-      EFEOverlapInverseGLLOperatorContext<ValueTypeOperator,
+      EFEOverlapInverseOperatorContext<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::apply(

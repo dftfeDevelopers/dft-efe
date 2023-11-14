@@ -55,28 +55,9 @@ namespace dftefe
     public:
 
       EFEBasisManagerDealii(
-        std::shared_ptr<const TriangulationBase> triangulation,
-        std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                        atomSphericalDataContainer,
-        const size_type                  feOrder,
-        const double                     atomPartitionTolerance,
-        const std::vector<std::string> & atomSymbolVec,
-        const std::vector<utils::Point> &atomCoordinatesVec,
-        const std::string                fieldName,
-        const utils::mpi::MPIComm &      comm,
-        const quadrature::QuadratureRuleAttributes l2ProjQuadAttr,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
-
-      EFEBasisManagerDealii(
-        std::shared_ptr<const TriangulationBase> triangulation,
-        std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const size_type                  feOrder,
-        const double                     atomPartitionTolerance,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<utils::Point> &atomCoordinates,
-        const std::string                fieldName,
-        const utils::mpi::MPIComm &      comm);
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
+          enrichmentClassicalInterface,
+        const size_type                  feOrder);
 
       double
       getBasisFunctionValue(const size_type     basisId,
@@ -89,10 +70,8 @@ namespace dftefe
 
       ////// FE specific  member functions /////
       void
-      reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder,
-             const std::vector<std::string> & atomSymbolVec,
-             const std::vector<utils::Point> & atomCoordinatesVec) override;
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
+        enrichmentClassicalInterface, const size_type  feOrder);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -221,7 +200,6 @@ namespace dftefe
       totalRanges() const override;
 
     private:
-      std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
       bool                                     d_isVariableDofsPerCell;
       std::vector<std::shared_ptr<FECellBase>> d_localCells;
@@ -229,26 +207,23 @@ namespace dftefe
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
-                                                   d_enrichmentIdsPartition;
-      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
+        d_enrichmentIdsPartition;
       std::vector<std::vector<global_size_type>>
                       d_overlappingEnrichmentIdsInCells;
       size_type d_totalRanges;
       std::vector<std::pair<global_size_type, global_size_type>>
         d_locallyOwnedRanges;
-      std::vector<std::pair<global_size_type, global_size_type>> d_globalRanges;
+      std::vector<std::pair<global_size_type, global_size_type>> 
+        d_globalRanges;
       std::vector<global_size_type> d_ghostEnrichmentGlobalIds;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
       std::vector<std::string>  d_atomSymbolVec;
       std::vector<utils::Point> d_atomCoordinatesVec;
       const std::string               d_fieldName;
-      const double              d_atomPartitionTolerance;
-      const utils::mpi::MPIComm d_comm;
       bool                      d_isOrthogonalized;
-      const quadrature::QuadratureRuleAttributes d_l2ProjQuadAttr;
-      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
-      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
+      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical
+        <ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
 
     }; // end of EFEBasisManagerDealii
   }    // end of namespace basis

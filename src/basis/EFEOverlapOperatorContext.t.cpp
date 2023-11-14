@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -31,8 +31,245 @@ namespace dftefe
 {
   namespace basis
   {
-    namespace BasisOverlapOperatorContextInternal
+    namespace EFEOverlapOperatorContextInternal
     {
+
+      template <typename ValueTypeOperator,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      computeBasisOverlapMatrix(const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & feBasisDataStorage,
+        std::shared_ptr<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+           basisOverlap,
+        std::vector<size_type> & cellStartIdsBasisOverlap,
+        std::vector<size_type> & dofsInCellVec)
+      {
+        const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &feBM =
+          dynamic_cast<const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>
+          (feBasisDataStorage.getBasisManager());
+        utils::throwException(
+          &feBM != nullptr,
+          "Could not cast BasisManager to EFEBasisManager "
+          "in EFEOverlapOperatorContext");
+
+        const size_type numLocallyOwnedCells = feBM.nLocallyOwnedCells();
+        dofsInCellVec.resize(numLocallyOwnedCells,0);
+        cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
+        size_type cumulativeBasisOverlapId = 0;
+
+        size_type cellId               = 0; 
+        size_type  basisOverlapSize = 0;
+        const size_type feOrder              = feBM.getFEOrder(cellId);
+
+        // NOTE: cellId 0 passed as we assume only H refined in this function
+        const size_type dofsPerCell;
+
+        auto locallyOwnedCellIter = feBM.beginLocallyOwnedCells();
+
+        for (; locallyOwnedCellIter != feBM.endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsInCellVec[cellId] = feBM.nCellDofs(cellId);
+            basisOverlapSize += dofsPerCell * dofsPerCell;
+            cellId++;
+          }
+
+        std::vector<ValueTypeOperator> basisOverlapTmp(0);
+
+        basisOverlap = std::make_shared<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(basisOverlapSize);
+        basisOverlapTmp.resize(basisOverlapSize,
+                              ValueTypeOperator(0));
+
+        auto basisOverlapTmpIter = basisOverlapTmp.begin();
+        size_type cellIndex           = 0;
+
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCells = feBasisDataStorage.getBasisDataInAllCells();
+
+        size_type cumulativeQuadPoints = 0, cumulativeDofQuadPointsOffset = 0;
+
+        locallyOwnedCellIter = feBM.beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != feBM.endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsPerCell = dofsInCellVec[cellIndex];
+            size_type nQuadPointInCell =
+              feBasisDataStorage.getQuadratureRuleContainer()->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValues =
+              feBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(cellIndex);
+
+            const ValueTypeOperator *cumulativeDofQuadPoints =
+              basisDataInAllCells.data()+cumulativeDofQuadPointsOffset;
+
+            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+              {
+                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                  {
+                    *basisOverlapTmpIter = 0.0;
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                         qPoint++)
+                      {
+                        *basisOverlapTmpIter +=
+                        *(cumulativeDofQuadPoints+nQuadPointInCell*iNode+qPoint) *
+                        *(cumulativeDofQuadPoints+nQuadPointInCell*jNode+qPoint) *
+                        cellJxWValues[qPoint];
+                      }
+                    basisOverlapTmpIter++;
+                  }
+              }
+
+            cellStartIdsBasisOverlap[cellIndex] = cumulativeBasisOverlapId;
+            cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
+            cellIndex++;
+            cumulativeQuadPoints += nQuadPointInCell;
+            cumulativeDofQuadPointsOffset += nQuadPointInCell*dofsPerCell;
+          }
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+      }
+
+      template <typename ValueTypeOperator,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      computeBasisOverlapMatrix(const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & cfeBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & efeBasisDataStorage,
+        std::shared_ptr<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+           basisOverlap,
+        std::vector<size_type> & cellStartIdsBasisOverlap,
+        std::vector<size_type> & dofsInCellVec)
+      {
+        const FEBasisManager &cfeBM =
+          dynamic_cast<const FEBasisManager &>(cfeBasisDataStorage.getBasisManager());
+        utils::throwException(
+          &cfeBM != nullptr,
+          "Could not cast BasisManager to FEBasisManager "
+          "in EFEOverlapOperatorContext");
+
+        const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &efeBM =
+          dynamic_cast<const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>
+          (efeBasisDataStorage.getBasisManager());
+        utils::throwException(
+          &efeBM != nullptr,
+          "Could not cast BasisManager to EFEBasisManager "
+          "in EFEOverlapOperatorContext");
+
+        // NOTE: cellId 0 passed as we assume only H refined in this function
+
+        utils::throwException(
+          cfeBM.getTriangulation() == efeBM.getTriangulation() && cfeBM.getFEOrder(0) == efeBM.getFEOrder(0),
+          "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder. ");
+
+        const size_type numLocallyOwnedCells = efeBM.nLocallyOwnedCells();
+        dofsInCellVec.resize(numLocallyOwnedCells,0);
+        cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
+        size_type cumulativeBasisOverlapId = 0;
+
+        size_type  basisOverlapSize = 0;
+        size_type cellId               = 0;
+        const size_type feOrder              = efeBM.getFEOrder(cellId);
+
+        const size_type dofsPerCell;
+        const size_type dofsPerCellCFE = cfeBM.nCellDofs(cellId);
+
+        auto locallyOwnedCellIter = efeBM.beginLocallyOwnedCells();
+
+        for (; locallyOwnedCellIter != efeBM.endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsInCellVec[cellId] = efeBM.nCellDofs(cellId);
+            basisOverlapSize += dofsPerCell * dofsPerCell;
+            cellId++;
+          }
+
+        std::vector<ValueTypeOperator> basisOverlapTmp(0);
+
+        basisOverlap = std::make_shared<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(basisOverlapSize);
+        basisOverlapTmp.resize(basisOverlapSize,
+                              ValueTypeOperator(0));
+
+        auto basisOverlapTmpIter = basisOverlapTmp.begin();
+        size_type cellIndex           = 0;
+
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCellsCFE = cfeBasisDataStorage.getBasisDataInAllCells();
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCellsEFE = efeBasisDataStorage.getBasisDataInAllCells();
+
+        size_type cumulativeCFEDofQuadPointsOffset = 0, cumulativeEFEDofQuadPointsOffset = 0;
+
+        locallyOwnedCellIter = efeBM.beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != efeBM.endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsPerCell = dofsInCellVec[cellIndex];
+            size_type nQuadPointInCellCFE =
+              cfeBasisDataStorage.getQuadratureRuleContainer()->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesCFE =
+              cfeBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(cellIndex);
+
+            size_type nQuadPointInCellEFE =
+              efeBasisDataStorage.getQuadratureRuleContainer()->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesEFE =
+              efeBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(cellIndex);
+
+            const ValueTypeOperator *cumulativeCFEDofQuadPoints =
+              basisDataInAllCellsCFE.data()+cumulativeCFEDofQuadPointsOffset;
+
+            const ValueTypeOperator *cumulativeEFEDofQuadPoints =
+              basisDataInAllCellsEFE.data()+cumulativeEFEDofQuadPointsOffset;
+
+            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+              {
+                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                  {
+                    *basisOverlapTmpIter = 0.0;
+                    if (iNode < dofsPerCellCFE &&
+                        jNode < dofsPerCellCFE)
+                      {
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellCFE;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                            *(cumulativeCFEDofQuadPoints+nQuadPointInCellCFE*iNode+qPoint) *
+                            *(cumulativeCFEDofQuadPoints+nQuadPointInCellCFE*jNode+qPoint) *
+                            cellJxWValuesCFE[qPoint];
+                          }
+                      }
+                    else
+                      {
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEFE;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                            *(cumulativeEFEDofQuadPoints+nQuadPointInCellEFE*iNode+qPoint) *
+                            *(cumulativeEFEDofQuadPoints+nQuadPointInCellEFE*jNode+qPoint) *
+                            cellJxWValuesEFE[qPoint];
+                          }
+                      }
+                    basisOverlapTmpIter++;
+                  }
+              }
+
+            cellStartIdsBasisOverlap[cellIndex] = cumulativeBasisOverlapId;
+            cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
+            cellIndex++;
+            cumulativeCFEDofQuadPointsOffset += nQuadPointInCellCFE*dofsPerCellCFE;
+            cumulativeEFEDofQuadPointsOffset += nQuadPointInCellEFE*dofsPerCell;
+          }
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+      }
+
       template <utils::MemorySpace memorySpace>
       void
       storeSizes(utils::MemoryStorage<size_type, memorySpace> &mSizes,
@@ -181,7 +418,7 @@ namespace dftefe
             utils::MemoryStorage<size_type, memorySpace> strideC(
               numCellsInBlock);
 
-            BasisOverlapOperatorContextInternal::storeSizes(mSizes,
+            EFEOverlapOperatorContextInternal::storeSizes(mSizes,
                                                          nSizes,
                                                          kSizes,
                                                          ldaSizes,
@@ -257,18 +494,18 @@ namespace dftefe
           }
       }
 
-    } // end of namespace BasisOverlapOperatorContextInternal
+    } // end of namespace EFEOverlapOperatorContextInternal
 
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    BasisOverlapOperatorContext<ValueTypeOperator,
+    EFEOverlapOperatorContext<ValueTypeOperator,
                              ValueTypeOperand,
                              memorySpace,
                              dim>::
-      BasisOverlapOperatorContext(
+      EFEOverlapOperatorContext(
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
@@ -277,18 +514,68 @@ namespace dftefe
         const std::string                           constraintsY,
         const size_type                             maxCellTimesNumVecs)
       : d_feBasisHandler(&feBasisHandler)
-      , d_feBasisDataStorage(&feBasisDataStorage)
       , d_constraintsX(constraintsX)
       , d_constraintsY(constraintsY)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
-    {}
+      , d_cellStartIdsBasisOverlap(0)
+    {
+      std::shared_ptr<
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+        basisOverlap;
+      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        memorySpace,
+        dim>(feBasisDataStorage,
+             basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
+      d_basisOverlap = basisOverlap;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    EFEOverlapOperatorContext<ValueTypeOperator,
+                             ValueTypeOperand,
+                             memorySpace,
+                             dim>::
+      EFEOverlapOperatorContext(
+        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &                                         cfeBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &                                         efeBasisDataStorage,
+        const std::string                           constraintsX,
+        const std::string                           constraintsY,
+        const size_type                             maxCellTimesNumVecs)
+      : d_feBasisHandler(&feBasisHandler)
+      , d_constraintsX(constraintsX)
+      , d_constraintsY(constraintsY)
+      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_cellStartIdsBasisOverlap(0)
+    {
+      std::shared_ptr<
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+        basisOverlap;
+      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        memorySpace,
+        dim>(cfeBasisDataStorage,
+             efeBasisDataStorage,
+             basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
+      d_basisOverlap = basisOverlap;
+    }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    BasisOverlapOperatorContext<
+    EFEOverlapOperatorContext<
       ValueTypeOperator,
       ValueTypeOperand,
       memorySpace,
@@ -330,8 +617,7 @@ namespace dftefe
       constraintsX.distributeParentToChild(X, numVecs);
 
       // access cell-wise discrete Overlap operator
-      auto basisOverlapInAllCells =
-        d_feBasisDataStorage->getBasisOverlapInAllCells();
+      auto basisOverlapInAllCells = d_basisOverlap;
 
       const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
       Y.setValue(0.0);
@@ -340,7 +626,7 @@ namespace dftefe
       // perform Ax on the local part of A and x
       // (A = discrete Overlap operator)
       //
-      BasisOverlapOperatorContextInternal::computeAxCellWiseLocal(
+      EFEOverlapOperatorContextInternal::computeAxCellWiseLocal(
         basisOverlapInAllCells,
         X.begin(),
         Y.begin(),
@@ -360,6 +646,76 @@ namespace dftefe
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
       Y.updateGhostValues();
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const utils::MemoryStorage<ValueTypeOperator, memorySpace>&
+    EFEOverlapOperatorContext<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::
+      getBasisOverlapInAllCells() const
+    {
+      return *(d_basisOverlap);
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    utils::MemoryStorage<ValueTypeOperator, memorySpace>
+    EFEOverlapOperatorContext<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::
+      getBasisOverlapInCell(
+        const size_type                             cellId) const
+    {
+      std::shared_ptr<
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+                      basisOverlapStorage = d_basisOverlap;
+      const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
+      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        returnValue(sizeToCopy);
+      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+        sizeToCopy,
+        returnValue.data(),
+        basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId]);
+      return returnValue;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    utils::MemoryStorage<ValueTypeOperator, memorySpace>
+    EFEOverlapOperatorContext<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::
+      getBasisOverlap(
+        const size_type                             cellId,
+        const size_type                             basisId1,
+        const size_type                             basisId2) const
+    {
+      std::shared_ptr<
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+        basisOverlapStorage = d_basisOverlap;
+      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+                      returnValue(1);
+      const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
+      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+        sizeToCopy,
+        returnValue.data(),
+        basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId] +
+          basisId1 * d_dofsInCell[cellId] + basisId2);
+      return returnValue;
     }
 
   } // end of namespace physics

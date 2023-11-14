@@ -31,7 +31,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/BasisOverlapOperatorContext.h>
+#include <basis/FEOverlapOperatorContext.h>
 #include <linearAlgebra/PreconditionerJacobi.h>
 #include <linearAlgebra/PreconditionerNone.h>
 #include <basis/FEBasisHandler.h>
@@ -87,9 +87,10 @@ namespace dftefe
                                              cfeBasisHandler,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-          cfeBasisDataStorage,
-        FEBasisOperations<ValueTypeOperand, ValueTypeOperator,memorySpace,
-         dim> cfeBasisOperations,
+          cfeBasisDataStorageOverlapMatrix,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          cfeBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
@@ -129,9 +130,6 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
         d_feBasisHandler;
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-        d_feBasisDataStorage;
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
                                                            memorySpace>>

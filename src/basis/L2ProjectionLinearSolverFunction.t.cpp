@@ -204,9 +204,10 @@ namespace dftefe
                                              cfeBasisHandler,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-          cfeBasisDataStorage,
-        FEBasisOperations<ValueTypeOperand, ValueTypeOperator,memorySpace,
-         dim> cfeBasisOperations,
+          cfeBasisDataStorageOverlapMatrix,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          cfeBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
@@ -217,7 +218,6 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs)
       : d_feBasisHandler(cfeBasisHandler)
-      , d_feBasisDataStorage(cfeBasisDataStorage)
       , d_b(cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint),
             linAlgOpContext,
             inp.getNumberComponents())
@@ -238,13 +238,14 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
+      // Get M marix for Md = \integral N_e. N_c
       d_AxContext =
-        std::make_shared<BasisOverlapOperatorContext<ValueTypeOperator,
+        std::make_shared<FEOverlapOperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
                                                            memorySpace,
                                                            dim>>(
           *d_feBasisHandler,
-          *d_feBasisDataStorage,
+          *cfeBasisDataStorageOverlapMatrix,
           basisInterfaceCoeffConstraint,
           basisInterfaceCoeffConstraint,
           maxCellTimesNumVecs);
@@ -258,7 +259,7 @@ namespace dftefe
             getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
               diagonal,
               d_feBasisHandler,
-              d_feBasisDataStorage,
+              cfeBasisDataStorageOverlapMatrix,
               basisInterfaceCoeffConstraint,
               maxCellTimesNumVecs);
 
@@ -290,6 +291,10 @@ namespace dftefe
 
       d_b.setValue(0.0);
 
+      // Set up basis Operations for RHS
+      FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim> cfeBasisOperations(cfeBasisDataStorageRhs, maxCellTimesNumVecs);
+
+      // Integrate this with different quarature rule. (i.e. adaptive for the enrichment functions) , inp will be in adaptive grid
       cfeBasisOperations.integrateWithBasisValues(inp,
                                                  *d_feBasisHandler,
                                                  basisInterfaceCoeffConstraint,

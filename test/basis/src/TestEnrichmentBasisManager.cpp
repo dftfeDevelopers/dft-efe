@@ -132,9 +132,7 @@ int main()
       atomSymbol,
       atomCoordinatesVec,
       fieldName,
-      comm,
-      l2ProjQuadAttr,
-      linAlgOpContext);
+      comm);
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
 
