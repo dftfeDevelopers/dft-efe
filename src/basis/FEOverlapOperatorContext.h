@@ -109,11 +109,17 @@ namespace dftefe
 
       // get overlap of all the basis functions in all cells
       const Storage &
-      getBasisOverlapInAllCells() const override;
+      getBasisOverlapInAllCells() const;
+
+      // get EFEBasisDataStorage
+      const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
+      getFEBasisDataStorage() const;
 
     private:
       const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
         *d_feBasisHandler;
+      const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+        *d_feBasisDataStorage;
       std::shared_ptr<Storage>                    d_basisOverlap;
       std::vector<size_type>          d_cellStartIdsBasisOverlap;
       std::vector<size_type>                      d_dofsInCell;

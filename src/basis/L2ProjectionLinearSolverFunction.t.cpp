@@ -137,8 +137,8 @@ namespace dftefe
           const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
           feBasisHandler,
         std::shared_ptr<
-          const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                          feBasisDataStorage,
+          const FEOverlapOperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>
+                          feOverlapOperatorContext,
         const std::string basisInterfaceCoeffConstraint,
         const size_type                             maxCellTimesNumVecs)
       {
@@ -154,7 +154,7 @@ namespace dftefe
 
         // access cell-wise discrete Laplace operator
         auto NiNjInAllCells =
-          feBasisDataStorage->getBasisOverlapInAllCells();
+          feOverlapOperatorContext->getBasisOverlapInAllCells();
 
         const size_type cellBlockSize = maxCellTimesNumVecs;
 
@@ -202,8 +202,10 @@ namespace dftefe
         std::shared_ptr<
           const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
                                              cfeBasisHandler,
-        std::shared_ptr<
-          const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+        std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
+                                                    ValueTypeOperand,
+                                                    memorySpace,
+                                                    dim>>
           cfeBasisDataStorageOverlapMatrix,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
@@ -216,7 +218,7 @@ namespace dftefe
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellTimesNumVecs)   
       : d_feBasisHandler(cfeBasisHandler)
       , d_b(cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint),
             linAlgOpContext,
@@ -230,6 +232,7 @@ namespace dftefe
                   linAlgOpContext,
                   inp.getNumberComponents())
       , d_basisInterfaceCoeffConstraint(basisInterfaceCoeffConstraint)
+      , d_AxContext(cfeBasisDataStorageOverlapMatrix)
     {
       d_mpiPatternP2P =
         cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint);
@@ -239,16 +242,16 @@ namespace dftefe
                                                ValueTypeOperand>;
 
       // Get M marix for Md = \integral N_e. N_c
-      d_AxContext =
-        std::make_shared<FEOverlapOperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace,
-                                                           dim>>(
-          *d_feBasisHandler,
-          *cfeBasisDataStorageOverlapMatrix,
-          basisInterfaceCoeffConstraint,
-          basisInterfaceCoeffConstraint,
-          maxCellTimesNumVecs);
+      // d_AxContext =
+      //   std::make_shared<FEOverlapOperatorContext<ValueTypeOperator,
+      //                                                      ValueTypeOperand,
+      //                                                      memorySpace,
+      //                                                      dim>>(
+      //     *d_feBasisHandler,
+      //     *cfeBasisDataStorageOverlapMatrix,
+      //     basisInterfaceCoeffConstraint,
+      //     basisInterfaceCoeffConstraint,
+      //     maxCellTimesNumVecs);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
         d_mpiPatternP2P, linAlgOpContext);
@@ -259,7 +262,7 @@ namespace dftefe
             getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
               diagonal,
               d_feBasisHandler,
-              cfeBasisDataStorageOverlapMatrix,
+              d_AxContext,
               basisInterfaceCoeffConstraint,
               maxCellTimesNumVecs);
 

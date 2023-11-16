@@ -90,10 +90,11 @@ namespace dftefe
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::EnrichmentClassicalInterfaceSpherical(
-      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorageRhs,
-      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorageOverlapMatrix,      
+      std::shared_ptr<const FEOverlapOperatorContext<ValueTypeBasisData, ValueTypeBasisData, 
+        memorySpace, dim>> cfeBasisOverlapOperator,  
+      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorageRhs,     
+      std::shared_ptr<const FEBasisManager> cfeBasisManager,
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
-      std::shared_ptr<const TriangulationBase> triangulation,
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
       const double                     atomPartitionTolerance,
@@ -113,6 +114,7 @@ namespace dftefe
       , d_atomSymbolVec(atomSymbolVec)
       , d_atomCoordinatesVec(atomCoordinatesVec)
       , d_fieldName(fieldName)
+      , d_cfeBasisManager(cfeBasisManager)
     {
       d_isOrthogonalized = true;
 
@@ -122,8 +124,8 @@ namespace dftefe
         "Dimension should be 3 for Spherical Enrichment Dofs.");
 
       utils::throwException(
-      (cfeBasisDataStorageRhs->getBasisManager() == cfeBasisHandler->getBasisManager())
-      && (cfeBasisDataStorageOverlapMatrix->getBasisManager() == cfeBasisHandler->getBasisManager()),
+      (&(cfeBasisDataStorageRhs->getBasisManager()) == &(cfeBasisHandler->getBasisManager()))
+      && (&(cfeBasisOverlapOperator->getFEBasisDataStorage().getBasisManager()) == &(cfeBasisHandler->getBasisManager())),
       "The BasisManager of the dataStorage and basisHandler should be same in EnrichmentClassicalInterfaceSpherical() ");
 
       const FEBasisManager &feBM =
@@ -132,6 +134,10 @@ namespace dftefe
         &feBM != nullptr,
         "Could not cast BasisManager to FEBasisManager "
         "in EnrichmentClassicalInterfaceSpherical");
+
+      utils::throwException(
+      (&(feBM) ==  cfeBasisManager.get()),
+      "The Input basismanager does not match with the basismanager used for creating the basishandler in EnrichmentClassicalInterfaceSpherical() ");
 
       d_triangulation = feBM.getTriangulation();
 
@@ -234,7 +240,7 @@ namespace dftefe
                                                       memorySpace,
                                                       dim>>
                                                       ( cfeBasisHandler,
-                                                        cfeBasisDataStorageOverlapMatrix,
+                                                        cfeBasisOverlapOperator,
                                                         cfeBasisDataStorageRhs,
                                                         quadValuesEnrichmentFunction,
                                                         basisInterfaceCoeffConstraint,
@@ -378,6 +384,18 @@ namespace dftefe
         "Cannot call getCFEBasisHandler() for no orthogonalization of EFE mesh.");
 
       return d_cfeBasisHandler;
+    }
+
+    template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
+    std::shared_ptr<const FEBasisManager>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace,  dim>::getCFEBasisManager() const
+    {
+      if( !d_isOrthogonalized )
+        utils::throwException(
+        false,
+        "Cannot call getCFEBasisManager() for no orthogonalization of EFE mesh.");
+
+      return d_cfeBasisManager;
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>

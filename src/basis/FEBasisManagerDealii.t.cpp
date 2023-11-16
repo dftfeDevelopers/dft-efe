@@ -41,7 +41,7 @@ namespace dftefe
       , d_totalRanges(1)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
-      reinit(triangulation, feOrder, std::vector<std::string>(), std::vector<utils::Point>(0, utils::Point(dim, 0.0)));
+      reinit(triangulation, feOrder);
     }
 
     template <size_type dim>

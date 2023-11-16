@@ -38,6 +38,7 @@
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisHandler.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/FEOverlapOperatorContext.h>
 #include <basis/FEBasisOperations.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/AtomIdsPartition.h>
@@ -91,10 +92,10 @@ namespace dftefe
        * @param[in] fieldName The fieldname of the enrichment function
        */
       EnrichmentClassicalInterfaceSpherical(
-      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorageRhs,
-      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorageOverlapMatrix,
+      std::shared_ptr<const FEOverlapOperatorContext<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim>> cfeBasisOverlapOperator,  
+      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>> cfeBasisDataStorageRhs,  
+      std::shared_ptr<const FEBasisManager> cfeBasisManager,  
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> cfeBasisHandler,
-      std::shared_ptr<const TriangulationBase> triangulation,
       std::shared_ptr<const atoms::AtomSphericalDataContainer> atomSphericalDataContainer,
       const double                     atomPartitionTolerance,
       const std::vector<std::string> & atomSymbolVec,
@@ -144,6 +145,9 @@ namespace dftefe
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
       getCFEBasisHandler() const;
 
+      std::shared_ptr<const FEBasisManager>
+      getCFEBasisManager() const;
+
       std::string
       getBasisInterfaceCoeffConstraint() const;
 
@@ -176,6 +180,7 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> d_basisInterfaceCoeff;
       bool d_isOrthogonalized;
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> d_cfeBasisHandler;
+      std::shared_ptr<const FEBasisManager> d_cfeBasisManager;
       const std::string d_basisInterfaceCoeffConstraint;
       const std::vector<std::string> d_atomSymbolVec;
       const std::vector<utils::Point> d_atomCoordinatesVec;

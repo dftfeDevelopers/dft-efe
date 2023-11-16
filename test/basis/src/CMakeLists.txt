@@ -24,6 +24,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestEFEOverlapMatrix TestEFEOverlapMatrix.cpp )
-target_link_libraries(TestEFEOverlapMatrix PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+add_executable(TestOrthoEnrichmentBasisManager TestOrthoEnrichmentBasisManager.cpp )
+target_link_libraries(TestOrthoEnrichmentBasisManager PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

@@ -85,8 +85,10 @@ namespace dftefe
         std::shared_ptr<
           const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
                                              cfeBasisHandler,
-        std::shared_ptr<
-          const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+        std::shared_ptr< const FEOverlapOperatorContext<ValueTypeOperator,
+                                                    ValueTypeOperand,
+                                                    memorySpace,
+                                                    dim>>
           cfeBasisDataStorageOverlapMatrix,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
@@ -130,9 +132,10 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
         d_feBasisHandler;
-      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
+      std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
-                                                           memorySpace>>
+                                                           memorySpace,
+                                                           dim>>
         d_AxContext;
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,

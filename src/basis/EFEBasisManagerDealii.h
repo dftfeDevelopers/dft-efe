@@ -220,7 +220,7 @@ namespace dftefe
                                 d_atomSphericalDataContainer;
       std::vector<std::string>  d_atomSymbolVec;
       std::vector<utils::Point> d_atomCoordinatesVec;
-      const std::string               d_fieldName;
+      std::string               d_fieldName;
       bool                      d_isOrthogonalized;
       std::shared_ptr<const EnrichmentClassicalInterfaceSpherical
         <ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
