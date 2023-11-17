@@ -163,7 +163,7 @@ int main()
             atomCoordinatesVec,
             fieldName,
             i);
-        tolerances[i] = 1e-6;
+        tolerances[i] = 1e-8;
         integralThresholds[i] = 1e-14;
     }
 
@@ -231,14 +231,14 @@ int main()
     // Set up the CFE Basis Data Storage for Overlap Matrix
     std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageOverlapMatrix =
       std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST, dim>>
-      (cfeBasisManager, quadAttrAdaptive, basisAttrMap);
+      (cfeBasisManager, quadAttrGll, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageOverlapMatrix->evaluateBasisData(quadAttrGll, basisAttrMap);
 
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageRhs =
       std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST, dim>>
-      (cfeBasisManager, quadAttrGll, basisAttrMap);
+      (cfeBasisManager, quadAttrAdaptive, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
@@ -314,7 +314,7 @@ int main()
   // Set up Adaptive quadrature for EFE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
     std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, quadAttr, basisAttrMap);
+    (basisManager, quadAttrAdaptive, basisAttrMap);
 
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
@@ -366,7 +366,7 @@ int main()
          {
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
             basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
-            *(itField + localId )  = 1 ; //((double) rand() / (RAND_MAX));
+            *(itField + localId )  = ((double) rand() / (RAND_MAX));
          }
         }
     }
@@ -389,12 +389,12 @@ int main()
 
 
       MContext->apply(*X,*Y);
-  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadValuesContainer);
+  // feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> MInvContext =
-    std::make_shared<dftefe::basis::EFEOverlapInverseGLLOperatorContext<double,
+    std::make_shared<dftefe::basis::EFEOverlapInverseOperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
@@ -405,7 +405,7 @@ int main()
 
      MInvContext->apply(*Y,*Z);
 
-    std::cout << "\n" <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
+    std::cout <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
    error = std::make_shared<

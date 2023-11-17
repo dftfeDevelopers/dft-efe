@@ -79,6 +79,7 @@ namespace dftefe
   private:
     const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
       *d_feBasisHandler;
+    const EFEBasisManager< ValueTypeOperator, memorySpace, dim> *d_efebasisManager;
     linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
     const std::string d_constraints;
     std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>> d_basisOverlapEnrichmentBlock;

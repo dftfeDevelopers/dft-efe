@@ -94,6 +94,8 @@ namespace dftefe
         &febasisManager != nullptr,
         "Could not cast BasisManager of the input to EFEBasisManager.");
 
+      d_efebasisManager = &febasisManager;
+
       utils::throwException(
         febasisManager.isOrthogonalized(),
         "The Enrichment functions have to be orthogonalized for this class to do the application of overlap inverse"
@@ -311,11 +313,14 @@ namespace dftefe
         //     *(YenrichedLocallyOwnedVec.data() + i*numComponents + j) = *(YenrichedGlobalVec.data() + pair.first * numComponents + j);
         // }
 
-        YenrichedGlobalVec.template copyTo<memorySpace>(Y.begin(),
-              nlocallyOwnedEnrichmentIds*numComponents,
-              ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
-              (d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].second)) *numComponents,
-              nlocallyOwnedClassicalIds*numComponents);
+        if(nlocallyOwnedEnrichmentIds!=0)
+        {
+          YenrichedGlobalVec.template copyTo<memorySpace>(Y.begin(),
+                nlocallyOwnedEnrichmentIds*numComponents,
+                ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
+                (d_efebasisManager->getGlobalRanges()[0].second)) *numComponents,
+                nlocallyOwnedClassicalIds*numComponents);
+        }
 
         Y.updateGhostValues();
 

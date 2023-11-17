@@ -179,6 +179,14 @@ namespace dftefe
         size_type dofsPerCell;
         const size_type dofsPerCellCFE = cfeBM.nCellDofs(cellId);
 
+        bool isConstantDofsAndQuadPointsInCellCFE = false;
+        quadrature::QuadratureFamily quadFamily = cfeBasisDataStorage.getQuadratureRuleContainer()->
+            getQuadratureRuleAttributes().getQuadratureFamily();
+        if((quadFamily == quadrature::QuadratureFamily::GAUSS || 
+            quadFamily == quadrature::QuadratureFamily::GLL) && 
+            !cfeBM.isVariableDofsPerCell())
+          isConstantDofsAndQuadPointsInCellCFE = true;
+
         auto locallyOwnedCellIter = efeBM.beginLocallyOwnedCells();
 
         for (; locallyOwnedCellIter != efeBM.endLocallyOwnedCells();
@@ -262,7 +270,8 @@ namespace dftefe
             cellStartIdsBasisOverlap[cellIndex] = cumulativeBasisOverlapId;
             cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
             cellIndex++;
-            cumulativeCFEDofQuadPointsOffset += nQuadPointInCellCFE*dofsPerCellCFE;
+            if(!isConstantDofsAndQuadPointsInCellCFE)
+              cumulativeCFEDofQuadPointsOffset += nQuadPointInCellCFE*dofsPerCellCFE;
             cumulativeEFEDofQuadPointsOffset += nQuadPointInCellEFE*dofsPerCell;
           }
 
