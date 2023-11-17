@@ -11,6 +11,7 @@
 #include <atoms/AtomSevereFunction.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
+#include <basis/EFEOverlapOperatorContext.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -123,8 +124,7 @@ int main()
   // 1. Make EnrichmentClassicalInterface object for Pristine enrichment
   // 2. Make FEbasisdatastorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GAUSS)
   // 3. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
-  // 4. Input to the EFEBasisManager(eci, feOrder) -> FeBasisManager *f = new EFEBasisManager();
-  // 4.1. If we want to change the mesh then do reinit : 
+  // 4. Input to the EFEBasisManager(eci, feOrder) 
   // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
@@ -153,7 +153,7 @@ int main()
             atomCoordinatesVec,
             fieldName,
             i);
-        tolerances[i] = 100;
+        tolerances[i] = 1e-6;
         integralThresholds[i] = 1e-14;
     }
 
@@ -214,7 +214,7 @@ int main()
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
 
@@ -252,6 +252,19 @@ int main()
                                                             constraintName,
                                                             50);
 
+    const dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST> &s = cfeBasisOverlapOperator->getBasisOverlapInAllCells();
+    const dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST> &s1 = cfeBasisDataStorageOverlapMatrix->getBasisOverlapInAllCells();
+
+    auto j = s1.begin();
+    for (auto i = s.begin() ; i != s.end() ; i++ )
+    {
+      if( *i - *j > 1e-12 )
+        dftefe::utils::throwException(
+          false,
+          "No match In the The FE Basis Ovelap Implementations. ");
+      j++;
+    }
+
     enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
                           <double, dftefe::utils::MemorySpace::HOST, dim>>
                           (cfeBasisOverlapOperator,
@@ -278,24 +291,17 @@ int main()
 
   std::cout << (basisManager->getLocallyOwnedRanges()[0]).first << "," << (basisManager->getLocallyOwnedRanges()[0]).second << ";" << (basisManager->getLocallyOwnedRanges()[1]).first << "," << (basisManager->getLocallyOwnedRanges()[1]).second;
 
-  // Set up the quadrature rule
+  // Set up the EFE adaptive quadrature rule
 
-  dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
-
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = false;
+  // dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<dftefe::basis::BasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
+  std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
     std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, quadAttr, basisAttrMap);
+    (basisManager, quadAttrAdaptive, basisAttrMap);
 
   // evaluate basis data
-  feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
+  feBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
     constraintName = "HangingWithHomogeneous";
       constraintsVec.clear();
@@ -312,9 +318,37 @@ int main()
     constraintsMap[constraintName] = constraintsVec[0];
 
   // Set up BasisHandler
-  std::shared_ptr<dftefe::basis::BasisHandler<double, dftefe::utils::MemorySpace::HOST>> basisHandler =
+  std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> basisHandler =
     std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisManager, constraintsMap, comm);
+
+    // Create OperatorContext for Basisoverlap
+    std::shared_ptr<const dftefe::basis::EFEOverlapOperatorContext<double,
+                                                  double,
+                                                  dftefe::utils::MemorySpace::HOST,
+                                                  dim>> overlapOperator =
+    std::make_shared<dftefe::basis::EFEOverlapOperatorContext<double,
+                                                        double,
+                                                        dftefe::utils::MemorySpace::HOST,
+                                                        dim>>(
+                                                        *basisHandler,
+                                                        *feBasisData,
+                                                        constraintName,
+                                                        constraintName,
+                                                        50);
+
+    const dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST> &s2 = overlapOperator->getBasisOverlapInAllCells();
+    const dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST> &s3 = feBasisData->getBasisOverlapInAllCells();
+
+    j = s2.begin();
+    for (auto i = s3.begin() ; i != s3.end() ; i++ )
+    {
+      if( *i - *j > 1e-12 )
+        dftefe::utils::throwException(
+          false,
+          "No match In the The EFE Basis Ovelap Implementations. ");
+      j++;
+    }
 
   std::vector<std::pair<dftefe::global_size_type, dftefe::global_size_type>> vec = basisHandler->getLocallyOwnedRanges(constraintName);
   for (auto i:vec )

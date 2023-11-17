@@ -73,8 +73,8 @@ namespace dftefe
                                     EFEOverlapInverseOperatorContext
         (const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &feBasisDataStorage,
+        const basis::EFEOverlapOperatorContext<ValueTypeOperator,ValueTypeOperand, memorySpace, dim>
+          &efeOverlapOperatorContext,
         const std::string                           constraints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
         : d_feBasisHandler(&feBasisHandler)
@@ -94,11 +94,18 @@ namespace dftefe
         &febasisManager != nullptr,
         "Could not cast BasisManager of the input to EFEBasisManager.");
 
-      const EFEBasisDataStorage< ValueTypeOperator, memorySpace> &efebasisDataStorage =
-        dynamic_cast<const EFEBasisDataStorage< ValueTypeOperator, memorySpace> &>(feBasisDataStorage);
       utils::throwException(
-        &efebasisDataStorage != nullptr,
-        "Could not cast FEBasisDataStorage of the input to EFEBasisDataStorage.");
+        febasisManager.isOrthogonalized(),
+        "The Enrichment functions have to be orthogonalized for this class to do the application of overlap inverse"
+        "Contact developers for more options.");
+
+      utils::throwException(
+        efeOverlapOperatorContext.getCFEBasisDataStorage().
+        getQuadratureRuleContainer()->
+        getQuadratureRuleAttributes().getQuadratureFamily()
+         == dftefe::quadrature::QuadratureFamily::GLL,
+        "The quadrature rule for integration of Classical FE dofs has to be GLL."
+        "Contact developers if extra options are needed.");
 
       const size_type numCellClassicalDofs = utils::mathFunctions::sizeTypePow((febasisManager.getFEOrder(0)+1),dim);  
       d_nglobalEnrichmentIds = febasisManager.nGlobalEnrichmentNodes();
@@ -108,12 +115,11 @@ namespace dftefe
         numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
 
       auto itCellLocalIdsBegin =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(
-          constraints);
+        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(constraints);
 
       // access cell-wise discrete Laplace operator
       auto NiNjInAllCells =
-        efebasisDataStorage.getBasisOverlapInAllCells();
+        efeOverlapOperatorContext.getBasisOverlapInAllCells();
 
               std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
               std::copy(numCellDofs.begin(),
@@ -127,6 +133,8 @@ namespace dftefe
         linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
           d_feBasisHandler->getMPIPatternP2P(d_constraints), linAlgOpContext);
 
+        // Create the diagonal of the classical block matrix which is diagonal for GLL 
+        // with spectral quadrature
         FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
             addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
                                       itCellLocalIdsBegin,
@@ -150,6 +158,7 @@ namespace dftefe
                                                 d_diagonalInv.data(),
                                                 *(diagonal.getLinAlgOpContext()));
 
+          // Now form the enrichment block matrix.
           d_basisOverlapEnrichmentBlock = std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
           std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(d_nglobalEnrichmentIds * d_nglobalEnrichmentIds,0), 
@@ -314,9 +323,7 @@ namespace dftefe
         // its parent nodes
         d_feBasisHandler->getConstraints(d_constraints).distributeChildToParent(Y, Y.getNumberComponents());
 
-        // Function to add the values to the local node from its corresponding
-        // ghost nodes from other processors.
-        Y.accumulateAddLocallyOwned();
+        // Function to update the ghost values of the Y
         Y.updateGhostValues();
 
       }

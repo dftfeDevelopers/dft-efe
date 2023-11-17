@@ -28,7 +28,7 @@
 #include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <iostream>
-#include <basis/FEOverlapInverseGLLOperatorContext.h>
+#include <basis/FEOverlapInverseOperatorContext.h>
 
 int main()
 {
@@ -120,10 +120,10 @@ int main()
   dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
 
   dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = false;
 
@@ -187,19 +187,20 @@ int main()
         }
     }
 
-    std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
-                                                    double,
-                                                    dftefe::utils::MemorySpace::HOST>>
-    MContext =
-    std::make_shared<dftefe::basis::BasisOverlapOperatorContext<double,
+    // Create OperatorContext for Basisoverlap
+    std::shared_ptr<const dftefe::basis::FEOverlapOperatorContext<double,
+                                                  double,
+                                                  dftefe::utils::MemorySpace::HOST,
+                                                  dim>> MContext =
+    std::make_shared<dftefe::basis::FEOverlapOperatorContext<double,
                                                         double,
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>(
-      *basisHandler,
-      *feBasisData,
-      constraintHanging,
-      constraintHanging,
-      50);
+                                                        *basisHandler,
+                                                        *feBasisData,
+                                                        constraintHanging,
+                                                        constraintHanging,
+                                                        50);
 
 
       MContext->apply(*X,*Y);
@@ -208,12 +209,12 @@ int main()
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> MInvContext =
-    std::make_shared<dftefe::basis::FEOverlapInverseGLLOperatorContext<double,
+    std::make_shared<dftefe::basis::FEOverlapInverseOperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (*basisHandler,
-                                                    *feBasisData,
+                                                    *MContext,
                                                     constraintHanging,
                                                     linAlgOpContext);
 

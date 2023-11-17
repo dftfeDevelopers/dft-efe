@@ -32,6 +32,7 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/FEBasisHandler.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/FEOverlapOperatorContext.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/FECellWiseDataOperations.h>
 #include <vector>
@@ -58,8 +59,8 @@ namespace dftefe
   public:
     FEOverlapInverseOperatorContext(const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &feBasisDataStorage,
+        const basis::FEOverlapOperatorContext<ValueTypeOperator,ValueTypeOperand, memorySpace, dim>
+          &feOverlapOperatorContext,
         const std::string                           constraints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
 
@@ -71,8 +72,6 @@ namespace dftefe
   private:
     const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
       *d_feBasisHandler;
-    const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-      *d_feBasisDataStorage;
     linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
     const std::string d_constraints;
 

@@ -144,12 +144,18 @@ namespace dftefe
       const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
       getEFEBasisDataStorage() const;
 
+      // get CFEBasisDataStorage
+      const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
+      getCFEBasisDataStorage() const;
+
 
     private:
       const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
         *d_feBasisHandler;
       const FEBasisDataStorage<ValueTypeOperator, memorySpace>
         *d_efeBasisDataStorage;
+      const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+        *d_cfeBasisDataStorage;
       std::shared_ptr<Storage>                    d_basisOverlap;
       std::vector<size_type>          d_cellStartIdsBasisOverlap;
       std::vector<size_type>                      d_dofsInCell;

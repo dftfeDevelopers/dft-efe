@@ -64,7 +64,7 @@ namespace dftefe
         const size_type feOrder              = feBM.getFEOrder(cellId);
 
         // NOTE: cellId 0 passed as we assume only H refined in this function
-        const size_type dofsPerCell;
+        size_type dofsPerCell;
 
         auto locallyOwnedCellIter = feBM.beginLocallyOwnedCells();
 
@@ -72,7 +72,7 @@ namespace dftefe
              ++locallyOwnedCellIter)
           {
             dofsInCellVec[cellId] = feBM.nCellDofs(cellId);
-            basisOverlapSize += dofsPerCell * dofsPerCell;
+            basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
             cellId++;
           }
 
@@ -176,7 +176,7 @@ namespace dftefe
         size_type cellId               = 0;
         const size_type feOrder              = efeBM.getFEOrder(cellId);
 
-        const size_type dofsPerCell;
+        size_type dofsPerCell;
         const size_type dofsPerCellCFE = cfeBM.nCellDofs(cellId);
 
         auto locallyOwnedCellIter = efeBM.beginLocallyOwnedCells();
@@ -185,7 +185,7 @@ namespace dftefe
              ++locallyOwnedCellIter)
           {
             dofsInCellVec[cellId] = efeBM.nCellDofs(cellId);
-            basisOverlapSize += dofsPerCell * dofsPerCell;
+            basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
             cellId++;
           }
 
@@ -519,6 +519,7 @@ namespace dftefe
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
       , d_efeBasisDataStorage(&feBasisDataStorage)
+      , d_cfeBasisDataStorage(&feBasisDataStorage)
     {
       std::shared_ptr<
         utils::MemoryStorage<ValueTypeOperator, memorySpace>>
@@ -557,6 +558,7 @@ namespace dftefe
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
       , d_efeBasisDataStorage(&efeBasisDataStorage)
+      , d_cfeBasisDataStorage(&cfeBasisDataStorage)
     {
       std::shared_ptr<
         utils::MemoryStorage<ValueTypeOperator, memorySpace>>
@@ -734,6 +736,21 @@ namespace dftefe
       getEFEBasisDataStorage() const
     {
       return *d_efeBasisDataStorage;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const FEBasisDataStorage<ValueTypeOperator, memorySpace>&
+    EFEOverlapOperatorContext<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::
+      getCFEBasisDataStorage() const
+    {
+      return *d_cfeBasisDataStorage;
     }
 
   } // end of namespace physics

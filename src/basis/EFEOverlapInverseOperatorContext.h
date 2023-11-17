@@ -34,6 +34,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/EFEBasisHandler.h>
+#include <basis/EFEOverlapOperatorContext.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <basis/FEBasisHandler.h>
 #include <basis/FEBasisDataStorage.h>
@@ -65,8 +66,8 @@ namespace dftefe
   public:
     EFEOverlapInverseOperatorContext(const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &feBasisDataStorage,
+        const basis::EFEOverlapOperatorContext<ValueTypeOperator,ValueTypeOperand, memorySpace, dim>
+          &efeOverlapOperatorContext,
         const std::string                           constraints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
 

@@ -40,13 +40,12 @@ namespace dftefe
                                     FEOverlapInverseOperatorContext
         (const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &feBasisDataStorage,
+        const basis::FEOverlapOperatorContext<ValueTypeOperator,ValueTypeOperand, memorySpace, dim>
+          &feOverlapOperatorContext,
         const std::string                           constraints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
         : d_diagonalInv( d_feBasisHandler->getMPIPatternP2P(constraints), linAlgOpContext)
         , d_feBasisHandler(&feBasisHandler)
-        , d_feBasisDataStorage(&feBasisDataStorage)
         , d_constraints(constraints)
       {
 
@@ -63,6 +62,14 @@ namespace dftefe
           basisManager.totalRanges() == 1,
           "This function is only for classical FE basis.");
 
+      utils::throwException(
+        feOverlapOperatorContext.getFEBasisDataStorage().
+        getQuadratureRuleContainer()->
+        getQuadratureRuleAttributes().getQuadratureFamily()
+         == dftefe::quadrature::QuadratureFamily::GLL,
+        "The quadrature rule for integration of Classical FE dofs has to be GLL."
+        "Contact developers if extra options are needed.");
+
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
@@ -73,7 +80,7 @@ namespace dftefe
 
       // access cell-wise discrete Laplace operator
       auto NiNjInAllCells =
-        d_feBasisDataStorage->getBasisOverlapInAllCells();
+        feOverlapOperatorContext.getBasisOverlapInAllCells();
 
               std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
               std::copy(numCellDofs.begin(),
@@ -142,11 +149,11 @@ namespace dftefe
 
           // function to do a static condensation to send the constraint nodes to
           // its parent nodes
+          // TODO : The distributeChildToParent of the result of M_inv*X is processor local and for adaptive quadrature
+          // the M_inv is not diagonal. Implement that case here.
           d_feBasisHandler->getConstraints(d_constraints).distributeChildToParent(Y, Y.getNumberComponents());
 
-          // Function to add the values to the local node from its corresponding
-          // ghost nodes from other processors.
-          Y.accumulateAddLocallyOwned();
+          // Function to update the ghost values of the result
           Y.updateGhostValues();
 
       }
