@@ -279,6 +279,373 @@ namespace dftefe
             basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
       }
 
+      // Use this for data storage of orthogonalized EFE only
+      template <typename ValueTypeOperator,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      computeBasisOverlapMatrix(const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & enrichmentBlockEnrichmentBasisDataStorage,
+        std::shared_ptr<const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          enrichmentBlockClassicalBasisDataStorage,
+        std::shared_ptr<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+          & basisOverlap,
+        std::vector<size_type> & cellStartIdsBasisOverlap,
+        std::vector<size_type> & dofsInCellVec)
+      {
+        const FEBasisManager &ccfeBM =
+          dynamic_cast<const FEBasisManager &>(classicalBlockBasisDataStorage.getBasisManager());
+        utils::throwException(
+          &ccfeBM != nullptr,
+          "Could not cast BasisManager to FEBasisManager "
+          "in EFEOverlapOperatorContext for the Classical data storage of classical dof block.");
+
+        const FEBasisManager &ecfeBM =
+          dynamic_cast<const FEBasisManager &>(enrichmentBlockClassicalBasisDataStorage->getBasisManager());
+        utils::throwException(
+          &ccfeBM != nullptr,
+          "Could not cast BasisManager to FEBasisManager "
+          "in EFEOverlapOperatorContext for the Classical data storage of enrichment dof blocks.");
+
+        const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &eefeBM =
+          dynamic_cast<const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>
+          (enrichmentBlockEnrichmentBasisDataStorage.getBasisManager());
+        utils::throwException(
+          &eefeBM != nullptr,
+          "Could not cast BasisManager to EFEBasisManager "
+          "in EFEOverlapOperatorContext for the Enrichment data storage of enrichment dof blocks.");
+
+        // NOTE: cellId 0 passed as we assume only H refined in this function
+
+        utils::throwException(
+          ccfeBM.getTriangulation() == ecfeBM.getTriangulation() && ccfeBM.getFEOrder(0) == ecfeBM.getFEOrder(0)
+          && ccfeBM.getTriangulation() == eefeBM.getTriangulation() && ccfeBM.getFEOrder(0) == eefeBM.getFEOrder(0),
+          "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder"
+          "in EFEOverlapOperatorContext.");
+
+        utils::throwException(
+          eefeBM.isOrthogonalized(),
+          "The Enrcihment data storage of enrichment dof blocks should have isOrthogonalized as true in EFEOverlapOperatorContext.");
+
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeOperator, memorySpace, dim>>
+          eci = eefeBM.getEnrichmentClassicalInterface();
+
+        // interpolate the ci 's to the Mc=d classical quadRuleAttr quadpoints
+
+        FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim> 
+          basisOp1(enrichmentBlockClassicalBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+        size_type nTotalEnrichmentIds = eci->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
+          quadrature::QuadratureValuesContainer<ValueTypeOperator, memorySpace> basisInterfaceCoeffClassicalQuadRuleValues
+            (enrichmentBlockClassicalBasisDataStorage->getQuadratureRuleContainer(), nTotalEnrichmentIds, (ValueTypeOperator)0);
+
+        basisOp1.interpolate(eci->getBasisInterfaceCoeff(), 
+                            eci->getBasisInterfaceCoeffConstraint(),
+                            *eci->getCFEBasisHandler(),
+                            basisInterfaceCoeffClassicalQuadRuleValues);
+
+        // interpolate the ci 's to the enrichment quadRuleAttr quadpoints
+
+        BasisStorageAttributesBoolMap basisAttrMap;
+        basisAttrMap[BasisStorageAttributes::StoreValues] = true;
+        basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
+        basisAttrMap[BasisStorageAttributes::StoreHessian] = false; 
+        basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
+        basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+        basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
+
+        quadrature::QuadratureFamily quadFamily =
+        enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
+        ->getQuadratureRuleAttributes().getQuadratureFamily();
+
+        std::shared_ptr<FEBasisDataStorage<ValueTypeOperator, memorySpace>> enrichmentQuadRuleClassicalDataStorage =
+          std::make_shared<FEBasisDataStorageDealii<ValueTypeOperator, memorySpace, dim>>
+          (eci->getCFEBasisManager(), 
+          enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes(),
+          basisAttrMap);
+
+        if (quadFamily == quadrature::QuadratureFamily::GLL || quadFamily == quadrature::QuadratureFamily::GAUSS)
+          enrichmentQuadRuleClassicalDataStorage->evaluateBasisData(enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes(),  basisAttrMap);
+        else
+          enrichmentQuadRuleClassicalDataStorage->evaluateBasisData(enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes(), enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(), basisAttrMap);
+
+        FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim> basisOp2(enrichmentQuadRuleClassicalDataStorage, 
+          L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+
+        quadrature::QuadratureValuesContainer<ValueTypeOperator, memorySpace> basisInterfaceCoeffEnrichmentQuadRuleValues
+          (enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(), nTotalEnrichmentIds, (ValueTypeOperator)0);
+
+        basisOp2.interpolate( eci->getBasisInterfaceCoeff(), 
+                              eci->getBasisInterfaceCoeffConstraint(),
+                              *eci->getCFEBasisHandler(),
+                              basisInterfaceCoeffEnrichmentQuadRuleValues);
+
+        // Set up the overlap matrix quadrature storages.
+
+        const size_type numLocallyOwnedCells = eefeBM.nLocallyOwnedCells();
+        dofsInCellVec.resize(numLocallyOwnedCells,0);
+        cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
+        size_type cumulativeBasisOverlapId = 0;
+
+        size_type  basisOverlapSize = 0;
+        size_type cellId = 0;
+        const size_type feOrder = eefeBM.getFEOrder(cellId);
+
+        size_type dofsPerCell;
+        const size_type dofsPerCellCFE = ccfeBM.nCellDofs(cellId);
+
+        bool isConstantDofsAndQuadPointsInCellClassicalBlock = false, 
+            isConstantDofsAndQuadPointsInCellEnrichmentBlockClassical = false;
+        quadrature::QuadratureFamily quadFamilyClassicalBlock = classicalBlockBasisDataStorage.getQuadratureRuleContainer()->
+            getQuadratureRuleAttributes().getQuadratureFamily();
+        quadrature::QuadratureFamily quadFamilyEnrichmentBlockClassical = enrichmentBlockClassicalBasisDataStorage->getQuadratureRuleContainer()->
+            getQuadratureRuleAttributes().getQuadratureFamily();
+        if((quadFamilyClassicalBlock == quadrature::QuadratureFamily::GAUSS || 
+            quadFamilyClassicalBlock == quadrature::QuadratureFamily::GLL) && 
+            !ccfeBM.isVariableDofsPerCell())
+          isConstantDofsAndQuadPointsInCellClassicalBlock = true;
+        if((quadFamilyEnrichmentBlockClassical == quadrature::QuadratureFamily::GAUSS || 
+            quadFamilyEnrichmentBlockClassical == quadrature::QuadratureFamily::GLL) && 
+            !ecfeBM.isVariableDofsPerCell())
+          isConstantDofsAndQuadPointsInCellEnrichmentBlockClassical = true;
+
+        auto locallyOwnedCellIter = eefeBM.beginLocallyOwnedCells();
+
+        for (; locallyOwnedCellIter != eefeBM.endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsInCellVec[cellId] = eefeBM.nCellDofs(cellId);
+            basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
+            cellId++;
+          }
+
+        std::vector<ValueTypeOperator> basisOverlapTmp(0);
+
+        basisOverlap = std::make_shared<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(basisOverlapSize);
+        basisOverlapTmp.resize(basisOverlapSize,
+                              ValueTypeOperator(0));
+
+        auto basisOverlapTmpIter = basisOverlapTmp.begin();
+        size_type cellIndex = 0;
+
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCellsClassicalBlock = classicalBlockBasisDataStorage.getBasisDataInAllCells();
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCellsEnrichmentBlockClassical = enrichmentBlockClassicalBasisDataStorage->getBasisDataInAllCells();
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCellsEnrichmentBlockEnrichment = enrichmentBlockEnrichmentBasisDataStorage.getBasisDataInAllCells();
+
+        size_type cumulativeClassicalDofQuadPointsOffset = 0,
+           cumulativeEnrichmentBlockClassicalDofQuadPointsOffset = 0,
+           cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset = 0;
+
+        locallyOwnedCellIter = eefeBM.beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != eefeBM.endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsPerCell = dofsInCellVec[cellIndex];
+            size_type nQuadPointInCellClassicalBlock =
+              classicalBlockBasisDataStorage.getQuadratureRuleContainer()->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesClassicalBlock =
+              classicalBlockBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(cellIndex);
+
+            size_type nQuadPointInCellEnrichmentBlockClassical =
+              enrichmentBlockClassicalBasisDataStorage->getQuadratureRuleContainer()->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesEnrichmentBlockClassical =
+              enrichmentBlockClassicalBasisDataStorage->getQuadratureRuleContainer()->getCellJxW(cellIndex);
+
+            size_type nQuadPointInCellEnrichmentBlockEnrichment =
+              enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesEnrichmentBlockEnrichment =
+              enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(cellIndex);
+
+            const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
+              basisDataInAllCellsClassicalBlock.data()+cumulativeClassicalDofQuadPointsOffset;
+
+            const ValueTypeOperator *cumulativeEnrichmentBlockClassicalDofQuadPoints =
+              basisDataInAllCellsEnrichmentBlockClassical.data()+cumulativeEnrichmentBlockClassicalDofQuadPointsOffset;
+
+            const ValueTypeOperator *cumulativeEnrichmentBlockEnrichmentDofQuadPoints =
+              basisDataInAllCellsEnrichmentBlockEnrichment.data()+cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset;
+
+            std::vector<ValueTypeOperator> basisInterfaceCoeffClassicalQuadRuleValuesInCell(0), basisInterfaceCoeffEnrichmentQuadRuleValuesInCell(0);
+            basisInterfaceCoeffClassicalQuadRuleValuesInCell.resize(nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical);
+            basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.resize(nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockEnrichment);
+
+            basisInterfaceCoeffClassicalQuadRuleValues.template getCellValues<utils::MemorySpace::HOST>(cellIndex, basisInterfaceCoeffClassicalQuadRuleValuesInCell.data());
+            basisInterfaceCoeffEnrichmentQuadRuleValues.template getCellValues<utils::MemorySpace::HOST>(cellIndex, basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.data());
+
+            std::vector<utils::Point> quadRealPointsVec =
+               enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()->getCellRealPoints(cellIndex);
+
+            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+              {
+                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                  {
+                    *basisOverlapTmpIter = 0.0;
+                    // Ni_classical* Ni_classical of the classicalBlockBasisData
+                    if (iNode < dofsPerCellCFE &&
+                        jNode < dofsPerCellCFE)
+                      {
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellClassicalBlock;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                            *(cumulativeClassicalBlockDofQuadPoints + nQuadPointInCellClassicalBlock * iNode + qPoint) *
+                            *(cumulativeClassicalBlockDofQuadPoints + nQuadPointInCellClassicalBlock * jNode + qPoint) *
+                            cellJxWValuesClassicalBlock[qPoint];
+                          }
+                      }
+
+                    else if (iNode >= dofsPerCellCFE &&
+                        jNode < dofsPerCellCFE)
+                      {
+                        size_type enrichmentId = eci->getEnrichmentId(cellIndex, iNode - dofsPerCellCFE);
+                        ValueTypeOperator NpiNcj = (ValueTypeOperator)0, NciNcj = (ValueTypeOperator)0;
+                        // Ni_pristine*Ni_classical at quadpoints
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                             qPoint++)
+                          {
+                            NpiNcj +=
+                                eefeBM.getEnrichmentValue(
+                                cellIndex,
+                                iNode - dofsPerCellCFE,
+                                quadRealPointsVec[qPoint]) *
+                            *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints + nQuadPointInCellEnrichmentBlockEnrichment * jNode + qPoint) *
+                            cellJxWValuesEnrichmentBlockEnrichment[qPoint];
+                          }
+                        // Ni_classical using Mc = d quadrature * interpolated ci's in Ni_classicalQuadrature of Mc = d
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockClassical;
+                             qPoint++)
+                          {
+                            NciNcj +=
+                            *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
+                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentId) *
+                            *(cumulativeEnrichmentBlockClassicalDofQuadPoints + nQuadPointInCellEnrichmentBlockClassical * jNode + qPoint) *
+                            cellJxWValuesEnrichmentBlockClassical[qPoint];
+                          }
+                          *basisOverlapTmpIter += NpiNcj - NciNcj;
+                      }
+
+                    else if (iNode < dofsPerCellCFE &&
+                        jNode >= dofsPerCellCFE)
+                      {
+                        size_type enrichmentId = eci->getEnrichmentId(cellIndex, jNode - dofsPerCellCFE);
+                        ValueTypeOperator NciNpj = (ValueTypeOperator)0, NciNcj = (ValueTypeOperator)0;
+                        // Ni_pristine*Ni_classical at quadpoints
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                             qPoint++)
+                          {
+                            NciNpj +=
+                            *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints + nQuadPointInCellEnrichmentBlockEnrichment * iNode + qPoint) *                            
+                                eefeBM.getEnrichmentValue(
+                                cellIndex,
+                                jNode - dofsPerCellCFE,
+                                quadRealPointsVec[qPoint]) *
+                            cellJxWValuesEnrichmentBlockEnrichment[qPoint];
+                          }
+                        // Ni_classical using Mc = d quadrature * interpolated ci's in Ni_classicalQuadrature of Mc = d
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockClassical;
+                             qPoint++)
+                          {
+                            NciNcj +=
+                            *(cumulativeEnrichmentBlockClassicalDofQuadPoints + nQuadPointInCellEnrichmentBlockClassical * iNode + qPoint) *                            
+                            *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
+                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentId) *
+                            cellJxWValuesEnrichmentBlockClassical[qPoint];
+                          }
+                          *basisOverlapTmpIter += NciNpj - NciNcj;
+                      }
+
+                    else if (iNode >= dofsPerCellCFE &&
+                        jNode >= dofsPerCellCFE)
+                      {
+                        size_type enrichmentIdi = eci->getEnrichmentId(cellIndex, iNode - dofsPerCellCFE);
+                        size_type enrichmentIdj = eci->getEnrichmentId(cellIndex, jNode - dofsPerCellCFE);
+                
+                        ValueTypeOperator NpiNpj = (ValueTypeOperator)0, NciNpj = (ValueTypeOperator)0,
+                          NpiNcj = (ValueTypeOperator)0, NciNcj = (ValueTypeOperator)0;
+                        // Ni_pristine*Ni_pristine at quadpoints
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                             qPoint++)
+                          {
+                            NpiNpj +=
+                                eefeBM.getEnrichmentValue(
+                                cellIndex,
+                                iNode - dofsPerCellCFE,
+                                quadRealPointsVec[qPoint]) *
+                                eefeBM.getEnrichmentValue(
+                                cellIndex,
+                                jNode - dofsPerCellCFE,
+                                quadRealPointsVec[qPoint]) * 
+                            cellJxWValuesEnrichmentBlockEnrichment[qPoint];
+                          }
+                        // Ni_pristine* interpolated ci's in Ni_classicalQuadratureOfPristine at quadpoints
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                             qPoint++)
+                          {
+                            NciNpj +=
+                            *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.data() + 
+                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockEnrichment * qPoint + enrichmentIdi) *
+                                eefeBM.getEnrichmentValue(
+                                cellIndex,
+                                jNode - dofsPerCellCFE,
+                                quadRealPointsVec[qPoint]) *
+                            cellJxWValuesEnrichmentBlockEnrichment[qPoint];
+                          }
+                        // Ni_pristine* interpolated ci's in Ni_classicalQuadratureOfPristine at quadpoints
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                             qPoint++)
+                          {
+                            NpiNcj +=
+                                eefeBM.getEnrichmentValue(
+                                cellIndex,
+                                iNode - dofsPerCellCFE,
+                                quadRealPointsVec[qPoint]) *
+                            *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.data() + 
+                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockEnrichment * qPoint + enrichmentIdj) *
+                            cellJxWValuesEnrichmentBlockEnrichment[qPoint];
+                          }
+                        // interpolated ci's in Ni_classicalQuadrature of Mc = d *
+                        // interpolated ci's in Ni_classicalQuadrature of Mc = d
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCellEnrichmentBlockClassical;
+                             qPoint++)
+                          {
+                            NciNcj +=
+                            *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
+                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentIdi) *
+                            *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
+                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentIdj) *
+                            cellJxWValuesEnrichmentBlockClassical[qPoint];
+                          }
+                          *basisOverlapTmpIter += NpiNpj - NpiNcj - NciNpj + NciNcj;
+                      }
+                    basisOverlapTmpIter++;
+                  }
+              }
+
+            cellStartIdsBasisOverlap[cellIndex] = cumulativeBasisOverlapId;
+            cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
+            cellIndex++;
+            if(!isConstantDofsAndQuadPointsInCellClassicalBlock)
+              cumulativeClassicalDofQuadPointsOffset += nQuadPointInCellClassicalBlock * dofsPerCellCFE;
+            if(!isConstantDofsAndQuadPointsInCellEnrichmentBlockClassical)
+              cumulativeEnrichmentBlockClassicalDofQuadPointsOffset += nQuadPointInCellEnrichmentBlockClassical * dofsPerCellCFE;
+            cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset += nQuadPointInCellEnrichmentBlockEnrichment * dofsPerCell;
+          }
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+      }
+
+
       template <utils::MemorySpace memorySpace>
       void
       storeSizes(utils::MemoryStorage<size_type, memorySpace> &mSizes,
@@ -577,6 +944,49 @@ namespace dftefe
         memorySpace,
         dim>(cfeBasisDataStorage,
              efeBasisDataStorage,
+             basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
+      d_basisOverlap = basisOverlap;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    EFEOverlapOperatorContext<ValueTypeOperator,
+                             ValueTypeOperand,
+                             memorySpace,
+                             dim>::
+      EFEOverlapOperatorContext(
+        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & enrichmentBlockEnrichmentBasisDataStorage,
+        std::shared_ptr<const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          enrichmentBlockClassicalBasisDataStorage,          
+        const std::string                           constraintsX,
+        const std::string                           constraintsY,
+        const size_type                             maxCellTimesNumVecs)
+      : d_feBasisHandler(&feBasisHandler)
+      , d_constraintsX(constraintsX)
+      , d_constraintsY(constraintsY)
+      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_cellStartIdsBasisOverlap(0)
+      , d_efeBasisDataStorage(&enrichmentBlockEnrichmentBasisDataStorage)
+      , d_cfeBasisDataStorage(&classicalBlockBasisDataStorage)
+    {
+      std::shared_ptr<
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+        basisOverlap;
+      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        memorySpace,
+        dim>(classicalBlockBasisDataStorage,
+             enrichmentBlockEnrichmentBasisDataStorage,
+             enrichmentBlockClassicalBasisDataStorage,
              basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell);

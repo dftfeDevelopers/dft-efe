@@ -169,6 +169,21 @@ namespace dftefe
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const;
 
+
+      /**
+       * @brief The localid is determined by the storage pattern of the components of
+       * basisInterfaceCoeff multivector. The multivector has a storage pattern 
+       * of [LocallyownedEnrichmentIds, GhostEnrichemntIds]
+      */ 
+
+      global_size_type getEnrichmentId(size_type cellId, 
+        size_type enrichmentCellLocalId) const;
+
+      size_type getEnrichmentLocalId(global_size_type enrichmentId) const;
+
+      size_type getEnrichmentLocalId(size_type cellId, 
+      size_type enrichmentCellLocalId) const;
+
     private:
       std::shared_ptr<const EnrichmentIdsPartition<dim>> 
                                 d_enrichmentIdsPartition;
@@ -185,6 +200,8 @@ namespace dftefe
       const std::vector<std::string> d_atomSymbolVec;
       const std::vector<utils::Point> d_atomCoordinatesVec;
       const std::string d_fieldName;
+      std::vector<std::vector<global_size_type>>
+                      d_overlappingEnrichmentIdsInCells;
 
     }; // end of class
   }    // end of namespace basis

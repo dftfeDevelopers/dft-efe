@@ -489,6 +489,14 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    size_type
+    EnrichmentIdsPartition<dim>::nLocalEnrichmentIds() const
+    {
+      return (d_locallyOwnedEnrichmentIds.second -
+              d_locallyOwnedEnrichmentIds.first) + d_ghostEnrichmentIds.size();
+    }
+
+    template <unsigned int dim>
     global_size_type
     EnrichmentIdsPartition<dim>::nTotalEnrichmentIds() const
     {

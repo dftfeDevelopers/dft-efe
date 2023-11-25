@@ -33,9 +33,9 @@ namespace dftefe
      */
     const linearAlgebra::PreconditionerType L2ProjectionDefaults::PC_TYPE  = linearAlgebra::PreconditionerType::JACOBI;
     const size_type L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS = 50;
-    const size_type L2ProjectionDefaults:: MAX_ITER = 1e7;
-    const double L2ProjectionDefaults::ABSOLUTE_TOL = 1e-10;
-    const double L2ProjectionDefaults::RELATIVE_TOL = 1e-12;
+    const size_type L2ProjectionDefaults:: MAX_ITER = 1e8;
+    const double L2ProjectionDefaults::ABSOLUTE_TOL = 1e-13;
+    const double L2ProjectionDefaults::RELATIVE_TOL = 1e-14;
     const double L2ProjectionDefaults::DIVERGENCE_TOL = 1e6;
 
   } // end of namespace basis

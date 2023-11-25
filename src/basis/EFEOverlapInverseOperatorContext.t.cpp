@@ -178,8 +178,8 @@ namespace dftefe
                 *(basisOverlapEnrichmentBlockSTLTmp.data() + enrichmentVecInCell[j]*d_nglobalEnrichmentIds
                    + enrichmentVecInCell[k]) +=
                   *(NiNjInAllCells.data() + cumulativeBasisDataInCells + 
-                  numCellClassicalDofs*numCellClassicalDofs + 2 * numCellClassicalDofs*nCellEnrichmentDofs +
-                  nCellEnrichmentDofs * j + k );
+                   (numCellClassicalDofs + nCellEnrichmentDofs)*(numCellClassicalDofs +j) + 
+                   numCellClassicalDofs + k );
               }            
             }
             cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow((nCellEnrichmentDofs + numCellClassicalDofs),2);
@@ -208,9 +208,29 @@ namespace dftefe
         // d_nglobalEnrichmentIds,
         // ipiv.data());
 
+        // std::cout << "Enrichment Block : \n";
+        // int cc = 0;
+        // for (auto i : basisOverlapEnrichmentBlockSTL)
+        // {
+        //   if(cc % d_nglobalEnrichmentIds == 0)
+        //   std::cout << "\n";
+        //   std::cout << i << " ";
+        //   cc+=1;
+        // }
+
         EFEBlockInverse::inverse(basisOverlapEnrichmentBlockSTL.data(), d_nglobalEnrichmentIds);
 
-        d_basisOverlapEnrichmentBlock->template copyFrom(basisOverlapEnrichmentBlockSTL);
+        // std::cout << "Enrichment Inverse Block : \n";
+        // cc = 0;
+        // for (auto i : basisOverlapEnrichmentBlockSTL)
+        // {
+        //   if(cc % d_nglobalEnrichmentIds == 0)
+        //   std::cout << "\n";
+        //   std::cout << i << " ";
+        //   cc+=1;
+        // }
+
+        d_basisOverlapEnrichmentBlock->template copyFrom<utils::MemorySpace::HOST>(basisOverlapEnrichmentBlockSTL.data());
 
       }
 
@@ -265,7 +285,8 @@ namespace dftefe
         XenrichedGlobalVecTmp.template copyFrom<memorySpace>(X.begin(),
         nlocallyOwnedEnrichmentIds*numComponents,
         nlocallyOwnedClassicalIds*numComponents,
-        0);
+        ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
+                (d_efebasisManager->getGlobalRanges()[0].second)) *numComponents);
 
         int err = utils::mpi::MPIAllreduce<memorySpace>(
           XenrichedGlobalVecTmp.data(),
@@ -295,12 +316,12 @@ namespace dftefe
         d_nglobalEnrichmentIds,
         alpha,
         XenrichedGlobalVec.data(),
-        d_nglobalEnrichmentIds,
+        numComponents,
         d_basisOverlapEnrichmentBlock->data(),
         d_nglobalEnrichmentIds,
         beta,
         YenrichedGlobalVec.begin(),
-        d_nglobalEnrichmentIds,
+        numComponents,
         *d_linAlgOpContext);
 
         // utils::MemoryStorage<ValueTypeOperand, memorySpace> YenrichedLocallyOwnedVec(nlocallyOwnedEnrichmentIds*numComponents);
@@ -313,14 +334,12 @@ namespace dftefe
         //     *(YenrichedLocallyOwnedVec.data() + i*numComponents + j) = *(YenrichedGlobalVec.data() + pair.first * numComponents + j);
         // }
 
-        if(nlocallyOwnedEnrichmentIds!=0)
-        {
+ 
           YenrichedGlobalVec.template copyTo<memorySpace>(Y.begin(),
                 nlocallyOwnedEnrichmentIds*numComponents,
                 ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
                 (d_efebasisManager->getGlobalRanges()[0].second)) *numComponents,
                 nlocallyOwnedClassicalIds*numComponents);
-        }
 
         Y.updateGhostValues();
 

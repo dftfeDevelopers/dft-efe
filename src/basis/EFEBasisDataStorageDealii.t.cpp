@@ -264,17 +264,19 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisQuadStorageTmpIter =
                               efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent;
+                                quadRealPointsVec[qPoint])-classicalComponent[ efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell)];
 
                             // std::cout << quadRealPointsVec[qPoint][0] << " "
                             // << quadRealPointsVec[qPoint][1] << " " <<
@@ -1041,17 +1043,20 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;                            
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisQuadStorageTmpIter =
                               efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent;
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell)];
+                        
                             basisQuadStorageTmpIter++;
                           }
                       }
@@ -1086,17 +1091,19 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;                            
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisOverlapTmpIter +=
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell)]) *
                               dealiiFEValues.shape_value(jNode, qPoint) *
                               cellJxWValues[qPoint];
                             // enriched i * classical j
@@ -1109,17 +1116,19 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;                            
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisOverlapTmpIter +=
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell)]) *
                               dealiiFEValues.shape_value(iNode, qPoint) *
                               cellJxWValues[qPoint];
                             // enriched j * classical i
@@ -1131,21 +1140,24 @@ namespace dftefe
                              qPoint++)
                           {
                           
-                            ValueTypeBasisData classicalComponent = 0;                            
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisOverlapTmpIter +=
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell)]) *
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell)]) *
                               cellJxWValues[qPoint];
                             // enriched i * enriched j
                           }
@@ -1670,12 +1682,12 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
         basisOverlap;
 
-
+      size_type nTotalEnrichmentIds = d_efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -1883,11 +1895,12 @@ namespace dftefe
                              basisOverlap;
 
 
+      size_type nTotalEnrichmentIds = d_efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -2097,11 +2110,12 @@ namespace dftefe
                              basisOverlap;
 
 
+      size_type nTotalEnrichmentIds = d_efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            
@@ -2324,11 +2338,12 @@ namespace dftefe
                              basisOverlap;
 
 
+      size_type nTotalEnrichmentIds = d_efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> basisClassicalInterfaceQuadValues
-          (d_quadratureRuleContainer, d_efeBM->totalRanges()-1, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds, (ValueTypeBasisData)0);
 
         quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>  basisClassicalInterfaceQuadGradients
-          (d_quadratureRuleContainer, (d_efeBM->totalRanges()-1)*dim, (ValueTypeBasisData)0);
+          (d_quadratureRuleContainer, nTotalEnrichmentIds*dim, (ValueTypeBasisData)0);
 
         if(d_efeBM->isOrthogonalized())
         {            

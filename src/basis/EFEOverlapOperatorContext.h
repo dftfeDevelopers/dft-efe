@@ -118,6 +118,19 @@ namespace dftefe
         const std::string                           constraintsY,
         const size_type                             maxCellTimesNumVecs);
 
+      EFEOverlapOperatorContext(
+        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &feBasisHandler,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          & enrichmentBlockEnrichmentBasisDataStorage,
+        std::shared_ptr<const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          enrichmentBlockClassicalBasisDataStorage,
+        const std::string                           constraintsX,
+        const std::string                           constraintsY,
+        const size_type                             maxCellTimesNumVecs);
+
       /**
        * @brief Apply AX = B where A is the discretized matrix, X is the operand and B is the result.
        */

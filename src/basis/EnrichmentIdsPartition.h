@@ -115,6 +115,9 @@ namespace dftefe
       size_type
       nLocallyOwnedEnrichmentIds() const;
 
+      size_type
+      nLocalEnrichmentIds() const;
+
       global_size_type
       nTotalEnrichmentIds() const;
 
