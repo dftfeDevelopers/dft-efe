@@ -35,6 +35,8 @@ int main()
 
   std::cout<<" Entering test overlap matrix enrichment \n";
 
+  const long max_rand = 1000000L;
+
   //initialize MPI
   // NOTE : The test case only works for orthogonalized EFE basis
 
@@ -65,14 +67,14 @@ int main()
   const unsigned int dim = 3;
   std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
   std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {5, 5, 5};
+  std::vector<unsigned int>         subdivisions = {10, 10, 10};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
-  double xmax = 5.0;
-  double ymax = 5.0;
-  double zmax = 5.0;
+  double xmax = 80.0/6.0;
+  double ymax = 80.0/6.0;
+  double zmax = 80.0/6.0;
   unsigned int numComponents = 1;
 
   domainVectors[0][0] = xmax;
@@ -137,6 +139,7 @@ int main()
   // 4. Input to the EFEBasisManager(eci, feOrder) 
   // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
+  unsigned int feOrder = 3;
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
                           <double, dftefe::utils::MemorySpace::HOST, dim>>
                           enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
@@ -164,11 +167,11 @@ int main()
             fieldName,
             i);
         tolerances[i] = 1e-8;
-        integralThresholds[i] = 1e-14;
+        integralThresholds[i] = 1e-10;
     }
 
-    double smallestCellVolume = 1e-14;
-    unsigned int maxRecursion = 1e3;
+    double smallestCellVolume = 1e-12;
+    unsigned int maxRecursion = 1000;
 
     //Set up quadAttr for Rhs and OverlapMatrix
 
@@ -182,6 +185,8 @@ int main()
     unsigned int num1DGaussSize =4;
     std::shared_ptr<dftefe::quadrature::QuadratureRule> baseQuadRule =
     std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
+
+    dftefe::quadrature::QuadratureRuleAttributes quadAttrGauss(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
 
     std::shared_ptr<dftefe::basis::CellMappingBase> cellMapping = std::make_shared<dftefe::basis::LinearCellMappingDealii<dim>>();
     std::shared_ptr<dftefe::basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<dftefe::basis::ParentToChildCellsManagerDealii<dim>>();
@@ -199,7 +204,6 @@ int main()
       smallestCellVolume,
       maxRecursion);
 
-    unsigned int feOrder = 3;
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
     std::shared_ptr<dftefe::basis::FEBasisManager> cfeBasisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feOrder);
 
@@ -234,6 +238,13 @@ int main()
       (cfeBasisManager, quadAttrGll, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageOverlapMatrix->evaluateBasisData(quadAttrGll, basisAttrMap);
+
+    // Set up the CFE Basis Data Storage for Overlap Matrix
+    std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageOverlapMatrixGauss =
+      std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST, dim>>
+      (cfeBasisManager, quadAttrGauss, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageOverlapMatrixGauss->evaluateBasisData(quadAttrGauss, basisAttrMap);
 
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageRhs =
@@ -366,10 +377,20 @@ int main()
          {
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
             basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
-            *(itField + localId )  = ((double) rand() / (RAND_MAX));
+            for(int comp = 0 ; comp < numComponents ; comp++)
+            {
+              double lower_bound = comp;
+              double upper_bound = comp+1;
+              *(itField + localId*numComponents + comp )  = comp+1 ;//lower_bound + (upper_bound - lower_bound) * (random() % max_rand)/ max_rand;
+            }
+              //((double) rand() / (RAND_MAX));
          }
         }
     }
+
+    X->updateGhostValues();
+    basisHandler->getConstraints(constraintHanging).distributeParentToChild(*X, X->getNumberComponents());
+
 
     // Create OperatorContext for Basisoverlap CFE - GLL, EFE - Adaptive
     std::shared_ptr<const dftefe::basis::EFEOverlapOperatorContext<double,
@@ -383,12 +404,11 @@ int main()
                                                         *basisHandler,
                                                         *cfeBasisDataStorageOverlapMatrix,
                                                         *feBasisData,
+                                                        cfeBasisDataStorageOverlapMatrix,
                                                         constraintHanging,
                                                         constraintHanging,
                                                         50);
 
-
-      MContext->apply(*X,*Y);
   // feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
@@ -403,9 +423,11 @@ int main()
                                                     constraintHanging,
                                                     linAlgOpContext);
 
-     MInvContext->apply(*Y,*Z);
+    MInvContext->apply(*X,*Y);
+    MContext->apply(*Y,*Z);
 
-    std::cout <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
+    for (int comp = 0 ; comp < numComponents ; comp++)
+      std::cout << "Component "<<comp << ":" << X->l2Norms()[comp] << "," << Y->l2Norms()[comp] <<"," << Z->l2Norms()[comp] << "\n";
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
    error = std::make_shared<
@@ -419,7 +441,63 @@ int main()
 
   dftefe::linearAlgebra::add(ones, *X, nOnes, *Z, *error);
 
-    std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/Z->l2Norms()[0])<<"\n";
+  for (int comp = 0 ; comp < numComponents ; comp++)
+        std::cout << "Component "<<comp << ":" << "Error norm: "<<error->l2Norms()[0]<<" Relative error: "<<(error->l2Norms()[comp]/X->l2Norms()[comp])<<"\n";
+
+    // Form the Overlap Matrix
+    dftefe::global_size_type totalDofs = basisManager->nGlobalNodes();
+    std::shared_ptr<dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
+      basisOverlapBlock = std::make_shared<dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>(totalDofs * totalDofs);
+
+    std::vector<double> basisOverlapBlockSTL(totalDofs * totalDofs,0), 
+    basisOverlapBlockSTLTmp(totalDofs * totalDofs,0);
+    dftefe::size_type cumulativeBasisDataInCells = 0;
+    for (dftefe::size_type iCell = 0; iCell < basisManager->nLocallyOwnedCells() ; iCell++)
+    {
+      // get cell dof global ids
+      std::vector<dftefe::global_size_type> cellGlobalNodeIds(0);
+      basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+      // loop over nodes of a cell
+      for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+      {
+        for ( dftefe::size_type jNode = 0 ; jNode < cellGlobalNodeIds.size() ; jNode++)
+        {
+          *(basisOverlapBlockSTLTmp.data() + cellGlobalNodeIds[iNode]*totalDofs
+              + cellGlobalNodeIds[jNode]) +=
+            *(MContext->getBasisOverlapInAllCells().data() + cumulativeBasisDataInCells + 
+              cellGlobalNodeIds.size()*iNode + jNode);
+        }
+      }
+      cumulativeBasisDataInCells += dftefe::utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),2);
+    }
+
+  int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+    basisOverlapBlockSTLTmp.data(),
+    basisOverlapBlockSTL.data(),
+    basisOverlapBlockSTLTmp.size(),
+    dftefe::utils::mpi::MPIDouble,
+    dftefe::utils::mpi::MPISum,
+    comm);
+  std::pair<bool, std::string> mpiIsSuccessAndMsg =
+    dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
+  dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
+                        "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+  if(rank == 0)
+  {
+  std::cout << "Enrichment Block : \n";
+  int cc = 0;
+  for (int i = 0 ; i < totalDofs; i++)
+  {
+  for (int j = 0 ; j < totalDofs; j++)
+  {
+    if(basisOverlapBlockSTL[i*totalDofs+j] > 1e-10 && i == totalDofs-1 || j == totalDofs-1)
+      std::cout << i << " " << j << " " << basisOverlapBlockSTL[i*totalDofs+j] << "\n";
+  }
+  }
+  }
+
+  dftefe::utils::mpi::MPIBarrier(comm);
 
   //gracefully end MPI
 

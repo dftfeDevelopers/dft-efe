@@ -527,7 +527,7 @@ namespace dftefe
                           {
                             NciNcj +=
                             *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
-                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentId) *
+                            nTotalEnrichmentIds * qPoint + enrichmentId) *
                             *(cumulativeEnrichmentBlockClassicalDofQuadPoints + nQuadPointInCellEnrichmentBlockClassical * jNode + qPoint) *
                             cellJxWValuesEnrichmentBlockClassical[qPoint];
                           }
@@ -558,7 +558,7 @@ namespace dftefe
                             NciNcj +=
                             *(cumulativeEnrichmentBlockClassicalDofQuadPoints + nQuadPointInCellEnrichmentBlockClassical * iNode + qPoint) *                            
                             *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
-                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentId) *
+                            nTotalEnrichmentIds * qPoint + enrichmentId) *
                             cellJxWValuesEnrichmentBlockClassical[qPoint];
                           }
                           *basisOverlapTmpIter += NciNpj - NciNcj;
@@ -593,7 +593,7 @@ namespace dftefe
                           {
                             NciNpj +=
                             *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.data() + 
-                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockEnrichment * qPoint + enrichmentIdi) *
+                            nTotalEnrichmentIds * qPoint + enrichmentIdi) *
                                 eefeBM.getEnrichmentValue(
                                 cellIndex,
                                 jNode - dofsPerCellCFE,
@@ -610,7 +610,7 @@ namespace dftefe
                                 iNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
                             *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.data() + 
-                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockEnrichment * qPoint + enrichmentIdj) *
+                            nTotalEnrichmentIds * qPoint + enrichmentIdj) *
                             cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         // interpolated ci's in Ni_classicalQuadrature of Mc = d *
@@ -620,9 +620,9 @@ namespace dftefe
                           {
                             NciNcj +=
                             *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
-                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentIdi) *
+                            nTotalEnrichmentIds * qPoint + enrichmentIdi) *
                             *(basisInterfaceCoeffClassicalQuadRuleValuesInCell.data() + 
-                            nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical * qPoint + enrichmentIdj) *
+                            nTotalEnrichmentIds * qPoint + enrichmentIdj) *
                             cellJxWValuesEnrichmentBlockClassical[qPoint];
                           }
                           *basisOverlapTmpIter += NpiNpj - NpiNcj - NciNpj + NciNcj;
