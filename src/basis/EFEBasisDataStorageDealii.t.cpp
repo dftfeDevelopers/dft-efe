@@ -319,7 +319,8 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;                            
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
@@ -329,7 +330,8 @@ namespace dftefe
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell)]) *
                               dealiiFEValues.shape_value(jNode, qPoint) *
                               dealiiFEValues.JxW(qPoint);
                             // enriched i * classical j
@@ -343,7 +345,8 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
@@ -353,7 +356,8 @@ namespace dftefe
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell)]) *
                               dealiiFEValues.shape_value(iNode, qPoint) *
                               dealiiFEValues.JxW(qPoint);
                             // enriched j * classical i
@@ -366,7 +370,8 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            ValueTypeBasisData classicalComponent = 0;
+                            std::vector<ValueTypeBasisData> classicalComponent(0);
+                            classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
@@ -376,11 +381,13 @@ namespace dftefe
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 iNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell)]) *
                               (efeBM->getEnrichmentValue(
                                 cellIndex,
                                 jNode - classicalDofsPerCell,
-                                quadRealPointsVec[qPoint])-classicalComponent) *
+                                quadRealPointsVec[qPoint])-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell)]) *
                               dealiiFEValues.JxW(qPoint);
                             // enriched i * enriched j
                           }
@@ -442,7 +449,9 @@ namespace dftefe
                                   cumulativeQuadPoints * dim * dofsPerCell +
                                   iDim * dofsPerCell * numQuadPointsPerCell +
                                   iNode * numQuadPointsPerCell + qPoint;
-                                *it = shapeGrad[iDim]-classicalComponent[iDim];
+                                *it = shapeGrad[iDim]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * iDim];
                               }
                           }
                       }
@@ -693,7 +702,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -710,7 +719,9 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -726,7 +737,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -743,7 +754,9 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -758,7 +771,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -778,8 +791,12 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + (enrichmentDerivativei[k]-classicalComponent[k]) *
-                                                      (enrichmentDerivativej[k]-classicalComponent[k]);
+                                dotProd = dotProd + (enrichmentDerivativei[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]) *
+                                                      (enrichmentDerivativej[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]);
                               }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * dealiiFEValues.JxW(qPoint);
@@ -1199,7 +1216,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -1217,7 +1234,9 @@ namespace dftefe
                                   cumulativeQuadPoints * dim * dofsPerCell +
                                   iDim * dofsPerCell * nQuadPointInCell +
                                   iNode * nQuadPointInCell + qPoint;
-                                *it = shapeGrad[iDim]-classicalComponent[iDim];
+                                *it = shapeGrad[iDim]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * iDim];
                               }
                           }
                       }
@@ -1471,7 +1490,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -1488,7 +1507,9 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -1503,7 +1524,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -1520,7 +1541,9 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[k]) *
+                                dotProd = dotProd + (enrichmentDerivative[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]) *
                                                       classicalDerivative[k];
                               }
                             *basisGradNiGradNjTmpIter +=
@@ -1534,7 +1557,7 @@ namespace dftefe
                              qPoint++)
                           {
 
-                            std::vector<ValueTypeBasisData> classicalComponent(dim,0);
+                            std::vector<ValueTypeBasisData> classicalComponent(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds()*dim,0);
                             if(efeBM->isOrthogonalized())
                             {
                                 basisClassicalInterfaceQuadGradients.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
@@ -1554,8 +1577,12 @@ namespace dftefe
                               (ValueTypeBasisData)0.0;
                             for (unsigned int k = 0; k < dim; k++)
                               {
-                                dotProd = dotProd + (enrichmentDerivativei[k]-classicalComponent[k]) *
-                                                      (enrichmentDerivativej[k]-classicalComponent[k]);
+                                dotProd = dotProd + (enrichmentDerivativei[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, iNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]) *
+                                                      (enrichmentDerivativej[k]-classicalComponent[efeBM->
+                                  getEnrichmentClassicalInterface()->getEnrichmentId(cellIndex, jNode - classicalDofsPerCell) + 
+                                  efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds() * k]);
                               }
                             *basisGradNiGradNjTmpIter +=
                               dotProd * cellJxWValues[qPoint];
@@ -1590,6 +1617,8 @@ namespace dftefe
       , d_cellStartIdsBasisOverlap(0)
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_basisStorageAttributesBoolMap(basisStorageAttributesBoolMap)
+      , d_basisClassicalInterfaceQuadValues()
+      , d_basisClassicalInterfaceQuadGradients()
     {
       d_evaluateBasisData = false;
       d_efeBM =
@@ -1717,6 +1746,8 @@ namespace dftefe
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadValues);
 
+              d_basisClassicalInterfaceQuadValues = basisClassicalInterfaceQuadValues;
+
             // std::cout << "basisintcoeff-norm: " << d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff().l2Norms()[0];
             // ValueTypeBasisData classicalComponent = 0;
             // basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(0, 0, &classicalComponent);
@@ -1748,6 +1779,8 @@ namespace dftefe
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadGradients);
+
+              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;
 
                                          
             }
@@ -1930,6 +1963,8 @@ namespace dftefe
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadValues);
 
+              d_basisClassicalInterfaceQuadValues = basisClassicalInterfaceQuadValues;
+
                                    
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
@@ -1957,6 +1992,8 @@ namespace dftefe
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadGradients);
+
+              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;                      
 
                                          
             }
@@ -2145,6 +2182,8 @@ namespace dftefe
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadValues);
 
+              d_basisClassicalInterfaceQuadValues = basisClassicalInterfaceQuadValues;                      
+
                                    
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
@@ -2172,6 +2211,8 @@ namespace dftefe
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadGradients);
+
+              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;                      
 
                                          
             }
@@ -2373,6 +2414,8 @@ namespace dftefe
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadValues);
 
+              d_basisClassicalInterfaceQuadValues = basisClassicalInterfaceQuadValues;                      
+
                                    
             }
             if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)->second || 
@@ -2400,6 +2443,8 @@ namespace dftefe
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadGradients);
+
+              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;                      
 
                                          
             }
@@ -3069,5 +3114,55 @@ namespace dftefe
     {
       return *d_efeBM;
     }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
+    EFEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
+    getEnrichmentFunctionClassicalComponentQuadValues() const
+    {
+      utils::throwException(
+        d_evaluateBasisData == true,
+        "Cannot call function before calling evaluateBasisData()");
+
+        utils::throwException(
+        d_efeBM->isOrthogonalized(),
+        "Cannot call getBasisClassicalInterfaceQuadValues() for no orthogonalization of EFE mesh.");
+
+      utils::throwException(
+        d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)
+          ->second || d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)
+          ->second,
+        "basisClassicalInterfaceQuadValues values are not stored for the given QuadratureRuleAttributes");
+
+      return d_basisClassicalInterfaceQuadValues;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
+    EFEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
+    getEnrichmentFunctionClassicalComponentQuadGradients() const
+    {
+      utils::throwException(
+        d_evaluateBasisData == true,
+        "Cannot call function before calling evaluateBasisData()");
+
+        utils::throwException(
+        d_efeBM->isOrthogonalized(),
+        "Cannot call getBasisClassicalInterfaceQuadValues() for no orthogonalization of EFE mesh.");
+
+      utils::throwException(
+        d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)
+          ->second || d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)
+          ->second,
+        "basisClassicalInterfaceQuadValues values are not stored for the given QuadratureRuleAttributes");
+
+      return d_basisClassicalInterfaceQuadGradients;
+    }
+
+
   } // namespace basis
 } // namespace dftefe

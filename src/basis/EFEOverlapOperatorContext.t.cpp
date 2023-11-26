@@ -349,42 +349,17 @@ namespace dftefe
 
         // interpolate the ci 's to the enrichment quadRuleAttr quadpoints
 
-        BasisStorageAttributesBoolMap basisAttrMap;
-        basisAttrMap[BasisStorageAttributes::StoreValues] = true;
-        basisAttrMap[BasisStorageAttributes::StoreGradient] = false;
-        basisAttrMap[BasisStorageAttributes::StoreHessian] = false; 
-        basisAttrMap[BasisStorageAttributes::StoreOverlap] = false;
-        basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
-        basisAttrMap[BasisStorageAttributes::StoreJxW] = false;
-
-        quadrature::QuadratureFamily quadFamily =
-        enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
-        ->getQuadratureRuleAttributes().getQuadratureFamily();
-
-        std::shared_ptr<FEBasisDataStorage<ValueTypeOperator, memorySpace>> enrichmentQuadRuleClassicalDataStorage =
-          std::make_shared<FEBasisDataStorageDealii<ValueTypeOperator, memorySpace, dim>>
-          (eci->getCFEBasisManager(), 
-          enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes(),
-          basisAttrMap);
-
-        if (quadFamily == quadrature::QuadratureFamily::GLL || quadFamily == quadrature::QuadratureFamily::GAUSS)
-          enrichmentQuadRuleClassicalDataStorage->evaluateBasisData(enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes(),  basisAttrMap);
-        else
-          enrichmentQuadRuleClassicalDataStorage->evaluateBasisData(enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes(), enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(), basisAttrMap);
-
-        FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim> basisOp2(enrichmentQuadRuleClassicalDataStorage, 
-          L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
         quadrature::QuadratureValuesContainer<ValueTypeOperator, memorySpace> basisInterfaceCoeffEnrichmentQuadRuleValues
           (enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(), nTotalEnrichmentIds, (ValueTypeOperator)0);
 
-        basisOp2.interpolate( eci->getBasisInterfaceCoeff(), 
-                              eci->getBasisInterfaceCoeffConstraint(),
-                              *eci->getCFEBasisHandler(),
-                              basisInterfaceCoeffEnrichmentQuadRuleValues);
+        const EFEBasisDataStorage<ValueTypeOperator,memorySpace> &enrichmentBlockEnrichmentBasisDataStorageEFE =
+          dynamic_cast<const EFEBasisDataStorage<ValueTypeOperator,memorySpace> &>(enrichmentBlockEnrichmentBasisDataStorage);
+        utils::throwException(
+          &enrichmentBlockEnrichmentBasisDataStorageEFE != nullptr,
+          "Could not cast FEBasisDataStorage to EFEBasisDataStorage "
+          "in EFEOverlapOperatorContext for enrichmentBlockEnrichmentBasisDataStorage.");
+
+        basisInterfaceCoeffEnrichmentQuadRuleValues =  enrichmentBlockEnrichmentBasisDataStorageEFE.getEnrichmentFunctionClassicalComponentQuadValues();                  
 
         // Set up the overlap matrix quadrature storages.
 
