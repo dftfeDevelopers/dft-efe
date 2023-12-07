@@ -553,7 +553,8 @@ namespace dftefe
                             numCellsInBlockQuad.end(),
                             0);
 
-          utils::MemoryStorage<ValueTypeUnion, memorySpace> basisGradientInterpolateBlock(dim * numComponents * numCumulativeQuadCellsInBlock);
+          utils::MemoryStorage<ValueTypeUnion, memorySpace> basisGradientInterpolateBlock(0);
+          basisGradientInterpolateBlock.resize(dim * numComponents * numCumulativeQuadCellsInBlock);
 
           ValueTypeUnion *C = basisGradientInterpolateBlock.begin();
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
@@ -579,21 +580,26 @@ namespace dftefe
             ldcSizes.data(),
             linAlgOpContext);
 
+          size_type basisGradientInterpolateBlockOffSet = 0;
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
-              for(size_type iQuad = 0 ; iQuad < numCellsInBlockQuad[iCell] ; iQuad ++)
-              {              
+              size_type nQuadpointsInCell = numCellsInBlockQuad[iCell]; 
+              for(size_type iQuad = 0 ; iQuad < nQuadpointsInCell ; iQuad ++)
+              {
                 for(size_type iDim = 0 ; iDim < dim ; iDim ++)
                 {
-                  basisGradientInterpolateBlock.template copyTo<memorySpace>(quadValuesContainer.begin(), // *dst
+                  basisGradientInterpolateBlock.template copyTo<memorySpace>(
+                        quadValuesContainer.begin() + quadValueContainerStartOffset, // *dst
                         numComponents, //N
-                        iCell * numComponents * dim * numCellsInBlockQuad[iCell] + 
-                        iDim * numComponents * numCellsInBlockQuad[iCell] + iQuad * numComponents, // srcoffset
-                        quadValueContainerStartOffset + 
-                        iCell * numComponents * dim * numCellsInBlockQuad[iCell] + 
-                        iQuad * numComponents * dim + iDim * numComponents); // dstoffset
+                        basisGradientInterpolateBlockOffSet + 
+                        iDim * numComponents * nQuadpointsInCell + 
+                        iQuad * numComponents, // srcoffset
+                        basisGradientInterpolateBlockOffSet + 
+                        iQuad * numComponents * dim + 
+                        iDim * numComponents); // dstoffset
                 }
               }
+              basisGradientInterpolateBlockOffSet += nQuadpointsInCell * dim * numComponents;
             }
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
@@ -602,10 +608,11 @@ namespace dftefe
               {
                 size_type index = iCell * dim + iDim;
                 BStartOffset += kSizesTmp[index] * nSizesTmp[index];
-                quadValueContainerStartOffset += mSizesTmp[index] * nSizesTmp[index];
+                //quadValueContainerStartOffset += mSizesTmp[index] * nSizesTmp[index];
               }
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
+            quadValueContainerStartOffset += dim * numComponents * numCumulativeQuadCellsInBlock;
         }
     }
 

@@ -1779,9 +1779,6 @@ namespace dftefe
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
                                     basisClassicalInterfaceQuadGradients);
-
-              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;
-
                                          
             }
         }
@@ -1991,9 +1988,7 @@ namespace dftefe
               cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
-                                    basisClassicalInterfaceQuadGradients);
-
-              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;                      
+                                    basisClassicalInterfaceQuadGradients);                   
 
                                          
             }
@@ -2210,9 +2205,7 @@ namespace dftefe
               cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
-                                    basisClassicalInterfaceQuadGradients);
-
-              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;                      
+                                    basisClassicalInterfaceQuadGradients);                    
 
                                          
             }
@@ -2442,9 +2435,7 @@ namespace dftefe
               cfeBasisOp.interpolateWithBasisGradient( d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeff(), 
                                     d_efeBM->getEnrichmentClassicalInterface()->getBasisInterfaceCoeffConstraint(),
                                     *d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisHandler(),
-                                    basisClassicalInterfaceQuadGradients);
-
-              d_basisClassicalInterfaceQuadGradients = basisClassicalInterfaceQuadGradients;                      
+                                    basisClassicalInterfaceQuadGradients);               
 
                                          
             }
@@ -3147,18 +3138,8 @@ namespace dftefe
     getEnrichmentFunctionClassicalComponentQuadGradients() const
     {
       utils::throwException(
-        d_evaluateBasisData == true,
-        "Cannot call function before calling evaluateBasisData()");
-
-        utils::throwException(
-        d_efeBM->isOrthogonalized(),
-        "Cannot call getBasisClassicalInterfaceQuadValues() for no orthogonalization of EFE mesh.");
-
-      utils::throwException(
-        d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)
-          ->second || d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)
-          ->second,
-        "enrichmentFunctionClassicalComponentQuadGradients are not stored for the given QuadratureRuleAttributes");
+        false,
+        "This function is not implemented yet.");
 
       return d_basisClassicalInterfaceQuadGradients;
     }
