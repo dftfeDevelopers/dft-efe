@@ -323,7 +323,7 @@ namespace dftefe
                             classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisOverlapTmpIter +=
@@ -349,7 +349,7 @@ namespace dftefe
                             classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisOverlapTmpIter +=
@@ -374,7 +374,7 @@ namespace dftefe
                             classicalComponent.resize(efeBM->getEnrichmentIdsPartition()->nTotalEnrichmentIds());
                             if(efeBM->isOrthogonalized())
                             {
-                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, &classicalComponent);
+                                basisClassicalInterfaceQuadValues.template getCellQuadValues<utils::MemorySpace::HOST>(cellIndex, qPoint, classicalComponent.data());
                             }
 
                             *basisOverlapTmpIter +=
@@ -858,7 +858,7 @@ namespace dftefe
           {
             utils::throwException(
               false,
-              "For storing of basis values for enriched finite element basis "
+              "For storing of basis data for enriched finite element basis "
               "on a variable quadrature rule across cells, the underlying "
               "quadrature family has to be quadrature::QuadratureFamily::GAUSS_VARIABLE "
               "or quadrature::QuadratureFamily::GLL_VARIABLE or quadrature::QuadratureFamily::ADAPTIVE");
@@ -1379,7 +1379,7 @@ namespace dftefe
           {
             utils::throwException(
               false,
-              "For storing of basis values for classical finite element basis "
+              "For storing of basis data for enriched finite element basis "
               "on a variable quadrature rule across cells, the underlying "
               "quadrature family has to be quadrature::QuadratureFamily::GAUSS_VARIABLE "
               "or quadrature::QuadratureFamily::GLL_VARIABLE or quadrature::QuadratureFamily::ADAPTIVE");
@@ -1984,7 +1984,7 @@ namespace dftefe
                 std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
                 (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisManager(), quadratureRuleAttributes, basisAttrMap);
 
-              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, d_quadratureRuleContainer, basisAttrMap);
 
               FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
 
@@ -2203,7 +2203,7 @@ namespace dftefe
                 std::make_shared<FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>>
                 (d_efeBM->getEnrichmentClassicalInterface()->getCFEBasisManager(), quadratureRuleAttributes, basisAttrMap);
 
-              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, basisAttrMap);
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes, d_quadratureRuleContainer, basisAttrMap);
 
               FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace, dim> cfeBasisOp(cfeBasisDataStorage, L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
 
@@ -3134,7 +3134,7 @@ namespace dftefe
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreValues)
           ->second || d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreOverlap)
           ->second,
-        "basisClassicalInterfaceQuadValues values are not stored for the given QuadratureRuleAttributes");
+        "enrichmentFunctionClassicalComponentQuadValues are not stored for the given QuadratureRuleAttributes");
 
       return d_basisClassicalInterfaceQuadValues;
     }
@@ -3158,7 +3158,7 @@ namespace dftefe
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradient)
           ->second || d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreGradNiGradNj)
           ->second,
-        "basisClassicalInterfaceQuadValues values are not stored for the given QuadratureRuleAttributes");
+        "enrichmentFunctionClassicalComponentQuadGradients are not stored for the given QuadratureRuleAttributes");
 
       return d_basisClassicalInterfaceQuadGradients;
     }
