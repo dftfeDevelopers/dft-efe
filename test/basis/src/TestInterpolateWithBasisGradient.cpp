@@ -29,24 +29,46 @@
 
 #include <iostream>
 
-double interpolatePolynomial (double x_coord, double y_coord, double z_coord)
+double interpolatePolynomial1 (double x_coord, double y_coord, double z_coord, double x_max, double y_max, double z_max)
 {
-  double result = 0;
-  result = (x_coord)*(x_coord );
-  result += ((y_coord)*(y_coord));
-  result += ((z_coord)*(z_coord ));
+  double result = 1;
+  result = (x_coord-x_max)*(x_coord);
+  result *= ((y_coord-y_max)*(y_coord));
+  result *= ((z_coord-z_max)*(z_coord));
 
-  return result*(1.0);
+  return result;
 
 }
 
-std::vector<double> interpolatePolynomialGradient(double x_coord, double y_coord, double z_coord)
+std::vector<double> interpolatePolynomialGradient1 (double x_coord, double y_coord, double z_coord, double x_max, double y_max, double z_max)
 {
   std::vector<double> a(0);
   a.resize(3);
-  a[0] = 2*x_coord;
-  a[1] = 2*y_coord;
-  a[2] = 2*z_coord;
+  a[0] = (2*x_coord-x_max)*(y_coord-y_max)*(y_coord)*(z_coord-z_max)*(z_coord);
+  a[1] = (x_coord)*(x_coord-x_max)*(2*y_coord - y_max)*(z_coord)*(z_coord - z_max );
+  a[2] = (x_coord-x_max)*(x_coord)*(y_coord-y_max)*(y_coord)*(2*z_coord - z_max );
+
+  return a;
+}
+
+double interpolatePolynomial2 (double x_coord, double y_coord, double z_coord, double x_max, double y_max, double z_max)
+{
+  double result = 1;
+  result = (x_coord-x_max)*(x_coord)*(x_coord);
+  result *= ((y_coord-y_max)*(y_coord)*(y_coord));
+  result *= ((z_coord-z_max)*(z_coord)*(z_coord));
+
+  return result;
+
+}
+
+std::vector<double> interpolatePolynomialGradient2 (double x_coord, double y_coord, double z_coord, double x_max, double y_max, double z_max)
+{
+  std::vector<double> a(0);
+  a.resize(3);
+  a[0] = (3*x_coord*x_coord-2*x_max*x_coord)*(y_coord-y_max)*(y_coord)*(y_coord)*(z_coord-z_max)*(z_coord)*(z_coord);
+  a[1] = (x_coord)*(x_coord)*(x_coord-x_max)*(3*y_coord*y_coord-2*y_max*y_coord)*(z_coord)*(z_coord - z_max )*(z_coord);
+  a[2] = (x_coord-x_max)*(x_coord)*(x_coord)*(y_coord-y_max)*(y_coord)*(y_coord)*(3*z_coord*z_coord-2*z_max*z_coord);
 
   return a;
 }
@@ -55,12 +77,19 @@ int main()
 {
 
   std::cout<<" Entering test constraint matrix\n";
-  // Set up linAlgcontext
 
-  dftefe::utils::mpi::MPIComm mpi_communicator = dftefe::utils::mpi::MPICommWorld;
+  int mpiInitFlag = 0;
+  dftefe::utils::mpi::MPIInitialized(&mpiInitFlag);
+  if(!mpiInitFlag)
+  {
+    dftefe::utils::mpi::MPIInit(NULL, NULL);
+  }
 
-  //initialize the MPI environment
-  dftefe::utils::mpi::MPIInit(NULL, NULL);
+  dftefe::utils::mpi::MPIComm comm = dftefe::utils::mpi::MPICommWorld;
+
+  int rank;
+  dftefe::utils::mpi::MPICommRank(comm, &rank);
+
 
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
@@ -115,8 +144,8 @@ int main()
 
   // initialize the basis Manager
 
-  unsigned int feDegree = 2;
-  unsigned int numComponents = 1;
+  unsigned int feDegree = 3;
+  unsigned int numComponents = 2;
 
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
@@ -164,7 +193,7 @@ int main()
                   if (!constraintsVec[0]->isConstrained(nodeId))
                     {
                       basisCenter = dofCoords.find(nodeId)->second;
-                      double constraintValue = interpolatePolynomial(basisCenter[0], basisCenter[1], basisCenter[2]);
+                      double constraintValue = 0.0; //interpolatePolynomial1(basisCenter[0], basisCenter[1], basisCenter[2], xmax, ymax, zmax);
                       constraintsVec[0]->setInhomogeneity(nodeId, constraintValue);
                     } // non-hanging node check
                 }     // Face dof loop
@@ -241,10 +270,11 @@ int main()
          {
             dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
             basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
-            for(int comp = 0 ; comp < numComponents ; comp++)
-            {
-              *(itField + localId*numComponents + comp )  = interpolatePolynomial(nodeLoc[0], nodeLoc[1], nodeLoc[2]);
-            }
+
+              *(itField + localId*numComponents + 0 )  = interpolatePolynomial1(nodeLoc[0], nodeLoc[1], nodeLoc[2], xmax, ymax, zmax);
+              *(itField + localId*numComponents + 1 )  = interpolatePolynomial2(nodeLoc[0], nodeLoc[1], nodeLoc[2], xmax, ymax, zmax);
+
+            
          }
         }
     }
@@ -272,16 +302,24 @@ int main()
         double xLoc = cellQuadPoints[iQuad][0];
         double yLoc = cellQuadPoints[iQuad][1];
         double zLoc = cellQuadPoints[iQuad][2];
-        std::vector<double> analyticValue = interpolatePolynomialGradient
-          ( xLoc, yLoc, zLoc);
+        std::vector<double> analyticValue1(0), analyticValue2(0);
+        analyticValue1.resize(dim);
+        analyticValue1 = interpolatePolynomialGradient1( xLoc, yLoc, zLoc, xmax, ymax, zmax);
+        analyticValue2.resize(dim);
+        analyticValue2 = interpolatePolynomialGradient2( xLoc, yLoc, zLoc, xmax, ymax, zmax);
         std::vector<double> values(0);
-        values.resize(dim);
+        values.resize(dim*numComponents);
         quadValuesContainer.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(iCell, iQuad, values.data());
         for(unsigned int iDim = 0 ; iDim < dim ; iDim++ )
         {
-          if ( std::abs(values[iDim] - analyticValue[iDim]) > 1e-12 )
+          if ( std::abs(values[iDim*numComponents+0] - analyticValue1[iDim]) > 1e-8 )
           {
-            std::cout <<"Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue[iDim]<<" interValue = "<<values[iDim]<<"\n";
+            std::cout << " Component = 0 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue1[iDim]<<" interValue = "<<values[iDim*numComponents+0]<<"\n";
+            testPass = false;
+          } 
+          if ( std::abs(values[iDim*numComponents+1] - analyticValue2[iDim]) > 1e-8 )
+          {
+            std::cout << " Component = 1 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue2[iDim]<<" interValue = "<<values[iDim*numComponents+1]<<"\n";
             testPass = false;
           } 
         }
@@ -291,5 +329,10 @@ int main()
   std::cout<<" test status = "<<testPass<<"\n";
   return testPass;
 
-  dftefe::utils::mpi::MPIFinalize();
+  int mpiFinalFlag = 0;
+  dftefe::utils::mpi::MPIFinalized(&mpiFinalFlag);
+  if(!mpiFinalFlag)
+  {
+    dftefe::utils::mpi::MPIFinalize();
+  }
 }

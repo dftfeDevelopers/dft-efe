@@ -62,6 +62,7 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_cfeBasisManager(cfeBasisManager)
       , d_overlappingEnrichmentIdsInCells(0)
+      , d_basisInterfaceCoeff(nullptr)
     {
       d_isOrthogonalized = true;
 
@@ -163,7 +164,7 @@ namespace dftefe
 
       size_type nTotalEnrichmentIds = d_enrichmentIdsPartition->nTotalEnrichmentIds();
 
-      d_basisInterfaceCoeff = linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>
+      d_basisInterfaceCoeff = std::make_shared<linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>>
       (cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint),
         linAlgOpContext, nTotalEnrichmentIds, ValueTypeBasisData());
 
@@ -244,7 +245,7 @@ namespace dftefe
                                                       profiler);
 
       CGSolve->solve(*linearSolverFunction);
-      linearSolverFunction->getSolution(d_basisInterfaceCoeff);
+      linearSolverFunction->getSolution(*d_basisInterfaceCoeff);
 
       // // Can also do via the M^(-1) route. 
 
@@ -274,7 +275,7 @@ namespace dftefe
       //                                               basisInterfaceCoeffConstraint,
       //                                               linAlgOpContext);
 
-      // MInvContext->apply(d,d_basisInterfaceCoeff);
+      // MInvContext->apply(d,*d_basisInterfaceCoeff);
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>
@@ -295,6 +296,7 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_triangulation(triangulation)
       , d_overlappingEnrichmentIdsInCells(0)
+      , d_basisInterfaceCoeff(nullptr)
     {
       d_isOrthogonalized = false;
 
@@ -432,7 +434,7 @@ namespace dftefe
         false,
         "Cannot call getBasisInterfaceCoeff() for no orthogonalization of EFE mesh.");
 
-      return d_basisInterfaceCoeff;
+      return *d_basisInterfaceCoeff;
     }
 
     template <typename ValueTypeBasisData, utils::MemorySpace memorySpace, size_type dim>

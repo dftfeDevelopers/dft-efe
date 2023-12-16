@@ -191,9 +191,6 @@ namespace dftefe
       virtual const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
       getEnrichmentFunctionClassicalComponentQuadValues() const = 0;
 
-      virtual const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
-      getEnrichmentFunctionClassicalComponentQuadGradients() const = 0;
-
     }; // end of EFEBasisDataStorage
   }    // end of namespace basis
 } // end of namespace dftefe

@@ -172,6 +172,7 @@ int main(int argc, char** argv)
   double divergenceTol = readParameter<double>(parameterInputFileName, "divergenceTol");
   double refineradius = readParameter<double>(parameterInputFileName, "refineradius");
   unsigned int num1DGaussSize = readParameter<unsigned int>(parameterInputFileName, "num1DQuadratureSize");
+  unsigned int num1DGllSize = readParameter<unsigned int>(parameterInputFileName, "num1DL2ProjnQuadratureSize");
   unsigned int feOrder = readParameter<unsigned int>(parameterInputFileName, "feOrder");
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance");
   double smallestCellVolume = readParameter<double>(parameterInputFileName, "smallestCellVolume");
@@ -293,11 +294,13 @@ int main(int argc, char** argv)
                           "MPI Error:" + mpiIsSuccessAndMsg.second);
   }
 
-  // Make pristine EFE basis
+  // Make orthogonalized EFE basis
 
   // 1. Make EnrichmentClassicalInterface object for Pristine enrichment
-  // 2. Input to the EFEBasisManager(eci, feOrder) 
-  // 3. Make EFEBasisDataStorage with input as quadratureContainer.
+  // 2. Make FEbasisdatastorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GAUSS)
+  // 3. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
+  // 4. Input to the EFEBasisManager(eci, feOrder) 
+  // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
                           <double, dftefe::utils::MemorySpace::HOST, dim>>
@@ -333,6 +336,8 @@ int main(int argc, char** argv)
 
     dftefe::quadrature::QuadratureRuleAttributes quadAttrAdaptive(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
 
+    dftefe::quadrature::QuadratureRuleAttributes quadAttrGll(dftefe::quadrature::QuadratureFamily::GLL,true,num1DGllSize);
+
     // Set up base quadrature rule for adaptive quadrature 
 
     std::shared_ptr<dftefe::quadrature::QuadratureRule> baseQuadRule =
@@ -354,7 +359,88 @@ int main(int argc, char** argv)
       smallestCellVolume,
       maxRecursion);
 
+  dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
+
+    std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
+      constraintsVec;
+    std::map<std::string,
+            std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
+
+    // ------------ Make Classical stack for Orthogonalization ------------------------------
+
+    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
+    std::shared_ptr<dftefe::basis::FEBasisManager> cfeBasisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feOrder);
+
+    std::string constraintName = "HangingWithHomogeneous";
+    constraintsVec.resize(1);
+    for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
+    constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
+    
+    constraintsVec[0]->clear();
+    constraintsVec[0]->makeHangingNodeConstraint(cfeBasisManager);
+    constraintsVec[0]->setHomogeneousDirichletBC();
+    constraintsVec[0]->close();
+
+    constraintsMap[constraintName] = constraintsVec[0];
+
+    // Set up the CFE Basis Data Storage for Overlap Matrix
+    std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageOverlapMatrix =
+      std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST, dim>>
+      (cfeBasisManager, quadAttrGll, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageOverlapMatrix->evaluateBasisData(quadAttrGll, basisAttrMap);
+
+    // Set up the CFE Basis Data Storage for Rhs
+    std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageRhs =
+      std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST, dim>>
+      (cfeBasisManager, quadAttrAdaptive, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
+
+    // // Set up BasisHandler
+    std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> cfeBasisHandler =
+      std::make_shared<dftefe::basis::FEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST, dim>>
+      (cfeBasisManager, constraintsMap, comm);
+
+    // Create OperatorContext for CFEBasisoverlap
+    std::shared_ptr<const dftefe::basis::FEOverlapOperatorContext<double,
+                                                  double,
+                                                  dftefe::utils::MemorySpace::HOST,
+                                                  dim>> cfeBasisOverlapOperator =
+    std::make_shared<dftefe::basis::FEOverlapOperatorContext<double,
+                                                        double,
+                                                        dftefe::utils::MemorySpace::HOST,
+                                                        dim>>(
+                                                        *cfeBasisHandler,
+                                                        *cfeBasisDataStorageOverlapMatrix,
+                                                        constraintName,
+                                                        constraintName,
+                                                        50);
+
+    // Create the enrichmentClassicalInterface object
+    enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
+                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          (cfeBasisOverlapOperator,
+                          cfeBasisDataStorageRhs,
+                          cfeBasisManager,
+                          cfeBasisHandler,
+                          atomSphericalDataContainer,
+                          atomPartitionTolerance,
+                          atomSymbolVec,
+                          atomCoordinatesVec,
+                          fieldName,
+                          constraintName,
+                          linAlgOpContext,
+                          comm);
+
   // initialize the basis Manager
+
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
       enrichClassIntfce,
       feOrder);
@@ -364,58 +450,51 @@ int main(int argc, char** argv)
   std::cout << "Locally owned cells : " << basisManager->nLocallyOwnedCells() << "\n";
   std::cout << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
 
-  // Set the constraints
+    // Set the constraints
 
-  std::string constraintHanging = "HangingNodeConstraint"; //give BC to rho
-  std::string constraintHomwHan = "HomogeneousWithHanging"; // use this to solve the laplace equation
+    std::string constraintHanging = "HangingNodeConstraint"; //give BC to rho
+    std::string constraintHomwHan = "HomogeneousWithHanging"; // use this to solve the laplace equation
 
-  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec;
-  constraintsVec.resize(2);
-  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
+    constraintsVec.clear();
+    constraintsVec.resize(2);
+    for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
     constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>();
 
-  constraintsVec[0]->clear();
-  constraintsVec[0]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[0]->close();
+    constraintsVec[0]->clear();
+    constraintsVec[0]->makeHangingNodeConstraint(basisManager);
+    constraintsVec[0]->close();
 
-  constraintsVec[1]->clear();
-  constraintsVec[1]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[1]->setHomogeneousDirichletBC();
-  constraintsVec[1]->close();
+    constraintsVec[1]->clear();
+    constraintsVec[1]->makeHangingNodeConstraint(basisManager);
+    constraintsVec[1]->setHomogeneousDirichletBC();
+    constraintsVec[1]->close();
 
-  std::map<std::string,
-           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
+    constraintsMap.clear();
 
-  constraintsMap[constraintHanging] = constraintsVec[0];
-  constraintsMap[constraintHomwHan] = constraintsVec[1];
+    constraintsMap[constraintHanging] = constraintsVec[0];
+    constraintsMap[constraintHomwHan] = constraintsVec[1];
 
-        // Set up quad attribute
-        dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
-
-  dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
+    basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
+    basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+    basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
+    basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
+    basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
+    basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up Adaptive quadrature for EFE Basis Data Storage
-        std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
-        std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
+    std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
+    std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisManager, quadAttrAdaptive, basisAttrMap);
-        
-        // evaluate basis data
+
+    // evaluate basis data
     feBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
-
-        // Set up BasisHandler
-        std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> basisHandler =
+    // Set up BasisHandler
+    std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> basisHandler =
         std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
         (basisManager, constraintsMap, comm);
 
-  // Set up basis Operations
+    // Set up basis Operations
     dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
 
   // set up MPIPatternP2P for the constraints
@@ -480,13 +559,13 @@ int main(int argc, char** argv)
 
   // create the quadrature Value Container
 
-        dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
+    dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
     std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();
 
-        dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
-        dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
-        dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
+    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
+    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
+    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
 
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
@@ -547,7 +626,7 @@ int main(int argc, char** argv)
   for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
   {
       dftefe::size_type quadId = 0;
-        for (auto j : quadRuleContainer->getCellRealPoints(i))
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
       {
           std::vector<double> a(numComponents, 0);
           a[0] = potential( j, atomCoordinates1, rc);

@@ -153,7 +153,7 @@ int main()
             atomCoordinatesVec,
             fieldName,
             i);
-        tolerances[i] = 1e-6;
+        tolerances[i] = 100;
         integralThresholds[i] = 1e-14;
     }
 
@@ -212,10 +212,10 @@ int main()
 
   dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Overlap Matrix

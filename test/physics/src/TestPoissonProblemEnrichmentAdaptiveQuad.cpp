@@ -260,7 +260,7 @@ int main()
             atomCoordinatesVec,
             fieldName,
             i);
-        tolerances[i] = 1e-8;
+        tolerances[i] = 1000;
         integralThresholds[i] = 1e-10;
     }
 

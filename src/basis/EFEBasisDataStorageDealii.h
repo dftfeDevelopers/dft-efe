@@ -196,9 +196,6 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
       getEnrichmentFunctionClassicalComponentQuadValues() const override;
 
-      const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
-      getEnrichmentFunctionClassicalComponentQuadGradients() const override;
-
     private:
       bool                                              d_evaluateBasisData;
       std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> d_efeBM;
@@ -219,8 +216,7 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
-      quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> d_basisClassicalInterfaceQuadValues;
-      quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> d_basisClassicalInterfaceQuadGradients;
+      std::shared_ptr<quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>> d_basisClassicalInterfaceQuadValues;
     };
   } // end of namespace basis
 } // end of namespace dftefe

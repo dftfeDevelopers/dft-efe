@@ -192,7 +192,8 @@ namespace dftefe
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
       std::shared_ptr<const TriangulationBase> d_triangulation;
-      linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> d_basisInterfaceCoeff;
+      std::shared_ptr<linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>>
+       d_basisInterfaceCoeff;
       bool d_isOrthogonalized;
       std::shared_ptr<const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>> d_cfeBasisHandler;
       std::shared_ptr<const FEBasisManager> d_cfeBasisManager;
