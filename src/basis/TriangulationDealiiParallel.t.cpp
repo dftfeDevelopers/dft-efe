@@ -124,7 +124,6 @@ namespace dftefe
 
       d_isPeriodicFlags.resize(dim);
       d_isPeriodicFlags = isPeriodicFlags;
-
     }
 
     template <unsigned int dim>
@@ -331,7 +330,7 @@ namespace dftefe
       return dim;
     }
 
-    template<unsigned int dim>
+    template <unsigned int dim>
     std::vector<bool>
     TriangulationDealiiParallel<dim>::getPeriodicFlags() const
     {

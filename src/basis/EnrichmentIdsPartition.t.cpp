@@ -194,7 +194,7 @@ namespace dftefe
         const std::string                            fieldName,
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
-        double                                        additionalCutoff,
+        double                                       additionalCutoff,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector)
       {
         std::vector<size_type> newAtomIds = atomIdsPartition->newAtomIds();
@@ -246,7 +246,8 @@ namespace dftefe
                         *(iter), fieldName, *(qNumberIter));
                     double cutoff = sphericalData->getCutoff() +
                                     sphericalData->getCutoff() /
-                                      sphericalData->getSmoothness() + additionalCutoff;
+                                      sphericalData->getSmoothness() +
+                                    additionalCutoff;
                     for (unsigned int k = 0; k < dim; k++)
                       {
                         // assert for the cell and processor bounds
@@ -380,7 +381,8 @@ namespace dftefe
                atomSphericalDataContainer->getSphericalData(it, fieldName))
             {
               cutoff.push_back(i->getCutoff() +
-                               i->getCutoff() / i->getSmoothness() + additionalCutoff);
+                               i->getCutoff() / i->getSmoothness() +
+                               additionalCutoff);
             }
           double maxcutoff  = *(std::max_element(cutoff.begin(), cutoff.end()));
           rCutoffMax[count] = maxcutoff;
@@ -493,7 +495,8 @@ namespace dftefe
     EnrichmentIdsPartition<dim>::nLocalEnrichmentIds() const
     {
       return (d_locallyOwnedEnrichmentIds.second -
-              d_locallyOwnedEnrichmentIds.first) + d_ghostEnrichmentIds.size();
+              d_locallyOwnedEnrichmentIds.first) +
+             d_ghostEnrichmentIds.size();
     }
 
     template <unsigned int dim>

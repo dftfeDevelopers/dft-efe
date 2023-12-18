@@ -34,9 +34,10 @@ namespace dftefe
       template <typename ValueType, utils::MemorySpace memorySpace>
       void
       initialize(
-        std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
-        const size_type                            numberComponents,
-        const ValueType                            initVal,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                        quadratureRuleContainer,
+        const size_type numberComponents,
+        const ValueType initVal,
         typename QuadratureValuesContainer<ValueType,
                                            memorySpace>::SizeTypeVector
           &cellStartIds,
@@ -98,9 +99,10 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     QuadratureValuesContainer<ValueType, memorySpace>::
       QuadratureValuesContainer(
-        std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
-        const size_type                            numberComponents,
-        const ValueType                            initVal /*= ValueType()*/)
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                        quadratureRuleContainer,
+        const size_type numberComponents,
+        const ValueType initVal /*= ValueType()*/)
       : d_quadratureRuleContainer(quadratureRuleContainer)
       , d_numberComponents(numberComponents)
       , d_cellStartIds(0)
@@ -119,9 +121,10 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
     QuadratureValuesContainer<ValueType, memorySpace>::reinit(
-      std::shared_ptr<const quadrature::QuadratureRuleContainer> quadratureRuleContainer,
-      const size_type                            numberComponents,
-      const ValueType                            initVal /*= ValueType()*/)
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                      quadratureRuleContainer,
+      const size_type numberComponents,
+      const ValueType initVal /*= ValueType()*/)
     {
       d_quadratureRuleContainer = quadratureRuleContainer;
       QuadratureValuesContainerInternal::initialize<ValueType, memorySpace>(

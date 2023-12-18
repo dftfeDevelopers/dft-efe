@@ -272,10 +272,10 @@ namespace dftefe
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &                                         feBasisDataStorage,
-        const std::string                           constraintsX,
-        const std::string                           constraintsY,
-        const size_type                             maxCellTimesNumVecs)
+          &               feBasisDataStorage,
+        const std::string constraintsX,
+        const std::string constraintsY,
+        const size_type   maxCellTimesNumVecs)
       : d_feBasisHandler(&feBasisHandler)
       , d_feBasisDataStorage(&feBasisDataStorage)
       , d_constraintsX(constraintsX)

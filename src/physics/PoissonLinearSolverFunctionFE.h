@@ -110,8 +110,8 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorage,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-          &                                         inp,
-        const std::string                           constraintsHanging,
+          &               inp,
+        const std::string constraintsHanging,
         const std::string constraintsHangingwHomogeneous,
         const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &                                     inhomogeneousDirichletBCVector,

@@ -118,33 +118,26 @@ namespace dftefe
 
       // functions to get data for a basis function on all quad points in a cell
       virtual Storage
-      getBasisDataInCell(
-        const size_type                 cellId,
-        const size_type                 basisId) const = 0;
+      getBasisDataInCell(const size_type cellId,
+                         const size_type basisId) const = 0;
       virtual Storage
-      getBasisGradientDataInCell(
-        const size_type                 cellId,
-        const size_type                 basisId) const = 0;
+      getBasisGradientDataInCell(const size_type cellId,
+                                 const size_type basisId) const = 0;
       virtual Storage
-      getBasisHessianDataInCell(
-        const size_type                 cellId,
-        const size_type                 basisId) const = 0;
+      getBasisHessianDataInCell(const size_type cellId,
+                                const size_type basisId) const = 0;
 
       // functions to get data for all basis functions on all quad points in a
       // cell
       virtual Storage
-      getBasisDataInCell(
-        const size_type                 cellId) const = 0;
+      getBasisDataInCell(const size_type cellId) const = 0;
       virtual Storage
-      getBasisGradientDataInCell(
-        const size_type                 cellId) const = 0;
+      getBasisGradientDataInCell(const size_type cellId) const = 0;
       virtual Storage
-      getBasisHessianDataInCell(
-        const size_type                 cellId) const = 0;
+      getBasisHessianDataInCell(const size_type cellId) const = 0;
 
       virtual Storage
-      getJxWInCell(
-                   const size_type                 cellId) const = 0;
+      getJxWInCell(const size_type cellId) const = 0;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
@@ -160,20 +153,17 @@ namespace dftefe
 
       // get overlap of two basis functions in a cell
       virtual Storage
-      getBasisOverlap(
-                      const size_type                 cellId,
-                      const size_type                 basisId1,
-                      const size_type                 basisId2) const = 0;
+      getBasisOverlap(const size_type cellId,
+                      const size_type basisId1,
+                      const size_type basisId2) const = 0;
 
       // get overlap of all the basis functions in a cell
       virtual Storage
-      getBasisOverlapInCell(
-        const size_type                 cellId) const = 0;
+      getBasisOverlapInCell(const size_type cellId) const = 0;
 
       // get the laplace operator in a cell
       virtual Storage
-      getBasisGradNiGradNjInCell(
-        const size_type                 cellId) const = 0;
+      getBasisGradNiGradNjInCell(const size_type cellId) const = 0;
 
       // get laplace operator in all cells
       virtual const Storage &
@@ -187,8 +177,9 @@ namespace dftefe
       getQuadratureRuleContainer() const = 0;
 
       // ---- Only for Orthogonalized EFE basis--------
-      
-      virtual const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace> &
+
+      virtual const quadrature::QuadratureValuesContainer<ValueTypeBasisData,
+                                                          memorySpace> &
       getEnrichmentFunctionClassicalComponentQuadValues() const = 0;
 
     }; // end of EFEBasisDataStorage

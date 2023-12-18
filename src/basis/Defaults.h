@@ -69,6 +69,6 @@ namespace dftefe
 
     }; // end of class L2ProjectionDefaults
 
-  }    // end of namespace basis
+  } // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefebasisDefaults_h

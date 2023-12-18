@@ -49,45 +49,51 @@ namespace dftefe
 {
   namespace basis
   {
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    class EFEOverlapInverseOperatorContext
+      : public linearAlgebra::
+          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    {
+    public:
+      using ValueType =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperand>;
 
-  template <typename ValueTypeOperator,
-            typename ValueTypeOperand,
-            utils::MemorySpace memorySpace,
-            size_type          dim>
-  class EFEOverlapInverseOperatorContext
-    : public linearAlgebra::
-        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-  {
-  public:
-    using ValueType =
-      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                              ValueTypeOperand>;
+    public:
+      EFEOverlapInverseOperatorContext(
+        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &                                          feBasisHandler,
+        const basis::EFEOverlapOperatorContext<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace,
+                                               dim> &efeOverlapOperatorContext,
+        const std::string                            constraints,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
 
-  public:
-    EFEOverlapInverseOperatorContext(const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
-        const basis::EFEOverlapOperatorContext<ValueTypeOperator,ValueTypeOperand, memorySpace, dim>
-          &efeOverlapOperatorContext,
-        const std::string                           constraints,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext);
+      void
+      apply(
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
 
-    void
-    apply(
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-      linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
+    private:
+      const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+        *d_feBasisHandler;
+      const EFEBasisManager<ValueTypeOperator, memorySpace, dim>
+        *                                                   d_efebasisManager;
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
+      const std::string                                     d_constraints;
+      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+                d_basisOverlapEnrichmentBlock;
+      size_type d_nglobalEnrichmentIds;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
 
-  private:
-    const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-      *d_feBasisHandler;
-    const EFEBasisManager< ValueTypeOperator, memorySpace, dim> *d_efebasisManager;
-    linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-    const std::string d_constraints;
-    std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>> d_basisOverlapEnrichmentBlock;
-    size_type d_nglobalEnrichmentIds;
-    std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> d_linAlgOpContext;
-
-  }; // end of class BasisOverlapOperatorContext
-    }    // namespace basis
+    }; // end of class BasisOverlapOperatorContext
+  }    // namespace basis
 } // end of namespace dftefe
 #include <basis/EFEOverlapInverseOperatorContext.t.cpp>
 #endif // dftefeEFEOverlapInverseOperatorContext_h

@@ -142,7 +142,7 @@ namespace dftefe
 
       size_type
       nCumulativeLocalCellDofs() const override;
-    
+
       size_type
       totalRanges() const override;
 

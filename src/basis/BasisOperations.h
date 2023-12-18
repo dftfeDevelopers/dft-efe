@@ -58,12 +58,11 @@ namespace dftefe
       //                         field) const = 0;
 
       virtual void
-      interpolate(
-        const Field<ValueTypeBasisCoeff, memorySpace> &field,
-        quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &quadValuesContainer) const = 0;
+      interpolate(const Field<ValueTypeBasisCoeff, memorySpace> &field,
+                  quadrature::QuadratureValuesContainer<
+                    linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                                           ValueTypeBasisData>,
+                    memorySpace> &quadValuesContainer) const = 0;
 
       virtual void
       interpolate(
@@ -93,15 +92,15 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
-          memorySpace> &                            inp,
-        Field<ValueTypeBasisCoeff, memorySpace> &   f) const = 0;
+          memorySpace> &                         inp,
+        Field<ValueTypeBasisCoeff, memorySpace> &f) const = 0;
 
       virtual void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
-          memorySpace> &                            inp,
+          memorySpace> &                                      inp,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const std::string &                                   constraintsName,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>

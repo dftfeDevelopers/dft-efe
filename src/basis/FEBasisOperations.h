@@ -105,15 +105,15 @@ namespace dftefe
       void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                         inp,
-        Field<ValueTypeBasisCoeff, memorySpace> &   f) const override;
+          &                                      inp,
+        Field<ValueTypeBasisCoeff, memorySpace> &f) const override;
 
       void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
-          memorySpace> &                            inp,
+          memorySpace> &                                      inp,
         const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
         const std::string &                                   constraintsName,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>

@@ -49,15 +49,18 @@ namespace dftefe
      * through dealii
      */
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
-    class EFEBasisManagerDealii : public EFEBasisManager<ValueTypeBasisData, memorySpace, dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class EFEBasisManagerDealii
+      : public EFEBasisManager<ValueTypeBasisData, memorySpace, dim>
     {
     public:
-
       EFEBasisManagerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
-          enrichmentClassicalInterface,
-        const size_type                  feOrder);
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisData,
+          memorySpace,
+          dim>>         enrichmentClassicalInterface,
+        const size_type feOrder);
 
       double
       getBasisFunctionValue(const size_type     basisId,
@@ -70,8 +73,11 @@ namespace dftefe
 
       ////// FE specific  member functions /////
       void
-      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
-        enrichmentClassicalInterface, const size_type  feOrder);
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisData,
+               memorySpace,
+               dim>>         enrichmentClassicalInterface,
+             const size_type feOrder);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -190,7 +196,10 @@ namespace dftefe
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
       getEnrichmentIdsPartition() const override;
 
-      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>>
+      std::shared_ptr<
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
       getEnrichmentClassicalInterface() const override;
 
       bool
@@ -209,12 +218,11 @@ namespace dftefe
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
         d_enrichmentIdsPartition;
       std::vector<std::vector<global_size_type>>
-                      d_overlappingEnrichmentIdsInCells;
+                d_overlappingEnrichmentIdsInCells;
       size_type d_totalRanges;
       std::vector<std::pair<global_size_type, global_size_type>>
         d_locallyOwnedRanges;
-      std::vector<std::pair<global_size_type, global_size_type>> 
-        d_globalRanges;
+      std::vector<std::pair<global_size_type, global_size_type>> d_globalRanges;
       std::vector<global_size_type> d_ghostEnrichmentGlobalIds;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
@@ -222,8 +230,11 @@ namespace dftefe
       std::vector<utils::Point> d_atomCoordinatesVec;
       std::string               d_fieldName;
       bool                      d_isOrthogonalized;
-      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical
-        <ValueTypeBasisData, memorySpace, dim>> d_enrichClassIntfce;
+      std::shared_ptr<
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
+        d_enrichClassIntfce;
 
     }; // end of EFEBasisManagerDealii
   }    // end of namespace basis

@@ -141,7 +141,7 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                           feBasisDataStorage,
         const std::string constraintsHangingwHomogeneous,
-        const size_type                             maxCellTimesNumVecs)
+        const size_type   maxCellTimesNumVecs)
       {
         const size_type numLocallyOwnedCells =
           feBasisHandler->nLocallyOwnedCells();
@@ -213,8 +213,8 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
-          memorySpace> &                            inp,
-        const std::string                           constraintsHanging,
+          memorySpace> &  inp,
+        const std::string constraintsHanging,
         const std::string constraintsHangingwHomogeneous,
         const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &                                     inhomogeneousDirichletBCVector,

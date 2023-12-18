@@ -139,29 +139,26 @@ namespace dftefe
 
       // functions to get data for a basis function on all quad points in a cell
       Storage
-      getBasisDataInCell(
-        const size_type                 cellId,
-        const size_type                 basisId) const override;
+      getBasisDataInCell(const size_type cellId,
+                         const size_type basisId) const override;
       Storage
-      getBasisGradientDataInCell(
-        const size_type                 cellId,
-        const size_type                 basisId) const override;
+      getBasisGradientDataInCell(const size_type cellId,
+                                 const size_type basisId) const override;
       Storage
-      getBasisHessianDataInCell(
-        const size_type                 cellId,
-        const size_type                 basisId) const override;
+      getBasisHessianDataInCell(const size_type cellId,
+                                const size_type basisId) const override;
 
       // functions to get data for all basis functions on all quad points in a
       // cell
       Storage
-      getBasisDataInCell(const size_type                 cellId) const override;
+      getBasisDataInCell(const size_type cellId) const override;
       Storage
-      getBasisGradientDataInCell(const size_type                 cellId) const override;
+      getBasisGradientDataInCell(const size_type cellId) const override;
       Storage
-      getBasisHessianDataInCell(const size_type                 cellId) const override;
+      getBasisHessianDataInCell(const size_type cellId) const override;
 
       Storage
-      getJxWInCell(const size_type                 cellId) const override;
+      getJxWInCell(const size_type cellId) const override;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
@@ -173,18 +170,17 @@ namespace dftefe
       getBasisHessianDataInAllCells() const override;
 
       const Storage &
-      getJxWInAllCells()
-        const override;
+      getJxWInAllCells() const override;
 
       // get overlap of two basis functions in a cell
       Storage
-      getBasisOverlap(const size_type                 cellId,
-                      const size_type                 basisId1,
-                      const size_type                 basisId2) const override;
+      getBasisOverlap(const size_type cellId,
+                      const size_type basisId1,
+                      const size_type basisId2) const override;
 
       // get overlap of all the basis functions in a cell
       Storage
-      getBasisOverlapInCell(const size_type                 cellId) const override;
+      getBasisOverlapInCell(const size_type cellId) const override;
 
       // get overlap of all the basis functions in all cells
       const Storage &
@@ -193,7 +189,7 @@ namespace dftefe
 
       // get the laplace operator in a cell
       Storage
-      getBasisGradNiGradNjInCell(const size_type                 cellId) const override;
+      getBasisGradNiGradNjInCell(const size_type cellId) const override;
 
       // get laplace operator in all cells
       const Storage &

@@ -42,12 +42,11 @@ namespace dftefe
       static void
       copyFieldToCellWiseData(
         const ValueType *data,
-        const size_type            numComponents,
-        const size_type *          cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueType,
-                                    memorySpace>::SizeTypeVector &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueType, memorySpace>
-          &cellWiseStorage);
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisHandler<ValueType, memorySpace>::SizeTypeVector
+          &                                                   numCellDofs,
+        dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
       static void
       addCellWiseDataToFieldData(
@@ -55,16 +54,16 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueType,
-                                    memorySpace>::SizeTypeVector &numCellDofs,
-        ValueType *                                     data);
+        const typename BasisHandler<ValueType, memorySpace>::SizeTypeVector
+          &        numCellDofs,
+        ValueType *data);
 
       static void
       addCellWiseBasisDataToDiagonalData(
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
-        ValueType *  data);
+        ValueType *                                         data);
 
 
     }; // end of class FECellWiseDataOperations
@@ -78,8 +77,8 @@ namespace dftefe
       static void
       copyFieldToCellWiseData(
         const ValueType *data,
-        const size_type            numComponents,
-        const size_type *          cellLocalIdsStartPtr,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
         const BasisHandler<ValueType,
                            dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
           &numCellDofs,
@@ -96,7 +95,7 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         const BasisHandler<ValueType,
                            dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
-          &                  numCellDofs,
+          &        numCellDofs,
         ValueType *data);
 
       static void
@@ -104,7 +103,7 @@ namespace dftefe
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
-        ValueType *  data);
+        ValueType *                                         data);
 
 
     }; // end of class FECellWiseDataOperations

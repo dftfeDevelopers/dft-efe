@@ -204,11 +204,14 @@ namespace dftefe
       //
 
     private:
-      std::shared_ptr<const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> d_efeBMDealii;
-      std::map<
-        std::string,
-        std::shared_ptr<
-          const EFEConstraintsDealii<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>>>
+      std::shared_ptr<
+        const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>>
+        d_efeBMDealii;
+      std::map<std::string,
+               std::shared_ptr<const EFEConstraintsDealii<ValueTypeBasisCoeff,
+                                                          ValueTypeBasisData,
+                                                          memorySpace,
+                                                          dim>>>
                           d_efeConstraintsDealiiOptMap;
       utils::mpi::MPIComm d_mpiComm;
       bool                d_isDistributed;

@@ -46,7 +46,8 @@ namespace dftefe
      *
      */
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     class EFEBasisManager : public FEBasisManager
     {
     public:
@@ -158,7 +159,10 @@ namespace dftefe
       virtual std::shared_ptr<const EnrichmentIdsPartition<dim>>
       getEnrichmentIdsPartition() const = 0;
 
-      virtual std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>>
+      virtual std::shared_ptr<
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
       getEnrichmentClassicalInterface() const = 0;
 
       virtual bool

@@ -136,11 +136,13 @@ namespace dftefe
         std::shared_ptr<
           const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
           feBasisHandler,
-        std::shared_ptr<
-          const FEOverlapOperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>>
+        std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
+                                                       ValueTypeOperand,
+                                                       memorySpace,
+                                                       dim>>
                           feOverlapOperatorContext,
         const std::string basisInterfaceCoeffConstraint,
-        const size_type                             maxCellTimesNumVecs)
+        const size_type   maxCellTimesNumVecs)
       {
         const size_type numLocallyOwnedCells =
           feBasisHandler->nLocallyOwnedCells();
@@ -195,17 +197,17 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::
       L2ProjectionLinearSolverFunction(
         std::shared_ptr<
           const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-                                             cfeBasisHandler,
+          cfeBasisHandler,
         std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
-                                                    ValueTypeOperand,
-                                                    memorySpace,
-                                                    dim>>
+                                                       ValueTypeOperand,
+                                                       memorySpace,
+                                                       dim>>
           cfeBasisDataStorageOverlapMatrix,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
@@ -213,12 +215,12 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
-          memorySpace> & inp,
-        const std::string basisInterfaceCoeffConstraint,
+          memorySpace> &                        inp,
+        const std::string                       basisInterfaceCoeffConstraint,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)   
+        const size_type maxCellTimesNumVecs)
       : d_feBasisHandler(cfeBasisHandler)
       , d_b(cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint),
             linAlgOpContext,
@@ -295,13 +297,15 @@ namespace dftefe
       d_b.setValue(0.0);
 
       // Set up basis Operations for RHS
-      FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim> cfeBasisOperations(cfeBasisDataStorageRhs, maxCellTimesNumVecs);
+      FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim>
+        cfeBasisOperations(cfeBasisDataStorageRhs, maxCellTimesNumVecs);
 
-      // Integrate this with different quarature rule. (i.e. adaptive for the enrichment functions) , inp will be in adaptive grid
+      // Integrate this with different quarature rule. (i.e. adaptive for the
+      // enrichment functions) , inp will be in adaptive grid
       cfeBasisOperations.integrateWithBasisValues(inp,
-                                                 *d_feBasisHandler,
-                                                 basisInterfaceCoeffConstraint,
-                                                 d_b);
+                                                  *d_feBasisHandler,
+                                                  basisInterfaceCoeffConstraint,
+                                                  d_b);
 
       // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {
@@ -321,9 +325,9 @@ namespace dftefe
     const linearAlgebra::
       OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
       L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                    ValueTypeOperand,
-                                    memorySpace,
-                                    dim>::getAxContext() const
+                                       ValueTypeOperand,
+                                       memorySpace,
+                                       dim>::getAxContext() const
     {
       return *d_AxContext;
     }
@@ -335,9 +339,9 @@ namespace dftefe
     const linearAlgebra::
       OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
       L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                    ValueTypeOperand,
-                                    memorySpace,
-                                    dim>::getPCContext() const
+                                       ValueTypeOperand,
+                                       memorySpace,
+                                       dim>::getPCContext() const
     {
       return *d_PCContext;
     }
@@ -348,9 +352,9 @@ namespace dftefe
               size_type          dim>
     void
     L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::
       setSolution(const linearAlgebra::MultiVector<
                   linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                          ValueTypeOperand>,
@@ -365,9 +369,9 @@ namespace dftefe
               size_type          dim>
     void
     L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::
       getSolution(linearAlgebra::MultiVector<
                   linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                          ValueTypeOperand>,
@@ -396,9 +400,9 @@ namespace dftefe
               size_type          dim>
     const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
     L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::getRhs() const
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::getRhs() const
     {
       return d_b;
     }
@@ -412,9 +416,9 @@ namespace dftefe
                                              ValueTypeOperand>,
       memorySpace> &
     L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::getInitialGuess() const
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::getInitialGuess() const
     {
       return d_initial;
     }
@@ -425,12 +429,12 @@ namespace dftefe
               size_type          dim>
     const utils::mpi::MPIComm &
     L2ProjectionLinearSolverFunction<ValueTypeOperator,
-                                  ValueTypeOperand,
-                                  memorySpace,
-                                  dim>::getMPIComm() const
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::getMPIComm() const
     {
       return d_mpiPatternP2P->mpiCommunicator();
     }
 
-  } // end of namespace physics
+  } // namespace basis
 } // end of namespace dftefe

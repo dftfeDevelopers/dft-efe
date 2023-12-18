@@ -43,13 +43,16 @@ namespace dftefe
 {
   namespace basis
   {
-
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::EFEBasisManagerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
-          EnrichmentClassicalInterface,
-        const size_type                  feOrder)
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      EFEBasisManagerDealii(
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisData,
+          memorySpace,
+          dim>>         EnrichmentClassicalInterface,
+        const size_type feOrder)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
       , d_overlappingEnrichmentIdsInCells(0)
@@ -58,25 +61,30 @@ namespace dftefe
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
     {
-      d_dofHandler  = std::make_shared<dealii::DoFHandler<dim>>();
+      d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
       reinit(EnrichmentClassicalInterface, feOrder);
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     void
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::reinit(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>> 
-        enrichmentClassicalInterface, 
-        const size_type  feOrder)
+      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+        ValueTypeBasisData,
+        memorySpace,
+        dim>>         enrichmentClassicalInterface,
+      const size_type feOrder)
     {
       // Create Classical FE dof_handler
       d_enrichClassIntfce = enrichmentClassicalInterface;
-      d_isOrthogonalized = enrichmentClassicalInterface->isOrthgonalized();
-      d_atomSphericalDataContainer = enrichmentClassicalInterface->getAtomSphericalDataContainer();
+      d_isOrthogonalized  = enrichmentClassicalInterface->isOrthgonalized();
+      d_atomSphericalDataContainer =
+        enrichmentClassicalInterface->getAtomSphericalDataContainer();
       d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
-      d_atomCoordinatesVec = enrichmentClassicalInterface->getAtomCoordinatesVec();
+      d_atomCoordinatesVec =
+        enrichmentClassicalInterface->getAtomCoordinatesVec();
       d_fieldName = enrichmentClassicalInterface->getFieldName();
       dealii::FE_Q<dim>                       feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
@@ -141,7 +149,8 @@ namespace dftefe
             d_localCells.push_back(cellDealii);
           }
 
-      d_enrichmentIdsPartition = d_enrichClassIntfce->getEnrichmentIdsPartition();
+      d_enrichmentIdsPartition =
+        d_enrichClassIntfce->getEnrichmentIdsPartition();
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -192,11 +201,12 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     double
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getBasisFunctionValue(
-      const size_type     basisId,
-      const utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisFunctionValue(const size_type     basisId,
+                            const utils::Point &point) const
     {
       utils::throwException(
         false,
@@ -205,12 +215,13 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<double>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getBasisFunctionDerivative(
-      const size_type     basisId,
-      const utils::Point &point,
-      const size_type     derivativeOrder) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisFunctionDerivative(const size_type     basisId,
+                                 const utils::Point &point,
+                                 const size_type     derivativeOrder) const
     {
       utils::throwException(
         false,
@@ -221,50 +232,62 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::shared_ptr<const TriangulationBase>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getTriangulation() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getTriangulation() const
     {
       return d_enrichClassIntfce->getTriangulation();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocalCells()
+      const
     {
       return d_localCells.size();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocallyOwnedCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.size();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalCells()
+      const
     {
       return d_enrichClassIntfce->getTriangulation()->nGlobalCells();
     }
 
     // TODO put an assert condition to check if p refined is false
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getFEOrder(size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getFEOrder(
+      size_type cellId) const
     {
       return (d_dofHandler->get_fe().degree);
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nCellDofs(size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nCellDofs(
+      size_type cellId) const
     {
       size_type classicalDofs = d_dofHandler->get_fe().n_dofs_per_cell();
       size_type enrichedDofs = d_overlappingEnrichmentIdsInCells[cellId].size();
@@ -272,17 +295,21 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     bool
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::isVariableDofsPerCell() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      isVariableDofsPerCell() const
     {
       return d_isVariableDofsPerCell;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocalNodes() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocalNodes()
+      const
     {
       global_size_type retValue = 0;
       for (unsigned int rangeId = 0; rangeId < d_totalRanges; rangeId++)
@@ -294,9 +321,11 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     global_size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalNodes() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalNodes()
+      const
     {
       global_size_type retValue = 0;
       for (unsigned int rangeId = 0; rangeId < d_totalRanges; rangeId++)
@@ -308,25 +337,31 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getLocallyOwnedRanges() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getLocallyOwnedRanges() const
     {
       return d_locallyOwnedRanges;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getGlobalRanges() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getGlobalRanges() const
     {
       return d_globalRanges;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::map<BasisIdAttribute, size_type>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getBasisAttributeToRangeIdMap() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisAttributeToRangeIdMap() const
     {
       std::map<BasisIdAttribute, size_type>         returnValue;
       std::pair<global_size_type, global_size_type> classicalRange =
@@ -352,9 +387,11 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<size_type>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getLocalNodeIds(size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getLocalNodeIds(size_type cellId) const
     {
       utils::throwException(
         false,
@@ -365,9 +402,11 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<size_type>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getGlobalNodeIds() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getGlobalNodeIds() const
     {
       utils::throwException(
         false,
@@ -379,11 +418,12 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     void
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getCellDofsGlobalIds(
-      size_type                      cellId,
-      std::vector<global_size_type> &vecGlobalNodeId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getCellDofsGlobalIds(size_type                      cellId,
+                           std::vector<global_size_type> &vecGlobalNodeId) const
     {
       std::vector<global_size_type> vecGlobalClassicalNodeId(0);
       vecGlobalNodeId.resize(nCellDofs(cellId), 0);
@@ -414,9 +454,11 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<size_type>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getBoundaryIds() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBoundaryIds() const
     {
       utils::throwException(
         false,
@@ -426,47 +468,58 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::beginLocallyOwnedCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocallyOwnedCells()
     {
       return d_locallyOwnedCells.begin();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocallyOwnedCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      endLocallyOwnedCells()
     {
       return d_locallyOwnedCells.end();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::beginLocallyOwnedCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.begin();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocallyOwnedCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      endLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.end();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::beginLocalCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocalCells()
     {
       return d_localCells.begin();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocalCells()
     {
@@ -474,23 +527,28 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::beginLocalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocalCells() const
     {
       return d_localCells.begin();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocalCells()
+      const
     {
       return d_localCells.end();
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     unsigned int
     EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getDim() const
     {
@@ -501,17 +559,21 @@ namespace dftefe
     // dealii specific functions
     //
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::shared_ptr<const dealii::DoFHandler<dim>>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getDoFHandler() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getDoFHandler()
+      const
     {
       return d_dofHandler;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     const dealii::FiniteElement<dim> &
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getReferenceFE(const size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getReferenceFE(
+      const size_type cellId) const
     {
       //
       // NOTE: The implementation is only restricted to
@@ -523,10 +585,11 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     void
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getBasisCenters(
-      std::map<global_size_type, utils::Point> &dofCoords) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisCenters(std::map<global_size_type, utils::Point> &dofCoords) const
     {
       // TODO if the creation of linear mapping is inefficient, then this has to
       // be improved
@@ -557,17 +620,21 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nCumulativeLocallyOwnedCellDofs() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nCumulativeLocallyOwnedCellDofs() const
     {
       return d_numCumulativeLocallyOwnedCellDofs;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nCumulativeLocalCellDofs() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nCumulativeLocalCellDofs() const
     {
       return d_numCumulativeLocalCellDofs;
     }
@@ -575,12 +642,13 @@ namespace dftefe
     // Enrichment functions with dealii mesh. The enrichedid is the cell local
     // id.
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     double
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getEnrichmentValue(
-      const size_type             cellId,
-      const size_type             cellLocalEnrichmentId,
-      const dftefe::utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentValue(const size_type             cellId,
+                         const size_type             cellLocalEnrichmentId,
+                         const dftefe::utils::Point &point) const
     {
       double retValue = 0;
       if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
@@ -624,12 +692,13 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<double>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getEnrichmentDerivative(
-      const size_type             cellId,
-      const size_type             cellLocalEnrichmentId,
-      const dftefe::utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentDerivative(const size_type             cellId,
+                              const size_type             cellLocalEnrichmentId,
+                              const dftefe::utils::Point &point) const
     {
       std::vector<double> retValue(0);
       if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
@@ -673,12 +742,13 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<double>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getEnrichmentHessian(
-      const size_type             cellId,
-      const size_type             cellLocalEnrichmentId,
-      const dftefe::utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentHessian(const size_type             cellId,
+                           const size_type             cellLocalEnrichmentId,
+                           const dftefe::utils::Point &point) const
     {
       std::vector<double> retValue(0);
       if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
@@ -722,49 +792,64 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<global_size_type>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getGhostEnrichmentGlobalIds() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getGhostEnrichmentGlobalIds() const
     {
       return d_ghostEnrichmentGlobalIds;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     global_size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalEnrichmentNodes() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nGlobalEnrichmentNodes() const
     {
       return (d_enrichmentIdsPartition->nTotalEnrichmentIds());
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::shared_ptr<const EnrichmentIdsPartition<dim>>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getEnrichmentIdsPartition() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentIdsPartition() const
     {
       return d_enrichmentIdsPartition;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
-    std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData, memorySpace, dim>>
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getEnrichmentClassicalInterface() const
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    std::shared_ptr<
+      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                  memorySpace,
+                                                  dim>>
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentClassicalInterface() const
     {
       return d_enrichClassIntfce;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     bool
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::isOrthogonalized() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      isOrthogonalized() const
     {
       return d_isOrthogonalized;
     }
 
     template <typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace, size_type dim>
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::totalRanges() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::totalRanges()
+      const
     {
       return d_totalRanges;
     }

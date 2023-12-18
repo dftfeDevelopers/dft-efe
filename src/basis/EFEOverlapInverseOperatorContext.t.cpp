@@ -35,61 +35,69 @@ namespace dftefe
   {
     namespace EFEBlockInverse
     {
-      // extern "C" 
+      // extern "C"
       // {
       //   // LU decomoposition of a general matrix
-      //   void dgetrf(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+      //   void dgetrf(int* M, int *N, double* A, int* lda, int* IPIV, int*
+      //   INFO);
 
       //   // generate inverse of a matrix given its LU decomposition
-      //   void dgetri(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+      //   void dgetri(int* N, double* A, int* lda, int* IPIV, double* WORK,
+      //   int* lwork, int* INFO);
       // }
 
-      void inverse(double* A, int N)
+      void
+      inverse(double *A, int N)
       {
-        int *IPIV = new int[N];
-        int LWORK = N*N;
-        double *WORK = new double[LWORK];
-        int INFO;
+        int *   IPIV  = new int[N];
+        int     LWORK = N * N;
+        double *WORK  = new double[LWORK];
+        int     INFO;
 
-        dgetrf(&N,&N,A,&N,IPIV,&INFO);
-        dgetri(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
+        dgetrf(&N, &N, A, &N, IPIV, &INFO);
+        dgetri(&N, A, &N, IPIV, WORK, &LWORK, &INFO);
 
         delete[] IPIV;
         delete[] WORK;
       }
-    }
+    } // namespace EFEBlockInverse
 
     // Write M^-1 apply on a matrix for GLL with spectral finite element
     // M^-1 does not have a cell structure.
 
-  template <typename ValueTypeOperator,
-            typename ValueTypeOperand,
-            utils::MemorySpace memorySpace,
-            size_type          dim>
-      EFEOverlapInverseOperatorContext<ValueTypeOperator,
-                                    ValueTypeOperand,
-                                    memorySpace,
-                                    dim>::
-                                    EFEOverlapInverseOperatorContext
-        (const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
-        const basis::EFEOverlapOperatorContext<ValueTypeOperator,ValueTypeOperand, memorySpace, dim>
-          &efeOverlapOperatorContext,
-        const std::string                           constraints,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext)
-        : d_feBasisHandler(&feBasisHandler)
-        , d_constraints(constraints)
-        , d_linAlgOpContext(linAlgOpContext)
-        , d_diagonalInv( d_feBasisHandler->getMPIPatternP2P(constraints), linAlgOpContext)
-      {
-
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    EFEOverlapInverseOperatorContext<ValueTypeOperator,
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::
+      EFEOverlapInverseOperatorContext(
+        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
+          &                                          feBasisHandler,
+        const basis::EFEOverlapOperatorContext<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace,
+                                               dim> &efeOverlapOperatorContext,
+        const std::string                            constraints,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext)
+      : d_feBasisHandler(&feBasisHandler)
+      , d_constraints(constraints)
+      , d_linAlgOpContext(linAlgOpContext)
+      , d_diagonalInv(d_feBasisHandler->getMPIPatternP2P(constraints),
+                      linAlgOpContext)
+    {
       const size_type numLocallyOwnedCells =
         d_feBasisHandler->nLocallyOwnedCells();
 
       const BasisManager &basisManager = feBasisHandler.getBasisManager();
 
-      const EFEBasisManager< ValueTypeOperator, memorySpace, dim> &febasisManager =
-        dynamic_cast<const EFEBasisManager< ValueTypeOperator, memorySpace, dim> &>(basisManager);
+      const EFEBasisManager<ValueTypeOperator, memorySpace, dim>
+        &febasisManager = dynamic_cast<
+          const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>(
+          basisManager);
       utils::throwException(
         &febasisManager != nullptr,
         "Could not cast BasisManager of the input to EFEBasisManager.");
@@ -102,14 +110,16 @@ namespace dftefe
         "Contact developers for more options.");
 
       utils::throwException(
-        efeOverlapOperatorContext.getCFEBasisDataStorage().
-        getQuadratureRuleContainer()->
-        getQuadratureRuleAttributes().getQuadratureFamily()
-         == dftefe::quadrature::QuadratureFamily::GLL,
+        efeOverlapOperatorContext.getCFEBasisDataStorage()
+            .getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes()
+            .getQuadratureFamily() == dftefe::quadrature::QuadratureFamily::GLL,
         "The quadrature rule for integration of Classical FE dofs has to be GLL."
         "Contact developers if extra options are needed.");
 
-      const size_type numCellClassicalDofs = utils::mathFunctions::sizeTypePow((febasisManager.getFEOrder(0)+1),dim);  
+      const size_type numCellClassicalDofs =
+        utils::mathFunctions::sizeTypePow((febasisManager.getFEOrder(0) + 1),
+                                          dim);
       d_nglobalEnrichmentIds = febasisManager.nGlobalEnrichmentNodes();
 
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
@@ -123,233 +133,258 @@ namespace dftefe
       auto NiNjInAllCells =
         efeOverlapOperatorContext.getBasisOverlapInAllCells();
 
-              std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
-              std::copy(numCellDofs.begin(),
-                        numCellDofs.begin() + numLocallyOwnedCells,
-                        locallyOwnedCellsNumDoFsSTL.begin());
+      std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
+                                                         0);
+      std::copy(numCellDofs.begin(),
+                numCellDofs.begin() + numLocallyOwnedCells,
+                locallyOwnedCellsNumDoFsSTL.begin());
 
-              utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
-                numLocallyOwnedCells);
-              locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
+      utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
+        numLocallyOwnedCells);
+      locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
 
-        linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
-          d_feBasisHandler->getMPIPatternP2P(d_constraints), linAlgOpContext);
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
+        d_feBasisHandler->getMPIPatternP2P(d_constraints), linAlgOpContext);
 
-        // Create the diagonal of the classical block matrix which is diagonal for GLL 
-        // with spectral quadrature
-        FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
-            addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
-                                      itCellLocalIdsBegin,
-                                      locallyOwnedCellsNumDoFs,
-                                      diagonal.data());
+      // Create the diagonal of the classical block matrix which is diagonal for
+      // GLL with spectral quadrature
+      FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
+        addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
+                                           itCellLocalIdsBegin,
+                                           locallyOwnedCellsNumDoFs,
+                                           diagonal.data());
 
-          // function to do a static condensation to send the constraint nodes to
-          // its parent nodes
-          d_feBasisHandler->getConstraints(d_constraints)
-            .distributeChildToParent(diagonal, 1);
+      // function to do a static condensation to send the constraint nodes to
+      // its parent nodes
+      d_feBasisHandler->getConstraints(d_constraints)
+        .distributeChildToParent(diagonal, 1);
 
-          // Function to add the values to the local node from its corresponding
-          // ghost nodes from other processors.
-          diagonal.accumulateAddLocallyOwned();
+      // Function to add the values to the local node from its corresponding
+      // ghost nodes from other processors.
+      diagonal.accumulateAddLocallyOwned();
 
-          diagonal.updateGhostValues();                         
+      diagonal.updateGhostValues();
 
-          linearAlgebra::blasLapack::reciprocalX(diagonal.localSize(),
-                                                1.0,
-                                                diagonal.data(),
-                                                d_diagonalInv.data(),
-                                                *(diagonal.getLinAlgOpContext()));
+      linearAlgebra::blasLapack::reciprocalX(diagonal.localSize(),
+                                             1.0,
+                                             diagonal.data(),
+                                             d_diagonalInv.data(),
+                                             *(diagonal.getLinAlgOpContext()));
 
-          // Now form the enrichment block matrix.
-          d_basisOverlapEnrichmentBlock = std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
+      // Now form the enrichment block matrix.
+      d_basisOverlapEnrichmentBlock =
+        std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
-          std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(d_nglobalEnrichmentIds * d_nglobalEnrichmentIds,0), 
-          basisOverlapEnrichmentBlockSTLTmp(d_nglobalEnrichmentIds * d_nglobalEnrichmentIds,0);
+      std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(
+        d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0),
+        basisOverlapEnrichmentBlockSTLTmp(d_nglobalEnrichmentIds *
+                                            d_nglobalEnrichmentIds,
+                                          0);
 
-          size_type cellId = 0;
-          size_type cumulativeBasisDataInCells = 0;
-          for (auto enrichmentVecInCell : febasisManager.getEnrichmentIdsPartition()->overlappingEnrichmentIdsInCells())
-          {
-            size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
-            for (unsigned int j = 0 ; j < nCellEnrichmentDofs ; j++ )
+      size_type cellId                     = 0;
+      size_type cumulativeBasisDataInCells = 0;
+      for (auto enrichmentVecInCell :
+           febasisManager.getEnrichmentIdsPartition()
+             ->overlappingEnrichmentIdsInCells())
+        {
+          size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+          for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
             {
-              for (unsigned int k = 0 ; k < nCellEnrichmentDofs ; k++ )
-              {
-                *(basisOverlapEnrichmentBlockSTLTmp.data() + enrichmentVecInCell[j]*d_nglobalEnrichmentIds
-                   + enrichmentVecInCell[k]) +=
-                  *(NiNjInAllCells.data() + cumulativeBasisDataInCells + 
-                   (numCellClassicalDofs + nCellEnrichmentDofs)*(numCellClassicalDofs +j) + 
-                   numCellClassicalDofs + k );
-              }            
+              for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                {
+                  *(basisOverlapEnrichmentBlockSTLTmp.data() +
+                    enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                    enrichmentVecInCell[k]) +=
+                    *(NiNjInAllCells.data() + cumulativeBasisDataInCells +
+                      (numCellClassicalDofs + nCellEnrichmentDofs) *
+                        (numCellClassicalDofs + j) +
+                      numCellClassicalDofs + k);
+                }
             }
-            cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow((nCellEnrichmentDofs + numCellClassicalDofs),2);
-            cellId +=1;
-          }
+          cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+            (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+          cellId += 1;
+        }
 
-        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-          basisOverlapEnrichmentBlockSTLTmp.data(),
-          basisOverlapEnrichmentBlockSTL.data(),
-          basisOverlapEnrichmentBlockSTLTmp.size(),
-          utils::mpi::MPIDouble,
-          utils::mpi::MPISum,
-          d_feBasisHandler->getMPIPatternP2P(d_constraints)->mpiCommunicator());
-        std::pair<bool, std::string> mpiIsSuccessAndMsg =
-          utils::mpi::MPIErrIsSuccessAndMsg(err);
-        utils::throwException(mpiIsSuccessAndMsg.first,
-                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        basisOverlapEnrichmentBlockSTLTmp.data(),
+        basisOverlapEnrichmentBlockSTL.data(),
+        basisOverlapEnrichmentBlockSTLTmp.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisHandler->getMPIPatternP2P(d_constraints)->mpiCommunicator());
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-        // do inversion
+      // do inversion
 
-        // utils::MemoryStorage<size_type, memorySpace> ipiv(d_nglobalEnrichmentIds);
+      // utils::MemoryStorage<size_type, memorySpace>
+      // ipiv(d_nglobalEnrichmentIds);
 
-        // linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
-        // d_nglobalEnrichmentIds,
-        // d_basisOverlapEnrichmentBlock.data(),
-        // d_nglobalEnrichmentIds,
-        // ipiv.data());
+      // linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
+      // d_nglobalEnrichmentIds,
+      // d_basisOverlapEnrichmentBlock.data(),
+      // d_nglobalEnrichmentIds,
+      // ipiv.data());
 
-        // std::cout << "Enrichment Block : \n";
-        // int cc = 0;
-        // for (auto i : basisOverlapEnrichmentBlockSTL)
-        // {
-        //   if(cc % d_nglobalEnrichmentIds == 0)
-        //   std::cout << "\n";
-        //   std::cout << i << " ";
-        //   cc+=1;
-        // }
+      // std::cout << "Enrichment Block : \n";
+      // int cc = 0;
+      // for (auto i : basisOverlapEnrichmentBlockSTL)
+      // {
+      //   if(cc % d_nglobalEnrichmentIds == 0)
+      //   std::cout << "\n";
+      //   std::cout << i << " ";
+      //   cc+=1;
+      // }
 
-        EFEBlockInverse::inverse(basisOverlapEnrichmentBlockSTL.data(), d_nglobalEnrichmentIds);
+      EFEBlockInverse::inverse(basisOverlapEnrichmentBlockSTL.data(),
+                               d_nglobalEnrichmentIds);
 
-        // std::cout << "Enrichment Inverse Block : \n";
-        // cc = 0;
-        // for (auto i : basisOverlapEnrichmentBlockSTL)
-        // {
-        //   if(cc % d_nglobalEnrichmentIds == 0)
-        //   std::cout << "\n";
-        //   std::cout << i << " ";
-        //   cc+=1;
-        // }
+      // std::cout << "Enrichment Inverse Block : \n";
+      // cc = 0;
+      // for (auto i : basisOverlapEnrichmentBlockSTL)
+      // {
+      //   if(cc % d_nglobalEnrichmentIds == 0)
+      //   std::cout << "\n";
+      //   std::cout << i << " ";
+      //   cc+=1;
+      // }
 
-        d_basisOverlapEnrichmentBlock->template copyFrom<utils::MemorySpace::HOST>(basisOverlapEnrichmentBlockSTL.data());
+      d_basisOverlapEnrichmentBlock
+        ->template copyFrom<utils::MemorySpace::HOST>(
+          basisOverlapEnrichmentBlockSTL.data());
+    }
 
-      }
-
-        template <typename ValueTypeOperator,
+    template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-      EFEOverlapInverseOperatorContext<ValueTypeOperator,
-                                    ValueTypeOperand,
-                                    memorySpace,
-                                    dim>::apply(
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-      linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
-      {
+    EFEOverlapInverseOperatorContext<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+                  linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
+    {
+      const size_type numComponents = X.getNumberComponents();
+      const size_type nlocallyOwnedEnrichmentIds =
+        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].second -
+        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first;
+      const size_type nlocallyOwnedClassicalIds =
+        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].second -
+        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].first;
 
-        const size_type numComponents = X.getNumberComponents();
-        const size_type nlocallyOwnedEnrichmentIds = d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].second - 
-          d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first;
-        const size_type nlocallyOwnedClassicalIds = d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].second - 
-          d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].first;
+      X.updateGhostValues();
+      // update the child nodes based on the parent nodes
+      d_feBasisHandler->getConstraints(d_constraints)
+        .distributeParentToChild(X, X.getNumberComponents());
 
-        X.updateGhostValues();
-        // update the child nodes based on the parent nodes
-        d_feBasisHandler->getConstraints(d_constraints).distributeParentToChild(X, X.getNumberComponents());
+      Y.setValue(0.0);
 
-        Y.setValue(0.0);
-
-        linearAlgebra::blasLapack::khatriRaoProduct(
-          linearAlgebra::blasLapack::Layout::ColMajor,
-          1,
-          numComponents,
-          d_diagonalInv.localSize(),
-          d_diagonalInv.data(),
-          X.begin(),
-          Y.begin(),
-          *(d_diagonalInv.getLinAlgOpContext()));
-
-        utils::MemoryStorage<ValueTypeOperand, memorySpace> XenrichedGlobalVec(d_nglobalEnrichmentIds*numComponents),
-          XenrichedGlobalVecTmp(d_nglobalEnrichmentIds*numComponents), YenrichedGlobalVec(d_nglobalEnrichmentIds*numComponents);
-        // std::vector<ValueTypeOperand> XenrichedGlobalVecSTL(d_nglobalEnrichmentIds*numComponents,0), 
-        //   XenrichedGlobalVecSTLTmp(d_nglobalEnrichmentIds*numComponents,0);
-
-        // for ( size_type i = 0 ; i < X.locallyOwnedSize() ; i++)
-        // {
-        //   std::pair<global_size_type, size_type> pair = X.getMPIPatternP2P()->localToGlobalAndRangeId(i);
-        //   if(pair.second == 1)
-        //   for ( size_type j = 0 ; j < numComponents ; j++ )
-        //     *(XenrichedGlobalVecSTLTmp.data() + pair.first * numComponents + j) = *(X.data() + i*numComponents + j);
-        // }
-
-        XenrichedGlobalVecTmp.template copyFrom<memorySpace>(X.begin(),
-        nlocallyOwnedEnrichmentIds*numComponents,
-        nlocallyOwnedClassicalIds*numComponents,
-        ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
-                (d_efebasisManager->getGlobalRanges()[0].second)) *numComponents);
-
-        int err = utils::mpi::MPIAllreduce<memorySpace>(
-          XenrichedGlobalVecTmp.data(),
-          XenrichedGlobalVec.data(),
-          XenrichedGlobalVecTmp.size(),
-          utils::mpi::MPIDouble,
-          utils::mpi::MPISum,
-          d_feBasisHandler->getMPIPatternP2P(d_constraints)->mpiCommunicator());
-        std::pair<bool, std::string> mpiIsSuccessAndMsg =
-          utils::mpi::MPIErrIsSuccessAndMsg(err);
-        utils::throwException(mpiIsSuccessAndMsg.first,
-                              "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-        // Do dgemm
-
-        ValueType  alpha = 1.0;
-        ValueType  beta  = 0.0;
-                                         
-        linearAlgebra::blasLapack::gemm<ValueTypeOperator,
-                                        ValueTypeOperand,
-                                        memorySpace>(
+      linearAlgebra::blasLapack::khatriRaoProduct(
         linearAlgebra::blasLapack::Layout::ColMajor,
-        linearAlgebra::blasLapack::Op::NoTrans,
-        linearAlgebra::blasLapack::Op::Trans,
+        1,
         numComponents,
-        d_nglobalEnrichmentIds,
-        d_nglobalEnrichmentIds,
-        alpha,
+        d_diagonalInv.localSize(),
+        d_diagonalInv.data(),
+        X.begin(),
+        Y.begin(),
+        *(d_diagonalInv.getLinAlgOpContext()));
+
+      utils::MemoryStorage<ValueTypeOperand, memorySpace> XenrichedGlobalVec(
+        d_nglobalEnrichmentIds * numComponents),
+        XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
+        YenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents);
+      // std::vector<ValueTypeOperand>
+      // XenrichedGlobalVecSTL(d_nglobalEnrichmentIds*numComponents,0),
+      //   XenrichedGlobalVecSTLTmp(d_nglobalEnrichmentIds*numComponents,0);
+
+      // for ( size_type i = 0 ; i < X.locallyOwnedSize() ; i++)
+      // {
+      //   std::pair<global_size_type, size_type> pair =
+      //   X.getMPIPatternP2P()->localToGlobalAndRangeId(i); if(pair.second ==
+      //   1) for ( size_type j = 0 ; j < numComponents ; j++ )
+      //     *(XenrichedGlobalVecSTLTmp.data() + pair.first * numComponents + j)
+      //     = *(X.data() + i*numComponents + j);
+      // }
+
+      XenrichedGlobalVecTmp.template copyFrom<memorySpace>(
+        X.begin(),
+        nlocallyOwnedEnrichmentIds * numComponents,
+        nlocallyOwnedClassicalIds * numComponents,
+        ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first) -
+         (d_efebasisManager->getGlobalRanges()[0].second)) *
+          numComponents);
+
+      int err = utils::mpi::MPIAllreduce<memorySpace>(
+        XenrichedGlobalVecTmp.data(),
         XenrichedGlobalVec.data(),
-        numComponents,
-        d_basisOverlapEnrichmentBlock->data(),
-        d_nglobalEnrichmentIds,
-        beta,
-        YenrichedGlobalVec.begin(),
-        numComponents,
-        *d_linAlgOpContext);
+        XenrichedGlobalVecTmp.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisHandler->getMPIPatternP2P(d_constraints)->mpiCommunicator());
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-        // utils::MemoryStorage<ValueTypeOperand, memorySpace> YenrichedLocallyOwnedVec(nlocallyOwnedEnrichmentIds*numComponents);
+      // Do dgemm
 
-        // for ( size_type i = 0 ; i < Y.locallyOwnedSize() ; i++)
-        // {
-        //   std::pair<global_size_type, size_type> pair = Y.getMPIPatternP2P()->localToGlobalAndRangeId(i);
-        //   if(pair.second == 1)
-        //   for ( size_type j = 0 ; j < numComponents ; j++ )
-        //     *(YenrichedLocallyOwnedVec.data() + i*numComponents + j) = *(YenrichedGlobalVec.data() + pair.first * numComponents + j);
-        // }
+      ValueType alpha = 1.0;
+      ValueType beta  = 0.0;
 
- 
-          YenrichedGlobalVec.template copyTo<memorySpace>(Y.begin(),
-                nlocallyOwnedEnrichmentIds*numComponents,
-                ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first)-
-                (d_efebasisManager->getGlobalRanges()[0].second)) *numComponents,
-                nlocallyOwnedClassicalIds*numComponents);
+      linearAlgebra::blasLapack::
+        gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+          linearAlgebra::blasLapack::Layout::ColMajor,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          linearAlgebra::blasLapack::Op::Trans,
+          numComponents,
+          d_nglobalEnrichmentIds,
+          d_nglobalEnrichmentIds,
+          alpha,
+          XenrichedGlobalVec.data(),
+          numComponents,
+          d_basisOverlapEnrichmentBlock->data(),
+          d_nglobalEnrichmentIds,
+          beta,
+          YenrichedGlobalVec.begin(),
+          numComponents,
+          *d_linAlgOpContext);
 
-        Y.updateGhostValues();
+      // utils::MemoryStorage<ValueTypeOperand, memorySpace>
+      // YenrichedLocallyOwnedVec(nlocallyOwnedEnrichmentIds*numComponents);
 
-        // function to do a static condensation to send the constraint nodes to
-        // its parent nodes
-        d_feBasisHandler->getConstraints(d_constraints).distributeChildToParent(Y, Y.getNumberComponents());
+      // for ( size_type i = 0 ; i < Y.locallyOwnedSize() ; i++)
+      // {
+      //   std::pair<global_size_type, size_type> pair =
+      //   Y.getMPIPatternP2P()->localToGlobalAndRangeId(i); if(pair.second ==
+      //   1) for ( size_type j = 0 ; j < numComponents ; j++ )
+      //     *(YenrichedLocallyOwnedVec.data() + i*numComponents + j) =
+      //     *(YenrichedGlobalVec.data() + pair.first * numComponents + j);
+      // }
 
-        // Function to update the ghost values of the Y
-        Y.updateGhostValues();
 
-      }
-  }
-}
+      YenrichedGlobalVec.template copyTo<memorySpace>(
+        Y.begin(),
+        nlocallyOwnedEnrichmentIds * numComponents,
+        ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first) -
+         (d_efebasisManager->getGlobalRanges()[0].second)) *
+          numComponents,
+        nlocallyOwnedClassicalIds * numComponents);
+
+      Y.updateGhostValues();
+
+      // function to do a static condensation to send the constraint nodes to
+      // its parent nodes
+      d_feBasisHandler->getConstraints(d_constraints)
+        .distributeChildToParent(Y, Y.getNumberComponents());
+
+      // Function to update the ghost values of the Y
+      Y.updateGhostValues();
+    }
+  } // namespace basis
+} // namespace dftefe

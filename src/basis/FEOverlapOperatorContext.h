@@ -82,10 +82,10 @@ namespace dftefe
         const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &                                         feBasisDataStorage,
-        const std::string                           constraintsX,
-        const std::string                           constraintsY,
-        const size_type                             maxCellTimesNumVecs);
+          &               feBasisDataStorage,
+        const std::string constraintsX,
+        const std::string constraintsY,
+        const size_type   maxCellTimesNumVecs);
 
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
@@ -99,13 +99,13 @@ namespace dftefe
 
       // get overlap of two basis functions in a cell
       Storage
-      getBasisOverlap(const size_type                 cellId,
-                      const size_type                 basisId1,
-                      const size_type                 basisId2) const;
+      getBasisOverlap(const size_type cellId,
+                      const size_type basisId1,
+                      const size_type basisId2) const;
 
       // get overlap of all the basis functions in a cell
       Storage
-      getBasisOverlapInCell(const size_type                 cellId) const;
+      getBasisOverlapInCell(const size_type cellId) const;
 
       // get overlap of all the basis functions in all cells
       const Storage &
@@ -119,13 +119,13 @@ namespace dftefe
       const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
         *d_feBasisHandler;
       const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *d_feBasisDataStorage;
-      std::shared_ptr<Storage>                    d_basisOverlap;
-      std::vector<size_type>          d_cellStartIdsBasisOverlap;
-      std::vector<size_type>                      d_dofsInCell;
-      const std::string                           d_constraintsX;
-      const std::string                           d_constraintsY;
-      const size_type                             d_maxCellTimesNumVecs;
+        *                      d_feBasisDataStorage;
+      std::shared_ptr<Storage> d_basisOverlap;
+      std::vector<size_type>   d_cellStartIdsBasisOverlap;
+      std::vector<size_type>   d_dofsInCell;
+      const std::string        d_constraintsX;
+      const std::string        d_constraintsY;
+      const size_type          d_maxCellTimesNumVecs;
     }; // end of class FEOverlapOperatorContext
   }    // end of namespace basis
 } // end of namespace dftefe

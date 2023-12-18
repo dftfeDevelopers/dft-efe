@@ -137,10 +137,13 @@ namespace dftefe
       void
       addLine(const global_size_type lineDof);
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>    d_constraintMatrix;
-      std::shared_ptr<const basis::EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>> d_efeBasisManager;
-      bool                                              d_isCleared;
-      bool                                              d_isClosed;
+      dealii::AffineConstraints<ValueTypeBasisCoeff> d_constraintMatrix;
+      std::shared_ptr<const basis::EFEBasisManagerDealii<ValueTypeBasisData,
+                                                         memorySpace,
+                                                         dim>>
+           d_efeBasisManager;
+      bool d_isCleared;
+      bool d_isClosed;
 
       GlobalSizeTypeVector d_rowConstraintsIdsGlobal;
       SizeTypeVector       d_rowConstraintsIdsLocal;
