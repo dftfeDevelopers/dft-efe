@@ -104,8 +104,13 @@ int main()
 
   dftefe::utils::mpi::MPIComm comm = dftefe::utils::mpi::MPICommWorld;
 
+    // Get the rank of the process
   int rank;
   dftefe::utils::mpi::MPICommRank(comm, &rank);
+
+    // Get nProcs
+    int numProcs;
+    dftefe::utils::mpi::MPICommSize(comm, &numProcs);
 
   int blasQueue = 0;
   dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
@@ -270,7 +275,6 @@ int main()
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = true;
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
@@ -384,12 +388,9 @@ int main()
 
   // create the quadrature Value Container
 
-  std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
-    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
-
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr, quadRule, triangulationBase,
-                                                                 linearCellMappingDealii);
+    std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
+                feBasisData->getQuadratureRuleContainer();
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer1(quadRuleContainer, numComponents);
@@ -397,7 +398,7 @@ int main()
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
     dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer.getCellRealPoints(i))
+    for (auto j : quadRuleContainer->getCellRealPoints(i))
     {
       std::vector<double> a(numComponents, 0);
       a[0] = rho( j, atomCoordinates1, rc);
@@ -422,7 +423,6 @@ int main()
                                                     feBasisOp,
                                                     feBasisData,
                                                     quadValuesContainer,
-                                                    quadAttr,
                                                     constraintHanging,
                                                     constraintHomwHan,
                                                     *vhNHDB,
@@ -452,12 +452,12 @@ int main()
 
   // perform integral rho vh 
 
-  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainer1);
+  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainer1);
 
   auto iter1 = quadValuesContainer.begin();
   auto iter2 = quadValuesContainer1.begin();
-  dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints();
-  const std::vector<double> JxW = quadRuleContainer.getJxW();
+  dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints();
+  const std::vector<double> JxW = quadRuleContainer->getJxW();
   std::vector<double> integral(5, 0.0), mpiReducedIntegral(5, 0.0);
   for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
   {

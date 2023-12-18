@@ -229,21 +229,21 @@ int main()
   // initialize the basis Manager
 
   unsigned int feOrder = 3;
-
-  const dftefe::quadrature::QuadratureRuleAttributes l2ProjQuadAttr(dftefe::quadrature::QuadratureFamily::GLL,true,4);
-
-
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double, dftefe::utils::MemorySpace::HOST ,dim>>(
-      triangulationBase ,
-      atomSphericalDataContainer ,
-      feOrder,
+  std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
+                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
+                          <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
+                          atomSphericalDataContainer,
       atomPartitionTolerance,
       atomSymbol,
       atomCoordinatesVec,
       fieldName,
       comm);
-      // l2ProjQuadAttr,
-      // linAlgOpContext);
+
+  // initialize the basis Manager
+  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
+      enrichClassIntfce,
+      feOrder);
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisManager->getBasisCenters(dofCoords);
 
@@ -401,16 +401,14 @@ int main()
 
   // create the quadrature Value Container
 
-  std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
-    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
-
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  std::shared_ptr<dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer = std::make_shared<dftefe::quadrature::QuadratureRuleContainer>
-                                              ( quadAttr, quadRule, triangulationBase,linearCellMappingDealii);
+    std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
+                feBasisData->getQuadratureRuleContainer();
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
+
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
@@ -436,7 +434,6 @@ int main()
                                                     feBasisOp,
                                                     feBasisData,
                                                     quadValuesContainer,
-                                                    quadAttr,
                                                     constraintHanging,
                                                     constraintHomwHan,
                                                     *vhNHDB,
@@ -474,7 +471,7 @@ int main()
     }
   }
 
-  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
+  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainerNumerical);
 
   auto iter1 = quadValuesContainerAnalytical.begin();
   auto iter2 = quadValuesContainerNumerical.begin();
