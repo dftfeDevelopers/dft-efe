@@ -38,6 +38,7 @@ namespace dftefe
       std::shared_ptr<const TriangulationBase> triangulation,
       const size_type                          feOrder)
       : d_isVariableDofsPerCell(false)
+      , d_totalRanges(1)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       reinit(triangulation, feOrder);
@@ -432,6 +433,13 @@ namespace dftefe
     FEBasisManagerDealii<dim>::nCumulativeLocalCellDofs() const
     {
       return d_numCumulativeLocalCellDofs;
+    }
+
+    template <size_type dim>
+    size_type
+    FEBasisManagerDealii<dim>::totalRanges() const
+    {
+      return d_totalRanges;
     }
 
   } // namespace basis

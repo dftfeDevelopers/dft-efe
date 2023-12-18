@@ -272,16 +272,14 @@ namespace dftefe
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &                                         feBasisDataStorage,
-        const std::string                           constraintsX,
-        const std::string                           constraintsY,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             maxCellTimesNumVecs)
+          &               feBasisDataStorage,
+        const std::string constraintsX,
+        const std::string constraintsY,
+        const size_type   maxCellTimesNumVecs)
       : d_feBasisHandler(&feBasisHandler)
       , d_feBasisDataStorage(&feBasisDataStorage)
       , d_constraintsX(constraintsX)
       , d_constraintsY(constraintsY)
-      , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {}
 
@@ -334,8 +332,7 @@ namespace dftefe
 
       // access cell-wise discrete Laplace operator
       auto gradNiGradNjInAllCells =
-        d_feBasisDataStorage->getBasisGradNiGradNjInAllCells(
-          d_quadratureRuleAttributes);
+        d_feBasisDataStorage->getBasisGradNiGradNjInAllCells();
 
       const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
       Y.setValue(0.0);

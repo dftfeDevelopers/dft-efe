@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <atom xmlns="http://www.dft-efe.com/dft-efe">
-  <symbol>SmearedCharge0.001Uniform_rc1.0</symbol>
+  <symbol>SmearedCharge</symbol>
   <Z>1.0</Z>
   <charge>1.0</charge>
   <NR>6501</NR>

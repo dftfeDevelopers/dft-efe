@@ -27,6 +27,7 @@
 #define dftefeBlasWrapperTypedef_h
 
 #include <blas.hh>
+// #include <lapack.hh>
 #include <utils/MemoryStorage.h>
 
 namespace dftefe

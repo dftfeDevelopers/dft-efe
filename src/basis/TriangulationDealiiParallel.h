@@ -65,6 +65,8 @@ namespace dftefe
       executeCoarseningAndRefinement() override;
       unsigned int
       nLocallyOwnedCells() const override;
+      double
+      maxCellDiameter() const override;
       size_type
       nGlobalCells() const override;
       size_type
@@ -87,6 +89,8 @@ namespace dftefe
       endLocal() const override;
       unsigned int
       getDim() const override;
+      std::vector<bool>
+      getPeriodicFlags() const override;
 
       // Class specific member function
 
@@ -111,6 +115,7 @@ namespace dftefe
       bool                                                isFinalized;
       dealii::parallel::distributed::Triangulation<dim>   d_triangulationDealii;
       std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorCell;
+      std::vector<bool>                                   d_isPeriodicFlags;
 
     }; // end of class TriangulationDealiiParallel
 

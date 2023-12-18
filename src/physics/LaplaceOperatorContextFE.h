@@ -80,11 +80,10 @@ namespace dftefe
         const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
           &feBasisHandler,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &                                         feBasisDataStorage,
-        const std::string                           constraintsX,
-        const std::string                           constraintsY,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             maxCellTimesNumVecs);
+          &               feBasisDataStorage,
+        const std::string constraintsX,
+        const std::string constraintsY,
+        const size_type   maxCellTimesNumVecs);
 
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
@@ -100,11 +99,10 @@ namespace dftefe
       const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
         *d_feBasisHandler;
       const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *                                         d_feBasisDataStorage;
-      const std::string                           d_constraintsX;
-      const std::string                           d_constraintsY;
-      const quadrature::QuadratureRuleAttributes &d_quadratureRuleAttributes;
-      const size_type                             d_maxCellTimesNumVecs;
+        *               d_feBasisDataStorage;
+      const std::string d_constraintsX;
+      const std::string d_constraintsY;
+      const size_type   d_maxCellTimesNumVecs;
     }; // end of class LaplaceOperatorContextFE
   }    // end of namespace physics
 } // end of namespace dftefe

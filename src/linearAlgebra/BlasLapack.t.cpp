@@ -471,6 +471,26 @@ namespace dftefe
           }
       }
 
+      // template <typename ValueType,
+      //           typename dftefe::utils::MemorySpace memorySpace>
+      // void
+      // inverse( const size_type               n,
+      //   ValueType *                          A,
+      //   const size_type                      lda,
+      //   ValueType *                          ipiv)
+      //   {
+      //     lapack::getrf(n,
+      //                   n,
+      //                   A,
+      //                   lda,
+      //                   ipiv);
+
+      //     lapack::getri(n,
+      //                   A,
+      //                   lda,
+      //                   ipiv);
+
+      //   }
 
     } // namespace blasLapack
   }   // namespace linearAlgebra

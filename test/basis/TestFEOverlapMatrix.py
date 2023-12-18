@@ -17,7 +17,7 @@
 #    License at the top level of DFT-EFE distribution.  If not, see
 #    <https://www.gnu.org/licenses/>.
 
-# @author Avirup Sircar
+# @author Vishal Subramanian 
 
 import reframe as rfm
 import reframe.utility.sanity as sn
@@ -37,10 +37,10 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestPoissonProblemClassicalAdaptiveQuad(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestPoissonProblemClassicalAdaptiveQuad'
+class BuildOnlyTestFEOverlapMatrix(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestFEOverlapMatrix'
     build_system = 'CMake'
-    make_opts = ['TestPoissonProblemClassicalAdaptiveQuad']
+    make_opts = ['TestFEOverlapMatrix']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -71,7 +71,7 @@ class BuildOnlyTestPoissonProblemClassicalAdaptiveQuad(rfm.CompileOnlyRegression
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         
-        hasTestPassed = not hasError
+        hasTestPassed = not hasWarning and not hasError
         msg = ""
         if hasError:
             msg = msgError
@@ -88,9 +88,9 @@ class BuildOnlyTestPoissonProblemClassicalAdaptiveQuad(rfm.CompileOnlyRegression
 
 
 @rfm.simple_test
-class BuildAndRunTestPoissonProblemClassicalAdaptiveQuad(rfm.RegressionTest):
-    target_name = 'TestPoissonProblemClassicalAdaptiveQuad'
-    descr = '''A build and run test for atom ids partition'''
+class BuildAndRunTestFEOverlapMatrix(rfm.RegressionTest):
+    target_name = 'TestFEOverlapMatrix'
+    descr = '''A build and run test to verify the accuracy of interpolation to quad points'''
     build_system = 'CMake'
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
@@ -134,11 +134,11 @@ class BuildAndRunTestPoissonProblemClassicalAdaptiveQuad(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestPoissonProblemClassicalAdaptiveQuad.'''
+        BuildAndRunTestFEOverlapMatrix.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestPoissonProblemClassicalAdaptiveQuad.'''
+        BuildAndRunTestFEOverlapMatrix.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestPoissonProblemClassicalAdaptiveQuad.'''
+        BuildAndRunTestFEOverlapMatrix.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,9 +173,9 @@ class BuildAndRunTestPoissonProblemClassicalAdaptiveQuad(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestPoissonProblemClassicalAdaptiveQuad(rfm.RunOnlyRegressionTest):
-    target_name = 'TestPoissonProblemClassicalAdaptiveQuad'
-    descr = '''A run only test for atom ids partition'''
+class RunOnlyTestFEOverlapMatrix(rfm.RunOnlyRegressionTest):
+    target_name = 'TestFEOverlapMatrix'
+    descr = '''A run only test to verify the accuracy of interpolation'''
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name
@@ -211,11 +211,11 @@ class RunOnlyTestPoissonProblemClassicalAdaptiveQuad(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestPoissonProblemClassicalAdaptiveQuad.'''
+        RunOnlyTestFEOverlapMatrix.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestPoissonProblemClassicalAdaptiveQuad'''
+        RunOnlyTestFEOverlapMatrix'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestPoissonProblemClassicalAdaptiveQuad'''
+        RunOnlyTestFEOverlapMatrix'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

@@ -67,9 +67,9 @@ namespace dftefe
                                  const size_type derivativeOrder = 1) const = 0;
 
       ////// FE specific virtual member functions /////
-      virtual void
-      reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) = 0;
+      // virtual void
+      // reinit(std::shared_ptr<const TriangulationBase> triangulation,
+      //        const size_type                          feOrder) = 0;
 
       virtual std::shared_ptr<const TriangulationBase>
       getTriangulation() const = 0;
@@ -137,6 +137,9 @@ namespace dftefe
       virtual void
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const = 0;
+
+      virtual size_type
+      totalRanges() const = 0;
 
       virtual unsigned int
       getDim() const = 0;

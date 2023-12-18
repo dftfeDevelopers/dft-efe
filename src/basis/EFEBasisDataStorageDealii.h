@@ -31,6 +31,7 @@
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisOperations.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <basis/EFEBasisManagerDealii.h>
 #include <basis/EFEBasisManager.h>
@@ -38,6 +39,7 @@
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleGLL.h>
 #include <quadrature/QuadratureRuleAdaptive.h>
+#include <quadrature/QuadratureValuesContainer.h>
 #include <memory>
 #include <map>
 #include <vector>
@@ -110,8 +112,7 @@ namespace dftefe
         override;
 
       void
-      deleteBasisData(
-        const QuadratureRuleAttributes &quadratureRuleAttributes) override;
+      deleteBasisData() override;
 
       // functions to get data for a basis function on a given quad point in a
       // cell
@@ -128,92 +129,75 @@ namespace dftefe
       // functions to get data for a basis function on all quad points in a cell
       // The evaluation of functions
       Storage
-      getBasisDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId,
-        const size_type                 basisId) const override;
+      getBasisDataInCell(const size_type cellId,
+                         const size_type basisId) const override;
       Storage
-      getBasisGradientDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId,
-        const size_type                 basisId) const override;
+      getBasisGradientDataInCell(const size_type cellId,
+                                 const size_type basisId) const override;
       Storage
-      getBasisHessianDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId,
-        const size_type                 basisId) const override;
+      getBasisHessianDataInCell(const size_type cellId,
+                                const size_type basisId) const override;
 
       // functions to get data for all basis functions on all quad points in a
       // cell
       Storage
-      getBasisDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override;
+      getBasisDataInCell(const size_type cellId) const override;
       Storage
-      getBasisGradientDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override;
+      getBasisGradientDataInCell(const size_type cellId) const override;
       Storage
-      getBasisHessianDataInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override;
+      getBasisHessianDataInCell(const size_type cellId) const override;
 
       Storage
-      getJxWInCell(const QuadratureRuleAttributes &quadratureRuleAttributes,
-                   const size_type                 cellId) const override;
+      getJxWInCell(const size_type cellId) const override;
 
       // functions to get data for all basis functions on all quad points in all
       // cells
       const Storage &
-      getBasisDataInAllCells(const QuadratureRuleAttributes
-                               &quadratureRuleAttributes) const override;
+      getBasisDataInAllCells() const override;
       const Storage &
-      getBasisGradientDataInAllCells(const QuadratureRuleAttributes &
-                                       quadratureRuleAttributes) const override;
+      getBasisGradientDataInAllCells() const override;
       const Storage &
-      getBasisHessianDataInAllCells(const QuadratureRuleAttributes
-                                      &quadratureRuleAttributes) const override;
+      getBasisHessianDataInAllCells() const override;
 
       const Storage &
-      getJxWInAllCells(const QuadratureRuleAttributes &quadratureRuleAttributes)
-        const override;
+      getJxWInAllCells() const override;
 
       // get overlap of two basis functions in a cell
       Storage
-      getBasisOverlap(const QuadratureRuleAttributes &quadratureRuleAttributes,
-                      const size_type                 cellId,
-                      const size_type                 basisId1,
-                      const size_type                 basisId2) const override;
+      getBasisOverlap(const size_type cellId,
+                      const size_type basisId1,
+                      const size_type basisId2) const override;
 
       // get overlap of all the basis functions in a cell
       Storage
-      getBasisOverlapInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override;
+      getBasisOverlapInCell(const size_type cellId) const override;
 
       // get overlap of all the basis functions in all cells
       const Storage &
-      getBasisOverlapInAllCells(const QuadratureRuleAttributes
-                                  &quadratureRuleAttributes) const override;
+      getBasisOverlapInAllCells() const override;
 
       // get the laplace operator in a cell
       Storage
-      getBasisGradNiGradNjInCell(
-        const QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                 cellId) const override;
+      getBasisGradNiGradNjInCell(const size_type cellId) const override;
 
       // get laplace operator in all cells
       const Storage &
-      getBasisGradNiGradNjInAllCells(const QuadratureRuleAttributes &
-                                       quadratureRuleAttributes) const override;
+      getBasisGradNiGradNjInAllCells() const override;
 
-      const quadrature::QuadratureRuleContainer &
-      getQuadratureRuleContainer(const QuadratureRuleAttributes
-                                   &quadratureRuleAttributes) const override;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+      getQuadratureRuleContainer() const override;
+
+      // ---- Only for Orthogonalized EFE basis--------
+
+      const quadrature::QuadratureValuesContainer<ValueTypeBasisData,
+                                                  memorySpace> &
+      getEnrichmentFunctionClassicalComponentQuadValues() const override;
 
     private:
-      bool                                              d_evaluateBasisData;
-      std::shared_ptr<const EFEBasisManagerDealii<dim>> d_efeBM;
+      bool d_evaluateBasisData;
+      std::shared_ptr<
+        const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>>
+        d_efeBM;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                     d_quadratureRuleContainer;
       QuadratureRuleAttributes      d_quadratureRuleAttributes;
@@ -231,6 +215,9 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>>
+        d_basisClassicalInterfaceQuadValues;
     };
   } // end of namespace basis
 } // end of namespace dftefe

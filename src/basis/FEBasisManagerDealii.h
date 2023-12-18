@@ -64,7 +64,7 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) override;
+             const size_type                          feOrder);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -137,11 +137,14 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocallyOwnedCellDofs() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocalCellDofs() const override;
+
+      size_type
+      totalRanges() const override;
 
       // This assumes a linear cell mapping
       void
@@ -165,6 +168,7 @@ namespace dftefe
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
+      size_type d_totalRanges;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis

@@ -141,8 +141,7 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                           feBasisDataStorage,
         const std::string constraintsHangingwHomogeneous,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             maxCellTimesNumVecs)
+        const size_type   maxCellTimesNumVecs)
       {
         const size_type numLocallyOwnedCells =
           feBasisHandler->nLocallyOwnedCells();
@@ -156,8 +155,7 @@ namespace dftefe
 
         // access cell-wise discrete Laplace operator
         auto gradNiGradNjInAllCells =
-          feBasisDataStorage->getBasisGradNiGradNjInAllCells(
-            quadratureRuleAttributes);
+          feBasisDataStorage->getBasisGradNiGradNjInAllCells();
 
         const size_type cellBlockSize = maxCellTimesNumVecs;
 
@@ -205,8 +203,8 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
                                              feBasisHandler,
-        const basis::FEBasisOperations<ValueTypeOperator,
-                                       ValueTypeOperand,
+        const basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
                                        memorySpace,
                                        dim> &feBasisOperations,
         std::shared_ptr<
@@ -215,9 +213,8 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
-          memorySpace> &                            inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const std::string                           constraintsHanging,
+          memorySpace> &  inp,
+        const std::string constraintsHanging,
         const std::string constraintsHangingwHomogeneous,
         const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &                                     inhomogeneousDirichletBCVector,
@@ -261,7 +258,6 @@ namespace dftefe
           *d_feBasisDataStorage,
           constraintsHangingwHomogeneous,
           constraintsHangingwHomogeneous,
-          quadratureRuleAttributes,
           maxCellTimesNumVecs); // solving the AX = b
 
       auto AxContextNHDB =
@@ -273,7 +269,6 @@ namespace dftefe
           *d_feBasisDataStorage,
           constraintsHanging,
           constraintsHangingwHomogeneous,
-          quadratureRuleAttributes,
           maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
@@ -287,7 +282,6 @@ namespace dftefe
               feBasisHandler,
               feBasisDataStorage,
               constraintsHangingwHomogeneous,
-              quadratureRuleAttributes,
               maxCellTimesNumVecs);
 
 
@@ -320,7 +314,6 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
 
       feBasisOperations.integrateWithBasisValues(inp,
-                                                 quadratureRuleAttributes,
                                                  *d_feBasisHandler,
                                                  constraintsHangingwHomogeneous,
                                                  b);

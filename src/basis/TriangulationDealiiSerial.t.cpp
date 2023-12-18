@@ -13,6 +13,7 @@ namespace dftefe
     TriangulationDealiiSerial<dim>::TriangulationDealiiSerial()
       : isInitialized(false)
       , isFinalized(false)
+      , d_isPeriodicFlags(0)
     {}
 
     template <unsigned int dim>
@@ -93,6 +94,9 @@ namespace dftefe
       dealii::GridGenerator::subdivided_parallelepiped<dim>(
         d_triangulationDealii, dealiiSubdivisions, dealiiPoints);
       markPeriodicFaces(isPeriodicFlags, domainVectors);
+
+      d_isPeriodicFlags.resize(dim);
+      d_isPeriodicFlags = isPeriodicFlags;
     }
 
     template <unsigned int dim>
@@ -253,6 +257,13 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    double
+    TriangulationDealiiSerial<dim>::maxCellDiameter() const
+    {
+      return dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
+    }
+
+    template <unsigned int dim>
     TriangulationBase::TriangulationCellIterator
     TriangulationDealiiSerial<dim>::beginLocal()
     {
@@ -285,6 +296,13 @@ namespace dftefe
     TriangulationDealiiSerial<dim>::getDim() const
     {
       return dim;
+    }
+
+    template <unsigned int dim>
+    std::vector<bool>
+    TriangulationDealiiSerial<dim>::getPeriodicFlags() const
+    {
+      return d_isPeriodicFlags;
     }
 
     template <unsigned int dim>

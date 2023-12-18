@@ -177,11 +177,19 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage.resize(numLocallyOwnedCells, 0);
           }
 
-        basisOverlap = std::make_shared<
-          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
-          numLocallyOwnedCells * dofsPerCell * dofsPerCell);
-        basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
-                               ValueTypeBasisData(0));
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          {
+            basisOverlap =
+              std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
+                                                         memorySpace>::Storage>(
+                numLocallyOwnedCells * dofsPerCell * dofsPerCell);
+            basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell *
+                                     dofsPerCell,
+                                   ValueTypeBasisData(0));
+          }
+
         auto locallyOwnedCellIter = feBM->beginLocallyOwnedCells();
         std::shared_ptr<FECellDealii<dim>> feCellDealii =
           std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
@@ -226,20 +234,26 @@ namespace dftefe
                   }
               }
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            if (basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreOverlap)
+                  ->second)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    *basisOverlapTmpIter = 0.0;
-                    for (unsigned int qPoint = 0; qPoint < numQuadPointsPerCell;
-                         qPoint++)
+                    for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
                       {
-                        *basisOverlapTmpIter +=
-                          dealiiFEValues.shape_value(iNode, qPoint) *
-                          dealiiFEValues.shape_value(jNode, qPoint) *
-                          dealiiFEValues.JxW(qPoint);
+                        *basisOverlapTmpIter = 0.0;
+                        for (unsigned int qPoint = 0;
+                             qPoint < numQuadPointsPerCell;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                              dealiiFEValues.shape_value(iNode, qPoint) *
+                              dealiiFEValues.shape_value(jNode, qPoint) *
+                              dealiiFEValues.JxW(qPoint);
+                          }
+                        basisOverlapTmpIter++;
                       }
-                    basisOverlapTmpIter++;
                   }
               }
 
@@ -330,8 +344,15 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          {
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+              basisOverlapTmp.size(),
+              basisOverlap->data(),
+              basisOverlapTmp.data());
+          }
       }
 
 
@@ -567,11 +588,19 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage.resize(numLocallyOwnedCells, 0);
           }
 
-        basisOverlap = std::make_shared<
-          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>(
-          numLocallyOwnedCells * dofsPerCell * dofsPerCell);
-        basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
-                               ValueTypeBasisData(0));
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          {
+            basisOverlap =
+              std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
+                                                         memorySpace>::Storage>(
+                numLocallyOwnedCells * dofsPerCell * dofsPerCell);
+            basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell *
+                                     dofsPerCell,
+                                   ValueTypeBasisData(0));
+          }
+
         auto locallyOwnedCellIter = feBM->beginLocallyOwnedCells();
         std::shared_ptr<FECellDealii<dim>> feCellDealii =
           std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
@@ -635,20 +664,25 @@ namespace dftefe
                   }
               }
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            if (basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreOverlap)
+                  ->second)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    *basisOverlapTmpIter = 0.0;
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
-                         qPoint++)
+                    for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
                       {
-                        *basisOverlapTmpIter +=
-                          dealiiFEValues.shape_value(iNode, qPoint) *
-                          dealiiFEValues.shape_value(jNode, qPoint) *
-                          cellJxWValues[qPoint];
+                        *basisOverlapTmpIter = 0.0;
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                              dealiiFEValues.shape_value(iNode, qPoint) *
+                              dealiiFEValues.shape_value(jNode, qPoint) *
+                              cellJxWValues[qPoint];
+                          }
+                        basisOverlapTmpIter++;
                       }
-                    basisOverlapTmpIter++;
                   }
               }
 
@@ -741,8 +775,15 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          {
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+              basisOverlapTmp.size(),
+              basisOverlap->data(),
+              basisOverlapTmp.data());
+          }
       }
 
       template <typename ValueTypeBasisData,
@@ -1079,6 +1120,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1174,7 +1218,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1226,6 +1275,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1301,7 +1353,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1356,6 +1413,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1439,7 +1499,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1500,6 +1565,9 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      utils::throwException<utils::InvalidArgument>(
+        d_quadratureRuleAttributes == quadratureRuleAttributes,
+        "Incorrect quadratureRuleAttributes given.");
       /**
        * @note We assume a linear mapping from the reference cell
        * to the real cell.
@@ -1587,7 +1655,12 @@ namespace dftefe
             cellStartIdsBasisHessianQuadStorage;
         }
 
-      d_basisOverlap      = basisOverlap;
+      if (basisStorageAttributesBoolMap
+            .find(BasisStorageAttributes::StoreOverlap)
+            ->second)
+        {
+          d_basisOverlap = basisOverlap;
+        }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
       if (basisStorageAttributesBoolMap
@@ -1653,15 +1726,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisDataInAllCells(const quadrature::QuadratureRuleAttributes
-                               &quadratureRuleAttributes) const
+      getBasisDataInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreValues)
@@ -1675,15 +1745,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradientDataInAllCells(const quadrature::QuadratureRuleAttributes
-                                       &quadratureRuleAttributes) const
+      getBasisGradientDataInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradient)
@@ -1697,15 +1764,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisHessianDataInAllCells(const quadrature::QuadratureRuleAttributes
-                                      &quadratureRuleAttributes) const
+      getBasisHessianDataInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreHessian)
@@ -1719,15 +1783,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getJxWInAllCells(const quadrature::QuadratureRuleAttributes
-                         &quadratureRuleAttributes) const
+      getJxWInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
           ->second,
@@ -1741,16 +1802,12 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId) const
+      getBasisDataInCell(const size_type cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreValues)
@@ -1778,16 +1835,12 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradientDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId) const
+      getBasisGradientDataInCell(const size_type cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradient)
@@ -1815,16 +1868,12 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisHessianDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId) const
+      getBasisHessianDataInCell(const size_type cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreHessian)
@@ -1852,16 +1901,12 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getJxWInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId) const
+      getJxWInCell(const size_type cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
           ->second,
@@ -2008,15 +2053,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisOverlapInAllCells(const quadrature::QuadratureRuleAttributes
-                                  &quadratureRuleAttributes) const
+      getBasisOverlapInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreOverlap)
@@ -2030,16 +2072,12 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisOverlapInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId) const
+      getBasisOverlapInCell(const size_type cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreOverlap)
@@ -2063,18 +2101,14 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisOverlap(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
-        const size_type                             basisId1,
-        const size_type                             basisId2) const
+      getBasisOverlap(const size_type cellId,
+                      const size_type basisId1,
+                      const size_type basisId2) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreOverlap)
@@ -2099,12 +2133,8 @@ namespace dftefe
               size_type          dim>
     void
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      deleteBasisData(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes)
+      deleteBasisData()
     {
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
       utils::throwException(
         (d_basisQuadStorage).use_count() == 1,
         "More than one owner for the basis quadrature storage found in FEBasisDataStorageDealii. Not safe to delete it.");
@@ -2131,10 +2161,7 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
-        const size_type                             basisId) const
+      getBasisDataInCell(const size_type cellId, const size_type basisId) const
     {
       utils::throwException(
         false,
@@ -2149,10 +2176,8 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradientDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
-        const size_type                             basisId) const
+      getBasisGradientDataInCell(const size_type cellId,
+                                 const size_type basisId) const
     {
       utils::throwException(
         false,
@@ -2167,10 +2192,8 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisHessianDataInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId,
-        const size_type                             basisId) const
+      getBasisHessianDataInCell(const size_type cellId,
+                                const size_type basisId) const
     {
       utils::throwException(
         false,
@@ -2183,18 +2206,15 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const quadrature::QuadratureRuleContainer &
+    std::shared_ptr<const quadrature::QuadratureRuleContainer>
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getQuadratureRuleContainer(const quadrature::QuadratureRuleAttributes
-                                   &quadratureRuleAttributes) const
+      getQuadratureRuleContainer() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
-      return *d_quadratureRuleContainer;
+
+      return d_quadratureRuleContainer;
     }
 
     template <typename ValueTypeBasisData,
@@ -2202,16 +2222,12 @@ namespace dftefe
               size_type          dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradNiGradNjInCell(
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const size_type                             cellId) const
+      getBasisGradNiGradNjInCell(const size_type cellId) const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradNiGradNj)
@@ -2236,15 +2252,12 @@ namespace dftefe
               size_type          dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
     FEBasisDataStorageDealii<ValueTypeBasisData, memorySpace, dim>::
-      getBasisGradNiGradNjInAllCells(const quadrature::QuadratureRuleAttributes
-                                       &quadratureRuleAttributes) const
+      getBasisGradNiGradNjInAllCells() const
     {
       utils::throwException(
         d_evaluateBasisData,
         "Cannot call function before calling evaluateBasisData()");
-      utils::throwException<utils::InvalidArgument>(
-        d_quadratureRuleAttributes == quadratureRuleAttributes,
-        "Incorrect quadratureRuleAttributes given.");
+
       utils::throwException(
         d_basisStorageAttributesBoolMap
           .find(BasisStorageAttributes::StoreGradNiGradNj)

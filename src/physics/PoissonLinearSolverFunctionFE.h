@@ -102,17 +102,16 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
                                              feBasisHandler,
-        const basis::FEBasisOperations<ValueTypeOperator,
-                                       ValueTypeOperand,
+        const basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
                                        memorySpace,
                                        dim> &feBasisOperations,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorage,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-          &                                         inp,
-        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const std::string                           constraintsHanging,
+          &               inp,
+        const std::string constraintsHanging,
         const std::string constraintsHangingwHomogeneous,
         const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &                                     inhomogeneousDirichletBCVector,
