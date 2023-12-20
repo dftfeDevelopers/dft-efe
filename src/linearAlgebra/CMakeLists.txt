@@ -12,19 +12,11 @@ if (NOT TARGET dft-efe-linalg)
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu
-            Matrix.cpp
             QueueManager.cpp
             LinAlgOpContext.cpp
             VectorAttributes.cpp
 	    Vector.cpp
 	    MultiVector.cpp
-            AbstractMatrix.cpp
-            GeneralMatrix.cpp
-            HermitianMatrix.cpp
-            TriangularMatrix.cpp
-            MatrixKernels.cu
-            MatrixKernels.cpp
-            MatrixOperations.cpp
 	    LinearSolver.cpp
 	    CGLinearSolver.cpp
         PreconditionerJacobi.cpp
