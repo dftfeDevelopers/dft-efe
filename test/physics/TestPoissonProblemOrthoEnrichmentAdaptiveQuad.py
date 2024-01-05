@@ -98,7 +98,7 @@ class BuildAndRunTestPoissonProblemOrthoEnrichmentAdaptiveQuad(rfm.RegressionTes
     executable = "./"+target_name
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'serial'}
+                'serialOrParallel': 'parallel'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -117,13 +117,13 @@ class BuildAndRunTestPoissonProblemOrthoEnrichmentAdaptiveQuad(rfm.RegressionTes
             self.job.launcher = getlauncher('local')()
 
         if "parallel" in self.tags:
-            self.job.launcher.options = ['-n 2']
+            self.job.launcher.options = ['-n 5']
             self.extra_resources = ss.setResources(self.tagsDict['arch'], 
-                                                   time_limit = "00:05:00", 
+                                                   time_limit = "00:30:00", 
                                                    num_nodes = 1, 
-                                                   num_tasks_per_node = 2,
-                                                   ntasks = 2,
-                                                   mem_per_cpu = '2gb')
+                                                   num_tasks_per_node = 5,
+                                                   ntasks = 5,
+                                                   mem_per_cpu = '5gb')
 
 
     @sanity_function

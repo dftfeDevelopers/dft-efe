@@ -27,6 +27,7 @@
 #include "TriangulationDealiiParallel.h"
 #include "TriangulationDealiiSerial.h"
 #include "FECellDealii.h"
+#include <deal.II/fe/mapping_q1.h>
 
 
 namespace dftefe
