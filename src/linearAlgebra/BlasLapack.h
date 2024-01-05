@@ -29,6 +29,9 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/TypeConfig.h>
+#define LAPACK_COMPLEX_CPP
+#define HAVE_LAPACK_CONFIG_H
+#include <lapack.hh>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -421,18 +424,18 @@ namespace dftefe
                             const size_type *                    lddc,
                             LinAlgOpContext<memorySpace> &       context);
 
-      //  /**
-      //   * @brief Matrix inversion
-      //   *
-      //   * @note: Assumes the matrix to be square (no pseudoinverse)
-      //   */
-      //  template <typename ValueType,
-      //            typename dftefe::utils::MemorySpace memorySpace>
-      //  void
-      //  inverse( const size_type                      n,
-      //           ValueType *                          A,
-      //           const size_type                      lda,
-      //           ValueType *                          ipiv);
+       /**
+        * @brief Matrix inversion
+        *
+        * @note: Assumes the matrix to be square (no pseudoinverse)
+        */
+       template <typename ValueType,
+                 typename dftefe::utils::MemorySpace memorySpace>
+       void
+       inverse( const size_type                      n,
+                ValueType *                          A,
+                const size_type                      lda,
+                ValueType *                          ipiv);
 
     } // namespace blasLapack
   }   // namespace linearAlgebra
