@@ -255,6 +255,9 @@ namespace dftefe
       int
       MPIFinalize(void);
 
+      double
+      MPIWtime(void);
+
       int
       MPIFinalized(int *flag);
 

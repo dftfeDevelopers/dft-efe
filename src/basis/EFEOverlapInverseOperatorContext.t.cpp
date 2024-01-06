@@ -28,15 +28,14 @@
 #include <cmath>
 #include <memory>
 #include <algorithm>
-#include <mkl.h>
+// #include <mkl.h>
 namespace dftefe
 {
   namespace basis
   {
-    namespace EFEBlockInverse
+    /*namespace EFEBlockInverse
     {
-      // extern "C"
-      // {
+      // Functions from intel MKL library
       //   // LU decomoposition of a general matrix
       //   void dgetrf(int* M, int *N, double* A, int* lda, int* IPIV, int*
       //   INFO);
@@ -44,7 +43,6 @@ namespace dftefe
       //   // generate inverse of a matrix given its LU decomposition
       //   void dgetri(int* N, double* A, int* lda, int* IPIV, double* WORK,
       //   int* lwork, int* INFO);
-      // }
 
       void
       inverse(double *A, int N)
@@ -60,7 +58,7 @@ namespace dftefe
         delete[] IPIV;
         delete[] WORK;
       }
-    } // namespace EFEBlockInverse
+    } // namespace EFEBlockInverse*/
 
     // Write M^-1 apply on a matrix for GLL with spectral finite element
     // M^-1 does not have a cell structure.
@@ -219,39 +217,18 @@ namespace dftefe
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      // do inversion
+      // do inversion of enrichment block using slate lapackpp
+      utils::MemoryStorage<size_type, memorySpace> ipiv(d_nglobalEnrichmentIds);
 
-      // utils::MemoryStorage<size_type, memorySpace>
-      // ipiv(d_nglobalEnrichmentIds);
+      linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
+        d_nglobalEnrichmentIds,
+        basisOverlapEnrichmentBlockSTL.data(),
+        d_nglobalEnrichmentIds,
+        ipiv.data());
 
-      // linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
-      // d_nglobalEnrichmentIds,
-      // d_basisOverlapEnrichmentBlock.data(),
-      // d_nglobalEnrichmentIds,
-      // ipiv.data());
-
-      // std::cout << "Enrichment Block : \n";
-      // int cc = 0;
-      // for (auto i : basisOverlapEnrichmentBlockSTL)
-      // {
-      //   if(cc % d_nglobalEnrichmentIds == 0)
-      //   std::cout << "\n";
-      //   std::cout << i << " ";
-      //   cc+=1;
-      // }
-
+      /* do inversion of enrichment block using intel mkl
       EFEBlockInverse::inverse(basisOverlapEnrichmentBlockSTL.data(),
-                               d_nglobalEnrichmentIds);
-
-      // std::cout << "Enrichment Inverse Block : \n";
-      // cc = 0;
-      // for (auto i : basisOverlapEnrichmentBlockSTL)
-      // {
-      //   if(cc % d_nglobalEnrichmentIds == 0)
-      //   std::cout << "\n";
-      //   std::cout << i << " ";
-      //   cc+=1;
-      // }
+                                d_nglobalEnrichmentIds);*/
 
       d_basisOverlapEnrichmentBlock
         ->template copyFrom<utils::MemorySpace::HOST>(
@@ -299,18 +276,6 @@ namespace dftefe
         d_nglobalEnrichmentIds * numComponents),
         XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
         YenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents);
-      // std::vector<ValueTypeOperand>
-      // XenrichedGlobalVecSTL(d_nglobalEnrichmentIds*numComponents,0),
-      //   XenrichedGlobalVecSTLTmp(d_nglobalEnrichmentIds*numComponents,0);
-
-      // for ( size_type i = 0 ; i < X.locallyOwnedSize() ; i++)
-      // {
-      //   std::pair<global_size_type, size_type> pair =
-      //   X.getMPIPatternP2P()->localToGlobalAndRangeId(i); if(pair.second ==
-      //   1) for ( size_type j = 0 ; j < numComponents ; j++ )
-      //     *(XenrichedGlobalVecSTLTmp.data() + pair.first * numComponents + j)
-      //     = *(X.data() + i*numComponents + j);
-      // }
 
       XenrichedGlobalVecTmp.template copyFrom<memorySpace>(
         X.begin(),
@@ -354,19 +319,6 @@ namespace dftefe
           YenrichedGlobalVec.begin(),
           numComponents,
           *d_linAlgOpContext);
-
-      // utils::MemoryStorage<ValueTypeOperand, memorySpace>
-      // YenrichedLocallyOwnedVec(nlocallyOwnedEnrichmentIds*numComponents);
-
-      // for ( size_type i = 0 ; i < Y.locallyOwnedSize() ; i++)
-      // {
-      //   std::pair<global_size_type, size_type> pair =
-      //   Y.getMPIPatternP2P()->localToGlobalAndRangeId(i); if(pair.second ==
-      //   1) for ( size_type j = 0 ; j < numComponents ; j++ )
-      //     *(YenrichedLocallyOwnedVec.data() + i*numComponents + j) =
-      //     *(YenrichedGlobalVec.data() + pair.first * numComponents + j);
-      // }
-
 
       YenrichedGlobalVec.template copyTo<memorySpace>(
         Y.begin(),
