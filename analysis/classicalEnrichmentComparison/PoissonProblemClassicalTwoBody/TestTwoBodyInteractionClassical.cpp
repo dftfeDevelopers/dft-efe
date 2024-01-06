@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
   // Read the parameter files and atom coordinate files
   std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
-  std::string atomDataFile = "TwoSmearedCharge.in";
+  std::string atomDataFile = "TwoSmearedCharge_dist3.in";
   std::string paramDataFile = argv[1];
   std::string inputFileName = sourceDir + atomDataFile;
   std::string parameterInputFileName = sourceDir + paramDataFile;

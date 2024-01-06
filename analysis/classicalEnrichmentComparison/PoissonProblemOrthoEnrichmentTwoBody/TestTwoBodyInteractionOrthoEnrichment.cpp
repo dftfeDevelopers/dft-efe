@@ -153,7 +153,8 @@ int main(int argc, char** argv)
 
   // Read the parameter files and atom coordinate files
   std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
-  std::string atomDataFile = "TwoSmearedCharge.in";
+  std::string atomDataFile = "TwoSmearedCharge_dist3.in";
+  std::string enrichmentDataFile = "SmearedCharge0.001Uniform_rc1.2_cutoff3_sm0.6.xml";
   std::string paramDataFile = argv[1];
   std::string inputFileName = sourceDir + atomDataFile;
   std::string parameterInputFileName = sourceDir + paramDataFile;
@@ -236,7 +237,7 @@ int main(int argc, char** argv)
   std::map<std::string, std::string> atomSymbolToFilename;
   for (auto i:atomSymbolVec )
   {
-      atomSymbolToFilename[i] = sourceDir + i + ".xml";
+      atomSymbolToFilename[i] = sourceDir + enrichmentDataFile;
   }
 
   std::vector<std::string> fieldNames{"vnuclear"};
