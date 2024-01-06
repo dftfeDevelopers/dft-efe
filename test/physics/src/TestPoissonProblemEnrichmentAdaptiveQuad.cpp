@@ -445,7 +445,7 @@ int main()
                                                     dftefe::utils::MemorySpace::HOST,
                                                     dim>>
                                                     (basisHandler,
-                                                    feBasisOp,
+                                                    feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
                                                     constraintHanging,
