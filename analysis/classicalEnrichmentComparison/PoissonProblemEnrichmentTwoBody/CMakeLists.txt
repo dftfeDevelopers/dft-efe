@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.20)
+project(poisson_problem_comprison)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
+message(${MAIN_PROJECT_DIR})
+
+include_directories(${MAIN_PROJECT_DIR}/src)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/basis/lib/buildUtils)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/lib/buildBasis)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/basis/lib/buildAtoms)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physics/lib/physics)
+
+if(ENABLE_MPI)
+	add_compile_definitions(DFTEFE_WITH_MPI)
+add_executable(TestPoissonProblemEnrichment /home/avirup/dft-efe/analysis/classicalEnrichmentComparison/PoissonProblemEnrichmentTwoBody/TestTwoBodyInteractionEnrichment.cpp)
+target_link_libraries(TestPoissonProblemEnrichment PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+endif()

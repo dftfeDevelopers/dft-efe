@@ -27,6 +27,7 @@
 #include "TriangulationDealiiParallel.h"
 #include "TriangulationDealiiSerial.h"
 #include "FECellDealii.h"
+#include <deal.II/fe/mapping_q1.h>
 
 
 namespace dftefe
@@ -37,7 +38,8 @@ namespace dftefe
     FEBasisManagerDealii<dim>::FEBasisManagerDealii(
       std::shared_ptr<const TriangulationBase> triangulation,
       const size_type                          feOrder)
-      : d_isHPRefined(false)
+      : d_isVariableDofsPerCell(false)
+      , d_totalRanges(1)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       reinit(triangulation, feOrder);
@@ -241,9 +243,9 @@ namespace dftefe
 
     template <size_type dim>
     bool
-    FEBasisManagerDealii<dim>::isHPRefined() const
+    FEBasisManagerDealii<dim>::isVariableDofsPerCell() const
     {
-      return d_isHPRefined;
+      return d_isVariableDofsPerCell;
     }
 
     template <size_type dim>
@@ -295,7 +297,7 @@ namespace dftefe
     {
       std::vector<std::pair<global_size_type, global_size_type>> retValue(0);
       retValue.resize(1);
-      retValue[0].first = 0;
+      retValue[0].first  = 0;
       retValue[0].second = d_dofHandler->n_dofs();
       return retValue;
     }
@@ -441,12 +443,13 @@ namespace dftefe
       // is same for all cellId. As a result, we pass index
       // 0 to dealii's dofHandler
       //
-      if (d_isHPRefined)
-        {
-          utils::throwException(
-            false,
-            "Support for hp-refined finite element mesh is not supported yet.");
-        }
+      // if (d_isHPRefined)
+      //   {
+      //     utils::throwException(
+      //       false,
+      //       "Support for hp-refined finite element mesh is not supported
+      //       yet.");
+      //   }
 
       return d_dofHandler->get_fe(0);
     }
@@ -481,12 +484,11 @@ namespace dftefe
     }
 
     template <size_type dim>
-    std::vector<std::vector<global_size_type>>
-    FEBasisManagerDealii<dim>::getTriangulationBoundaryGlobalNodeIds() const
+    size_type
+    FEBasisManagerDealii<dim>::totalRanges() const
     {
-      return d_triangulationBoundaryGlobalNodeIds;
+      return d_totalRanges;
     }
-
 
   } // namespace basis
 } // namespace dftefe

@@ -27,7 +27,8 @@ namespace dftefe
       triangulationDealiiSerial->createSingleCellTriangulation(vertices);
       triangulationDealiiSerial->refineGlobal(1);
       triangulationDealiiSerial->finalizeTriangulationConstruction();
-      const size_type numberCells = triangulationDealiiSerial->nLocalCells();
+      const size_type numberCells =
+        triangulationDealiiSerial->nLocallyOwnedCells();
       std::vector<std::shared_ptr<const TriangulationCellBase>> returnValue(
         numberCells);
 

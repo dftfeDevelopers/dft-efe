@@ -111,14 +111,14 @@ namespace dftefe
        */
       void
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &Y) const override;
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const override;
 
       PreconditionerType
       getPreconditionerType() const override;
 
     private:
       Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-      PreconditionerType                       d_pcType;
+      PreconditionerType                     d_pcType;
     };
 
 

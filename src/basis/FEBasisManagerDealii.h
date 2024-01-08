@@ -64,7 +64,7 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) override;
+             const size_type                          feOrder);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -83,7 +83,7 @@ namespace dftefe
       nCellDofs(size_type cellId) const override;
 
       bool
-      isHPRefined() const override;
+      isVariableDofsPerCell() const override;
 
       size_type
       nLocalNodes() const override;
@@ -137,11 +137,14 @@ namespace dftefe
       unsigned int
       getDim() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocallyOwnedCellDofs() const override;
 
-      virtual size_type
+      size_type
       nCumulativeLocalCellDofs() const override;
+
+      size_type
+      totalRanges() const override;
 
       // This assumes a linear cell mapping
       void
@@ -163,12 +166,12 @@ namespace dftefe
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
-      bool                                     d_isHPRefined;
+      bool                                     d_isVariableDofsPerCell;
       std::vector<std::shared_ptr<FECellBase>> d_localCells;
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
-      std::vector<std::vector<global_size_type>> d_triangulationBoundaryGlobalNodeIds;
+      size_type d_totalRanges;
 
     }; // end of FEBasisManagerDealii
   }    // end of namespace basis

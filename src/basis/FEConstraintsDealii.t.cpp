@@ -143,10 +143,59 @@ namespace dftefe
       setInhomogeneousDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
     &boundaryValues)
     {
-      std::map<global_size_type, utils::Point> boundaryCoord;
-      d_feBasisManager->getBasisCenters(boundaryCoord);
+      dealii::IndexSet locallyRelevantDofs;
+      dealii::DoFTools::extract_locally_relevant_dofs(
+        *(d_feBasisManager->getDoFHandler()), locallyRelevantDofs);
 
-      for (auto nodeId : d_feBasisManager->getTriangulationBoundaryGlobalNodeIds()[0])
+      const unsigned int vertices_per_cell =
+        dealii::GeometryInfo<dim>::vertices_per_cell;
+      const unsigned int dofs_per_cell =
+        d_feBasisManager->getDoFHandler()->get_fe().dofs_per_cell;
+      const unsigned int faces_per_cell =
+        dealii::GeometryInfo<dim>::faces_per_cell;
+      const unsigned int dofs_per_face =
+        d_feBasisManager->getDoFHandler()->get_fe().dofs_per_face;
+
+      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
+      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
+
+      std::vector<bool> dofs_touched(d_feBasisManager->nGlobalNodes(), false);
+      auto              cell = d_feBasisManager->beginLocalCells(),
+           endc              = d_feBasisManager->endLocalCells();
+      for (; cell != endc; ++cell)
+        {
+          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+            {
+              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
+              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
+              if (boundaryId == 0)
+                {
+                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                       ++iFaceDof)
+                    {
+                      const dealii::types::global_dof_index nodeId =
+                        iFaceGlobalDofIndices[iFaceDof];
+                      if (dofs_touched[nodeId])
+                        continue;
+                      dofs_touched[nodeId] = true;
+                      if (!isConstrained(nodeId))
+                        {
+                          setInhomogeneity(nodeId, 0);
+                        } // non-hanging node check
+                    }     // Face dof loop
+                }
+            } // Face loop
+        }     // cell locally owned
+    }
+    /*
+        template <typename ValueTypeBasisCoeff,
+                  dftefe::utils::MemorySpace memorySpace,
+                  size_type                  dim>
+        void
+        FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+          setInhomogeneousDirichletBC(utils::ScalarSpatialFunctionReal
+       &boundaryValues)
         {
           if (!isConstrained(nodeId))
             {
@@ -551,17 +600,32 @@ namespace dftefe
               size_type                  dim>
     void
     FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      setConstrainedNodes(
+      setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
-        size_type blockSize,
-        ValueTypeBasisCoeff alpha) const
+        size_type blockSize) const
+    {
+      ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
+        constraintsSetConstrainedNodesToZero(vectorData,
+                                             blockSize,
+                                             d_rowConstraintsIdsLocal);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff                      alpha) const
     {
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsSetConstrainedNodes(vectorData,
-                                             blockSize,
-                                             d_rowConstraintsIdsLocal,
-                                             alpha);
+                                       blockSize,
+                                       d_rowConstraintsIdsLocal,
+                                       alpha);
     }
 
 

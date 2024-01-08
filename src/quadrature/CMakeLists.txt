@@ -1,7 +1,4 @@
 if (NOT TARGET dft-efe-quadrature)
-find_package(deal.II 9.3.0 REQUIRED)
-include_directories(${DEAL_II_INCLUDE_DIRS})
-
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,11 +27,15 @@ set(DFT-EFE-QUADRATURE-SOURCES
 
 add_library(dft-efe-quadrature SHARED ${DFT-EFE-QUADRATURE-SOURCES})
 
+find_package(deal.II 9.5.1 REQUIRED HINTS ${DEALII_PATH})
+target_include_directories(dft-efe-quadrature PUBLIC ${DEALII_PATH}/${DEAL_II_INCLUDE_RELDIR})
+target_link_libraries(dft-efe-quadrature PUBLIC dealii::dealii_release)
+#target_link_libraries (dft-efe-quadrature PUBLIC ${DEALII_PATH}/${DEAL_II_LIBRARY_RELDIR})
+
 if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
 
 include_directories(../)
-#target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils dft-efe-linalg ${DFTEFE_MPI_LIBRARIES})
 target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
 endif()

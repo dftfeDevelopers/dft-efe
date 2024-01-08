@@ -77,7 +77,8 @@ namespace dftefe
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
-      const MultiVector<ValueType, memorySpace> &b = linearSolverFunction.getRhs();
+      const MultiVector<ValueType, memorySpace> &b =
+        linearSolverFunction.getRhs();
 
       std::vector<double> bNorm(0);
       bNorm = b.l2Norms();
@@ -117,147 +118,154 @@ namespace dftefe
       //
       // CG loop
       //
-      std::vector<double> rNorm(numComponents , 0.0);
-      size_type precision = d_profiler.getPrecision();
-      Error     err       = Error::OTHER_ERROR;
-      size_type iter      = 0;
-      std::vector<bool> convergeFlag(0);
+      std::vector<double> rNorm(numComponents, 0.0);
+      size_type           precision = d_profiler.getPrecision();
+      Error               err       = Error::OTHER_ERROR;
+      size_type           iter      = 0;
+      std::vector<bool>   convergeFlag(0);
       convergeFlag.resize(numComponents, false);
-      bool divergeFlag = false;
-      bool allConverged = false;
+      bool                   divergeFlag  = false;
+      bool                   allConverged = false;
       std::vector<ValueType> ones(0);
       ones.resize(numComponents, (ValueType)1.0);
       std::vector<ValueType> nOnes(0);
       nOnes.resize(numComponents, (ValueType)-1.0);
 
       for (; iter <= d_maxIter; ++iter)
-      {
-        // register start of the iteration
-        d_profiler.registerIterStart(iter);
-        if (iter == 0)
         {
-          //
-          // @note: w is meant for storing Ap (p = search direction).
-          // However, for the 0-th iteration we use it to store Ax
-          // to avoid allocating memory for another Vector
-          AxContext.apply(x, w);
-          add(ones, b, nOnes, w, r); 
+          // register start of the iteration
+          d_profiler.registerIterStart(iter);
+          if (iter == 0)
+            {
+              //
+              // @note: w is meant for storing Ap (p = search direction).
+              // However, for the 0-th iteration we use it to store Ax
+              // to avoid allocating memory for another Vector
+              AxContext.apply(x, w);
+              add(ones, b, nOnes, w, r);
 
-          //
-          // z = preconditioned r
-          //
-          pcContext.apply(r, z);
+              //
+              // z = preconditioned r
+              //
+              pcContext.apply(r, z);
 
-          //
-          // p = z
-          //
-          p = z;
+              //
+              // p = z
+              //
+              p = z;
 
-          // for (unsigned int h = 0 ; h < z.locallyOwnedSize() ; h++)
-          // {
-          //   std::cout << "z[" <<iter << "," << h <<"] : "<< *(z.data()+h) << ",";
-          // }
-        }
+              // for (unsigned int h = 0 ; h < z.locallyOwnedSize() ; h++)
+              // {
+              //   std::cout << "z[" <<iter << "," << h <<"] : "<< *(z.data()+h)
+              //   << ",";
+              // }
+            }
 
-        else
-        {
-          // w = Ap
-          AxContext.apply(p, w);
+          else
+            {
+              // w = Ap
+              AxContext.apply(p, w);
 
-          // z^Hr (dot product of z-conjugate and r)
-          std::vector<ValueType> zDotr(0);
-          dot(z,
-              r,
-              zDotr,
-              blasLapack::ScalarOp::Conj,
-              blasLapack::ScalarOp::Identity);
+              // z^Hr (dot product of z-conjugate and r)
+              std::vector<ValueType> zDotr(0);
+              dot(z,
+                  r,
+                  zDotr,
+                  blasLapack::ScalarOp::Conj,
+                  blasLapack::ScalarOp::Identity);
 
-          // p^Hw (dot product of p-conjugate and w)
-          std::vector<ValueType> pDotw(0);
-          dot(p,
-              w,
-              pDotw,
-              blasLapack::ScalarOp::Conj,
-              blasLapack::ScalarOp::Identity);
+              // p^Hw (dot product of p-conjugate and w)
+              std::vector<ValueType> pDotw(0);
+              dot(p,
+                  w,
+                  pDotw,
+                  blasLapack::ScalarOp::Conj,
+                  blasLapack::ScalarOp::Identity);
 
-          //ValueType alpha = zDotr / pDotw;
-          std::vector<ValueType> alpha(0), nAlpha(0);
-          for (size_type i = 0 ; i < numComponents ; i++)
-          {
-            alpha.push_back(zDotr[i] / pDotw[i]);
-            nAlpha.push_back(-zDotr[i] / pDotw[i]);
-          }
+              // ValueType alpha = zDotr / pDotw;
+              std::vector<ValueType> alpha(0), nAlpha(0);
+              for (size_type i = 0; i < numComponents; i++)
+                {
+                  alpha.push_back(zDotr[i] / pDotw[i]);
+                  nAlpha.push_back(-zDotr[i] / pDotw[i]);
+                }
 
-          // x = x + alpha*p
-          add(ones, x, alpha, p, x); 
+              // x = x + alpha*p
+              add(ones, x, alpha, p, x);
 
-          // r = r - alpha*w
-          add(ones, r, nAlpha, w, r); 
+              // r = r - alpha*w
+              add(ones, r, nAlpha, w, r);
 
-          // z = preconditioned r
-          pcContext.apply(r, z);
+              // z = preconditioned r
+              pcContext.apply(r, z);
 
-          // updated z^Hr (dot product of new z-conjugate and r)
-          std::vector<ValueType> zDotrNew(0);
-          dot(z,
-              r,
-              zDotrNew,
-              blasLapack::ScalarOp::Conj,
-              blasLapack::ScalarOp::Identity);
+              // updated z^Hr (dot product of new z-conjugate and r)
+              std::vector<ValueType> zDotrNew(0);
+              dot(z,
+                  r,
+                  zDotrNew,
+                  blasLapack::ScalarOp::Conj,
+                  blasLapack::ScalarOp::Identity);
 
-          //ValueType beta = zDotrNew / zDotr;
-          std::vector<ValueType> beta(0);
-          for (size_type i = 0 ; i < numComponents ; i++)
-            beta.push_back(zDotrNew[i] / zDotr[i]);
+              // ValueType beta = zDotrNew / zDotr;
+              std::vector<ValueType> beta(0);
+              for (size_type i = 0; i < numComponents; i++)
+                beta.push_back(zDotrNew[i] / zDotr[i]);
 
-          // p = z + beta*p
-          add(ones, z, beta, p, p); 
-        }
+              // p = z + beta*p
+              add(ones, z, beta, p, p);
+            }
 
-        std::vector<double> rNorm(0);
-        rNorm = r.l2Norms();
+          std::vector<double> rNorm(0);
+          rNorm = r.l2Norms();
 
-        for(unsigned int i = 0 ; i < numComponents ; i++ )
-          std::cout << rNorm[i] << ",";
-        std::cout << "\n";
+          for (unsigned int i = 0; i < numComponents; i++)
+            std::cout << rNorm[i] << ",";
+          std::cout << "\n";
 
-        std::string msg;
-        for (size_type i = 0 ; i < numComponents ; i++ )
-        {
-          if (rNorm[i] < std::max(d_absoluteTol, bNorm[i] * d_relativeTol) && convergeFlag[i]==false)
-          {
-            err = Error::SUCCESS;
-            convergeFlag[i] = true;
-            //copy x to xConverged of the ith comp vector
-            for(size_type j = 0 ; j < x.locallyOwnedSize() ; j++)
-            *(xConverged.data() + j*numComponents + i) = *(x.data() + j*numComponents + i);
-          }
+          std::string msg;
+          for (size_type i = 0; i < numComponents; i++)
+            {
+              if (rNorm[i] <
+                    std::max(d_absoluteTol, bNorm[i] * d_relativeTol) &&
+                  convergeFlag[i] == false)
+                {
+                  err             = Error::SUCCESS;
+                  convergeFlag[i] = true;
+                  // copy x to xConverged of the ith comp vector
+                  for (size_type j = 0; j < x.locallyOwnedSize(); j++)
+                    *(xConverged.data() + j * numComponents + i) =
+                      *(x.data() + j * numComponents + i);
+                }
 
-          if (rNorm[i] > d_divergenceTol && divergeFlag==false)
-          {
-            err = Error::RESIDUAL_DIVERGENCE;
-            divergeFlag = true;
-          }
+              if (rNorm[i] > d_divergenceTol && divergeFlag == false)
+                {
+                  err         = Error::RESIDUAL_DIVERGENCE;
+                  divergeFlag = true;
+                }
 
-        msg = "CGLinearSolver[" + std::to_string(iter) + "]";
-        msg +=
-          " Abs. residual: " +
-          CGLinearSolverInternal::toStringWithPrecision(rNorm[i], precision);
-        msg += " Rel. residual: " +
-                CGLinearSolverInternal::toStringWithPrecision(rNorm[i] / bNorm[i],
-                                                              precision);
-        msg += "For Vector Component No: " + i;
-        }
+              msg = "CGLinearSolver[" + std::to_string(iter) + "]";
+              msg += " Abs. residual: " +
+                     CGLinearSolverInternal::toStringWithPrecision(rNorm[i],
+                                                                   precision);
+              msg += " Rel. residual: " +
+                     CGLinearSolverInternal::toStringWithPrecision(rNorm[i] /
+                                                                     bNorm[i],
+                                                                   precision);
+              msg += "For Vector Component No: " + i;
+            }
 
-        if ( std::all_of(convergeFlag.begin(), convergeFlag.end(), [](bool boolVal){return boolVal;}) )
+          if (std::all_of(convergeFlag.begin(),
+                          convergeFlag.end(),
+                          [](bool boolVal) { return boolVal; }))
             allConverged = true;
 
-        if(divergeFlag || allConverged)
-          break;
+          if (divergeFlag || allConverged)
+            break;
 
-        // register end of the iteration
-        d_profiler.registerIterEnd(msg);
-      }
+          // register end of the iteration
+          d_profiler.registerIterEnd(msg);
+        }
 
       linearSolverFunction.setSolution(xConverged);
 

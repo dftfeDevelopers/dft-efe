@@ -45,6 +45,8 @@ namespace dftefe
       executeCoarseningAndRefinement() = 0;
       virtual unsigned int
       nLocallyOwnedCells() const = 0;
+      virtual double
+      maxCellDiameter() const = 0; // Test this for mpi triangulation
       virtual unsigned int
       nLocalCells() const = 0;
       virtual size_type
@@ -63,6 +65,8 @@ namespace dftefe
       endLocal() const = 0;
       virtual unsigned int
       getDim() const = 0;
+      virtual std::vector<bool>
+      getPeriodicFlags() const = 0;
 
     }; // end of class TriangulationBase
   }    // end of namespace basis

@@ -40,12 +40,11 @@ namespace dftefe
     {
       template <typename ValueType>
       __global__ void
-      gatherSendBufferDeviceKernel(
-        const size_type  totalFlattenedSize,
-        const size_type  blockSize,
-        const ValueType *dataArray,
-        const size_type *ownedLocalIndicesForTargetProcs,
-        ValueType *      sendBuffer)
+      gatherSendBufferDeviceKernel(const size_type  totalFlattenedSize,
+                                   const size_type  blockSize,
+                                   const ValueType *dataArray,
+                                   const size_type *localIndices,
+                                   ValueType *      sendBuffer)
       {
         const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
         for (size_type i = globalThreadId; i < totalFlattenedSize;
@@ -55,8 +54,7 @@ namespace dftefe
             const size_type intraBlockId = i - blockId * blockSize;
 
             sendBuffer[i] =
-              dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                        intraBlockId];
+              dataArray[localIndices[blockId] * blockSize + intraBlockId];
           }
       }
 
@@ -76,14 +74,35 @@ namespace dftefe
             const size_type blockId      = i / blockSize;
             const size_type intraBlockId = i - blockId * blockSize;
 
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId] =
-              dftefe::utils::add(
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId],
-                recvBuffer[i]);
+            // FIXME: would not complex ValueType, workaround with temporary
+            // real and imaginary double arrays needs to be implemented
+            atomicAdd(
+              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                         intraBlockId],
+              recvBuffer[i]);
           }
       }
+
+      template <typename ValueType>
+      __global__ void
+      insertFromRecvBufferDeviceKernel(const size_type  totalFlattenedSize,
+                                       const size_type  blockSize,
+                                       const ValueType *recvBuffer,
+                                       const size_type *ghostLocalIndices,
+                                       ValueType *      dataArray)
+      {
+        const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+        for (size_type i = globalThreadId; i < totalFlattenedSize;
+             i += blockDim.x * gridDim.x)
+          {
+            const size_type blockId      = i / blockSize;
+            const size_type intraBlockId = i - blockId * blockSize;
+
+            dataArray[ghostLocalIndices[blockId] * blockSize + intraBlockId] =
+              recvBuffer[i];
+          }
+      }
+
     } // namespace
 
     template <typename ValueType>
@@ -99,11 +118,32 @@ namespace dftefe
       gatherSendBufferDeviceKernel<<<
         ownedLocalIndicesForTargetProcs.size() / dftefe::utils::BLOCK_SIZE + 1,
         dftefe::utils::BLOCK_SIZE>>>(
-        ownedLocalIndicesForTargetProcs.size(),
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
+        dftefe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
+    }
+
+    template <typename ValueType>
+    void
+    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
+      gatherLocallyGhostEntriesSendBufferToGhostProcs(
+        const ValueType *dataArray,
+        const MemoryStorage<size_type, utils::MemorySpace::DEVICE>
+          &             ghostLocalIndicesForGhostProcs,
+        const size_type blockSize,
+        MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &sendBuffer)
+    {
+      gatherSendBufferDeviceKernel<<<
+        ghostLocalIndicesForGhostProcs.size() / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
+        ghostLocalIndicesForGhostProcs.size() * blockSize,
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(dataArray),
+        dftefe::utils::makeDataTypeDeviceCompatible(
+          ghostLocalIndicesForGhostProcs.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
     }
 
@@ -121,7 +161,7 @@ namespace dftefe
       accumAddFromRecvBufferDeviceKernel<<<
         ownedLocalIndicesForTargetProcs.size() / dftefe::utils::BLOCK_SIZE + 1,
         dftefe::utils::BLOCK_SIZE>>>(
-        ownedLocalIndicesForTargetProcs.size(),
+        ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
         dftefe::utils::makeDataTypeDeviceCompatible(
@@ -129,6 +169,26 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
     }
 
+
+    template <typename ValueType>
+    void
+    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
+      insertLocalGhostValuesRecvBufferFromGhostProcs(
+        const MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &recvBuffer,
+        const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
+          &             ghostLocalIndices,
+        const size_type blockSize,
+        ValueType *     dataArray)
+    {
+      insertFromRecvBufferDeviceKernel<<<
+        ghostLocalIndices.size() / dftefe::utils::BLOCK_SIZE + 1,
+        dftefe::utils::BLOCK_SIZE>>>(
+        ghostLocalIndices.size() * blockSize,
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
+        dftefe::utils::makeDataTypeDeviceCompatible(ghostLocalIndices.data()),
+        dftefe::utils::makeDataTypeDeviceCompatible(dataArray));
+    }
 
     template class MPICommunicatorP2PKernels<
       double,

@@ -29,6 +29,9 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/TypeConfig.h>
+#define LAPACK_COMPLEX_CPP
+#define HAVE_LAPACK_CONFIG_H
+#include <lapack.hh>
 namespace dftefe
 {
   namespace linearAlgebra
@@ -139,24 +142,24 @@ namespace dftefe
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context);
 
-     //    /*
-     //     * @brief Template for performing \f$ blockedOutput_ij = blockedInput_ij * singleVectorInput_i$
-     //     * @param[in] size size of the blocked Input array
-     //     * @param[in] numComponets no of componets
-     //     * @param[in] blockedInput blocked array
-     //     * @param[in] singleVectorInput array
-     //     * @param[out] blockedOutput blocked array
-     //     */
-     //  template <typename ValueType1,
-     //            typename ValueType2,
-     //            typename dftefe::utils::MemorySpace memorySpace>
-     //    void
-     //    blockedHadamardProduct(const size_type                     n,
-     //                    const size_type                      blockSize,
-     //                    const ValueType1 *                   blockedInput,
-     //                    const ValueType2 *                   singleVectorInput,
-     //                    scalar_type<ValueType1, ValueType2> *blockedOutput,
-     //                    LinAlgOpContext<memorySpace> &       context);
+      //    /*
+      //     * @brief Template for performing \f$ blockedOutput_ij = blockedInput_ij * singleVectorInput_i$
+      //     * @param[in] size size of the blocked Input array
+      //     * @param[in] numComponets no of componets
+      //     * @param[in] blockedInput blocked array
+      //     * @param[in] singleVectorInput array
+      //     * @param[out] blockedOutput blocked array
+      //     */
+      //  template <typename ValueType1,
+      //            typename ValueType2,
+      //            typename dftefe::utils::MemorySpace memorySpace>
+      //    void
+      //    blockedHadamardProduct(const size_type                     n,
+      //                    const size_type                      blockSize,
+      //                    const ValueType1 *                   blockedInput,
+      //                    const ValueType2 * singleVectorInput,
+      //                    scalar_type<ValueType1, ValueType2> *blockedOutput,
+      //                    LinAlgOpContext<memorySpace> &       context);
 
 
       /**
@@ -249,14 +252,14 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      transposedKhatriRaoProduct(const Layout               layout,
-                       size_type                            sizeI,
-                       size_type                            sizeJ,
-                       size_type                            sizeK,
-                       const ValueType1 *                   A,
-                       const ValueType2 *                   B,
-                       scalar_type<ValueType1, ValueType2> *Z,
-                       LinAlgOpContext<memorySpace> &       context);
+      transposedKhatriRaoProduct(const Layout                         layout,
+                                 size_type                            sizeI,
+                                 size_type                            sizeJ,
+                                 size_type                            sizeK,
+                                 const ValueType1 *                   A,
+                                 const ValueType2 *                   B,
+                                 scalar_type<ValueType1, ValueType2> *Z,
+                                 LinAlgOpContext<memorySpace> &       context);
 
 
       /**
@@ -293,14 +296,14 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      axpbyBlocked(const size_type                      n,
-            const size_type                      blockSize,
-            const scalar_type<ValueType1, ValueType2> *  alpha,
-            const ValueType1 *                   x,
-            const scalar_type<ValueType1, ValueType2> *  beta,
-            const ValueType2 *                   y,
-            scalar_type<ValueType1, ValueType2> *z,
-            LinAlgOpContext<memorySpace> &       context);
+      axpbyBlocked(const size_type                            n,
+                   const size_type                            blockSize,
+                   const scalar_type<ValueType1, ValueType2> *alpha,
+                   const ValueType1 *                         x,
+                   const scalar_type<ValueType1, ValueType2> *beta,
+                   const ValueType2 *                         y,
+                   scalar_type<ValueType1, ValueType2> *      z,
+                   LinAlgOpContext<memorySpace> &             context);
 
 
       template <typename ValueType1,
@@ -420,6 +423,20 @@ namespace dftefe
                             scalar_type<ValueType1, ValueType2> *dC,
                             const size_type *                    lddc,
                             LinAlgOpContext<memorySpace> &       context);
+
+      /**
+       * @brief Matrix inversion
+       *
+       * @note: Assumes the matrix to be square (no pseudoinverse)
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      inverse(const size_type n,
+              ValueType *     A,
+              const size_type lda,
+              ValueType *     ipiv);
+
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe

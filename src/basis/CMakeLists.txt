@@ -25,19 +25,24 @@ set(DFT-EFE-BASIS-SOURCES
 	EFEBasisManagerDealii.cpp
 	FEBasisOperations.cpp
 	AtomIdsPartition.cpp
-	EnrichmentIdsPartition.cpp)
+	EnrichmentIdsPartition.cpp
+	FEOverlapOperatorContext.cpp
+	EFEOverlapOperatorContext.cpp
+	EnrichmentClassicalInterfaceSpherical.cpp
+	L2ProjectionLinearSolverFunction.cpp
+	Defaults.cpp
+	FEOverlapInverseOperatorContext.cpp
+	EFEOverlapInverseOperatorContext.cpp
+	)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
 include_directories(../)
 
-find_package(deal.II 9.3.0 REQUIRED HINTS ${DEALII_PATH})
-target_include_directories(dft-efe-basis PUBLIC ${DEAL_II_INCLUDE_DIRS})
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-	target_link_libraries (dft-efe-basis PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
-ELSE()
-	target_link_libraries (dft-efe-basis PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
-ENDIF()
+find_package(deal.II 9.5.1 REQUIRED HINTS ${DEALII_PATH})
+target_include_directories(dft-efe-basis PUBLIC ${DEALII_PATH}/${DEAL_II_INCLUDE_RELDIR})
+target_link_libraries (dft-efe-basis PUBLIC dealii::dealii_release)
+#target_link_libraries (dft-efe-basis PUBLIC ${DEALII_PATH}/lib)
 
 
 if(ENABLE_MPI)
@@ -66,5 +71,4 @@ if (NOT TARGET dft-efe-atoms)
 endif()
 
 target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms ${DFTEFE_MPI_LIBRARIES})
-#target_link_libraries(dft-efe-basis PUBLIC dft-efe-utils dft-efe-quadrature ${DFTEFE_MPI_LIBRARIES})
 endif()

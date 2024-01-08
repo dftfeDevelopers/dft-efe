@@ -29,55 +29,69 @@
 #include "FECellDealii.h"
 #include <utils/Point.h>
 #include <utils/PointImpl.h>
+#include <basis/FEConstraintsBase.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <quadrature/QuadratureRuleContainer.h>
+#include <quadrature/QuadratureAttributes.h>
+#include "FEBasisManagerDealii.h"
+#include "FEConstraintsDealii.h"
+#include "FEBasisDataStorageDealii.h"
+#include "FEBasisHandlerDealii.h"
 
 
 namespace dftefe
 {
   namespace basis
   {
-    template <size_type dim>
-    EFEBasisManagerDealii<dim>::EFEBasisManagerDealii(
-      std::shared_ptr<const TriangulationBase> triangulation,
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                       atomSphericalDataContainer,
-      const size_type                  feOrder,
-      const double                     atomPartitionTolerance,
-      const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> & atomCoordinatesVec,
-      const std::string                fieldName,
-      const utils::mpi::MPIComm &      comm)
-      : d_isHPRefined(false)
-      , d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbolVec)
-      , d_atomCoordinatesVec(0, utils::Point(dim, 0.0))
-      , d_fieldName(fieldName)
-      , d_comm(comm)
-      , d_atomPartitionTolerance(atomPartitionTolerance)
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      EFEBasisManagerDealii(
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisData,
+          memorySpace,
+          dim>>         EnrichmentClassicalInterface,
+        const size_type feOrder)
+      : d_isVariableDofsPerCell(true)
+      , d_totalRanges(2) // Classical and Enriched
       , d_overlappingEnrichmentIdsInCells(0)
       , d_locallyOwnedRanges(0)
       , d_globalRanges(0)
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
-      , d_atomIdsPartition(nullptr)
     {
-      d_atomCoordinatesVec = atomCoordinatesVec;
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
-      d_totalRanges = 2; // Classical and Enriched
       // making the classical and enriched dofs in the dealii mesh here
-      reinit(triangulation, feOrder);
+      reinit(EnrichmentClassicalInterface, feOrder);
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     void
-    EFEBasisManagerDealii<dim>::reinit(
-      std::shared_ptr<const TriangulationBase> triangulation,
-      const size_type                          feOrder)
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::reinit(
+      std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+        ValueTypeBasisData,
+        memorySpace,
+        dim>>         enrichmentClassicalInterface,
+      const size_type feOrder)
     {
       // Create Classical FE dof_handler
+      d_enrichClassIntfce = enrichmentClassicalInterface;
+      d_isOrthogonalized  = enrichmentClassicalInterface->isOrthgonalized();
+      d_atomSphericalDataContainer =
+        enrichmentClassicalInterface->getAtomSphericalDataContainer();
+      d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
+      d_atomCoordinatesVec =
+        enrichmentClassicalInterface->getAtomCoordinatesVec();
+      d_fieldName = enrichmentClassicalInterface->getFieldName();
       dealii::FE_Q<dim>                       feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
         dynamic_cast<const TriangulationDealiiParallel<dim> *>(
-          triangulation.get());
+          enrichmentClassicalInterface->getTriangulation().get());
+
+      // TODO - If remeshing then update triangulation
 
       if (!(dealiiParallelTria == nullptr))
         {
@@ -90,7 +104,7 @@ namespace dftefe
         {
           const TriangulationDealiiSerial<dim> *dealiiSerialTria =
             dynamic_cast<const TriangulationDealiiSerial<dim> *>(
-              triangulation.get());
+              enrichmentClassicalInterface->getTriangulation().get());
 
           if (!(dealiiSerialTria == nullptr))
             {
@@ -106,9 +120,6 @@ namespace dftefe
                 "reinit() in EFEBasisManagerDealii is not able to re cast the Triangulation.");
             }
         }
-
-      // TODO check how to pass the triangulation to dofHandler
-      d_triangulation = triangulation;
 
       typename dealii::DoFHandler<dim>::active_cell_iterator cell =
         d_dofHandler->begin_active();
@@ -138,103 +149,46 @@ namespace dftefe
             d_localCells.push_back(cellDealii);
           }
 
-      //----------------ADD ENRICHEMNT FUNCTIONALITY
-      //--------------------------------------------------------//
-
-      // Add enriched FE dofs with on top of the classical dofs.
-      // Note that the enriched FE dofs are already partitioned elswhere
-      // This implies we pass mpi communicator here also.
-      // So we only work with local enrichement ids which are created.
-
-      std::vector<utils::Point>              cellVertices(0, utils::Point(dim, 0.0));
-      std::vector<std::vector<utils::Point>> cellVerticesVector(0);
-      cell = d_dofHandler->begin_active();
-
-      for (; cell != endc; cell++)
-        if (cell->is_locally_owned())
-          {
-            std::shared_ptr<FECellDealii<dim>> cellDealii =
-              std::make_shared<FECellDealii<dim>>(cell);
-
-            cellDealii->getVertices(cellVertices);
-            cellVerticesVector.push_back(cellVertices);
-          }
-
-      std::vector<double> minbound;
-      std::vector<double> maxbound;
-      maxbound.resize(dim, 0);
-      minbound.resize(dim, 0);
-
-      for (unsigned int k = 0; k < dim; k++)
-        {
-          double maxtmp = -DBL_MAX, mintmp = DBL_MAX;
-          auto   cellIter = cellVerticesVector.begin();
-          for (; cellIter != cellVerticesVector.end(); ++cellIter)
-            {
-              auto cellVertices = cellIter->begin();
-              for (; cellVertices != cellIter->end(); ++cellVertices)
-                {
-                  if (maxtmp <= *(cellVertices->begin() + k))
-                    maxtmp = *(cellVertices->begin() + k);
-                  if (mintmp >= *(cellVertices->begin() + k))
-                    mintmp = *(cellVertices->begin() + k);
-                }
-            }
-          maxbound[k] = maxtmp;
-          minbound[k] = mintmp;
-        }
-
-      //Create atomIdsPartition Object.
-      d_atomIdsPartition =
-        std::make_shared<const AtomIdsPartition<dim>>(d_atomCoordinatesVec,
-                                                      minbound,
-                                                      maxbound,
-                                                      cellVerticesVector,
-                                                      d_atomPartitionTolerance,
-                                                      d_comm);
-
-      //Create enrichmentIdsPartition Object.
       d_enrichmentIdsPartition =
-        std::make_shared<const EnrichmentIdsPartition<dim>>(
-          d_atomSphericalDataContainer,
-          d_atomIdsPartition,
-          d_atomSymbolVec,
-          d_atomCoordinatesVec,
-          d_fieldName,
-          minbound,
-          maxbound,
-          cellVerticesVector,
-          d_comm);
+        d_enrichClassIntfce->getEnrichmentIdsPartition();
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
       // populate the global ranges range.The range would be as follows,
-      // The order is chosen as : Classical Ranges, Enrichment Range1, Enrichment Range2 ,.... 
+      // The order is chosen as : Classical Ranges, Enrichment Range1,
+      // Enrichment Range2 ,....
       d_globalRanges.resize(d_totalRanges);
-      d_globalRanges[0].first = 0;
+      d_globalRanges[0].first  = 0;
       d_globalRanges[0].second = d_dofHandler->n_dofs();
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
-      {
-        d_globalRanges[rangeId].first = d_globalRanges[rangeId-1].second;
-        d_globalRanges[rangeId].second = d_globalRanges[rangeId].first + d_enrichmentIdsPartition->nTotalEnrichmentIds();
-      }
+      for (unsigned int rangeId = 1; rangeId < d_totalRanges; rangeId++)
+        {
+          d_globalRanges[rangeId].first = d_globalRanges[rangeId - 1].second;
+          d_globalRanges[rangeId].second =
+            d_globalRanges[rangeId].first +
+            d_enrichmentIdsPartition->nTotalEnrichmentIds();
+        }
 
       // populate the locally owned ranges range.The range would be as follows,
-      // The order is chosen as : Classical Ranges, Enrichment Range1, Enrichment Range2 ,.... 
+      // The order is chosen as : Classical Ranges, Enrichment Range1,
+      // Enrichment Range2 ,....
       d_locallyOwnedRanges.resize(d_totalRanges);
-      auto  dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
       global_size_type startId        = *(dealiiIndexSet.begin());
-      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      global_size_type endId  = startId + d_dofHandler->n_locally_owned_dofs();
       d_locallyOwnedRanges[0] = std::make_pair(startId, endId);
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
-      {
-        d_locallyOwnedRanges[rangeId].first = d_globalRanges[0].second + d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().first;
-        d_locallyOwnedRanges[rangeId].second = d_globalRanges[0].second + d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
-      }
+      for (unsigned int rangeId = 1; rangeId < d_totalRanges; rangeId++)
+        {
+          d_locallyOwnedRanges[rangeId].first =
+            d_globalRanges[0].second +
+            d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().first;
+          d_locallyOwnedRanges[rangeId].second =
+            d_globalRanges[0].second +
+            d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
+        }
 
       // shift the ghost enriched ids by the total classical dofs
-      for(auto i : d_enrichmentIdsPartition->ghostEnrichmentIds())
+      for (auto i : d_enrichmentIdsPartition->ghostEnrichmentIds())
         d_ghostEnrichmentGlobalIds.push_back(i + d_dofHandler->n_dofs());
 
       d_numCumulativeLocallyOwnedCellDofs = 0;
@@ -244,132 +198,15 @@ namespace dftefe
 
       for (size_type iCell = 0; iCell < d_localCells.size(); ++iCell)
         d_numCumulativeLocalCellDofs += nCellDofs(iCell);
-
-       // get boundary classical global node ids
-
-      const unsigned int dofs_per_cell =
-        getDoFHandler()->get_fe().dofs_per_cell;
-      const unsigned int faces_per_cell =
-        dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face =
-        getDoFHandler()->get_fe().dofs_per_face;
-
-      d_triangulationBoundaryGlobalNodeIds.resize(d_totalRanges);
-
-      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
-      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-
-      std::vector<bool> dofs_touched(getDoFHandler()->n_dofs(), false);
-
-      cell = d_dofHandler->begin_active();
-      endc = d_dofHandler->end();
-
-      for (; cell != endc; cell++)
-      {
-        if (cell->is_locally_owned())
-        {
-          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
-          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
-            {
-              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
-              if (boundaryId == 0)
-                {
-                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
-                       ++iFaceDof)
-                    {
-                      const dealii::types::global_dof_index nodeId =
-                        iFaceGlobalDofIndices[iFaceDof];
-                      if (dofs_touched[nodeId])
-                        continue;
-                      dofs_touched[nodeId] = true;
-                      d_triangulationBoundaryGlobalNodeIds[0].push_back(nodeId);
-                    }     // Face dof loop
-                }
-            } // Face loop
-        }     // cell locally owned
-      }
-
-      // get boundary enrichment global node ids assuming parallelopiped triangulation.
-      
-      std::vector<double>    minboundGlobal;
-      minboundGlobal.resize(dim);
-      std::vector<double>    maxboundGlobal;
-      maxboundGlobal.resize(dim);
-      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-        minbound.data(),
-        minboundGlobal.data(),
-        minbound.size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPIMin,
-        d_comm);
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-        maxbound.data(),
-        maxboundGlobal.data(),
-        maxbound.size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPIMax,
-        d_comm);
-      mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++)
-      {
-        for (global_size_type enrichmentId = d_locallyOwnedRanges[rangeId].first ;
-            enrichmentId < d_locallyOwnedRanges[rangeId].second ; 
-              enrichmentId++ )
-        {
-          size_type atomId =
-            d_enrichmentIdsPartition->getAtomId(enrichmentId);
-          size_type qNumberId =
-            (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-              enrichmentId)).localIdInAtom;
-          std::string      atomSymbol = d_atomSymbolVec[atomId];
-          utils::Point     origin(d_atomCoordinatesVec[atomId]);
-          std::vector<std::vector<int>> qNumbers(0);
-          qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                      d_fieldName);
-          auto sphericalData =
-            d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                          d_fieldName,
-                                                          qNumbers[qNumberId]);
-          double cutoff = sphericalData->getCutoff() +
-            sphericalData->getCutoff() /
-              sphericalData->getSmoothness();
-          
-          bool flag = false;
-          for(unsigned int i = 0 ; i < dim ; i++)
-          {
-            if(origin[i] - minboundGlobal[i] < cutoff || maxboundGlobal[i] - origin[i] < cutoff)
-            {
-              flag = true;
-              break;
-            }
-          }
-          if(flag)
-            d_triangulationBoundaryGlobalNodeIds[rangeId].push_back(enrichmentId);
-        }
-        if(!d_triangulationBoundaryGlobalNodeIds[rangeId].empty())
-        {
-          utils::throwException(
-            false,
-            "Non-Periodic problem cannot have enrichment ids cutting cuboidal triangulation boundary.");          
-        }
-      }
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     double
-    EFEBasisManagerDealii<dim>::getBasisFunctionValue(
-      const size_type     basisId,
-      const utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisFunctionValue(const size_type     basisId,
+                            const utils::Point &point) const
     {
       utils::throwException(
         false,
@@ -377,12 +214,14 @@ namespace dftefe
       return 0;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<double>
-    EFEBasisManagerDealii<dim>::getBasisFunctionDerivative(
-      const size_type     basisId,
-      const utils::Point &point,
-      const size_type     derivativeOrder) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisFunctionDerivative(const size_type     basisId,
+                                 const utils::Point &point,
+                                 const size_type     derivativeOrder) const
     {
       utils::throwException(
         false,
@@ -392,101 +231,139 @@ namespace dftefe
       return vecReturn;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::shared_ptr<const TriangulationBase>
-    EFEBasisManagerDealii<dim>::getTriangulation() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getTriangulation() const
     {
-      return d_triangulation;
+      return d_enrichClassIntfce->getTriangulation();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nLocalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocalCells()
+      const
     {
       return d_localCells.size();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nLocallyOwnedCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.size();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nGlobalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalCells()
+      const
     {
-      return d_triangulation->nGlobalCells();
+      return d_enrichClassIntfce->getTriangulation()->nGlobalCells();
     }
 
     // TODO put an assert condition to check if p refined is false
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::getFEOrder(size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getFEOrder(
+      size_type cellId) const
     {
       return (d_dofHandler->get_fe().degree);
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nCellDofs(size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nCellDofs(
+      size_type cellId) const
     {
       size_type classicalDofs = d_dofHandler->get_fe().n_dofs_per_cell();
       size_type enrichedDofs = d_overlappingEnrichmentIdsInCells[cellId].size();
       return (classicalDofs + enrichedDofs);
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     bool
-    EFEBasisManagerDealii<dim>::isHPRefined() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      isVariableDofsPerCell() const
     {
-      return d_isHPRefined;
+      return d_isVariableDofsPerCell;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nLocalNodes() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nLocalNodes()
+      const
     {
       global_size_type retValue = 0;
-      for (unsigned int rangeId = 0 ; rangeId < d_totalRanges ; rangeId++ )
-      {
-        retValue = retValue + d_locallyOwnedRanges[rangeId].second - d_locallyOwnedRanges[rangeId].first;
-      }
+      for (unsigned int rangeId = 0; rangeId < d_totalRanges; rangeId++)
+        {
+          retValue = retValue + d_locallyOwnedRanges[rangeId].second -
+                     d_locallyOwnedRanges[rangeId].first;
+        }
       return retValue;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     global_size_type
-    EFEBasisManagerDealii<dim>::nGlobalNodes() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::nGlobalNodes()
+      const
     {
       global_size_type retValue = 0;
-      for (unsigned int rangeId = 0 ; rangeId < d_totalRanges ; rangeId++ )
-      {
-        retValue = retValue + d_globalRanges[rangeId].second - d_globalRanges[rangeId].first;
-      }
+      for (unsigned int rangeId = 0; rangeId < d_totalRanges; rangeId++)
+        {
+          retValue = retValue + d_globalRanges[rangeId].second -
+                     d_globalRanges[rangeId].first;
+        }
       return retValue;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<dim>::getLocallyOwnedRanges() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getLocallyOwnedRanges() const
     {
       return d_locallyOwnedRanges;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::pair<global_size_type, global_size_type>>
-    EFEBasisManagerDealii<dim>::getGlobalRanges() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getGlobalRanges() const
     {
-       return d_globalRanges;
+      return d_globalRanges;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::map<BasisIdAttribute, size_type>
-    EFEBasisManagerDealii<dim>::getBasisAttributeToRangeIdMap() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisAttributeToRangeIdMap() const
     {
-      std::map<BasisIdAttribute, size_type> returnValue;
+      std::map<BasisIdAttribute, size_type>         returnValue;
       std::pair<global_size_type, global_size_type> classicalRange =
         d_locallyOwnedRanges[0];
       std::pair<global_size_type, global_size_type> enrichedRange =
@@ -509,9 +386,12 @@ namespace dftefe
       return returnValue;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<size_type>
-    EFEBasisManagerDealii<dim>::getLocalNodeIds(size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getLocalNodeIds(size_type cellId) const
     {
       utils::throwException(
         false,
@@ -521,9 +401,12 @@ namespace dftefe
       /// implement this now
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<size_type>
-    EFEBasisManagerDealii<dim>::getGlobalNodeIds() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getGlobalNodeIds() const
     {
       utils::throwException(
         false,
@@ -534,11 +417,13 @@ namespace dftefe
       /// implement this now
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     void
-    EFEBasisManagerDealii<dim>::getCellDofsGlobalIds(
-      size_type                      cellId,
-      std::vector<global_size_type> &vecGlobalNodeId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getCellDofsGlobalIds(size_type                      cellId,
+                           std::vector<global_size_type> &vecGlobalNodeId) const
     {
       std::vector<global_size_type> vecGlobalClassicalNodeId(0);
       vecGlobalNodeId.resize(nCellDofs(cellId), 0);
@@ -548,11 +433,11 @@ namespace dftefe
       d_locallyOwnedCells[cellId]->cellNodeIdtoGlobalNodeId(
         vecGlobalClassicalNodeId);
 
-      size_type classicalcount = 0, enrichedcount = 0;
+      size_type                     classicalcount = 0, enrichedcount = 0;
       std::vector<global_size_type> vecEnrichedNodeId(0);
       vecEnrichedNodeId = d_overlappingEnrichmentIdsInCells[cellId];
 
-      for (size_type count = 0 ; count < vecGlobalNodeId.size() ; count++)
+      for (size_type count = 0; count < vecGlobalNodeId.size(); count++)
         {
           if (count < d_dofHandler->get_fe().n_dofs_per_cell())
             {
@@ -561,15 +446,19 @@ namespace dftefe
             }
           else
             {
-              vecGlobalNodeId[count] = vecEnrichedNodeId[enrichedcount] + d_globalRanges[0].second;
+              vecGlobalNodeId[count] =
+                vecEnrichedNodeId[enrichedcount] + d_globalRanges[0].second;
               enrichedcount += 1;
             }
         }
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<size_type>
-    EFEBasisManagerDealii<dim>::getBoundaryIds() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBoundaryIds() const
     {
       utils::throwException(
         false,
@@ -578,65 +467,90 @@ namespace dftefe
       return vec;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<dim>::beginLocallyOwnedCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocallyOwnedCells()
     {
       return d_locallyOwnedCells.begin();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<dim>::endLocallyOwnedCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      endLocallyOwnedCells()
     {
       return d_locallyOwnedCells.end();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<dim>::beginLocallyOwnedCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.begin();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<dim>::endLocallyOwnedCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      endLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.end();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<dim>::beginLocalCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocalCells()
     {
       return d_localCells.begin();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisManagerDealii<dim>::endLocalCells()
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocalCells()
     {
       return d_localCells.end();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<dim>::beginLocalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      beginLocalCells() const
     {
       return d_localCells.begin();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisManagerDealii<dim>::endLocalCells() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::endLocalCells()
+      const
     {
       return d_localCells.end();
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     unsigned int
-    EFEBasisManagerDealii<dim>::getDim() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getDim() const
     {
       return dim;
     }
@@ -644,16 +558,22 @@ namespace dftefe
     //
     // dealii specific functions
     //
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::shared_ptr<const dealii::DoFHandler<dim>>
-    EFEBasisManagerDealii<dim>::getDoFHandler() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getDoFHandler()
+      const
     {
       return d_dofHandler;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     const dealii::FiniteElement<dim> &
-    EFEBasisManagerDealii<dim>::getReferenceFE(const size_type cellId) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::getReferenceFE(
+      const size_type cellId) const
     {
       //
       // NOTE: The implementation is only restricted to
@@ -661,19 +581,15 @@ namespace dftefe
       // is same for all cellId. As a result, we pass index
       // 0 to dealii's dofHandler
       //
-      if (d_isHPRefined)
-        {
-          utils::throwException(
-            false,
-            "Support for hp-refined finite element mesh is not supported yet.");
-        }
       return d_dofHandler->get_fe(0);
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     void
-    EFEBasisManagerDealii<dim>::getBasisCenters(
-      std::map<global_size_type, utils::Point> &dofCoords) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getBasisCenters(std::map<global_size_type, utils::Point> &dofCoords) const
     {
       // TODO if the creation of linear mapping is inefficient, then this has to
       // be improved
@@ -686,38 +602,53 @@ namespace dftefe
 
       // add for the enrichment case
 
-      for (unsigned int rangeId = 1 ; rangeId < d_totalRanges ; rangeId++ )
-      {
-        for (global_size_type i = d_locallyOwnedRanges[rangeId].first;
-            i < d_locallyOwnedRanges[rangeId].second;
-            i++)
-          dofCoords.insert({i,
-            d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(i-d_globalRanges[0].second)]});
-      }
+      for (unsigned int rangeId = 1; rangeId < d_totalRanges; rangeId++)
+        {
+          for (global_size_type i = d_locallyOwnedRanges[rangeId].first;
+               i < d_locallyOwnedRanges[rangeId].second;
+               i++)
+            dofCoords.insert(
+              {i,
+               d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(
+                 i - d_globalRanges[0].second)]});
+          for (auto i : d_ghostEnrichmentGlobalIds)
+            dofCoords.insert(
+              {i,
+               d_atomCoordinatesVec[d_enrichmentIdsPartition->getAtomId(
+                 i - d_globalRanges[0].second)]});
+        }
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nCumulativeLocallyOwnedCellDofs() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nCumulativeLocallyOwnedCellDofs() const
     {
       return d_numCumulativeLocallyOwnedCellDofs;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     size_type
-    EFEBasisManagerDealii<dim>::nCumulativeLocalCellDofs() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nCumulativeLocalCellDofs() const
     {
       return d_numCumulativeLocalCellDofs;
     }
 
     // Enrichment functions with dealii mesh. The enrichedid is the cell local
     // id.
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     double
-    EFEBasisManagerDealii<dim>::getEnrichmentValue(
-      const size_type             cellId,
-      const size_type             cellLocalEnrichmentId,
-      const dftefe::utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentValue(const size_type             cellId,
+                         const size_type             cellLocalEnrichmentId,
+                         const dftefe::utils::Point &point) const
     {
       double retValue = 0;
       if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
@@ -734,15 +665,14 @@ namespace dftefe
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                    enrichmentId))
                   .localIdInAtom;
-              std::string      atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point     origin(d_atomCoordinatesVec[atomId]);
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
               std::vector<std::vector<int>> qNumbers(0);
               qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
+                                                                   d_fieldName);
               auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers[qNumberId]);
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
               retValue = sphericalData->getValue(point, origin);
             }
           else
@@ -761,12 +691,14 @@ namespace dftefe
       return retValue;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<double>
-    EFEBasisManagerDealii<dim>::getEnrichmentDerivative(
-      const size_type             cellId,
-      const size_type             cellLocalEnrichmentId,
-      const dftefe::utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentDerivative(const size_type             cellId,
+                              const size_type             cellLocalEnrichmentId,
+                              const dftefe::utils::Point &point) const
     {
       std::vector<double> retValue(0);
       if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
@@ -783,15 +715,14 @@ namespace dftefe
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                    enrichmentId))
                   .localIdInAtom;
-              std::string      atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point     origin(d_atomCoordinatesVec[atomId]);
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
               std::vector<std::vector<int>> qNumbers(0);
               qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
+                                                                   d_fieldName);
               auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers[qNumberId]);
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
               retValue = sphericalData->getGradientValue(point, origin);
             }
           else
@@ -810,12 +741,14 @@ namespace dftefe
       return retValue;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<double>
-    EFEBasisManagerDealii<dim>::getEnrichmentHessian(
-      const size_type             cellId,
-      const size_type             cellLocalEnrichmentId,
-      const dftefe::utils::Point &point) const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentHessian(const size_type             cellId,
+                           const size_type             cellLocalEnrichmentId,
+                           const dftefe::utils::Point &point) const
     {
       std::vector<double> retValue(0);
       if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
@@ -832,15 +765,14 @@ namespace dftefe
                 (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                    enrichmentId))
                   .localIdInAtom;
-              std::string      atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point     origin(d_atomCoordinatesVec[atomId]);
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
               std::vector<std::vector<int>> qNumbers(0);
               qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                          d_fieldName);
+                                                                   d_fieldName);
               auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(atomSymbol,
-                                                               d_fieldName,
-                                                               qNumbers[qNumberId]);
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
               retValue = sphericalData->getHessianValue(point, origin);
             }
           else
@@ -859,25 +791,67 @@ namespace dftefe
       return retValue;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     std::vector<global_size_type>
-    EFEBasisManagerDealii<dim>::getGhostEnrichmentGlobalIds() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getGhostEnrichmentGlobalIds() const
     {
       return d_ghostEnrichmentGlobalIds;
     }
 
-    template <size_type dim>
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     global_size_type
-    EFEBasisManagerDealii<dim>::nGlobalEnrichmentNodes() const
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      nGlobalEnrichmentNodes() const
     {
       return (d_enrichmentIdsPartition->nTotalEnrichmentIds());
     }
 
-    template <size_type dim>
-    std::vector<std::vector<global_size_type>>
-    EFEBasisManagerDealii<dim>::getBoundaryGlobalNodeIds() const
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    std::shared_ptr<const EnrichmentIdsPartition<dim>>
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentIdsPartition() const
     {
-      return d_triangulationBoundaryGlobalNodeIds;
+      return d_enrichmentIdsPartition;
+    }
+
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    std::shared_ptr<
+      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                  memorySpace,
+                                                  dim>>
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      getEnrichmentClassicalInterface() const
+    {
+      return d_enrichClassIntfce;
+    }
+
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    bool
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::
+      isOrthogonalized() const
+    {
+      return d_isOrthogonalized;
+    }
+
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    size_type
+    EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>::totalRanges()
+      const
+    {
+      return d_totalRanges;
     }
 
   } // namespace basis

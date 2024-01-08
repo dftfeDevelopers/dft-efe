@@ -32,9 +32,9 @@ int main()
   std::string atomFileName = "TestAtom.xml";
   std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-  std::vector<int> qNumbers{2, 1, 0};
+  std::vector<int> qNumbers{1, 0, 0};
   dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-  auto sphericalDataObj = atomTest.getSphericalData("orbital", qNumbers);
+  auto sphericalDataObj = atomTest.getSphericalData("vnuclear", qNumbers);
   std::vector<double> pointvec{0, 0, 2.};
   std::vector<double> originvec{0. ,0. ,0.};
   dftefe::utils::Point point(pointvec);

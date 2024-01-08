@@ -426,13 +426,16 @@ namespace dftefe
         getGhostProcIds() const;
 
         const std::vector<size_type> &
-        getNumGhostIndicesInProcs() const;
+        getNumGhostIndicesInGhostProcs() const;
 
         size_type
-        getNumGhostIndicesInProc(const size_type procId) const;
+        getNumGhostIndicesInGhostProc(const size_type procId) const;
+
+        const SizeTypeVector &
+        getGhostLocalIndicesForGhostProcs() const;
 
         SizeTypeVector
-        getGhostLocalIndices(const size_type procId) const;
+        getGhostLocalIndicesForGhostProc(const size_type procId) const;
 
         const std::vector<size_type> &
         getGhostLocalIndicesRanges() const;
@@ -446,11 +449,14 @@ namespace dftefe
         size_type
         getNumOwnedIndicesForTargetProc(const size_type procId) const;
 
+        size_type
+        getTotalOwnedIndicesForTargetProcs() const;
+
         const SizeTypeVector &
         getOwnedLocalIndicesForTargetProcs() const;
 
         SizeTypeVector
-        getOwnedLocalIndices(const size_type procId) const;
+        getOwnedLocalIndicesForTargetProc(const size_type procId) const;
 
         size_type
         nmpiProcesses() const;

@@ -998,6 +998,8 @@ namespace dftefe
               d_globalRanges[i].second - d_globalRanges[i].first;
           }
 
+
+
         ///////////////////////////////////////////////////
         //////////// Ghost Data Evaluation Begin //////////
         ///////////////////////////////////////////////////
@@ -1047,6 +1049,8 @@ namespace dftefe
             ++iGhostProc;
           }
 
+
+
         std::string msg = "In rank " + std::to_string(d_myRank) +
                           " mismatch of"
                           " the sizes of ghost indices. Expected size: " +
@@ -1063,6 +1067,22 @@ namespace dftefe
           memoryTransfer.copy(d_numGhostIndices,
                               d_flattenedLocalGhostIndices.begin(),
                               &flattenedLocalGhostIndicesTmp[0]);
+
+
+        // for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
+        //   {
+        //     if (iProc == d_myRank)
+        //       {
+        //         for (auto i : d_flattenedLocalGhostIndices)
+        //           {
+        //             std::cout << "rank: " << d_myRank
+        //                       << " d_flattenedLocalGhostIndices: " << i <<
+        //                       "\n";
+        //           }
+        //       }
+        //     std::cout << std::flush;
+        //     dftefe::utils::mpi::MPIBarrier(mpiComm);
+        //   }
 
         d_ghostProcLocallyOwnedRangesCumulative.resize(
           d_numGhostProcs, std::vector<size_type>(d_nGlobalRanges));
@@ -1203,6 +1223,8 @@ namespace dftefe
                   d_ghostProcLocallyOwnedRangesCumulative[iGhostProc]
                                                          [ghostIndexRangeId];
 
+
+
                 // throwException<LogicError>(
                 //        localIndicesForGhostProc[startIndex + iIndex] <
                 //        (d_allOwnedRanges[2 * ghostProcId + 1] -
@@ -1286,6 +1308,21 @@ namespace dftefe
           memoryTransfer.copy(totalOwnedIndicesForTargetProcs,
                               d_flattenedLocalTargetIndices.begin(),
                               &flattenedLocalTargetIndicesTmp[0]);
+
+        // for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
+        //   {
+        //     if (iProc == d_myRank)
+        //       {
+        //         for (auto i : d_flattenedLocalTargetIndices)
+        //           {
+        //             std::cout << "rank: " << d_myRank
+        //                       << " d_flattenedLocalTargetIndices: " << i
+        //                       << "\n";
+        //           }
+        //       }
+        //     std::cout << std::flush;
+        //     dftefe::utils::mpi::MPIBarrier(mpiComm);
+        //   }
 
         ///////////////////////////////////////////////////
         //////////// Target Data Evaluation End ////////
@@ -1626,22 +1663,14 @@ namespace dftefe
 
       template <dftefe::utils::MemorySpace memorySpace>
       const std::vector<size_type> &
-      MPIPatternP2P<memorySpace>::getNumGhostIndicesInProcs() const
+      MPIPatternP2P<memorySpace>::getNumGhostIndicesInGhostProcs() const
       {
         return d_numGhostIndicesInGhostProcs;
       }
 
-
-      template <dftefe::utils::MemorySpace memorySpace>
-      const std::vector<size_type> &
-      MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
-      {
-        return d_localGhostIndicesRanges;
-      }
-
       template <dftefe::utils::MemorySpace memorySpace>
       size_type
-      MPIPatternP2P<memorySpace>::getNumGhostIndicesInProc(
+      MPIPatternP2P<memorySpace>::getNumGhostIndicesInGhostProc(
         const size_type procId) const
       {
         auto      itProcIds             = d_ghostProcIds.begin();
@@ -1666,9 +1695,18 @@ namespace dftefe
         return numGhostIndicesInProc;
       }
 
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      const typename MPIPatternP2P<memorySpace>::SizeTypeVector &
+      MPIPatternP2P<memorySpace>::getGhostLocalIndicesForGhostProcs() const
+      {
+        return d_flattenedLocalGhostIndices;
+      }
+
+
       template <dftefe::utils::MemorySpace memorySpace>
       typename MPIPatternP2P<memorySpace>::SizeTypeVector
-      MPIPatternP2P<memorySpace>::getGhostLocalIndices(
+      MPIPatternP2P<memorySpace>::getGhostLocalIndicesForGhostProc(
         const size_type procId) const
       {
         size_type cumulativeIndices     = 0;
@@ -1703,6 +1741,13 @@ namespace dftefe
 
       template <dftefe::utils::MemorySpace memorySpace>
       const std::vector<size_type> &
+      MPIPatternP2P<memorySpace>::getGhostLocalIndicesRanges() const
+      {
+        return d_localGhostIndicesRanges;
+      }
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      const std::vector<size_type> &
       MPIPatternP2P<memorySpace>::getTargetProcIds() const
       {
         return d_targetProcIds;
@@ -1713,13 +1758,6 @@ namespace dftefe
       MPIPatternP2P<memorySpace>::getNumOwnedIndicesForTargetProcs() const
       {
         return d_numOwnedIndicesForTargetProcs;
-      }
-
-      template <dftefe::utils::MemorySpace memorySpace>
-      const typename MPIPatternP2P<memorySpace>::SizeTypeVector &
-      MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProcs() const
-      {
-        return d_flattenedLocalTargetIndices;
       }
 
       template <dftefe::utils::MemorySpace memorySpace>
@@ -1750,9 +1788,17 @@ namespace dftefe
         return numOwnedIndicesForProc;
       }
 
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      const typename MPIPatternP2P<memorySpace>::SizeTypeVector &
+      MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProcs() const
+      {
+        return d_flattenedLocalTargetIndices;
+      }
+
       template <dftefe::utils::MemorySpace memorySpace>
       typename MPIPatternP2P<memorySpace>::SizeTypeVector
-      MPIPatternP2P<memorySpace>::getOwnedLocalIndices(
+      MPIPatternP2P<memorySpace>::getOwnedLocalIndicesForTargetProc(
         const size_type procId) const
       {
         size_type cumulativeIndices      = 0;
@@ -1787,7 +1833,12 @@ namespace dftefe
         return returnValue;
       }
 
-
+      template <dftefe::utils::MemorySpace memorySpace>
+      size_type
+      MPIPatternP2P<memorySpace>::getTotalOwnedIndicesForTargetProcs() const
+      {
+        return d_flattenedLocalTargetIndices.size();
+      }
 
       template <dftefe::utils::MemorySpace memorySpace>
       const MPIComm &

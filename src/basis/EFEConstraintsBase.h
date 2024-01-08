@@ -101,11 +101,16 @@ namespace dftefe
         size_type blockSize) const = 0;
 
       virtual void
-      setConstrainedNodes(
+      setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
-        size_type blockSize,
-        ValueTypeBasisCoeff alpha) const = 0;
+        size_type blockSize) const = 0;
+
+      virtual void
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff alpha) const = 0;
       //
       // FE related functions
       //

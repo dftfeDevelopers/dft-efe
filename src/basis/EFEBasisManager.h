@@ -32,6 +32,8 @@
 #include <basis/TriangulationBase.h>
 #include <basis/FECellBase.h>
 #include <map>
+#include <basis/EnrichmentClassicalInterfaceSpherical.h>
+#include <basis/EnrichmentIdsPartition.h>
 
 namespace dftefe
 {
@@ -43,6 +45,9 @@ namespace dftefe
      * function at a point, getting cell and nodal information, etc.
      *
      */
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     class EFEBasisManager : public FEBasisManager
     {
     public:
@@ -55,9 +60,9 @@ namespace dftefe
                                  const size_type derivativeOrder = 1) const = 0;
 
       ////// FE specific virtual member functions /////
-      virtual void
-      reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) = 0;
+      // virtual void
+      // reinit(std::shared_ptr<const TriangulationBase> triangulation,
+      //        const size_type                          feOrder) = 0;
 
       virtual std::shared_ptr<const TriangulationBase>
       getTriangulation() const = 0;
@@ -73,7 +78,7 @@ namespace dftefe
       virtual size_type
       nCellDofs(size_type cellId) const = 0;
       virtual bool
-      isHPRefined() const = 0;
+      isVariableDofsPerCell() const = 0;
 
       virtual std::vector<std::pair<global_size_type, global_size_type>>
       getLocallyOwnedRanges() const = 0;
@@ -151,10 +156,22 @@ namespace dftefe
       virtual global_size_type
       nGlobalEnrichmentNodes() const = 0;
 
-      virtual std::vector<std::vector<global_size_type>>
-      getBoundaryGlobalNodeIds() const = 0;
+      virtual std::shared_ptr<const EnrichmentIdsPartition<dim>>
+      getEnrichmentIdsPartition() const = 0;
 
-    }; // end of FEBasisManager
+      virtual std::shared_ptr<
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
+      getEnrichmentClassicalInterface() const = 0;
+
+      virtual bool
+      isOrthogonalized() const = 0;
+
+      virtual size_type
+      totalRanges() const = 0;
+
+    }; // end of EFEBasisManager
   }    // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeFEBasisManager_h
+#endif // dftefeEFEBasisManager_h

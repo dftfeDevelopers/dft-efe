@@ -26,6 +26,7 @@
 #include <utils/Exceptions.h>
 #include <utils/MemoryTransfer.h>
 #include <complex>
+#include <ctime>
 namespace dftefe
 {
   namespace utils
@@ -217,6 +218,12 @@ namespace dftefe
       MPIFinalized(int *flag)
       {
         return ::MPI_Finalized(flag);
+      }
+
+      double
+      MPIWtime(void)
+      {
+        return ::MPI_Wtime();
       }
 
       bool
@@ -473,6 +480,12 @@ namespace dftefe
       {
         *flag = 1;
         return MPISuccess;
+      }
+
+      double
+      MPIWtime(void)
+      {
+        return std::time(nullptr);
       }
 
       bool

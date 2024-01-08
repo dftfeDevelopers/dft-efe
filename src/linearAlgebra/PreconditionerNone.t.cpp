@@ -44,19 +44,19 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     void
-    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &Y) const
+    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>::apply(
+      MultiVector<ValueTypeOperand, memorySpace> &X,
+      MultiVector<ValueTypeUnion, memorySpace> &  Y) const
     {
-        Y = X;
+      Y = X;
     }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     PreconditionerType
-    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>
-      :: getPreconditionerType() const
+    PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      getPreconditionerType() const
     {
       return d_pcType;
     }

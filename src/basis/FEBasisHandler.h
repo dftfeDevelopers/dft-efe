@@ -65,7 +65,18 @@ namespace dftefe
       getBasisManager() const = 0;
 
       virtual const Constraints<ValueTypeBasisCoeff, memorySpace> &
+<<<<<<< HEAD
       getConstraints() const = 0;
+=======
+      getConstraints(const std::string constraintsName) const = 0;
+
+      virtual void
+      setConstraints(
+        std::map<
+          std::string,
+          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
+          constraintsMap) = 0;
+>>>>>>> c372005e78399678eefa9918e01c93c3ddbab091
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const = 0;

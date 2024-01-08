@@ -70,45 +70,6 @@ include_directories(${MAIN_PROJECT_DIR}/src)
 #target_link_libraries(TestBlasLapackComplexDoubleGemmHost PUBLIC dft-efe-linalg)
 #set_target_properties(TestBlasLapackComplexDoubleGemmHost PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmHost" SUFFIX ".x")
 #
-#add_executable(TestSerialDenseMatrixDoubleFrobeniusNormHost TestSerialDenseMatrixDoubleFrobeniusNormHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleFrobeniusNormHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleFrobeniusNormHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleFrobeniusNormHost" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleCopyHost TestSerialDenseMatrixDoubleCopyHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleCopyHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleCopyHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleCopyHost" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleSizeHost TestSerialDenseMatrixDoubleSizeHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleSizeHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleSizeHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleSizeHost" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleConstructorHost TestSerialDenseMatrixDoubleConstructorHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleConstructorHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleConstructorHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleConstructorHost" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleSetValuesHost TestSerialDenseMatrixDoubleSetValuesHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleSetValuesHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleSetValuesHost PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleSetValuesHost" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleGetValuesHost TestSerialDenseMatrixDoubleGetValuesHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleGetValuesHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleGetValuesHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
-#
-#add_executable(TestSerialMultiVectorDoubleAddHost TestSerialMultiVectorDoubleAddHost.cpp)
-#target_link_libraries(TestSerialMultiVectorDoubleAddHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialMultiVectorDoubleAddHost PROPERTIES OUTPUT_NAME "TestSerialMultiVectorDoubleAddHost" SUFFIX ".x")
-#
-#add_executable(TestSerialMultiVectorDoubleNormHost TestSerialMultiVectorDoubleNormHost.cpp)
-#target_link_libraries(TestSerialMultiVectorDoubleNormHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialMultiVectorDoubleNormHost PROPERTIES OUTPUT_NAME "TestSerialMultiVectorDoubleNormHost" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleInPlaceAddHost TestSerialDenseMatrixDoubleInPlaceAddHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleInPlaceAddHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleInPlaceAddHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
-#
-#add_executable(TestSerialDenseMatrixDoubleInPlaceSubtractHost TestSerialDenseMatrixDoubleInPlaceSubtractHost.cpp)
-#target_link_libraries(TestSerialDenseMatrixDoubleInPlaceSubtractHost PUBLIC dft-efe-linalg)
-#set_target_properties(TestSerialDenseMatrixDoubleInPlaceSubtractHost PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
 find_package(MKL REQUIRED)
 include_directories(${MKL_INCLUDE_DIRS})
@@ -142,19 +103,4 @@ if (ENABLE_CUDA)
     target_link_libraries(TestBlasLapackComplexDoubleGemmDevice PUBLIC dft-efe-linalg)
     set_target_properties(TestBlasLapackComplexDoubleGemmDevice PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmDevice" SUFFIX ".x")
 
-    add_executable(TestSerialDenseMatrixDoubleConstructorDevice TestSerialDenseMatrixDoubleConstructorDevice.cpp)
-    target_link_libraries(TestSerialDenseMatrixDoubleConstructorDevice PUBLIC dft-efe-linalg)
-    set_target_properties(TestSerialDenseMatrixDoubleConstructorDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleConstructorDevice" SUFFIX ".x")
-
-    add_executable(TestSerialDenseMatrixDoubleCopyDevice TestSerialDenseMatrixDoubleCopyDevice.cpp)
-    target_link_libraries(TestSerialDenseMatrixDoubleCopyDevice PUBLIC dft-efe-linalg)
-    set_target_properties(TestSerialDenseMatrixDoubleCopyDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleCopyDevice" SUFFIX ".x")
-
-    add_executable(TestSerialDenseMatrixDoubleInPlaceAddDevice TestSerialDenseMatrixDoubleInPlaceAddDevice.cpp)
-    target_link_libraries(TestSerialDenseMatrixDoubleInPlaceAddDevice PUBLIC dft-efe-linalg)
-    set_target_properties(TestSerialDenseMatrixDoubleInPlaceAddDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleInPlaceAddDevice" SUFFIX ".x")
-
-    add_executable(TestSerialDenseMatrixDoubleInPlaceSubtractDevice TestSerialDenseMatrixDoubleInPlaceSubtractDevice.cpp)
-    target_link_libraries(TestSerialDenseMatrixDoubleInPlaceSubtractDevice PUBLIC dft-efe-linalg)
-    set_target_properties(TestSerialDenseMatrixDoubleInPlaceSubtractDevice PROPERTIES OUTPUT_NAME "TestSerialDenseMatrixDoubleInPlaceSubtractDevice" SUFFIX ".x")
 endif ()

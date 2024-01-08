@@ -99,11 +99,16 @@ namespace dftefe
         size_type blockSize) const override;
 
       void
-      setConstrainedNodes(
+      setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
-        size_type blockSize,
-        ValueTypeBasisCoeff alpha) const override;
+        size_type blockSize) const override;
+
+      void
+      setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                     memorySpace> &vectorData,
+                          size_type                                blockSize,
+                          ValueTypeBasisCoeff alpha) const override;
 
       //
       // FE related functions

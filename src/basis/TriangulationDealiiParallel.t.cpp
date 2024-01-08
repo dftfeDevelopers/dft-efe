@@ -15,6 +15,7 @@ namespace dftefe
       : d_triangulationDealii(mpi_communicator)
       , isInitialized(false)
       , isFinalized(false)
+      , d_isPeriodicFlags(0)
     {}
 
     template <unsigned int dim>
@@ -120,6 +121,9 @@ namespace dftefe
       dealii::GridGenerator::subdivided_parallelepiped<dim>(
         d_triangulationDealii, dealiiSubdivisions, dealiiPoints);
       markPeriodicFaces(isPeriodicFlags, domainVectors);
+
+      d_isPeriodicFlags.resize(dim);
+      d_isPeriodicFlags = isPeriodicFlags;
     }
 
     template <unsigned int dim>
@@ -285,6 +289,13 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    double
+    TriangulationDealiiParallel<dim>::maxCellDiameter() const
+    {
+      return dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
+    }
+
+    template <unsigned int dim>
     TriangulationBase::TriangulationCellIterator
     TriangulationDealiiParallel<dim>::beginLocal()
     {
@@ -317,6 +328,13 @@ namespace dftefe
     TriangulationDealiiParallel<dim>::getDim() const
     {
       return dim;
+    }
+
+    template <unsigned int dim>
+    std::vector<bool>
+    TriangulationDealiiParallel<dim>::getPeriodicFlags() const
+    {
+      return d_isPeriodicFlags;
     }
 
     template <unsigned int dim>

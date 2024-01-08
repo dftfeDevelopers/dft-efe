@@ -33,10 +33,10 @@
 #  include <deal.II/fe/fe_q.h>
 #  include <basis/AtomIdsPartition.h>
 #  include <atoms/AtomSphericalDataContainer.h>
-#  include <basis/EnrichmentIdsPartition.h>
 #  include <utils/Exceptions.h>
 #  include <utils/MPITypes.h>
 #  include <utils/MPIWrapper.h>
+#  include <linearAlgebra/LinAlgOpContext.h>
 
 /// dealii includes
 #  include <deal.II/dofs/dof_handler.h>
@@ -48,20 +48,19 @@ namespace dftefe
      * A derived class of FEBasisManager to handle the FE basis evaluations
      * through dealii
      */
-    template <size_type dim>
-    class EFEBasisManagerDealii : public EFEBasisManager
+    template <typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class EFEBasisManagerDealii
+      : public EFEBasisManager<ValueTypeBasisData, memorySpace, dim>
     {
     public:
       EFEBasisManagerDealii(
-        std::shared_ptr<const TriangulationBase> triangulation,
-        std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const size_type                  feOrder,
-        const double                     atomPartitionTolerance,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<utils::Point> &atomCoordinates,
-        const std::string                fieldName,
-        const utils::mpi::MPIComm &      comm);
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisData,
+          memorySpace,
+          dim>>         enrichmentClassicalInterface,
+        const size_type feOrder);
 
       double
       getBasisFunctionValue(const size_type     basisId,
@@ -74,8 +73,11 @@ namespace dftefe
 
       ////// FE specific  member functions /////
       void
-      reinit(std::shared_ptr<const TriangulationBase> triangulation,
-             const size_type                          feOrder) override;
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisData,
+               memorySpace,
+               dim>>         enrichmentClassicalInterface,
+             const size_type feOrder);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -94,7 +96,7 @@ namespace dftefe
       nCellDofs(size_type cellId) const override;
 
       bool
-      isHPRefined() const override;
+      isVariableDofsPerCell() const override;
 
       size_type
       nLocalNodes() const override;
@@ -191,34 +193,48 @@ namespace dftefe
       global_size_type
       nGlobalEnrichmentNodes() const override;
 
-      std::vector<std::vector<global_size_type>>
-      getBoundaryGlobalNodeIds() const;
+      std::shared_ptr<const EnrichmentIdsPartition<dim>>
+      getEnrichmentIdsPartition() const override;
+
+      std::shared_ptr<
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
+      getEnrichmentClassicalInterface() const override;
+
+      bool
+      isOrthogonalized() const override;
+
+      size_type
+      totalRanges() const override;
 
     private:
-      std::shared_ptr<const TriangulationBase> d_triangulation;
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
-      bool                                     d_isHPRefined;
+      bool                                     d_isVariableDofsPerCell;
       std::vector<std::shared_ptr<FECellBase>> d_localCells;
       std::vector<std::shared_ptr<FECellBase>> d_locallyOwnedCells;
       size_type d_numCumulativeLocallyOwnedCellDofs;
       size_type d_numCumulativeLocalCellDofs;
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
-                                                   d_enrichmentIdsPartition;
-      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
-      std::vector<std::vector<global_size_type>> d_overlappingEnrichmentIdsInCells;
-      const size_type                                   d_totalRanges;
-      std::vector<std::pair<global_size_type, global_size_type>> d_locallyOwnedRanges;
+        d_enrichmentIdsPartition;
+      std::vector<std::vector<global_size_type>>
+                d_overlappingEnrichmentIdsInCells;
+      size_type d_totalRanges;
+      std::vector<std::pair<global_size_type, global_size_type>>
+        d_locallyOwnedRanges;
       std::vector<std::pair<global_size_type, global_size_type>> d_globalRanges;
       std::vector<global_size_type> d_ghostEnrichmentGlobalIds;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                            d_atomSphericalDataContainer;
-      std::vector<std::string>              d_atomSymbolVec;
-      std::vector<utils::Point>             d_atomCoordinatesVec;
-      std::string                           d_fieldName;
-      const double                          d_atomPartitionTolerance;
-      const utils::mpi::MPIComm             d_comm;
-      std::vector<std::vector<global_size_type>> d_triangulationBoundaryGlobalNodeIds;
-
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::string               d_fieldName;
+      bool                      d_isOrthogonalized;
+      std::shared_ptr<
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
+        d_enrichClassIntfce;
 
     }; // end of EFEBasisManagerDealii
   }    // end of namespace basis

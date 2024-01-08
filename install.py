@@ -49,7 +49,7 @@ def updateOptsDictFromCommandLine(strings):
 
 if __name__ == "__main__":
     numArgs = len(sys.argv)
-    if numArgs > 2:
+    if numArgs > 3:
         raise Exception('''Invalid options passed.\n\n''' +
                         getUsageMsg())
 
