@@ -169,7 +169,6 @@ int main()
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = true;
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
@@ -265,7 +264,6 @@ int main()
       *feBasisData,
       constraintHanging,
       constraintHomwHan,
-      quadAttr,
       50); 
 
       std::cout << std::setprecision(10);

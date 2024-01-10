@@ -144,8 +144,21 @@ T readParameter(std::string ParamFile, std::string param)
         std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
 
         // Read the parameter files and atom coordinate files
-        std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
+        char* dftefe_path = getenv("DFTEFE_PATH");
+        std::string sourceDir;
+        // if executes if a non null value is returned
+        // otherwise else executes
+        if (dftefe_path != NULL) 
+        {
+        sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+        }
+        else
+        {
+        dftefe::utils::throwException(false,
+                                "dftefe_path does not exist!");
+        }
         std::string atomDataFile = "SingleSmearedCharge.in";
+        std::string enrichmentDataFile = "SmearedCharge3e-5Uniform_rc0.6_cutoff3_sm0.6.xml";
         std::string paramDataFile = argv[1];
         std::string inputFileName = sourceDir + atomDataFile;
         std::string parameterInputFileName = sourceDir + paramDataFile;
@@ -185,11 +198,17 @@ T readParameter(std::string ParamFile, std::string param)
         domainVectors[1][1] = ymax;
         domainVectors[2][2] = zmax;
 
+        std::vector<double> origin(0);
+        origin.resize(dim);
+        for(unsigned int i = 0 ; i < dim ; i++)
+            origin[i] = -domainVectors[i][i]*0.5;
+
         // initialize the triangulation
         triangulationBase->initializeTriangulationConstruction();
         triangulationBase->createUniformParallelepiped(subdivisions,
                                                         domainVectors,
                                                         isPeriodicFlags);
+        triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
         triangulationBase->finalizeTriangulationConstruction();
 
         // Enrichment data file consisting of g(r,\theta,\phi) = f(r)*Y_lm(\theta, \phi)
@@ -218,7 +237,7 @@ T readParameter(std::string ParamFile, std::string param)
         std::map<std::string, std::string> atomSymbolToFilename;
         for (auto i:atomSymbolVec )
         {
-            atomSymbolToFilename[i] = sourceDir + i + ".xml";
+            atomSymbolToFilename[i] = sourceDir + enrichmentDataFile;
         }
 
         std::vector<std::string> fieldNames{"vnuclear"};
@@ -277,22 +296,76 @@ T readParameter(std::string ParamFile, std::string param)
         }
 
 
-        // initialize the basis Manager
+    // Make pristine EFE basis
 
-        std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<dim>>(
-            triangulationBase ,
-            atomSphericalDataContainer ,
-            feOrder,
-            atomPartitionTolerance,
-            atomSymbolVec,
-            atomCoordinatesVec,
-            fieldName,
-            comm);
-        std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
-        basisManager->getBasisCenters(dofCoords);
+    // 1. Make EnrichmentClassicalInterface object for Pristine enrichment
+    // 2. Input to the EFEBasisManager(eci, feOrder) 
+    // 3. Make EFEBasisDataStorage with input as quadratureContainer.
 
-        std::cout << "Locally owned cells : " << basisManager->nLocallyOwnedCells() << "\n";
-        std::cout << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
+    std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
+                            <double, dftefe::utils::MemorySpace::HOST, dim>>
+                            enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
+                            <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
+                            atomSphericalDataContainer,
+                            atomPartitionTolerance,
+                            atomSymbolVec,
+                            atomCoordinatesVec,
+                            fieldName,
+                            comm);
+
+        // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
+        std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
+        unsigned int numfun = 2;
+        functionsVec.resize(numfun); // Enrichment Functions
+        std::vector<double> tolerances(numfun);
+        std::vector<double> integralThresholds(numfun);
+        for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
+        {
+            functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>(        
+                enrichClassIntfce->getEnrichmentIdsPartition(),
+                atomSphericalDataContainer,
+                atomSymbolVec,
+                atomCoordinatesVec,
+                fieldName,
+                i);
+            tolerances[i] = adaptiveQuadTolerance;
+            integralThresholds[i] = integralThreshold;
+        }
+
+        //Set up quadAttr for Rhs and OverlapMatrix
+
+        dftefe::quadrature::QuadratureRuleAttributes quadAttrAdaptive(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
+
+        // Set up base quadrature rule for adaptive quadrature 
+
+        std::shared_ptr<dftefe::quadrature::QuadratureRule> baseQuadRule =
+        std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
+
+        std::shared_ptr<dftefe::basis::CellMappingBase> cellMapping = std::make_shared<dftefe::basis::LinearCellMappingDealii<dim>>();
+        std::shared_ptr<dftefe::basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<dftefe::basis::ParentToChildCellsManagerDealii<dim>>();
+
+        std::shared_ptr<dftefe::quadrature::QuadratureRuleContainer> quadRuleContainerAdaptive =
+        std::make_shared<dftefe::quadrature::QuadratureRuleContainer>
+        (quadAttrAdaptive, 
+        baseQuadRule, 
+        triangulationBase, 
+        *cellMapping, 
+        *parentToChildCellsManager,
+        functionsVec,
+        tolerances,
+        integralThresholds,
+        smallestCellVolume,
+        maxRecursion);
+
+    // initialize the basis Manager
+    std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
+        enrichClassIntfce,
+        feOrder);
+    std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
+    basisManager->getBasisCenters(dofCoords);
+
+    std::cout << "Locally owned cells : " << basisManager->nLocallyOwnedCells() << "\n";
+    std::cout << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
 
         // Set the constraints
 
@@ -303,7 +376,7 @@ T readParameter(std::string ParamFile, std::string param)
         constraintsVec;
         constraintsVec.resize(2);
         for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-        constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
+        constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>();
 
         constraintsVec[0]->clear();
         constraintsVec[0]->makeHangingNodeConstraint(basisManager);
@@ -320,9 +393,6 @@ T readParameter(std::string ParamFile, std::string param)
         constraintsMap[constraintHanging] = constraintsVec[0];
         constraintsMap[constraintHomwHan] = constraintsVec[1];
 
-        // Set up quad attribute
-        dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
-
         dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
         basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
         basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
@@ -330,49 +400,22 @@ T readParameter(std::string ParamFile, std::string param)
         basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
         basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
         basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
-        basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = true;
 
-        // Set up the FE Basis Data Storage
+        // Set up Adaptive quadrature for EFE Basis Data Storage
         std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
         std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-        (basisManager, quadAttr, basisAttrMap);
+        (basisManager, quadAttrAdaptive, basisAttrMap);
 
-        std::shared_ptr<const dftefe::basis::EFEBasisManagerDealii<dim>> efeBM =
-        std::dynamic_pointer_cast<const dftefe::basis::EFEBasisManagerDealii<dim>>(basisManager);
-
-        // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
-        std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
-        unsigned int numfun = 2;
-        functionsVec.resize(numfun); // First and second derivative of the enrichemnt function
-        std::vector<double> tolerances(numfun);
-        std::vector<double> integralThresholds(numfun);
-        for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
-        {
-            functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>(        
-                efeBM->getEnrichmentIdsPartition(),
-                atomSphericalDataContainer,
-                atomSymbolVec,
-                atomCoordinatesVec,
-                fieldName,
-                i);
-            tolerances[i] = adaptiveQuadTolerance;
-            integralThresholds[i] = integralThreshold;
-        }
-
-        // Set up base quadrature rule for adaptive quadrature 
-        std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
-        std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
-        
         // evaluate basis data
-        feBasisData->evaluateBasisData(quadAttr,  quadRule, functionsVec,
-            tolerances, integralThresholds, smallestCellVolume, maxRecursion, basisAttrMap);
+        feBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
+
 
         // Set up BasisHandler
         std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> basisHandler =
-        std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-        (basisManager, constraintsMap, comm);
+            std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+            (basisManager, constraintsMap, comm);
 
-        // // Set up basis Operations
+        // Set up basis Operations
         dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
 
         // set up MPIPatternP2P for the constraints
@@ -391,7 +434,8 @@ T readParameter(std::string ParamFile, std::string param)
         dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>(
             mpiPatternP2PHomwHan, linAlgOpContext, numComponents, double());
 
-        // vector for lhs
+        //populate the value of the Density at the nodes for interpolating to quad points
+        auto numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
         dftefe::utils::Point nodeLoc(dim,0.0);
         auto itField  = vhNHDB->begin();
         const unsigned int dofs_per_cell =
@@ -435,8 +479,8 @@ T readParameter(std::string ParamFile, std::string param)
         // create the quadrature Value Container
 
         dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-        dftefe::quadrature::QuadratureRuleContainer quadRuleContainer =  
-                    feBasisData->getQuadratureRuleContainer(quadAttr);
+        std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
+                    feBasisData->getQuadratureRuleContainer();
 
         dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
         dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
@@ -446,7 +490,7 @@ T readParameter(std::string ParamFile, std::string param)
         for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
         {
             dftefe::size_type quadId = 0;
-            for (auto j : quadRuleContainer.getCellRealPoints(i))
+            for (auto j : quadRuleContainer->getCellRealPoints(i))
             {
                 double a = rho( j, atomCoordinatesVec, rc);
                 double *b = &a;
@@ -464,15 +508,14 @@ T readParameter(std::string ParamFile, std::string param)
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>
                                                         (basisHandler,
-                                                        feBasisOp,
+                                                        feBasisData,
                                                         feBasisData,
                                                         quadValuesContainer,
-                                                        quadAttr,
                                                         constraintHanging,
                                                         constraintHomwHan,
                                                         *vhNHDB,
                                                         dftefe::linearAlgebra::PreconditionerType::JACOBI,
-							                            linAlgOpContext,
+                                                        linAlgOpContext,
                                                         50);
 
         dftefe::linearAlgebra::LinearAlgebraProfiler profiler;
@@ -496,7 +539,7 @@ T readParameter(std::string ParamFile, std::string param)
         for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
         {
             dftefe::size_type quadId = 0;
-            for (auto j : quadRuleContainer.getCellRealPoints(i))
+            for (auto j : quadRuleContainer->getCellRealPoints(i))
             {
                 double a = potential( j, atomCoordinatesVec, rc);
                 double *b = &a;
@@ -505,15 +548,15 @@ T readParameter(std::string ParamFile, std::string param)
             }
         }
 
-        feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
+        feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainerNumerical);
 
         auto iterPotAnalytic = quadValuesContainerAnalytical.begin();
         auto iterPotNumeric = quadValuesContainerNumerical.begin();
         auto iterRho = quadValuesContainer.begin();
-        dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints(), mpinumQuadraturePoints=0;
-        const std::vector<double> JxW = quadRuleContainer.getJxW();
+        dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints(), mpinumQuadraturePoints=0;
+        const std::vector<double> JxW = quadRuleContainer->getJxW();
         std::vector<double> integral(6, 0.0), mpiReducedIntegral(integral.size(), 0.0);
-        const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
+        const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer->getRealPoints();
         int count = 0;
 
         for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )

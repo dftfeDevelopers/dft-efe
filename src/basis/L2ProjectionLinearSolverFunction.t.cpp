@@ -31,103 +31,6 @@ namespace dftefe
     {
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
-                utils::MemorySpace memorySpace>
-      void
-      computeDiagonalCellWiseLocal(
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &NiNjInAllCells,
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand> *y,
-        const size_type               numLocallyOwnedCells,
-        const std::vector<size_type> &numCellDofs,
-        const size_type *             cellLocalIdsStartPtr,
-        const size_type               cellBlockSize)
-      {
-        //
-        // Perform ye = Diagonal(Ae), where
-        // Ae is the discrete Overlap operator for the e-th cell.
-        // That is, \f$Ae_ij=\int_{\Omega_e} N_i \cdot N_j
-        // d\textbf{r} $\f,
-        // (\f$Ae_ij$\f is the integral of the dot product of the gradient of
-        // i-th and j-th basis function in the e-th cell.
-        //
-        // ye is part of output vector (y),
-        // respectively, belonging to e-th cell.
-        //
-
-        size_type BStartOffset       = 0;
-        size_type cellLocalIdsOffset = 0;
-        for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-             cellStartId += cellBlockSize)
-          {
-            const size_type cellEndId =
-              std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
-            const size_type        numCellsInBlock = cellEndId - cellStartId;
-            std::vector<size_type> cellsInBlockNumDoFsSTL(numCellsInBlock, 0);
-            std::copy(numCellDofs.begin() + cellStartId,
-                      numCellDofs.begin() + cellEndId,
-                      cellsInBlockNumDoFsSTL.begin());
-
-            const size_type cellsInBlockNumCumulativeDoFs =
-              std::accumulate(cellsInBlockNumDoFsSTL.begin(),
-                              cellsInBlockNumDoFsSTL.end(),
-                              0);
-
-            utils::MemoryStorage<size_type, memorySpace> cellsInBlockNumDoFs(
-              numCellsInBlock);
-            cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
-
-            // allocate memory for cell-wise data for y
-            utils::MemoryStorage<
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                     ValueTypeOperand>,
-              memorySpace>
-              yCellValues(cellsInBlockNumCumulativeDoFs,
-                          utils::Types<linearAlgebra::blasLapack::scalar_type<
-                            ValueTypeOperator,
-                            ValueTypeOperand>>::zero);
-
-            const ValueTypeOperator *BBlock =
-              NiNjInAllCells.data() + BStartOffset;
-            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                   ValueTypeOperand> *C =
-              yCellValues.begin();
-
-            size_type BBlockOffset = 0;
-            size_type COffset      = 0;
-            for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-              {
-                size_type nDoFs = cellsInBlockNumDoFsSTL[iCell];
-                for (size_type j = 0; j < nDoFs; j++)
-                  {
-                    *(C + COffset + j) =
-                      *(BBlock + BBlockOffset + j * nDoFs + j);
-                  }
-                COffset += nDoFs;
-                BBlockOffset += nDoFs * nDoFs;
-              }
-
-            FECellWiseDataOperations<
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                     ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       1,
-                                                       cellLocalIdsStartPtr +
-                                                         cellLocalIdsOffset,
-                                                       cellsInBlockNumDoFs,
-                                                       y);
-
-            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-              {
-                BStartOffset +=
-                  cellsInBlockNumDoFsSTL[iCell] * cellsInBlockNumDoFsSTL[iCell];
-                cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
-              }
-          }
-      }
-
-      template <typename ValueTypeOperator,
-                typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
@@ -141,8 +44,7 @@ namespace dftefe
                                                        memorySpace,
                                                        dim>>
                           feOverlapOperatorContext,
-        const std::string basisInterfaceCoeffConstraint,
-        const size_type   maxCellTimesNumVecs)
+        const std::string basisInterfaceCoeffConstraint)
       {
         const size_type numLocallyOwnedCells =
           feBasisHandler->nLocallyOwnedCells();
@@ -158,20 +60,21 @@ namespace dftefe
         auto NiNjInAllCells =
           feOverlapOperatorContext->getBasisOverlapInAllCells();
 
-        const size_type cellBlockSize = maxCellTimesNumVecs;
+        std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
+                                                           0);
+        std::copy(numCellDofs.begin(),
+                  numCellDofs.begin() + numLocallyOwnedCells,
+                  locallyOwnedCellsNumDoFsSTL.begin());
 
-        //
-        // get processor local part of the diagonal
-        //
-        L2ProjectionLinearSolverFunctionInternal::computeDiagonalCellWiseLocal<
-          ValueTypeOperator,
-          ValueTypeOperand,
-          memorySpace>(NiNjInAllCells,
-                       diagonal.begin(),
-                       numLocallyOwnedCells,
-                       numCellDofs,
-                       itCellLocalIdsBegin,
-                       cellBlockSize);
+        utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
+          numLocallyOwnedCells);
+        locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
+
+        basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
+          addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
+                                             itCellLocalIdsBegin,
+                                             locallyOwnedCellsNumDoFs,
+                                             diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes
@@ -265,8 +168,7 @@ namespace dftefe
               diagonal,
               d_feBasisHandler,
               d_AxContext,
-              basisInterfaceCoeffConstraint,
-              maxCellTimesNumVecs);
+              basisInterfaceCoeffConstraint);
 
 
           d_feBasisHandler->getConstraints(basisInterfaceCoeffConstraint)

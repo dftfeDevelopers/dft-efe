@@ -92,7 +92,7 @@ double rho(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origi
     if( r > rc )
       ret += 0;
     else
-      ret += -21*std::pow((r-rc),3)*(6*r*r + 3*r*rc + rc*rc)/(5*M_PI*std::pow(rc,8))*4*M_PI;
+      ret += -21*std::pow((r-rc),3)*(6*r*r + 3*r*rc + rc*rc)/(5*M_PI*std::pow(rc,8));
   }
   return ret;
 }
@@ -121,6 +121,7 @@ double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> 
 
 int main(int argc, char** argv)
 {
+// argv[1] = "PoissonProblemClassicalTwoBody/param.in"
 
   std::cout<<" Entering test two body interaction \n";
 
@@ -152,8 +153,20 @@ int main(int argc, char** argv)
 
 
   // Read the parameter files and atom coordinate files
-  std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
-  std::string atomDataFile = "TwoSmearedCharge.in";
+  char* dftefe_path = getenv("DFTEFE_PATH");
+  std::string sourceDir;
+  // if executes if a non null value is returned
+  // otherwise else executes
+  if (dftefe_path != NULL) 
+  {
+    sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+  }
+  else
+  {
+    dftefe::utils::throwException(false,
+                          "dftefe_path does not exist!");
+  }
+  std::string atomDataFile = "TwoSmearedCharge_dist1.5.in";
   std::string paramDataFile = argv[1];
   std::string inputFileName = sourceDir + atomDataFile;
   std::string parameterInputFileName = sourceDir + paramDataFile;
@@ -173,7 +186,6 @@ int main(int argc, char** argv)
   double refineradius = readParameter<double>(parameterInputFileName, "refineradius");
   unsigned int num1DGaussSize = readParameter<unsigned int>(parameterInputFileName, "num1DQuadratureSize");
   unsigned int feOrder = readParameter<unsigned int>(parameterInputFileName, "feOrder");
-  unsigned int numComponents = 3;
 
   // Set up Triangulation
   const unsigned int dim = 3;
@@ -202,18 +214,15 @@ int main(int argc, char** argv)
   triangulationBase->finalizeTriangulationConstruction();
 
   std::fstream fstream;
-
   fstream.open(inputFileName, std::fstream::in);
   
   // read the input file and create atomsymbol vector and atom coordinates vector.
   std::vector<dftefe::utils::Point> atomCoordinatesVec(0,dftefe::utils::Point(dim, 0.0));
-  std::vector<dftefe::utils::Point> atomCoordinates1(0,dftefe::utils::Point(dim, 0.0));
-  std::vector<dftefe::utils::Point> atomCoordinates2(0,dftefe::utils::Point(dim, 0.0));
-  std::vector<double> coordinates;
+    std::vector<double> coordinates;
   coordinates.resize(dim,0.);
-  std::vector<std::string> atomSymbol;
+  std::vector<std::string> atomSymbolVec;
   std::string symbol;
-  atomSymbol.resize(0);
+  atomSymbolVec.resize(0);
   std::string line;
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
@@ -222,11 +231,12 @@ int main(int argc, char** argv)
           ss >> coordinates[i]; 
       }
       atomCoordinatesVec.push_back(coordinates);
-      atomSymbol.push_back(symbol);
+      atomSymbolVec.push_back(symbol);
   }
   dftefe::utils::mpi::MPIBarrier(comm);
-  atomCoordinates1.push_back(atomCoordinatesVec[0]);
-  atomCoordinates2.push_back(atomCoordinatesVec[1]);
+
+  const unsigned int nAtoms = atomCoordinatesVec.size(); 
+  const unsigned int numComponents = nAtoms+1;
 
   int flag = 1;
   int mpiReducedFlag = 1;
@@ -373,11 +383,14 @@ int main(int argc, char** argv)
         dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
         if( !basisHandler->getConstraints(constraintHomwHan).isConstrained(globalId))
         {
-          dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHomwHan);
-          basisHandler->getBasisCenters(localId,constraintHomwHan,nodeLoc);
-          *(itField + (localId)*(numComponents))  = rho(nodeLoc, atomCoordinates1, rc);
-          *(itField + (localId)*(numComponents) + 1)  = rho(nodeLoc, atomCoordinates2, rc);
-          *(itField + (localId)*(numComponents) + 2)  = rho(nodeLoc, atomCoordinatesVec, rc);
+          dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
+          basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
+          for (unsigned int j = 0 ; j < nAtoms ; j++ )
+          {
+            std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[j]};
+            *(itField + (localId)*(numComponents) + j)  = rho(nodeLoc, coord, rc);
+          }
+          *(itField + (localId)*(numComponents) + nAtoms)  = rho(nodeLoc, atomCoordinatesVec, rc) ;  
         }
       }
     }
@@ -420,9 +433,12 @@ int main(int argc, char** argv)
                     {
                       dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
                       basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
-                      *(itField + (localId)*(numComponents))  = potential(nodeLoc, atomCoordinates1, rc);
-                      *(itField + (localId)*(numComponents) + 1)  = potential(nodeLoc, atomCoordinates2, rc);
-                      *(itField + (localId)*(numComponents) + 2)  = potential(nodeLoc, atomCoordinatesVec, rc);          
+                      for (unsigned int j = 0 ; j < nAtoms ; j++ )
+                      {
+                        std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[j]};
+                        *(itField + (localId)*(numComponents) + j)  = potential(nodeLoc, coord, rc);
+                      }
+                      *(itField + (localId)*(numComponents) + nAtoms)  = potential(nodeLoc, atomCoordinatesVec, rc) ;          
                     } // non-hanging node check
                 }     // Face dof loop
             }
@@ -440,7 +456,35 @@ int main(int argc, char** argv)
                 feBasisData->getQuadratureRuleContainer();
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
-  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer1(quadRuleContainer, numComponents);
+  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
+
+  // Calculate the offset of the smeared charge so that the total charge in the domain is one
+  std::vector<double> chargeDensity(nAtoms, 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
+  for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
+  {
+    std::vector<double> JxW = quadRuleContainer->getCellJxW(i);
+    dftefe::size_type quadId = 0;
+    for (auto j : quadRuleContainer->getCellRealPoints(i))
+    {
+      for(unsigned int k = 0 ; k < nAtoms ; k++)
+      {
+        std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[k]};
+        chargeDensity[k] += rho( j, coord, rc) * JxW[quadId];
+      }
+      quadId = quadId + 1;
+    }
+  }
+  dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+        chargeDensity.data(),
+        mpiReducedChargeDensity.data(),
+        chargeDensity.size(),
+        dftefe::utils::mpi::MPIDouble,
+        dftefe::utils::mpi::MPISum,
+        comm);
+
+  std::cout << rank << "," << mpiReducedChargeDensity[0] << "," << mpiReducedChargeDensity[1] << std::endl;
+
+  // Store the charge density at the quadrature points for the poisson problem
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
@@ -448,16 +492,17 @@ int main(int argc, char** argv)
     for (auto j : quadRuleContainer->getCellRealPoints(i))
     {
       std::vector<double> a(numComponents, 0);
-      a[0] = rho( j, atomCoordinates1, rc);
-      a[1] = rho( j, atomCoordinates2, rc);
-      a[2] = rho( j, atomCoordinatesVec, rc);
+      for (unsigned int k = 0 ; k < nAtoms ; k++)
+      {
+        std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[k]};
+      a[k] = rho( j, coord, rc) * (4*M_PI) * (1.0/mpiReducedChargeDensity[k]);
+      }
+      a[nAtoms] = rho( j, atomCoordinatesVec, rc) * (4*M_PI) * nAtoms/(std::accumulate(mpiReducedChargeDensity.begin(),mpiReducedChargeDensity.end(),0.0));
       double *b = a.data();
       quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
       quadId = quadId + 1;
     }
   }
-
-  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadAttr, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                    double,
@@ -467,7 +512,7 @@ int main(int argc, char** argv)
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (basisHandler,
-                                                    feBasisOp,
+                                                    feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
                                                     constraintHanging,
@@ -497,23 +542,19 @@ int main(int argc, char** argv)
 
   // perform integral rho vh 
 
-  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainer1);
+  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainerNumerical);
 
   auto iter1 = quadValuesContainer.begin();
-  auto iter2 = quadValuesContainer1.begin();
+  auto iter2 = quadValuesContainerNumerical.begin();
   dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints(), mpinumQuadraturePoints=0;
   const std::vector<double> JxW = quadRuleContainer->getJxW();
-  std::vector<double> integral(7, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+  std::vector<double> energy(numComponents, 0.0), mpiReducedEnergy(energy.size(), 0.0);
   for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
   {
     for (unsigned int j = 0 ; j < numComponents ; j++ )
     {
-      integral[j] += *(i*numComponents+j+iter1) * *(i*numComponents+j+iter2) * JxW[i] * 0.5/(4*M_PI);
+      energy[j] += *(i*numComponents+j+iter1) * *(i*numComponents+j+iter2) * JxW[i] * 0.5/(4*M_PI);
     }
-    integral[3] += *(i*numComponents+0+iter1) * *(i*numComponents+1+iter2) * JxW[i] * 0.5/(4*M_PI);
-    integral[4] += *(i*numComponents+1+iter1) * *(i*numComponents+0+iter2) * JxW[i] * 0.5/(4*M_PI);
-    integral[5] += *(i*numComponents+0+iter1) * JxW[i]/(4*M_PI);
-    integral[6] += *(i*numComponents+1+iter1) * JxW[i]/(4*M_PI);
   }
 
         dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
@@ -525,40 +566,46 @@ int main(int argc, char** argv)
             comm);
 
   dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
-        integral.data(),
-        mpiReducedIntegral.data(),
-        integral.size(),
+        energy.data(),
+        mpiReducedEnergy.data(),
+        energy.size(),
         dftefe::utils::mpi::MPIDouble,
         dftefe::utils::mpi::MPISum,
         comm);
 
   double Ig = 10976./(17875*rc);
-  double vg0 = potential(atomCoordinates1[0], atomCoordinates1, rc);
-  double analyticalSelfPotantial = 0.5 * (Ig - vg0) ;
+  double analyticalSelfEnergy = 0, numericalSelfEnergy = 0;
+  for (unsigned int i = 0 ; i < nAtoms ; i++)
+  {
+    std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[i]};
+    analyticalSelfEnergy += 0.5 * (Ig - potential(atomCoordinatesVec[i], coord, rc));
+    numericalSelfEnergy += mpiReducedEnergy[i];
+  }
 
     double dist = 0;
     for (unsigned int j = 0 ; j < dim ; j++ )
     {
-      dist += std::pow((atomCoordinates1[0][j]-atomCoordinates2[0][j]),2);
+      dist += std::pow((atomCoordinatesVec[0][j]-atomCoordinatesVec[1][j]),2);
     }
     dist = std::sqrt(dist);
     
-    std::cout << "The error in electrostatic energy: " << (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/dist << "\n";
+    std::cout << "The error in electrostatic energy: " << (mpiReducedEnergy[2] + analyticalSelfEnergy) - 1.0/dist << "\n";
 
         if(rank == 0)
         {
         std::ofstream myfile;
         std::stringstream ss;
-        ss << "CFE"<<subdivisionx<<"x"<<subdivisiony<<"x"<<subdivisionz<<
+        ss << "CFE"<<"domain_"<<xmax<<"x"<<ymax<<"x"<<zmax<<
+        "subdiv_"<<subdivisionx<<"x"<<subdivisiony<<"x"<<subdivisionz<<
         "feOrder_"<<feOrder<<"nQuad_"<<num1DGaussSize<<"hMin_"<<hMin<<".out";
         std::string outputFile = ss.str();
         myfile.open (outputFile, std::ios::out | std::ios::trunc);
           myfile << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
           myfile << "No. of quad points: "<< mpinumQuadraturePoints << "\n";
-          myfile << "Integral of b s' over volume: "<< mpiReducedIntegral[5] << "," << mpiReducedIntegral[6] << "\n";
-          myfile << "The electrostatic energy (analy/num) : "<< (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) << "," << (mpiReducedIntegral[2] - (mpiReducedIntegral[0] + mpiReducedIntegral[1]))  << "\n";
-          myfile << "The error in electrostatic energy from analytical self potential: " << (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/dist << "Relative error: "<<((mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/dist)*dist<<"\n";
-          myfile << "The error in electrostatic energy from numerical self potntial : " << (mpiReducedIntegral[2] - (mpiReducedIntegral[0] + mpiReducedIntegral[1])) - 1.0/dist << "Relative error: "<<((mpiReducedIntegral[2] - (mpiReducedIntegral[0] + mpiReducedIntegral[1])) - 1.0/dist)*dist<<"\n";
+          myfile << "Integral of b smear over volume: "<< std::accumulate(mpiReducedChargeDensity.begin(),mpiReducedChargeDensity.end(),0.0) << "\n";
+          myfile << "The electrostatic energy (analy/num) : "<< (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) << "," << (mpiReducedEnergy[nAtoms] - numericalSelfEnergy)  << "\n";
+          myfile << "The error in electrostatic energy from analytical self potential: " << (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) - 1.0/dist << " Relative error: "<<((mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) - 1.0/dist)*dist<<"\n";
+          myfile << "The error in electrostatic energy from numerical self potntial : " << (mpiReducedEnergy[nAtoms] - numericalSelfEnergy) - 1.0/dist << " Relative error: "<<((mpiReducedEnergy[nAtoms] - numericalSelfEnergy) - 1.0/dist)*dist<<"\n";
         myfile.close();
         }
 

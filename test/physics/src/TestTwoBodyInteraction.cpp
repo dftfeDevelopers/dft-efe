@@ -122,20 +122,20 @@ int main()
   const unsigned int dim = 3;
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
         std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {20, 20, 20};
+  std::vector<unsigned int>         subdivisions = {28, 28, 28};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
-  double xmax = 20.0;
-  double ymax = 20.0;
-  double zmax = 20.0;
-  double rc = 0.5;
+  double xmax = 30.0;
+  double ymax = 30.0;
+  double zmax = 30.0;
+  double rc = 1.2;
   unsigned int numComponents = 3;
-  double hMin = 0.4;
+  double hMin = 1e6;
   dftefe::size_type maxIter = 2e7;
-  double absoluteTol = 1e-10;
-  double relativeTol = 1e-12;
+  double absoluteTol = 1e-12;
+  double relativeTol = 1e-14;
   double divergenceTol = 1e10;
   double refineradius = 3*rc;
 
@@ -228,7 +228,7 @@ int main()
 
   // initialize the basis Manager
 
-  unsigned int feDegree = 3;
+  unsigned int feDegree = 7;
 
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
@@ -264,7 +264,7 @@ int main()
   constraintsMap[constraintHomwHan] = constraintsVec[1];
 
   // Set up the quadrature rule
-  unsigned int num1DGaussSize = 4;
+  unsigned int num1DGaussSize = 8;
 
   dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
 
@@ -420,7 +420,7 @@ int main()
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (basisHandler,
-                                                    feBasisOp,
+                                                    feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
                                                     constraintHanging,
