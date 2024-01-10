@@ -60,7 +60,7 @@ namespace dftefe
           feBasisDataStorage->getBasisGradNiGradNjInAllCells();
 
         std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
-                                                          0);
+                                                           0);
         std::copy(numCellDofs.begin(),
                   numCellDofs.begin() + numLocallyOwnedCells,
                   locallyOwnedCellsNumDoFsSTL.begin());
@@ -71,9 +71,9 @@ namespace dftefe
 
         basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
           addCellWiseBasisDataToDiagonalData(gradNiGradNjInAllCells.data(),
-                                            itCellLocalIdsBegin,
-                                            locallyOwnedCellsNumDoFs,
-                                            diagonal.data());
+                                             itCellLocalIdsBegin,
+                                             locallyOwnedCellsNumDoFs,
+                                             diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes
@@ -105,7 +105,7 @@ namespace dftefe
       PoissonLinearSolverFunctionFE(
         std::shared_ptr<
           const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-                                             feBasisHandler,
+          feBasisHandler,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageStiffnessMatrix,
@@ -214,10 +214,9 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
 
       // Set up basis Operations for RHS
-      basis::FEBasisOperations<ValueTypeOperand,
-                              ValueTypeOperator,
-                              memorySpace,
-                              dim> feBasisOperations(feBasisDataStorageRhs, maxCellTimesNumVecs);
+      basis::
+        FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+          feBasisOperations(feBasisDataStorageRhs, maxCellTimesNumVecs);
 
       feBasisOperations.integrateWithBasisValues(inp,
                                                  *d_feBasisHandler,

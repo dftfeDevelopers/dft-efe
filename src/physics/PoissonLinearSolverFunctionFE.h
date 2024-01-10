@@ -101,7 +101,7 @@ namespace dftefe
       PoissonLinearSolverFunctionFE(
         std::shared_ptr<
           const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-                                             feBasisHandler,
+          feBasisHandler,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageStiffnessMatrix,

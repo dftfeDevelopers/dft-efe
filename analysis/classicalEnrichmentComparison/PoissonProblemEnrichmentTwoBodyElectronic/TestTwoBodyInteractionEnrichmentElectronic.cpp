@@ -625,7 +625,7 @@ std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (basisHandler,
-                                                    feBasisOp,
+                                                    feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
                                                     constraintHanging,
@@ -663,7 +663,7 @@ std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared
   dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints(), mpinumQuadraturePoints=0;
   const std::vector<double> JxW = quadRuleContainer->getJxW();
   std::vector<dftefe::utils::Point> quadPoint = quadRuleContainer->getRealPoints();
-  std::vector<double> energy(numComponents + 2*nAtoms, 0.0), mpiReducedEnergy(energy.size(), 0.0);
+  std::vector<double> energy(numComponents, 0.0), mpiReducedEnergy(energy.size(), 0.0);
 
   for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
   {
@@ -671,18 +671,18 @@ std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared
     {
       energy[j] += *(i*numComponents+j+iter1) * *(i*numComponents+j+iter2) * JxW[i] * 0.5*(1/(4*M_PI));
     }
-    for (unsigned int j = 0 ; j < nAtoms ; j++ )
-    {
-      std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[j]};
-      energy[j+numComponents] += offset * rho(spline, quadPoint[i], atomCoordinatesVec) * 
-        (vPoint(quadPoint[i], coord) - vSmear(quadPoint[i], coord, rc)) * JxW[i];
-    }
-    for (unsigned int j = 0 ; j < nAtoms ; j++ )
-    {
-      std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[j]};
-      energy[j+numComponents+nAtoms] += offset * rho(spline, quadPoint[i], atomCoordinatesVec) * 
-        (vPoint(quadPoint[i], coord) - *(i*numComponents+j+iter2)) * JxW[i];
-    }
+    // for (unsigned int j = 0 ; j < nAtoms ; j++ )
+    // {
+    //   std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[j]};
+      //   energy[j+numComponents] += offset * rho(spline, quadPoint[i], atomCoordinatesVec) * 
+        //     (vPoint(quadPoint[i], coord) - vSmear(quadPoint[i], coord, rc)) * JxW[i];
+    // }
+    // for (unsigned int j = 0 ; j < nAtoms ; j++ )
+    // {
+    //   std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[j]};
+      //   energy[j+numComponents+nAtoms] += offset * rho(spline, quadPoint[i], atomCoordinatesVec) * 
+        //     (vPoint(quadPoint[i], coord) - *(i*numComponents+j+iter2)) * JxW[i];
+    // }
   }
 
   dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
@@ -702,17 +702,15 @@ std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared
         comm);
 
   double Ig = 10976./(17875*rc);
-  double analyticalSelfEnergy = 0, numericalSelfEnergy = 0, analyticalHartreeCorrectedEnergy = 0, numericalHartreeCorrectedEnergy = 0 ;
+  double analyticalSelfEnergy = 0, numericalSelfEnergy = 0;
   for (unsigned int i = 0 ; i < nAtoms ; i++)
   {
     std::vector<dftefe::utils::Point> coord{atomCoordinatesVec[i]};
     analyticalSelfEnergy += 0.5 * (Ig - vSmear(atomCoordinatesVec[i], coord, rc));
     numericalSelfEnergy += mpiReducedEnergy[i];
-    analyticalHartreeCorrectedEnergy += mpiReducedEnergy[i + numComponents];
-    numericalHartreeCorrectedEnergy += mpiReducedEnergy[i + numComponents + nAtoms];
-  }
+      }
     
-    std::cout << "The electrostatic interaction energy from analytical Self Energy: " << (mpiReducedEnergy[nAtoms] + analyticalHartreeCorrectedEnergy + analyticalSelfEnergy) << "\n";
+    std::cout << "The electrostatic interaction energy from analytical Self Energy: " << (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) << "\n";
 
     if(rank == 0)
     {
@@ -728,14 +726,10 @@ std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared
         myfile << std::fixed << std::setprecision(15) << std::endl;
         myfile << "Charge Density over volume (bSmear, rho): "<< mpiReducedChargeDensity[0] << "," << mpiReducedChargeDensity[1] << "\n";
         myfile << std::endl;
-        myfile << "The electrostatic interaction energy from analytical Self Energy and vSmear: "<< 
-            (mpiReducedEnergy[nAtoms] + analyticalHartreeCorrectedEnergy + analyticalSelfEnergy) << "\n";
-        myfile << "The electrostatic interaction energy from analytical Self Energy and numerical vSmear: " << 
-            (mpiReducedEnergy[nAtoms] + numericalHartreeCorrectedEnergy + analyticalSelfEnergy) << "\n";
-        myfile << "The electrostatic interaction energy from numerical Self Energy and analytical vSmear: " << 
-            (mpiReducedEnergy[nAtoms] + analyticalHartreeCorrectedEnergy - numericalSelfEnergy) <<"\n";
-        myfile << "The electrostatic interaction energy from numerical Self Energy and vSmear: " << 
-            (mpiReducedEnergy[nAtoms] + numericalHartreeCorrectedEnergy - numericalSelfEnergy)<<"\n";
+        myfile << "The electrostatic interaction energy from analytical Self Energy: "<< 
+            (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) << "\n";
+        myfile << "The electrostatic interaction energy from numerical Self Energy: " << 
+            (mpiReducedEnergy[nAtoms] - numericalSelfEnergy)<<"\n";
       myfile.close();
     }
 

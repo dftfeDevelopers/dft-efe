@@ -61,7 +61,7 @@ namespace dftefe
           feOverlapOperatorContext->getBasisOverlapInAllCells();
 
         std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
-                                                          0);
+                                                           0);
         std::copy(numCellDofs.begin(),
                   numCellDofs.begin() + numLocallyOwnedCells,
                   locallyOwnedCellsNumDoFsSTL.begin());
@@ -72,9 +72,9 @@ namespace dftefe
 
         basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
           addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
-                                            itCellLocalIdsBegin,
-                                            locallyOwnedCellsNumDoFs,
-                                            diagonal.data());
+                                             itCellLocalIdsBegin,
+                                             locallyOwnedCellsNumDoFs,
+                                             diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes

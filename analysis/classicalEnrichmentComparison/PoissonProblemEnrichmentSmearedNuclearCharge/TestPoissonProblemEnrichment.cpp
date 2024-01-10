@@ -496,7 +496,7 @@ T readParameter(std::string ParamFile, std::string param)
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>
                                                         (basisHandler,
-                                                        feBasisOp,
+                                                        feBasisData,
                                                         feBasisData,
                                                         quadValuesContainer,
                                                         constraintHanging,
