@@ -150,7 +150,19 @@ int main(int argc, char** argv)
     std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
 
     // Read the parameter files and atom coordinate files
-    std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
+    char* dftefe_path = getenv("DFTEFE_PATH");
+    std::string sourceDir;
+    // if executes if a non null value is returned
+    // otherwise else executes
+    if (dftefe_path != NULL) 
+    {
+      sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+    }
+    else
+    {
+      dftefe::utils::throwException(false,
+                            "dftefe_path does not exist!");
+    }
     std::string atomDataFile = "SingleSmearedCharge.in";
     std::string paramDataFile = argv[1];
     std::string inputFileName = sourceDir + atomDataFile;
