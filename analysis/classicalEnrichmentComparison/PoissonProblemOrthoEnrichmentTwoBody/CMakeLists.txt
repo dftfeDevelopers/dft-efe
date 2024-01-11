@@ -16,6 +16,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physic
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestPoissonProblemEnrichment /home/avirup/dft-efe/analysis/classicalEnrichmentComparison/PoissonProblemOrthoEnrichmentTwoBody/TestTwoBodyInteractionOrthoEnrichment.cpp)
+add_executable(TestPoissonProblemEnrichment ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/PoissonProblemOrthoEnrichmentTwoBody/TestTwoBodyInteractionOrthoEnrichment.cpp)
 target_link_libraries(TestPoissonProblemEnrichment PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

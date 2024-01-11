@@ -25,6 +25,9 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physic
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestPoissonProblemOrthoEnrichmentAdaptiveQuad TestPoissonProblemOrthoEnrichmentAdaptiveQuad.cpp )
-target_link_libraries(TestPoissonProblemOrthoEnrichmentAdaptiveQuad PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+
+add_executable(TestFunctionClassical TestFunctionClassical.cpp )
+target_link_libraries(TestFunctionClassical PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+add_executable(TestLaplaceOperator TestLaplaceOperator.cpp )
+target_link_libraries(TestLaplaceOperator PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

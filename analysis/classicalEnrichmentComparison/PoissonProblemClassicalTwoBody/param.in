@@ -1,9 +1,9 @@
 xmax = 20.    
 ymax = 20.
 zmax = 20
-subdivisionx = 4
-subdivisiony = 4
-subdivisionz = 4
+subdivisionx = 10
+subdivisiony = 10
+subdivisionz = 10
 rc = 0.6
 hMin = 1e6
 maxIter = 20000000

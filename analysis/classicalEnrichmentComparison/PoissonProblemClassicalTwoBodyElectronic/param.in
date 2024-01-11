@@ -1,0 +1,15 @@
+xmax = 30.    
+ymax = 30.
+zmax = 30.
+subdivisionx = 35.  
+subdivisiony = 35.  
+subdivisionz = 35.  
+rc = 0.6
+hMin = 0.5
+maxIter = 20000000
+absoluteTol = 1e-10
+relativeTol = 1e-12
+divergenceTol = 1e10
+refineradius = 1.8
+feOrder = 7
+num1DQuadratureSize = 20

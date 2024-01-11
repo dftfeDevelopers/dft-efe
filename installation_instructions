@@ -13,7 +13,27 @@ For greatlakes:
 For a CPU only compilation
 
 CPU:
+export DFTEFE_PATH= <path to dftefe project> (eg: /home/$USER/dft-efe)
+
 python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --BOOST_DIR="/sw/pkgs/arc/stacks/gcc/10.3.0/boost/1.78.0" --SLATE_DIR="/home/vikramg/DFTEFE-softwares/slate/install" --DEALII_PATH="/scratch/vikramg_root/vikramg/shared_data/avirup/dealii/installmoduleboostkokkos" --ENABLE_MPI=ON --ENABLE_CUDA=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so"
+
+python install.py
+
+make
+
+For perlmutter:
+For a CPU only compilation
+
+Note: Used locally installed boost. 
+
+CPU:
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/libflame/install/lib
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/blis/install/lib
+
+export DFTEFE_PATH= <path to dftefe project> (eg: /global/homes/a/$USER/dft-efe)
+
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=cc --CMAKE_CXX_COMPILER=CC --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --BOOST_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares/boost/install" --SLATE_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares/slate/install" --DEALII_PATH="/pscratch/sd/a/avirup/DFTEFE-softwares/dealii/install" --ENABLE_MPI=ON --ENABLE_CUDA=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so"
 
 python install.py
 

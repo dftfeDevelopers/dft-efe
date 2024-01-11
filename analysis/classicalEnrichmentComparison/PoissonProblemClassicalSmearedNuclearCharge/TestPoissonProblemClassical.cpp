@@ -118,7 +118,7 @@ T readParameter(std::string ParamFile, std::string param)
     return ret;
     } 
 
-int main()
+int main(int argc, char** argv)
 {
 
   std::cout<<" Entering test poisson problem classical \n";
@@ -150,9 +150,21 @@ int main()
     std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
 
     // Read the parameter files and atom coordinate files
-    std::string sourceDir = "/home/avirup/dft-efe/analysis/classicalEnrichmentComparison/";
+    char* dftefe_path = getenv("DFTEFE_PATH");
+    std::string sourceDir;
+    // if executes if a non null value is returned
+    // otherwise else executes
+    if (dftefe_path != NULL) 
+    {
+      sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+    }
+    else
+    {
+      dftefe::utils::throwException(false,
+                            "dftefe_path does not exist!");
+    }
     std::string atomDataFile = "SingleSmearedCharge.in";
-    std::string paramDataFile = "PoissonProblemClassicalSmearedNuclearCharge/param.in";
+    std::string paramDataFile = argv[1];
     std::string inputFileName = sourceDir + atomDataFile;
     std::string parameterInputFileName = sourceDir + paramDataFile;
 
@@ -177,7 +189,7 @@ int main()
   const unsigned int dim = 3;
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
         std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {20, 20 ,20};
+  std::vector<unsigned int>         subdivisions = {subdivisionx, subdivisiony ,subdivisionz};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
@@ -186,11 +198,17 @@ int main()
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
+  std::vector<double> origin(0);
+  origin.resize(dim);
+  for(unsigned int i = 0 ; i < dim ; i++)
+      origin[i] = -domainVectors[i][i]*0.5;
+
   // initialize the triangulation
   triangulationBase->initializeTriangulationConstruction();
   triangulationBase->createUniformParallelepiped(subdivisions,
                                                  domainVectors,
                                                  isPeriodicFlags);
+  triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
   triangulationBase->finalizeTriangulationConstruction();
 
     // Enrichment data file consisting of g(r,\theta,\phi) = f(r)*Y_lm(\theta, \phi)
@@ -350,7 +368,6 @@ int main()
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = true;
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
@@ -492,12 +509,9 @@ int main()
 
   // create the quadrature Value Container
 
-  std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
-    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
-
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr, quadRule, triangulationBase,
-                                                                 linearCellMappingDealii);
+    std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
+                feBasisData->getQuadratureRuleContainer();
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents);
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerAnalytical(quadRuleContainer, numComponents);
@@ -506,7 +520,7 @@ int main()
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
     dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer.getCellRealPoints(i))
+    for (auto j : quadRuleContainer->getCellRealPoints(i))
     {
       double a = rho( j, atomCoordinatesVec, rc);
       double *b = &a;
@@ -525,10 +539,9 @@ int main()
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (basisHandler,
-                                                    feBasisOp,
+                                                    feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
-                                                    quadAttr,
                                                     constraintHanging,
                                                     constraintHomwHan,
                                                     *vhNHDB,
@@ -557,7 +570,7 @@ int main()
   for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
   {
     dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer.getCellRealPoints(i))
+    for (auto j : quadRuleContainer->getCellRealPoints(i))
     {
       double a = potential( j, atomCoordinatesVec, rc);
       double *b = &a;
@@ -566,15 +579,15 @@ int main()
     }
   }
 
-  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadAttr, quadValuesContainerNumerical);
+  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainerNumerical);
 
         auto iterPotAnalytic = quadValuesContainerAnalytical.begin();
         auto iterPotNumeric = quadValuesContainerNumerical.begin();
         auto iterRho = quadValuesContainer.begin();
-        dftefe::size_type numQuadraturePoints = quadRuleContainer.nQuadraturePoints(), mpinumQuadraturePoints=0;
-        const std::vector<double> JxW = quadRuleContainer.getJxW();
+        dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints(), mpinumQuadraturePoints=0;
+        const std::vector<double> JxW = quadRuleContainer->getJxW();
         std::vector<double> integral(5, 0.0), mpiReducedIntegral(integral.size(), 0.0);
-        const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
+        const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer->getRealPoints();
         int count = 0;
 
         for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
