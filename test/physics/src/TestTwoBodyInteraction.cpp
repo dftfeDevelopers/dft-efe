@@ -122,14 +122,14 @@ int main()
   const unsigned int dim = 3;
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
         std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {28, 28, 28};
+  std::vector<unsigned int>         subdivisions = {15, 15, 15};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<dftefe::utils::Point> domainVectors(dim,
                                                   dftefe::utils::Point(dim, 0.0));
 
-  double xmax = 30.0;
-  double ymax = 30.0;
-  double zmax = 30.0;
+  double xmax = 20.0;
+  double ymax = 20.0;
+  double zmax = 20.0;
   double rc = 1.2;
   unsigned int numComponents = 3;
   double hMin = 1e6;
@@ -150,8 +150,21 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
-  std::string sourceDir = "/home/avirup/dft-efe/test/physics/src/";
-  std::string atomDataFile = "AtomData.in";
+    char* dftefe_path = getenv("DFTEFE_PATH");
+    std::string sourceDir;
+    // if executes if a non null value is returned
+    // otherwise else executes
+    if (dftefe_path != NULL) 
+    {
+      sourceDir = (std::string)dftefe_path + "/test/physics/src/";
+    }
+    else
+    {
+      dftefe::utils::throwException(false,
+                            "dftefe_path does not exist!");
+    }
+
+  std::string atomDataFile = "TwoAtomData1_5.in";
   std::string inputFileName = sourceDir + atomDataFile;
   std::fstream fstream;
 
@@ -486,7 +499,7 @@ int main()
     << "+" << mpiReducedIntegral[3] << "+" << mpiReducedIntegral[4] << "=" << mpiReducedIntegral[0] 
       + mpiReducedIntegral[1] + mpiReducedIntegral[3] + mpiReducedIntegral[4];
         
-    std::cout << "\nThe error in electrostatic energy: " << (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/10.0;
+    std::cout << "\nThe difference in electrostatic energy wrt analytical: " << (mpiReducedIntegral[2] + 2*analyticalSelfPotantial) - 1.0/1.5;
 
 
   //gracefully end MPI
