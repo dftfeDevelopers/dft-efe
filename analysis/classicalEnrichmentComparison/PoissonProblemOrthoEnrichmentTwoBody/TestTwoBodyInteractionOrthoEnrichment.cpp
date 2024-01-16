@@ -76,7 +76,7 @@ T readParameter(std::string ParamFile, std::string param)
 }
 
 
-double rho(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origin, double rc)
+double rho(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin, double rc)
 {
   double ret = 0;
   // The function should have homogeneous dirichlet BC
@@ -96,7 +96,7 @@ double rho(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origi
   return ret;
 }
 
-double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origin, double rc)
+double potential(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin, double rc)
 {
   double ret = 0;
   // The function should have homogeneous dirichlet BC
@@ -117,6 +117,39 @@ double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> 
   }
   return ret;
 }
+
+  class AtomEnergyFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  {
+  private:
+    std::vector<dftefe::utils::Point> d_atomCoordinatesVec;
+    double d_rc;
+
+  public:
+    AtomEnergyFunction(
+      const std::vector<dftefe::utils::Point> &atomCoordinatesVec,
+      double rc)
+      : d_atomCoordinatesVec(atomCoordinatesVec),
+        d_rc(rc)
+      {}
+
+    double
+    operator()(const dftefe::utils::Point &point) const
+    {
+      return rho(point, d_atomCoordinatesVec, d_rc) * potential(point, d_atomCoordinatesVec, d_rc);
+    }
+
+    std::vector<double>
+    operator()(const std::vector<dftefe::utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = rho(points[i], d_atomCoordinatesVec, d_rc) * potential(points[i], d_atomCoordinatesVec, d_rc);
+      }
+      return ret;
+    }
+  };
 
 int main(int argc, char** argv)
 {
@@ -326,11 +359,11 @@ int main(int argc, char** argv)
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
-    unsigned int numfun = 2;
+    unsigned int numfun = 3;
     functionsVec.resize(numfun); // Enrichment Functions
     std::vector<double> tolerances(numfun);
     std::vector<double> integralThresholds(numfun);
-    for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
+    for ( unsigned int i=0 ;i < functionsVec.size()-1 ; i++ )
     {
         functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>(        
             enrichClassIntfce->getEnrichmentIdsPartition(),
@@ -342,6 +375,11 @@ int main(int argc, char** argv)
         tolerances[i] = adaptiveQuadTolerance;
         integralThresholds[i] = integralThreshold;
     }
+    functionsVec[2] = std::make_shared<AtomEnergyFunction>(
+        atomCoordinatesVec,
+        rc);
+    tolerances[2] = adaptiveQuadTolerance;
+    integralThresholds[2] = integralThreshold;
 
     //Set up quadAttr for Rhs and OverlapMatrix
 
@@ -780,7 +818,7 @@ int main(int argc, char** argv)
         std::stringstream ss;
         ss << "OEFE"<<"domain_"<<xmax<<"x"<<ymax<<"x"<<zmax<<
         "subdiv_"<<subdivisionx<<"x"<<subdivisiony<<"x"<<subdivisionz<<
-        "feOrder_"<<feOrder<<"hMin_"<<hMin<<"adapTol_"<<adaptiveQuadTolerance<<".out";
+        "feOrder_"<<feOrder<<"hMin_"<<hMin<<"adapTol_"<<adaptiveQuadTolerance<<"nQuad_"<<num1DGaussSize".out";
         std::string outputFile = ss.str();
         myfile.open (outputFile, std::ios::out | std::ios::trunc);
           myfile << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
