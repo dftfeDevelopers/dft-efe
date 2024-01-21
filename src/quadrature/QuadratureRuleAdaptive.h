@@ -24,7 +24,8 @@ namespace dftefe
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
         std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
                                    functions,
-        const std::vector<double> &tolerances,
+        const std::vector<double> &absoluteTolerances,
+        const std::vector<double> &relativeTolerances,
         const std::vector<double> &integralThresholds,
         const double               smallestCellVolume = 1e-12,
         const unsigned int         maxRecursion       = 100);

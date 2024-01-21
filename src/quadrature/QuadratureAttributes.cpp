@@ -80,18 +80,6 @@ namespace dftefe
     }
 
     bool
-    QuadratureRuleAttributes::operator<(
-      const QuadratureRuleAttributes &quadratureRuleAttributes) const
-    {
-      if (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily)
-        {
-          return d_num1DPoints < quadratureRuleAttributes.d_num1DPoints;
-        }
-      else
-        return d_quadratureFamily < quadratureRuleAttributes.d_quadratureFamily;
-    }
-
-    bool
     QuadratureRuleAttributes::operator==(
       const QuadratureRuleAttributes &quadratureRuleAttributes) const
     {

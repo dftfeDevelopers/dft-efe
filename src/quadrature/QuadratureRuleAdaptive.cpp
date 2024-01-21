@@ -106,7 +106,8 @@ namespace dftefe
         const std::vector<double> &             parentCellIntegralValues,
         const std::vector<double> &             parentCellIntegralThresholds,
         const std::vector<std::vector<double>> &childCellsIntegralValues,
-        const std::vector<double> &             tolerances)
+        const std::vector<double> &             absoluteTolerances,
+        const std::vector<double> &             relativeTolerances)
       {
         bool            returnValue     = true;
         const size_type numberFunctions = parentCellIntegralValues.size();
@@ -115,7 +116,8 @@ namespace dftefe
              ++iFunction)
           {
             const double parentIntegral = parentCellIntegralValues[iFunction];
-            if (fabs(parentIntegral) > parentCellIntegralThresholds[iFunction])
+            if (fabs(parentIntegral) > parentCellIntegralThresholds[iFunction] /
+                                         (fabs(parentIntegral) + 1e-16))
               {
                 double sumChildIntegrals = 0.0;
                 for (unsigned int iChild = 0; iChild < numberChildren; ++iChild)
@@ -125,7 +127,9 @@ namespace dftefe
                   }
 
                 const double diff = fabs(sumChildIntegrals - parentIntegral);
-                if (diff > tolerances[iFunction])
+                if (diff > std::max(absoluteTolerances[iFunction],
+                                    fabs(parentIntegral) *
+                                      relativeTolerances[iFunction]))
                   {
                     returnValue = false;
                     break;
@@ -142,7 +146,8 @@ namespace dftefe
         const std::vector<double> &         parentCellIntegralValues,
         const std::vector<double> &         parentCellIntegralThresholds,
         const double                        parentVolume,
-        const std::vector<double> &         tolerances,
+        const std::vector<double> &         absoluteTolerances,
+        const std::vector<double> &         relativeTolerances,
         const double                        smallestCellVolume,
         const unsigned int                  recursionLevel,
         const unsigned int                  maxRecursion,
@@ -243,7 +248,8 @@ namespace dftefe
               haveIntegralsConverged(parentCellIntegralValues,
                                      parentCellIntegralThresholds,
                                      childCellsIntegralValues,
-                                     tolerances);
+                                     absoluteTolerances,
+                                     relativeTolerances);
 
             if (convergenceFlag)
               {
@@ -269,7 +275,8 @@ namespace dftefe
                                        childCellsIntegralValues[iChild],
                                        parentCellIntegralThresholds,
                                        childCellsVolume[iChild],
-                                       tolerances,
+                                       absoluteTolerances,
+                                       relativeTolerances,
                                        smallestCellVolume,
                                        recursionLevelNext,
                                        maxRecursion,
@@ -300,7 +307,8 @@ namespace dftefe
       basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
       std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
                                  functions,
-      const std::vector<double> &tolerances,
+      const std::vector<double> &absoluteTolerances,
+      const std::vector<double> &relativeTolerances,
       const std::vector<double> &integralThresholds,
       const double               smallestCellVolume /*= 1e-12*/,
       const unsigned int         maxRecursion /*= 100*/)
@@ -353,7 +361,8 @@ namespace dftefe
                          classicalIntegralValues,
                          integralThresholds,
                          cellVolume,
-                         tolerances,
+                         absoluteTolerances,
+                         relativeTolerances,
                          smallestCellVolume,
                          recursionLevel,
                          maxRecursion,

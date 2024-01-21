@@ -222,7 +222,8 @@ int main(int argc, char** argv)
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance");
   double smallestCellVolume = readParameter<double>(parameterInputFileName, "smallestCellVolume");
   unsigned int maxRecursion = readParameter<unsigned int>(parameterInputFileName, "maxRecursion");
-  double adaptiveQuadTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadTolerance");
+  double adaptiveQuadAbsTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadAbsTolerance");
+  double adaptiveQuadRelTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadRelTolerance");
   double integralThreshold = readParameter<double>(parameterInputFileName, "integralThreshold");
 
   // Set up Triangulation
@@ -356,11 +357,11 @@ int main(int argc, char** argv)
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
-    unsigned int numfun = 3;
+    unsigned int numfun = 2;
     functionsVec.resize(numfun); // Enrichment Functions
-    std::vector<double> tolerances(numfun);
+    std::vector<double> absoluteTolerances(numfun), relativeTolerances(numfun);
     std::vector<double> integralThresholds(numfun);
-    for ( unsigned int i=0 ;i < functionsVec.size()-1 ; i++ )
+    for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
     {
         functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>(        
             enrichClassIntfce->getEnrichmentIdsPartition(),
@@ -369,14 +370,16 @@ int main(int argc, char** argv)
             atomCoordinatesVec,
             fieldName,
             i);
-        tolerances[i] = adaptiveQuadTolerance;
+        absoluteTolerances[i] = adaptiveQuadAbsTolerance;
+        relativeTolerances[i] = adaptiveQuadRelTolerance;
         integralThresholds[i] = integralThreshold;
     }
-    functionsVec[2] = std::make_shared<AtomEnergyFunction>(
-        atomCoordinatesVec,
-        rc);
-    tolerances[2] = adaptiveQuadTolerance;
-    integralThresholds[2] = integralThreshold;
+    // functionsVec[2] = std::make_shared<AtomEnergyFunction>(
+    //     atomCoordinatesVec,
+    //     rc);
+    // absoluteTolerances[2] = adaptiveQuadAbsTolerance;
+    // relativeTolerances[2] = adaptiveQuadRelTolerance;
+    // integralThresholds[2] = integralThreshold;
 
     //Set up quadAttr for Rhs and OverlapMatrix
 
@@ -398,31 +401,51 @@ int main(int argc, char** argv)
       *cellMapping, 
       *parentToChildCellsManager,
       functionsVec,
-      tolerances,
+      absoluteTolerances,
+      relativeTolerances,
       integralThresholds,
       smallestCellVolume,
       maxRecursion);
+
+  // const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainerAdaptive->getRealPoints();
+  // std::ofstream myfile;
+  // std::stringstream ss;
+  // ss << "Quad_"<<"adapAbsTol_"<<adaptiveQuadAbsTolerance<<"adapRelTol_"<<adaptiveQuadRelTolerance<<"nQuad_"<<num1DGaussSize<<".out";
+  // std::string outputFile = ss.str();
+  // myfile.open (outputFile, std::ios::out | std::ios::trunc);
+  // dftefe::size_type count = 0;
+  // for( unsigned int it  = 0 ; it < quadRuleContainerAdaptive->nQuadraturePoints() ; it++ )
+  //   {
+  //     double xLoc = locQuadPoints[count][0];
+  //     double yLoc = locQuadPoints[count][1];
+  //     double zLoc = locQuadPoints[count][2];
+
+  //     myfile<<xLoc<<"\t"<<yLoc<<"\t"<<zLoc<<std::endl;
+  //     count++;
+  //   }
 
     dftefe::quadrature::QuadratureRuleAttributes quadAttrAdaptiveStiffnessMatrix(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
 
-    tolerances.clear();
-    for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
-    {
-      tolerances[i] = adaptiveQuadTolerance*1e3;
-    }
+    // absoluteTolerances.clear(), relativeTolerances.clear();
+    // for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
+    // {
+    //     absoluteTolerances[i] = adaptiveQuadAbsTolerance*1e3;
+    //     relativeTolerances[i] = adaptiveQuadRelTolerance*1e3;
+    // }
 
-    std::shared_ptr<dftefe::quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveStiffnessMatrix =
-      std::make_shared<dftefe::quadrature::QuadratureRuleContainer>
-      (quadAttrAdaptive, 
-      baseQuadRule, 
-      triangulationBase, 
-      *cellMapping, 
-      *parentToChildCellsManager,
-      functionsVec,
-      tolerances,
-      integralThresholds,
-      smallestCellVolume,
-      maxRecursion);
+    std::shared_ptr<dftefe::quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveStiffnessMatrix = quadRuleContainerAdaptive;
+      // std::make_shared<dftefe::quadrature::QuadratureRuleContainer>
+      // (quadAttrAdaptive, 
+      // baseQuadRule, 
+      // triangulationBase, 
+      // *cellMapping, 
+      // *parentToChildCellsManager,
+      // functionsVec,
+      // absoluteTolerances,
+      // relativeTolerances,
+      // integralThresholds,
+      // smallestCellVolume,
+      // maxRecursion);
 
   // initialize the basis Manager
   std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
@@ -738,7 +761,7 @@ int main(int argc, char** argv)
         std::stringstream ss;
         ss << "EFE"<<"domain_"<<xmax<<"x"<<ymax<<"x"<<zmax<<
         "subdiv_"<<subdivisionx<<"x"<<subdivisiony<<"x"<<subdivisionz<<
-        "feOrder_"<<feOrder<<"hMin_"<<hMin<<"adapTol_"<<adaptiveQuadTolerance<<"nQuad_"<<num1DGaussSize<<".out";
+        "feOrder_"<<feOrder<<"hMin_"<<hMin<<"adapAbsTol_"<<adaptiveQuadAbsTolerance<<"adapRelTol_"<<adaptiveQuadRelTolerance<<"nQuad_"<<num1DGaussSize<<".out";
         std::string outputFile = ss.str();
         myfile.open (outputFile, std::ios::out | std::ios::trunc);
           myfile << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";

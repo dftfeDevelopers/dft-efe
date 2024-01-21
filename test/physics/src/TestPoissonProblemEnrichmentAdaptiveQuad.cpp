@@ -262,7 +262,7 @@ int main()
     std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
     unsigned int numfun = 2;
     functionsVec.resize(numfun); // Enrichment Functions
-    std::vector<double> tolerances(numfun);
+    std::vector<double> absoluteTolerances(numfun), relativeTolerances(numfun);
     std::vector<double> integralThresholds(numfun);
     for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
     {
@@ -273,7 +273,8 @@ int main()
             atomCoordinatesVec,
             fieldName,
             i);
-        tolerances[i] = 1000;
+        absoluteTolerances[i] = 1000;
+        relativeTolerances[i] = 1000;
         integralThresholds[i] = 1e-10;
     }
 
@@ -301,7 +302,8 @@ int main()
       *cellMapping, 
       *parentToChildCellsManager,
       functionsVec,
-      tolerances,
+      absoluteTolerances,
+      relativeTolerances,
       integralThresholds,
       smallestCellVolume,
       maxRecursion);

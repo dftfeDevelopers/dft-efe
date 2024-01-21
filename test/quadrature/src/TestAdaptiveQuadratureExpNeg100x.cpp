@@ -74,6 +74,7 @@ main()
       *parentToChildCellsManager,
       functions,
       tolerances,
+      tolerances,
       integralThresholds,
       smallestCellVolume,
       maxRecursion);

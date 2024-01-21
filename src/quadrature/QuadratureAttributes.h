@@ -37,12 +37,16 @@ namespace dftefe
       GAUSS, // Uniform Gauss quadrature rule across all cells in the domain
       GLL, // Uniform Gauss-Legendre-Lobatto quadrature rule across all cells in
            // the domain
-      GAUSS_VARIABLE, // Variable Gauss quadrature rule (i.e., different cells
-                      // have different Gauss quadrature)
-      GLL_VARIABLE,   // Variable Gauss-Legendre-Lobatto quadrature rule (i.e.,
-                      // different cells have different Gauss-Legendre-Lobatto
-                      // quadrature)
-      ADAPTIVE        // Adaptive quadrature rule
+      GAUSS_VARIABLE,  // Variable Gauss quadrature rule (i.e., different cells
+                       // have different Gauss quadrature)
+      GLL_VARIABLE,    // Variable Gauss-Legendre-Lobatto quadrature rule (i.e.,
+                       // different cells have different Gauss-Legendre-Lobatto
+                       // quadrature)
+      ADAPTIVE,        // Adaptive quadrature rule
+      GAUSS_SUBDIVIDED // This family implies uniform Gauss quadrature rule in
+                       // the domain The nGaussPoints in 1D is varied in each
+                       // domain and the maximum of the points is taken as the
+                       // gauss quad rule.
     };
 
     enum class QuadratureRuleType
