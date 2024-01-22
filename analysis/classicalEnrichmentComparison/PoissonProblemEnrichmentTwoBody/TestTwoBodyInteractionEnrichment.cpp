@@ -357,11 +357,11 @@ int main(int argc, char** argv)
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
-    unsigned int numfun = 2;
+    unsigned int numfun = 3;
     functionsVec.resize(numfun); // Enrichment Functions
     std::vector<double> absoluteTolerances(numfun), relativeTolerances(numfun);
     std::vector<double> integralThresholds(numfun);
-    for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
+    for ( unsigned int i=0 ;i < functionsVec.size()-1 ; i++ )
     {
         functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>(        
             enrichClassIntfce->getEnrichmentIdsPartition(),
@@ -374,12 +374,12 @@ int main(int argc, char** argv)
         relativeTolerances[i] = adaptiveQuadRelTolerance;
         integralThresholds[i] = integralThreshold;
     }
-    // functionsVec[2] = std::make_shared<AtomEnergyFunction>(
-    //     atomCoordinatesVec,
-    //     rc);
-    // absoluteTolerances[2] = adaptiveQuadAbsTolerance;
-    // relativeTolerances[2] = adaptiveQuadRelTolerance;
-    // integralThresholds[2] = integralThreshold;
+    functionsVec[2] = std::make_shared<AtomEnergyFunction>(
+        atomCoordinatesVec,
+        rc);
+    absoluteTolerances[2] = adaptiveQuadAbsTolerance;
+    relativeTolerances[2] = adaptiveQuadRelTolerance;
+    integralThresholds[2] = integralThreshold;
 
     //Set up quadAttr for Rhs and OverlapMatrix
 
@@ -684,6 +684,8 @@ int main(int argc, char** argv)
 
   feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainerNumerical);
 
+  std::vector<dftefe::size_type> nQuadPointsInCellVec(0);
+
   for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
   {
       dftefe::size_type quadId = 0;
@@ -700,7 +702,19 @@ int main(int argc, char** argv)
           quadValuesContainerAnalytical.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
           quadId = quadId + 1;
       }
+      nQuadPointsInCellVec.push_back(quadRuleContainer->nCellQuadraturePoints(i));
   }
+
+  dftefe::size_type nQuadPointsInCellMaxProc = *std::max_element(nQuadPointsInCellVec.begin(), nQuadPointsInCellVec.end()), 
+    nQuadPointsInCellMax;
+
+  dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+    &nQuadPointsInCellMaxProc,
+    &nQuadPointsInCellMax,
+    1,
+    dftefe::utils::mpi::MPIUnsigned,
+    dftefe::utils::mpi::MPIMax,
+    comm);
 
   auto iter1 = quadValuesContainer.begin();
   auto iter2 = quadValuesContainerNumerical.begin();
@@ -761,11 +775,14 @@ int main(int argc, char** argv)
         std::stringstream ss;
         ss << "EFE"<<"domain_"<<xmax<<"x"<<ymax<<"x"<<zmax<<
         "subdiv_"<<subdivisionx<<"x"<<subdivisiony<<"x"<<subdivisionz<<
-        "feOrder_"<<feOrder<<"hMin_"<<hMin<<"adapAbsTol_"<<adaptiveQuadAbsTolerance<<"adapRelTol_"<<adaptiveQuadRelTolerance<<"nQuad_"<<num1DGaussSize<<".out";
+        "feOrder_"<<feOrder<<"hMin_"<<hMin<<"nQuad_"<<num1DGaussSize<<
+        "adapAbsTol_"<<adaptiveQuadAbsTolerance<<"adapRelTol_"<<adaptiveQuadRelTolerance<<
+        "threshold"<<integralThreshold<<".out";
         std::string outputFile = ss.str();
         myfile.open (outputFile, std::ios::out | std::ios::trunc);
           myfile << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
           myfile << "No. of quad points: "<< mpinumQuadraturePoints << "\n";
+          myfile << "No. of max quad points in cell: "<< nQuadPointsInCellMax << "\n";
           myfile << "Integral of b smear over volume: "<< std::accumulate(mpiReducedChargeDensity.begin(),mpiReducedChargeDensity.end(),0.0) << "\n";
           myfile << "The electrostatic energy (analy/num) : "<< (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) << "," << (mpiReducedEnergy[nAtoms] - numericalSelfEnergy)  << "\n";
           myfile << "The error in electrostatic energy from analytical self potential: " << (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) - 1.0/dist << " Relative error: "<<((mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) - 1.0/dist)*dist<<"\n";

@@ -117,7 +117,7 @@ namespace dftefe
           {
             const double parentIntegral = parentCellIntegralValues[iFunction];
             if (fabs(parentIntegral) > parentCellIntegralThresholds[iFunction] /
-                                         (fabs(parentIntegral) + 1e-16))
+                                         (fabs(parentIntegral) + 1e-16 /*Normalization*/))
               {
                 double sumChildIntegrals = 0.0;
                 for (unsigned int iChild = 0; iChild < numberChildren; ++iChild)
