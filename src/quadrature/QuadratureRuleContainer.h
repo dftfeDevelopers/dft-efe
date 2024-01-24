@@ -10,6 +10,8 @@
 #include <basis/CellMappingBase.h>
 #include <basis/ParentToChildCellsManagerBase.h>
 #include <memory>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 
 namespace dftefe
 {
@@ -80,6 +82,21 @@ namespace dftefe
         const std::vector<double> &integralThresholds,
         const double               smallestCellVolume = 1e-12,
         const unsigned int         maxRecursion       = 100);
+
+      QuadratureRuleContainer(
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                 order1DMin,
+        const size_type                 order1DMax,
+        const size_type                 copies1DMax,
+        std::shared_ptr<const basis::TriangulationBase> triangulation,
+        const basis::CellMappingBase &                  cellMapping,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                   functions,
+        const std::vector<double> &absoluteTolerances,
+        const std::vector<double> &relativeTolerances,
+        const quadrature::QuadratureRuleContainer
+          &                        quadratureRuleContainerReference,
+        const utils::mpi::MPIComm &comm);
 
       /**
        * @brief Returns the underlying QuadratureRuleAttributes
@@ -197,6 +214,11 @@ namespace dftefe
       size_type
       getCellQuadStartId(const size_type cellId) const;
 
+      std::shared_ptr<const basis::TriangulationBase>
+      getTriangulation() const;
+
+      const basis::CellMappingBase &
+      getCellMapping() const;
 
     private:
       const QuadratureRuleAttributes &d_quadratureRuleAttributes;
@@ -209,6 +231,8 @@ namespace dftefe
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
       bool                                               d_storeJacobianInverse;
+      std::shared_ptr<const basis::TriangulationBase>    d_triangulation;
+      const basis::CellMappingBase &                     d_cellMapping;
     };
   } // end of namespace quadrature
 

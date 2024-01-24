@@ -1,6 +1,11 @@
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureRuleAdaptive.h>
+#include <quadrature/QuadratureRuleGaussIterated.h>
 #include <utils/Exceptions.h>
+#include <numeric>
+#include <functional>
+#include <algorithm>
+#include <iomanip>
 
 namespace dftefe
 {
@@ -81,6 +86,8 @@ namespace dftefe
       , d_realPoints(0, utils::Point(triangulation->getDim(), 0))
       , d_JxW(0)
       , d_numQuadPoints(0)
+      , d_triangulation(triangulation)
+      , d_cellMapping(cellMapping)
     {
       utils::throwException(
         d_dim == quadratureRule->getDim(),
@@ -89,7 +96,8 @@ namespace dftefe
       const QuadratureFamily quadFamily =
         d_quadratureRuleAttributes.getQuadratureFamily();
       if (!(quadFamily == QuadratureFamily::GAUSS ||
-            quadFamily == QuadratureFamily::GLL))
+            quadFamily == QuadratureFamily::GLL ||
+            quadFamily == QuadratureFamily::GAUSS_SUBDIVIDED))
         utils::throwException<utils::LogicError>(
           false,
           "The constructor "
@@ -124,6 +132,8 @@ namespace dftefe
       , d_realPoints(0, utils::Point(triangulation->getDim(), 0))
       , d_JxW(0)
       , d_numQuadPoints(0)
+      , d_triangulation(triangulation)
+      , d_cellMapping(cellMapping)
     {
       d_numCells = triangulation->nLocallyOwnedCells();
       utils::throwException<utils::LengthError>(
@@ -175,6 +185,8 @@ namespace dftefe
       const unsigned int         maxRecursion /*= 100*/)
       : d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_dim(triangulation->getDim())
+      , d_triangulation(triangulation)
+      , d_cellMapping(cellMapping)
     {
       utils::throwException(
         d_dim == baseQuadratureRule->getDim(),
@@ -260,6 +272,284 @@ namespace dftefe
           // std::cout << "iCell volume: " << cellVolume << std::endl;
           iCell++;
         }
+    }
+
+    QuadratureRuleContainer::QuadratureRuleContainer(
+      const QuadratureRuleAttributes &                quadratureRuleAttributes,
+      const size_type                                 order1DMin,
+      const size_type                                 order1DMax,
+      const size_type                                 copies1DMax,
+      std::shared_ptr<const basis::TriangulationBase> triangulation,
+      const basis::CellMappingBase &                  cellMapping,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                 functions,
+      const std::vector<double> &absoluteTolerances,
+      const std::vector<double> &relativeTolerances,
+      const quadrature::QuadratureRuleContainer
+        &                        quadratureRuleContainerReference,
+      const utils::mpi::MPIComm &comm)
+      : d_quadratureRuleAttributes(quadratureRuleAttributes)
+      , d_dim(triangulation->getDim())
+      , d_numCellQuadPoints(0)
+      , d_cellQuadStartIds(0)
+      , d_realPoints(0, utils::Point(triangulation->getDim(), 0))
+      , d_JxW(0)
+      , d_numQuadPoints(0)
+      , d_triangulation(triangulation)
+      , d_cellMapping(cellMapping)
+    {
+      const QuadratureFamily quadFamily =
+        d_quadratureRuleAttributes.getQuadratureFamily();
+      if (!(quadFamily == QuadratureFamily::GAUSS_SUBDIVIDED))
+        utils::throwException<utils::LogicError>(
+          false,
+          "The constructor "
+          "for QuadratureRuleContainer with a base QuadratureRule, "
+          "input ScalarSpatialFunctionReal, 1D orders and various tolerances "
+          "is only valid for QuadratureRuleAttributes "
+          "built with QuadratureFamily GAUSS_SUBDIVIDED.");
+
+      utils::throwException(
+        triangulation == quadratureRuleContainerReference.getTriangulation() &&
+          &(cellMapping) ==
+            &(quadratureRuleContainerReference.getCellMapping()),
+        "The triangulation or FEcellMapping passed to the reference Quadrature"
+        " does not match the input triangulation or FEcellMapping.");
+
+      const size_type        numCells = triangulation->nLocallyOwnedCells();
+      const size_type        numCellsInSet = 5;
+      std::vector<double>    referenceQuadDensityInCellsVec(0);
+      std::vector<size_type> cellIndex(numCells, 0);
+
+      for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+        {
+          std::vector<double> cellJxW =
+            quadratureRuleContainerReference.getCellJxW(iCell);
+          double cellVolume =
+            std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
+          referenceQuadDensityInCellsVec.push_back(
+            quadratureRuleContainerReference.nCellQuadraturePoints(iCell) *
+            1.0 / cellVolume);
+          cellIndex[iCell] = iCell;
+        }
+
+      std::sort(cellIndex.begin(),
+                cellIndex.end(),
+                [&](size_type A, size_type B) -> bool {
+                  return referenceQuadDensityInCellsVec[A] >
+                         referenceQuadDensityInCellsVec[B];
+                });
+
+      std::vector<size_type> cellIdsWithMaxRefQuadPoints(
+        std::min(numCells, numCellsInSet), 0);
+      for (size_type i = 0; i < cellIdsWithMaxRefQuadPoints.size(); i++)
+        cellIdsWithMaxRefQuadPoints[i] = cellIndex[i];
+
+      std::vector<size_type> orderVec(0);
+      std::vector<size_type> iterVec(0);
+      std::vector<size_type> quadPointsVec(0);
+
+      for (size_type i = order1DMin; i <= order1DMax; i++)
+        {
+          for (size_type j = 1; j <= copies1DMax; j++)
+            {
+              QuadratureRuleGaussIterated iteratedGaussQuadratureRule(d_dim,
+                                                                      i,
+                                                                      j);
+              bool                        allFunctionsConvergeInAllCells = true;
+
+              for (auto cellId : cellIdsWithMaxRefQuadPoints)
+                {
+                  std::shared_ptr<basis::TriangulationCellBase> cell =
+                    *(triangulation->beginLocal() + cellId);
+
+                  bool allFunctionsConverge = true;
+
+                  const std::vector<utils::Point>
+                    &gaussIteratedParametricPoints =
+                      iteratedGaussQuadratureRule.getPoints();
+                  std::vector<utils::Point> realQuadPointsGaussIterated(
+                    iteratedGaussQuadratureRule.nPoints(),
+                    utils::Point(d_dim, 0.0));
+                  cellMapping.getRealPoints(gaussIteratedParametricPoints,
+                                            *cell,
+                                            realQuadPointsGaussIterated);
+
+                  std::vector<double> cellJxWGaussIterated(
+                    iteratedGaussQuadratureRule.nPoints(), 0.0);
+                  cellMapping.getJxW(*cell,
+                                     gaussIteratedParametricPoints,
+                                     iteratedGaussQuadratureRule.getWeights(),
+                                     cellJxWGaussIterated);
+
+                  const std::vector<utils::Point>
+                    &referenceQuadParametricPoints =
+                      quadratureRuleContainerReference.getCellParametricPoints(
+                        cellId);
+                  std::vector<utils::Point> realQuadPointsReference(
+                    quadratureRuleContainerReference.nCellQuadraturePoints(
+                      cellId),
+                    utils::Point(d_dim, 0.0));
+                  cellMapping.getRealPoints(referenceQuadParametricPoints,
+                                            *cell,
+                                            realQuadPointsReference);
+
+                  std::vector<double> cellJxWReference(
+                    quadratureRuleContainerReference.nCellQuadraturePoints(
+                      cellId),
+                    0.0);
+                  cellMapping.getJxW(*cell,
+                                     referenceQuadParametricPoints,
+                                     quadratureRuleContainerReference
+                                       .getCellQuadratureWeights(cellId),
+                                     cellJxWReference);
+
+                  for (size_type iFunction = 0; iFunction < functions.size();
+                       ++iFunction)
+                    {
+                      double gaussIteratedIntegralValue = 0;
+                      double referenceIntegralValue     = 0;
+                      std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+                                          function = functions[iFunction];
+                      std::vector<double> functionValuesGaussIterated =
+                        (*function)(realQuadPointsGaussIterated);
+                      std::vector<double> functionValuesReference =
+                        (*function)(realQuadPointsReference);
+
+                      gaussIteratedIntegralValue =
+                        std::inner_product(functionValuesGaussIterated.begin(),
+                                           functionValuesGaussIterated.end(),
+                                           cellJxWGaussIterated.begin(),
+                                           0.0);
+                      referenceIntegralValue =
+                        std::inner_product(functionValuesReference.begin(),
+                                           functionValuesReference.end(),
+                                           cellJxWReference.begin(),
+                                           0.0);
+
+                      const double diff = fabs(gaussIteratedIntegralValue -
+                                               referenceIntegralValue);
+                      if (diff < std::max(absoluteTolerances[iFunction],
+                                          fabs(referenceIntegralValue) *
+                                            relativeTolerances[iFunction]))
+                        {
+                          allFunctionsConverge = false;
+                          break;
+                        }
+                    }
+                  if (!allFunctionsConverge)
+                    {
+                      allFunctionsConvergeInAllCells = false;
+                      break;
+                    }
+                }
+
+              if (allFunctionsConvergeInAllCells)
+                {
+                  orderVec.push_back(i);
+                  iterVec.push_back(j);
+                  quadPointsVec.push_back(
+                    iteratedGaussQuadratureRule.nPoints());
+                }
+            }
+        }
+      utils::throwException(
+        orderVec.size() != 0 && iterVec.size() != 0 &&
+          quadPointsVec.size() != 0,
+        "No eligible pairs found that converges to the same accuracy as the "
+        "input reference quadrature grid. Try"
+        " again using a higher order1DMax or higher copies1DMax.");
+
+      size_type smallestNQuadPointInProcIndex =
+        std::distance(std::begin(quadPointsVec),
+                      std::min_element(std::begin(quadPointsVec),
+                                       std::end(quadPointsVec)));
+
+      int                          nProcs;
+      int                          err = utils::mpi::MPICommSize(comm, &nProcs);
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      int rank;
+      err                = utils::mpi::MPICommRank(comm, &rank);
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      std::vector<size_type> optimumOrderInAllProcs(nProcs, 0),
+        optimumOrderInAllProcsTmp(nProcs, 0);
+      std::vector<size_type> optimumIterInAllProcs(nProcs, 0),
+        optimumIterInAllProcsTmp(nProcs, 0);
+      std::vector<size_type> optimumQuadPointsInAllProcs(nProcs, 0),
+        optimumQuadPointsInAllProcsTmp(nProcs, 0);
+
+      optimumOrderInAllProcsTmp[rank] = orderVec[smallestNQuadPointInProcIndex];
+      optimumIterInAllProcsTmp[rank]  = iterVec[smallestNQuadPointInProcIndex];
+      optimumQuadPointsInAllProcsTmp[rank] =
+        quadPointsVec[smallestNQuadPointInProcIndex];
+
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        optimumOrderInAllProcsTmp.data(),
+        optimumOrderInAllProcs.data(),
+        optimumOrderInAllProcsTmp.size(),
+        utils::mpi::MPIUnsigned,
+        utils::mpi::MPISum,
+        comm);
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        optimumIterInAllProcsTmp.data(),
+        optimumIterInAllProcs.data(),
+        optimumIterInAllProcsTmp.size(),
+        utils::mpi::MPIUnsigned,
+        utils::mpi::MPISum,
+        comm);
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        optimumQuadPointsInAllProcsTmp.data(),
+        optimumQuadPointsInAllProcs.data(),
+        optimumQuadPointsInAllProcsTmp.size(),
+        utils::mpi::MPIUnsigned,
+        utils::mpi::MPISum,
+        comm);
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      size_type largestNQuadPointInAllProcsIndex =
+        std::distance(std::begin(optimumQuadPointsInAllProcs),
+                      std::min_element(std::begin(optimumQuadPointsInAllProcs),
+                                       std::end(optimumQuadPointsInAllProcs)));
+
+      size_type order =
+        optimumOrderInAllProcs[largestNQuadPointInAllProcsIndex];
+      size_type copies =
+        optimumIterInAllProcs[largestNQuadPointInAllProcsIndex];
+
+      d_numCells = numCells;
+      std::shared_ptr<const QuadratureRule> quadratureRule =
+        std::make_shared<const QuadratureRuleGaussIterated>(d_dim,
+                                                            order,
+                                                            copies);
+
+      d_quadratureRuleVec =
+        std::vector<std::shared_ptr<const QuadratureRule>>(d_numCells,
+                                                           quadratureRule);
+      initialize(d_quadratureRuleVec,
+                 triangulation,
+                 cellMapping,
+                 d_numCellQuadPoints,
+                 d_cellQuadStartIds,
+                 d_realPoints,
+                 d_JxW,
+                 d_numQuadPoints);
     }
 
 
@@ -361,6 +651,18 @@ namespace dftefe
     QuadratureRuleContainer::getCellQuadStartId(const size_type cellId) const
     {
       return d_cellQuadStartIds[cellId];
+    }
+
+    std::shared_ptr<const basis::TriangulationBase>
+    QuadratureRuleContainer::getTriangulation() const
+    {
+      return d_triangulation;
+    }
+
+    const basis::CellMappingBase &
+    QuadratureRuleContainer::getCellMapping() const
+    {
+      return d_cellMapping;
     }
 
   } // end of namespace quadrature
