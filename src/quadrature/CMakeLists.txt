@@ -24,7 +24,8 @@ set(DFT-EFE-QUADRATURE-SOURCES
 	QuadratureRuleAdaptive.cpp
 	QuadratureRuleGaussIterated.cpp
 	QuadratureValuesContainer.cpp
-	Integrate.cpp)
+	Integrate.cpp
+	Defaults.cpp)
 
 add_library(dft-efe-quadrature SHARED ${DFT-EFE-QUADRATURE-SOURCES})
 

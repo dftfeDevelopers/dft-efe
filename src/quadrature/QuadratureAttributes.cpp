@@ -40,10 +40,12 @@ namespace dftefe
     QuadratureRuleAttributes::QuadratureRuleAttributes(
       const QuadratureFamily quadratureFamily,
       const bool             isCartesianTensorStructured,
-      const size_type        num1DPoints /*= 0*/)
+      const size_type        num1DPoints /*= 0*/,
+      const std::string      tag /*= std::string()*/)
       : d_quadratureFamily(quadratureFamily)
       , d_isCartesianTensorStructured(isCartesianTensorStructured)
       , d_num1DPoints(num1DPoints)
+      , d_tag(tag)
     {
       if (d_isCartesianTensorStructured == false)
         {
@@ -79,6 +81,12 @@ namespace dftefe
       return d_num1DPoints;
     }
 
+    std::string
+    QuadratureRuleAttributes::getTag() const
+    {
+      return d_tag;
+    }
+
     bool
     QuadratureRuleAttributes::operator==(
       const QuadratureRuleAttributes &quadratureRuleAttributes) const
@@ -87,7 +95,8 @@ namespace dftefe
         (d_quadratureFamily == quadratureRuleAttributes.d_quadratureFamily) &&
         (d_num1DPoints == quadratureRuleAttributes.d_num1DPoints) &&
         (d_isCartesianTensorStructured ==
-         quadratureRuleAttributes.d_isCartesianTensorStructured);
+         quadratureRuleAttributes.d_isCartesianTensorStructured) &&
+        (d_tag == quadratureRuleAttributes.d_tag);
       return flag;
     }
   } // end of namespace quadrature

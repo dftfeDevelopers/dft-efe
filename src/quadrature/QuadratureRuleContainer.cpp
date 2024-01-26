@@ -98,8 +98,7 @@ namespace dftefe
       const QuadratureFamily quadFamily =
         d_quadratureRuleAttributes.getQuadratureFamily();
       if (!(quadFamily == QuadratureFamily::GAUSS ||
-            quadFamily == QuadratureFamily::GLL ||
-            quadFamily == QuadratureFamily::GAUSS_SUBDIVIDED))
+            quadFamily == QuadratureFamily::GLL))
         utils::throwException<utils::LogicError>(
           false,
           "The constructor "
@@ -323,7 +322,9 @@ namespace dftefe
       if (quadratureRuleContainerReference.getQuadratureRuleAttributes()
             .getQuadratureFamily() == QuadratureFamily::ADAPTIVE)
         {
-          const size_type        numCellsInSet = 5;
+          const size_type numCellsInSet =
+            QuadratureRuleGaussSubdividedDefaults::
+              NUM_CELLS_FOR_ADAPTIVE_REFERENCE;
           std::vector<double>    referenceQuadDensityInCellsVec(0);
           std::vector<size_type> cellIndex(numCells, 0);
 
