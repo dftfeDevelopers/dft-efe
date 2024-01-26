@@ -144,8 +144,6 @@ namespace dftefe
       isCartesianTensorStructured() const;
       size_type
       getNum1DPoints() const;
-      bool
-      operator<(const QuadratureRuleAttributes &quadratureRuleAttributes) const;
 
       bool
       operator==(

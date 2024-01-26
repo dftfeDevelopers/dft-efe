@@ -6,6 +6,8 @@
 #include <functional>
 #include <algorithm>
 #include <iomanip>
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
 
 namespace dftefe
 {
@@ -317,33 +319,44 @@ namespace dftefe
         " does not match the input triangulation or FEcellMapping.");
 
       const size_type        numCells = triangulation->nLocallyOwnedCells();
-      const size_type        numCellsInSet = 5;
-      std::vector<double>    referenceQuadDensityInCellsVec(0);
-      std::vector<size_type> cellIndex(numCells, 0);
-
-      for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+      std::vector<size_type> cellIdsWithMaxRefQuadPoints(0);
+      if (quadratureRuleContainerReference.getQuadratureRuleAttributes()
+            .getQuadratureFamily() == QuadratureFamily::ADAPTIVE)
         {
-          std::vector<double> cellJxW =
-            quadratureRuleContainerReference.getCellJxW(iCell);
-          double cellVolume =
-            std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
-          referenceQuadDensityInCellsVec.push_back(
-            quadratureRuleContainerReference.nCellQuadraturePoints(iCell) *
-            1.0 / cellVolume);
-          cellIndex[iCell] = iCell;
+          const size_type        numCellsInSet = 5;
+          std::vector<double>    referenceQuadDensityInCellsVec(0);
+          std::vector<size_type> cellIndex(numCells, 0);
+
+          for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+            {
+              std::vector<double> cellJxW =
+                quadratureRuleContainerReference.getCellJxW(iCell);
+              double cellVolume =
+                std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
+              referenceQuadDensityInCellsVec.push_back(
+                quadratureRuleContainerReference.nCellQuadraturePoints(iCell) *
+                1.0 / cellVolume);
+              cellIndex[iCell] = iCell;
+            }
+
+          std::sort(cellIndex.begin(),
+                    cellIndex.end(),
+                    [&](size_type A, size_type B) -> bool {
+                      return referenceQuadDensityInCellsVec[A] >
+                             referenceQuadDensityInCellsVec[B];
+                    });
+
+          cellIdsWithMaxRefQuadPoints.resize(std::min(numCells, numCellsInSet),
+                                             0);
+          for (size_type i = 0; i < cellIdsWithMaxRefQuadPoints.size(); i++)
+            cellIdsWithMaxRefQuadPoints[i] = cellIndex[i];
         }
-
-      std::sort(cellIndex.begin(),
-                cellIndex.end(),
-                [&](size_type A, size_type B) -> bool {
-                  return referenceQuadDensityInCellsVec[A] >
-                         referenceQuadDensityInCellsVec[B];
-                });
-
-      std::vector<size_type> cellIdsWithMaxRefQuadPoints(
-        std::min(numCells, numCellsInSet), 0);
-      for (size_type i = 0; i < cellIdsWithMaxRefQuadPoints.size(); i++)
-        cellIdsWithMaxRefQuadPoints[i] = cellIndex[i];
+      else
+        {
+          cellIdsWithMaxRefQuadPoints.resize(numCells, 0);
+          for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+            cellIdsWithMaxRefQuadPoints[iCell] = iCell;
+        }
 
       std::vector<size_type> orderVec(0);
       std::vector<size_type> iterVec(0);
@@ -429,7 +442,7 @@ namespace dftefe
 
                       const double diff = fabs(gaussIteratedIntegralValue -
                                                referenceIntegralValue);
-                      if (diff < std::max(absoluteTolerances[iFunction],
+                      if (diff > std::max(absoluteTolerances[iFunction],
                                           fabs(referenceIntegralValue) *
                                             relativeTolerances[iFunction]))
                         {
@@ -458,7 +471,7 @@ namespace dftefe
           quadPointsVec.size() != 0,
         "No eligible pairs found that converges to the same accuracy as the "
         "input reference quadrature grid. Try"
-        " again using a higher order1DMax or higher copies1DMax.");
+        " again using a higher order1DMax or higher copies1DMax or relaxing the tolerances.");
 
       size_type smallestNQuadPointInProcIndex =
         std::distance(std::begin(quadPointsVec),
@@ -525,7 +538,7 @@ namespace dftefe
 
       size_type largestNQuadPointInAllProcsIndex =
         std::distance(std::begin(optimumQuadPointsInAllProcs),
-                      std::min_element(std::begin(optimumQuadPointsInAllProcs),
+                      std::max_element(std::begin(optimumQuadPointsInAllProcs),
                                        std::end(optimumQuadPointsInAllProcs)));
 
       size_type order =
@@ -538,6 +551,11 @@ namespace dftefe
         std::make_shared<const QuadratureRuleGaussIterated>(d_dim,
                                                             order,
                                                             copies);
+
+      // std::cout << "Chosen pairs are: "<< order << "," << copies << " Num
+      // Quad Pts: " <<
+      // optimumQuadPointsInAllProcs[largestNQuadPointInAllProcsIndex] <<
+      // std::endl;
 
       d_quadratureRuleVec =
         std::vector<std::shared_ptr<const QuadratureRule>>(d_numCells,
