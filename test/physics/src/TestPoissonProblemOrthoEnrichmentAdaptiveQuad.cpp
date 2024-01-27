@@ -276,7 +276,7 @@ int main()
             fieldName,
             i);
         absoluteTolerances[i] = 1e-4;
-        relativeTolerances[i] = 1e-4
+        relativeTolerances[i] = 1e-4;
         integralThresholds[i] = 1e-10;
     }
 

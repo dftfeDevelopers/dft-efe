@@ -118,7 +118,7 @@ int main()
   double zmax = 20.0;
   double rc = 0.5;
   unsigned int numComponents = 1;
-  double hMin = 0.8;
+  double hMin = 1e6;
   dftefe::size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;

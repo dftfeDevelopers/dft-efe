@@ -46,6 +46,11 @@ namespace dftefe
       //
       static const unsigned int MAX_RECURSION;
 
+      //
+      // normalization of Integral threhold criteria to avoid 0/0 form
+      //
+      static const double INTEGRAL_THRESHOLDS_NORMALIZATION;
+
     }; // end of class QuadratureRuleAdaptiveDefaults
 
     class QuadratureRuleAttributesDefaults

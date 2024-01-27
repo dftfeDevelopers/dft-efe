@@ -273,8 +273,8 @@ int main()
             atomCoordinatesVec,
             fieldName,
             i);
-        absoluteTolerances[i] = 1000;
-        relativeTolerances[i] = 1000;
+        absoluteTolerances[i] = 1e-4;
+        relativeTolerances[i] = 1e-4;
         integralThresholds[i] = 1e-10;
     }
 
