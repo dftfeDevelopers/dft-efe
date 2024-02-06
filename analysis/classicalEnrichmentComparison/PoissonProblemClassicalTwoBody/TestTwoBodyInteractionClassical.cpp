@@ -325,7 +325,7 @@ int main(int argc, char** argv)
 
   dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
@@ -609,6 +609,50 @@ int main(int argc, char** argv)
         myfile.close();
         }
 
+  dftefe::utils::mpi::MPIBarrier(comm);
+
+  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> potentialQuadGradients(quadRuleContainer, numComponents*dim);
+
+  dftefe::basis::FEBasisOperations<double,
+                    double,
+                    dftefe::utils::MemorySpace::HOST,
+                    dim> feBasisOpStiffnessMatrix(feBasisData, 50);
+
+  feBasisOpStiffnessMatrix.interpolateWithBasisGradient(
+    *solution,
+    constraintHanging,
+    *basisHandler,
+    potentialQuadGradients);
+
+  auto iter4 = potentialQuadGradients.begin();
+  const std::vector<double> JxW1 = quadRuleContainer->getJxW();
+  numQuadraturePoints = quadRuleContainer->nQuadraturePoints();
+  std::vector<double> gradPotentialSqby8PI(numComponents,0), mpiReducedGradPotentialSqby8PI(gradPotentialSqby8PI.size(),0);
+  for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
+  {
+    for (unsigned int j = 0 ; j < dim ; j++ )
+    {
+      for (unsigned int k = 0 ; k < numComponents ; k++ )
+      { 
+        gradPotentialSqby8PI[k] += *(i*dim*numComponents+j*numComponents+k+iter4) * *(i*dim*numComponents+j*numComponents+k+iter4) * JxW1[i] * 0.5 * (1/(4*M_PI));
+      }
+    }
+  }
+
+  dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+      &gradPotentialSqby8PI,
+      &mpiReducedGradPotentialSqby8PI,
+      numComponents,
+      dftefe::utils::mpi::MPIDouble,
+      dftefe::utils::mpi::MPISum,
+      comm);
+
+  for (int k = 0 ; k < numComponents ; k++)
+  {
+    std::cout << "mpiReducedGradPotentialSqby8PI: " << mpiReducedGradPotentialSqby8PI[k] << std::endl;
+    std::cout << "mpiReducedSelfEnergy: " << mpiReducedEnergy[k] << std::endl;
+    std::cout << "Difference: " << mpiReducedGradPotentialSqby8PI[k]-mpiReducedEnergy[k] << std::endl;
+  }
   //gracefully end MPI
 
   int mpiFinalFlag = 0;

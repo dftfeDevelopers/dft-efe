@@ -10,7 +10,9 @@
 #include <basis/CellMappingBase.h>
 #include <basis/ParentToChildCellsManagerBase.h>
 #include <memory>
-
+#include <utils/MPITypes.h>
+#include <utils/MPIWrapper.h>
+#include <quadrature/Defaults.h>
 namespace dftefe
 {
   namespace quadrature
@@ -75,10 +77,57 @@ namespace dftefe
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
         std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
                                    functions,
-        const std::vector<double> &tolerances,
+        const std::vector<double> &absoluteTolerances,
+        const std::vector<double> &relativeTolerances,
         const std::vector<double> &integralThresholds,
-        const double               smallestCellVolume = 1e-12,
-        const unsigned int         maxRecursion       = 100);
+        const double               smallestCellVolume =
+          QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
+        const unsigned int maxRecursion =
+          QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
+
+      /**
+       * @brief Constructor for creating a subdivided quadrature rule in each cell based
+       * user-defined functions and a reference quadrature. So one provides a
+       * minimum and maximum order (or number of 1D gauss points) and maimum
+       * number of copies of the orders one wants to go. Also one has a
+       * reference quadrature which can
+       * 1. either be constructed from highly refined tensor structures of GAUSS
+       * or GLL. from spatally variable quadrature rules like GAUSS_VARIABLE,
+       * GLL_VARIABLE, or ADAPTIVE. Care should be taken that for ADAPTIVE it is
+       * assumed that the quadrature is optimal and hence only cells with high
+       * quadrature density are traversed. Whereas for all others all the cells
+       * are traversed. Then the {order, copy} pair with minimum quad points per
+       * cell is chosen. Then again the maximum of this points over all
+       * processors are taken. In one statement the condition can be written as
+       * sup_{processors} inf_{all pairs in a processor} (QuadPoints in Cells
+       * statisfing the given tolerances w.r.t. the reference quadrature)
+       * @param[in] order1DMin The minimum gauss 1D number of points from which
+       * to start
+       * @param[in] order1DMax The maximum gauss 1D number of points upto which
+       * to iterate
+       * @param[in] copies1DMax The maimum number of copies (starting from 1) to
+       * be done at each iteration of order.
+       * @param[in] triangulation The triangulation that has information on the
+       * cell and its vertices
+       * @param[in] cellMapping cellMapping object that provides the the
+       * information on how the cell in real space is mapped to its parametric
+       * coordinates. This is required to calculate the JxW values at each quad
+       * point
+       */
+      QuadratureRuleContainer(
+        const QuadratureRuleAttributes &quadratureRuleAttributes,
+        const size_type                 order1DMin,
+        const size_type                 order1DMax,
+        const size_type                 copies1DMax,
+        std::shared_ptr<const basis::TriangulationBase> triangulation,
+        const basis::CellMappingBase &                  cellMapping,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                   functions,
+        const std::vector<double> &absoluteTolerances,
+        const std::vector<double> &relativeTolerances,
+        const quadrature::QuadratureRuleContainer
+          &                        quadratureRuleContainerReference,
+        const utils::mpi::MPIComm &comm);
 
       /**
        * @brief Returns the underlying QuadratureRuleAttributes
@@ -196,6 +245,11 @@ namespace dftefe
       size_type
       getCellQuadStartId(const size_type cellId) const;
 
+      std::shared_ptr<const basis::TriangulationBase>
+      getTriangulation() const;
+
+      const basis::CellMappingBase &
+      getCellMapping() const;
 
     private:
       const QuadratureRuleAttributes &d_quadratureRuleAttributes;
@@ -208,6 +262,8 @@ namespace dftefe
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
       bool                                               d_storeJacobianInverse;
+      std::shared_ptr<const basis::TriangulationBase>    d_triangulation;
+      const basis::CellMappingBase &                     d_cellMapping;
     };
   } // end of namespace quadrature
 

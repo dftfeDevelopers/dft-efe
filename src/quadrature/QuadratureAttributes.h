@@ -28,6 +28,8 @@
 
 #include <utils/TypeConfig.h>
 #include <map>
+#include <string>
+#include <quadrature/Defaults.h>
 namespace dftefe
 {
   namespace quadrature
@@ -37,12 +39,15 @@ namespace dftefe
       GAUSS, // Uniform Gauss quadrature rule across all cells in the domain
       GLL, // Uniform Gauss-Legendre-Lobatto quadrature rule across all cells in
            // the domain
-      GAUSS_VARIABLE, // Variable Gauss quadrature rule (i.e., different cells
-                      // have different Gauss quadrature)
-      GLL_VARIABLE,   // Variable Gauss-Legendre-Lobatto quadrature rule (i.e.,
-                      // different cells have different Gauss-Legendre-Lobatto
-                      // quadrature)
-      ADAPTIVE        // Adaptive quadrature rule
+      GAUSS_VARIABLE,  // Variable Gauss quadrature rule (i.e., different cells
+                       // have different Gauss quadrature)
+      GLL_VARIABLE,    // Variable Gauss-Legendre-Lobatto quadrature rule (i.e.,
+                       // different cells have different Gauss-Legendre-Lobatto
+                       // quadrature)
+      ADAPTIVE,        // Adaptive quadrature rule
+      GAUSS_SUBDIVIDED // This family implies gauss iterated and  but in an
+                       // optimal manner where the {order, copy} pair is
+                       // determined from an algorithm.
     };
 
     enum class QuadratureRuleType
@@ -130,9 +135,12 @@ namespace dftefe
     {
     public:
       QuadratureRuleAttributes();
-      QuadratureRuleAttributes(const QuadratureFamily quadratureFamily,
-                               const bool      isCartesianTensorStructured,
-                               const size_type num1DPoints = 0);
+      QuadratureRuleAttributes(
+        const QuadratureFamily quadratureFamily,
+        const bool             isCartesianTensorStructured,
+        const size_type        num1DPoints =
+          QuadratureRuleAttributesDefaults::NUM_1D_POINTS,
+        const std::string tag = QuadratureRuleAttributesDefaults::TAG);
       ~QuadratureRuleAttributes() = default;
       QuadratureFamily
       getQuadratureFamily() const;
@@ -140,8 +148,8 @@ namespace dftefe
       isCartesianTensorStructured() const;
       size_type
       getNum1DPoints() const;
-      bool
-      operator<(const QuadratureRuleAttributes &quadratureRuleAttributes) const;
+      std::string
+      getTag() const;
 
       bool
       operator==(
@@ -151,6 +159,7 @@ namespace dftefe
       QuadratureFamily d_quadratureFamily;
       bool             d_isCartesianTensorStructured;
       size_type        d_num1DPoints;
+      std::string      d_tag;
     }; // end of QuadratureRuleAttributes
 
     /**

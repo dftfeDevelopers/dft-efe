@@ -87,6 +87,91 @@ site_configuration = {
             ]
         },
         {
+            'name': 'perlmutter',
+            'descr': 'Perlmutter NERSC',
+            'hostnames': ['.*'],
+            'modules_system': 'lmod',
+            'partitions': [
+                {
+                    'name': 'debug',
+                    'scheduler': 'slurm',
+                    'launcher': 'srun',
+                    'access': ['-A m3059', '--partition=debug', '--time=00:05:00', '--constraint=cpu'],
+                    'environs': ['PrgEnv-gnu'],
+                    'resources': [
+                        {
+                            'name': 'cpu',
+                            'options': ['--partition=debug',
+                                        '--time={time_limit}',
+                                        '--nodes={num_nodes}',
+                                        '--ntasks-per-node={num_tasks_per_node}',
+                                        '--ntasks={ntasks}',
+                                        '--mem-per-cpu={mem_per_cpu}',
+                                        '--constraint=cpu']
+                        }
+                    ]
+                },
+                {
+                    'name': 'regular',
+                    'scheduler': 'slurm',
+                    'launcher': 'srun',
+                    'access': ['-A m3059', '--partition=regular', '--time=00:05:00', '--constraint=cpu'],
+                    'environs': ['PrgEnv-gnu'],
+                    'resources': [
+                        {
+                            'name': 'cpu',
+                            'options': ['--partition=regular',
+                                        '--time={time_limit}',
+                                        '--nodes={num_nodes}',
+                                        '--ntasks-per-node={num_tasks_per_node}',
+                                        '--ntasks={ntasks}',
+                                        '--mem-per-cpu={mem_per_cpu}',
+                                        '--constraint=cpu']
+                        }
+                    ]
+                },
+                {
+                    'name': 'gpu',
+                    'scheduler': 'slurm',
+                    'launcher': 'srun',
+                    'access': ['-A m3059', '--partition=gpu', '--time=00:05:00', '--constraint=gpu'],
+                    'environs': ['PrgEnv-gnu'],
+                    'resources': [
+                        {
+                            'name': 'gpu',
+                            'options': ['--partition=gpu',
+                                        '--time={time_limit}',
+                                        '--nodes={num_nodes}',
+                                        '--gpus-per-node={gpus_per_node}'
+                                        '--ntasks-per-node={num_tasks_per_node}',
+                                        '--ntasks={ntasks}',
+                                        '--mem-per-cpu={mem_per_cpu}',
+                                        ' --constraint=gpu']
+                        }
+                    ]
+                },
+                {
+                    'name': 'interactive',
+                    'scheduler': 'slurm',
+                    'launcher': 'srun',
+                    'access': ['-A m3059', '--partition=interactive', '--time=00:05:00', '--constraint=cpu'],
+                    'environs': ['PrgEnv-gnu'],
+                    'resources': [
+                        {
+                            'name': 'cpu',
+                            'options': ['--partition=interactive',
+                                        '--time={time_limit}',
+                                        '--nodes={num_nodes}',
+                                        '--ntasks-per-node={num_tasks_per_node}',
+                                        '--ntasks={ntasks}',
+                                        '--mem-per-cpu={mem_per_cpu}',
+                                        '--constraint=cpu']
+                        }
+                    ]
+                },
+            ]
+        },
+        {
             'name': 'generic',
             'descr': 'Generic example system',
             'hostnames': ['.*'],
@@ -118,10 +203,11 @@ site_configuration = {
             'target_systems': ['greatlakes']
         },
         {
-            'name': 'builtin',
+            'name': 'PrgEnv-gnu',
             'cc': 'cc',
-            'cxx': '',
-            'ftn': ''
+            'cxx': 'CC',
+            'ftn': 'ftn',
+            'target_systems': ['perlmutter']
         },
     ],
     'logging': [

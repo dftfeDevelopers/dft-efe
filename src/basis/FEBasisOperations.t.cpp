@@ -153,7 +153,8 @@ namespace dftefe
         quadratureRuleAttributes.getQuadratureFamily();
       bool sameQuadRuleInAllCells = false;
       if (quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
-          quadratureFamily == quadrature::QuadratureFamily::GLL)
+          quadratureFamily == quadrature::QuadratureFamily::GLL ||
+          quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
         sameQuadRuleInAllCells = true;
       bool variableDofsPerCell = feBasisDofHandler.isVariableDofsPerCell();
 
@@ -746,7 +747,8 @@ namespace dftefe
       const quadrature::QuadratureFamily quadratureFamily =
         quadratureRuleAttributes.getQuadratureFamily();
       if (quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
-          quadratureFamily == quadrature::QuadratureFamily::GLL)
+          quadratureFamily == quadrature::QuadratureFamily::GLL ||
+          quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
         sameQuadRuleInAllCells = true;
 
       bool variableDofsPerCell = feBasisDofHandler.isVariableDofsPerCell();

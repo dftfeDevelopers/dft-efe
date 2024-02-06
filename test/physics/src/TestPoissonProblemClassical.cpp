@@ -132,7 +132,7 @@ int main()
   double zmax = 20.0;
   double rc = 0.5;
   unsigned int numComponents = 1;
-  double hMin = 0.8;
+  double hMin = 1e6;
   dftefe::size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -153,8 +153,21 @@ int main()
     // Enrichment data file consisting of g(r,\theta,\phi) = f(r)*Y_lm(\theta, \phi)
     std::vector<std::vector<dftefe::utils::Point>> cellVerticesVector;
     std::vector<dftefe::utils::Point> cellVertices;
-    std::string sourceDir = "/home/avirup/dft-efe/test/physics/src/";
-    std::string atomDataFile = "AtomData.in";
+
+    char* dftefe_path = getenv("DFTEFE_PATH");
+    std::string sourceDir;
+    // if executes if a non null value is returned
+    // otherwise else executes
+    if (dftefe_path != NULL) 
+    {
+      sourceDir = (std::string)dftefe_path + "/test/physics/src/";
+    }
+    else
+    {
+      dftefe::utils::throwException(false,
+                            "dftefe_path does not exist!");
+    }
+    std::string atomDataFile = "SingleAtomData.in";
     std::string inputFileName = sourceDir + atomDataFile;
     std::fstream fstream;
 
@@ -547,21 +560,19 @@ int main()
         auto iterRho = quadValuesContainer.begin();
         dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints(), mpinumQuadraturePoints=0;
         const std::vector<double> JxW = quadRuleContainer->getJxW();
-        std::vector<double> integral(5, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+        std::vector<double> integral(3, 0.0), mpiReducedIntegral(integral.size(), 0.0);
         const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer->getRealPoints();
         int count = 0;
 
         for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
         {
             integral[0] += std::pow((*(i+iterPotAnalytic) - *(i+iterPotNumeric)),2) * JxW[i];
-            integral[1] += std::pow((*(i+iterPotAnalytic)),2) * JxW[i];
-            integral[2] += std::pow((*(i+iterPotNumeric)),2) * JxW[i];
             if(std::abs(*(i+iterPotAnalytic) - *(i+iterPotNumeric)) > 1e-2)
             {
                 count = count + 1;
             }
-            integral[3] += *(i+iterRho) * *(i+iterPotNumeric) * JxW[i] * 0.5/(4*M_PI);
-	          integral[4] += *(i+iterRho) * JxW[i]/(4*M_PI);
+            integral[1] += *(i+iterRho) * *(i+iterPotNumeric) * JxW[i] * 0.5/(4*M_PI);
+	          integral[2] += *(i+iterRho) * JxW[i]/(4*M_PI);
         }
 
         dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
@@ -582,15 +593,15 @@ int main()
             dftefe::utils::mpi::MPISum,
             comm);
 
-        std::cout << "Integral of b over volume: "<< mpiReducedIntegral[4]<<"\n";
+        std::cout << "Integral of b over volume: "<< mpiReducedIntegral[2]<<"\n";
 
-        std::cout << "The error rms: " << std::sqrt(mpiReducedIntegral[0]) << ", Analytical:" << std::sqrt(mpiReducedIntegral[1])<< ", Numerical:" << std::sqrt(mpiReducedIntegral[2]) << "\n";
+        std::cout << "The integral L2 norm of potential: " << std::sqrt(mpiReducedIntegral[0]) << "\n";
 
         double Ig = 10976./(17875*rc);
         double vg0 = potential(atomCoordinatesVec[0], atomCoordinatesVec, rc);
         double analyticalSelfPotantial = 0.5 * (Ig - vg0);
         
-        std::cout << "\n The self energy: "<< analyticalSelfPotantial << " Error in self energy: " << (mpiReducedIntegral[3] + analyticalSelfPotantial) << "\n";
+        std::cout << "\n The self energy: "<< analyticalSelfPotantial << " Difference in self energy wrt analytical: " << (mpiReducedIntegral[1] + analyticalSelfPotantial) << "\n";
 
   //gracefully end MPI
 

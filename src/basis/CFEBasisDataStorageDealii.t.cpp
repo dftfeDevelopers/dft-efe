@@ -1597,7 +1597,8 @@ namespace dftefe
           baseQuadratureRuleAdaptive,
         std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
           &                                 functions,
-        const std::vector<double> &         tolerances,
+        const std::vector<double> &         absoluteTolerances,
+        const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
         const unsigned int                  maxRecursion,
@@ -1627,7 +1628,8 @@ namespace dftefe
               linearCellMappingDealii,
               parentToChildCellsManagerDealii,
               functions,
-              tolerances,
+              absoluteTolerances,
+              relativeTolerances,
               integralThresholds,
               smallestCellVolume,
               maxRecursion);

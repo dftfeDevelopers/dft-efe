@@ -118,7 +118,7 @@ int main()
   double zmax = 20.0;
   double rc = 0.5;
   unsigned int numComponents = 1;
-  double hMin = 0.8;
+  double hMin = 1e6;
   dftefe::size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -137,8 +137,21 @@ int main()
   triangulationBase->finalizeTriangulationConstruction();
 
   // Enrichment data file consisting of g(r,\theta,\phi) = f(r)*Y_lm(\theta, \phi)
-  std::string sourceDir = "/home/avirup/dft-efe/test/physics/src/";
-  std::string atomDataFile = "AtomData.in";
+  char* dftefe_path = getenv("DFTEFE_PATH");
+  std::string sourceDir;
+  // if executes if a non null value is returned
+  // otherwise else executes
+  if (dftefe_path != NULL) 
+  {
+    sourceDir = (std::string)dftefe_path + "/test/physics/src/";
+  }
+  else
+  {
+    dftefe::utils::throwException(false,
+                          "dftefe_path does not exist!");
+  }
+
+  std::string atomDataFile = "SingleAtomData.in";
   std::string inputFileName = sourceDir + atomDataFile;
   std::fstream fstream;
 
@@ -477,15 +490,13 @@ int main()
   auto iter2 = quadValuesContainerNumerical.begin();
   dftefe::size_type numQuadraturePoints = quadRuleContainer->nQuadraturePoints();
   const std::vector<double> JxW = quadRuleContainer->getJxW();
-  std::vector<double> integral(3, 0.0), mpiReducedIntegral(integral.size(), 0.0);
+  std::vector<double> integral(1, 0.0), mpiReducedIntegral(integral.size(), 0.0);
   const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer->getRealPoints();
   int count = 0;
 
   for (unsigned int i = 0 ; i < numQuadraturePoints ; i++ )
   {
       integral[0] += std::pow((*(i+iter1) - *(i+iter2)),2) * JxW[i];
-      integral[1] += std::pow((*(i+iter1)),2) * JxW[i];
-      integral[2] += std::pow((*(i+iter2)),2) * JxW[i];
       if(std::abs(*(i+iter1) - *(i+iter2)) > 1e-2)
       {
         count = count + 1;
@@ -503,7 +514,7 @@ int main()
         dftefe::utils::mpi::MPISum,
         comm);
 
-  std::cout << "The error rms: " << std::sqrt(mpiReducedIntegral[0]) << ", Analytical:" << std::sqrt(mpiReducedIntegral[1])<< ", Numerical:" << std::sqrt(mpiReducedIntegral[2]) << "\n";
+  std::cout << "The integral L2 norm of potential: " << std::sqrt(mpiReducedIntegral[0]) << "\n";
 
   int mpiFinalFlag = 0;
   dftefe::utils::mpi::MPIFinalized(&mpiFinalFlag);

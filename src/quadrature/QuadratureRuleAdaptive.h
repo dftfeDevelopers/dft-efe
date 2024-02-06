@@ -9,6 +9,7 @@
 #include <basis/ParentToChildCellsManagerBase.h>
 #include <vector>
 #include <memory>
+#include <quadrature/Defaults.h>
 
 namespace dftefe
 {
@@ -24,10 +25,13 @@ namespace dftefe
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
         std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
                                    functions,
-        const std::vector<double> &tolerances,
+        const std::vector<double> &absoluteTolerances,
+        const std::vector<double> &relativeTolerances,
         const std::vector<double> &integralThresholds,
-        const double               smallestCellVolume = 1e-12,
-        const unsigned int         maxRecursion       = 100);
+        const double               smallestCellVolume =
+          QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
+        const unsigned int maxRecursion =
+          QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
 
     private:
     };
