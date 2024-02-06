@@ -23,12 +23,12 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeEFEBasisManagerDealii_h
-#  define dftefeEFEBasisManagerDealii_h
+#ifndef dftefeEFEBasisDofHandlerDealii_h
+#  define dftefeEFEBasisDofHandlerDealii_h
 
 #  include <utils/TypeConfig.h>
 #  include <utils/Point.h>
-#  include <basis/EFEBasisManager.h>
+#  include <basis/EFEBasisDofHandler.h>
 #  include <memory>
 #  include <deal.II/fe/fe_q.h>
 #  include <basis/AtomIdsPartition.h>
@@ -48,14 +48,26 @@ namespace dftefe
      * A derived class of FEBasisManager to handle the FE basis evaluations
      * through dealii
      */
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class EFEBasisManagerDealii
-      : public EFEBasisManager<ValueTypeBasisData, memorySpace, dim>
+    class EFEBasisDofHandlerDealii
+      : public EFEBasisDofHandler<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData,
+                                  memorySpace,
+                                  dim>
     {
     public:
-      EFEBasisManagerDealii(
+      EFEBasisDofHandlerDealii(
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisData,
+          memorySpace,
+          dim>>                    enrichmentClassicalInterface,
+        const size_type            feOrder,
+        const utils::mpi::MPIComm &mpiComm);
+
+      EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
           ValueTypeBasisData,
           memorySpace,
@@ -72,6 +84,14 @@ namespace dftefe
         const size_type     derivativeOrder = 1) const override;
 
       ////// FE specific  member functions /////
+      void
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisData,
+               memorySpace,
+               dim>>                    enrichmentClassicalInterface,
+             const size_type            feOrder,
+             const utils::mpi::MPIComm &mpiComm);
+
       void
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
                ValueTypeBasisData,
@@ -124,7 +144,7 @@ namespace dftefe
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const override;
 
-      std::vector<size_type>
+      const std::vector<global_size_type> &
       getBoundaryIds() const override;
 
       FEBasisManager::FECellIterator
@@ -160,6 +180,29 @@ namespace dftefe
       void
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const override;
+
+      // Additional functions for getting geometric constriants matrix
+      // Additional functions for getting the communication pattern object
+      // for MPI case
+
+      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> >
+        &getIntrinsicConstraints() const override;
+
+      // use this to add extra constraints on top of geometric constraints
+      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> >
+        *createConstraintsStart() const override;
+
+      // call this after calling start
+      void
+      createConstraintsEnd(
+        std::shared_ptr<
+          const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+          constraintsLocal) const override;
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const override;
+
+      bool isDistributed() const override;
 
       //
       // dealii specific functions
@@ -208,6 +251,10 @@ namespace dftefe
       size_type
       totalRanges() const override;
 
+      bool
+      isDistributed() const override;
+
+
     private:
       std::shared_ptr<dealii::DoFHandler<dim>> d_dofHandler;
       bool                                     d_isVariableDofsPerCell;
@@ -236,9 +283,14 @@ namespace dftefe
                                                     dim>>
         d_enrichClassIntfce;
 
-    }; // end of EFEBasisManagerDealii
+      bool d_isDistributed;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>> d_constraintsLocal;
+
+
+    }; // end of EFEBasisDofHandlerDealii
   }    // end of namespace basis
 } // end of namespace dftefe
-#  include "EFEBasisManagerDealii.t.cpp"
-#endif // dftefeEFEBasisManagerDealii_h
+#  include "EFEBasisDofHandlerDealii.t.cpp"
+#endif // dftefeEFEBasisDofHandlerDealii_h
 //

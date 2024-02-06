@@ -13,27 +13,31 @@ set(DFT-EFE-BASIS-SOURCES
 	TriangulationDealiiParallel.cpp
 	ConstraintsInternal.cpp
 	ConstraintsInternal.cu
-	FEConstraintsDealii.cpp
-	FEConstraintsBase.cpp
-	EFEConstraintsDealii.cpp
-	EFEConstraintsBase.cpp
-	FEBasisDataStorageDealii.cpp
-	FEBasisHandlerDealii.cpp
-	FEBasisManagerDealii.cpp
-	EFEBasisDataStorageDealii.cpp
-	EFEBasisHandlerDealii.cpp
-	EFEBasisManagerDealii.cpp
+	CFEConstraintsLocalDealii.cpp
+	CFEBasisDofHandlerDealii.cpp
+	FEBasisManager.cpp
+	CFEBasisDataStorageDealii.cpp
 	FEBasisOperations.cpp
-	AtomIdsPartition.cpp
-	EnrichmentIdsPartition.cpp
-	FEOverlapOperatorContext.cpp
-	EFEOverlapOperatorContext.cpp
-	EnrichmentClassicalInterfaceSpherical.cpp
-	L2ProjectionLinearSolverFunction.cpp
+	#AtomIdsPartition.cpp
+	#EnrichmentIdsPartition.cpp
+	#FEOverlapOperatorContext.cpp
+	#EFEOverlapOperatorContext.cpp
+	#EnrichmentClassicalInterfaceSpherical.cpp
+	#L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
-	FEOverlapInverseOperatorContext.cpp
-	EFEOverlapInverseOperatorContext.cpp
+	#FEOverlapInverseOperatorContext.cpp
+	#EFEOverlapInverseOperatorContext.cpp
+	#EFEBasisDataStorageDealii.cpp
+	#EFEBasisDofHandlerDealii.cpp
+	#EFEConstraintsLocalDealii.cpp
 	)
+
+#FEConstraintsBase.cpp
+#EFEConstraintsBase.cpp
+#FEBasisHandlerDealii.cpp
+#EFEBasisHandlerDealii.cpp
+#EFEBasisManagerDealii.cpp
+#FEBasisManagerDealii.cpp
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 

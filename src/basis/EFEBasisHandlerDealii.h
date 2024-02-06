@@ -79,12 +79,12 @@ namespace dftefe
       EFEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>
-                                  constraints);
+          constraints);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
         std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>
-                                  constraints);
+          constraints);
 
       ~EFEBasisHandlerDealii() = default;
 
@@ -96,13 +96,6 @@ namespace dftefe
 
       const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const override;
-
-      void
-      setConstraints(
-        std::map<
-          std::string,
-          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-          constraintsMap) override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const override;
@@ -133,7 +126,7 @@ namespace dftefe
       globalToLocalIndex(const global_size_type globalId) const override;
 
       global_size_type
-      localToGlobalIndex(const size_type   localId) const override;
+      localToGlobalIndex(const size_type localId) const override;
 
       void
       getBasisCenters(const size_type       localId,
@@ -155,19 +148,19 @@ namespace dftefe
       locallyOwnedCellGlobalDofIdsBegin() const override;
 
       const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(const size_type   cellId) const override;
+      locallyOwnedCellGlobalDofIdsBegin(const size_type cellId) const override;
 
       const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsEnd(const size_type   cellId) const override;
+      locallyOwnedCellGlobalDofIdsEnd(const size_type cellId) const override;
 
       const_LocalIndexIter
       locallyOwnedCellLocalDofIdsBegin() const override;
 
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(const size_type   cellId) const override;
+      locallyOwnedCellLocalDofIdsBegin(const size_type cellId) const override;
 
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsEnd(const size_type   cellId) const override;
+      locallyOwnedCellLocalDofIdsEnd(const size_type cellId) const override;
 
       void
       getCellDofsLocalIds(
@@ -181,7 +174,7 @@ namespace dftefe
     private:
       std::shared_ptr<const EFEBasisManagerDealii<dim>> d_efeBMDealii;
       std::shared_ptr<
-          const EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
+        const EFEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
                           d_efeConstraintsDealiiOpt;
       utils::mpi::MPIComm d_mpiComm;
       bool                d_isDistributed;
@@ -192,9 +185,9 @@ namespace dftefe
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
       // constraints dependent data
-      std::shared_ptr<GlobalSizeTypeVector> d_ghostIndices;
+      std::shared_ptr<GlobalSizeTypeVector>                   d_ghostIndices;
       std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
-      std::shared_ptr<SizeTypeVector> d_locallyOwnedCellLocalIndices;
+      std::shared_ptr<SizeTypeVector>          d_locallyOwnedCellLocalIndices;
       std::map<global_size_type, utils::Point> d_supportPoints;
     };
 

@@ -68,13 +68,6 @@ namespace dftefe
       virtual const Constraints<ValueTypeBasisCoeff, memorySpace> &
       getConstraints(const std::string constraintsName) const = 0;
 
-      virtual void
-      setConstraints(
-        std::map<
-          std::string,
-          std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>>
-          constraintsMap) = 0;
-
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const = 0;
 
@@ -103,7 +96,7 @@ namespace dftefe
       globalToLocalIndex(const global_size_type globalId) const = 0;
 
       virtual global_size_type
-      localToGlobalIndex(const size_type   localId) const = 0;
+      localToGlobalIndex(const size_type localId) const = 0;
 
       virtual void
       getBasisCenters(const size_type       localId,
@@ -126,19 +119,19 @@ namespace dftefe
       locallyOwnedCellGlobalDofIdsBegin() const = 0;
 
       virtual EFEBasisHandler::const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(const size_type   cellId) const = 0;
+      locallyOwnedCellGlobalDofIdsBegin(const size_type cellId) const = 0;
 
       virtual EFEBasisHandler::const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsEnd(const size_type   cellId) const = 0;
+      locallyOwnedCellGlobalDofIdsEnd(const size_type cellId) const = 0;
 
       virtual EFEBasisHandler::const_LocalIndexIter
       locallyOwnedCellLocalDofIdsBegin() const = 0;
 
       virtual EFEBasisHandler::const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(const size_type   cellId) const = 0;
+      locallyOwnedCellLocalDofIdsBegin(const size_type cellId) const = 0;
 
       virtual EFEBasisHandler::const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsEnd(const size_type   cellId) const = 0;
+      locallyOwnedCellLocalDofIdsEnd(const size_type cellId) const = 0;
 
       virtual void
       getCellDofsLocalIds(const size_type         cellId,

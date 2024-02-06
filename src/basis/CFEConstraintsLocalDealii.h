@@ -20,20 +20,18 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian
+ * @author Vishal Subramanian, Avirup Sircar
  */
 
-#ifndef dftefeFEConstraintsDealii_h
-#define dftefeFEConstraintsDealii_h
+#ifndef dftefeCFEConstraintsLocalDealii_h
+#define dftefeCFEConstraintsLocalDealii_h
 
-#include <basis/FEConstraintsBase.h>
-#include <basis/FEBasisManager.h>
+#include <basis/ConstraintsLocal.h>
 #include <utils/TypeConfig.h>
 #include <deal.II/lac/affine_constraints.h>
-#include "FEBasisManagerDealii.h"
 #include <utils/MemoryStorage.h>
-#include <utils/MPIPatternP2P.h>
 #include <utils/ScalarSpatialFunction.h>
+#include <unordered_map>
 
 #include <linearAlgebra/Vector.h>
 namespace dftefe
@@ -41,32 +39,49 @@ namespace dftefe
   namespace basis
   {
     template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
-    class FEConstraintsDealii
-      : public FEConstraintsBase<ValueTypeBasisCoeff, memorySpace>
+    class CFEConstraintsLocalDealii
+      : public ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
     {
     public:
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
-      FEConstraintsDealii();
-      ~FEConstraintsDealii() = default;
+
+      CFEConstraintsLocalDealii();
+
+      CFEConstraintsLocalDealii(
+        dealii::AffineConstraints<ValueTypeBasisCoeff>
+         & dealiiAffineConstraintMatrix,
+        std::vector<std::pair<global_size_type, global_size_type>>
+                                      & locallyOwnedRanges,
+        std::vector<global_size_type> & ghostIndices,
+        std::unordered_map<global_size_type, size_type>
+          & globalToLocalMapLocalDofs);
+
+      ~CFEConstraintsLocalDealii() = default;
+
+      //
+      // Copy function - note one has to call close after calling copyFrom
+      //
+      void
+      copyFrom(const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
+               &constraintsLocalIn) override;
+
       void
       clear() override;
-      void
-      setInhomogeneity(global_size_type    basisId,
-                       ValueTypeBasisCoeff constraintValue) override;
       bool
       isConstrained(global_size_type basisId) const override;
       void
       close() override;
       bool
       isClosed() const override;
+
       void
-      setDirichletBC(
-        utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) override;
-      
+      setInhomogeneity(global_size_type    basisId,
+                       ValueTypeBasisCoeff constraintValue) override;
+
       const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 
@@ -75,17 +90,6 @@ namespace dftefe
 
       ValueTypeBasisCoeff
       getInhomogeneity(const global_size_type lineDof) const override;
-
-      void
-      copyConstraintsData(
-        const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
-        const size_type classicalId) override;
-      void
-      populateConstraintsData(
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
-        const size_type                               classicalId) override;
-
 
       void
       distributeChildToParent(
@@ -111,18 +115,14 @@ namespace dftefe
                           ValueTypeBasisCoeff alpha) const override;
 
       //
-      // FE related functions
-      //
-      void
-      makeHangingNodeConstraint(
-        std::shared_ptr<FEBasisManager> feBasis) override;
-
-      //
-      // dealii specific fucntions
+      // dealii function
       //
       const dealii::AffineConstraints<ValueTypeBasisCoeff> &
       getAffineConstraints() const;
 
+      //
+      // private functions
+      //
     private:
       void
       addEntries(
@@ -131,12 +131,28 @@ namespace dftefe
           &colWeightPairs);
 
       void
+      copyConstraintsDataFromDealiiToDealii(
+        const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>
+          &constraintsDataIn);
+
+        void copyConstraintsDataFromDealiiToDftefe();
+
+      void
       addLine(const global_size_type lineDof);
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>   d_constraintMatrix;
-      std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBasisManager;
-      bool                                             d_isCleared;
-      bool                                             d_isClosed;
+      bool
+      isGhostEntry(const global_size_type globalId) const;
+
+      bool
+      inLocallyOwnedRanges(const global_size_type globalId) const;
+
+      size_type
+      globalToLocal(const global_size_type globalId) const;
+
+
+      dealii::AffineConstraints<ValueTypeBasisCoeff> d_dealiiAffineConstraintMatrix;
+      bool                                           d_isCleared;
+      bool                                           d_isClosed;
 
       GlobalSizeTypeVector d_rowConstraintsIdsGlobal;
       SizeTypeVector       d_rowConstraintsIdsLocal;
@@ -149,9 +165,14 @@ namespace dftefe
         d_constraintsInhomogenities;
 
       SizeTypeVector d_rowConstraintsSizes;
+
+      std::vector<std::pair<global_size_type, global_size_type>>
+                                                      d_locallyOwnedRanges;
+      std::vector<global_size_type>                   d_ghostIndices;
+      std::unordered_map<global_size_type, size_type> d_globalToLocalMap;
     };
 
   } // namespace basis
 } // namespace dftefe
-#include <basis/FEConstraintsDealii.t.cpp>
-#endif // dftefeFEConstraintsDealii_h
+#include <basis/CFEConstraintsLocalDealii.t.cpp>
+#endif // dftefeCFEConstraintsLocalDealii_h

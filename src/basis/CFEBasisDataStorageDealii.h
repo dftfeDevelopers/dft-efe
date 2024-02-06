@@ -23,20 +23,19 @@
  * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeFEBasisDataStorageDealii_h
-#define dftefeFEBasisDataStorageDealii_h
+#ifndef dftefeCFEBasisDataStorageDealii_h
+#define dftefeCFEBasisDataStorageDealii_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
 #include <basis/FEBasisDataStorage.h>
-#include <basis/FEBasisManagerDealii.h>
-#include <basis/FEBasisManager.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
+#include <basis/FEBasisDofHandler.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleGLL.h>
-//#include <deal.II/matrix_free/matrix_free.h>
 #include <memory>
 #include <map>
 #include <vector>
@@ -49,10 +48,11 @@ namespace dftefe
      * such as the basis function values on a quadrature grid, the overlap
      * matrix of the basis, etc.
      */
-    template <typename ValueTypeBasisData,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    class FEBasisDataStorageDealii
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class CFEBasisDataStorageDealii
       : public FEBasisDataStorage<ValueTypeBasisData, memorySpace>
     {
     public:
@@ -61,15 +61,15 @@ namespace dftefe
       using Storage =
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
-      FEBasisDataStorageDealii(
-        std::shared_ptr<const BasisManager>         feBM,
+      CFEBasisDataStorageDealii(
+        std::shared_ptr<const BasisDofHandler>      feBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap);
 
-      ~FEBasisDataStorageDealii() = default;
+      ~CFEBasisDataStorageDealii() = default;
 
-      const BasisManager &
-      getBasisManager() const override;
+      const BasisDofHandler &
+      getBasisDofHandler() const override;
 
       void
       evaluateBasisData(
@@ -200,8 +200,10 @@ namespace dftefe
       getQuadratureRuleContainer() const override;
 
     private:
-      bool                                             d_evaluateBasisData;
-      std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBM;
+      bool d_evaluateBasisData;
+      std::shared_ptr<
+        const CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>>
+        d_feBDH;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                     d_quadratureRuleContainer;
       QuadratureRuleAttributes      d_quadratureRuleAttributes;
@@ -220,8 +222,8 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
 
-    }; // end of FEBasisDataStorageDealii
+    }; // end of CFEBasisDataStorageDealii
   }    // end of namespace basis
 } // end of namespace dftefe
-#include <basis/FEBasisDataStorageDealii.t.cpp>
-#endif // dftefeFEBasisDataStorageDealii_h
+#include <basis/CFEBasisDataStorageDealii.t.cpp>
+#endif // dftefeCFEBasisDataStorageDealii_h

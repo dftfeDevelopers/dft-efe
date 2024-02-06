@@ -12,251 +12,188 @@ namespace dftefe
   {
     // default constructor
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::EFEConstraintsDealii()
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      CFEConstraintsLocalDealii()
       : d_isCleared(false)
       , d_isClosed(false)
     {
-      //      d_constraintMatrix =
-      //      dealii::AffineConstraints<ValueTypeBasisCoeff>();
+      d_locallyOwnedRanges.resize(0);
+      d_ghostIndices.resize(0);
+      d_globalToLocalMap.clear();
     }
 
-
+    // constructor taking the closed dealiiAffineConstraintMatrix and
+    // partitioning information to pass to dftefe objects
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
+              size_type                  dim>
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      CFEConstraintsLocalDealii(
+        dealii::AffineConstraints<ValueTypeBasisCoeff>
+          &dealiiAffineConstraintMatrix,
+        std::vector<std::pair<global_size_type, global_size_type>>
+          &                            locallyOwnedRanges,
+        std::vector<global_size_type> &ghostIndices,
+        std::unordered_map<global_size_type, size_type>
+          &globalToLocalMapLocalDofs)
+      : d_dealiiAffineConstraintMatrix(dealiiAffineConstraintMatrix)
+      , d_locallyOwnedRanges(locallyOwnedRanges)
+      , d_ghostIndices(ghostIndices)
+      , d_globalToLocalMap(globalToLocalMapLocalDofs)
+      , d_isCleared(false)
+      , d_isClosed(true)
+    {
+      copyConstraintsDataFromDealiiToDftefe();
+    }
+
+    //
+    // Copy function - note one has to call close after calling copyFrom
+    //
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::clear()
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::copyFrom(
+      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
+      &constraintsLocalIn)
     {
-      d_constraintMatrix.clear();
+      const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>
+       &cfeConstraintsLocalDealiiIn =
+        dynamic_cast<const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim> &>
+        (constraintsLocalIn);
+
+      utils::throwException(
+        &cfeConstraintsLocalDealiiIn!=nullptr,
+        " Could not typecast ConstraintsLocal to CFEConstraintsLocalDealii in CFEConstraintsLocalDealii.h");
+
+      d_isClosed = false;
+      d_isCleared = false;
+      d_locallyOwnedRanges = cfeConstraintsLocalDealiiIn.d_locallyOwnedRanges;
+      d_ghostIndices = cfeConstraintsLocalDealiiIn.d_ghostIndices;
+      d_globalToLocalMap = cfeConstraintsLocalDealiiIn.d_globalToLocalMap;
+      copyConstraintsDataFromDealiiToDealii(cfeConstraintsLocalDealiiIn);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::clear()
+    {
+      d_dealiiAffineConstraintMatrix.clear();
       d_isCleared = true;
       d_isClosed  = false;
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::close()
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::close()
     {
-      d_constraintMatrix.close();
+      d_dealiiAffineConstraintMatrix.close();
+      copyConstraintsDataFromDealiiToDftefe();
       d_isCleared = false;
       d_isClosed  = true;
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace,
-      dim>::makeHangingNodeConstraint(std::shared_ptr<FEBasisManager> feBasis)
-    {
-      utils::throwException(
-        d_isCleared && !d_isClosed,
-        " Clear the constraint matrix before making hanging node constraints");
-
-      d_efeBasisManager = std::dynamic_pointer_cast<
-        const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>>(
-        feBasis);
-
-      utils::throwException(
-        d_efeBasisManager != nullptr,
-        " Could not cast the FEBasisManager to EFEBasisManagerDealii in make hanging node constraints");
-
-
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(
-        *(d_efeBasisManager->getDoFHandler()), locally_relevant_dofs);
-      d_constraintMatrix.reinit(locally_relevant_dofs);
-      dealii::DoFTools::make_hanging_node_constraints(
-        *(d_efeBasisManager->getDoFHandler()), d_constraintMatrix);
-      d_isCleared = false;
-      d_isClosed  = false;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::setInhomogeneity(global_size_type basisId,
-                                                ValueTypeBasisCoeff
-                                                  constraintValue)
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setInhomogeneity(global_size_type    basisId,
+                       ValueTypeBasisCoeff constraintValue)
     {
       utils::throwException(
         !d_isClosed,
-        " Clear the constraint matrix before setting inhomogeneities");
+        " Clear the constraint matrix before setting inhomogeneities. Cannot setInhomogeneity after close().");
 
       // If condition is removed
       // add_line does not do anything if the basisId already exists.
       addLine(basisId);
-      d_constraintMatrix.set_inhomogeneity(basisId, constraintValue);
-      d_isCleared = false;
-      d_isClosed  = false;
+      d_dealiiAffineConstraintMatrix.set_inhomogeneity(basisId,
+                                                       constraintValue);
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::isClosed() const
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::isClosed()
+      const
     {
       return d_isClosed;
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::isConstrained(global_size_type basisId) const
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      isConstrained(global_size_type basisId) const
     {
-      return d_constraintMatrix.is_constrained(basisId);
-    }
-    
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::setHomogeneousDirichletBC()
-    {
-      dealii::IndexSet locallyRelevantDofs;
-      dealii::DoFTools::extract_locally_relevant_dofs(
-        *(d_efeBasisManager->getDoFHandler()), locallyRelevantDofs);
-
-      const unsigned int vertices_per_cell =
-        dealii::GeometryInfo<dim>::vertices_per_cell;
-      const unsigned int dofs_per_cell =
-        d_efeBasisManager->getDoFHandler()->get_fe().dofs_per_cell;
-      const unsigned int faces_per_cell =
-        dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face =
-        d_efeBasisManager->getDoFHandler()->get_fe().dofs_per_face;
-
-      std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
-      std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-
-      std::vector<bool> dofs_touched(
-        d_efeBasisManager->getDoFHandler()->n_dofs(), false);
-      auto cell = d_efeBasisManager->beginLocalCells(),
-           endc = d_efeBasisManager->endLocalCells();
-      for (; cell != endc; ++cell)
-        {
-          if (!isConstrained(nodeId))
-            {
-              setInhomogeneity(nodeId, boundaryValues(boundaryCoord[nodeId]));
-            }
-        }
+      return d_dealiiAffineConstraintMatrix.is_constrained(basisId);
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     const dealii::AffineConstraints<ValueTypeBasisCoeff> &
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::getAffineConstraints() const
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getAffineConstraints() const
     {
-      return d_constraintMatrix;
+      return d_dealiiAffineConstraintMatrix;
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::getConstraintEntries(const global_size_type
-                                                      lineDof) const
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getConstraintEntries(const global_size_type lineDof) const
     {
-      return d_constraintMatrix.get_constraint_entries(lineDof);
+      return d_dealiiAffineConstraintMatrix.get_constraint_entries(lineDof);
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     bool
-    EFEConstraintsDealii<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace,
-      dim>::isInhomogeneouslyConstrained(const global_size_type lineDof) const
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      isInhomogeneouslyConstrained(const global_size_type lineDof) const
     {
-      return (d_constraintMatrix.is_inhomogeneously_constrained(lineDof));
+      return (
+        d_dealiiAffineConstraintMatrix.is_inhomogeneously_constrained(lineDof));
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     ValueTypeBasisCoeff
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::getInhomogeneity(const global_size_type lineDof)
-      const
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getInhomogeneity(const global_size_type lineDof) const
     {
-      return (d_constraintMatrix.get_inhomogeneity(lineDof));
+      return (d_dealiiAffineConstraintMatrix.get_inhomogeneity(lineDof));
     }
 
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::
-      copyConstraintsData(
-        const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
-        const size_type                                      classicalId)
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      copyConstraintsDataFromDealiiToDealii(
+        const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>
+          &constraintsDataIn)
     {
       this->clear();
       std::vector<std::pair<global_size_type, global_size_type>>
-        locallyOwnedRanges = mpiPattern.getLocallyOwnedRanges();
+        locallyOwnedRanges = d_locallyOwnedRanges;
 
-      auto locallyOwnedRange = locallyOwnedRanges[classicalId];
-      // auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+      auto locallyOwnedRange = locallyOwnedRanges[0];
 
       bool printWarning = false;
       for (auto locallyOwnedId = locallyOwnedRange.first;
@@ -279,9 +216,8 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
-                          .first))
+                  if (!(isGhostEntry((*rowData)[j].first) ||
+                        inLocallyOwnedRanges((*rowData)[j].first)))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -296,9 +232,8 @@ namespace dftefe
             }
         }
 
-      auto ghostIndices =
-        mpiPattern.getGhostIndices(); // can be optimized .. checking enriched
-                                      // ghosts also
+      auto ghostIndices = d_ghostIndices; // can be optimized .. checking
+                                          // enriched ghosts also
 
       for (auto ghostIter = ghostIndices.begin();
            ghostIter != ghostIndices.end();
@@ -320,9 +255,8 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
-                          .first))
+                  if (!(isGhostEntry((*rowData)[j].first) ||
+                        inLocallyOwnedRanges((*rowData)[j].first)))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -345,17 +279,11 @@ namespace dftefe
 
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace,
-      dim>::populateConstraintsData(const utils::mpi::MPIPatternP2P<memorySpace>
-                                      &             mpiPattern,
-                                    const size_type classicalId)
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      copyConstraintsDataFromDealiiToDftefe()
     {
       bool printWarning = false;
 
@@ -371,10 +299,9 @@ namespace dftefe
       std::vector<size_type> rowConstraintsSizesTmp;
 
       std::vector<std::pair<global_size_type, global_size_type>>
-        locallyOwnedRanges = mpiPattern.getLocallyOwnedRanges();
+        locallyOwnedRanges = d_locallyOwnedRanges;
 
-      auto locallyOwnedRange = locallyOwnedRanges[classicalId];
-      // auto locallyOwnedRange = mpiPattern.getLocallyOwnedRange();
+      auto locallyOwnedRange = locallyOwnedRanges[0];
 
       size_type columnIdStart = 0;
 
@@ -392,9 +319,8 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
-                          .first))
+                  if (!(isGhostEntry((*rowData)[j].first) ||
+                        inLocallyOwnedRanges((*rowData)[j].first)))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -407,8 +333,7 @@ namespace dftefe
               if (isConstraintRhsExpandingOutOfIndexSet)
                 continue;
 
-              rowConstraintsIdsLocalTmp.push_back(
-                mpiPattern.globalToLocal(lineDof));
+              rowConstraintsIdsLocalTmp.push_back(globalToLocal(lineDof));
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
               constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
               rowConstraintsSizesTmp.push_back(rowData->size());
@@ -416,7 +341,7 @@ namespace dftefe
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
-                    mpiPattern.globalToLocal((*rowData)[j].first));
+                    globalToLocal((*rowData)[j].first));
                   double realPart = utils::getRealPart((*rowData)[j].second);
                   columnConstraintsValuesTmp.push_back(realPart);
                 }
@@ -426,7 +351,7 @@ namespace dftefe
             }
         }
 
-      auto ghostIndices = mpiPattern.getGhostIndices();
+      auto ghostIndices = d_ghostIndices;
 
       for (auto ghostIter = ghostIndices.begin();
            ghostIter != ghostIndices.end();
@@ -443,9 +368,8 @@ namespace dftefe
               bool isConstraintRhsExpandingOutOfIndexSet = false;
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  if (!(mpiPattern.isGhostEntry((*rowData)[j].first).first ||
-                        mpiPattern.inLocallyOwnedRanges((*rowData)[j].first)
-                          .first))
+                  if (!(isGhostEntry((*rowData)[j].first) ||
+                        inLocallyOwnedRanges((*rowData)[j].first)))
                     {
                       isConstraintRhsExpandingOutOfIndexSet = true;
                       printWarning                          = true;
@@ -456,8 +380,7 @@ namespace dftefe
               if (isConstraintRhsExpandingOutOfIndexSet)
                 continue;
 
-              rowConstraintsIdsLocalTmp.push_back(
-                mpiPattern.globalToLocal(lineDof));
+              rowConstraintsIdsLocalTmp.push_back(globalToLocal(lineDof));
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
               constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
               rowConstraintsSizesTmp.push_back(rowData->size());
@@ -465,7 +388,7 @@ namespace dftefe
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
-                    mpiPattern.globalToLocal((*rowData)[j].first));
+                    globalToLocal((*rowData)[j].first));
                   double realPart = utils::getRealPart((*rowData)[j].second);
                   columnConstraintsValuesTmp.push_back(realPart);
                 }
@@ -533,44 +456,34 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       addEntries(
         const global_size_type constrainedDofIndex,
         const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
           &colWeightPairs)
     {
-      d_constraintMatrix.add_entries(constrainedDofIndex, colWeightPairs);
+      d_dealiiAffineConstraintMatrix.add_entries(constrainedDofIndex,
+                                                 colWeightPairs);
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::addLine(const global_size_type lineDof)
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::addLine(
+      const global_size_type lineDof)
     {
-      d_constraintMatrix.add_line(lineDof);
+      d_dealiiAffineConstraintMatrix.add_line(lineDof);
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeParentToChild(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
@@ -588,14 +501,10 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeChildToParent(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
@@ -612,14 +521,10 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setConstrainedNodesToZero(
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &       vectorData,
@@ -632,14 +537,10 @@ namespace dftefe
     }
 
     template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
+              utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    EFEConstraintsDealii<ValueTypeBasisCoeff,
-                         ValueTypeBasisData,
-                         memorySpace,
-                         dim>::
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                      memorySpace> &vectorData,
                           size_type                                blockSize,
@@ -652,6 +553,53 @@ namespace dftefe
                                        alpha);
     }
 
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type                  dim>
+    bool
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      isGhostEntry(const global_size_type globalId) const
+    {
+      bool returnValue = false;
+      auto it =
+        std::find(d_ghostIndices.begin(), d_ghostIndices.end(), globalId);
+
+      if (it != d_ghostIndices.end())
+        returnValue = true;
+      return returnValue;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type                  dim>
+    bool
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      inLocallyOwnedRanges(const global_size_type globalId) const
+    {
+      bool returnValue = false;
+      for (auto i : d_locallyOwnedRanges)
+        {
+          if (globalId >= i.first && globalId < i.second)
+            {
+              returnValue = true;
+              break;
+            }
+        }
+      return returnValue;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type                  dim>
+    size_type
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      globalToLocal(const global_size_type globalId) const
+    {
+      utils::throwException(
+        (d_globalToLocalMap.find(globalId) != d_globalToLocalMap.end()),
+        " Could not find the globalId in locally owned or ghost ids in CFEConstraintsDealii.h");
+      return d_globalToLocalMap.find(globalId)->second;
+    }
 
   } // namespace basis
 } // namespace dftefe

@@ -49,7 +49,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     class OperatorContextFE ::
-          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+      OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
     public:
       /**
@@ -57,7 +57,7 @@ namespace dftefe
        */
       OperatorContextFE(
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          & feBasisDataStorage);
+          &feBasisDataStorage);
 
       /**
        *@brief Default Destructor
@@ -82,14 +82,13 @@ namespace dftefe
        */
       virtual void
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &Y) const = 0;
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const = 0;
 
       virtual void
       getCellMatrixDataInAllCells() const = 0;
 
       virtual void
       getCellMatrixDataInCell() const = 0;
-
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

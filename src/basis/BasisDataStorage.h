@@ -30,7 +30,7 @@
 #include <utils/MemorySpaceType.h>
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureAttributes.h>
-#include <basis/BasisManager.h>
+#include <basis/BasisDofHandler.h>
 #include <memory>
 namespace dftefe
 {
@@ -74,8 +74,8 @@ namespace dftefe
     public:
       virtual ~BasisDataStorage() = default;
 
-      virtual const BasisManager &
-      getBasisManager() const = 0;
+      virtual const BasisDofHandler &
+      getBasisDofHandler() const = 0;
 
       virtual void
       evaluateBasisData(

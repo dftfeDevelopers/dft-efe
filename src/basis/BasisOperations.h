@@ -68,8 +68,7 @@ namespace dftefe
       interpolate(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
-        const std::string &                                   constraintsName,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
@@ -79,8 +78,7 @@ namespace dftefe
       interpolateWithBasisGradient(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
-        const std::string &                                   constraintsName,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
@@ -101,8 +99,7 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &                                      inp,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-        const std::string &                                   constraintsName,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const = 0;
       // virtual void

@@ -78,12 +78,12 @@ namespace dftefe
       FEBasisHandlerDealii(
         std::shared_ptr<const BasisManager> basisManager,
         std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>
-                                   constraints);
+          constraints);
       void
       reinit(
         std::shared_ptr<const BasisManager> basisManager,
         std::shared_ptr<const Constraints<ValueTypeBasisCoeff, memorySpace>>
-                                   constraints);
+          constraints);
 
       ~FEBasisHandlerDealii() = default;
 
@@ -126,7 +126,7 @@ namespace dftefe
       globalToLocalIndex(const global_size_type globalId) const override;
 
       global_size_type
-      localToGlobalIndex(const size_type   localId) const override;
+      localToGlobalIndex(const size_type localId) const override;
 
       void
       getBasisCenters(const size_type       localId,
@@ -148,23 +148,19 @@ namespace dftefe
       locallyOwnedCellGlobalDofIdsBegin() const override;
 
       const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsBegin(
-        const size_type   cellId) const override;
+      locallyOwnedCellGlobalDofIdsBegin(const size_type cellId) const override;
 
       const_GlobalIndexIter
-      locallyOwnedCellGlobalDofIdsEnd(
-        const size_type   cellId) const override;
+      locallyOwnedCellGlobalDofIdsEnd(const size_type cellId) const override;
 
       const_LocalIndexIter
       locallyOwnedCellLocalDofIdsBegin() const override;
 
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsBegin(
-        const size_type   cellId) const override;
+      locallyOwnedCellLocalDofIdsBegin(const size_type cellId) const override;
 
       const_LocalIndexIter
-      locallyOwnedCellLocalDofIdsEnd(
-        const size_type   cellId) const override;
+      locallyOwnedCellLocalDofIdsEnd(const size_type cellId) const override;
 
       void
       getCellDofsLocalIds(
@@ -179,7 +175,7 @@ namespace dftefe
       std::shared_ptr<const FEBasisManagerDealii<dim>> d_feBMDealii;
       std::shared_ptr<
         const FEConstraintsDealii<ValueTypeBasisCoeff, memorySpace, dim>>
-                        d_feConstraintsDealiiOpt;
+                          d_feConstraintsDealiiOpt;
       utils::mpi::MPIComm d_mpiComm;
       bool                d_isDistributed;
       std::vector<std::pair<global_size_type, global_size_type>>
@@ -189,9 +185,9 @@ namespace dftefe
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
       // constraints dependent data
-      std::shared_ptr<GlobalSizeTypeVector> d_ghostIndices;
+      std::shared_ptr<GlobalSizeTypeVector>                   d_ghostIndices;
       std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
-      std::shared_ptr<SizeTypeVector> d_locallyOwnedCellLocalIndices;
+      std::shared_ptr<SizeTypeVector>          d_locallyOwnedCellLocalIndices;
       std::map<global_size_type, utils::Point> d_supportPoints;
     };
 

@@ -20,35 +20,95 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo, Avirup Sircar
  */
 
 #ifndef dftefeBasisManager_h
 #define dftefeBasisManager_h
 
-#include <utils/TypeConfig.h>
+#include <basis/ConstraintsLocal.h>
 #include <utils/Point.h>
+#include <utils/ScalarSpatialFunction.h>
+#include <utils/ScalarZeroFunctionReal.h>
+#include <basis/BasisDofHandler.h>
+#include "DealiiConversions.h"
+#include <utils/TypeConfig.h>
+#include <utils/MemoryStorage.h>
+#include <utils/MPIPatternP2P.h>
+#include <string>
 namespace dftefe
 {
   namespace basis
   {
     /**
-     * An abstract class to handle basis related operations, such as
-     * evaluating the value and gradients of any basis function at a
-     * point.
+     * @brief An abstract class to encapsulate the partitioning
+     * of a basis across multiple processors
+     *
+     * @tparam ValueTypeBasisCoeff the datatype for the constraints
+     * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
+     * DEVICE) in which the data must reside.
      */
+    template <typename ValueTypeBasisCoeff,
+              dftefe::utils::MemorySpace memorySpace>
     class BasisManager
     {
+      //
+      // typedefs
+      //
     public:
-      virtual double
-      getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) const = 0;
-      virtual std::vector<double>
-      getBasisFunctionDerivative(const size_type     basisId,
-                                 const utils::Point &point,
-                                 const size_type derivativeOrder = 1) const = 0;
+      using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
+      using GlobalSizeTypeVector =
+        utils::MemoryStorage<global_size_type, memorySpace>;
+      using LocalIndexIter       = typename SizeTypeVector::iterator;
+      using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
+      using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
+      using const_GlobalIndexIter =
+        typename GlobalSizeTypeVector::const_iterator;
 
-    }; // end of BasisManager
-  }    // end of namespace basis
+    public:
+      ~BasisManager() = default;
+
+      virtual const BasisDofHandler &
+      getBasisDofHandler() const = 0;
+
+      virtual const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> &
+      getConstraints() const = 0;
+
+      virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const = 0;
+
+      virtual std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges() const = 0;
+
+      virtual const GlobalSizeTypeVector &
+      getGhostIndices() const = 0;
+
+      virtual size_type
+      nLocal() const = 0;
+
+      virtual size_type
+      nLocallyOwned() const = 0;
+
+      virtual size_type
+      nGhost() const = 0;
+
+      virtual std::pair<bool, size_type>
+      inLocallyOwnedRanges(const global_size_type globalId) const = 0;
+
+      virtual std::pair<bool, size_type>
+      isGhostEntry(const global_size_type ghostId) const = 0;
+
+      virtual size_type
+      globalToLocalIndex(const global_size_type globalId) const = 0;
+
+      virtual global_size_type
+      localToGlobalIndex(const size_type localId) const = 0;
+
+      virtual void
+      getBasisCenters(const size_type       localId,
+                      dftefe::utils::Point &basisCenter) const = 0;
+    };
+
+  } // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefeBasisManager_h

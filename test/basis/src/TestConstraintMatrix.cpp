@@ -2,14 +2,14 @@
 #include <basis/TriangulationDealiiSerial.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
-#include <basis/FEBasisManagerDealii.h>
-#include <basis/FEConstraintsDealii.h>
-#include <basis/FEBasisDataStorageDealii.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
+#include <basis/CFEConstraintsLocalDealii.h>
+#include <basis/CFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
-#include <basis/FEConstraintsDealii.h>
-#include <basis/FEBasisHandlerDealii.h>
+#include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
+#include <utils/ScalarZeroFunctionReal.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -109,30 +109,8 @@ int main()
 
   unsigned int feDegree = 3;
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
-
-  // Set the constraints
-
-  std::string constraintName = "HomogenousWithHangingPeriodic";
-  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec;
-  constraintsVec.resize(1);
-  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
-   
-  constraintsVec[0]->clear();
-  constraintsVec[0]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[0]->setHomogeneousDirichletBC();
-  constraintsVec[0]->close();
-  
-  std::vector<std::shared_ptr<dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsBaseVec(constraintsVec.size(), nullptr);
-  std::copy(constraintsVec.begin(), constraintsVec.end(), constraintsBaseVec.begin());
-
-  std::map<std::string,
-           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
-
-  constraintsMap[constraintName] = constraintsVec[0];
+  std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree);
 
   // Set up the quadrature rule
   unsigned int num1DGaussSize =4;
@@ -146,20 +124,23 @@ int main()
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreQuadRealPoints] = false;
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::BasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
-    std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, quadAttr, basisAttrMap);
+    std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, quadAttr, basisAttrMap);
 
   // // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
-  // // Set up BasisHandler
-  std::shared_ptr<dftefe::basis::BasisHandler<double, dftefe::utils::MemorySpace::HOST>> basisHandler =
-    std::make_shared<dftefe::basis::FEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, constraintsMap);
+  std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
+    zeroFunction = std::make_shared<
+      dftefe::utils::ScalarZeroFunctionReal>();
+
+  // // Set up BasisManager
+  std::shared_ptr<const dftefe::basis::BasisManager<double, dftefe::utils::MemorySpace::HOST>> basisManager =
+    std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, zeroFunction);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
@@ -167,12 +148,12 @@ int main()
 
   // set up Field
 
-  dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData( basisHandler, constraintName, 1, linAlgOpContext);
+  dftefe::basis::Field<double, dftefe::utils::MemorySpace::HOST> fieldData( basisManager, 1, linAlgOpContext);
 
 
   //populate the value of the Field
 
-  dftefe::size_type numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
+  dftefe::size_type numLocallyOwnedCells  = basisDofHandler->nLocallyOwnedCells();
   auto itField  = fieldData.begin();
   dftefe::utils::Point nodeLoc(dim,0.0);
   dftefe::size_type nodeCount = 0; 
@@ -180,25 +161,25 @@ int main()
     {
       // get cell dof global ids
       std::vector<dftefe::global_size_type> cellGlobalNodeIds;
-      basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+      basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
 
       // loop over nodes of a cell
       for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
         {
           // If node not constrained then get the local id and coordinates of the node
           dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
-         if( !constraintsVec[0]->isConstrained(globalId))
+         if( !basisManager->getConstraints().isConstrained(globalId))
          {
-            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
-            basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
+            dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+            basisManager->getBasisCenters(localId,nodeLoc);
 
             *(itField + localId )  = interpolatePolynomial (feDegree, nodeLoc[0], nodeLoc[1], nodeLoc[2],xmin,ymin,zmin);
            //std::cout<<"id = "<<nodeCount<<" local = "<<localId<<" inVal = "<<*(itField + localId )<<"\n";
          }
          else
          {
-           dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
-            basisHandler->getBasisCenters(localId,constraintName,nodeLoc);
+           dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+            basisManager->getBasisCenters(localId,nodeLoc);
            //std::cout<<"id = "<<nodeCount<<" x = "<<nodeLoc[0]<<" y = "<<nodeLoc[1]<<" z = "<<nodeLoc[2]<<std::endl;
          }
           nodeCount++;
@@ -218,14 +199,14 @@ int main()
   for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
     {
       std::vector<dftefe::global_size_type> cellGlobalNodeIds;
-      basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+      basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
 
       for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
         {
           dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
           if( !constraintsVec[0]->isConstrained(globalId))
           {
-            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintName) ;
+            dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
 
            std::cout<<"id = "<<nodeCount<<" local = "<<localId<<" inConsVal = "<<*(itField + localId )<<"\n";
           }
@@ -240,17 +221,18 @@ int main()
     std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
 
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
-  dftefe::quadrature::QuadratureRuleContainer quadRuleContainer( quadAttr, quadRule, triangulationBase,
-                                                                 linearCellMappingDealii);
+  std::shared_ptr<dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer = 
+    std::make_shared<dftefe::quadrature::QuadratureRuleContainer>
+      ( quadAttr, quadRule, triangulationBase, linearCellMappingDealii);
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, 1);
 
 
   // Interpolate the nodal data to the quad points
-  feBasisOp.interpolate( fieldData, quadAttr, quadValuesContainer);
+  feBasisOp.interpolate( fieldData, quadValuesContainer);
 
 
-  const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer.getRealPoints();
+  const std::vector<dftefe::utils::Point> & locQuadPoints = quadRuleContainer->getRealPoints();
 
   bool testPass = true;
   dftefe::size_type count = 0;

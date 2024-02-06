@@ -23,8 +23,8 @@
  * @author Vishal Subramanian
  */
 
-#ifndef dftefeConstraints_h
-#define dftefeConstraints_h
+#ifndef dftefeConstraintsLocal_h
+#define dftefeConstraintsLocal_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MPIPatternP2P.h>
@@ -39,11 +39,19 @@ namespace dftefe
      * An abstract class to handle the constraints related to a basis
      */
     template <typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace>
-    class Constraints
+              utils::MemorySpace memorySpace>
+    class ConstraintsLocal
     {
     public:
-      ~Constraints() = default;
+      ~ConstraintsLocal() = default;
+
+      //
+      // Copy function - note one has to call close after calling copyFrom
+      //
+      virtual void
+      copyFrom(const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
+               &constraintsLocalIn) = 0;
+
       virtual void
       clear() = 0;
       virtual void
@@ -53,9 +61,6 @@ namespace dftefe
       close() = 0;
       virtual bool
       isClosed() const = 0;
-      virtual void
-      setDirichletBC(
-        utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) = 0;
       virtual bool
       isConstrained(global_size_type basisId) const = 0;
 
@@ -68,16 +73,6 @@ namespace dftefe
 
       virtual ValueTypeBasisCoeff
       getInhomogeneity(const global_size_type lineDof) const = 0;
-
-      virtual void
-      copyConstraintsData(
-        const Constraints<ValueTypeBasisCoeff, memorySpace> &constraintsDataIn,
-        const utils::mpi::MPIPatternP2P<memorySpace> &       mpiPattern,
-        const size_type                                      classicalId) = 0;
-      virtual void
-      populateConstraintsData(
-        const utils::mpi::MPIPatternP2P<memorySpace> &mpiPattern,
-        const size_type                               classicalId) = 0;
 
       virtual void
       distributeChildToParent(

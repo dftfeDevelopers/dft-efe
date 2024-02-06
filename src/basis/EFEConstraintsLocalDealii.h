@@ -64,11 +64,11 @@ namespace dftefe
       close() override;
       bool
       isClosed() const override;
-    
+
       void
-      setDirichletBC(
-        utils::ScalarSpatialFunction<ValueTypeBasisCoeff> &boundaryValues) override;
-      
+      setDirichletBC(utils::ScalarSpatialFunction<ValueTypeBasisCoeff>
+                       &boundaryValues) override;
+
       const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 

@@ -1,16 +1,16 @@
-#ifndef dftefeScalarSpatialFunctionZero_h
-#define dftefeScalarSpatialFunctionZero_h
+#ifndef dftefeScalarZeroFunctionReal_h
+#define dftefeScalarZeroFunctionReal_h
 
 #include "ScalarSpatialFunction.h"
+#include "MathConstants.h"
 namespace dftefe
 {
   namespace utils
   {
-    template <typename T>
-    class ScalarSpatialFunctionZero : public ScalarSpatialFunction<T>
+    class ScalarZeroFunctionReal : public ScalarSpatialFunctionReal
     {
     public:
-      ScalarSpatialFunctionZero();
+      ScalarZeroFunctionReal();
       double
       operator()(const utils::Point &point) const override;
       std::vector<double>
@@ -19,4 +19,4 @@ namespace dftefe
 
   } // namespace utils
 } // namespace dftefe
-#endif // dftefeScalarSpatialFunctionZero_h
+#endif // dftefeScalarZeroFunctionReal_h

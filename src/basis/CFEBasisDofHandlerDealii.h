@@ -20,38 +20,54 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo, Vishal Subramanian, Avirup Sircar
  */
 
-#ifndef dftefeFEBasisManagerDealii_h
-#define dftefeFEBasisManagerDealii_h
+#ifndef dftefeCFEBasisDofHandlerDealii_h
+#define dftefeCFEBasisDofHandlerDealii_h
 
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
-#include <basis/FEBasisManager.h>
+#include <basis/FEBasisDofHandler.h>
 #include <memory>
 #include <deal.II/fe/fe_q.h>
 
+#include <basis/ConstraintsLocal.h>
+#include <basis/CFEConstraintsLocalDealii.h>
+#include <memory>
+#include <map>
+
 /// dealii includes
 #include <deal.II/dofs/dof_handler.h>
+#include <deal.II/matrix_free/matrix_free.h>
+
 namespace dftefe
 {
   namespace basis
   {
     /**
-     * A derived class of FEBasisManager to handle the FE basis evaluations
+     * A derived class of FEBasisDofHandler to handle the FE basis evaluations
      * through dealii
      */
-    template <size_type dim>
-    class FEBasisManagerDealii : public FEBasisManager
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class CFEBasisDofHandlerDealii
+      : public FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
     {
     public:
-      using FECellIterator       = FEBasisManager::FECellIterator;
-      using const_FECellIterator = FEBasisManager::const_FECellIterator;
+      using FECellIterator       = typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::FECellIterator;
+      using const_FECellIterator = typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::const_FECellIterator;
 
-      FEBasisManagerDealii(
+      CFEBasisDofHandlerDealii(
+        std::shared_ptr<const TriangulationBase> triangulation,
+        const size_type                          feOrder,
+        const utils::mpi::MPIComm &              mpiComm);
+
+      CFEBasisDofHandlerDealii(
         std::shared_ptr<const TriangulationBase> triangulation,
         const size_type                          feOrder);
+
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;
@@ -62,6 +78,11 @@ namespace dftefe
         const size_type     derivativeOrder = 1) const override;
 
       ////// FE specific  member functions /////
+      void
+      reinit(std::shared_ptr<const TriangulationBase> triangulation,
+             const size_type                          feOrder,
+             const utils::mpi::MPIComm &              mpiComm);
+
       void
       reinit(std::shared_ptr<const TriangulationBase> triangulation,
              const size_type                          feOrder);
@@ -111,7 +132,7 @@ namespace dftefe
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const override;
 
-      std::vector<size_type>
+      const std::vector<global_size_type> &
       getBoundaryIds() const override;
 
       FECellIterator
@@ -151,6 +172,29 @@ namespace dftefe
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const override;
 
+      // Additional functions for getting geometric constriants matrix
+      // Additional functions for getting the communication pattern object
+      // for MPI case
+
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        getIntrinsicConstraints() const override;
+
+      // use this to add extra constraints on top of geometric constraints
+      std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+       createConstraintsStart() const override;
+
+      // call this after calling start
+      void
+      createConstraintsEnd(
+         std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, 
+         memorySpace>> constraintsLocal) const override;
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const override;
+
+      bool isDistributed() const override;
+
+
       //
       // dealii specific functions
       //
@@ -159,9 +203,6 @@ namespace dftefe
 
       const dealii::FiniteElement<dim> &
       getReferenceFE(const size_type cellId) const;
-
-      std::vector<std::vector<global_size_type>>
-      getBoundaryGlobalNodeIds() const;
 
     private:
       std::shared_ptr<const TriangulationBase> d_triangulation;
@@ -173,8 +214,13 @@ namespace dftefe
       size_type d_numCumulativeLocalCellDofs;
       size_type d_totalRanges;
 
-    }; // end of FEBasisManagerDealii
+      std::vector<global_size_type> d_boundaryIds;
+      bool d_isDistributed;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>> d_constraintsLocal;
+
+    }; // end of CFEBasisDofHandlerDealii
   }    // end of namespace basis
 } // end of namespace dftefe
-#include "FEBasisManagerDealii.t.cpp"
-#endif // dftefeFEBasisManagerDealii_h
+#include "CFEBasisDofHandlerDealii.t.cpp"
+#endif // dftefeCFEBasisDofHandlerDealii_h

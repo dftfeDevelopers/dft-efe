@@ -20,37 +20,49 @@
  ******************************************************************************/
 
 /*
- * @author Avirup Sircar
+ * @author Bikash Kanungo, Vishal Subramanian
  */
 
-#ifndef dftefeEFEBasisManager_h
-#define dftefeEFEBasisManager_h
+#ifndef dftefeFEBasisDofHandler_h
+#define dftefeFEBasisDofHandler_h
 
 #include <utils/TypeConfig.h>
 #include <utils/Point.h>
-#include <basis/FEBasisManager.h>
+#include <basis/BasisDofHandler.h>
 #include <basis/TriangulationBase.h>
 #include <basis/FECellBase.h>
+#include <basis/ConstraintsLocal.h>
+#include <utils/MPIPatternP2P.h>
 #include <map>
-#include <basis/EnrichmentClassicalInterfaceSpherical.h>
-#include <basis/EnrichmentIdsPartition.h>
-
 namespace dftefe
 {
   namespace basis
   {
+    // add attribute to the classical and enriched ids for locallyOwnedRanges()
+    enum class BasisIdAttribute
+    {
+      CLASSICAL,
+      ENRICHED
+    };
     /**
-     * An abstract class to handle enriched finite element (FE) basis related
-     * operations, such as evaluating the value and gradients of any basis
-     * function at a point, getting cell and nodal information, etc.
+     * An abstract class to handle finite element (FE) basis related operations,
+     * such as evaluating the value and gradients of any basis function at a
+     * point, getting cell and nodal information, etc.
      *
      */
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class EFEBasisManager : public FEBasisManager
+    class FEBasisDofHandler : public BasisDofHandler
     {
+      //
+      // Typedefs
+      //
     public:
+      typedef std::vector<std::shared_ptr<FECellBase>>::iterator FECellIterator;
+      typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
+        const_FECellIterator;
+
       virtual double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const = 0;
@@ -101,23 +113,23 @@ namespace dftefe
       getCellDofsGlobalIds(
         size_type                      cellId,
         std::vector<global_size_type> &vecGlobalNodeId) const = 0;
-      virtual std::vector<size_type>
+      virtual const std::vector<global_size_type> &
       getBoundaryIds() const = 0;
-      virtual FEBasisManager::FECellIterator
+      virtual FECellIterator
       beginLocallyOwnedCells() = 0;
-      virtual FEBasisManager::FECellIterator
+      virtual FECellIterator
       endLocallyOwnedCells() = 0;
-      virtual FEBasisManager::const_FECellIterator
+      virtual const_FECellIterator
       beginLocallyOwnedCells() const = 0;
-      virtual FEBasisManager::const_FECellIterator
+      virtual const_FECellIterator
       endLocallyOwnedCells() const = 0;
-      virtual FEBasisManager::FECellIterator
+      virtual FECellIterator
       beginLocalCells() = 0;
-      virtual FEBasisManager::FECellIterator
+      virtual FECellIterator
       endLocalCells() = 0;
-      virtual FEBasisManager::const_FECellIterator
+      virtual const_FECellIterator
       beginLocalCells() const = 0;
-      virtual FEBasisManager::const_FECellIterator
+      virtual const_FECellIterator
       endLocalCells() const = 0;
 
       virtual size_type
@@ -131,47 +143,34 @@ namespace dftefe
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const = 0;
 
-      virtual unsigned int
-      getDim() const = 0;
-
-      // Enrichment specific functions.
-      virtual double
-      getEnrichmentValue(const size_type             cellId,
-                         const size_type             cellLocalEnrichmentId,
-                         const dftefe::utils::Point &point) const = 0;
-
-      virtual std::vector<double>
-      getEnrichmentDerivative(const size_type             cellId,
-                              const size_type             cellLocalEnrichmentId,
-                              const dftefe::utils::Point &point) const = 0;
-
-      virtual std::vector<double>
-      getEnrichmentHessian(const size_type             cellId,
-                           const size_type             cellLocalEnrichmentId,
-                           const dftefe::utils::Point &point) const = 0;
-
-      virtual std::vector<global_size_type>
-      getGhostEnrichmentGlobalIds() const = 0;
-
-      virtual global_size_type
-      nGlobalEnrichmentNodes() const = 0;
-
-      virtual std::shared_ptr<const EnrichmentIdsPartition<dim>>
-      getEnrichmentIdsPartition() const = 0;
-
-      virtual std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
-                                                    memorySpace,
-                                                    dim>>
-      getEnrichmentClassicalInterface() const = 0;
-
-      virtual bool
-      isOrthogonalized() const = 0;
-
       virtual size_type
       totalRanges() const = 0;
 
-    }; // end of EFEBasisManager
+      virtual unsigned int
+      getDim() const = 0;
+
+      // Additional functions for getting geometric constriants matrix
+      // Additional functions for getting the communication pattern object
+      // for MPI case
+
+     virtual std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+     getIntrinsicConstraints() const = 0;
+
+      // use this to add extra constraints on top of geometric constraints
+      virtual std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+       createConstraintsStart() const = 0;
+
+      // call this after calling start
+      virtual void
+      createConstraintsEnd(
+         std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>> constraintsLocal) const = 0;
+
+      virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const = 0;
+
+      virtual bool isDistributed() const = 0;
+
+    }; // end of FEBasisDofHandler
   }    // end of namespace basis
 } // end of namespace dftefe
-#endif // dftefeEFEBasisManager_h
+#endif // dftefeFEBasisDofHandler_h
