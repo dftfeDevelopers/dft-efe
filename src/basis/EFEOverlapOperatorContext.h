@@ -32,11 +32,10 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/FEBasisHandler.h>
-#include <basis/FEBasisDataStorage.h>
-#include <basis/EFEBasisHandler.h>
 #include <basis/FEBasisManager.h>
-#include <basis/EFEBasisManager.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisDofHandler.h>
+#include <basis/EFEBasisDofHandler.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <memory>
@@ -83,27 +82,31 @@ namespace dftefe
     public:
       /**
        * @brief Constructor for getting the overlap matrix operator.
-       * @tparam feBasisHandler FEBasisHandler object for getting the processor local to cell mapping of the distributed vector
+       * @tparam feBasisManager FEBasisManager object for getting the processor local to cell mapping of the distributed vector
        * @tparam feBasisDataStorage Same FEBasisDataStorage object for getting the basisvalues
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
        * @tparam maxCellTimesNumVecs cell times number of vectors
        */
       EFEOverlapOperatorContext(
-        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               feBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs);
+          &             feBasisDataStorage,
+        const size_type maxCellTimesNumVecs);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
        * This can happen when the classical dofs have a different quadrature
        * than that of the enrichment dofs. For example one can have Adaptive
        * quadrature for the enrichment functions and GLL for the classical dofs.
-       * @tparam feBasisHandler FEBasisHandler object for getting the processor local to cell mapping of the distributed vector
+       * @tparam feBasisManager FEBasisManager object for getting the processor local to cell mapping of the distributed vector
        * @tparam cfeBasisDataStorage Classical FEBasisDataStorage object for getting the basisvalues of the classical dofs
        * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
        * @tparam constraintsX Constraints for X
@@ -111,29 +114,37 @@ namespace dftefe
        * @tparam maxCellTimesNumVecs cell times number of vectors
        */
       EFEOverlapOperatorContext(
-        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               efeBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs);
+          &             efeBasisDataStorage,
+        const size_type maxCellTimesNumVecs);
 
       EFEOverlapOperatorContext(
-        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                          enrichmentBlockClassicalBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs);
+                        enrichmentBlockClassicalBasisDataStorage,
+        const size_type maxCellTimesNumVecs);
 
       /**
        * @brief Apply AX = B where A is the discretized matrix, X is the operand and B is the result.
@@ -167,8 +178,14 @@ namespace dftefe
 
 
     private:
-      const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-        *d_feBasisHandler;
+      const FEBasisManager<ValueTypeOperand,
+                           ValueTypeOperator,
+                           memorySpace,
+                           dim> *d_feBasisManagerX;
+      const FEBasisManager<ValueTypeOperand,
+                           ValueTypeOperator,
+                           memorySpace,
+                           dim> *d_feBasisManagerY;
       const FEBasisDataStorage<ValueTypeOperator, memorySpace>
         *d_efeBasisDataStorage;
       const FEBasisDataStorage<ValueTypeOperator, memorySpace>
@@ -176,8 +193,6 @@ namespace dftefe
       std::shared_ptr<Storage> d_basisOverlap;
       std::vector<size_type>   d_cellStartIdsBasisOverlap;
       std::vector<size_type>   d_dofsInCell;
-      const std::string        d_constraintsX;
-      const std::string        d_constraintsY;
       const size_type          d_maxCellTimesNumVecs;
     }; // end of class EFEOverlapOperatorContext
   }    // end of namespace basis

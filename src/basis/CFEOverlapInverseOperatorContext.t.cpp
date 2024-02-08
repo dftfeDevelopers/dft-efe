@@ -33,39 +33,39 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    FEOverlapInverseOperatorContext<ValueTypeOperator,
-                                    ValueTypeOperand,
-                                    memorySpace,
-                                    dim>::
-      FEOverlapInverseOperatorContext(
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &                                         feBasisHandler,
-        const basis::FEOverlapOperatorContext<ValueTypeOperator,
-                                              ValueTypeOperand,
-                                              memorySpace,
-                                              dim> &feOverlapOperatorContext,
-        const std::string                           constraints,
+    CFEOverlapInverseOperatorContext<ValueTypeOperator,
+                                     ValueTypeOperand,
+                                     memorySpace,
+                                     dim>::
+      CFEOverlapInverseOperatorContext(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                        feBasisManager,
+        const basis::CFEOverlapOperatorContext<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace,
+                                               dim> &cfeOverlapOperatorContext,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
-      : d_diagonalInv(d_feBasisHandler->getMPIPatternP2P(constraints),
-                      linAlgOpContext)
-      , d_feBasisHandler(&feBasisHandler)
-      , d_constraints(constraints)
+      : d_diagonalInv(d_feBasisManager->getMPIPatternP2P(), linAlgOpContext)
+      , d_feBasisManager(&feBasisManager)
     {
       const size_type numLocallyOwnedCells =
-        d_feBasisHandler->nLocallyOwnedCells();
+        d_feBasisManager->nLocallyOwnedCells();
 
-      const FEBasisManager &basisManager =
-        dynamic_cast<const FEBasisManager &>(feBasisHandler.getBasisManager());
+      const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>
+        &basisDofHandler = dynamic_cast<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim> &>(
+          feBasisManager.getBasisDofHandler());
       utils::throwException(
-        &basisManager != nullptr,
-        "Could not cast BasisManager of the input vector to FEBasisManager ");
+        &basisDofHandler != nullptr,
+        "Could not cast BasisDofHandler of the input vector to FEBasisDofHandler ");
 
-      utils::throwException(basisManager.totalRanges() == 1,
+      utils::throwException(basisDofHandler.totalRanges() == 1,
                             "This function is only for classical FE basis.");
 
       utils::throwException(
-        feOverlapOperatorContext.getFEBasisDataStorage()
+        cfeOverlapOperatorContext.getFEBasisDataStorage()
             .getQuadratureRuleContainer()
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily() == dftefe::quadrature::QuadratureFamily::GLL,
@@ -74,14 +74,14 @@ namespace dftefe
 
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
+        numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
 
       auto itCellLocalIdsBegin =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(constraints);
+        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
       // access cell-wise discrete Laplace operator
       auto NiNjInAllCells =
-        feOverlapOperatorContext.getBasisOverlapInAllCells();
+        cfeOverlapOperatorContext.getBasisOverlapInAllCells();
 
       std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
                                                          0);
@@ -94,7 +94,7 @@ namespace dftefe
       locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
-        d_feBasisHandler->getMPIPatternP2P(d_constraints), linAlgOpContext);
+        d_feBasisManager->getMPIPatternP2P(d_constraints), linAlgOpContext);
 
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
         addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
@@ -104,7 +104,7 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      d_feBasisHandler->getConstraints(d_constraints)
+      d_feBasisManager->getConstraints(d_constraints)
         .distributeChildToParent(diagonal, 1);
 
       // Function to add the values to the local node from its corresponding
@@ -125,7 +125,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    FEOverlapInverseOperatorContext<
+    CFEOverlapInverseOperatorContext<
       ValueTypeOperator,
       ValueTypeOperand,
       memorySpace,
@@ -134,7 +134,7 @@ namespace dftefe
     {
       X.updateGhostValues();
       // update the child nodes based on the parent nodes
-      d_feBasisHandler->getConstraints(d_constraints)
+      d_feBasisManager->getConstraints(d_constraints)
         .distributeParentToChild(X, X.getNumberComponents());
 
       Y.setValue(0.0);
@@ -154,7 +154,7 @@ namespace dftefe
       // TODO : The distributeChildToParent of the result of M_inv*X is
       // processor local and for adaptive quadrature the M_inv is not diagonal.
       // Implement that case here.
-      d_feBasisHandler->getConstraints(d_constraints)
+      d_feBasisManager->getConstraints(d_constraints)
         .distributeChildToParent(Y, Y.getNumberComponents());
 
       // Function to update the ghost values of the result

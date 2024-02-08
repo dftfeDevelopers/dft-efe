@@ -21,13 +21,13 @@ set(DFT-EFE-BASIS-SOURCES
 	AtomIdsPartition.cpp
 	EnrichmentIdsPartition.cpp
 	CFEOverlapOperatorContext.cpp
-	#EFEOverlapOperatorContext.cpp
+	EFEOverlapOperatorContext.cpp
 	EnrichmentClassicalInterfaceSpherical.cpp
 	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
-	#FEOverlapInverseOperatorContext.cpp
-	#EFEOverlapInverseOperatorContext.cpp
-	#EFEBasisDataStorageDealii.cpp
+	CFEOverlapInverseOperatorContext.cpp
+	EFEOverlapInverseOperatorContext.cpp
+	EFEBasisDataStorageDealii.cpp
 	EFEBasisDofHandlerDealii.cpp
 	EFEConstraintsLocalDealii.cpp
 	)

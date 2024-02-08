@@ -34,6 +34,7 @@ namespace dftefe
     namespace EFEOverlapOperatorContextInternal
     {
       template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
@@ -45,32 +46,39 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
-        const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &feBM =
-          dynamic_cast<
-            const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>(
-            feBasisDataStorage.getBasisManager());
-        utils::throwException(&feBM != nullptr,
-                              "Could not cast BasisManager to EFEBasisManager "
-                              "in EFEOverlapOperatorContext");
+        std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>
+          feBDH = std::dynamic_pointer_cast<
+            const EFEBasisDofHandler<ValueTypeOperand,
+                                     ValueTypeOperator,
+                                     memorySpace,
+                                     dim>>(
+            feBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          feBDH != nullptr,
+          "Could not cast BasisDofHandler to EFEBasisDofHandler "
+          "in EFEOverlapOperatorContext");
 
-        const size_type numLocallyOwnedCells = feBM.nLocallyOwnedCells();
+        const size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
         dofsInCellVec.resize(numLocallyOwnedCells, 0);
         cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
         size_type cumulativeBasisOverlapId = 0;
 
         size_type       cellId           = 0;
         size_type       basisOverlapSize = 0;
-        const size_type feOrder          = feBM.getFEOrder(cellId);
+        const size_type feOrder          = feBDH->getFEOrder(cellId);
 
         // NOTE: cellId 0 passed as we assume only H refined in this function
         size_type dofsPerCell;
 
-        auto locallyOwnedCellIter = feBM.beginLocallyOwnedCells();
+        auto locallyOwnedCellIter = feBDH->beginLocallyOwnedCells();
 
-        for (; locallyOwnedCellIter != feBM.endLocallyOwnedCells();
+        for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
-            dofsInCellVec[cellId] = feBM.nCellDofs(cellId);
+            dofsInCellVec[cellId] = feBDH->nCellDofs(cellId);
             basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
             cellId++;
           }
@@ -90,8 +98,8 @@ namespace dftefe
 
         size_type cumulativeQuadPoints = 0, cumulativeDofQuadPointsOffset = 0;
 
-        locallyOwnedCellIter = feBM.beginLocallyOwnedCells();
-        for (; locallyOwnedCellIter != feBM.endLocallyOwnedCells();
+        locallyOwnedCellIter = feBDH->beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
             dofsPerCell = dofsInCellVec[cellIndex];
@@ -136,6 +144,7 @@ namespace dftefe
       }
 
       template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
@@ -149,38 +158,49 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
-        const FEBasisManager &cfeBM = dynamic_cast<const FEBasisManager &>(
-          cfeBasisDataStorage.getBasisManager());
-        utils::throwException(&cfeBM != nullptr,
-                              "Could not cast BasisManager to FEBasisManager "
-                              "in EFEOverlapOperatorContext");
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+          cfeBDH = std::dynamic_pointer_cast<
+            const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+            cfeBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          cfeBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler "
+          "in EFEOverlapOperatorContext");
 
-        const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &efeBM =
-          dynamic_cast<
-            const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>(
-            efeBasisDataStorage.getBasisManager());
-        utils::throwException(&efeBM != nullptr,
-                              "Could not cast BasisManager to EFEBasisManager "
-                              "in EFEOverlapOperatorContext");
+        std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>
+          efeBDH = std::dynamic_pointer_cast<
+            const EFEBasisDofHandler<ValueTypeOperand,
+                                     ValueTypeOperator,
+                                     memorySpace,
+                                     dim>>(
+            efeBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          efeBDH != nullptr,
+          "Could not cast BasisDofHandler to EFEBasisDofHandler "
+          "in EFEOverlapOperatorContext");
 
         // NOTE: cellId 0 passed as we assume only H refined in this function
 
         utils::throwException(
-          cfeBM.getTriangulation() == efeBM.getTriangulation() &&
-            cfeBM.getFEOrder(0) == efeBM.getFEOrder(0),
+          cfeBDH->getTriangulation() == efeBDH->getTriangulation() &&
+            cfeBDH->getFEOrder(0) == efeBDH->getFEOrder(0),
           "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder. ");
 
-        const size_type numLocallyOwnedCells = efeBM.nLocallyOwnedCells();
+        const size_type numLocallyOwnedCells = efeBDH->nLocallyOwnedCells();
         dofsInCellVec.resize(numLocallyOwnedCells, 0);
         cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
         size_type cumulativeBasisOverlapId = 0;
 
         size_type       basisOverlapSize = 0;
         size_type       cellId           = 0;
-        const size_type feOrder          = efeBM.getFEOrder(cellId);
+        const size_type feOrder          = efeBDH->getFEOrder(cellId);
 
         size_type       dofsPerCell;
-        const size_type dofsPerCellCFE = cfeBM.nCellDofs(cellId);
+        const size_type dofsPerCellCFE = cfeBDH->nCellDofs(cellId);
 
         bool isConstantDofsAndQuadPointsInCellCFE = false;
         quadrature::QuadratureFamily quadFamily =
@@ -189,15 +209,15 @@ namespace dftefe
             .getQuadratureFamily();
         if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
              quadFamily == quadrature::QuadratureFamily::GLL) &&
-            !cfeBM.isVariableDofsPerCell())
+            !cfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellCFE = true;
 
-        auto locallyOwnedCellIter = efeBM.beginLocallyOwnedCells();
+        auto locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
 
-        for (; locallyOwnedCellIter != efeBM.endLocallyOwnedCells();
+        for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
-            dofsInCellVec[cellId] = efeBM.nCellDofs(cellId);
+            dofsInCellVec[cellId] = efeBDH->nCellDofs(cellId);
             basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
             cellId++;
           }
@@ -220,8 +240,8 @@ namespace dftefe
         size_type cumulativeCFEDofQuadPointsOffset = 0,
                   cumulativeEFEDofQuadPointsOffset = 0;
 
-        locallyOwnedCellIter = efeBM.beginLocallyOwnedCells();
-        for (; locallyOwnedCellIter != efeBM.endLocallyOwnedCells();
+        locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
             dofsPerCell = dofsInCellVec[cellIndex];
@@ -298,6 +318,7 @@ namespace dftefe
 
       // Use this for data storage of orthogonalized EFE only
       template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
@@ -314,48 +335,59 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
-        const FEBasisManager &ccfeBM = dynamic_cast<const FEBasisManager &>(
-          classicalBlockBasisDataStorage.getBasisManager());
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+          ccfeBDH = std::dynamic_pointer_cast<
+            const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+            classicalBlockBasisDataStorage.getBasisDofHandler());
         utils::throwException(
-          &ccfeBM != nullptr,
-          "Could not cast BasisManager to FEBasisManager "
+          ccfeBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler "
           "in EFEOverlapOperatorContext for the Classical data storage of classical dof block.");
 
-        const FEBasisManager &ecfeBM = dynamic_cast<const FEBasisManager &>(
-          enrichmentBlockClassicalBasisDataStorage->getBasisManager());
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+          ecfeBDH = std::dynamic_pointer_cast<
+            const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+            enrichmentBlockClassicalBasisDataStorage->getBasisDofHandler());
         utils::throwException(
-          &ccfeBM != nullptr,
-          "Could not cast BasisManager to FEBasisManager "
+          ecfeBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler "
           "in EFEOverlapOperatorContext for the Classical data storage of enrichment dof blocks.");
 
-        const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &eefeBM =
-          dynamic_cast<
-            const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>(
-            enrichmentBlockEnrichmentBasisDataStorage.getBasisManager());
+        std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>
+          eefeBDH = std::dynamic_pointer_cast<
+            const EFEBasisDofHandler<ValueTypeOperand,
+                                     ValueTypeOperator,
+                                     memorySpace,
+                                     dim>>(
+            enrichmentBlockEnrichmentBasisDataStorage.getBasisDofHandler());
         utils::throwException(
-          &eefeBM != nullptr,
-          "Could not cast BasisManager to EFEBasisManager "
+          eefeBDH != nullptr,
+          "Could not cast BasisDofHandler to EFEBasisDofHandler "
           "in EFEOverlapOperatorContext for the Enrichment data storage of enrichment dof blocks.");
 
-        // NOTE: cellId 0 passed as we assume only H refined in this function
-
         utils::throwException(
-          ccfeBM.getTriangulation() == ecfeBM.getTriangulation() &&
-            ccfeBM.getFEOrder(0) == ecfeBM.getFEOrder(0) &&
-            ccfeBM.getTriangulation() == eefeBM.getTriangulation() &&
-            ccfeBM.getFEOrder(0) == eefeBM.getFEOrder(0),
+          ccfeBDH->getTriangulation() == ecfeBDH->getTriangulation() &&
+            ccfeBDH->getFEOrder(0) == ecfeBDH->getFEOrder(0) &&
+            ccfeBDH->getTriangulation() == eefeBDH->getTriangulation() &&
+            ccfeBDH->getFEOrder(0) == eefeBDH->getFEOrder(0),
           "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder"
           "in EFEOverlapOperatorContext.");
 
         utils::throwException(
-          eefeBM.isOrthogonalized(),
+          eefeBDH->isOrthogonalized(),
           "The Enrcihment data storage of enrichment dof blocks should have isOrthogonalized as true in EFEOverlapOperatorContext.");
 
         std::shared_ptr<
-          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperator,
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperand,
+                                                      ValueTypeOperator,
                                                       memorySpace,
                                                       dim>>
-          eci = eefeBM.getEnrichmentClassicalInterface();
+          eci = eefeBDH->getEnrichmentClassicalInterface();
 
         // interpolate the ci 's to the Mc=d classical quadRuleAttr quadpoints
 
@@ -376,8 +408,7 @@ namespace dftefe
             (ValueTypeOperator)0);
 
         basisOp1.interpolate(eci->getBasisInterfaceCoeff(),
-                             eci->getBasisInterfaceCoeffConstraint(),
-                             *eci->getCFEBasisHandler(),
+                             *eci->getCFEBasisManager(),
                              basisInterfaceCoeffClassicalQuadRuleValues);
 
         // interpolate the ci 's to the enrichment quadRuleAttr quadpoints
@@ -404,17 +435,17 @@ namespace dftefe
 
         // Set up the overlap matrix quadrature storages.
 
-        const size_type numLocallyOwnedCells = eefeBM.nLocallyOwnedCells();
+        const size_type numLocallyOwnedCells = eefeBDH->nLocallyOwnedCells();
         dofsInCellVec.resize(numLocallyOwnedCells, 0);
         cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
         size_type cumulativeBasisOverlapId = 0;
 
         size_type       basisOverlapSize = 0;
         size_type       cellId           = 0;
-        const size_type feOrder          = eefeBM.getFEOrder(cellId);
+        const size_type feOrder          = eefeBDH->getFEOrder(cellId);
 
         size_type       dofsPerCell;
-        const size_type dofsPerCellCFE = ccfeBM.nCellDofs(cellId);
+        const size_type dofsPerCellCFE = ccfeBDH->nCellDofs(cellId);
 
         bool isConstantDofsAndQuadPointsInCellClassicalBlock           = false,
              isConstantDofsAndQuadPointsInCellEnrichmentBlockClassical = false;
@@ -428,21 +459,21 @@ namespace dftefe
             .getQuadratureFamily();
         if ((quadFamilyClassicalBlock == quadrature::QuadratureFamily::GAUSS ||
              quadFamilyClassicalBlock == quadrature::QuadratureFamily::GLL) &&
-            !ccfeBM.isVariableDofsPerCell())
+            !ccfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellClassicalBlock = true;
         if ((quadFamilyEnrichmentBlockClassical ==
                quadrature::QuadratureFamily::GAUSS ||
              quadFamilyEnrichmentBlockClassical ==
                quadrature::QuadratureFamily::GLL) &&
-            !ecfeBM.isVariableDofsPerCell())
+            !ecfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellEnrichmentBlockClassical = true;
 
-        auto locallyOwnedCellIter = eefeBM.beginLocallyOwnedCells();
+        auto locallyOwnedCellIter = eefeBDH->beginLocallyOwnedCells();
 
-        for (; locallyOwnedCellIter != eefeBM.endLocallyOwnedCells();
+        for (; locallyOwnedCellIter != eefeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
-            dofsInCellVec[cellId] = eefeBM.nCellDofs(cellId);
+            dofsInCellVec[cellId] = eefeBDH->nCellDofs(cellId);
             basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
             cellId++;
           }
@@ -471,8 +502,8 @@ namespace dftefe
                   cumulativeEnrichmentBlockClassicalDofQuadPointsOffset  = 0,
                   cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset = 0;
 
-        locallyOwnedCellIter = eefeBM.beginLocallyOwnedCells();
-        for (; locallyOwnedCellIter != eefeBM.endLocallyOwnedCells();
+        locallyOwnedCellIter = eefeBDH->beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != eefeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
             dofsPerCell = dofsInCellVec[cellIndex];
@@ -573,7 +604,7 @@ namespace dftefe
                              qPoint++)
                           {
                             NpiNcj +=
-                              eefeBM.getEnrichmentValue(
+                              eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 iNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
@@ -619,7 +650,7 @@ namespace dftefe
                                 nQuadPointInCellEnrichmentBlockEnrichment *
                                   iNode +
                                 qPoint) *
-                              eefeBM.getEnrichmentValue(
+                              eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 jNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
@@ -663,11 +694,11 @@ namespace dftefe
                              qPoint++)
                           {
                             NpiNpj +=
-                              eefeBM.getEnrichmentValue(
+                              eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 iNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
-                              eefeBM.getEnrichmentValue(
+                              eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 jNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
@@ -683,7 +714,7 @@ namespace dftefe
                               *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell
                                   .data() +
                                 nTotalEnrichmentIds * qPoint + enrichmentIdi) *
-                              eefeBM.getEnrichmentValue(
+                              eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 jNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
@@ -696,7 +727,7 @@ namespace dftefe
                              qPoint++)
                           {
                             NpiNcj +=
-                              eefeBM.getEnrichmentValue(
+                              eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 iNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
@@ -983,21 +1014,29 @@ namespace dftefe
                               memorySpace,
                               dim>::
       EFEOverlapOperatorContext(
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               feBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs)
-      : d_feBasisHandler(&feBasisHandler)
-      , d_constraintsX(constraintsX)
-      , d_constraintsY(constraintsY)
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &             feBasisDataStorage,
+        const size_type maxCellTimesNumVecs)
+      : d_feBasisManagerX(&feBasisManagerX)
+      , d_feBasisManagerY(&feBasisManagerY)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
       , d_efeBasisDataStorage(&feBasisDataStorage)
       , d_cfeBasisDataStorage(&feBasisDataStorage)
     {
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlap;
       EFEOverlapOperatorContextInternal::
@@ -1018,23 +1057,31 @@ namespace dftefe
                               memorySpace,
                               dim>::
       EFEOverlapOperatorContext(
-        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               efeBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs)
-      : d_feBasisHandler(&feBasisHandler)
-      , d_constraintsX(constraintsX)
-      , d_constraintsY(constraintsY)
+          &             efeBasisDataStorage,
+        const size_type maxCellTimesNumVecs)
+      : d_feBasisManagerX(&feBasisManagerX)
+      , d_feBasisManagerY(&feBasisManagerY)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
       , d_efeBasisDataStorage(&efeBasisDataStorage)
       , d_cfeBasisDataStorage(&cfeBasisDataStorage)
     {
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlap;
       EFEOverlapOperatorContextInternal::
@@ -1056,26 +1103,34 @@ namespace dftefe
                               memorySpace,
                               dim>::
       EFEOverlapOperatorContext(
-        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                          enrichmentBlockClassicalBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs)
-      : d_feBasisHandler(&feBasisHandler)
-      , d_constraintsX(constraintsX)
-      , d_constraintsY(constraintsY)
+                        enrichmentBlockClassicalBasisDataStorage,
+        const size_type maxCellTimesNumVecs)
+      : d_feBasisManagerX(&feBasisManagerX)
+      , d_feBasisManagerY(&feBasisManagerY)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
       , d_efeBasisDataStorage(&enrichmentBlockEnrichmentBasisDataStorage)
       , d_cfeBasisDataStorage(&classicalBlockBasisDataStorage)
     {
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlap;
       EFEOverlapOperatorContextInternal::
@@ -1105,31 +1160,29 @@ namespace dftefe
                     memorySpace> &Y) const
     {
       const size_type numLocallyOwnedCells =
-        d_feBasisHandler->nLocallyOwnedCells();
+        d_feBasisManagerX->nLocallyOwnedCells();
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
+        numCellDofs[iCell] = d_feBasisManagerX->nLocallyOwnedCellDofs(iCell);
 
       auto itCellLocalIdsBeginX =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsX);
+        d_feBasisManagerX->locallyOwnedCellLocalDofIdsBegin();
 
       auto itCellLocalIdsBeginY =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsY);
+        d_feBasisManagerY->locallyOwnedCellLocalDofIdsBegin();
 
       const size_type numVecs = X.getNumberComponents();
 
       // get handle to constraints
-      const basis::Constraints<
+      const basis::ConstraintsLocal<
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>,
-        memorySpace> &constraintsX =
-        d_feBasisHandler->getConstraints(d_constraintsX);
+        memorySpace> &constraintsX = d_feBasisManagerX->getConstraints();
 
-      const basis::Constraints<
+      const basis::ConstraintsLocal<
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>,
-        memorySpace> &constraintsY =
-        d_feBasisHandler->getConstraints(d_constraintsY);
+        memorySpace> &constraintsY = d_feBasisManagerY->getConstraints();
 
       X.updateGhostValues();
       // update the child nodes based on the parent nodes

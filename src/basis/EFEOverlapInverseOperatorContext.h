@@ -33,13 +33,12 @@
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/EFEBasisHandler.h>
 #include <basis/EFEOverlapOperatorContext.h>
 #include <basis/EFEBasisDataStorage.h>
-#include <basis/FEBasisHandler.h>
-#include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisManager.h>
-#include <basis/EFEBasisManager.h>
+#include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisDofHandler.h>
+#include <basis/EFEBasisDofHandler.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/FECellWiseDataOperations.h>
 #include <vector>
@@ -64,13 +63,13 @@ namespace dftefe
 
     public:
       EFEOverlapInverseOperatorContext(
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &                                          feBasisHandler,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                        feBasisManager,
         const basis::EFEOverlapOperatorContext<ValueTypeOperator,
                                                ValueTypeOperand,
                                                memorySpace,
                                                dim> &efeOverlapOperatorContext,
-        const std::string                            constraints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
@@ -80,12 +79,15 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
 
     private:
-      const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-        *d_feBasisHandler;
-      const EFEBasisManager<ValueTypeOperator, memorySpace, dim>
-        *                                                   d_efebasisManager;
+      const FEBasisManager<ValueTypeOperand,
+                           ValueTypeOperator,
+                           memorySpace,
+                           dim> *    d_feBasisManager;
+      const EFEBasisDofHandler<ValueTypeOperand,
+                               ValueTypeOperator,
+                               memorySpace,
+                               dim> *d_efebasisDofHandler;
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-      const std::string                                     d_constraints;
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
                 d_basisOverlapEnrichmentBlock;
       size_type d_nglobalEnrichmentIds;

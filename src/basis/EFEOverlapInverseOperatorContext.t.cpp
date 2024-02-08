@@ -72,38 +72,41 @@ namespace dftefe
                                      memorySpace,
                                      dim>::
       EFEOverlapInverseOperatorContext(
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &                                          feBasisHandler,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                        feBasisManager,
         const basis::EFEOverlapOperatorContext<ValueTypeOperator,
                                                ValueTypeOperand,
                                                memorySpace,
                                                dim> &efeOverlapOperatorContext,
-        const std::string                            constraints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
-      : d_feBasisHandler(&feBasisHandler)
-      , d_constraints(constraints)
+      : d_feBasisManager(&feBasisManager)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_diagonalInv(d_feBasisHandler->getMPIPatternP2P(constraints),
-                      linAlgOpContext)
+      , d_diagonalInv(d_feBasisManager->getMPIPatternP2P(), linAlgOpContext)
     {
       const size_type numLocallyOwnedCells =
-        d_feBasisHandler->nLocallyOwnedCells();
+        d_feBasisManager->nLocallyOwnedCells();
 
-      const BasisManager &basisManager = feBasisHandler.getBasisManager();
+      const BasisDofHandler &basisDofHandler =
+        feBasisManager.getBasisDofHandler();
 
-      const EFEBasisManager<ValueTypeOperator, memorySpace, dim>
-        &febasisManager = dynamic_cast<
-          const EFEBasisManager<ValueTypeOperator, memorySpace, dim> &>(
-          basisManager);
+      const EFEBasisDofHandler<ValueTypeOperand,
+                               ValueTypeOperator,
+                               memorySpace,
+                               dim> &febasisDofHandler =
+        dynamic_cast<const EFEBasisDofHandler<ValueTypeOperand,
+                                              ValueTypeOperator,
+                                              memorySpace,
+                                              dim> &>(basisDofHandler);
       utils::throwException(
-        &febasisManager != nullptr,
-        "Could not cast BasisManager of the input to EFEBasisManager.");
+        &febasisDofHandler != nullptr,
+        "Could not cast BasisDofHandler of the input to EFEBasisDofHandler.");
 
-      d_efebasisManager = &febasisManager;
+      d_efebasisDofHandler = &febasisDofHandler;
 
       utils::throwException(
-        febasisManager.isOrthogonalized(),
+        febasisDofHandler.isOrthogonalized(),
         "The Enrichment functions have to be orthogonalized for this class to do the application of overlap inverse"
         "Contact developers for more options.");
 
@@ -116,16 +119,16 @@ namespace dftefe
         "Contact developers if extra options are needed.");
 
       const size_type numCellClassicalDofs =
-        utils::mathFunctions::sizeTypePow((febasisManager.getFEOrder(0) + 1),
+        utils::mathFunctions::sizeTypePow((febasisDofHandler.getFEOrder(0) + 1),
                                           dim);
-      d_nglobalEnrichmentIds = febasisManager.nGlobalEnrichmentNodes();
+      d_nglobalEnrichmentIds = febasisDofHandler.nGlobalEnrichmentNodes();
 
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
+        numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
 
       auto itCellLocalIdsBegin =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(constraints);
+        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
       // access cell-wise discrete Laplace operator
       auto NiNjInAllCells =
@@ -142,7 +145,7 @@ namespace dftefe
       locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
-        d_feBasisHandler->getMPIPatternP2P(d_constraints), linAlgOpContext);
+        d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
       // Create the diagonal of the classical block matrix which is diagonal for
       // GLL with spectral quadrature
@@ -154,8 +157,7 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      d_feBasisHandler->getConstraints(d_constraints)
-        .distributeChildToParent(diagonal, 1);
+      d_feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
@@ -183,7 +185,7 @@ namespace dftefe
       size_type cellId                     = 0;
       size_type cumulativeBasisDataInCells = 0;
       for (auto enrichmentVecInCell :
-           febasisManager.getEnrichmentIdsPartition()
+           febasisDofHandler.getEnrichmentIdsPartition()
              ->overlappingEnrichmentIdsInCells())
         {
           size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
@@ -211,7 +213,7 @@ namespace dftefe
         basisOverlapEnrichmentBlockSTLTmp.size(),
         utils::mpi::MPIDouble,
         utils::mpi::MPISum,
-        d_feBasisHandler->getMPIPatternP2P(d_constraints)->mpiCommunicator());
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
         utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first,
@@ -249,16 +251,16 @@ namespace dftefe
     {
       const size_type numComponents = X.getNumberComponents();
       const size_type nlocallyOwnedEnrichmentIds =
-        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].second -
-        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first;
+        d_feBasisManager->getLocallyOwnedRanges()[1].second -
+        d_feBasisManager->getLocallyOwnedRanges()[1].first;
       const size_type nlocallyOwnedClassicalIds =
-        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].second -
-        d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[0].first;
+        d_feBasisManager->getLocallyOwnedRanges()[0].second -
+        d_feBasisManager->getLocallyOwnedRanges()[0].first;
 
       X.updateGhostValues();
       // update the child nodes based on the parent nodes
-      d_feBasisHandler->getConstraints(d_constraints)
-        .distributeParentToChild(X, X.getNumberComponents());
+      d_feBasisManager->getConstraints().distributeParentToChild(
+        X, X.getNumberComponents());
 
       Y.setValue(0.0);
 
@@ -281,8 +283,8 @@ namespace dftefe
         X.begin(),
         nlocallyOwnedEnrichmentIds * numComponents,
         nlocallyOwnedClassicalIds * numComponents,
-        ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first) -
-         (d_efebasisManager->getGlobalRanges()[0].second)) *
+        ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
+         (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
           numComponents);
 
       int err = utils::mpi::MPIAllreduce<memorySpace>(
@@ -291,7 +293,7 @@ namespace dftefe
         XenrichedGlobalVecTmp.size(),
         utils::mpi::MPIDouble,
         utils::mpi::MPISum,
-        d_feBasisHandler->getMPIPatternP2P(d_constraints)->mpiCommunicator());
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
         utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first,
@@ -323,8 +325,8 @@ namespace dftefe
       YenrichedGlobalVec.template copyTo<memorySpace>(
         Y.begin(),
         nlocallyOwnedEnrichmentIds * numComponents,
-        ((d_feBasisHandler->getLocallyOwnedRanges(d_constraints)[1].first) -
-         (d_efebasisManager->getGlobalRanges()[0].second)) *
+        ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
+         (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
           numComponents,
         nlocallyOwnedClassicalIds * numComponents);
 
@@ -332,8 +334,8 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      d_feBasisHandler->getConstraints(d_constraints)
-        .distributeChildToParent(Y, Y.getNumberComponents());
+      d_feBasisManager->getConstraints().distributeChildToParent(
+        Y, Y.getNumberComponents());
 
       // Function to update the ghost values of the Y
       Y.updateGhostValues();
