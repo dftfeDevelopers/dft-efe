@@ -970,12 +970,6 @@ namespace dftefe
         std::shared_ptr<const BasisDofHandler>      feBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
-      //        std::vector<std::shared_ptr<Constraints<ValueTypeBasisCoeff,
-      //        memorySpace>>>
-      //          constraintsVec,
-      // const std::vector<quadrature::QuadratureRuleAttributes>
-      //   &                                 quadratureRuleAttributesVec,
-      // const QuadAttrToBasisStorageAttrMap quadAttrToBasisStorageAttrMap
       : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
@@ -1341,20 +1335,22 @@ namespace dftefe
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
 
-      CFEBasisDataStorageDealiiInternal::
-        storeValuesHRefinedAdaptiveQuad<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>(
-          d_feBDH,
-          basisQuadStorage,
-          basisGradientQuadStorage,
-          basisHessianQuadStorage,
-          basisOverlap,
-          quadratureRuleAttributes,
-          d_quadratureRuleContainer,
-          nQuadPointsInCell,
-          cellStartIdsBasisQuadStorage,
-          cellStartIdsBasisGradientQuadStorage,
-          cellStartIdsBasisHessianQuadStorage,
-          basisStorageAttributesBoolMap);
+      CFEBasisDataStorageDealiiInternal::storeValuesHRefinedAdaptiveQuad<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        memorySpace,
+        dim>(d_feBDH,
+             basisQuadStorage,
+             basisGradientQuadStorage,
+             basisHessianQuadStorage,
+             basisOverlap,
+             quadratureRuleAttributes,
+             d_quadratureRuleContainer,
+             nQuadPointsInCell,
+             cellStartIdsBasisQuadStorage,
+             cellStartIdsBasisGradientQuadStorage,
+             cellStartIdsBasisHessianQuadStorage,
+             basisStorageAttributesBoolMap);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1492,20 +1488,22 @@ namespace dftefe
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
 
-      CFEBasisDataStorageDealiiInternal::
-        storeValuesHRefinedAdaptiveQuad<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>(
-          d_feBDH,
-          basisQuadStorage,
-          basisGradientQuadStorage,
-          basisHessianQuadStorage,
-          basisOverlap,
-          quadratureRuleAttributes,
-          d_quadratureRuleContainer,
-          nQuadPointsInCell,
-          cellStartIdsBasisQuadStorage,
-          cellStartIdsBasisGradientQuadStorage,
-          cellStartIdsBasisHessianQuadStorage,
-          basisStorageAttributesBoolMap);
+      CFEBasisDataStorageDealiiInternal::storeValuesHRefinedAdaptiveQuad<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        memorySpace,
+        dim>(d_feBDH,
+             basisQuadStorage,
+             basisGradientQuadStorage,
+             basisHessianQuadStorage,
+             basisOverlap,
+             quadratureRuleAttributes,
+             d_quadratureRuleContainer,
+             nQuadPointsInCell,
+             cellStartIdsBasisQuadStorage,
+             cellStartIdsBasisGradientQuadStorage,
+             cellStartIdsBasisHessianQuadStorage,
+             basisStorageAttributesBoolMap);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1655,20 +1653,22 @@ namespace dftefe
       std::vector<size_type> cellStartIdsBasisGradientQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
 
-      CFEBasisDataStorageDealiiInternal::
-        storeValuesHRefinedAdaptiveQuad<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>(
-          d_feBDH,
-          basisQuadStorage,
-          basisGradientQuadStorage,
-          basisHessianQuadStorage,
-          basisOverlap,
-          quadratureRuleAttributes,
-          d_quadratureRuleContainer,
-          nQuadPointsInCell,
-          cellStartIdsBasisQuadStorage,
-          cellStartIdsBasisGradientQuadStorage,
-          cellStartIdsBasisHessianQuadStorage,
-          basisStorageAttributesBoolMap);
+      CFEBasisDataStorageDealiiInternal::storeValuesHRefinedAdaptiveQuad<
+        ValueTypeBasisCoeff,
+        ValueTypeBasisData,
+        memorySpace,
+        dim>(d_feBDH,
+             basisQuadStorage,
+             basisGradientQuadStorage,
+             basisHessianQuadStorage,
+             basisOverlap,
+             quadratureRuleAttributes,
+             d_quadratureRuleContainer,
+             nQuadPointsInCell,
+             cellStartIdsBasisQuadStorage,
+             cellStartIdsBasisGradientQuadStorage,
+             cellStartIdsBasisHessianQuadStorage,
+             basisStorageAttributesBoolMap);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -2388,13 +2388,13 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const BasisDofHandler &
+    std::shared_ptr<const BasisDofHandler>
     CFEBasisDataStorageDealii<ValueTypeBasisCoeff,
                               ValueTypeBasisData,
                               memorySpace,
                               dim>::getBasisDofHandler() const
     {
-      return *d_feBDH;
+      return d_feBDH;
     }
   } // namespace basis
 } // namespace dftefe

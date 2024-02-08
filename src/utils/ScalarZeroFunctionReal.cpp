@@ -16,7 +16,8 @@ namespace dftefe
     }
 
     std::vector<double>
-    ScalarZeroFunctionReal::operator()(const std::vector<utils::Point> &points) const
+    ScalarZeroFunctionReal::operator()(
+      const std::vector<utils::Point> &points) const
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);

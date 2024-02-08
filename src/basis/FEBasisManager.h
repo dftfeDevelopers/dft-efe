@@ -58,17 +58,15 @@ namespace dftefe
         typename GlobalSizeTypeVector::const_iterator;
 
     public:
-
       FEBasisManager(std::shared_ptr<const BasisDofHandler> basisDofHandler,
                      std::shared_ptr<const utils::ScalarSpatialFunctionReal>
                        dirichletBoundaryCondition = nullptr);
 
       void
-      reinit(
-        std::shared_ptr<const BasisDofHandler> basisDofHandler,
-        std::shared_ptr<const utils::ScalarSpatialFunctionReal>
-          dirichletBoundaryCondition);
-      
+      reinit(std::shared_ptr<const BasisDofHandler> basisDofHandler,
+             std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+               dirichletBoundaryCondition);
+
       ~FEBasisManager() = default;
 
       const BasisDofHandler &
@@ -147,9 +145,9 @@ namespace dftefe
                           std::vector<size_type> &vecLocalNodeId) const;
 
     private:
-      std::shared_ptr<const FEBasisDofHandler<ValueTypeBasisCoeff,
-                                           memorySpace,
-                                           dim>> d_feBDH;
+      std::shared_ptr<
+        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+        d_feBDH;
       std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         d_constraintsLocal;
       std::vector<std::pair<global_size_type, global_size_type>>
@@ -159,8 +157,9 @@ namespace dftefe
       std::vector<size_type> d_numLocallyOwnedCellDofs;
 
       // constraints dependent data
-      std::shared_ptr<GlobalSizeTypeVector>                   d_ghostIndices;
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      std::shared_ptr<GlobalSizeTypeVector> d_ghostIndices;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                               d_mpiPatternP2P;
       std::shared_ptr<SizeTypeVector>          d_locallyOwnedCellLocalIndices;
       std::map<global_size_type, utils::Point> d_supportPoints;
     };

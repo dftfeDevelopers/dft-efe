@@ -58,7 +58,7 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
 
-      virtual const BasisDofHandler &
+      virtual std::shared_ptr<const BasisDofHandler>
       getBasisDofHandler() const = 0;
 
       virtual void

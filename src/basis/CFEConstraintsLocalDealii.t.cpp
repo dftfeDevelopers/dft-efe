@@ -13,7 +13,7 @@ namespace dftefe
     // default constructor
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       CFEConstraintsLocalDealii()
       : d_isCleared(false)
@@ -28,7 +28,7 @@ namespace dftefe
     // partitioning information to pass to dftefe objects
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       CFEConstraintsLocalDealii(
         dealii::AffineConstraints<ValueTypeBasisCoeff>
@@ -53,32 +53,32 @@ namespace dftefe
     //
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::copyFrom(
       const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
-      &constraintsLocalIn)
+        &constraintsLocalIn)
     {
       const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>
-       &cfeConstraintsLocalDealiiIn =
-        dynamic_cast<const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim> &>
-        (constraintsLocalIn);
+        &cfeConstraintsLocalDealiiIn = dynamic_cast<
+          const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>
+            &>(constraintsLocalIn);
 
       utils::throwException(
-        &cfeConstraintsLocalDealiiIn!=nullptr,
+        &cfeConstraintsLocalDealiiIn != nullptr,
         " Could not typecast ConstraintsLocal to CFEConstraintsLocalDealii in CFEConstraintsLocalDealii.h");
 
-      d_isClosed = false;
-      d_isCleared = false;
+      d_isClosed           = false;
+      d_isCleared          = false;
       d_locallyOwnedRanges = cfeConstraintsLocalDealiiIn.d_locallyOwnedRanges;
-      d_ghostIndices = cfeConstraintsLocalDealiiIn.d_ghostIndices;
-      d_globalToLocalMap = cfeConstraintsLocalDealiiIn.d_globalToLocalMap;
+      d_ghostIndices       = cfeConstraintsLocalDealiiIn.d_ghostIndices;
+      d_globalToLocalMap   = cfeConstraintsLocalDealiiIn.d_globalToLocalMap;
       copyConstraintsDataFromDealiiToDealii(cfeConstraintsLocalDealiiIn);
     }
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::clear()
     {
@@ -89,7 +89,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::close()
     {
@@ -101,7 +101,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setInhomogeneity(global_size_type    basisId,
@@ -120,7 +120,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::isClosed()
       const
@@ -130,7 +130,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       isConstrained(global_size_type basisId) const
@@ -140,7 +140,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     const dealii::AffineConstraints<ValueTypeBasisCoeff> &
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getAffineConstraints() const
@@ -150,7 +150,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getConstraintEntries(const global_size_type lineDof) const
@@ -160,7 +160,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       isInhomogeneouslyConstrained(const global_size_type lineDof) const
@@ -171,7 +171,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     ValueTypeBasisCoeff
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getInhomogeneity(const global_size_type lineDof) const
@@ -182,7 +182,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       copyConstraintsDataFromDealiiToDealii(
@@ -280,7 +280,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       copyConstraintsDataFromDealiiToDftefe()
@@ -457,7 +457,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       addEntries(
@@ -471,7 +471,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::addLine(
       const global_size_type lineDof)
@@ -481,7 +481,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeParentToChild(
@@ -502,7 +502,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       distributeChildToParent(
@@ -522,7 +522,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setConstrainedNodesToZero(
@@ -538,7 +538,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     void
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       setConstrainedNodes(linearAlgebra::MultiVector<ValueTypeBasisCoeff,
@@ -555,7 +555,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       isGhostEntry(const global_size_type globalId) const
@@ -571,7 +571,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       inLocallyOwnedRanges(const global_size_type globalId) const
@@ -590,7 +590,7 @@ namespace dftefe
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     size_type
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       globalToLocal(const global_size_type globalId) const

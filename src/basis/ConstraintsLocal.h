@@ -38,8 +38,7 @@ namespace dftefe
     /**
      * An abstract class to handle the constraints related to a basis
      */
-    template <typename ValueTypeBasisCoeff,
-              utils::MemorySpace memorySpace>
+    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     class ConstraintsLocal
     {
     public:
@@ -50,7 +49,7 @@ namespace dftefe
       //
       virtual void
       copyFrom(const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
-               &constraintsLocalIn) = 0;
+                 &constraintsLocalIn) = 0;
 
       virtual void
       clear() = 0;

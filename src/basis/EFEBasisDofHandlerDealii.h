@@ -40,12 +40,13 @@
 
 /// dealii includes
 #  include <deal.II/dofs/dof_handler.h>
+#  include <deal.II/matrix_free/matrix_free.h>
 namespace dftefe
 {
   namespace basis
   {
     /**
-     * A derived class of FEBasisManager to handle the FE basis evaluations
+     * A derived class of FEBasisDofHandler to handle the FE basis evaluations
      * through dealii
      */
     template <typename ValueTypeBasisCoeff,
@@ -61,6 +62,7 @@ namespace dftefe
     public:
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>                    enrichmentClassicalInterface,
@@ -69,6 +71,7 @@ namespace dftefe
 
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>         enrichmentClassicalInterface,
@@ -86,6 +89,7 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
@@ -94,6 +98,7 @@ namespace dftefe
 
       void
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>         enrichmentClassicalInterface,
@@ -147,26 +152,34 @@ namespace dftefe
       const std::vector<global_size_type> &
       getBoundaryIds() const override;
 
-      FEBasisManager::FECellIterator
-      beginLocallyOwnedCells() override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        FECellIterator
+        beginLocallyOwnedCells() override;
 
-      FEBasisManager::FECellIterator
-      endLocallyOwnedCells() override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        FECellIterator
+        endLocallyOwnedCells() override;
 
-      FEBasisManager::const_FECellIterator
-      beginLocallyOwnedCells() const override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        const_FECellIterator
+        beginLocallyOwnedCells() const override;
 
-      FEBasisManager::const_FECellIterator
-      endLocallyOwnedCells() const override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        const_FECellIterator
+        endLocallyOwnedCells() const override;
 
-      FEBasisManager::FECellIterator
-      beginLocalCells() override;
-      FEBasisManager::FECellIterator
-      endLocalCells() override;
-      FEBasisManager::const_FECellIterator
-      beginLocalCells() const override;
-      FEBasisManager::const_FECellIterator
-      endLocalCells() const override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        FECellIterator
+        beginLocalCells() override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        FECellIterator
+        endLocalCells() override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        const_FECellIterator
+        beginLocalCells() const override;
+      typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+        const_FECellIterator
+        endLocalCells() const override;
       unsigned int
       getDim() const override;
 
@@ -185,24 +198,24 @@ namespace dftefe
       // Additional functions for getting the communication pattern object
       // for MPI case
 
-      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> >
-        &getIntrinsicConstraints() const override;
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+      getIntrinsicConstraints() const override;
 
       // use this to add extra constraints on top of geometric constraints
-      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> >
-        *createConstraintsStart() const override;
+      std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+      createConstraintsStart() const override;
 
       // call this after calling start
       void
       createConstraintsEnd(
-        std::shared_ptr<
-          const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
           constraintsLocal) const override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const override;
 
-      bool isDistributed() const override;
+      bool
+      isDistributed() const override;
 
       //
       // dealii specific functions
@@ -240,7 +253,8 @@ namespace dftefe
       getEnrichmentIdsPartition() const override;
 
       std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
       getEnrichmentClassicalInterface() const override;
@@ -250,9 +264,6 @@ namespace dftefe
 
       size_type
       totalRanges() const override;
-
-      bool
-      isDistributed() const override;
 
 
     private:
@@ -278,14 +289,18 @@ namespace dftefe
       std::string               d_fieldName;
       bool                      d_isOrthogonalized;
       std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
         d_enrichClassIntfce;
 
-      bool d_isDistributed;
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
-      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>> d_constraintsLocal;
+      std::vector<global_size_type> d_boundaryIds;
+      bool                          d_isDistributed;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2P;
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        d_constraintsLocal;
 
 
     }; // end of EFEBasisDofHandlerDealii

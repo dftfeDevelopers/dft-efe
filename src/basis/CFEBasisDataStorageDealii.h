@@ -68,7 +68,7 @@ namespace dftefe
 
       ~CFEBasisDataStorageDealii() = default;
 
-      const BasisDofHandler &
+      std::shared_ptr<const BasisDofHandler>
       getBasisDofHandler() const override;
 
       void

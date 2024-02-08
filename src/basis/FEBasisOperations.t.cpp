@@ -100,10 +100,14 @@ namespace dftefe
       quadrature::QuadratureRuleAttributes quadratureRuleAttributes =
         d_feBasisDataStorage->getQuadratureRuleContainer()
           ->getQuadratureRuleAttributes();
-      const FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>
-        &feBasisManager = dynamic_cast<
-          const FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim> &>(
-          basisManager);
+      const FEBasisManager<ValueTypeBasisCoeff,
+                           ValueTypeBasisData,
+                           memorySpace,
+                           dim> &feBasisManager =
+        dynamic_cast<const FEBasisManager<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
+                                          memorySpace,
+                                          dim> &>(basisManager);
       utils::throwException(
         &feBasisManager != nullptr,
         "Could not cast BasisManager of the input vector to FEBasisManager in "
@@ -112,8 +116,10 @@ namespace dftefe
       const BasisDofHandler &basisDofHandler =
         basisManager.getBasisDofHandler();
 
-      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &feBasisDofHandler =
-        dynamic_cast<const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(basisDofHandler);
+      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
+        &feBasisDofHandler = dynamic_cast<
+          const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
+          basisDofHandler);
       utils::throwException(
         &feBasisDofHandler != nullptr,
         "Could not cast BasisDofHandler of the input vector to FEBasisDofHandler "
@@ -349,10 +355,14 @@ namespace dftefe
       quadrature::QuadratureRuleAttributes quadratureRuleAttributes =
         d_feBasisDataStorage->getQuadratureRuleContainer()
           ->getQuadratureRuleAttributes();
-      const FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>
-        &feBasisManager = dynamic_cast<
-          const FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim> &>(
-          basisManager);
+      const FEBasisManager<ValueTypeBasisCoeff,
+                           ValueTypeBasisData,
+                           memorySpace,
+                           dim> &feBasisManager =
+        dynamic_cast<const FEBasisManager<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
+                                          memorySpace,
+                                          dim> &>(basisManager);
       utils::throwException(
         &feBasisManager != nullptr,
         "Could not cast BasisManager of the input vector to FEBasisManager in "
@@ -361,8 +371,10 @@ namespace dftefe
       const BasisDofHandler &basisDofHandler =
         basisManager.getBasisDofHandler();
 
-      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &feBasisDofHandler =
-        dynamic_cast<const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(basisDofHandler);
+      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
+        &feBasisDofHandler = dynamic_cast<
+          const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
+          basisDofHandler);
       utils::throwException(
         &feBasisDofHandler != nullptr,
         "Could not cast BasisDofHandler of the input vector to FEBasisDofHandler "
@@ -694,10 +706,14 @@ namespace dftefe
         "input QuadratureValuesContainer and the one passed to the "
         " FEBasisOperations::integrateWithBasisValues function");
 
-      const FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>
-        &feBasisManager = dynamic_cast<
-          const FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim> &>(
-          basisManager);
+      const FEBasisManager<ValueTypeBasisCoeff,
+                           ValueTypeBasisData,
+                           memorySpace,
+                           dim> &feBasisManager =
+        dynamic_cast<const FEBasisManager<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
+                                          memorySpace,
+                                          dim> &>(basisManager);
       utils::throwException(
         &feBasisManager != nullptr,
         "Could not cast BasisManager of the input Field to FEBasisManager in "
@@ -705,14 +721,16 @@ namespace dftefe
 
       const BasisDofHandler &basisDofHandlerField =
         basisManager.getBasisDofHandler();
-      const BasisDofHandler &basisDofHandlerDataStorage =
+      std::shared_ptr<const BasisDofHandler> basisDofHandlerDataStorage =
         d_feBasisDataStorage->getBasisDofHandler();
       utils::throwException(
-        &basisDofHandlerField == &basisDofHandlerDataStorage,
+        &basisDofHandlerField == basisDofHandlerDataStorage.get(),
         "Mismatch in BasisDofHandler used in the Field and the BasisDataStorage "
         "in FEBasisOperations integrateWithBasisValues().");
-      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &feBasisDofHandler =
-        dynamic_cast<const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(basisDofHandlerField);
+      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
+        &feBasisDofHandler = dynamic_cast<
+          const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> &>(
+          basisDofHandlerField);
       utils::throwException(
         &feBasisDofHandler != nullptr,
         "Could not cast BasisDofHandler of the input Field to FEBasisDofHandler "

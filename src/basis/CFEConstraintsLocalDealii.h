@@ -40,7 +40,7 @@ namespace dftefe
   {
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     class CFEConstraintsLocalDealii
       : public ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
     {
@@ -53,12 +53,12 @@ namespace dftefe
 
       CFEConstraintsLocalDealii(
         dealii::AffineConstraints<ValueTypeBasisCoeff>
-         & dealiiAffineConstraintMatrix,
+          &dealiiAffineConstraintMatrix,
         std::vector<std::pair<global_size_type, global_size_type>>
-                                      & locallyOwnedRanges,
-        std::vector<global_size_type> & ghostIndices,
+          &                            locallyOwnedRanges,
+        std::vector<global_size_type> &ghostIndices,
         std::unordered_map<global_size_type, size_type>
-          & globalToLocalMapLocalDofs);
+          &globalToLocalMapLocalDofs);
 
       ~CFEConstraintsLocalDealii() = default;
 
@@ -67,7 +67,7 @@ namespace dftefe
       //
       void
       copyFrom(const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
-               &constraintsLocalIn) override;
+                 &constraintsLocalIn) override;
 
       void
       clear() override;
@@ -135,7 +135,8 @@ namespace dftefe
         const CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>
           &constraintsDataIn);
 
-        void copyConstraintsDataFromDealiiToDftefe();
+      void
+      copyConstraintsDataFromDealiiToDftefe();
 
       void
       addLine(const global_size_type lineDof);
@@ -150,9 +151,10 @@ namespace dftefe
       globalToLocal(const global_size_type globalId) const;
 
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff> d_dealiiAffineConstraintMatrix;
-      bool                                           d_isCleared;
-      bool                                           d_isClosed;
+      dealii::AffineConstraints<ValueTypeBasisCoeff>
+           d_dealiiAffineConstraintMatrix;
+      bool d_isCleared;
+      bool d_isClosed;
 
       GlobalSizeTypeVector d_rowConstraintsIdsGlobal;
       SizeTypeVector       d_rowConstraintsIdsLocal;

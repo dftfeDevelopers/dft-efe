@@ -31,10 +31,10 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/FEOverlapOperatorContext.h>
+#include <basis/CFEOverlapOperatorContext.h>
 #include <linearAlgebra/PreconditionerJacobi.h>
 #include <linearAlgebra/PreconditionerNone.h>
-#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisManager.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/FEBasisDataStorage.h>
 #include <quadrature/QuadratureValuesContainer.h>
@@ -82,13 +82,14 @@ namespace dftefe
        * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE
        */
       L2ProjectionLinearSolverFunction(
-        std::shared_ptr<
-          const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-          cfeBasisHandler,
-        std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
-                                                       ValueTypeOperand,
-                                                       memorySpace,
-                                                       dim>>
+        std::shared_ptr<const FEBasisManager<ValueTypeOperand,
+                                             ValueTypeOperator,
+                                             memorySpace,
+                                             dim>> cfeBasisManager,
+        std::shared_ptr<const CFEOverlapOperatorContext<ValueTypeOperator,
+                                                        ValueTypeOperand,
+                                                        memorySpace,
+                                                        dim>>
           cfeBasisDataStorageOverlapMatrix,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
@@ -97,7 +98,6 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
           memorySpace> &                        inp,
-        const std::string                       basisInterfaceCoeffConstraint,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -130,12 +130,13 @@ namespace dftefe
 
     private:
       std::shared_ptr<
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-        d_feBasisHandler;
-      std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
-                                                     ValueTypeOperand,
-                                                     memorySpace,
-                                                     dim>>
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
+        d_feBasisManager;
+      std::shared_ptr<const CFEOverlapOperatorContext<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace,
+                                                      dim>>
         d_AxContext;
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
@@ -145,7 +146,6 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace>       d_b;
       linearAlgebra::PreconditionerType                        d_pcType;
       const linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
-      std::string d_basisInterfaceCoeffConstraint;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
     }; // end of class L2ProjectionLinearSolverFunction

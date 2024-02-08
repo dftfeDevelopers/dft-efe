@@ -36,9 +36,9 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <basis/FEBasisManager.h>
-#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisDofHandler.h>
 #include <basis/FEBasisDataStorage.h>
-#include <basis/FEOverlapOperatorContext.h>
+#include <basis/CFEOverlapOperatorContext.h>
 #include <basis/FEBasisOperations.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/AtomIdsPartition.h>
@@ -57,14 +57,15 @@ namespace dftefe
      * 1. Partition the enrichment degrees of freedom based on a.)
      * periodic/non-periodic BCs b.) Orthogonalized or pristine enrichment dofs
      * needed.
-     * 2. Acts as input to the EFEBasisManager the basic class for all EFE
+     * 2. Acts as input to the EFEBasisDofHandler the basic class for all EFE
      * operations.
      * 3. For Orthogonalized EFE it carries an extra set of c's from Mc = d
      * obtained from classical dofs.
      * 4. For periodic BC, there will be contributions to enrichment set from
      * periodic images.
      */
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class EnrichmentClassicalInterfaceSpherical
@@ -101,32 +102,25 @@ namespace dftefe
        * \f$d_{I}\f$
        * @param[in] cfeBasisDataStorageOverlapMatrix FEBasisDataStorage object
        * for the OverlapMatrix \f$M^{cc}\f$
-       * @param[in] cfeBasisHandler BasisHandler object for gathering the
-       * partitioning info of distributed multivector \f$c\f$.
        * @param[in] linAlgOpContext The linearAlgebraOperator context for
        * solving the linear equation
        * @param[in] fieldName The fieldname of the enrichment function
        */
       EnrichmentClassicalInterfaceSpherical(
-        std::shared_ptr<const FEOverlapOperatorContext<ValueTypeBasisData,
-                                                       ValueTypeBasisData,
-                                                       memorySpace,
-                                                       dim>>
+        std::shared_ptr<const CFEOverlapOperatorContext<ValueTypeBasisData,
+                                                        ValueTypeBasisData,
+                                                        memorySpace,
+                                                        dim>>
           cfeBasisOverlapOperator,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                              cfeBasisDataStorageRhs,
-        std::shared_ptr<const FEBasisManager> cfeBasisManager,
-        std::shared_ptr<
-          const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
-          cfeBasisHandler,
+          cfeBasisDataStorageRhs,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainer,
         const double                     atomPartitionTolerance,
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinatesVec,
         const std::string                fieldName,
-        std::string                      basisInterfaceCoeffConstraint,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm);
@@ -169,15 +163,15 @@ namespace dftefe
       std::shared_ptr<const AtomIdsPartition<dim>>
       getAtomIdsPartition() const;
 
-      std::shared_ptr<
-        const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
-      getCFEBasisHandler() const;
-
-      std::shared_ptr<const FEBasisManager>
+      std::shared_ptr<const FEBasisManager<ValueTypeBasisCoeff,
+                                           ValueTypeBasisData,
+                                           memorySpace,
+                                           dim>>
       getCFEBasisManager() const;
 
-      std::string
-      getBasisInterfaceCoeffConstraint() const;
+      std::shared_ptr<
+        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+      getCFEBasisDofHandler() const;
 
       const linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> &
       getBasisInterfaceCoeff() const;
@@ -226,13 +220,13 @@ namespace dftefe
            d_basisInterfaceCoeff;
       bool d_isOrthogonalized;
       std::shared_ptr<
-        const FEBasisHandler<ValueTypeBasisData, memorySpace, dim>>
-                                            d_cfeBasisHandler;
-      std::shared_ptr<const FEBasisManager> d_cfeBasisManager;
-      const std::string                     d_basisInterfaceCoeffConstraint;
-      const std::vector<std::string>        d_atomSymbolVec;
-      const std::vector<utils::Point>       d_atomCoordinatesVec;
-      const std::string                     d_fieldName;
+        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+        d_cfeBasisDofHandler;
+      std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+                                      d_cfeBasisManager;
+      const std::vector<std::string>  d_atomSymbolVec;
+      const std::vector<utils::Point> d_atomCoordinatesVec;
+      const std::string               d_fieldName;
       std::vector<std::vector<global_size_type>>
         d_overlappingEnrichmentIdsInCells;
 

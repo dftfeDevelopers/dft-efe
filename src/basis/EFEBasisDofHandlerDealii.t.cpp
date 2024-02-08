@@ -29,14 +29,14 @@
 #include "FECellDealii.h"
 #include <utils/Point.h>
 #include <utils/PointImpl.h>
-#include <basis/FEConstraintsBase.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureAttributes.h>
-#include "FEBasisDofHandlerDealii.h"
-#include "FEConstraintsDealii.h"
-#include "FEBasisDataStorageDealii.h"
-#include "FEBasisHandlerDealii.h"
+#include "CFEBasisDofHandlerDealii.h"
+#include "EFEConstraintsLocalDealii.h"
+#include "CFEBasisDataStorageDealii.h"
+#include "FEBasisManager.h"
+
 
 #include <utils/Exceptions.h>
 #include <deal.II/base/quadrature.h>
@@ -59,8 +59,9 @@ namespace dftefe
                 size_type                  dim>
       void
       setDealiiMatrixFreeLight(
+        dealii::DoFHandler<dim> &dealiiDofHandler,
         dealii::AffineConstraints<ValueTypeBasisCoeff>
-          dealiiAffineConstraintMatrix,
+          &dealiiAffineConstraintMatrix,
         dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree)
       {
         typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
@@ -72,7 +73,7 @@ namespace dftefe
         dealiiMatrixFree.clear();
         dealii::MappingQ1<dim> mappingDealii;
         dealiiMatrixFree.reinit(mappingDealii,
-                                *(getDoFHandler()),
+                                dealiiDofHandler,
                                 dealiiAffineConstraintMatrix,
                                 dealiiQuadratureType,
                                 dealiiAdditionalData);
@@ -83,6 +84,7 @@ namespace dftefe
                 size_type                  dim>
       void
       getGhostIndices(
+        std::vector<global_size_type> &ghostEnrichmentGlobalIds,
         const dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree,
         std::vector<global_size_type> &                     ghostIndices)
       {
@@ -96,18 +98,16 @@ namespace dftefe
         ghostIndexSet.fill_index_vector(ghostIndicesClassical);
 
         // get the enriched ghost ids
-        std::vector<global_size_type> ghostIndicesEnriched(0);
-        ghostIndicesEnriched = getGhostEnrichmentGlobalIds();
-
         ghostIndices.clear();
         ghostIndices.insert(ghostIndices.begin(),
                             ghostIndicesClassical.begin(),
                             ghostIndicesClassical.end());
         ghostIndices.insert(ghostIndices.end(),
-                            ghostIndicesEnriched.begin(),
-                            ghostIndicesEnriched.end());
+                            ghostEnrichmentGlobalIds.begin(),
+                            ghostEnrichmentGlobalIds.end());
       }
     } // namespace EFEBasisDofHandlerInternal
+
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
@@ -118,6 +118,7 @@ namespace dftefe
                              dim>::
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>                    EnrichmentClassicalInterface,
@@ -131,8 +132,6 @@ namespace dftefe
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
       , d_boundaryIds(0)
-      , d_mpiPatternP2P(nullptr)
-      , d_constraintsLocal(nullptr)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
@@ -149,6 +148,7 @@ namespace dftefe
                              dim>::
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>         EnrichmentClassicalInterface,
@@ -161,8 +161,6 @@ namespace dftefe
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
       , d_boundaryIds(0)
-      , d_mpiPatternP2P(nullptr)
-      , d_constraintsLocal(nullptr)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
@@ -179,6 +177,7 @@ namespace dftefe
                              memorySpace,
                              dim>::
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
@@ -317,10 +316,6 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
-
-      utils::throwException(
-        d_isCleared && !d_isClosed,
-        " Clear the constraint matrix before making hanging node constraints");
       dealii::IndexSet locally_relevant_dofs;
       locally_relevant_dofs.clear();
       dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
@@ -367,18 +362,18 @@ namespace dftefe
 
       EFEBasisDofHandlerInternal::
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
-          dealiiAffineConstraintMatrix, dealiiMatrixFree);
+          *d_dofHandler, dealiiAffineConstraintMatrix, dealiiMatrixFree);
 
       std::vector<global_size_type> ghostIndicesSTLVec;
       EFEBasisDofHandlerInternal::getGhostIndices<ValueTypeBasisCoeff, dim>(
-        dealiiMatrixFree, ghostIndicesSTLVec);
+        d_ghostEnrichmentGlobalIds, dealiiMatrixFree, ghostIndicesSTLVec);
 
       //
       // populate d_mpiPatternP2P - nbx consensus map for P2P communication
       //
       d_mpiPatternP2P =
         std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
-          d_locallyOwnedRanges, ghostIndicesSTLVec, mpiComm);
+          getLocallyOwnedRanges(), ghostIndicesSTLVec, mpiComm);
 
       // Get the required parameters for creating ConstraintsLocal Object
 
@@ -389,28 +384,29 @@ namespace dftefe
       std::unordered_map<global_size_type, size_type> globalToLocalMapLocalDofs;
       globalToLocalMapLocalDofs.clear();
 
-      for (global_size_type i = locallyOwnedRanges.first;
-           i < locallyOwnedRanges.second;
-           i++)
+      for (auto j : locallyOwnedRanges)
         {
-          globalToLocalMapLocalDofs.insert(
-            {i, d_mpiPatternP2P.globalToLocal(i)});
+          for (global_size_type i = j.first; i < j.second; i++)
+            {
+              globalToLocalMapLocalDofs.insert(
+                {i, d_mpiPatternP2P->globalToLocal(i)});
+            }
         }
       for (auto j : ghostIndices)
         {
           globalToLocalMapLocalDofs.insert(
-            {j, d_mpiPatternP2P.globalToLocal(j)});
+            {j, d_mpiPatternP2P->globalToLocal(j)});
         }
 
       // Creation of geometric / intrinsic constraint
       // matrix having only trimmed constraint ids.
 
       d_constraintsLocal = std::make_shared<
-          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
-          dealiiAffineConstraintMatrix,
-          locallyOwnedRanges,
-          ghostIndices,
-          globalToLocalMapLocalDofs);
+        const EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
+        dealiiAffineConstraintMatrix,
+        locallyOwnedRanges,
+        ghostIndices,
+        globalToLocalMapLocalDofs);
 
       // get boundary node ids of all locally owned and ghost cells. This is
       // because the dofs of locally owned and ghost cells
@@ -432,14 +428,16 @@ namespace dftefe
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
       std::vector<bool> dofs_touched(this->nGlobalNodes(), false);
-      auto cell = this->beginLocalCells(), endc = this->endLocalCells();
-      for (; cell != endc; ++cell)
+      auto cellIter = this->beginLocalCells(), endIter = this->endLocalCells();
+      for (; cellIter != endIter; ++cellIter)
         {
-          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          (*cellIter)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
           for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
             {
-              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
+              (*cellIter)->getFaceDoFGlobalIndices(iFace,
+                                                   iFaceGlobalDofIndices);
+              const size_type boundaryId =
+                (*cellIter)->getFaceBoundaryId(iFace);
               if (boundaryId == 0)
                 {
                   for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
@@ -471,6 +469,7 @@ namespace dftefe
                              memorySpace,
                              dim>::
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
+               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>         enrichmentClassicalInterface,
@@ -608,10 +607,6 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
-
-      utils::throwException(
-        d_isCleared && !d_isClosed,
-        " Clear the constraint matrix before making hanging node constraints");
       dealii::IndexSet locally_relevant_dofs;
       locally_relevant_dofs.clear();
       dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
@@ -658,21 +653,21 @@ namespace dftefe
 
       EFEBasisDofHandlerInternal::
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
-          dealiiAffineConstraintMatrix, dealiiMatrixFree);
+          *d_dofHandler, dealiiAffineConstraintMatrix, dealiiMatrixFree);
 
       std::vector<global_size_type> ghostIndicesSTLVec;
       EFEBasisDofHandlerInternal::getGhostIndices<ValueTypeBasisCoeff, dim>(
-        dealiiMatrixFree, ghostIndicesSTLVec);
+        d_ghostEnrichmentGlobalIds, dealiiMatrixFree, ghostIndicesSTLVec);
 
       //
       // populate d_mpiPatternP2P - nbx consensus map for P2P communication
       //
       std::vector<size_type> locallyOwnedRangesSizeVec(0);
-      for (auto i : d_locallyOwnedRanges)
+      for (auto i : getLocallyOwnedRanges())
         {
           locallyOwnedRangesSizeVec.push_back(i.second - i.first);
         }
-      auto d_mpiPatternP2P =
+      d_mpiPatternP2P =
         std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
           locallyOwnedRangesSizeVec);
 
@@ -685,28 +680,29 @@ namespace dftefe
       std::unordered_map<global_size_type, size_type> globalToLocalMapLocalDofs;
       globalToLocalMapLocalDofs.clear();
 
-      for (global_size_type i = locallyOwnedRanges.first;
-           i < locallyOwnedRanges.second;
-           i++)
+      for (auto j : locallyOwnedRanges)
         {
-          globalToLocalMapLocalDofs.insert(
-            {i, d_mpiPatternP2P.globalToLocal(i)});
+          for (global_size_type i = j.first; i < j.second; i++)
+            {
+              globalToLocalMapLocalDofs.insert(
+                {i, d_mpiPatternP2P->globalToLocal(i)});
+            }
         }
       for (auto j : ghostIndices)
         {
           globalToLocalMapLocalDofs.insert(
-            {j, d_mpiPatternP2P.globalToLocal(j)});
+            {j, d_mpiPatternP2P->globalToLocal(j)});
         }
 
       // Creation of geometric / intrinsic constraint
       // matrix having only trimmed constraint ids.
 
       d_constraintsLocal = std::make_shared<
-          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
-          dealiiAffineConstraintMatrix,
-          locallyOwnedRanges,
-          ghostIndices,
-          globalToLocalMapLocalDofs);
+        const EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
+        dealiiAffineConstraintMatrix,
+        locallyOwnedRanges,
+        ghostIndices,
+        globalToLocalMapLocalDofs);
 
       // get boundary node ids of all locally owned and ghost cells. This is
       // because the dofs of locally owned and ghost cells
@@ -728,14 +724,16 @@ namespace dftefe
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
       std::vector<bool> dofs_touched(this->nGlobalNodes(), false);
-      auto cell = this->beginLocalCells(), endc = this->endLocalCells();
-      for (; cell != endc; ++cell)
+      auto cellIter = this->beginLocalCells(), endIter = this->endLocalCells();
+      for (; cellIter != endIter; ++cellIter)
         {
-          (*cell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
+          (*cellIter)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
           for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
             {
-              (*cell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-              const size_type boundaryId = (*cell)->getFaceBoundaryId(iFace);
+              (*cellIter)->getFaceDoFGlobalIndices(iFace,
+                                                   iFaceGlobalDofIndices);
+              const size_type boundaryId =
+                (*cellIter)->getFaceBoundaryId(iFace);
               if (boundaryId == 0)
                 {
                   for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
@@ -1081,11 +1079,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::beginLocallyOwnedCells()
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::beginLocallyOwnedCells()
     {
       return d_locallyOwnedCells.begin();
     }
@@ -1094,11 +1093,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::endLocallyOwnedCells()
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::endLocallyOwnedCells()
     {
       return d_locallyOwnedCells.end();
     }
@@ -1107,11 +1107,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::beginLocallyOwnedCells() const
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      const_FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::beginLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.begin();
     }
@@ -1120,11 +1121,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::endLocallyOwnedCells() const
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      const_FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::endLocallyOwnedCells() const
     {
       return d_locallyOwnedCells.end();
     }
@@ -1133,11 +1135,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::beginLocalCells()
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::beginLocalCells()
     {
       return d_localCells.begin();
     }
@@ -1146,11 +1149,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::endLocalCells()
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::endLocalCells()
     {
       return d_localCells.end();
     }
@@ -1159,11 +1163,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::beginLocalCells() const
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      const_FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::beginLocalCells() const
     {
       return d_localCells.begin();
     }
@@ -1172,11 +1177,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<std::shared_ptr<FECellBase>>::const_iterator
-    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                             ValueTypeBasisData,
-                             memorySpace,
-                             dim>::endLocalCells() const
+    typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+      const_FECellIterator
+      EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>::endLocalCells() const
     {
       return d_localCells.end();
     }
@@ -1502,7 +1508,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<
-      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                  ValueTypeBasisData,
                                                   memorySpace,
                                                   dim>>
     EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
@@ -1546,32 +1553,32 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
-      &EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                                ValueTypeBasisData,
-                                memorySpace,
-                                dim>::getIntrinsicConstraints() const
+    std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                             ValueTypeBasisData,
+                             memorySpace,
+                             dim>::getIntrinsicConstraints() const
     {
-      return *d_constraintsLocal;
+      return d_constraintsLocal;
     }
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
-      *EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                                ValueTypeBasisData,
-                                memorySpace,
-                                dim>::createConstraintsStart() const
+    std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                             ValueTypeBasisData,
+                             memorySpace,
+                             dim>::createConstraintsStart() const
     {
-      const ConstraintsLocal<ValueTypeBasisCoeff,
-                             memorySpace> *constraintsLocal =
-        new EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>();
+      std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        constraintsLocal = std::make_shared<
+          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
 
-      constraintsLocal->copyFrom(d_constraintsLocal.get());
+      constraintsLocal->copyFrom(*d_constraintsLocal);
 
-      return constraintsLocal;
+      return (constraintsLocal);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1584,8 +1591,7 @@ namespace dftefe
                              memorySpace,
                              dim>::
       createConstraintsEnd(
-        std::shared_ptr<
-          const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
           constraintsLocal) const
     {
       constraintsLocal->close();

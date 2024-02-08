@@ -34,6 +34,8 @@
 #include <map>
 #include <basis/EnrichmentClassicalInterfaceSpherical.h>
 #include <basis/EnrichmentIdsPartition.h>
+#include <basis/ConstraintsLocal.h>
+#include <utils/MPIPatternP2P.h>
 
 namespace dftefe
 {
@@ -51,6 +53,7 @@ namespace dftefe
               size_type                  dim>
     class EFEBasisDofHandler
       : public FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
+
     {
     public:
       virtual double
@@ -105,21 +108,37 @@ namespace dftefe
         std::vector<global_size_type> &vecGlobalNodeId) const = 0;
       virtual const std::vector<global_size_type> &
       getBoundaryIds() const = 0;
-      virtual FEBasisDofHandler::FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::FECellIterator
       beginLocallyOwnedCells() = 0;
-      virtual FEBasisDofHandler::FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::FECellIterator
       endLocallyOwnedCells() = 0;
-      virtual FEBasisDofHandler::const_FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::const_FECellIterator
       beginLocallyOwnedCells() const = 0;
-      virtual FEBasisDofHandler::const_FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::const_FECellIterator
       endLocallyOwnedCells() const = 0;
-      virtual FEBasisDofHandler::FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::FECellIterator
       beginLocalCells() = 0;
-      virtual FEBasisDofHandler::FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::FECellIterator
       endLocalCells() = 0;
-      virtual FEBasisDofHandler::const_FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::const_FECellIterator
       beginLocalCells() const = 0;
-      virtual FEBasisDofHandler::const_FECellIterator
+      virtual typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::const_FECellIterator
       endLocalCells() const = 0;
 
       virtual size_type
@@ -162,7 +181,8 @@ namespace dftefe
       getEnrichmentIdsPartition() const = 0;
 
       virtual std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
       getEnrichmentClassicalInterface() const = 0;
@@ -177,24 +197,26 @@ namespace dftefe
       // Additional functions for getting the communication pattern object
       // for MPI case
 
-      virtual const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> >
-        &getIntrinsicConstraints() const = 0;
+      virtual std::shared_ptr<
+        const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+      getIntrinsicConstraints() const = 0;
 
       // use this to add extra constraints on top of geometric constraints
-      virtual const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> >
-        *createConstraintsStart() const = 0;
+      virtual std::shared_ptr<
+        ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+      createConstraintsStart() const = 0;
 
       // call this after calling start
       virtual void
       createConstraintsEnd(
-        std::shared_ptr<
-          const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
           constraintsLocal) const = 0;
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const = 0;
 
-      virtual bool isDistributed() const = 0;
+      virtual bool
+      isDistributed() const = 0;
 
     }; // end of EFEBasisDofHandler
   }    // end of namespace basis

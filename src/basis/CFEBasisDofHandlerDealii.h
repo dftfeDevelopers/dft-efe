@@ -51,13 +51,17 @@ namespace dftefe
      */
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
-              size_type                  dim>
+              size_type          dim>
     class CFEBasisDofHandlerDealii
       : public FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
     {
     public:
-      using FECellIterator       = typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::FECellIterator;
-      using const_FECellIterator = typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::const_FECellIterator;
+      using FECellIterator = typename FEBasisDofHandler<ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim>::FECellIterator;
+      using const_FECellIterator =
+        typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
+          const_FECellIterator;
 
       CFEBasisDofHandlerDealii(
         std::shared_ptr<const TriangulationBase> triangulation,
@@ -177,22 +181,23 @@ namespace dftefe
       // for MPI case
 
       std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
-        getIntrinsicConstraints() const override;
+      getIntrinsicConstraints() const override;
 
       // use this to add extra constraints on top of geometric constraints
       std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
-       createConstraintsStart() const override;
+      createConstraintsStart() const override;
 
       // call this after calling start
       void
       createConstraintsEnd(
-         std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, 
-         memorySpace>> constraintsLocal) const override;
+        std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+          constraintsLocal) const override;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const override;
 
-      bool isDistributed() const override;
+      bool
+      isDistributed() const override;
 
 
       //
@@ -215,9 +220,11 @@ namespace dftefe
       size_type d_totalRanges;
 
       std::vector<global_size_type> d_boundaryIds;
-      bool d_isDistributed;
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
-      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>> d_constraintsLocal;
+      bool                          d_isDistributed;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2P;
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        d_constraintsLocal;
 
     }; // end of CFEBasisDofHandlerDealii
   }    // end of namespace basis

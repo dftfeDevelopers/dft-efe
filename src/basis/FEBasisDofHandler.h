@@ -153,22 +153,26 @@ namespace dftefe
       // Additional functions for getting the communication pattern object
       // for MPI case
 
-     virtual std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
-     getIntrinsicConstraints() const = 0;
+      virtual std::shared_ptr<
+        const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+      getIntrinsicConstraints() const = 0;
 
       // use this to add extra constraints on top of geometric constraints
-      virtual std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
-       createConstraintsStart() const = 0;
+      virtual std::shared_ptr<
+        ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+      createConstraintsStart() const = 0;
 
       // call this after calling start
       virtual void
       createConstraintsEnd(
-         std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>> constraintsLocal) const = 0;
+        std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+          constraintsLocal) const = 0;
 
       virtual std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const = 0;
 
-      virtual bool isDistributed() const = 0;
+      virtual bool
+      isDistributed() const = 0;
 
     }; // end of FEBasisDofHandler
   }    // end of namespace basis

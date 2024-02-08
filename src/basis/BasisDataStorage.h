@@ -74,7 +74,7 @@ namespace dftefe
     public:
       virtual ~BasisDataStorage() = default;
 
-      virtual const BasisDofHandler &
+      virtual std::shared_ptr<const BasisDofHandler>
       getBasisDofHandler() const = 0;
 
       virtual void

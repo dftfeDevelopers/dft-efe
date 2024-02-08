@@ -165,10 +165,10 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::reinit(
-      std::shared_ptr<const BasisDofHandler> basisDofHandler,
-      std::shared_ptr<const utils::ScalarSpatialFunctionReal>
-        dirichletBoundaryCondition)
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      reinit(std::shared_ptr<const BasisDofHandler> basisDofHandler,
+             std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+               dirichletBoundaryCondition)
     {
       // initialize the private data members.
       d_feBDH = std::dynamic_pointer_cast<
@@ -181,7 +181,7 @@ namespace dftefe
       if (dirichletBoundaryCondition != nullptr)
         {
           std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
-          constraintsLocalIntrinsic = d_feBDH->createConstraintsStart();
+            constraintsLocalIntrinsic = d_feBDH->createConstraintsStart();
 
           std::vector<global_size_type> boundaryIds = d_feBDH->getBoundaryIds();
 
@@ -189,18 +189,25 @@ namespace dftefe
           boundaryCoord.clear();
           d_feBDH->getBasisCenters(boundaryCoord);
           for (auto nodeId : boundaryIds)
-          {
-            auto inhomoValue = (*dirichletBoundaryCondition)(boundaryCoord.find(nodeId)->second);
-            constraintsLocalIntrinsic->setInhomogeneity(nodeId, inhomoValue);
-          }
+            {
+              if (boundaryCoord.find(nodeId) != boundaryCoord.end())
+                {
+                  auto inhomoValue = (*dirichletBoundaryCondition)(
+                    boundaryCoord.find(nodeId)->second);
+                  constraintsLocalIntrinsic->setInhomogeneity(nodeId,
+                                                              inhomoValue);
+                }
+              else
+                utils::throwException(
+                  false, "Could not find boundary nodeId in FEBasisManager.");
+            }
           d_feBDH->createConstraintsEnd(constraintsLocalIntrinsic);
 
-          d_constraintsLocal          = constraintsLocalIntrinsic;
-
+          d_constraintsLocal = constraintsLocalIntrinsic;
         }
       else
         {
-          d_constraintsLocal          = d_feBDH->getIntrinsicConstraints();
+          d_constraintsLocal = d_feBDH->getIntrinsicConstraints();
         }
 
       d_locallyOwnedRanges = d_feBDH->getLocallyOwnedRanges();
@@ -250,7 +257,7 @@ namespace dftefe
       ghostIndicesTmp = d_mpiPatternP2P->getGhostIndices();
 
       const size_type numGhostIndices = ghostIndicesTmp.size();
-      d_ghostIndices = std::make_shared<
+      d_ghostIndices                  = std::make_shared<
         typename BasisManager<ValueTypeBasisCoeff,
                               memorySpace>::GlobalSizeTypeVector>(
         numGhostIndices);
@@ -287,8 +294,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> &
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::getConstraints()
-      const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      getConstraints() const
     {
       return *(d_constraintsLocal);
     }
@@ -298,8 +305,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::getMPIPatternP2P()
-      const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      getMPIPatternP2P() const
     {
       return d_mpiPatternP2P;
     }
@@ -320,7 +327,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::nLocal() const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      nLocal() const
     {
       // add locallyownedranges here
       size_type numLocallyOwned = 0;
@@ -337,7 +345,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::nLocallyOwned() const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      nLocallyOwned() const
     {
       size_type numLocallyOwned = 0;
       for (auto i : d_locallyOwnedRanges)
@@ -352,7 +361,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::nGhost() const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      nGhost() const
     {
       const size_type numGhost = (*(d_ghostIndices)).size();
       return numGhost;
@@ -363,9 +373,9 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::getBasisCenters(
-      const size_type       localId,
-      dftefe::utils::Point &basisCenter) const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      getBasisCenters(const size_type       localId,
+                      dftefe::utils::Point &basisCenter) const
     {
       global_size_type globalId = localToGlobalIndex(localId);
 
@@ -426,8 +436,8 @@ namespace dftefe
                                   ValueTypeBasisData,
                                   memorySpace,
                                   dim>::GlobalSizeTypeVector &
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::getGhostIndices()
-      const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      getGhostIndices() const
     {
       return *(d_ghostIndices);
     }
@@ -437,8 +447,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::pair<bool, size_type>
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::inLocallyOwnedRanges(
-      const global_size_type globalId) const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      inLocallyOwnedRanges(const global_size_type globalId) const
     {
       return (d_mpiPatternP2P)->inLocallyOwnedRanges(globalId);
     }
@@ -448,8 +458,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::pair<bool, size_type>
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::isGhostEntry(
-      const global_size_type ghostId) const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      isGhostEntry(const global_size_type ghostId) const
     {
       return (d_mpiPatternP2P)->isGhostEntry(ghostId);
     }
@@ -459,8 +469,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     size_type
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::globalToLocalIndex(
-      const global_size_type globalId) const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      globalToLocalIndex(const global_size_type globalId) const
     {
       return (d_mpiPatternP2P)->globalToLocal(globalId);
     }
@@ -470,8 +480,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     global_size_type
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::localToGlobalIndex(
-      const size_type localId) const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      localToGlobalIndex(const size_type localId) const
     {
       return (d_mpiPatternP2P)->localToGlobal(localId);
     }
@@ -516,10 +526,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
-      const_GlobalIndexIter
-      FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
-        locallyOwnedCellGlobalDofIdsEnd(const size_type cellId) const
+    typename FEBasisManager<ValueTypeBasisCoeff,
+                            ValueTypeBasisData,
+                            memorySpace,
+                            dim>::const_GlobalIndexIter
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      locallyOwnedCellGlobalDofIdsEnd(const size_type cellId) const
     {
       DFTEFE_AssertWithMsg(
         cellId < d_numLocallyOwnedCellDofs.size(),
@@ -568,10 +580,12 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
-      const_LocalIndexIter
-      FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
-        locallyOwnedCellLocalDofIdsEnd(const size_type cellId) const
+    typename FEBasisManager<ValueTypeBasisCoeff,
+                            ValueTypeBasisData,
+                            memorySpace,
+                            dim>::const_LocalIndexIter
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      locallyOwnedCellLocalDofIdsEnd(const size_type cellId) const
     {
       DFTEFE_AssertWithMsg(
         cellId < d_numLocallyOwnedCellDofs.size(),
@@ -599,9 +613,9 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::getCellDofsLocalIds(
-      const size_type         cellId,
-      std::vector<size_type> &vecLocalNodeId) const
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      getCellDofsLocalIds(const size_type         cellId,
+                          std::vector<size_type> &vecLocalNodeId) const
     {
       std::vector<global_size_type> vecGlobalNodeId(0);
       d_feBDH->getCellDofsGlobalIds(cellId, vecGlobalNodeId);

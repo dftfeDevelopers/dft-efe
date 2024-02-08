@@ -18,18 +18,18 @@ set(DFT-EFE-BASIS-SOURCES
 	FEBasisManager.cpp
 	CFEBasisDataStorageDealii.cpp
 	FEBasisOperations.cpp
-	#AtomIdsPartition.cpp
-	#EnrichmentIdsPartition.cpp
-	#FEOverlapOperatorContext.cpp
+	AtomIdsPartition.cpp
+	EnrichmentIdsPartition.cpp
+	CFEOverlapOperatorContext.cpp
 	#EFEOverlapOperatorContext.cpp
-	#EnrichmentClassicalInterfaceSpherical.cpp
-	#L2ProjectionLinearSolverFunction.cpp
+	EnrichmentClassicalInterfaceSpherical.cpp
+	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
 	#FEOverlapInverseOperatorContext.cpp
 	#EFEOverlapInverseOperatorContext.cpp
 	#EFEBasisDataStorageDealii.cpp
-	#EFEBasisDofHandlerDealii.cpp
-	#EFEConstraintsLocalDealii.cpp
+	EFEBasisDofHandlerDealii.cpp
+	EFEConstraintsLocalDealii.cpp
 	)
 
 #FEConstraintsBase.cpp

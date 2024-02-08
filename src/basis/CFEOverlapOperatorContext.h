@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeFEOverlapOperatorContext_h
-#define dftefeFEOverlapOperatorContext_h
+#ifndef dftefeCFEOverlapOperatorContext_h
+#define dftefeCFEOverlapOperatorContext_h
 
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -32,8 +32,8 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/FEBasisHandlerDealii.h>
-#include <basis/FEBasisDataStorageDealii.h>
+#include <basis/FEBasisManager.h>
+#include <basis/CFEBasisDataStorageDealii.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <memory>
 
@@ -46,8 +46,9 @@ namespace dftefe
      * the action of a discrete operator on vectors, matrices, etc.
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator.
+     * Ususlly ValueTypeBasisData in FE basis
      * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
-     * on which the operator will act.
+     * on which the operator will act. Ususlly ValueTypeBasisCoeff in FE basis
      * @tparam memorySpace The memory space (HOST, DEVICE, HOST_PINNED, etc.) in which the data of the operator
      * and its operands reside
      *
@@ -56,7 +57,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class FEOverlapOperatorContext
+    class CFEOverlapOperatorContext
       : public linearAlgebra::
           OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
@@ -78,14 +79,18 @@ namespace dftefe
       /**
        * @brief Constructor
        */
-      FEOverlapOperatorContext(
-        const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+      CFEOverlapOperatorContext(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerX,
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               feBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs);
+          &             feBasisDataStorage,
+        const size_type maxCellTimesNumVecs);
 
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
@@ -116,18 +121,22 @@ namespace dftefe
       getFEBasisDataStorage() const;
 
     private:
-      const FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-        *d_feBasisHandler;
+      const FEBasisManager<ValueTypeOperand,
+                           ValueTypeOperator,
+                           memorySpace,
+                           dim> *d_feBasisManagerX;
+      const FEBasisManager<ValueTypeOperand,
+                           ValueTypeOperator,
+                           memorySpace,
+                           dim> *d_feBasisManagerY;
       const FEBasisDataStorage<ValueTypeOperator, memorySpace>
         *                      d_feBasisDataStorage;
       std::shared_ptr<Storage> d_basisOverlap;
       std::vector<size_type>   d_cellStartIdsBasisOverlap;
       std::vector<size_type>   d_dofsInCell;
-      const std::string        d_constraintsX;
-      const std::string        d_constraintsY;
       const size_type          d_maxCellTimesNumVecs;
-    }; // end of class FEOverlapOperatorContext
+    }; // end of class CFEOverlapOperatorContext
   }    // end of namespace basis
 } // end of namespace dftefe
-#include <basis/FEOverlapOperatorContext.t.cpp>
-#endif // dftefeFEOverlapOperatorContext_h
+#include <basis/CFEOverlapOperatorContext.t.cpp>
+#endif // dftefeCFEOverlapOperatorContext_h
