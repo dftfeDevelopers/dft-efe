@@ -85,6 +85,10 @@ namespace dftefe
         std::vector<global_size_type> ghostIndicesClassical(0);
         ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
         ghostIndexSet.fill_index_vector(ghostIndicesClassical);
+        ghostIndices.clear();
+        ghostIndices.insert(ghostIndices.begin(),
+                            ghostIndicesClassical.begin(),
+                            ghostIndicesClassical.end());
       }
     } // namespace CFEBasisDofHandlerInternal
 

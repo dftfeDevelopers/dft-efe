@@ -2,6 +2,7 @@
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackKernels.h>
 #include <type_traits>
+#include <utils/MemoryStorage.h>
 
 namespace dftefe
 {
@@ -474,14 +475,13 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      inverse(const size_type n,
-              ValueType *     A,
-              const size_type lda,
-              ValueType *     ipiv)
+      inverse(size_type n, ValueType *A)
       {
-        lapack::getrf(n, n, A, lda, ipiv);
+        utils::MemoryStorage<long int, memorySpace> ipiv(n);
 
-        lapack::getri(n, A, lda, ipiv);
+        lapack::getrf(n, n, A, n, ipiv.data());
+
+        lapack::getri(n, A, n, ipiv.data());
       }
 
     } // namespace blasLapack

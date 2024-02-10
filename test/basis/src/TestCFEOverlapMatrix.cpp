@@ -2,12 +2,12 @@
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
-#include <basis/EFEBasisManagerDealii.h>
-#include <basis/BasisManager.h>
-#include <basis/FEConstraintsDealii.h>
+#include <basis/EFEBasisDofHandlerDealii.h>
+#include <basis/BasisDofHandler.h>
+#include <basis/ConstraintsLocal.h>
 #include <basis/EFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
-#include <basis/EFEBasisHandlerDealii.h>
+#include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <utils/Point.h>
@@ -28,11 +28,11 @@
 #include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <iostream>
-#include <basis/FEOverlapInverseOperatorContext.h>
+#include <basis/CFEOverlapInverseOperatorContext.h>
 
 int main()
 {
-  std::cout<<" Entering test poisson problem classical \n";
+  std::cout<<" Entering test CFE overlap matrix \n";
 
   // Required to solve : \nabla^2 V_H = g(r,r_c) Solve using CG in linearAlgebra
   // In the weak form the eqn is:
@@ -85,34 +85,18 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
-  // initialize the basis Manager
+  // initialize the basis 
 
   unsigned int feDegree = 3;
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
+  std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree);
+
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
-  basisManager->getBasisCenters(dofCoords);
+  basisDofHandler->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " << basisManager->nLocallyOwnedCells() << "\n";
-  std::cout << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
-
-  // Set the constraints
-
-  std::string constraintHanging = "HangingNodeConstraint"; 
-  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec;
-  constraintsVec.resize(1);
-  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
-
-  constraintsVec[0]->clear();
-  constraintsVec[0]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[0]->close();
-
-  std::map<std::string,
-           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
-
-  constraintsMap[constraintHanging] = constraintsVec[0];
+  std::cout << "Locally owned cells : " << basisDofHandler->nLocallyOwnedCells() << "\n";
+  std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
   unsigned int num1DGLLSize = 4;
@@ -129,22 +113,22 @@ int main()
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
-    std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, quadAttr, basisAttrMap);
+    std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, quadAttr, basisAttrMap);
 
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
-  // Set up BasisHandler
-  std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisHandler =
-    std::make_shared<dftefe::basis::FEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, constraintsMap, comm);
+  // Set up BasisManager
+  std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
+    std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
 
   // set up MPIPatternP2P for the constraints
-  auto mpiPatternP2PHanging = basisHandler->getMPIPatternP2P(constraintHanging);
+  auto mpiPatternP2PHanging = basisManager->getMPIPatternP2P();
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
    X = std::make_shared<
@@ -163,7 +147,7 @@ int main()
 
   //populate the value of the Potential at the nodes for the analytic expressions
 
-  dftefe::size_type numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
+  dftefe::size_type numLocallyOwnedCells  = basisDofHandler->nLocallyOwnedCells();
   auto itField  = X->begin();
   dftefe::utils::Point nodeLoc(dim,0.0);
   dftefe::size_type nodeCount = 0; 
@@ -171,51 +155,49 @@ int main()
     {
       // get cell dof global ids
       std::vector<dftefe::global_size_type> cellGlobalNodeIds;
-      basisManager->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+      basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
 
       // loop over nodes of a cell
       for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
         {
           // If node not constrained then get the local id and coordinates of the node
           dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
-         if( !basisHandler->getConstraints(constraintHanging).isConstrained(globalId))
+         if( !basisManager->getConstraints().isConstrained(globalId))
          {
-            dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
-            basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
+            dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+            basisManager->getBasisCenters(localId,nodeLoc);
             *(itField + localId )  = ((double) rand() / (RAND_MAX));
          }
         }
     }
 
     // Create OperatorContext for Basisoverlap
-    std::shared_ptr<const dftefe::basis::FEOverlapOperatorContext<double,
+    std::shared_ptr<const dftefe::basis::CFEOverlapOperatorContext<double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
                                                   dim>> MContext =
-    std::make_shared<dftefe::basis::FEOverlapOperatorContext<double,
+    std::make_shared<dftefe::basis::CFEOverlapOperatorContext<double,
                                                         double,
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>(
-                                                        *basisHandler,
+                                                        *basisManager,
+                                                        *basisManager,
                                                         *feBasisData,
-                                                        constraintHanging,
-                                                        constraintHanging,
                                                         50);
 
 
       MContext->apply(*X,*Y);
-  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisHandler, quadValuesContainer);
+  //feBasisOp.interpolate( *dens, constraintHomwHan, *basisManager, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> MInvContext =
-    std::make_shared<dftefe::basis::FEOverlapInverseOperatorContext<double,
+    std::make_shared<dftefe::basis::CFEOverlapInverseOperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
-                                                   (*basisHandler,
+                                                   (*basisManager,
                                                     *MContext,
-                                                    constraintHanging,
                                                     linAlgOpContext);
 
     MInvContext->apply(*Y,*Z);
@@ -234,7 +216,7 @@ int main()
 
   dftefe::linearAlgebra::add(ones, *X, nOnes, *Z, *error);
 
-    std::cout<<"No of dofs: "<< basisManager->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/Z->l2Norms()[0])<<"\n";
+    std::cout<<"No of dofs: "<< basisDofHandler->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/Z->l2Norms()[0])<<"\n";
 
 
   //gracefully end MPI

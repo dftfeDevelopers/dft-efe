@@ -64,8 +64,7 @@ namespace dftefe
      * 4. For periodic BC, there will be contributions to enrichment set from
      * periodic images.
      */
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
+    template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class EnrichmentClassicalInterfaceSpherical
@@ -107,11 +106,9 @@ namespace dftefe
        * @param[in] fieldName The fieldname of the enrichment function
        */
       EnrichmentClassicalInterfaceSpherical(
-        std::shared_ptr<const CFEOverlapOperatorContext<ValueTypeBasisData,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>>
-          cfeBasisOverlapOperator,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          cfeBasisDataStorageOverlapMatrix,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           cfeBasisDataStorageRhs,
@@ -163,14 +160,10 @@ namespace dftefe
       std::shared_ptr<const AtomIdsPartition<dim>>
       getAtomIdsPartition() const;
 
-      std::shared_ptr<const FEBasisManager<ValueTypeBasisCoeff,
-                                           ValueTypeBasisData,
-                                           memorySpace,
-                                           dim>>
+      std::shared_ptr<const BasisManager<ValueTypeBasisData, memorySpace>>
       getCFEBasisManager() const;
 
-      std::shared_ptr<
-        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+      std::shared_ptr<const BasisDofHandler>
       getCFEBasisDofHandler() const;
 
       const linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> &
@@ -220,9 +213,12 @@ namespace dftefe
            d_basisInterfaceCoeff;
       bool d_isOrthogonalized;
       std::shared_ptr<
-        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+        const FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>>
         d_cfeBasisDofHandler;
-      std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+      std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+                                           ValueTypeBasisData,
+                                           memorySpace,
+                                           dim>>
                                       d_cfeBasisManager;
       const std::vector<std::string>  d_atomSymbolVec;
       const std::vector<utils::Point> d_atomCoordinatesVec;

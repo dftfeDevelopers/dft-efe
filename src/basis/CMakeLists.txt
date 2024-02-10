@@ -32,13 +32,6 @@ set(DFT-EFE-BASIS-SOURCES
 	EFEConstraintsLocalDealii.cpp
 	)
 
-#FEConstraintsBase.cpp
-#EFEConstraintsBase.cpp
-#FEBasisHandlerDealii.cpp
-#EFEBasisHandlerDealii.cpp
-#EFEBasisManagerDealii.cpp
-#FEBasisManagerDealii.cpp
-
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
 include_directories(../)

@@ -383,8 +383,7 @@ namespace dftefe
           "The Enrcihment data storage of enrichment dof blocks should have isOrthogonalized as true in EFEOverlapOperatorContext.");
 
         std::shared_ptr<
-          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperand,
-                                                      ValueTypeOperator,
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperator,
                                                       memorySpace,
                                                       dim>>
           eci = eefeBDH->getEnrichmentClassicalInterface();
@@ -1039,12 +1038,14 @@ namespace dftefe
 
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlap;
-      EFEOverlapOperatorContextInternal::
-        computeBasisOverlapMatrix<ValueTypeOperator, memorySpace, dim>(
-          feBasisDataStorage,
-          basisOverlap,
-          d_cellStartIdsBasisOverlap,
-          d_dofsInCell);
+      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(feBasisDataStorage,
+             basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
       d_basisOverlap = basisOverlap;
     }
 
@@ -1084,13 +1085,15 @@ namespace dftefe
 
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlap;
-      EFEOverlapOperatorContextInternal::
-        computeBasisOverlapMatrix<ValueTypeOperator, memorySpace, dim>(
-          cfeBasisDataStorage,
-          efeBasisDataStorage,
-          basisOverlap,
-          d_cellStartIdsBasisOverlap,
-          d_dofsInCell);
+      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(cfeBasisDataStorage,
+             efeBasisDataStorage,
+             basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
       d_basisOverlap = basisOverlap;
     }
 
@@ -1133,14 +1136,16 @@ namespace dftefe
 
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlap;
-      EFEOverlapOperatorContextInternal::
-        computeBasisOverlapMatrix<ValueTypeOperator, memorySpace, dim>(
-          classicalBlockBasisDataStorage,
-          enrichmentBlockEnrichmentBasisDataStorage,
-          enrichmentBlockClassicalBasisDataStorage,
-          basisOverlap,
-          d_cellStartIdsBasisOverlap,
-          d_dofsInCell);
+      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(classicalBlockBasisDataStorage,
+             enrichmentBlockEnrichmentBasisDataStorage,
+             enrichmentBlockClassicalBasisDataStorage,
+             basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
       d_basisOverlap = basisOverlap;
     }
 

@@ -62,7 +62,6 @@ namespace dftefe
     public:
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>                    enrichmentClassicalInterface,
@@ -71,7 +70,6 @@ namespace dftefe
 
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>         enrichmentClassicalInterface,
@@ -89,7 +87,6 @@ namespace dftefe
       ////// FE specific  member functions /////
       void
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
@@ -98,7 +95,6 @@ namespace dftefe
 
       void
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>         enrichmentClassicalInterface,
@@ -253,8 +249,7 @@ namespace dftefe
       getEnrichmentIdsPartition() const override;
 
       std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
-                                                    ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
       getEnrichmentClassicalInterface() const override;
@@ -289,8 +284,7 @@ namespace dftefe
       std::string               d_fieldName;
       bool                      d_isOrthogonalized;
       std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
-                                                    ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
         d_enrichClassIntfce;

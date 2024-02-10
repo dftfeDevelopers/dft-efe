@@ -94,7 +94,7 @@ namespace dftefe
       locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
-        d_feBasisManager->getMPIPatternP2P(d_constraints), linAlgOpContext);
+        d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
         addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
@@ -104,8 +104,7 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
-      d_feBasisManager->getConstraints(d_constraints)
-        .distributeChildToParent(diagonal, 1);
+      d_feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
@@ -134,8 +133,8 @@ namespace dftefe
     {
       X.updateGhostValues();
       // update the child nodes based on the parent nodes
-      d_feBasisManager->getConstraints(d_constraints)
-        .distributeParentToChild(X, X.getNumberComponents());
+      d_feBasisManager->getConstraints().distributeParentToChild(
+        X, X.getNumberComponents());
 
       Y.setValue(0.0);
 
@@ -154,8 +153,8 @@ namespace dftefe
       // TODO : The distributeChildToParent of the result of M_inv*X is
       // processor local and for adaptive quadrature the M_inv is not diagonal.
       // Implement that case here.
-      d_feBasisManager->getConstraints(d_constraints)
-        .distributeChildToParent(Y, Y.getNumberComponents());
+      d_feBasisManager->getConstraints().distributeChildToParent(
+        Y, Y.getNumberComponents());
 
       // Function to update the ghost values of the result
       Y.updateGhostValues();

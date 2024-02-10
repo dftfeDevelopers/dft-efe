@@ -118,7 +118,6 @@ namespace dftefe
                              dim>::
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>                    EnrichmentClassicalInterface,
@@ -148,7 +147,6 @@ namespace dftefe
                              dim>::
       EFEBasisDofHandlerDealii(
         std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisCoeff,
           ValueTypeBasisData,
           memorySpace,
           dim>>         EnrichmentClassicalInterface,
@@ -177,7 +175,6 @@ namespace dftefe
                              memorySpace,
                              dim>::
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
@@ -365,8 +362,9 @@ namespace dftefe
           *d_dofHandler, dealiiAffineConstraintMatrix, dealiiMatrixFree);
 
       std::vector<global_size_type> ghostIndicesSTLVec;
-      EFEBasisDofHandlerInternal::getGhostIndices<ValueTypeBasisCoeff, dim>(
-        d_ghostEnrichmentGlobalIds, dealiiMatrixFree, ghostIndicesSTLVec);
+      EFEBasisDofHandlerInternal::
+        getGhostIndices<ValueTypeBasisCoeff, memorySpace, dim>(
+          d_ghostEnrichmentGlobalIds, dealiiMatrixFree, ghostIndicesSTLVec);
 
       //
       // populate d_mpiPatternP2P - nbx consensus map for P2P communication
@@ -469,7 +467,6 @@ namespace dftefe
                              memorySpace,
                              dim>::
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisCoeff,
                ValueTypeBasisData,
                memorySpace,
                dim>>         enrichmentClassicalInterface,
@@ -656,8 +653,9 @@ namespace dftefe
           *d_dofHandler, dealiiAffineConstraintMatrix, dealiiMatrixFree);
 
       std::vector<global_size_type> ghostIndicesSTLVec;
-      EFEBasisDofHandlerInternal::getGhostIndices<ValueTypeBasisCoeff, dim>(
-        d_ghostEnrichmentGlobalIds, dealiiMatrixFree, ghostIndicesSTLVec);
+      EFEBasisDofHandlerInternal::
+        getGhostIndices<ValueTypeBasisCoeff, memorySpace, dim>(
+          d_ghostEnrichmentGlobalIds, dealiiMatrixFree, ghostIndicesSTLVec);
 
       //
       // populate d_mpiPatternP2P - nbx consensus map for P2P communication
@@ -1508,8 +1506,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<
-      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
-                                                  ValueTypeBasisData,
+      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
                                                   memorySpace,
                                                   dim>>
     EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,

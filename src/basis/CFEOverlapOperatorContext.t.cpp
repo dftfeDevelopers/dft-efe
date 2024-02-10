@@ -75,7 +75,7 @@ namespace dftefe
         basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
                                ValueTypeOperator(0));
 
-        auto      locallyOwnedCellIter = feBDH.beginLocallyOwnedCells();
+        auto      locallyOwnedCellIter = feBDH->beginLocallyOwnedCells();
         auto      basisOverlapTmpIter  = basisOverlapTmp.begin();
         size_type cellIndex            = 0;
 
