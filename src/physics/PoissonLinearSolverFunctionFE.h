@@ -34,7 +34,7 @@
 #include <physics/LaplaceOperatorContextFE.h>
 #include <linearAlgebra/PreconditionerJacobi.h>
 #include <linearAlgebra/PreconditionerNone.h>
-#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisManager.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/FEBasisDataStorage.h>
 #include <quadrature/QuadratureValuesContainer.h>
@@ -86,22 +86,14 @@ namespace dftefe
                                                ValueTypeOperand>;
 
     public:
-      // PoissonLinearSolverFunctionFE(
-      //   const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-      //     &feBasisHandler,
-      //   const utils::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-      //     & feBasisDataStorage,
-      //   const linearAlgebra::Vector<ValueType, memorySpace> &b,
-      //   const std::string                                    constraintsName,
-      //   const linearAlgebra::PreconditionerType              pcType);
-
       /**
        * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE
        */
       PoissonLinearSolverFunctionFE(
-        std::shared_ptr<
-          const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-          feBasisHandler,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>> feBasisManagerField,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageStiffnessMatrix,
@@ -109,11 +101,7 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-          &               inp,
-        const std::string constraintsHanging,
-        const std::string constraintsHangingwHomogeneous,
-        const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-          &                                     inhomogeneousDirichletBCVector,
+          &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -145,9 +133,15 @@ namespace dftefe
       getMPIComm() const override;
 
     private:
+      size_type d_numComponents;
       std::shared_ptr<
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-        d_feBasisHandler;
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
+        d_feBasisManagerField;
+      std::shared_ptr<
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
+        d_feBasisManagerHomo;
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
                                                            memorySpace>>
@@ -155,16 +149,14 @@ namespace dftefe
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
                                                            memorySpace>>
-        d_PCContext;
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-        d_inhomogeneousDirichletBCVector;
+                                                         d_PCContext;
+      linearAlgebra::PreconditionerType                  d_pcType;
       linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
       linearAlgebra::MultiVector<ValueType, memorySpace> d_b;
-      linearAlgebra::PreconditionerType                  d_pcType;
-      const std::string                                  d_constraintsHanging;
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-        d_mpiPatternP2PHangingwHomogeneous;
-      const linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
+      linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
+      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+        d_fieldInHomoDBCVec;
+
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace physics
 } // end of namespace dftefe

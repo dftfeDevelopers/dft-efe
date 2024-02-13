@@ -269,19 +269,25 @@ namespace dftefe
                              memorySpace,
                              dim>::
       LaplaceOperatorContextFE(
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerX,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerY,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               feBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs)
-      : d_feBasisHandler(&feBasisHandler)
+          &             feBasisDataStorage,
+        const size_type maxCellTimesNumVecs)
+      : d_feBasisManagerX(&feBasisManagerX)
+      , d_feBasisManagerY(&feBasisManagerY)
       , d_feBasisDataStorage(&feBasisDataStorage)
-      , d_constraintsX(constraintsX)
-      , d_constraintsY(constraintsY)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
-    {}
+    {
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+    }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
@@ -300,31 +306,31 @@ namespace dftefe
     {
       std::cout << std::setprecision(10);
       const size_type numLocallyOwnedCells =
-        d_feBasisHandler->nLocallyOwnedCells();
+        d_feBasisManagerX->nLocallyOwnedCells();
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = d_feBasisHandler->nLocallyOwnedCellDofs(iCell);
+        {
+          numCellDofs[iCell] = d_feBasisManagerX->nLocallyOwnedCellDofs(iCell);
+        }
 
       auto itCellLocalIdsBeginX =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsX);
+        d_feBasisManagerX->locallyOwnedCellLocalDofIdsBegin();
 
       auto itCellLocalIdsBeginY =
-        d_feBasisHandler->locallyOwnedCellLocalDofIdsBegin(d_constraintsY);
+        d_feBasisManagerY->locallyOwnedCellLocalDofIdsBegin();
 
       const size_type numVecs = X.getNumberComponents();
 
       // get handle to constraints
-      const basis::Constraints<
+      const basis::ConstraintsLocal<
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>,
-        memorySpace> &constraintsX =
-        d_feBasisHandler->getConstraints(d_constraintsX);
+        memorySpace> &constraintsX = d_feBasisManagerX->getConstraints();
 
-      const basis::Constraints<
+      const basis::ConstraintsLocal<
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>,
-        memorySpace> &constraintsY =
-        d_feBasisHandler->getConstraints(d_constraintsY);
+        memorySpace> &constraintsY = d_feBasisManagerY->getConstraints();
 
       X.updateGhostValues();
       // update the child nodes based on the parent nodes

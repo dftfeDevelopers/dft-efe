@@ -32,9 +32,8 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/FEBasisHandlerDealii.h>
-#include <basis/EFEBasisHandlerDealii.h>
-#include <basis/FEBasisDataStorageDealii.h>
+#include <basis/FEBasisManager.h>
+#include <basis/FEBasisDataStorage.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <memory>
 
@@ -77,13 +76,15 @@ namespace dftefe
        * @brief Constructor
        */
       LaplaceOperatorContextFE(
-        const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-          &feBasisHandler,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerX,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerY,
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &               feBasisDataStorage,
-        const std::string constraintsX,
-        const std::string constraintsY,
-        const size_type   maxCellTimesNumVecs);
+          &             feBasisDataStorage,
+        const size_type maxCellTimesNumVecs);
 
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
@@ -96,13 +97,15 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
 
     private:
-      const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>
-        *d_feBasisHandler;
+      const basis::
+        FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+          *d_feBasisManagerX;
+      const basis::
+        FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+          *d_feBasisManagerY;
       const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *               d_feBasisDataStorage;
-      const std::string d_constraintsX;
-      const std::string d_constraintsY;
-      const size_type   d_maxCellTimesNumVecs;
+        *             d_feBasisDataStorage;
+      const size_type d_maxCellTimesNumVecs;
     }; // end of class LaplaceOperatorContextFE
   }    // end of namespace physics
 } // end of namespace dftefe

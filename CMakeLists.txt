@@ -26,8 +26,8 @@ add_subdirectory(src/linearAlgebra ${CMAKE_CURRENT_BINARY_DIR}/buildLinearAlgebr
 add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
 add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
 add_subdirectory(src/atoms ${CMAKE_CURRENT_BINARY_DIR}/buildAtoms)
-#add_subdirectory(src/physics ${CMAKE_CURRENT_BINARY_DIR}/buildPhysics)
-target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature dft-efe-atoms)
+add_subdirectory(src/physics ${CMAKE_CURRENT_BINARY_DIR}/buildPhysics)
+target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature dft-efe-atoms dft-efe-physics)
 include_directories(src)
 
 # Build documentation
