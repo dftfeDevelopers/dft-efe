@@ -493,8 +493,11 @@ namespace dftefe
         {
           //          d_dofHandler->initialize(dealiiParallelTria->returnDealiiTria(),
           //          feElem);
-          d_dofHandler->reinit(dealiiParallelTria->returnDealiiTria());
-          d_dofHandler->distribute_dofs(feElem);
+          //          d_dofHandler->reinit(dealiiParallelTria->returnDealiiTria());
+          //          d_dofHandler->distribute_dofs(feElem);
+          utils::throwException(
+            false,
+            "TriangulationDealiiParallel object as argument not allowed with no mpiCommunicator as argument to FEDofHandler.");
         }
       else
         {

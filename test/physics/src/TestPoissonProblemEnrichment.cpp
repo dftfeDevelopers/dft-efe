@@ -2,11 +2,11 @@
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
-#include <basis/EFEBasisManagerDealii.h>
-#include <basis/EFEConstraintsDealii.h>
+#include <basis/EFEBasisDofHandlerDealii.h>
+#include <basis/EFEConstraintsLocalDealii.h>
 #include <basis/EFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
-#include <basis/EFEBasisHandlerDealii.h>
+#include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <utils/Point.h>
@@ -32,7 +32,7 @@
 
 #include <iostream>
 
-double rho(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origin, double rc)
+double rho(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin, double rc)
 {
   double ret = 0;
   // The function should have homogeneous dirichlet BC
@@ -52,7 +52,7 @@ double rho(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origi
   return ret;
 }
 
-double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> &origin, double rc)
+double potential(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin, double rc)
 {
   double ret = 0;
   // The function should have homogeneous dirichlet BC
@@ -73,6 +73,36 @@ double potential(dftefe::utils::Point &point, std::vector<dftefe::utils::Point> 
   }
   return ret;
 } 
+
+  class ScalarSpatialPotentialFunctionReal : public dftefe::utils::ScalarSpatialFunctionReal
+  {
+    public:
+    ScalarSpatialPotentialFunctionReal(std::vector<dftefe::utils::Point> &origin, double rc)
+    :d_rc(rc), d_origin(origin)
+    {}
+
+    double
+    operator()(const dftefe::utils::Point &point) const
+    {
+      return potential(point, d_origin, d_rc);
+    }
+
+    std::vector<double>
+    operator()(const std::vector<dftefe::utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = potential(points[i], d_origin, d_rc);
+      }
+      return ret;
+    }
+
+    private:
+    std::vector<dftefe::utils::Point> d_origin; 
+    double d_rc;
+  };
 
 int main()
 {
@@ -239,94 +269,29 @@ int main()
   }
 
 
-  // initialize the basis Manager
-
   unsigned int feOrder = 3;
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
                           <double, dftefe::utils::MemorySpace::HOST, dim>>
                           enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
                           <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
                           atomSphericalDataContainer,
-      atomPartitionTolerance,
-      atomSymbol,
-      atomCoordinatesVec,
-      fieldName,
-      comm);
+                          atomPartitionTolerance,
+                          atomSymbol,
+                          atomCoordinatesVec,
+                          fieldName,
+                          comm);
 
   // initialize the basis Manager
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::EFEBasisManagerDealii<double,dftefe::utils::MemorySpace::HOST,dim>>(
-      enrichClassIntfce,
-      feOrder);
+  std::shared_ptr<dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
+    std::make_shared<dftefe::basis::EFEBasisDofHandlerDealii<double, double,dftefe::utils::MemorySpace::HOST,dim>>(
+      enrichClassIntfce, feOrder, comm);
+
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
-  basisManager->getBasisCenters(dofCoords);
+  basisDofHandler->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " << basisManager->nLocallyOwnedCells() << "\n";
-  std::cout << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
+  std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
+  std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
   
-  // Set the constraints
-
-  std::string constraintHanging = "HangingNodeConstraint"; //give BC to rho
-  std::string constraintHomwHan = "HomogeneousWithHanging"; // use this to solve the laplace equation
-  std::string constraintAllHom = "AllClassicalNodesHomogeneous"; // use this to solve the laplace equation
-
-  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec;
-  constraintsVec.resize(3);
-  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::EFEConstraintsDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>();
-
-  constraintsVec[0]->clear();
-  constraintsVec[0]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[0]->close();
-
-  constraintsVec[1]->clear();
-  constraintsVec[1]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[1]->setHomogeneousDirichletBC();
-  constraintsVec[1]->close();
-
-  constraintsVec[2]->clear();
-  constraintsVec[2]->makeHangingNodeConstraint(basisManager);
-  const unsigned int dofs_per_cell =
-    basisManager->nCellDofs(0);
-  const unsigned int faces_per_cell =
-    dealii::GeometryInfo<dim>::faces_per_cell;
-  const unsigned int dofs_per_face =
-    std::pow((basisManager->getFEOrder(0)+1),2);
-  std::vector<dftefe::global_size_type> cellGlobalDofIndices(dofs_per_cell);
-  std::vector<dftefe::global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-  std::vector<bool> dofs_touched(basisManager->nGlobalNodes(), false);
-  auto              icell = basisManager->beginLocallyOwnedCells();
-  dftefe::utils::Point basisCenter(dim, 0);
-  for (; icell != basisManager->endLocallyOwnedCells(); ++icell)
-    {
-      (*icell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
-      for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
-        {
-          (*icell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-          const dftefe::size_type boundaryId = (*icell)->getFaceBoundaryId(iFace);
-              for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
-                    ++iFaceDof)
-                {
-                  const dftefe::global_size_type nodeId =
-                    iFaceGlobalDofIndices[iFaceDof];
-                  if (dofs_touched[nodeId])
-                    continue;
-                  dofs_touched[nodeId] = true;
-                      basisCenter = dofCoords.find(nodeId)->second;
-                      double constraintValue = 0.0;
-                      constraintsVec[2]->setInhomogeneity(nodeId, constraintValue);
-                }     // Face dof loop
-        } // Face loop
-    }     // cell locally owned
-  constraintsVec[2]->close();
-
-  std::map<std::string,
-           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
-
-  constraintsMap[constraintHanging] = constraintsVec[0];
-  constraintsMap[constraintHomwHan] = constraintsVec[1];
-  constraintsMap[constraintAllHom] = constraintsVec[2];
-
   // Set up the quadrature rule
   unsigned int num1DGaussSize = 4;
 
@@ -342,77 +307,72 @@ int main()
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
-    std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, quadAttr, basisAttrMap);
+    std::make_shared<dftefe::basis::EFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, quadAttr, basisAttrMap);
 
   // // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
-  // Set up BasisHandler
-  std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST, dim>> basisHandler =
-    std::make_shared<dftefe::basis::EFEBasisHandlerDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, constraintsMap, comm);
+  std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
+    potentialFunction = std::make_shared<ScalarSpatialPotentialFunctionReal>(atomCoordinatesVec, rc);
 
-  // // Set up basis Operations
+  // // Set up BasisManager
+  std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
+    std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, potentialFunction);
+
+  // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
 
   // set up MPIPatternP2P for the constraints
-  auto mpiPatternP2PHanging = basisHandler->getMPIPatternP2P(constraintHanging);
-  auto mpiPatternP2PHomwHan = basisHandler->getMPIPatternP2P(constraintHomwHan);
-  auto mpiPatternP2PAllHom = basisHandler->getMPIPatternP2P(constraintAllHom);
+  auto mpiPatternP2PPotential = basisManager->getMPIPatternP2P();
 
   // set up different multivectors - vh with inhomogeneous BC, vh
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
-   vhNHDB = std::make_shared<
+   vh = std::make_shared<
     dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>(
-      mpiPatternP2PHanging, linAlgOpContext, numComponents, double());
+      mpiPatternP2PPotential, linAlgOpContext, numComponents, double());
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
    solution = std::make_shared<
     dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>(
-      mpiPatternP2PHomwHan, linAlgOpContext, numComponents, double());
+      mpiPatternP2PPotential, linAlgOpContext, numComponents, double());
 
   //populate the value of the Density at the nodes for interpolating to quad points
-  auto numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
+  auto numLocallyOwnedCells  = basisDofHandler->nLocallyOwnedCells();
+  auto itField  = vh->begin();
   dftefe::utils::Point nodeLoc(dim,0.0);
-
-  // vector for lhs
-
-  numLocallyOwnedCells  = basisManager->nLocallyOwnedCells();
-  auto itField  = vhNHDB->begin();
-  dofs_touched.clear();
-  dofs_touched.resize(basisManager->nGlobalNodes(), false);
-  icell = basisManager->beginLocallyOwnedCells();
-  for (; icell != basisManager->endLocallyOwnedCells(); ++icell)
+for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
     {
-      (*icell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
-      for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+      // get cell dof global ids
+      std::vector<dftefe::global_size_type> cellGlobalNodeIds;
+      basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+
+      // loop over nodes of a cell
+      for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+      {
+              // If node not constrained then get the local id and coordinates of the node
+        dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
+        if( !basisManager->getConstraints().isConstrained(globalId))
         {
-          (*icell)->getFaceDoFGlobalIndices(iFace, iFaceGlobalDofIndices);
-          const dftefe::size_type boundaryId = (*icell)->getFaceBoundaryId(iFace);
-          if (boundaryId == 0)
-            {
-              for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
-                    ++iFaceDof)
-                {
-                  const dftefe::global_size_type globalId =
-                    iFaceGlobalDofIndices[iFaceDof];
-                  if (dofs_touched[globalId])
-                    continue;
-                  dofs_touched[globalId] = true;
-                  if (!basisHandler->getConstraints(constraintHanging).isConstrained(globalId))
-                    {
-                      dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
-                      basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
-                      *(itField + localId )  = potential(nodeLoc, atomCoordinatesVec, rc);  
-                    } // non-hanging node check
-                }     // Face dof loop
-            }
-        } // Face loop
-    }     // cell locally owned
+          dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+          basisManager->getBasisCenters(localId,nodeLoc);
+          *(itField + localId )  = potential(nodeLoc, atomCoordinatesVec, rc);  
+        }
+      }
+    }
+
+  // update the ghost values before calling apply Constraints
+  // For a serial run, updating ghost values has no effect
+
+  vh->updateGhostValues();
+  basisManager->getConstraints().distributeParentToChild(*vh, numComponents);
 
   // create the quadrature Value Container
+
+std::shared_ptr<dftefe::quadrature::QuadratureRule> quadRule =
+    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
 
   dftefe::basis::LinearCellMappingDealii<dim> linearCellMappingDealii;
     std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
@@ -435,7 +395,6 @@ int main()
     }
   }
 
-
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> linearSolverFunction =
@@ -443,14 +402,11 @@ int main()
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
-                                                   (basisHandler,
+                                                   (basisManager,
                                                     feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
-                                                    constraintHanging,
-                                                    constraintHomwHan,
-                                                    *vhNHDB,
-                                                    dftefe::linearAlgebra::PreconditionerType::JACOBI,
+                                                    dftefe::linearAlgebra::PreconditionerType::JACOBI ,
                                                     linAlgOpContext,
                                                     50);
 
@@ -484,7 +440,7 @@ int main()
     }
   }
 
-  feBasisOp.interpolate( *solution, constraintHanging, *basisHandler, quadValuesContainerNumerical);
+  feBasisOp.interpolate( *solution, *basisManager, quadValuesContainerNumerical);
 
   auto iter1 = quadValuesContainerAnalytical.begin();
   auto iter2 = quadValuesContainerNumerical.begin();

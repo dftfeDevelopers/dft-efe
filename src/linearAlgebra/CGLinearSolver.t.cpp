@@ -80,6 +80,10 @@ namespace dftefe
       const MultiVector<ValueType, memorySpace> &b =
         linearSolverFunction.getRhs();
 
+      const utils::mpi::MPIComm &comm = b.getMPIPatternP2P()->mpiCommunicator();
+      int                        rank;
+      utils::mpi::MPICommRank(comm, &rank);
+
       std::vector<double> bNorm(0);
       bNorm = b.l2Norms();
 
@@ -219,9 +223,15 @@ namespace dftefe
           std::vector<double> rNorm(0);
           rNorm = r.l2Norms();
 
-          for (unsigned int i = 0; i < numComponents; i++)
-            std::cout << rNorm[i] << ",";
-          std::cout << "\n";
+          if (rank == 0)
+            {
+              if (iter % 100 == 0)
+                {
+                  for (unsigned int i = 0; i < numComponents; i++)
+                    std::cout << rNorm[i] << ",";
+                  std::cout << "\n";
+                }
+            }
 
           std::string msg;
           for (size_type i = 0; i < numComponents; i++)
