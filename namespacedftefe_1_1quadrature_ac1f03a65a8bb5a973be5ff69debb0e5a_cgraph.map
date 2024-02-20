@@ -1,0 +1,8 @@
+<map id="dftefe::quadrature::add" name="dftefe::quadrature::add">
+<area shape="rect" id="node1" title="Perform ." alt="" coords="5,128,155,153"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#aac23c12a3fe90a5df33a2a8d22de60ae" title=" " alt="" coords="242,13,378,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="217,77,403,132"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1linearAlgebra_1_1LinAlgOpContext.html#a169a2fa2f19f80eff25b5a216ddd4fb7" title=" " alt="" coords="203,157,417,197"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ad2504793324141b6cc7802b8c0967d35" title=" " alt="" coords="217,221,403,276"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a21c6124808f81cde13d74d409868df9a" title="Template for performing ." alt="" coords="465,5,668,60"/>
+</map>

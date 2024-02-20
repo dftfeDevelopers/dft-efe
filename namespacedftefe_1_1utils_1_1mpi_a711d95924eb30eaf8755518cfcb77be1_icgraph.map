@@ -1,0 +1,6 @@
+<map id="dftefe::utils::mpi::MPICommSize" name="dftefe::utils::mpi::MPICommSize">
+<area shape="rect" id="node1" title=" " alt="" coords="248,77,363,117"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1AtomIdsPartition.html#a32a305c44565e2831c3443d99fa93235" title="Constructor takes as coordinates of the atomids from the input file with the processor maximum and mi..." alt="" coords="5,5,200,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1mpi_1_1MPIRequestersNBX.html#afbe778d80adc72dbd157c6ac861ca0c3" title=" " alt="" coords="27,70,179,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#abe1c7b1dacd4cd250dafbcc30796beb9" title="Constructor for creating a subdivided quadrature rule in each cell based user&#45;defined functions and a..." alt="" coords="16,149,189,203"/>
+</map>

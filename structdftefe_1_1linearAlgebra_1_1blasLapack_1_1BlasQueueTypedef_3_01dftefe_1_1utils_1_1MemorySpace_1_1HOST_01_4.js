@@ -1,0 +1,4 @@
+var structdftefe_1_1linearAlgebra_1_1blasLapack_1_1BlasQueueTypedef_3_01dftefe_1_1utils_1_1MemorySpace_1_1HOST_01_4 =
+[
+    [ "TYPE", "structdftefe_1_1linearAlgebra_1_1blasLapack_1_1BlasQueueTypedef_3_01dftefe_1_1utils_1_1MemorySpace_1_1HOST_01_4.html#a78a73f1cb8abf05ab70bce6df41b304b", null ]
+];

@@ -1,0 +1,5 @@
+<map id="dftefe::linearAlgebra::JacobiPreconditioner&lt; ValueType, memorySpace &gt;" name="dftefe::linearAlgebra::JacobiPreconditioner&lt; ValueType, memorySpace &gt;">
+<area shape="rect" id="node1" title="A class to encapsulate the Jacobi preconditioner in a linear or non&#45;linear solve." alt="" coords="483,13,677,67"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1Preconditioner.html" title=" " alt="" coords="248,13,435,67"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1OperatorContext.html" title="Abstract class to encapsulate the action of a discrete operator on vectors, matrices,..." alt="" coords="5,5,200,75"/>
+</map>

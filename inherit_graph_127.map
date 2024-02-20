@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,67,184,107"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1L2ProjectionLinearSolverFunction.html" title="A derived class of linearAlgebra::LinearSolverFunction to encapsulate the L2 Projecton partial differ..." alt="" coords="232,5,449,75"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1physics_1_1PoissonLinearSolverFunctionFE.html" title="A derived class of linearAlgebra::LinearSolverFunction to encapsulate the Poisson partial differentia..." alt="" coords="235,99,447,168"/>
+</map>

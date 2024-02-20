@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['real_5ftype_0',['real_type',['../namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a9c97bbfb5fcc5dd04c69a9a3b8be0e3f',1,'dftefe::linearAlgebra::blasLapack']]],
+  ['reference_1',['reference',['../classdftefe_1_1basis_1_1BasisDataStorage.html#a0906485c456b6276cba39ae976e06098',1,'dftefe::basis::BasisDataStorage::reference()'],['../classdftefe_1_1basis_1_1Field.html#a1339026d417d086546d5126c0bfa2fe4',1,'dftefe::basis::Field::reference()'],['../classdftefe_1_1linearAlgebra_1_1MultiVector.html#a8bb94847fbc8b58668d588138ace5d52',1,'dftefe::linearAlgebra::MultiVector::reference()'],['../classdftefe_1_1linearAlgebra_1_1Vector.html#ab38b9620357b2b20ee9689d72b8a9e5e',1,'dftefe::linearAlgebra::Vector::reference()'],['../classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a6d5852192ec13b7db81785f1ba8bceb4',1,'dftefe::quadrature::QuadratureValuesContainer::reference()'],['../classdftefe_1_1utils_1_1MemoryStorage.html#a93164c56df7a2e301166bc0a562442a8',1,'dftefe::utils::MemoryStorage::reference()'],['../classdftefe_1_1utils_1_1PointImpl.html#a4df68ce850eae722ba1edff21e3092fc',1,'dftefe::utils::PointImpl::reference()']]],
+  ['runtimeerror_2',['RuntimeError',['../namespacedftefe_1_1utils.html#a30e5788f1495b5643d9f0a352ceeb350',1,'dftefe::utils']]]
+];

@@ -1,0 +1,12 @@
+<map id="dftefe::linearAlgebra::blasLapack::gemmStridedVarBatched" name="dftefe::linearAlgebra::blasLapack::gemmStridedVarBatched">
+<area shape="rect" id="node1" title=" " alt="" coords="480,199,679,253"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a87efd15a3d0fe3daaf3c78dc0e1272d6" title=" " alt="" coords="239,5,415,60"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#abbb95b8fbacbbb67c83b7edf01aebba5" title=" " alt="" coords="239,84,415,139"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1physics_1_1LaplaceOperatorContextFEInternal.html#ad7c4fe7b1ad34eead69e7a21dc0defe3" title=" " alt="" coords="239,163,415,217"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="221,242,432,282"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="221,306,432,346"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="221,370,432,410"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a7bcdd7077b2c689dad3415bc741d7712" title=" " alt="" coords="5,13,173,53"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1EFEOverlapOperatorContext.html#a07221bafaf804b8bbc9560ab9ee788d7" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="6,91,173,131"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1physics_1_1LaplaceOperatorContextFE.html#a13504824986c8c0076fa0ace0a345d0a" title=" " alt="" coords="5,170,173,210"/>
+</map>

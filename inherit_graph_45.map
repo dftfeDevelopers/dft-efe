@@ -1,0 +1,8 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classdftefe_1_1linearAlgebra_1_1OperatorContext.html" title="Abstract class to encapsulate the action of a discrete operator on vectors, matrices,..." alt="" coords="5,42,200,111"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1Preconditioner.html" title=" " alt="" coords="251,5,438,60"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1linearAlgebra_1_1Preconditioner.html" title="Abstract class to encapsulate a preconditioner." alt="" coords="248,85,441,154"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1JacobiPreconditioner.html" title="A class to encapsulate the Jacobi preconditioner in a linear or non&#45;linear solve." alt="" coords="498,5,693,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1linearAlgebra_1_1PreconditionerJacobi.html" title="Class to encapsulate the Jacobi preconditioner." alt="" coords="489,85,701,154"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1linearAlgebra_1_1PreconditionerNone.html" title="Class to encapsulate the NONE preconditioner. Just takes in a vector and returns it." alt="" coords="489,178,701,247"/>
+</map>

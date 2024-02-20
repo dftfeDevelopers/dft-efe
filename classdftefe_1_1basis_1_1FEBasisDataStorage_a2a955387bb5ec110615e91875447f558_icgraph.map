@@ -1,0 +1,7 @@
+<map id="dftefe::basis::FEBasisDataStorage::getBasisDofHandler" name="dftefe::basis::FEBasisDataStorage::getBasisDofHandler">
+<area shape="rect" id="node1" title=" " alt="" coords="535,53,724,93"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a5b6332b0df2bf34ddd05a98788a9d11d" title=" " alt="" coords="296,5,487,60"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#a41cbc68d01f6214ff9e82f6b6302c4eb" title=" " alt="" coords="296,84,487,139"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#ae9ae58e3cd5940be7152232c1a758c8d" title="Constructor." alt="" coords="5,5,248,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1EFEOverlapOperatorContext.html#a4e238c70ef8979848b02f2fc22519c1f" title="Constructor for getting the overlap matrix operator." alt="" coords="6,84,247,139"/>
+</map>

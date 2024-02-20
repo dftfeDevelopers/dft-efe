@@ -1,0 +1,14 @@
+<map id="dftefe::linearAlgebra::MultiVector::getLinAlgOpContext" name="dftefe::linearAlgebra::MultiVector::getLinAlgOpContext">
+<area shape="rect" id="node1" title=" " alt="" coords="496,301,712,341"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a7bcdd7077b2c689dad3415bc741d7712" title=" " alt="" coords="247,5,415,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1EFEOverlapOperatorContext.html#a07221bafaf804b8bbc9560ab9ee788d7" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="247,69,414,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1physics_1_1LaplaceOperatorContextFE.html#a13504824986c8c0076fa0ace0a345d0a" title=" " alt="" coords="247,133,415,173"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOperatorContext.html#a8752578399151fc8e537a6c7e83bc737" title=" " alt="" coords="213,198,448,253"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1linearAlgebra.html#a6fd6f4d21b76d80bc40d108dbf088bbc" title=" " alt="" coords="251,277,411,302"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1EFEOverlapInverseOperatorContext.html#ad520686b2dbbc5ad870730cc481af46a" title=" " alt="" coords="213,326,448,381"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="225,405,436,445"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="225,469,436,509"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="225,533,436,573"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1linearAlgebra_1_1PreconditionerJacobi.html#aa4091c564b613546dd40e5497f20fdbf" title="Constructor." alt="" coords="256,598,405,653"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1linearAlgebra.html#ac07344cb7f6a469d51d8c738c4852c14" title=" " alt="" coords="5,277,165,302"/>
+</map>

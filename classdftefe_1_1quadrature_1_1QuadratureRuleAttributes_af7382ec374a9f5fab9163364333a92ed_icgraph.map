@@ -1,0 +1,19 @@
+<map id="dftefe::quadrature::QuadratureRuleAttributes::getQuadratureFamily" name="dftefe::quadrature::QuadratureRuleAttributes::getQuadratureFamily">
+<area shape="rect" id="node1" title=" " alt="" coords="829,411,1004,466"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#a70e27429a3b6614ff6776e20b41de231" title=" " alt="" coords="269,372,484,412"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a78328125bd68f060135431e907f51a4a" title=" " alt="" coords="5,372,220,412"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="552,100,763,140"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="552,164,763,204"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="552,228,763,268"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a6e9cfbdc335fa04022b78f843c5b05a7" title="Constructor for assigning each cell with a common quadrature rule." alt="" coords="571,293,744,347"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ade6f7fe63de196e5a49fef72dda920c5" title=" " alt="" coords="552,371,763,426"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#aa17cec1a67c127d451a4225b40e9b458" title=" " alt="" coords="552,450,763,505"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a929024427b4ce1b384c7a7101657fef7" title=" " alt="" coords="533,529,781,583"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#aa5004ec5682892080d15fac57fefc69e" title=" " alt="" coords="547,607,767,662"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ab5880eef7d828e26b16d753a3cd2de89" title=" " alt="" coords="549,765,766,819"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ada330361834bac333d197c88d2bf8be9" title=" " alt="" coords="549,843,766,898"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#a2772b34229dde6e69a9395d9a68f1443" title=" " alt="" coords="549,686,766,741"/>
+<area shape="rect" id="node17" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a32eae8526aa03332026ea710e5f7172c" title=" " alt="" coords="268,909,485,963"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#aa5ed61b23a3d6fc7455d2eba504b040b" title=" " alt="" coords="269,772,484,812"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="269,844,484,884"/>
+</map>

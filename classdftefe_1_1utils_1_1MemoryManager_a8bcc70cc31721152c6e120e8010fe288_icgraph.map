@@ -1,0 +1,15 @@
+<map id="dftefe::utils::MemoryManager::set" name="dftefe::utils::MemoryManager::set">
+<area shape="rect" id="node1" title=" " alt="" coords="823,253,1033,279"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a244d9ab5a6f633118824c21bd28800e6" title="Constructor for Vector with size and initial value arguments." alt="" coords="592,214,775,254"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="592,278,775,318"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a5b6332b0df2bf34ddd05a98788a9d11d" title=" " alt="" coords="325,5,515,60"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#a41cbc68d01f6214ff9e82f6b6302c4eb" title=" " alt="" coords="325,84,515,139"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1quadrature_1_1QuadratureValuesContainerInternal.html#aec58d8f44548b514e46b34276c02fbc5" title=" " alt="" coords="327,163,513,217"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="315,242,525,282"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ade6f7fe63de196e5a49fef72dda920c5" title=" " alt="" coords="315,307,525,361"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#aa17cec1a67c127d451a4225b40e9b458" title=" " alt="" coords="315,385,525,440"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a929024427b4ce1b384c7a7101657fef7" title=" " alt="" coords="296,464,544,519"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#aa5004ec5682892080d15fac57fefc69e" title=" " alt="" coords="310,543,530,597"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#ae9ae58e3cd5940be7152232c1a758c8d" title="Constructor." alt="" coords="5,5,248,60"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1EFEOverlapOperatorContext.html#a4e238c70ef8979848b02f2fc22519c1f" title="Constructor for getting the overlap matrix operator." alt="" coords="6,84,247,139"/>
+</map>

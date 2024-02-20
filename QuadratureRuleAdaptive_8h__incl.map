@@ -1,0 +1,24 @@
+<map id="src/quadrature/QuadratureRuleAdaptive.h" name="src/quadrature/QuadratureRuleAdaptive.h">
+<area shape="rect" id="node1" title=" " alt="" coords="483,5,656,45"/>
+<area shape="rect" id="node2" href="$QuadratureRule_8h.html" title=" " alt="" coords="547,255,669,280"/>
+<area shape="rect" id="node5" href="$TypeConfig_8h.html" title=" " alt="" coords="793,475,889,500"/>
+<area shape="rect" id="node7" title=" " alt="" coords="268,475,327,500"/>
+<area shape="rect" id="node15" href="$ScalarSpatialFunction_8h.html" title=" " alt="" coords="43,255,229,280"/>
+<area shape="rect" id="node18" href="$CellMappingBase_8h.html" title=" " alt="" coords="304,255,472,280"/>
+<area shape="rect" id="node19" href="$TriangulationCellBase_8h.html" title=" " alt="" coords="518,181,711,207"/>
+<area shape="rect" id="node20" title=" " alt="" coords="745,255,813,280"/>
+<area shape="rect" id="node21" href="$ParentToChildCellsManagerBase_8h.html" title=" " alt="" coords="607,93,775,133"/>
+<area shape="rect" id="node22" href="$quadrature_2Defaults_8h.html" title=" " alt="" coords="939,401,1085,427"/>
+<area shape="rect" id="node3" href="$Point_8h.html" title=" " alt="" coords="365,328,456,353"/>
+<area shape="rect" id="node4" href="$PointImpl_8h.html" title=" " alt="" coords="531,401,618,427"/>
+<area shape="rect" id="node6" title=" " alt="" coords="539,475,611,500"/>
+<area shape="rect" id="node8" href="$PointImpl_8t_8cpp.html" title=" " alt="" coords="653,475,761,500"/>
+<area shape="rect" id="node9" href="$Exceptions_8h.html" title=" " alt="" coords="659,548,754,573"/>
+<area shape="rect" id="node14" title=" " alt="" coords="779,548,853,573"/>
+<area shape="rect" id="node10" title=" " alt="" coords="891,621,946,647"/>
+<area shape="rect" id="node11" title=" " alt="" coords="789,621,867,647"/>
+<area shape="rect" id="node12" title=" " alt="" coords="557,621,625,647"/>
+<area shape="rect" id="node13" href="$Exceptions_8t_8cpp.html" title=" " alt="" coords="649,621,765,647"/>
+<area shape="rect" id="node16" href="$Function_8h.html" title=" " alt="" coords="147,401,229,427"/>
+<area shape="rect" id="node17" title=" " alt="" coords="79,328,150,353"/>
+</map>

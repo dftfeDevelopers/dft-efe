@@ -1,0 +1,32 @@
+<map id="dftefe::utils::MemoryStorage::begin" name="dftefe::utils::MemoryStorage::begin">
+<area shape="rect" id="node1" title="Return iterator pointing to the beginning of point data." alt="" coords="807,587,989,627"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#a5ad7838af778153cc2779f06eef077fb" title=" " alt="" coords="519,5,736,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="229,13,440,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1EFEOverlapInverseOperatorContext.html#ae0eb8242586e33c2f5e9d5db7eadde17" title=" " alt="" coords="530,135,725,175"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a06ea29042f1df652c8e350f566186329" title=" " alt="" coords="532,200,723,255"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a1d97a882d2631db40e11b0d01109f248" title=" " alt="" coords="532,279,723,333"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a92a65b6628a678e04399e5a4f6548309" title=" " alt="" coords="496,397,759,437"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a3d020ba079e25484ff51819592bca8a0" title=" " alt="" coords="515,501,739,556"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#a189220b0e5e26ad4f0372f5bb32b4279" title=" " alt="" coords="522,580,733,635"/>
+<area shape="rect" id="node25" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="229,919,440,959"/>
+<area shape="rect" id="node26" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ae53237f8f422012c01111353a2feedce" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="518,711,737,765"/>
+<area shape="rect" id="node27" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a8c9c62e62c2fa3ce1c5ac0fee315972c" title="Copies the data to a MemoryStorage object in a different memory space. This provides a seamless inter..." alt="" coords="536,790,719,830"/>
+<area shape="rect" id="node28" href="$classdftefe_1_1utils_1_1mpi_1_1MPIPatternP2P.html#a070689bd0e50a542e251f6411c2edab4" title=" " alt="" coords="522,855,733,909"/>
+<area shape="rect" id="node29" href="$classdftefe_1_1utils_1_1mpi_1_1MPIPatternP2P.html#a9a8a535d76a785d678b13d57ee9f36a1" title=" " alt="" coords="519,933,735,988"/>
+<area shape="rect" id="node30" href="$namespacedftefe_1_1utils.html#aff89d6a6fc1424a77af307861a9bdc8c" title="Create a MemoryStorage object from an input C++ STL vector." alt="" coords="536,1013,719,1053"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#aad016a8f5c6b4582b3f25857c3cdff69" title=" " alt="" coords="221,77,448,117"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a42280579ecbb347d6e654759acf13f29" title=" " alt="" coords="221,141,448,181"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#a6438877a58ab39c491db8467e5683557" title=" " alt="" coords="221,205,448,245"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a676c8b32bb142e69a6172360fb4a9093" title=" " alt="" coords="221,269,448,309"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#adc40135f653f44c2ace45e87386ee041" title=" " alt="" coords="226,333,443,373"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a9d99e1a01238b84e1a22add5071473cb" title=" " alt="" coords="226,397,443,437"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#a61380fefce1301fa3bc263a3930806ac" title=" " alt="" coords="226,461,443,516"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a119842eeb365b60b364ec006baa429aa" title=" " alt="" coords="226,540,443,595"/>
+<area shape="rect" id="node18" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a87efd15a3d0fe3daaf3c78dc0e1272d6" title=" " alt="" coords="247,619,423,673"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#abbb95b8fbacbbb67c83b7edf01aebba5" title=" " alt="" coords="247,697,423,752"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1physics_1_1LaplaceOperatorContextFEInternal.html#ad7c4fe7b1ad34eead69e7a21dc0defe3" title=" " alt="" coords="247,776,423,831"/>
+<area shape="rect" id="node24" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="229,855,440,895"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a7bcdd7077b2c689dad3415bc741d7712" title=" " alt="" coords="5,626,173,666"/>
+<area shape="rect" id="node21" href="$classdftefe_1_1basis_1_1EFEOverlapOperatorContext.html#a07221bafaf804b8bbc9560ab9ee788d7" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="6,705,173,745"/>
+<area shape="rect" id="node23" href="$classdftefe_1_1physics_1_1LaplaceOperatorContextFE.html#a13504824986c8c0076fa0ace0a345d0a" title=" " alt="" coords="5,783,173,823"/>
+</map>
