@@ -2,12 +2,11 @@
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
-#include <basis/FEBasisManagerDealii.h>
-#include <basis/FEConstraintsDealii.h>
-#include <basis/FEBasisDataStorageDealii.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
+#include <basis/CFEConstraintsLocalDealii.h>
+#include <basis/CFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
-#include <basis/FEConstraintsDealii.h>
-#include <basis/FEBasisHandlerDealii.h>
+#include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleContainer.h>
@@ -125,38 +124,14 @@ int main()
 
   // initialize the basis Manager
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> basisManager =   std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase, feDegree);
+  std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree, comm);
+
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
-  basisManager->getBasisCenters(dofCoords);
+  basisDofHandler->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " <<basisManager->nLocallyOwnedCells() << "\n";
-  std::cout << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
-
-  // Set the constraints
-
-  std::string constraintHanging = "HangingNodeConstraint"; //give BC to rho
-  std::string constraintHomwHan = "HomogeneousWithHanging"; // use this to solve the laplace equation
-
-  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double, dftefe::utils::MemorySpace::HOST>>>
-    constraintsVec;
-  constraintsVec.resize(2);
-  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
-
-  constraintsVec[0]->clear();
-  constraintsVec[0]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[0]->close();
-
-  constraintsVec[1]->clear();
-  constraintsVec[1]->makeHangingNodeConstraint(basisManager);
-  constraintsVec[1]->setHomogeneousDirichletBC();
-  constraintsVec[1]->close();
-
-  std::map<std::string,
-           std::shared_ptr<const dftefe::basis::Constraints<double, dftefe::utils::MemorySpace::HOST>>> constraintsMap;
-
-  constraintsMap[constraintHanging] = constraintsVec[0];
-  constraintsMap[constraintHomwHan] = constraintsVec[1];
+  std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
+  std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
 
@@ -172,23 +147,31 @@ int main()
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
-    std::make_shared<dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, quadAttr, basisAttrMap);
+    std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, quadAttr, basisAttrMap);
 
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
-  // Set up BasisHandler
-  std::shared_ptr<dftefe::basis::FEBasisHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisHandler =
-    std::make_shared<dftefe::basis::FEBasisHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisManager, constraintsMap, comm);
+  std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
+    zeroFunction = std::make_shared<
+      dftefe::utils::ScalarZeroFunctionReal>();
+
+  // // Set up BasisManager
+  std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManagerHom =
+    std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, zeroFunction);
+
+  std::shared_ptr<const dftefe::basis::FEBasisManager<double,double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
+    std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
 
   // set up MPIPatternP2P for the constraints
-  auto mpiPatternP2PHanging = basisHandler->getMPIPatternP2P(constraintHanging);
-  auto mpiPatternP2PHomwHan = basisHandler->getMPIPatternP2P(constraintHomwHan);
+  auto mpiPatternP2PHanging = basisManager->getMPIPatternP2P();
+  auto mpiPatternP2PHomwHan = basisManagerHom->getMPIPatternP2P();
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
    x = std::make_shared<
@@ -209,8 +192,8 @@ int main()
   //       {
   //         for (unsigned int i = 0 ; i < b->localSize() ; i++)
   //         {
-  //           basisHandler->getBasisCenters(i,constraintHomwHan,nodeLoc);
-  //           std::cout<<"id= "<<basisHandler->localToGlobalIndex(i,constraintHomwHan)<<" x= "<<nodeLoc[0]<<" y= "<<nodeLoc[1]<<" z= "<<nodeLoc[2] << " Val= " << *(b->data()+i) << " is_C= " << (bool)basisHandler->getConstraints(constraintHomwHan).isConstrained(basisHandler->localToGlobalIndex(i,constraintHomwHan))<< " rank= " << rank << " is_ghost = " << (bool)basisHandler->isGhostEntry(basisHandler->localToGlobalIndex(i,constraintHomwHan),constraintHomwHan).first << std::endl;
+  //           basisManagerHom->getBasisCenters(i,nodeLoc);
+  //           std::cout<<"id= "<<basisManagerHom->localToGlobalIndex(i)<<" x= "<<nodeLoc[0]<<" y= "<<nodeLoc[1]<<" z= "<<nodeLoc[2] << " Val= " << *(b->data()+i) << " is_C= " << (bool)basisManagerHom->getConstraints().isConstrained(basisManagerHom->localToGlobalIndex(i))<< " rank= " << rank << " is_ghost = " << (bool)basisManager->isGhostEntry(basisManagerHom->localToGlobalIndex(i)).first << std::endl;
   //         }
   //       }
   //     std::cout << std::flush;
@@ -221,17 +204,17 @@ int main()
 
   auto itField  = x->begin();
   const unsigned int dofs_per_cell =
-    basisManager->nCellDofs(0);
+    basisDofHandler->nCellDofs(0);
   const unsigned int faces_per_cell =
     dealii::GeometryInfo<dim>::faces_per_cell;
   const unsigned int dofs_per_face =
-    std::pow((basisManager->getFEOrder(0)+1),2);
+    std::pow((basisDofHandler->getFEOrder(0)+1),2);
   std::vector<dftefe::global_size_type> cellGlobalDofIndices(dofs_per_cell);
   std::vector<dftefe::global_size_type> iFaceGlobalDofIndices(dofs_per_face);
-  std::vector<bool> dofs_touched(basisManager->nGlobalNodes(), false);
-  auto              icell = basisManager->beginLocallyOwnedCells();
+  std::vector<bool> dofs_touched(basisDofHandler->nGlobalNodes(), false);
+  auto              icell = basisDofHandler->beginLocallyOwnedCells();
   dftefe::utils::Point basisCenter(dim, 0);
-  for (; icell != basisManager->endLocallyOwnedCells(); ++icell)
+  for (; icell != basisDofHandler->endLocallyOwnedCells(); ++icell)
     {
       (*icell)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
       for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
@@ -248,8 +231,8 @@ int main()
                   if (dofs_touched[globalId])
                     continue;
                   dofs_touched[globalId] = true;
-                      dftefe::size_type localId = basisHandler->globalToLocalIndex(globalId,constraintHanging) ;
-                      basisHandler->getBasisCenters(localId,constraintHanging,nodeLoc);
+                      dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+                      basisManager->getBasisCenters(localId,nodeLoc);
                       *(itField + (localId)*(numComponents))  = 1;         
                 }     // Face dof loop
             }
@@ -260,10 +243,9 @@ int main()
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double, double, dftefe::utils::MemorySpace::HOST>>
   AxContext = 
   std::make_shared<dftefe::physics::LaplaceOperatorContextFE<double, double, dftefe::utils::MemorySpace::HOST, dim>>(
-      *basisHandler,
+      *basisManager,
+      *basisManagerHom,
       *feBasisData,
-      constraintHanging,
-      constraintHomwHan,
       50); 
 
       std::cout << std::setprecision(10);
@@ -274,7 +256,7 @@ int main()
 
   AxContext->apply(*x, *b);
 
-  // basisHandler->getConstraints(constraintHomwHan).distributeParentToChild(*b, numComponents);
+  // basisManagerHom->getConstraints().distributeParentToChild(*b, numComponents);
   // b->updateGhostValues();
 
     for(int i = 0 ; i < numComponents ; i++)
@@ -289,8 +271,8 @@ dftefe::utils::mpi::MPIBarrier(comm);
         {
           for (unsigned int i = 0 ; i < b->localSize() ; i++)
           {
-            basisHandler->getBasisCenters(i,constraintHomwHan,nodeLoc);
-            std::cout<<"id= "<<basisHandler->localToGlobalIndex(i,constraintHomwHan)<<" x= "<<nodeLoc[0]<<" y= "<<nodeLoc[1]<<" z= "<<nodeLoc[2] << " Val= " << *(b->data()+i) << " is_C= " << (bool)basisHandler->getConstraints(constraintHomwHan).isConstrained(basisHandler->localToGlobalIndex(i,constraintHomwHan))<< " rank= " << rank << " is_ghost = " << (bool)basisHandler->isGhostEntry(basisHandler->localToGlobalIndex(i,constraintHomwHan),constraintHomwHan).first << std::endl;
+            basisManagerHom->getBasisCenters(i,nodeLoc);
+            std::cout<<"id= "<<basisManagerHom->localToGlobalIndex(i)<<" x= "<<nodeLoc[0]<<" y= "<<nodeLoc[1]<<" z= "<<nodeLoc[2] << " Val= " << *(b->data()+i) << " is_C= " << (bool)basisManagerHom->getConstraints().isConstrained(basisManagerHom->localToGlobalIndex(i))<< " rank= " << rank << " is_ghost = " << (bool)basisManagerHom->isGhostEntry(basisManagerHom->localToGlobalIndex(i)).first << std::endl;
           }
         }
         std::cout << std::flush;

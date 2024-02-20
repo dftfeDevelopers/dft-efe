@@ -37,23 +37,22 @@ namespace dftefe
       void
       getDiagonal(
         linearAlgebra::Vector<ValueTypeOperator, memorySpace> &diagonal,
-        std::shared_ptr<
-          const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-          feBasisHandler,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>>      feBasisManager,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                          feBasisDataStorage,
-        const std::string constraintsHangingwHomogeneous)
+          feBasisDataStorage)
       {
         const size_type numLocallyOwnedCells =
-          feBasisHandler->nLocallyOwnedCells();
+          feBasisManager->nLocallyOwnedCells();
         std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
         for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-          numCellDofs[iCell] = feBasisHandler->nLocallyOwnedCellDofs(iCell);
+          numCellDofs[iCell] = feBasisManager->nLocallyOwnedCellDofs(iCell);
 
         auto itCellLocalIdsBegin =
-          feBasisHandler->locallyOwnedCellLocalDofIdsBegin(
-            constraintsHangingwHomogeneous);
+          feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
         // access cell-wise discrete Laplace operator
         auto gradNiGradNjInAllCells =
@@ -77,8 +76,7 @@ namespace dftefe
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes
-        feBasisHandler->getConstraints(constraintsHangingwHomogeneous)
-          .distributeChildToParent(diagonal, 1);
+        feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
         // Function to add the values to the local node from its corresponding
         // ghost nodes from other processors.
@@ -103,9 +101,10 @@ namespace dftefe
                                   memorySpace,
                                   dim>::
       PoissonLinearSolverFunctionFE(
-        std::shared_ptr<
-          const basis::FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-          feBasisHandler,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>> feBasisManagerField,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageStiffnessMatrix,
@@ -115,78 +114,116 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
-          memorySpace> &  inp,
-        const std::string constraintsHanging,
-        const std::string constraintsHangingwHomogeneous,
-        const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-          &                                     inhomogeneousDirichletBCVector,
+          memorySpace> &                        inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs)
-      : d_feBasisHandler(feBasisHandler)
-      , d_b(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),
-            linAlgOpContext,
-            inp.getNumberComponents())
+      : d_feBasisManagerField(feBasisManagerField)
+      , d_numComponents(inpRhs.getNumberComponents())
       , d_pcType(pcType)
-      , d_constraintsHanging(constraintsHanging)
-      , d_x(feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous),
-            linAlgOpContext,
-            inp.getNumberComponents())
-      , d_initial(feBasisHandler->getMPIPatternP2P(
-                    constraintsHangingwHomogeneous),
-                  linAlgOpContext,
-                  inp.getNumberComponents())
-      , d_inhomogeneousDirichletBCVector(feBasisHandler->getMPIPatternP2P(
-                                           constraintsHanging),
-                                         linAlgOpContext,
-                                         inp.getNumberComponents())
     {
-      d_inhomogeneousDirichletBCVector = inhomogeneousDirichletBCVector;
-      d_mpiPatternP2PHangingwHomogeneous =
-        feBasisHandler->getMPIPatternP2P(constraintsHangingwHomogeneous);
-
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      d_AxContext =
-        std::make_shared<physics::LaplaceOperatorContextFE<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace,
-                                                           dim>>(
-          *d_feBasisHandler,
-          *feBasisDataStorageStiffnessMatrix,
-          constraintsHangingwHomogeneous,
-          constraintsHangingwHomogeneous,
-          maxCellTimesNumVecs); // solving the AX = b
+      utils::throwException(
+        ((feBasisDataStorageRhs->getBasisDofHandler()).get() ==
+         (feBasisDataStorageStiffnessMatrix->getBasisDofHandler()).get()) &&
+          ((feBasisDataStorageRhs->getBasisDofHandler()).get() ==
+           &(feBasisManagerField->getBasisDofHandler())),
+        "The BasisDofHandler of the dataStorages and basisManager should be same in PoissonLinearSolverFunctionFE.");
 
-      auto AxContextNHDB =
-        std::make_shared<physics::LaplaceOperatorContextFE<ValueTypeOperator,
+      std::shared_ptr<
+        const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>
+        basisDofHandler = std::dynamic_pointer_cast<
+          const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
+          feBasisDataStorageRhs->getBasisDofHandler());
+      utils::throwException(
+        basisDofHandler != nullptr,
+        "Could not cast BasisDofHandler to FEBasisDofHandler "
+        "in PoissonLinearSolverFunctionFE");
+
+      // set up MPIPatternP2P for the constraints
+      auto mpiPatternP2PField = feBasisManagerField->getMPIPatternP2P();
+
+      // set up vh with inhomogeneous BC
+
+      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+        fieldInHomoDBCVec(mpiPatternP2PField,
+                          linAlgOpContext,
+                          d_numComponents,
+                          ValueTypeOperand());
+      d_fieldInHomoDBCVec = fieldInHomoDBCVec;
+
+      // Set up BasisManager
+      std::shared_ptr<const utils::ScalarSpatialFunctionReal> zeroFunction =
+        std::make_shared<utils::ScalarZeroFunctionReal>();
+
+      d_feBasisManagerHomo =
+        std::make_shared<basis::FEBasisManager<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim>>(basisDofHandler,
+                                                     zeroFunction);
+
+      d_fieldInHomoDBCVec.updateGhostValues();
+      feBasisManagerField->getConstraints().distributeParentToChild(
+        d_fieldInHomoDBCVec, d_numComponents);
+
+      auto mpiPatternP2PHomo = d_feBasisManagerHomo->getMPIPatternP2P();
+
+      linearAlgebra::MultiVector<ValueType, memorySpace> b1(mpiPatternP2PHomo,
+                                                            linAlgOpContext,
+                                                            d_numComponents,
+                                                            ValueType());
+      d_b = b1;
+      linearAlgebra::MultiVector<ValueType, memorySpace> x(mpiPatternP2PHomo,
+                                                           linAlgOpContext,
+                                                           d_numComponents,
+                                                           ValueType());
+      d_x = x;
+      linearAlgebra::MultiVector<ValueType, memorySpace> initial(
+        mpiPatternP2PHomo, linAlgOpContext, d_numComponents, ValueType());
+      d_initial = initial;
+
+      d_AxContext = std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
+                                                              ValueTypeOperand,
+                                                              memorySpace,
+                                                              dim>>(
+        *d_feBasisManagerHomo,
+        *d_feBasisManagerHomo,
+        *feBasisDataStorageStiffnessMatrix,
+        maxCellTimesNumVecs); // solving the AX = b
+
+      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
-                                                           memorySpace,
-                                                           dim>>(
-          *d_feBasisHandler,
-          *feBasisDataStorageStiffnessMatrix,
-          constraintsHanging,
-          constraintsHangingwHomogeneous,
-          maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
+                                                           memorySpace>>
+        AxContextNHDB =
+          std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
+                                                    ValueTypeOperand,
+                                                    memorySpace,
+                                                    dim>>(
+            *d_feBasisManagerField,
+            *d_feBasisManagerHomo,
+            *feBasisDataStorageStiffnessMatrix,
+            maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
-        d_mpiPatternP2PHangingwHomogeneous, linAlgOpContext);
+        mpiPatternP2PHomo, linAlgOpContext);
 
       if (d_pcType == linearAlgebra::PreconditionerType::JACOBI)
         {
           PoissonLinearSolverFunctionFEInternal::
             getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
               diagonal,
-              feBasisHandler,
-              feBasisDataStorageStiffnessMatrix,
-              constraintsHangingwHomogeneous);
+              d_feBasisManagerHomo,
+              feBasisDataStorageStiffnessMatrix);
 
 
-          feBasisHandler->getConstraints(constraintsHangingwHomogeneous)
-            .setConstrainedNodes(diagonal, 1, 1.0);
+          d_feBasisManagerHomo->getConstraints().setConstrainedNodes(diagonal,
+                                                                     1,
+                                                                     1.0);
 
           d_PCContext = std::make_shared<
             linearAlgebra::PreconditionerJacobi<ValueTypeOperator,
@@ -195,6 +232,7 @@ namespace dftefe
 
           diagonal.updateGhostValues();
         }
+
       else if (d_pcType == linearAlgebra::PreconditionerType::NONE)
         d_PCContext =
           std::make_shared<linearAlgebra::PreconditionerNone<ValueTypeOperator,
@@ -206,9 +244,9 @@ namespace dftefe
       // Compute RHS
 
       std::vector<ValueType> ones(0);
-      ones.resize(inp.getNumberComponents(), (ValueType)1.0);
+      ones.resize(d_numComponents, (ValueType)1.0);
       std::vector<ValueType> nOnes(0);
-      nOnes.resize(inp.getNumberComponents(), (ValueType)-1.0);
+      nOnes.resize(d_numComponents, (ValueType)-1.0);
 
       d_b.setValue(0.0);
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b(d_b, 0.0);
@@ -218,14 +256,13 @@ namespace dftefe
         FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
           feBasisOperations(feBasisDataStorageRhs, maxCellTimesNumVecs);
 
-      feBasisOperations.integrateWithBasisValues(inp,
-                                                 *d_feBasisHandler,
-                                                 constraintsHangingwHomogeneous,
+      feBasisOperations.integrateWithBasisValues(inpRhs,
+                                                 *d_feBasisManagerHomo,
                                                  b);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
-      AxContextNHDB->apply(d_inhomogeneousDirichletBCVector, rhsNHDB);
+      AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB);
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
 
@@ -234,7 +271,7 @@ namespace dftefe
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // for(int i = 0 ; i < inp.getNumberComponents() ; i++)
+      // for(int i = 0 ; i < d_numComponents ; i++)
       // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i] << " d_b-norm: " <<
       // d_b.l2Norms()[i] << " b-norm: " << b.l2Norms()[i] << "\t";
       // std::cout << "\n";
@@ -300,6 +337,7 @@ namespace dftefe
                   memorySpace> &solution)
     {
       size_type numComponents = solution.getNumberComponents();
+      solution.setValue(0.0);
 
       for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
         {
@@ -307,14 +345,14 @@ namespace dftefe
             {
               solution.data()[i * numComponents + j] =
                 d_x.data()[i * numComponents + j] +
-                d_inhomogeneousDirichletBCVector.data()[i * numComponents + j];
+                d_fieldInHomoDBCVec.data()[i * numComponents + j];
             }
         }
 
       solution.updateGhostValues();
 
-      d_feBasisHandler->getConstraints(d_constraintsHanging)
-        .distributeParentToChild(solution, numComponents);
+      d_feBasisManagerField->getConstraints().distributeParentToChild(
+        solution, numComponents);
     }
 
     template <typename ValueTypeOperator,
@@ -356,7 +394,7 @@ namespace dftefe
                                   memorySpace,
                                   dim>::getMPIComm() const
     {
-      return d_mpiPatternP2PHangingwHomogeneous->mpiCommunicator();
+      return d_feBasisManagerHomo->getMPIPatternP2P()->mpiCommunicator();
     }
 
   } // end of namespace physics

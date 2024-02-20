@@ -432,10 +432,7 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      inverse(const size_type n,
-              ValueType *     A,
-              const size_type lda,
-              ValueType *     ipiv);
+      inverse(size_type n, ValueType *A);
 
     } // namespace blasLapack
   }   // namespace linearAlgebra

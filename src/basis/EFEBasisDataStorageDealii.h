@@ -33,8 +33,8 @@
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/EFEBasisDataStorage.h>
-#include <basis/EFEBasisManagerDealii.h>
-#include <basis/EFEBasisManager.h>
+#include <basis/EFEBasisDofHandlerDealii.h>
+#include <basis/EFEBasisDofHandler.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleGLL.h>
@@ -53,9 +53,10 @@ namespace dftefe
      * such as the basis function values on a quadrature grid, the overlap
      * matrix of the basis, etc.
      */
-    template <typename ValueTypeBasisData,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     class EFEBasisDataStorageDealii
       : public EFEBasisDataStorage<ValueTypeBasisData, memorySpace>
     {
@@ -66,14 +67,14 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
       EFEBasisDataStorageDealii(
-        std::shared_ptr<const BasisManager>         efeBM,
+        std::shared_ptr<const BasisDofHandler>      efeBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap);
 
       ~EFEBasisDataStorageDealii() = default;
 
-      const BasisManager &
-      getBasisManager() const override;
+      std::shared_ptr<const BasisDofHandler>
+      getBasisDofHandler() const override;
 
       void
       evaluateBasisData(
@@ -196,9 +197,11 @@ namespace dftefe
 
     private:
       bool d_evaluateBasisData;
-      std::shared_ptr<
-        const EFEBasisManagerDealii<ValueTypeBasisData, memorySpace, dim>>
-        d_efeBM;
+      std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim>>
+        d_efeBDH;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                     d_quadratureRuleContainer;
       QuadratureRuleAttributes      d_quadratureRuleAttributes;

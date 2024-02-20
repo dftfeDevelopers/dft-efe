@@ -44,7 +44,7 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueType, memorySpace>::SizeTypeVector
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
           &                                                   numCellDofs,
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
@@ -54,7 +54,7 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisHandler<ValueType, memorySpace>::SizeTypeVector
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
           &        numCellDofs,
         ValueType *data);
 
@@ -79,7 +79,7 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const BasisHandler<ValueType,
+        const BasisManager<ValueType,
                            dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
           &numCellDofs,
         dftefe::utils::MemoryStorage<ValueType,
@@ -93,7 +93,7 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const BasisHandler<ValueType,
+        const BasisManager<ValueType,
                            dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
           &        numCellDofs,
         ValueType *data);

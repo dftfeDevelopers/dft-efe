@@ -27,7 +27,7 @@
 #include <basis/TriangulationBase.h>
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/AtomIdsPartition.h>
-#include <basis/FEBasisManagerDealii.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
 #include <basis/FEBasisManager.h>
 #include <basis/EnrichmentIdsPartition.h>
 
@@ -76,8 +76,8 @@ int main()
     std::vector<std::vector<dftefe::utils::Point>> cellVerticesVector;
     std::vector<dftefe::utils::Point> cellVertices;
     std::string sourceDir = "/home/avirup/dft-efe/test/basis/src/";
-    std::string atomDataFile = "AtomData.in"
-    std::string inputFileName = sourceDir + atomDataFile ;
+    std::string atomDataFile = "AtomData.in";
+    std::string inputFileName = sourceDir + atomDataFile;
     std::fstream fstream;
 
     // Set up Triangulation
@@ -87,9 +87,9 @@ int main()
     std::vector<bool>                 isPeriodicFlags(dim, false);
     std::vector<dftefe::utils::Point> domainVectors(dim, dftefe::utils::Point(dim, 0.));
 
-    double xmax = 5.0;
-    double ymax = 5.0;
-    double zmax = 5.0;
+    double xmax = 10.0;
+    double ymax = 10.0;
+    double zmax = 10.0;
 
     domainVectors[0][0] = xmax;
     domainVectors[1][1] = ymax;
@@ -103,19 +103,19 @@ int main()
     dftefe::size_type feOrder = 1;
 
     //Create the febasismanager object
-    std::shared_ptr<dftefe::basis::FEBasisManager> feBM =
-        std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase,feOrder);
+    std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> feBDH =  
+    std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feOrder, mpi_communicator);
 
-    dftefe::size_type numLocallyOwnedCells  = feBM->nLocallyOwnedCells();
+    dftefe::size_type numLocallyOwnedCells  = feBDH->nLocallyOwnedCells();
 
     std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------"<<numLocallyOwnedCells;
 
-    auto feBMCellIter = feBM->beginLocallyOwnedCells();
+    auto feBMCellIter = feBDH->beginLocallyOwnedCells();
     unsigned int atomcount = 0;
     //fstream.open(inputFileName, std::fstream::out | std::fstream::trunc);
     dealii::Point<dim> coords;
     //get the cellvertices vector
-    for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
+    for( ; feBMCellIter != feBDH->endLocallyOwnedCells(); feBMCellIter++)
     {
         (*feBMCellIter)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
@@ -251,6 +251,7 @@ int main()
                                                         fieldName,                   
                                                         minbound,  
                                                         maxbound,
+                                                        0,
                                                         cellVerticesVector,
                                                         mpi_communicator);    
 

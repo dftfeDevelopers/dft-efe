@@ -36,29 +36,28 @@ namespace dftefe
       void
       getDiagonal(
         linearAlgebra::Vector<ValueTypeOperator, memorySpace> &diagonal,
-        std::shared_ptr<
-          const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-          feBasisHandler,
-        std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
-                                                       ValueTypeOperand,
-                                                       memorySpace,
-                                                       dim>>
-                          feOverlapOperatorContext,
-        const std::string basisInterfaceCoeffConstraint)
+        std::shared_ptr<const FEBasisManager<ValueTypeOperand,
+                                             ValueTypeOperator,
+                                             memorySpace,
+                                             dim>>             feBasisManager,
+        std::shared_ptr<const CFEOverlapOperatorContext<ValueTypeOperator,
+                                                        ValueTypeOperand,
+                                                        memorySpace,
+                                                        dim>>
+          cfeOverlapOperatorContext)
       {
         const size_type numLocallyOwnedCells =
-          feBasisHandler->nLocallyOwnedCells();
+          feBasisManager->nLocallyOwnedCells();
         std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
         for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-          numCellDofs[iCell] = feBasisHandler->nLocallyOwnedCellDofs(iCell);
+          numCellDofs[iCell] = feBasisManager->nLocallyOwnedCellDofs(iCell);
 
         auto itCellLocalIdsBegin =
-          feBasisHandler->locallyOwnedCellLocalDofIdsBegin(
-            basisInterfaceCoeffConstraint);
+          feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
         // access cell-wise discrete Laplace operator
         auto NiNjInAllCells =
-          feOverlapOperatorContext->getBasisOverlapInAllCells();
+          cfeOverlapOperatorContext->getBasisOverlapInAllCells();
 
         std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
                                                            0);
@@ -78,8 +77,7 @@ namespace dftefe
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes
-        feBasisHandler->getConstraints(basisInterfaceCoeffConstraint)
-          .distributeChildToParent(diagonal, 1);
+        feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
         // Function to add the values to the local node from its corresponding
         // ghost nodes from other processors.
@@ -87,14 +85,12 @@ namespace dftefe
 
         diagonal.updateGhostValues();
       }
-
     } // end of namespace L2ProjectionLinearSolverFunctionInternal
 
 
     //
     // Constructor
     //
-
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
@@ -104,13 +100,14 @@ namespace dftefe
                                      memorySpace,
                                      dim>::
       L2ProjectionLinearSolverFunction(
-        std::shared_ptr<
-          const FEBasisHandler<ValueTypeOperator, memorySpace, dim>>
-          cfeBasisHandler,
-        std::shared_ptr<const FEOverlapOperatorContext<ValueTypeOperator,
-                                                       ValueTypeOperand,
-                                                       memorySpace,
-                                                       dim>>
+        std::shared_ptr<const FEBasisManager<ValueTypeOperand,
+                                             ValueTypeOperator,
+                                             memorySpace,
+                                             dim>> cfeBasisManager,
+        std::shared_ptr<const CFEOverlapOperatorContext<ValueTypeOperator,
+                                                        ValueTypeOperand,
+                                                        memorySpace,
+                                                        dim>>
           cfeBasisDataStorageOverlapMatrix,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
@@ -119,28 +116,24 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
           memorySpace> &                        inp,
-        const std::string                       basisInterfaceCoeffConstraint,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs)
-      : d_feBasisHandler(cfeBasisHandler)
-      , d_b(cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint),
+      : d_feBasisManager(cfeBasisManager)
+      , d_b(cfeBasisManager->getMPIPatternP2P(),
             linAlgOpContext,
             inp.getNumberComponents())
       , d_pcType(pcType)
-      , d_x(cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint),
+      , d_x(cfeBasisManager->getMPIPatternP2P(),
             linAlgOpContext,
             inp.getNumberComponents())
-      , d_initial(cfeBasisHandler->getMPIPatternP2P(
-                    basisInterfaceCoeffConstraint),
+      , d_initial(cfeBasisManager->getMPIPatternP2P(),
                   linAlgOpContext,
                   inp.getNumberComponents())
-      , d_basisInterfaceCoeffConstraint(basisInterfaceCoeffConstraint)
       , d_AxContext(cfeBasisDataStorageOverlapMatrix)
     {
-      d_mpiPatternP2P =
-        cfeBasisHandler->getMPIPatternP2P(basisInterfaceCoeffConstraint);
+      d_mpiPatternP2P = cfeBasisManager->getMPIPatternP2P();
 
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -148,14 +141,12 @@ namespace dftefe
 
       // Get M marix for Md = \integral N_e. N_c
       // d_AxContext =
-      //   std::make_shared<FEOverlapOperatorContext<ValueTypeOperator,
+      //   std::make_shared<CFEOverlapOperatorContext<ValueTypeOperator,
       //                                                      ValueTypeOperand,
       //                                                      memorySpace,
       //                                                      dim>>(
-      //     *d_feBasisHandler,
+      //     *d_feBasisManager,
       //     *cfeBasisDataStorageOverlapMatrix,
-      //     basisInterfaceCoeffConstraint,
-      //     basisInterfaceCoeffConstraint,
       //     maxCellTimesNumVecs);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
@@ -165,14 +156,12 @@ namespace dftefe
         {
           L2ProjectionLinearSolverFunctionInternal::
             getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
-              diagonal,
-              d_feBasisHandler,
-              d_AxContext,
-              basisInterfaceCoeffConstraint);
+              diagonal, d_feBasisManager, d_AxContext);
 
 
-          d_feBasisHandler->getConstraints(basisInterfaceCoeffConstraint)
-            .setConstrainedNodes(diagonal, 1, 1.0);
+          d_feBasisManager->getConstraints().setConstrainedNodes(diagonal,
+                                                                 1,
+                                                                 1.0);
 
           d_PCContext = std::make_shared<
             linearAlgebra::PreconditionerJacobi<ValueTypeOperator,
@@ -204,10 +193,7 @@ namespace dftefe
 
       // Integrate this with different quarature rule. (i.e. adaptive for the
       // enrichment functions) , inp will be in adaptive grid
-      cfeBasisOperations.integrateWithBasisValues(inp,
-                                                  *d_feBasisHandler,
-                                                  basisInterfaceCoeffConstraint,
-                                                  d_b);
+      cfeBasisOperations.integrateWithBasisValues(inp, *d_feBasisManager, d_b);
 
       // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {
@@ -292,8 +278,8 @@ namespace dftefe
 
       solution.updateGhostValues();
 
-      d_feBasisHandler->getConstraints(d_basisInterfaceCoeffConstraint)
-        .distributeParentToChild(solution, numComponents);
+      d_feBasisManager->getConstraints().distributeParentToChild(solution,
+                                                                 numComponents);
     }
 
     template <typename ValueTypeOperator,

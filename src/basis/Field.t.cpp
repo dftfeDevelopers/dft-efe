@@ -30,30 +30,27 @@ namespace dftefe
   {
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     Field<ValueTypeBasisCoeff, memorySpace>::Field(
-      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                        basisHandler,
-      const std::string constraintsName,
-      const size_type   numVectors,
+      std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+                      basisManager,
+      const size_type numVectors,
       std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
         linAlgOpContext)
     {
-      reinit(basisHandler, constraintsName, numVectors, linAlgOpContext);
+      reinit(basisManager, numVectors, linAlgOpContext);
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
     void
     Field<ValueTypeBasisCoeff, memorySpace>::reinit(
-      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                        basisHandler,
-      const std::string constraintsName,
-      const size_type   numVectors,
+      std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+                      basisManager,
+      const size_type numVectors,
       std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
         linAlgOpContext)
     {
-      d_basisHandler     = basisHandler;
-      d_constraintsName  = constraintsName;
+      d_basisManager     = basisManager;
       d_linAlgOpContext  = linAlgOpContext;
-      auto mpiPatternP2P = basisHandler->getMPIPatternP2P(constraintsName);
+      auto mpiPatternP2P = basisManager->getMPIPatternP2P();
 
       //
       // create the vector
@@ -68,8 +65,8 @@ namespace dftefe
     void
     Field<ValueTypeBasisCoeff, memorySpace>::applyConstraintsParentToChild()
     {
-      const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
-        d_basisHandler->getConstraints(d_constraintsName);
+      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> &constraints =
+        d_basisManager->getConstraints();
       constraints.distributeParentToChild(*d_vector,
                                           d_vector->getNumberComponents());
     }
@@ -78,8 +75,8 @@ namespace dftefe
     void
     Field<ValueTypeBasisCoeff, memorySpace>::applyConstraintsChildToParent()
     {
-      const Constraints<ValueTypeBasisCoeff, memorySpace> &constraints =
-        d_basisHandler->getConstraints(d_constraintsName);
+      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> &constraints =
+        d_basisManager->getConstraints();
       constraints.distributeChildToParent(*d_vector,
                                           d_vector->getNumberComponents());
     }
@@ -100,10 +97,10 @@ namespace dftefe
 
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
-    const BasisHandler<ValueTypeBasisCoeff, memorySpace> &
-    Field<ValueTypeBasisCoeff, memorySpace>::getBasisHandler() const
+    const BasisManager<ValueTypeBasisCoeff, memorySpace> &
+    Field<ValueTypeBasisCoeff, memorySpace>::getBasisManager() const
     {
-      return *d_basisHandler;
+      return *d_basisManager;
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
@@ -178,13 +175,6 @@ namespace dftefe
     Field<ValueTypeBasisCoeff, memorySpace>::accumulateAddLocallyOwnedEnd()
     {
       d_vector->accumulateAddLocallyOwnedEnd();
-    }
-
-    template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>
-    std::string
-    Field<ValueTypeBasisCoeff, memorySpace>::getConstraintsName() const
-    {
-      return d_constraintsName;
     }
 
     template <typename ValueTypeBasisCoeff, utils::MemorySpace memorySpace>

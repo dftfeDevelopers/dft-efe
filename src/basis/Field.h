@@ -26,8 +26,8 @@
 #ifndef dftefeField_h
 #define dftefeField_h
 
-#include <basis/BasisHandler.h>
-#include <basis/Constraints.h>
+#include <basis/BasisManager.h>
+#include <basis/ConstraintsLocal.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/MemorySpaceType.h>
@@ -68,10 +68,9 @@ namespace dftefe
                                             memorySpace>::const_iterator;
 
       Field(
-        std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                          basishandler,
-        const std::string constraintsName,
-        const size_type   numVectors,
+        std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+                        basisManager,
+        const size_type numVectors,
         std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
@@ -79,10 +78,9 @@ namespace dftefe
 
       void
       reinit(
-        std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-                          basisHandler,
-        const std::string constraintsName,
-        const size_type   numVectors,
+        std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+                        basisManager,
+        const size_type numVectors,
         std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
@@ -98,8 +96,8 @@ namespace dftefe
       const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
       getVector() const;
 
-      const BasisHandler<ValueTypeBasisCoeff, memorySpace> &
-      getBasisHandler() const;
+      const BasisManager<ValueTypeBasisCoeff, memorySpace> &
+      getBasisManager() const;
 
       iterator
       begin();
@@ -134,16 +132,11 @@ namespace dftefe
       linearAlgebra::LinAlgOpContext<memorySpace> &
       getLinAlgOpContext() const;
 
-      std::string
-      getConstraintsName() const;
-
     private:
-      std::string d_constraintsName;
-
       std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
-      std::shared_ptr<const BasisHandler<ValueTypeBasisCoeff, memorySpace>>
-        d_basisHandler;
+      std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+        d_basisManager;
       std::shared_ptr<
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>>
         d_vector;

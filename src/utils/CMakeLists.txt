@@ -24,6 +24,7 @@ set(DFT-EFE-UTILS-SOURCES
 	ExpModX.cpp
 	LogModX.cpp
 	MathFunctions.cpp
+	MathConstants.cpp
 	StringOperations.cpp
 	ConditionalOStream.cpp
 	MPITypes.cpp
@@ -35,7 +36,8 @@ set(DFT-EFE-UTILS-SOURCES
   MPICommunicatorP2PKernels.cpp
   MPICommunicatorP2PKernels.cu
   MPIErrorCodeHandler.cpp
-  Spline.cpp)
+  Spline.cpp
+  ScalarZeroFunctionReal.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

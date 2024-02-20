@@ -20,130 +20,151 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo, Avirup Sircar
  */
 
 #ifndef dftefeFEBasisManager_h
 #define dftefeFEBasisManager_h
 
-#include <utils/TypeConfig.h>
-#include <utils/Point.h>
 #include <basis/BasisManager.h>
-#include <basis/TriangulationBase.h>
-#include <basis/FECellBase.h>
-#include <map>
+#include <basis/FEBasisDofHandler.h>
 namespace dftefe
 {
   namespace basis
   {
-    // add attribute to the classical and enriched ids for locallyOwnedRanges()
-    enum class BasisIdAttribute
-    {
-      CLASSICAL,
-      ENRICHED
-    };
     /**
-     * An abstract class to handle finite element (FE) basis related operations,
-     * such as evaluating the value and gradients of any basis function at a
-     * point, getting cell and nodal information, etc.
-     *
+     * @brief An abstract class to encapsulate the partitioning
+     * of a finite element basis across multiple processors
      */
-    class FEBasisManager : public BasisManager
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    class FEBasisManager : public BasisManager<ValueTypeBasisCoeff, memorySpace>
     {
       //
-      // Typedefs
+      // typedefs
       //
     public:
-      typedef std::vector<std::shared_ptr<FECellBase>>::iterator FECellIterator;
-      typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
-        const_FECellIterator;
+      using SizeTypeVector =
+        typename BasisManager<ValueTypeBasisCoeff, memorySpace>::SizeTypeVector;
+      using GlobalSizeTypeVector =
+        typename BasisManager<ValueTypeBasisCoeff,
+                              memorySpace>::GlobalSizeTypeVector;
+      using LocalIndexIter       = typename SizeTypeVector::iterator;
+      using const_LocalIndexIter = typename SizeTypeVector::const_iterator;
+      using GlobalIndexIter      = typename GlobalSizeTypeVector::iterator;
+      using const_GlobalIndexIter =
+        typename GlobalSizeTypeVector::const_iterator;
 
-      virtual double
-      getBasisFunctionValue(const size_type     basisId,
-                            const utils::Point &point) const = 0;
-      virtual std::vector<double>
-      getBasisFunctionDerivative(const size_type     basisId,
-                                 const utils::Point &point,
-                                 const size_type derivativeOrder = 1) const = 0;
+    public:
+      FEBasisManager(std::shared_ptr<const BasisDofHandler> basisDofHandler,
+                     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+                       dirichletBoundaryCondition = nullptr);
 
-      ////// FE specific virtual member functions /////
-      // virtual void
-      // reinit(std::shared_ptr<const TriangulationBase> triangulation,
-      //        const size_type                          feOrder) = 0;
+      void
+      reinit(std::shared_ptr<const BasisDofHandler> basisDofHandler,
+             std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+               dirichletBoundaryCondition);
 
-      virtual std::shared_ptr<const TriangulationBase>
-      getTriangulation() const = 0;
+      ~FEBasisManager() = default;
 
-      virtual size_type
-      nLocalCells() const = 0;
-      virtual size_type
-      nLocallyOwnedCells() const = 0;
-      virtual size_type
-      nGlobalCells() const = 0;
-      virtual size_type
-      getFEOrder(size_type cellId) const = 0;
-      virtual size_type
-      nCellDofs(size_type cellId) const = 0;
-      virtual bool
-      isVariableDofsPerCell() const = 0;
+      const BasisDofHandler &
+      getBasisDofHandler() const override;
 
-      virtual std::vector<std::pair<global_size_type, global_size_type>>
-      getLocallyOwnedRanges() const = 0;
+      const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> &
+      getConstraints() const override;
 
-      virtual std::vector<std::pair<global_size_type, global_size_type>>
-      getGlobalRanges() const = 0;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      getMPIPatternP2P() const override;
 
-      virtual std::map<BasisIdAttribute, size_type>
-      getBasisAttributeToRangeIdMap() const = 0;
+      std::vector<std::pair<global_size_type, global_size_type>>
+      getLocallyOwnedRanges() const override;
 
-      virtual size_type
-      nLocalNodes() const = 0;
-      virtual global_size_type
-      nGlobalNodes() const = 0;
-      virtual std::vector<size_type>
-      getLocalNodeIds(size_type cellId) const = 0;
-      virtual std::vector<size_type>
-      getGlobalNodeIds() const = 0;
-      virtual void
-      getCellDofsGlobalIds(
-        size_type                      cellId,
-        std::vector<global_size_type> &vecGlobalNodeId) const = 0;
-      virtual std::vector<size_type>
-      getBoundaryIds() const = 0;
-      virtual FECellIterator
-      beginLocallyOwnedCells() = 0;
-      virtual FECellIterator
-      endLocallyOwnedCells() = 0;
-      virtual const_FECellIterator
-      beginLocallyOwnedCells() const = 0;
-      virtual const_FECellIterator
-      endLocallyOwnedCells() const = 0;
-      virtual FECellIterator
-      beginLocalCells() = 0;
-      virtual FECellIterator
-      endLocalCells() = 0;
-      virtual const_FECellIterator
-      beginLocalCells() const = 0;
-      virtual const_FECellIterator
-      endLocalCells() const = 0;
+      const GlobalSizeTypeVector &
+      getGhostIndices() const override;
 
-      virtual size_type
-      nCumulativeLocallyOwnedCellDofs() const = 0;
+      size_type
+      nLocal() const override;
 
-      virtual size_type
-      nCumulativeLocalCellDofs() const = 0;
+      size_type
+      nLocallyOwned() const override;
 
-      // This assumes a linear cell mapping
-      virtual void
-      getBasisCenters(
-        std::map<global_size_type, utils::Point> &dofCoords) const = 0;
+      size_type
+      nGhost() const override;
 
-      virtual size_type
-      totalRanges() const = 0;
+      std::pair<bool, size_type>
+      inLocallyOwnedRanges(const global_size_type globalId) const override;
 
-      virtual unsigned int
-      getDim() const = 0;
-    }; // end of FEBasisManager
-  }    // end of namespace basis
+      std::pair<bool, size_type>
+      isGhostEntry(const global_size_type ghostId) const override;
+
+      size_type
+      globalToLocalIndex(const global_size_type globalId) const override;
+
+      global_size_type
+      localToGlobalIndex(const size_type localId) const override;
+
+      void
+      getBasisCenters(const size_type       localId,
+                      dftefe::utils::Point &basisCenter) const override;
+
+      //
+      // FE specific functions
+      //
+
+      size_type
+      nLocallyOwnedCells() const;
+
+      size_type
+      nLocallyOwnedCellDofs(const size_type cellId) const;
+
+      size_type
+      nCumulativeLocallyOwnedCellDofs() const;
+
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsBegin() const;
+
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsBegin(const size_type cellId) const;
+
+      const_GlobalIndexIter
+      locallyOwnedCellGlobalDofIdsEnd(const size_type cellId) const;
+
+      const_LocalIndexIter
+      locallyOwnedCellLocalDofIdsBegin() const;
+
+      const_LocalIndexIter
+      locallyOwnedCellLocalDofIdsBegin(const size_type cellId) const;
+
+      const_LocalIndexIter
+      locallyOwnedCellLocalDofIdsEnd(const size_type cellId) const;
+
+      void
+      getCellDofsLocalIds(const size_type         cellId,
+                          std::vector<size_type> &vecLocalNodeId) const;
+
+    private:
+      std::shared_ptr<
+        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+        d_feBDH;
+      std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        d_constraintsLocal;
+      std::vector<std::pair<global_size_type, global_size_type>>
+                             d_locallyOwnedRanges;
+      std::vector<size_type> d_locallyOwnedCellStartIds;
+      GlobalSizeTypeVector   d_locallyOwnedCellGlobalIndices;
+      std::vector<size_type> d_numLocallyOwnedCellDofs;
+
+      // constraints dependent data
+      std::shared_ptr<GlobalSizeTypeVector> d_ghostIndices;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                               d_mpiPatternP2P;
+      std::shared_ptr<SizeTypeVector>          d_locallyOwnedCellLocalIndices;
+      std::map<global_size_type, utils::Point> d_supportPoints;
+    };
+
+  } // end of namespace basis
 } // end of namespace dftefe
+#include <basis/FEBasisManager.t.cpp>
 #endif // dftefeFEBasisManager_h

@@ -16,13 +16,13 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physic
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-	add_executable(TestFunctionClassical TestFunctionClassical.cpp )
-	target_link_libraries(TestFunctionClassical PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
-	set_target_properties(TestFunctionClassical PROPERTIES OUTPUT_NAME "TestFunctionClassical" SUFFIX ".x")
-
 	add_executable(TestLaplaceOperator TestLaplaceOperator.cpp )
 	target_link_libraries(TestLaplaceOperator PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestLaplaceOperator PROPERTIES OUTPUT_NAME "TestLaplaceOperator" SUFFIX ".x")
+
+	add_executable(TestFunctionClassical TestFunctionClassical.cpp )
+	target_link_libraries(TestFunctionClassical PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestFunctionClassical PROPERTIES OUTPUT_NAME "TestFunctionClassical" SUFFIX ".x")
 
 	add_executable(TestPoissonProblemClassical TestPoissonProblemClassical.cpp )
 	target_link_libraries(TestPoissonProblemClassical PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)

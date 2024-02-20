@@ -32,7 +32,7 @@
 #include <basis/Field.h>
 #include <basis/BasisOperations.h>
 #include <basis/BasisDataStorage.h>
-#include <basis/FEBasisHandler.h>
+#include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -84,8 +84,7 @@ namespace dftefe
       interpolate(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
-        const std::string &                                   constraintsName,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
@@ -95,8 +94,7 @@ namespace dftefe
       interpolateWithBasisGradient(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
-        const std::string &                                   constraintsName,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
@@ -114,8 +112,7 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &                                      inp,
-        const BasisHandler<ValueTypeBasisCoeff, memorySpace> &basisHandler,
-        const std::string &                                   constraintsName,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const override;
 
@@ -127,8 +124,8 @@ namespace dftefe
       //          &                                         inp,
       //        const quadrature::QuadratureRuleAttributes
       //        &quadratureRuleAttributes, const
-      //        FEBasisHandler<ValueTypeBasisCoeff, memorySpace,dim> &
-      //        feBasisHandler, linearAlgebra::Vector<ValueTypeBasisCoeff,
+      //        FEBasisManager<ValueTypeBasisCoeff, memorySpace,dim> &
+      //        feBasisManager, linearAlgebra::Vector<ValueTypeBasisCoeff,
       //        memorySpace> &v) const override;
 
       // virtual void

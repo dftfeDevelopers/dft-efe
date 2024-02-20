@@ -30,10 +30,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <basis/FEBasisDataStorage.h>
-#include <basis/FEBasisManagerDealii.h>
-#include <basis/FEBasisManager.h>
-#include <basis/FEConstraintsDealii.h>
-#include <basis/LinearCellMappingDealii.h>
+#include <basis/FEBasisDofHandler.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleGLL.h>
 #include <deal.II/matrix_free/matrix_free.h>
@@ -60,8 +57,8 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
 
-      virtual const BasisManager &
-      getBasisManager() const = 0;
+      virtual std::shared_ptr<const BasisDofHandler>
+      getBasisDofHandler() const = 0;
 
       virtual void
       evaluateBasisData(
