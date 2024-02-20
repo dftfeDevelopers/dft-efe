@@ -181,8 +181,6 @@ int main(int argc, char** argv)
     // Read the parameter files and atom coordinate files
     char* dftefe_path = getenv("DFTEFE_PATH");
     std::string sourceDir;
-    // if executes if a non null value is returned
-    // otherwise else executes
     if (dftefe_path != NULL) 
     {
       sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
