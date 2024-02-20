@@ -24,6 +24,7 @@ set(DFT-EFE-UTILS-SOURCES
 	ExpModX.cpp
 	LogModX.cpp
 	MathFunctions.cpp
+	MathConstants.cpp
 	StringOperations.cpp
 	ConditionalOStream.cpp
 	MPITypes.cpp

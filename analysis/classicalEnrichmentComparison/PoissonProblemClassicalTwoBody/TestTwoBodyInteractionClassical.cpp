@@ -316,7 +316,7 @@ int main(int argc, char** argv)
   // initialize the basis Manager
 
   std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
-   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree, comm);
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feOrder, comm);
 
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisDofHandler->getBasisCenters(dofCoords);
@@ -533,9 +533,9 @@ int main(int argc, char** argv)
       "feOrder_"<<feOrder<<"nQuad_"<<num1DGaussSize<<"hMin_"<<hMin<<".out";
       std::string outputFile = ss.str();
       myfile.open (outputFile, std::ios::out | std::ios::trunc);
-        myfile << "Total Number of dofs : " << basisManager->nGlobalNodes() << "\n";
+        myfile << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
         myfile << "No. of quad points: "<< mpinumQuadraturePoints << "\n";
-        myfile << "Integral of b smear over volume: "<< std::accumulate(mpiReducedChargeDensity.begin(),mpiReducedChargeDensity.end(),0.0) << "\n";
+        myfile << "Integral of b smear over volume: "<< mpiReducedChargeDensity[nAtoms] << "\n";
         myfile << "The electrostatic energy (analy/num) : "<< (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) << "," << (mpiReducedEnergy[nAtoms] - numericalSelfEnergy)  << "\n";
         myfile << "The error in electrostatic energy from analytical self potential: " << 
           (mpiReducedEnergy[nAtoms] + analyticalSelfEnergy) - 1.0/dist << " Relative error: "

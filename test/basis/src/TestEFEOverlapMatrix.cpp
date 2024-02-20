@@ -167,7 +167,7 @@ int main()
             fieldName,
             i);
         tolerances[i] = 1e-3;
-        integralThresholds[i] = 1e-10;
+        integralThresholds[i] = 1e-3;
     }
 
     double smallestCellVolume = 1e-12;
@@ -416,31 +416,31 @@ int main()
       cumulativeBasisDataInCells += dftefe::utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),2);
     }
 
-  int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
-    basisOverlapBlockSTLTmp.data(),
-    basisOverlapBlockSTL.data(),
-    basisOverlapBlockSTLTmp.size(),
-    dftefe::utils::mpi::MPIDouble,
-    dftefe::utils::mpi::MPISum,
-    comm);
-  std::pair<bool, std::string> mpiIsSuccessAndMsg =
-    dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
-  dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
-                        "MPI Error:" + mpiIsSuccessAndMsg.second);
+  // int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+  //   basisOverlapBlockSTLTmp.data(),
+  //   basisOverlapBlockSTL.data(),
+  //   basisOverlapBlockSTLTmp.size(),
+  //   dftefe::utils::mpi::MPIDouble,
+  //   dftefe::utils::mpi::MPISum,
+  //   comm);
+  // std::pair<bool, std::string> mpiIsSuccessAndMsg =
+  //   dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
+  // dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
+  //                       "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-  if(rank == 0)
-  {
-  std::cout << "Enrichment Block : \n";
-  int cc = 0;
-  for (int i = 0 ; i < totalDofs; i++)
-  {
-  for (int j = 0 ; j < totalDofs; j++)
-  {
-    if(basisOverlapBlockSTL[i*totalDofs+j] > 1e-10 && i == totalDofs-1 || j == totalDofs-1)
-      std::cout << i << " " << j << " " << basisOverlapBlockSTL[i*totalDofs+j] << "\n";
-  }
-  }
-  }
+  // if(rank == 0)
+  // {
+  // std::cout << "Enrichment Block : \n";
+  // int cc = 0;
+  // for (int i = 0 ; i < totalDofs; i++)
+  // {
+  // for (int j = 0 ; j < totalDofs; j++)
+  // {
+  //   if(basisOverlapBlockSTL[i*totalDofs+j] > 1e-10 && i == totalDofs-1 || j == totalDofs-1)
+  //     std::cout << i << " " << j << " " << basisOverlapBlockSTL[i*totalDofs+j] << "\n";
+  // }
+  // }
+  // }
 
   dftefe::utils::mpi::MPIBarrier(comm);
 

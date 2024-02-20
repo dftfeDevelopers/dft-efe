@@ -37,10 +37,10 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestInHomogeneousConstraint(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestInHomogeneousConstraint'
+class BuildOnlyTestHomogeneousConstraintMatrix(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestHomogeneousConstraintMatrix'
     build_system = 'CMake'
-    make_opts = ['TestInHomogeneousConstraint']
+    make_opts = ['TestHomogeneousConstraintMatrix']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -88,8 +88,8 @@ class BuildOnlyTestInHomogeneousConstraint(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestInHomogeneousConstraint(rfm.RegressionTest):
-    target_name = 'TestInHomogeneousConstraint'
+class BuildAndRunTestHomogeneousConstraintMatrix(rfm.RegressionTest):
+    target_name = 'TestHomogeneousConstraintMatrix'
     descr = '''A build and run test to verify the accuracy of interpolation to quad points'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -134,11 +134,11 @@ class BuildAndRunTestInHomogeneousConstraint(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestInHomogeneousConstraint.'''
+        BuildAndRunTestHomogeneousConstraintMatrix.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestInHomogeneousConstraint.'''
+        BuildAndRunTestHomogeneousConstraintMatrix.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestInHomogeneousConstraint.'''
+        BuildAndRunTestHomogeneousConstraintMatrix.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,8 +173,8 @@ class BuildAndRunTestInHomogeneousConstraint(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestInHomogeneousConstraint(rfm.RunOnlyRegressionTest):
-    target_name = 'TestInHomogeneousConstraint'
+class RunOnlyTestHomogeneousConstraintMatrix(rfm.RunOnlyRegressionTest):
+    target_name = 'TestHomogeneousConstraintMatrix'
     descr = '''A run only test to verify the accuracy of interpolation'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -211,11 +211,11 @@ class RunOnlyTestInHomogeneousConstraint(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestInHomogeneousConstraint.'''
+        RunOnlyTestHomogeneousConstraintMatrix.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestInHomogeneousConstraint'''
+        RunOnlyTestHomogeneousConstraintMatrix'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestInHomogeneousConstraint'''
+        RunOnlyTestHomogeneousConstraintMatrix'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

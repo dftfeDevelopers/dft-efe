@@ -75,9 +75,9 @@ int main()
     std::vector<bool>                 isPeriodicFlags(dim, false);
     std::vector<dftefe::utils::Point> domainVectors(dim, dftefe::utils::Point(dim, 0.));
 
-    double xmin = 5.0;
-    double ymin = 5.0;
-    double zmin = 5.0;
+    double xmin = 10.0;
+    double ymin = 10.0;
+    double zmin = 10.0;
 
     domainVectors[0][0] = xmin;
     domainVectors[1][1] = ymin;
@@ -152,8 +152,7 @@ int main()
                                                         maxbound,
                                                         cellVerticesVector,
                                                         tolerance,
-                                                        mpi_communicator,
-                                                        numProcs);
+                                                        mpi_communicator);
     std::cout<<"--------------Hello Tester from rank"<<rank<<"-----------------";
     std::cout<<"\n--------------Welcome to TestAtomPartitionSerial-------------------\n";
 

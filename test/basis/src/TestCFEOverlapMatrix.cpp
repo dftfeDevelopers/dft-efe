@@ -90,7 +90,7 @@ int main()
   unsigned int feDegree = 3;
 
   std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
-   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree);
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree, comm);
 
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisDofHandler->getBasisCenters(dofCoords);

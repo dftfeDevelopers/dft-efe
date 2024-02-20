@@ -35,7 +35,7 @@ main()
                                                  domainVectors,
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
-  std::cout << triangulationBase->nCells() << std::endl;
+  std::cout << triangulationBase->nLocalCells() << std::endl;
   dftefe::basis::TriangulationBase::TriangulationCellIterator it =
     triangulationBase->beginLocal();
   unsigned int iCell = 0;

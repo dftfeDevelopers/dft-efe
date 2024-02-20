@@ -2,9 +2,9 @@
 #include <basis/TriangulationDealiiSerial.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
-#include <basis/FEBasisManagerDealii.h>
-#include <basis/FEConstraintsDealii.h>
-#include <basis/FEBasisDataStorageDealii.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
+#include <basis/CFEConstraintsLocalDealii.h>
+#include <basis/CFEBasisDataStorageDealii.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
@@ -19,10 +19,6 @@
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/base/quadrature_lib.h>
-
-
-
-
 
 int main()
 {
@@ -42,47 +38,41 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
 
-  std::shared_ptr<dftefe::basis::FEBasisManager> dofHandler =
-    std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase);
+ unsigned int feDegree = 2;
 
-  unsigned int feDegree = 2;
-
-  dofHandler->reinit(triangulationBase, feDegree);
-
-  std::vector<std::shared_ptr<dftefe::basis::FEConstraintsBase<double>>>
-    constraintsVec ;
-  constraintsVec.resize(1);
-  for ( unsigned int i=0 ;i < constraintsVec.size() ; i++ )
-   constraintsVec[i] = std::make_shared<dftefe::basis::FEConstraintsDealii<double, dftefe::utils::MemorySpace::HOST, dim>>();
-   
-  constraintsVec[0]->clear();
-  constraintsVec[0]->makeHangingNodeConstraint(dofHandler);
-  constraintsVec[0]->setHomogeneousDirichletBC();
-  constraintsVec[0]->close();
+  std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> dofHandler =  
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feDegree);
 
   unsigned int num1DGaussSize =4;
 
-  std::vector<dftefe::quadrature::QuadratureRuleAttributes> quadAttr(1,
-           dftefe::quadrature::QuadratureRuleAttributes(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize));
+  dftefe::quadrature::QuadratureRuleAttributes quadAttr = 
+            dftefe::quadrature::QuadratureRuleAttributes(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
 
 
-  dftefe::basis::FEBasisDataStorageDealii<double, dftefe::utils::MemorySpace::HOST,dim> feBasisData(dofHandler,
-                                                                              constraintsVec,
-                                                                              quadAttr,
-                                                                              true,
-                                                                              false,
-                                                                              false,
-                                                                              false,
-                                                                              false);
+  dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = false;
+
+  // Set up the FE Basis Data Storage
+
+  dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim> 
+    feBasisData (dofHandler, quadAttr, basisAttrMap);
+
+  // evaluate basis data
+    feBasisData.evaluateBasisData(quadAttr, basisAttrMap);
 
   const dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST> &shapeFuncValue =
-    feBasisData.getBasisDataInAllCells(quadAttr[0]);
+    feBasisData.getBasisDataInAllCells();
 
   auto it = shapeFuncValue.begin();
-//  for (auto it = shapeFuncValue.begin(); it != shapeFuncValue.end(); it++)
-//    {
-//      std::cout<<" value = "<<*it<<"\n";
-//    }
+ for (auto it = shapeFuncValue.begin(); it != shapeFuncValue.end(); it++)
+   {
+     std::cout<<" value = "<<*it<<"\n";
+   }
 
 
 

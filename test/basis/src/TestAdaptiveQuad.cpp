@@ -51,7 +51,7 @@ main()
     new dftefe::basis::LinearCellMappingDealii<3>();
 
   std::shared_ptr<dftefe::quadrature::QuadratureRule> quadratureRuleGauss =
-    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(3, 6);
+    std::make_shared<dftefe::quadrature::QuadratureRuleGauss>(3, 4);
   const std::vector<dftefe::utils::Point> &parametricPoints =
     quadratureRuleGauss->getPoints();
   const std::vector<double> &weights = quadratureRuleGauss->getWeights();
@@ -65,10 +65,12 @@ main()
                 << std::endl;
     }
 
-  dftefe::quadrature::QuadratureRuleContainer quadratureRuleContainer(
-    quadratureRuleGauss, triangulationBase, *mapping);
+  dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,4);
 
-  dftefe::basis::TriangulationBase::cellIterator it =
+  dftefe::quadrature::QuadratureRuleContainer quadratureRuleContainer(
+    quadAttr, quadratureRuleGauss, triangulationBase, *mapping);
+
+  std::vector<std::shared_ptr<dftefe::basis::TriangulationCellBase>>::iterator it =
     triangulationBase->beginLocal();
   unsigned int iCell = 0;
   for (; it != triangulationBase->endLocal(); ++it)
@@ -83,17 +85,21 @@ main()
   std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>>
     functions(1, std::make_shared<dftefe::utils::LogModX>(0));
 
-  std::vector<double> tolerances(1, 1e-5);
-  std::vector<double> integralThresholds(1, 1e-11);
+  std::vector<double> tolerances(1, 1e-3);
+  std::vector<double> integralThresholds(1, 1e-3);
   const double        smallestCellVolume = 1e-14;
   const unsigned int  maxRecursion       = 100;
 
+  dftefe::quadrature::QuadratureRuleAttributes quadAttrAdaptive(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
+
   dftefe::quadrature::QuadratureRuleContainer adaptiveQuadratureContainer(
+    quadAttrAdaptive,
     quadratureRuleGauss,
     triangulationBase,
     *mapping,
     *parentToChildCellsManager,
     functions,
+    tolerances,
     tolerances,
     integralThresholds,
     smallestCellVolume,

@@ -27,7 +27,7 @@
 #include <basis/TriangulationBase.h>
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/AtomIdsPartition.h>
-#include <basis/FEBasisManagerDealii.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
 #include <basis/FEBasisManager.h>
 
 // Header for the utils class
@@ -82,9 +82,9 @@ int main()
     std::vector<bool>                 isPeriodicFlags(dim, false);
     std::vector<dftefe::utils::Point> domainVectors(dim, dftefe::utils::Point(dim, 0.));
 
-    double xmin = 3.0;
-    double ymin = 3.0;
-    double zmin = 3.0;
+    double xmin = 10.0;
+    double ymin = 10.0;
+    double zmin = 10.0;
 
     domainVectors[0][0] = xmin;
     domainVectors[1][1] = ymin;
@@ -120,17 +120,17 @@ int main()
     dftefe::size_type feOrder = 1;
 
     //Create the febasismanager object
-    std::shared_ptr<dftefe::basis::FEBasisManager> feBM =
-        std::make_shared<dftefe::basis::FEBasisManagerDealii<dim>>(triangulationBase,feOrder);
+    std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> feBDH =  
+    std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feOrder, mpi_communicator);
 
     dftefe::size_type numLocallyOwnedCells  = triangulationBase->nLocallyOwnedCells();
 
     std::cout<<"--------------Hello Tester from rank "<<rank<<"-----------------"<<numLocallyOwnedCells<<"\n";
 
-    /*auto feBMCellIter = feBM->beginLocallyOwnedCells();
+    auto feBMCellIter = feBDH->beginLocallyOwnedCells();
 
     //get the cellvertices vector
-    for( ; feBMCellIter != feBM->endLocallyOwnedCells(); feBMCellIter++)
+    for( ; feBMCellIter != feBDH->endLocallyOwnedCells(); feBMCellIter++)
     {
         (*feBMCellIter)->getVertices(cellVertices);
         cellVerticesVector.push_back(cellVertices);
@@ -181,13 +181,12 @@ int main()
         atomCoordinatesVec.push_back(coordinates);
         atomSymbol.push_back(symbol);
     }
+    dftefe::utils::mpi::MPIBarrier(mpi_communicator);
         
     // assume the tolerance value
     double tolerance = 1e-6;
 
     // Use the atomidsPartition object
-
-    std::vector<dftefe::size_type> nAtoms;
 
     std::shared_ptr<dftefe::basis::AtomIdsPartition<dim>> atomIdsPartition =
         std::make_shared<dftefe::basis::AtomIdsPartition<dim>>(atomCoordinatesVec,
@@ -195,8 +194,7 @@ int main()
                                                         maxbound,
                                                         cellVerticesVector,
                                                         tolerance,
-                                                        mpi_communicator,
-                                                        numProcs);
+                                                        mpi_communicator);
 
     for( auto i:atomIdsPartition->oldAtomIds())
         std::cout<<"oldAtomIds of "<<rank<<"->"<<i<<"\n";
@@ -211,7 +209,7 @@ int main()
         std::cout<<"nAtomIdsInProcessor "<<"->"<<i<<",";
     std::cout<<"\n";
     for( auto i:atomIdsPartition->locallyOwnedAtomIds())
-        std::cout<<"locallyOwnedAtomIds of "<<rank<<"->"<<i<<"\n";*/
+        std::cout<<"locallyOwnedAtomIds of "<<rank<<"->"<<i<<"\n";
 
     dftefe::utils::mpi::MPIFinalize();
 #endif
