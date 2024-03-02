@@ -20,7 +20,8 @@ if (NOT TARGET dft-efe-linalg)
 	    LinearSolver.cpp
 	    CGLinearSolver.cpp
         PreconditionerJacobi.cpp
-        PreconditionerNone.cpp)
+        PreconditionerNone.cpp
+        OrthonormalizationFunctions.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

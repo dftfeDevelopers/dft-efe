@@ -91,7 +91,7 @@ namespace dftefe
                      const double          absoluteTol,
                      const double          relativeTol,
                      const double          divergenceTol,
-                     LinearAlgebraProfiler profiler);
+                     LinearAlgebraProfiler profiler = LinearAlgebraProfiler());
 
       /**
        * @brief Default Destructor

@@ -223,15 +223,15 @@ namespace dftefe
           std::vector<double> rNorm(0);
           rNorm = r.l2Norms();
 
-          if (rank == 0)
-            {
-              if (iter % 100 == 0)
-                {
-                  for (unsigned int i = 0; i < numComponents; i++)
-                    std::cout << rNorm[i] << ",";
-                  std::cout << "\n";
-                }
-            }
+          // if (rank == 0)
+          //   {
+          //     if (iter % 100 == 0)
+          //       {
+          //         for (unsigned int i = 0; i < numComponents; i++)
+          //           std::cout << rNorm[i] << ",";
+          //         std::cout << "\n";
+          //       }
+          //   }
 
           std::string msg;
           for (size_type i = 0; i < numComponents; i++)
