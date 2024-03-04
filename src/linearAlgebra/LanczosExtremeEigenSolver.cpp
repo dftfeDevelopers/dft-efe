@@ -22,39 +22,4 @@
 /*
  * @author Avirup Sircar
  */
-
-#ifndef dftefeOrthonormalizationFunctions_h
-#define dftefeOrthonormalizationFunctions_h
-
-#include <utils/TypeConfig.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <string>
-#include <utils/MemorySpaceType.h>
-#include <linearAlgebra/Vector.h>
-#include <linearAlgebra/MultiVector.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
-
-namespace dftefe
-{
-  namespace linearAlgebra
-  {
-    template <typename ValueType, utils::MemorySpace memorySpace>
-    class OrthonormalizationFunctions
-    {
-    public:
-
-      /**
-       *@brief Default Destructor
-       *
-       */
-      ~OrthonormalizationFunctions() = default;
-
-      static void
-      CholeskyGramSchmidt(const MultiVector<ValueType, memorySpace> &X,
-                          MultiVector<ValueType, memorySpace> &orthogonalizedX);
-
-    }; // end of class OrthonormalizationFunctions
-  }    // end of namespace linearAlgebra
-} // end of namespace dftefe
-#include <linearAlgebra/OrthonormalizationFunctions.t.cpp>
-#endif
+#include "LanczosExtremeEigenSolver.h"
