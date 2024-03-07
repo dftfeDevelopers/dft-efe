@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Avirup Sircar
  */
 
 #ifndef dftefeLinearAlgebraTypes_h
@@ -49,7 +49,14 @@ namespace dftefe
       LBFGS
     };
 
-    enum class Error
+    enum class ParallelPrintType
+    {
+      NONE,
+      ROOT_ONLY,
+      ALL
+    };
+
+    enum class LinearSolverErrorCode
     {
       SUCCESS,
       FAILED_TO_CONVERGE,
@@ -58,26 +65,76 @@ namespace dftefe
       OTHER_ERROR
     };
 
-    enum class ParallelPrintType
+    enum class EigenSolverErrorCode
     {
-      NONE,
-      ROOT_ONLY,
-      ALL
+      SUCCESS,
+      LAPACK_STEQR_ERROR,
+      LANCZOS_BETA_ZERO,
+      OTHER_ERROR
+    };
+
+    enum class OrthonormalizationErrorCode
+    {
+      SUCCESS,
+      NON_ORTHONORMALIZABLE_MULTIVECTOR
+    };
+
+    struct LinearSolverError
+    {
+      bool                  isSuccess;
+      LinearSolverErrorCode err;
+      std::string           msg;
+    };
+
+    struct EigenSolverError
+    {
+      bool                 isSuccess;
+      EigenSolverErrorCode err;
+      std::string          msg;
+    };
+
+    struct OrthonormalizationError
+    {
+      bool                        isSuccess;
+      OrthonormalizationErrorCode err;
+      std::string                 msg;
     };
 
     /**
      * @brief A class to map Error to a message.
      * @note: This class only has static const data members.
      */
-    class ErrorMsg
+    class LinearSolverErrorMsg
     {
     public:
-      static std::pair<bool, std::string>
-      isSuccessAndMsg(const Error &error);
+      static LinearSolverError
+      isSuccessAndMsg(const LinearSolverErrorCode &errorCode);
 
     private:
-      static const std::map<Error, std::string> d_errToMsgMap;
-    }; // end of class ErrorMsg
-  }    // end of namespace linearAlgebra
+      static const std::map<LinearSolverErrorCode, std::string> d_errToMsgMap;
+    }; // end of class LinearSolverErrorMsg
+
+    class EigenSolverErrorMsg
+    {
+    public:
+      static EigenSolverError
+      isSuccessAndMsg(const EigenSolverErrorCode &errorCode);
+
+    private:
+      static const std::map<EigenSolverErrorCode, std::string> d_errToMsgMap;
+    }; // end of class EigenSolverErrorMsg
+
+    class OrthonormalizationErrorMsg
+    {
+    public:
+      static OrthonormalizationError
+      isSuccessAndMsg(const OrthonormalizationErrorCode &errorCode);
+
+    private:
+      static const std::map<OrthonormalizationErrorCode, std::string>
+        d_errToMsgMap;
+    }; // end of class OrthonormalizationErrorMsg
+
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeLinearAlgebraTypes_h

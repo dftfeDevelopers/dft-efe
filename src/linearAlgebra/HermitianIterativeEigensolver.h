@@ -32,7 +32,9 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/IdentityOperatorContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
 {
@@ -61,9 +63,8 @@ namespace dftefe
     class HermitianIterativeEigensolver
     {
     public:
-      using OpContext = typename OperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>;
+      using OpContext =
+        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
       using ScalarType = blasLapack::real_type<ValueType>;
@@ -71,18 +72,17 @@ namespace dftefe
     public:
       virtual ~HermitianIterativeEigensolver() = default;
 
-      virtual Error
+      virtual EigenSolverError
       solve(const OpContext &                                   A,
             std::vector<ScalarType> &                           eigenValues,
             linearAlgebra::MultiVector<ValueType, memorySpace> &eigenVectors,
             bool             computeEigenVectors = false,
-            const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+            const OpContext &B    = IdentityOperatorContext<ValueTypeOperator,
                                                          ValueTypeOperand,
                                                          memorySpace>(),
-            const OpContext &BInv =
-              IdentityOperatorContext<ValueTypeOperator,
-                                      ValueTypeOperand,
-                                      memorySpace>()) = 0;
+            const OpContext &BInv = IdentityOperatorContext<ValueTypeOperator,
+                                                            ValueTypeOperand,
+                                                            memorySpace>()) = 0;
 
     }; // end of class HermitianIterativeEigensolver
   }    // end of namespace linearAlgebra

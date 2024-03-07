@@ -32,12 +32,12 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <linearAlgebra/EigenSolver.h>
+#include <linearAlgebra/HermitianIterativeEigensolver.h>
 #include <memory>
 
 namespace dftefe
 {
-  namespace physics
+  namespace linearAlgebra
   {
     /**
      *@brief A derived class of OperatorContext to encapsulate
@@ -68,25 +68,30 @@ namespace dftefe
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
       using RealType = blasLapack::real_type<ValueType>;
-      using OpContext = HermitianIterativeEigensolver<ValueTypeOperator,
-                                             ValueTypeOperand,
-                                             memorySpace>::OpContext;
+      using OpContext =
+        typename HermitianIterativeEigensolver<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace>::OpContext;
 
       /**
        * @brief Constructor
        */
-      LanczosExtremeEigenSolver(const size_type                              maxKrylovSubspaceSize,
+      LanczosExtremeEigenSolver(
+        const size_type                              maxKrylovSubspaceSize,
         const size_type                              numLowerExtermeEigenValues,
         const size_type                              numUpperExtermeEigenValues,
         std::vector<double>                          tolerance,
-        const Vector<ValueTypeOperand, memorySpace>  &initialGuess);
+        double                                       lanczosBetaTolerance,
+        const Vector<ValueTypeOperand, memorySpace> &initialGuess);
 
-      LanczosExtremeEigenSolver(const size_type     maxKrylovSubspaceSize,
-                                const size_type     numLowerExtermeEigenValues,
-                                const size_type     numUpperExtermeEigenValues,
-                                std::vector<double> tolerance,
-                                std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-                                std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      LanczosExtremeEigenSolver(
+        const size_type     maxKrylovSubspaceSize,
+        const size_type     numLowerExtermeEigenValues,
+        const size_type     numUpperExtermeEigenValues,
+        std::vector<double> tolerance,
+        double              lanczosBetaTolerance,
+        std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
        *@brief Default Destructor
@@ -99,21 +104,24 @@ namespace dftefe
              const size_type     numLowerExtermeEigenValues,
              const size_type     numUpperExtermeEigenValues,
              std::vector<double> tolerance,
+             double              lanczosBetaTolerance,
              const Vector<ValueTypeOperand, memorySpace> &initialGuess);
 
       void
-      reinit(const size_type     maxKrylovSubspaceSize,
-             const size_type     numLowerExtermeEigenValues,
-             const size_type     numUpperExtermeEigenValues,
-             std::vector<double> tolerance,
-             std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      reinit(
+        const size_type     maxKrylovSubspaceSize,
+        const size_type     numLowerExtermeEigenValues,
+        const size_type     numUpperExtermeEigenValues,
+        std::vector<double> tolerance,
+        double              lanczosBetaTolerance,
+        std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
-      Error
-      solve(const OpContext &                                   A,
-            std::vector<RealType> &                           eigenValues,
+      EigenSolverError
+      solve(const OpContext &                    A,
+            std::vector<RealType> &              eigenValues,
             MultiVector<ValueType, memorySpace> &eigenVectors,
-            bool             computeEigenVectors = false,
+            bool                                 computeEigenVectors = false,
             const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                          ValueTypeOperand,
                                                          memorySpace>(),
@@ -122,16 +130,17 @@ namespace dftefe
                                       ValueTypeOperand,
                                       memorySpace>()) override;
 
-      private:
+    private:
       Vector<ValueType, memorySpace> d_initialGuess;
-      size_type     d_maxKrylovSubspaceSize;
-      size_type     d_numLowerExtermeEigenValues;
-      size_type     d_numUpperExtermeEigenValues;
-      std::vector<double> d_tolerance;
-    
+      size_type                      d_maxKrylovSubspaceSize;
+      size_type                      d_numLowerExtermeEigenValues;
+      size_type                      d_numUpperExtermeEigenValues;
+      std::vector<double>            d_tolerance;
+      double                         d_lanczosBetaTolerance;
+
 
     }; // end of class LanczosExtremeEigenSolver
-  }    // end of namespace physics
+  }    // namespace linearAlgebra
 } // end of namespace dftefe
-#include <physics/LanczosExtremeEigenSolver.t.cpp>
+#include <linearAlgebra/LanczosExtremeEigenSolver.t.cpp>
 #endif // dftefeLanczosExtremeEigenSolver_h

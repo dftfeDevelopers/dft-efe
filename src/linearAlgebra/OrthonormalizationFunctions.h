@@ -42,14 +42,13 @@ namespace dftefe
     class OrthonormalizationFunctions
     {
     public:
-
       /**
        *@brief Default Destructor
        *
        */
       ~OrthonormalizationFunctions() = default;
 
-      static void
+      static OrthonormalizationError
       CholeskyGramSchmidt(const MultiVector<ValueType, memorySpace> &X,
                           MultiVector<ValueType, memorySpace> &orthogonalizedX);
 

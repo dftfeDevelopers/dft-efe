@@ -110,7 +110,7 @@ namespace dftefe
        *  \f$\mathbf{x}$\f
        *
        */
-      Error
+      LinearSolverError
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
           &linearSolverFunction) override;

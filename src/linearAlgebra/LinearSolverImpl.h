@@ -76,7 +76,7 @@ namespace dftefe
        *  \f$\mathbf{x}$\f
        *
        */
-      virtual Error
+      virtual LinearSolverError
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
           &linearSolverFunction) = 0;

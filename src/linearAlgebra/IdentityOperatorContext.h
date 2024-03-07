@@ -29,6 +29,7 @@
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {

@@ -157,20 +157,36 @@ namespace dftefe
     } // namespace OrthonormalizationFunctionsInternal
 
     template <typename ValueType, utils::MemorySpace memorySpace>
-    void
+    OrthonormalizationError
     OrthonormalizationFunctions<ValueType, memorySpace>::CholeskyGramSchmidt(
       const MultiVector<ValueType, memorySpace> &X,
       MultiVector<ValueType, memorySpace> &      orthogonalizedX)
     {
+      OrthonormalizationErrorCode err;
       orthogonalizedX.setValue((ValueType)0.0);
-      OrthonormalizationFunctionsInternal::CholeskyGramSchmidtImpl<ValueType,
-                                                                   memorySpace>(
-        X.locallyOwnedSize(),
-        X.getNumberComponents(),
-        X.data(),
-        orthogonalizedX.data(),
-        *X.getLinAlgOpContext(),
-        X.getMPIPatternP2P()->mpiCommunicator());
+
+      if (X.globalSize() < X.getNumberComponents())
+        {
+          err = OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR;
+        }
+      else
+        {
+          OrthonormalizationFunctionsInternal::CholeskyGramSchmidtImpl<
+            ValueType,
+            memorySpace>(X.locallyOwnedSize(),
+                         X.getNumberComponents(),
+                         X.data(),
+                         orthogonalizedX.data(),
+                         *X.getLinAlgOpContext(),
+                         X.getMPIPatternP2P()->mpiCommunicator());
+
+          err = OrthonormalizationErrorCode::SUCCESS;
+        }
+
+      OrthonormalizationError retunValue =
+        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+
+      return retunValue;
     }
 
   } // end of namespace linearAlgebra

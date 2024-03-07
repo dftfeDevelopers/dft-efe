@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Avirup Sircar
  */
 
 #include <linearAlgebra/LinearAlgebraTypes.h>
@@ -29,28 +29,98 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    const std::map<Error, std::string> ErrorMsg::d_errToMsgMap = {
-      {Error::SUCCESS, "Success"},
-      {Error::FAILED_TO_CONVERGE, "Failed to converge"},
-      {Error::RESIDUAL_DIVERGENCE, "Residual diverged"},
-      {Error::DIVISON_BY_ZERO, "Division by zero encountered"},
-      {Error::OTHER_ERROR, "Other error encountered"}};
+    const std::map<LinearSolverErrorCode, std::string>
+      LinearSolverErrorMsg::d_errToMsgMap = {
+        {LinearSolverErrorCode::SUCCESS, "Success"},
+        {LinearSolverErrorCode::FAILED_TO_CONVERGE, "Failed to converge"},
+        {LinearSolverErrorCode::RESIDUAL_DIVERGENCE, "Residual diverged"},
+        {LinearSolverErrorCode::DIVISON_BY_ZERO,
+         "Division by zero encountered"},
+        {LinearSolverErrorCode::OTHER_ERROR, "Other error encountered"}};
 
-    std::pair<bool, std::string>
-    ErrorMsg::isSuccessAndMsg(const Error &error)
+    const std::map<EigenSolverErrorCode, std::string>
+      EigenSolverErrorMsg::d_errToMsgMap = {
+        {EigenSolverErrorCode::SUCCESS, "Success"},
+        {EigenSolverErrorCode::LAPACK_STEQR_ERROR,
+         "LAPACK STEQR failed with the error code "},
+        {EigenSolverErrorCode::LANCZOS_BETA_ZERO,
+         "Could not create more B-orthonormal krylov subspace vectors in Lanczos."},
+        {EigenSolverErrorCode::OTHER_ERROR, "Other error encountered"}};
+
+    const std::map<OrthonormalizationErrorCode, std::string>
+      OrthonormalizationErrorMsg::d_errToMsgMap = {
+        {OrthonormalizationErrorCode::SUCCESS, "Success"},
+        {OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR,
+         "Failed to converge"}};
+
+    LinearSolverError
+    LinearSolverErrorMsg::isSuccessAndMsg(const LinearSolverErrorCode &error)
     {
-      std::pair<bool, std::string> returnValue(false, "");
-      auto                         it = d_errToMsgMap.find(error);
+      LinearSolverError ret;
+      auto              it = d_errToMsgMap.find(error);
       if (it != d_errToMsgMap.end())
-        returnValue = std::make_pair(error == Error::SUCCESS, it->second);
-
+        {
+          if (error == LinearSolverErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+          // returnValue = std::make_pair(error == Error::SUCCESS, it->second);
+        }
       else
         {
           utils::throwException<utils::InvalidArgument>(
-            false, "Invalid linearAlgebra::Error passed.");
+            false, "Invalid linearAlgebra::LinearSolverErrorCode passed.");
         }
-
-      return returnValue;
+      return ret;
     }
+
+    EigenSolverError
+    EigenSolverErrorMsg::isSuccessAndMsg(const EigenSolverErrorCode &error)
+    {
+      EigenSolverError ret;
+      auto             it = d_errToMsgMap.find(error);
+      if (it != d_errToMsgMap.end())
+        {
+          if (error == EigenSolverErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false, "Invalid linearAlgebra::EigenSolverErrorCode passed.");
+        }
+      return ret;
+    }
+
+    OrthonormalizationError
+    OrthonormalizationErrorMsg::isSuccessAndMsg(
+      const OrthonormalizationErrorCode &error)
+    {
+      OrthonormalizationError ret;
+      auto                    it = d_errToMsgMap.find(error);
+      if (it != d_errToMsgMap.end())
+        {
+          if (error == OrthonormalizationErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false,
+            "Invalid linearAlgebra::OrthonormalizationErrorCode passed.");
+        }
+      return ret;
+    }
+
   } // namespace linearAlgebra
 } // namespace dftefe
