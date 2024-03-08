@@ -81,17 +81,18 @@ namespace dftefe
         const size_type                              maxKrylovSubspaceSize,
         const size_type                              numLowerExtermeEigenValues,
         const size_type                              numUpperExtermeEigenValues,
-        std::vector<double>                          &tolerance,
+        std::vector<double> &                        tolerance,
         double                                       lanczosBetaTolerance,
         const Vector<ValueTypeOperand, memorySpace> &initialGuess);
 
       LanczosExtremeEigenSolver(
-        const size_type     maxKrylovSubspaceSize,
-        const size_type     numLowerExtermeEigenValues,
-        const size_type     numUpperExtermeEigenValues,
+        const size_type      maxKrylovSubspaceSize,
+        const size_type      numLowerExtermeEigenValues,
+        const size_type      numUpperExtermeEigenValues,
         std::vector<double> &tolerance,
-        double              lanczosBetaTolerance,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        double               lanczosBetaTolerance,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
@@ -101,22 +102,22 @@ namespace dftefe
       ~LanczosExtremeEigenSolver() = default;
 
       void
-      reinit(const size_type     maxKrylovSubspaceSize,
-             const size_type     numLowerExtermeEigenValues,
-             const size_type     numUpperExtermeEigenValues,
+      reinit(const size_type      maxKrylovSubspaceSize,
+             const size_type      numLowerExtermeEigenValues,
+             const size_type      numUpperExtermeEigenValues,
              std::vector<double> &tolerance,
-             double              lanczosBetaTolerance,
+             double               lanczosBetaTolerance,
              const Vector<ValueTypeOperand, memorySpace> &initialGuess);
 
       void
-      reinit(
-        const size_type     maxKrylovSubspaceSize,
-        const size_type     numLowerExtermeEigenValues,
-        const size_type     numUpperExtermeEigenValues,
-        std::vector<double> &tolerance,
-        double              lanczosBetaTolerance,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      reinit(const size_type      maxKrylovSubspaceSize,
+             const size_type      numLowerExtermeEigenValues,
+             const size_type      numUpperExtermeEigenValues,
+             std::vector<double> &tolerance,
+             double               lanczosBetaTolerance,
+             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -126,9 +127,10 @@ namespace dftefe
             const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                          ValueTypeOperand,
                                                          memorySpace>(),
-            const OpContext &BInv = IdentityOperatorContext<ValueTypeOperator,
-                                                         ValueTypeOperand,
-                                                         memorySpace>()) override;
+            const OpContext &BInv =
+              IdentityOperatorContext<ValueTypeOperator,
+                                      ValueTypeOperand,
+                                      memorySpace>()) override;
 
     private:
       Vector<ValueType, memorySpace> d_initialGuess;

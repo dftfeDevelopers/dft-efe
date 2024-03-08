@@ -154,8 +154,10 @@ int main()
   size_type numOwnedIndices = 10;
   size_type maxNumGhostIndices = 0;
   size_type numComponents = 1;
+  size_type numEigWantedLow = 3;
+  size_type numEigWantedUp = 3;
  
-  std::srand(std::time(nullptr)*rank);
+  std::srand(std::time(nullptr)*(rank+1));
   const global_size_type numGlobalIndices = numProcs*numOwnedIndices;
   const global_size_type ownedIndexStart = rank*numOwnedIndices;
   const global_size_type ownedIndexEnd = ownedIndexStart + numOwnedIndices;
@@ -187,21 +189,7 @@ int main()
       (locallyOwnedRange, ghostIndices, 
         utils::mpi::MPICommWorld);
 
-  linearAlgebra::MultiVector<ValueType, Host> X(mpiPatternP2P,linAlgOpContext,numComponents);
-
-  size_type vecSize = X.locallyOwnedSize();
-  size_type numVec = X.getNumberComponents();
-  global_size_type globalSize = X.globalSize();
-
-  for(size_type i = 0 ; i < vecSize ; i++)
-  {
-    for(size_type j = 0 ; j < numVec ; j++)
-    {
-      *(X.data()+i*numVec+j) = static_cast<ValueType>(std::rand()) / RAND_MAX;
-    }
-  }
-
-  X.updateGhostValues();
+  global_size_type globalSize = numGlobalIndices;
 
   std::vector<ValueType> colMajorA(globalSize*globalSize, 0.0);
   dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
@@ -240,31 +228,52 @@ int main()
     = std::make_shared<OperatorContextA<ValueType, ValueType>> 
       (colMajorA, globalSize);
 
-  std::vector<ValueType> tolerance(2);
-  tolerance[0] = 1e-2;
-  tolerance[1] = 1e-2;
+  
+  std::vector<ValueType> tolerance(numEigWantedLow + numEigWantedUp);
+  for(auto &i : tolerance)
+    i = 1e-2;
 
   std::shared_ptr<linearAlgebra::HermitianIterativeEigenSolver<ValueType, ValueType, Host>> lanczos
     = std::make_shared<linearAlgebra::LanczosExtremeEigenSolver<ValueType, ValueType, Host>> 
         (40,
-         1,
-         1,
+         numEigWantedLow,
+         numEigWantedUp,
          tolerance,
          1e-8,
          mpiPatternP2P,
          linAlgOpContext);
 
   linearAlgebra::MultiVector<ValueType, Host> eigenVectors;
-  std::vector<ValueType> eigenValues(2);
+  std::vector<ValueType> eigenValues(numEigWantedLow+numEigWantedUp);
   lanczos->solve(*opContextA,
                   eigenValues,
                   eigenVectors);
 
-  std::cout << "EigenValues: " << eigenValues[0] << "," << eigenValues[1] << "\n";
-
+  std::cout << "EigenValues: ";
+  for(auto i : eigenValues)
+  {
+    std::cout << i << ",";
+  }
+  std::cout << "\n";
 
 
 /*
+
+  linearAlgebra::MultiVector<ValueType, Host> X(mpiPatternP2P,linAlgOpContext,numComponents);
+
+  size_type vecSize = X.locallyOwnedSize();
+  size_type numVec = X.getNumberComponents();
+
+  for(size_type i = 0 ; i < vecSize ; i++)
+  {
+    for(size_type j = 0 ; j < numVec ; j++)
+    {
+      *(X.data()+i*numVec+j) = static_cast<ValueType>(std::rand()) / RAND_MAX;
+    }
+  }
+
+  X.updateGhostValues();
+
   linearAlgebra::MultiVector<ValueType, Host> Y(X, (ValueType)0.0);
 
   opContextA->apply(X,Y);

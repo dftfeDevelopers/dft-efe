@@ -38,7 +38,6 @@ namespace dftefe
   {
     namespace LanczosExtremeEigenSolverInternal
     {
-  
       template <typename T>
       class generate
       {
@@ -47,7 +46,7 @@ namespace dftefe
         randomNumber()
         {
           T retVal;
-          retVal = static_cast<T>((std::rand()) / RAND_MAX);
+          retVal = static_cast<T>(std::rand()) / RAND_MAX;
           return retVal;
         }
       };
@@ -59,10 +58,10 @@ namespace dftefe
         inline static std::complex<double>
         randomNumber()
         {
-        std::complex<double> retVal;
-        retVal.real(static_cast<double>((std::rand()) / RAND_MAX));
-        retVal.imag(static_cast<double>((std::rand()) / RAND_MAX));
-        return retVal;
+          std::complex<double> retVal;
+          retVal.real(static_cast<double>(std::rand()) / RAND_MAX);
+          retVal.imag(static_cast<double>(std::rand()) / RAND_MAX);
+          return retVal;
         }
       };
 
@@ -73,10 +72,10 @@ namespace dftefe
         inline static std::complex<float>
         randomNumber()
         {
-        std::complex<float> retVal;
-        retVal.real(static_cast<float>((std::rand()) / RAND_MAX));
-        retVal.imag(static_cast<float>((std::rand()) / RAND_MAX));
-        return retVal;
+          std::complex<float> retVal;
+          retVal.real(static_cast<float>(std::rand()) / RAND_MAX);
+          retVal.imag(static_cast<float>(std::rand()) / RAND_MAX);
+          return retVal;
         }
       };
 
@@ -92,7 +91,7 @@ namespace dftefe
         const size_type                              maxKrylovSubspaceSize,
         const size_type                              numLowerExtermeEigenValues,
         const size_type                              numUpperExtermeEigenValues,
-        std::vector<double>                          &tolerance,
+        std::vector<double> &                        tolerance,
         double                                       lanczosBetaTolerance,
         const Vector<ValueTypeOperand, memorySpace> &initialGuess)
     {
@@ -111,13 +110,14 @@ namespace dftefe
                               ValueTypeOperand,
                               memorySpace>::
       LanczosExtremeEigenSolver(
-        const size_type     maxKrylovSubspaceSize,
-        const size_type     numLowerExtermeEigenValues,
-        const size_type     numUpperExtermeEigenValues,
+        const size_type      maxKrylovSubspaceSize,
+        const size_type      numLowerExtermeEigenValues,
+        const size_type      numUpperExtermeEigenValues,
         std::vector<double> &tolerance,
-        double              lanczosBetaTolerance,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>>           linAlgOpContext)
+        double               lanczosBetaTolerance,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       reinit(maxKrylovSubspaceSize,
              numLowerExtermeEigenValues,
@@ -135,14 +135,17 @@ namespace dftefe
     LanczosExtremeEigenSolver<ValueTypeOperator,
                               ValueTypeOperand,
                               memorySpace>::
-      reinit(const size_type     maxKrylovSubspaceSize,
-             const size_type     numLowerExtermeEigenValues,
-             const size_type     numUpperExtermeEigenValues,
+      reinit(const size_type      maxKrylovSubspaceSize,
+             const size_type      numLowerExtermeEigenValues,
+             const size_type      numUpperExtermeEigenValues,
              std::vector<double> &tolerance,
-             double              lanczosBetaTolerance,
+             double               lanczosBetaTolerance,
              const Vector<ValueTypeOperand, memorySpace> &initialGuess)
     {
-      d_maxKrylovSubspaceSize      = maxKrylovSubspaceSize;
+      d_maxKrylovSubspaceSize      = ((global_size_type)maxKrylovSubspaceSize <=
+                                 d_initialGuess.globalSize()) ?
+                                       maxKrylovSubspaceSize :
+                                       d_initialGuess.globalSize();
       d_initialGuess               = initialGuess;
       d_numLowerExtermeEigenValues = numLowerExtermeEigenValues;
       d_numUpperExtermeEigenValues = numUpperExtermeEigenValues;
@@ -157,39 +160,47 @@ namespace dftefe
     LanczosExtremeEigenSolver<ValueTypeOperator,
                               ValueTypeOperand,
                               memorySpace>::
-      reinit(
-        const size_type     maxKrylovSubspaceSize,
-        const size_type     numLowerExtermeEigenValues,
-        const size_type     numUpperExtermeEigenValues,
-        std::vector<double> &tolerance,
-        double              lanczosBetaTolerance,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>>           linAlgOpContext)
+      reinit(const size_type      maxKrylovSubspaceSize,
+             const size_type      numLowerExtermeEigenValues,
+             const size_type      numUpperExtermeEigenValues,
+             std::vector<double> &tolerance,
+             double               lanczosBetaTolerance,
+             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       // Get the rank of the process
       int rank;
       utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
+      std::srand(std::time(nullptr) * (rank + 1));
 
-      Vector<ValueType, memorySpace> initialGuess(mpiPatternP2P, linAlgOpContext);
+      Vector<ValueType, memorySpace> initialGuess(mpiPatternP2P,
+                                                  linAlgOpContext);
 
       d_initialGuess = initialGuess;
 
       std::vector<ValueType> initialGuessSTL(d_initialGuess.locallyOwnedSize());
 
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        d_initialGuess.locallyOwnedSize(), initialGuessSTL.data(), d_initialGuess.data());
+        d_initialGuess.locallyOwnedSize(),
+        initialGuessSTL.data(),
+        d_initialGuess.data());
 
-      LanczosExtremeEigenSolverInternal::generate<ValueType> rand;
+      LanczosExtremeEigenSolverInternal::generate<ValueType> generateNumber;
       // todo - implement random class in utils and modify this
       for (size_type i = 0; i < d_initialGuess.locallyOwnedSize(); i++)
         {
-          *(initialGuessSTL.data() + i) = rand.randomNumber();
+          *(initialGuessSTL.data() + i) = generateNumber.randomNumber();
         }
 
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         initialGuessSTL.size(), d_initialGuess.data(), initialGuessSTL.data());
 
-      d_maxKrylovSubspaceSize      = maxKrylovSubspaceSize;
+      d_maxKrylovSubspaceSize = ((global_size_type)maxKrylovSubspaceSize <=
+                                 d_initialGuess.globalSize()) ?
+                                  maxKrylovSubspaceSize :
+                                  d_initialGuess.globalSize();
+
       d_numLowerExtermeEigenValues = numLowerExtermeEigenValues;
       d_numUpperExtermeEigenValues = numUpperExtermeEigenValues;
       d_tolerance                  = tolerance;
@@ -222,15 +233,16 @@ namespace dftefe
 
       eigenValues.clear();
       std::vector<RealType> eigenValuesPrev(0);
-      std::vector<bool>     isToleranceReached;
-      bool                  isSuccess = false;
-      size_type             krylovSubspaceSize;
+      eigenValuesPrev.resize(numWantedEigenValues, (RealType)0);
+      std::vector<bool> isToleranceReached(numWantedEigenValues, false);
+      bool              isSuccess = false;
+      size_type         krylovSubspaceSize;
 
       std::vector<RealType> alphaVec(0), betaVec(0), eigenValuesIter(0),
         betaVecTemp(0);
-      std::vector<ValueType> alpha(1), beta(1);
+      std::vector<ValueType> alpha(1, (ValueType)0), beta(1, (ValueType)0);
 
-      ValueType ones = (ValueType)1.0;
+      ValueType ones = (ValueType)1.0, nBeta, nAlpha;
 
       Vector<ValueType, memorySpace> temp(d_initialGuess, 0.0);
       Vector<ValueType, memorySpace> v(d_initialGuess, 0.0);
@@ -251,7 +263,7 @@ namespace dftefe
         wantedEigenVectorsKrylovSubspace(0);
 
       EigenSolverErrorCode err = EigenSolverErrorCode::OTHER_ERROR;
-      retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+      retunValue               = EigenSolverErrorMsg::isSuccessAndMsg(err);
 
       // normalize the initialGuess with B norm set q = b/norm
       // compute B-norm = (initGuess)^TB(initGuess)
@@ -261,15 +273,17 @@ namespace dftefe
       dot<ValueType, ValueType, memorySpace>(d_initialGuess,
                                              temp,
                                              alpha,
-                                             blasLapack::ScalarOp::Conj, 
+                                             blasLapack::ScalarOp::Conj,
                                              blasLapack::ScalarOp::Identity);
 
-      std::cout << "alpha[0]: "<<alpha[0]<<"\n";
+      alpha[0] = std::sqrt(alpha[0]);
 
       std::vector<ValueType> initialGuessSTL(d_initialGuess.locallyOwnedSize());
 
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        d_initialGuess.locallyOwnedSize(), initialGuessSTL.data(), d_initialGuess.data());
+        d_initialGuess.locallyOwnedSize(),
+        initialGuessSTL.data(),
+        d_initialGuess.data());
 
       for (size_type h = 0; h < d_initialGuess.locallyOwnedSize(); h++)
         {
@@ -278,7 +292,6 @@ namespace dftefe
 
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         qSTL.size(), q.data(), qSTL.data());
-
 
       for (size_type iter = 1; iter <= d_maxKrylovSubspaceSize; iter++)
         {
@@ -295,7 +308,11 @@ namespace dftefe
           // get \alpha = q_i^TAq_i
 
           dot<ValueType, ValueType, memorySpace>(
-            q, temp, alpha, blasLapack::ScalarOp::Conj, blasLapack::ScalarOp::Identity);
+            q,
+            temp,
+            alpha,
+            blasLapack::ScalarOp::Conj,
+            blasLapack::ScalarOp::Identity);
 
           alphaVec.push_back((RealType)alpha[0]);
 
@@ -304,18 +321,6 @@ namespace dftefe
               krylovSubspaceSize = iter;
               eigenValuesIter    = alphaVec;
               betaVecTemp        = betaVec;
-                std::cout << "alphavec: ";
-                for(auto i : alphaVec)
-                {
-                  std::cout << i << ",";
-                }
-                std::cout << "\n";
-                std::cout << "betavec: ";
-                for(auto i : betaVec)
-                {
-                  std::cout << i << ",";
-                }
-                std::cout << "\n";
               if (computeEigenVectors)
                 {
                   eigenVectorsKrylovSubspace.resize(
@@ -331,9 +336,9 @@ namespace dftefe
 
                   if (lapackReturn != 0)
                     {
-                      err = EigenSolverErrorCode::LAPACK_STEQR_ERROR;
+                      err        = EigenSolverErrorCode::LAPACK_STEQR_ERROR;
                       retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                      retunValue.msg += std::to_string(lapackReturn);                    
+                      retunValue.msg += std::to_string(lapackReturn);
                       break;
                     }
                 }
@@ -349,7 +354,7 @@ namespace dftefe
 
                   if (lapackReturn != 0)
                     {
-                      err = EigenSolverErrorCode::LAPACK_STEQR_ERROR;
+                      err        = EigenSolverErrorCode::LAPACK_STEQR_ERROR;
                       retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
                       retunValue.msg += std::to_string(lapackReturn);
                       break;
@@ -357,15 +362,20 @@ namespace dftefe
                 }
 
               eigenValues.clear();
-              eigenValuesPrev.clear();
 
               // To store the sliced vector
               eigenValues.resize(numWantedEigenValues);
-              eigenValuesPrev.resize(numWantedEigenValues, (RealType)0);
+
+              // std::cout << "eigenValuesIter: ";
+              // for(auto i : eigenValuesIter)
+              // {
+              //   std::cout << i << ",";
+              // }
+              // std::cout << "\n";
 
               auto start = eigenValuesIter.begin();
               auto end =
-                eigenValuesIter.end() + d_numLowerExtermeEigenValues + 1;
+                eigenValuesIter.begin() + d_numLowerExtermeEigenValues + 1;
 
               std::copy(start, end, eigenValues.begin());
 
@@ -376,29 +386,29 @@ namespace dftefe
                         end,
                         eigenValues.begin() + d_numLowerExtermeEigenValues);
 
-              isToleranceReached.clear();
-              for (size_type eigId = 0; eigId <= numWantedEigenValues; eigId++)
+              for (size_type eigId = 0; eigId < numWantedEigenValues; eigId++)
                 {
-                  isToleranceReached.push_back(
-                    (eigenValuesPrev[eigId] - eigenValues[eigId] <=
-                     d_tolerance[eigId]));
+                  isToleranceReached[eigId] =
+                    (std::abs(eigenValuesPrev[eigId] - eigenValues[eigId]) <=
+                     d_tolerance[eigId]) ?
+                      true :
+                      false;
                 }
               if (std::all_of(isToleranceReached.begin(),
                               isToleranceReached.end(),
                               [](bool v) { return v; }))
                 {
-                  err       = EigenSolverErrorCode::SUCCESS;
+                  err        = EigenSolverErrorCode::SUCCESS;
                   retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                  isSuccess = true;
+                  isSuccess  = true;
                   break;
                 }
               eigenValuesPrev = eigenValues;
             }
+          nAlpha = (ValueType)(-1.0) * (ValueType)alpha[0];
+          nBeta  = (ValueType)(-1.0) * (ValueType)beta[0];
 
-          ValueType nAlpha = (ValueType)(-1.0) * (ValueType)alpha[0],
-                    nBeta  = (ValueType)(-1.0) * (ValueType)beta[0];
-
-          // get v = v - \alpha_iq_i - \beta_i-1q_i-1
+          // get v = v - \alpha_i * q_i - \beta_i-1 * q_i-1
 
           add(ones, v, nAlpha, q, v);
           add(ones, v, nBeta, qPrev, v);
@@ -408,13 +418,19 @@ namespace dftefe
           B.apply(v, temp);
 
           dot<ValueType, ValueType, memorySpace>(
-            v, temp, beta, blasLapack::ScalarOp::Conj, blasLapack::ScalarOp::Identity);
+            v,
+            temp,
+            beta,
+            blasLapack::ScalarOp::Conj,
+            blasLapack::ScalarOp::Identity);
+
+          beta[0] = std::sqrt(beta[0]);
 
           if (beta[0] < d_lanczosBetaTolerance)
             {
-              if(krylovSubspaceSize >= numWantedEigenValues)
+              if (krylovSubspaceSize >= numWantedEigenValues)
                 isSuccess = true;
-              err = EigenSolverErrorCode::LANCZOS_BETA_ZERO;
+              err        = EigenSolverErrorCode::LANCZOS_BETA_ZERO;
               retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
               break;
             }
@@ -443,14 +459,16 @@ namespace dftefe
           wantedEigenVectorsKrylovSubspace.resize(
             krylovSubspaceSize * numWantedEigenValues,
             utils::Types<ValueType>::zero);
-          krylovSubspOrthoVecMemStorage.resize(krylovSubspaceSize * q.locallyOwnedSize(),
+          krylovSubspOrthoVecMemStorage.resize(krylovSubspaceSize *
+                                                 q.locallyOwnedSize(),
                                                utils::Types<ValueType>::zero);
 
           for (size_type vecId = 0; vecId < krylovSubspaceSize; vecId++)
             {
               utils::MemoryTransfer<memorySpace, memorySpace>::copy(
                 q.locallyOwnedSize(),
-                krylovSubspOrthoVecMemStorage.data() + vecId * q.locallyOwnedSize(),
+                krylovSubspOrthoVecMemStorage.data() +
+                  vecId * q.locallyOwnedSize(),
                 krylovSubspOrthoVec[vecId].data());
             }
 
