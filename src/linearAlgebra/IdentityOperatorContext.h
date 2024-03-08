@@ -80,4 +80,5 @@ namespace dftefe
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
+#include <linearAlgebra/IdentityOperatorContext.t.cpp>
 #endif // dftefeIdentityOperatorContext_h

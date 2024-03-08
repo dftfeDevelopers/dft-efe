@@ -32,7 +32,8 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <linearAlgebra/HermitianIterativeEigensolver.h>
+#include <linearAlgebra/IdentityOperatorContext.h>
+#include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
 
 namespace dftefe
@@ -54,7 +55,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     class LanczosExtremeEigenSolver
-      : public HermitianIterativeEigensolver<ValueTypeOperator,
+      : public HermitianIterativeEigenSolver<ValueTypeOperator,
                                              ValueTypeOperand,
                                              memorySpace>
     {
@@ -69,7 +70,7 @@ namespace dftefe
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
       using RealType = blasLapack::real_type<ValueType>;
       using OpContext =
-        typename HermitianIterativeEigensolver<ValueTypeOperator,
+        typename HermitianIterativeEigenSolver<ValueTypeOperator,
                                                ValueTypeOperand,
                                                memorySpace>::OpContext;
 
@@ -80,7 +81,7 @@ namespace dftefe
         const size_type                              maxKrylovSubspaceSize,
         const size_type                              numLowerExtermeEigenValues,
         const size_type                              numUpperExtermeEigenValues,
-        std::vector<double>                          tolerance,
+        std::vector<double>                          &tolerance,
         double                                       lanczosBetaTolerance,
         const Vector<ValueTypeOperand, memorySpace> &initialGuess);
 
@@ -88,9 +89,9 @@ namespace dftefe
         const size_type     maxKrylovSubspaceSize,
         const size_type     numLowerExtermeEigenValues,
         const size_type     numUpperExtermeEigenValues,
-        std::vector<double> tolerance,
+        std::vector<double> &tolerance,
         double              lanczosBetaTolerance,
-        std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
@@ -103,7 +104,7 @@ namespace dftefe
       reinit(const size_type     maxKrylovSubspaceSize,
              const size_type     numLowerExtermeEigenValues,
              const size_type     numUpperExtermeEigenValues,
-             std::vector<double> tolerance,
+             std::vector<double> &tolerance,
              double              lanczosBetaTolerance,
              const Vector<ValueTypeOperand, memorySpace> &initialGuess);
 
@@ -112,9 +113,9 @@ namespace dftefe
         const size_type     maxKrylovSubspaceSize,
         const size_type     numLowerExtermeEigenValues,
         const size_type     numUpperExtermeEigenValues,
-        std::vector<double> tolerance,
+        std::vector<double> &tolerance,
         double              lanczosBetaTolerance,
-        std::shared_ptr<utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       EigenSolverError
@@ -125,10 +126,9 @@ namespace dftefe
             const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                          ValueTypeOperand,
                                                          memorySpace>(),
-            const OpContext &BInv =
-              IdentityOperatorContext<ValueTypeOperator,
-                                      ValueTypeOperand,
-                                      memorySpace>()) override;
+            const OpContext &BInv = IdentityOperatorContext<ValueTypeOperator,
+                                                         ValueTypeOperand,
+                                                         memorySpace>()) override;
 
     private:
       Vector<ValueType, memorySpace> d_initialGuess;

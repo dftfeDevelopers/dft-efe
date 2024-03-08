@@ -75,6 +75,9 @@ namespace dftefe
         utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
           S.size(), Shost.data(), S.data());
 
+        // TODO: Copy only the real part because S is real and then do cholesky
+        // Reason: Reduced flops.
+
         // MPI_AllReduce to get the S from all procs
 
         int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(

@@ -23,17 +23,18 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeHermitianIterativeEigensolver_h
-#define dftefeHermitianIterativeEigensolver_h
+#ifndef dftefeHermitianIterativeEigenSolver_h
+#define dftefeHermitianIterativeEigenSolver_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MPITypes.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
-#include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/IdentityOperatorContext.h>
+#include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
@@ -60,7 +61,7 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class HermitianIterativeEigensolver
+    class HermitianIterativeEigenSolver
     {
     public:
       using OpContext =
@@ -70,7 +71,7 @@ namespace dftefe
       using ScalarType = blasLapack::real_type<ValueType>;
 
     public:
-      virtual ~HermitianIterativeEigensolver() = default;
+      virtual ~HermitianIterativeEigenSolver() = default;
 
       virtual EigenSolverError
       solve(const OpContext &                                   A,
@@ -84,7 +85,7 @@ namespace dftefe
                                                             ValueTypeOperand,
                                                             memorySpace>()) = 0;
 
-    }; // end of class HermitianIterativeEigensolver
+    }; // end of class HermitianIterativeEigenSolver
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeHermitianIterativeEigensolver_h
+#endif // dftefeHermitianIterativeEigenSolver_h

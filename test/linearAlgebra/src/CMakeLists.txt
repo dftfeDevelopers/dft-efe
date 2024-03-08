@@ -78,13 +78,17 @@ link_directories(${MKL_LIBRARIES})
 
 if (ENABLE_MPI)
 
-add_executable(TestParallelMultiVectorCholeskyGSHostComplexDouble  TestParallelMultiVectorCholeskyGSHostComplexDouble.cpp)
-target_link_libraries(TestParallelMultiVectorCholeskyGSHostComplexDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
-set_target_properties(TestParallelMultiVectorCholeskyGSHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+# add_executable(TestParallelMultiVectorCholeskyGSHostComplexDouble  TestParallelMultiVectorCholeskyGSHostComplexDouble.cpp)
+# target_link_libraries(TestParallelMultiVectorCholeskyGSHostComplexDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+# set_target_properties(TestParallelMultiVectorCholeskyGSHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
-add_executable(TestParallelMultiVectorCholeskyGSHostDouble  TestParallelMultiVectorCholeskyGSHostDouble.cpp)
-target_link_libraries(TestParallelMultiVectorCholeskyGSHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
-set_target_properties(TestParallelMultiVectorCholeskyGSHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+# add_executable(TestParallelMultiVectorCholeskyGSHostDouble  TestParallelMultiVectorCholeskyGSHostDouble.cpp)
+# target_link_libraries(TestParallelMultiVectorCholeskyGSHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+# set_target_properties(TestParallelMultiVectorCholeskyGSHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+
+add_executable(TestLanczosEigenSolverHostDouble  TestLanczosEigenSolverHostDouble.cpp)
+target_link_libraries(TestLanczosEigenSolverHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+set_target_properties(TestLanczosEigenSolverHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
 # add_executable(TestCGLinearSolverSerialHostDouble  TestCGLinearSolverSerialHostDouble.cpp)
 # target_link_libraries(TestCGLinearSolverSerialHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
