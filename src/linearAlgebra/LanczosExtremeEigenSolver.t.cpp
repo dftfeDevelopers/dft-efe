@@ -316,6 +316,20 @@ namespace dftefe
 
           alphaVec.push_back((RealType)alpha[0]);
 
+          // std::cout << "alphaVec: ";
+          // for(auto i : alphaVec)
+          // {
+          //   std::cout << i << ",";
+          // }
+          // std::cout << "\n";
+
+          // std::cout << "betaVec: ";
+          // for(auto i : betaVec)
+          // {
+          //   std::cout << i << ",";
+          // }
+          // std::cout << "\n";
+
           if (iter >= numWantedEigenValues)
             {
               krylovSubspaceSize = iter;
@@ -366,6 +380,7 @@ namespace dftefe
               // To store the sliced vector
               eigenValues.resize(numWantedEigenValues);
 
+              // std::cout << "iter: "<<iter << "\n";
               // std::cout << "eigenValuesIter: ";
               // for(auto i : eigenValuesIter)
               // {
@@ -453,6 +468,13 @@ namespace dftefe
             qSTL.size(), q.data(), qSTL.data());
         }
 
+      if (krylovSubspaceSize > d_maxKrylovSubspaceSize)
+        {
+          isSuccess  = true;
+          err        = EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+        }
+
       if (computeEigenVectors && isSuccess)
         {
           // copy to wantedEigenVectorsKrylovSubspace and rotate
@@ -463,6 +485,7 @@ namespace dftefe
                                                  q.locallyOwnedSize(),
                                                utils::Types<ValueType>::zero);
 
+          // std::cout << "krylovSubspOrthoVec: \n";
           for (size_type vecId = 0; vecId < krylovSubspaceSize; vecId++)
             {
               utils::MemoryTransfer<memorySpace, memorySpace>::copy(
@@ -470,7 +493,27 @@ namespace dftefe
                 krylovSubspOrthoVecMemStorage.data() +
                   vecId * q.locallyOwnedSize(),
                 krylovSubspOrthoVec[vecId].data());
+
+              // for(size_type j = 0 ; j <
+              // krylovSubspOrthoVec[vecId].locallyOwnedSize() ; j++)
+              // {
+              //   std::cout << *(krylovSubspOrthoVec[vecId].data()+j) << ",";
+              // }
+              // std::cout << "\n";
             }
+
+          // std::cout << "krylovSubspOrthoVecMemStorage: \n" ;
+          // for(size_type j = 0 ; j < krylovSubspaceSize ; j++)
+          // {
+          //   std::cout << "[";
+          //   for(size_type i = 0 ; i < q.locallyOwnedSize() ; i++)
+          //   {
+          //     std::cout <<
+          //     *(krylovSubspOrthoVecMemStorage.data()+j*q.locallyOwnedSize()+i)
+          //     << ",";
+          //   }
+          //   std::cout << "]\n";
+          // }
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             d_numLowerExtermeEigenValues * krylovSubspaceSize,
@@ -484,6 +527,32 @@ namespace dftefe
             eigenVectorsKrylovSubspace.data() +
               krylovSubspaceSize * krylovSubspaceSize -
               d_numUpperExtermeEigenValues * krylovSubspaceSize);
+
+          // std::cout << "eigenVectorsKrylovSubspace: \n" ;
+          // for(size_type j = 0 ; j < krylovSubspaceSize ; j++)
+          // {
+          //   std::cout << "[";
+          //   for(size_type i = 0 ; i < krylovSubspaceSize ; i++)
+          //   {
+          //     std::cout <<
+          //     *(eigenVectorsKrylovSubspace.data()+i*krylovSubspaceSize+j) <<
+          //     ",";
+          //   }
+          //   std::cout << "]\n";
+          // }
+
+          // std::cout << "wantedEigenVectorsKrylovSubspace: \n" ;
+          // for(size_type j = 0 ; j < numWantedEigenValues ; j++)
+          // {
+          //   std::cout << "[";
+          //   for(size_type i = 0 ; i < krylovSubspaceSize ; i++)
+          //   {
+          //     std::cout <<
+          //     *(wantedEigenVectorsKrylovSubspace.data()+j*krylovSubspaceSize+i)
+          //     << ",";
+          //   }
+          //   std::cout << "]\n";
+          // }
 
           blasLapack::gemm<ValueType, ValueType, memorySpace>(
             blasLapack::Layout::ColMajor,

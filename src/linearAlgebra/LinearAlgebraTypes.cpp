@@ -45,6 +45,8 @@ namespace dftefe
          "LAPACK STEQR failed with the error code "},
         {EigenSolverErrorCode::LANCZOS_BETA_ZERO,
          "Could not create more B-orthonormal krylov subspace vectors in Lanczos."},
+        {EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT,
+         "Maximum Krylov Subspace Size given is insufficient for Lanczos convergence."},
         {EigenSolverErrorCode::OTHER_ERROR, "Other error encountered"}};
 
     const std::map<OrthonormalizationErrorCode, std::string>

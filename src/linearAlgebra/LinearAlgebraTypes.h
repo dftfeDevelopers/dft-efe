@@ -70,6 +70,7 @@ namespace dftefe
       SUCCESS,
       LAPACK_STEQR_ERROR,
       LANCZOS_BETA_ZERO,
+      LANCZOS_SUBSPACE_INSUFFICIENT,
       OTHER_ERROR
     };
 

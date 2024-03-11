@@ -51,6 +51,89 @@ using namespace dftefe;
 using size_type = size_type;
 using global_size_type = global_size_type;
 using ValueType = double;
+const utils::MemorySpace Host = utils::MemorySpace::HOST;
+
+void
+generateDiagonalColMajorMatrix(std::vector<ValueType> &colMajorA, global_size_type globalSize, int rank)
+{
+
+  dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+  if(rank == 0)
+  {
+    ValueType min = -1.0, max = 1.0;
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      colMajorA[i*globalSize + i] = (max - min) * ( (ValueType)std::rand() / (ValueType)RAND_MAX ) + min;
+    }
+
+    colMajorA[0*globalSize + 0] = -4;
+    colMajorA[1*globalSize + 1] = -8;
+    colMajorA[(globalSize-2)*globalSize + globalSize-2] = 7;
+    colMajorA[(globalSize-1)*globalSize + globalSize-1] = 13.44;
+
+  }
+
+  int err = utils::mpi::MPIAllreduce<Host>(
+    utils::mpi::MPIInPlace,
+    colMajorA.data(),
+    colMajorA.size(),
+    utils::mpi::Types<ValueType>::getMPIDatatype(),
+    utils::mpi::MPISum,
+    utils::mpi::MPICommWorld);
+
+}
+
+void generateHermitianPosDefColMajorMatrix(std::vector<ValueType> &colMajorA, global_size_type globalSize, int rank)
+{
+
+  std::vector<ValueType> colMajorACopy(0);
+  std::vector<ValueType> a(globalSize*globalSize, 0);
+  dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+  if(rank == 0)
+  {
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      for( global_size_type j = 0 ; j < globalSize ; j++ )
+      {
+        a[j*globalSize + i] = static_cast<ValueType>(std::rand()) / RAND_MAX;
+      }
+    }
+
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      for( global_size_type j = 0 ; j < globalSize ; j++ )
+      {
+        colMajorA[j*globalSize + i] = (a[j*globalSize + i] + a[i*globalSize + j])/2.0 ;
+      }
+    }
+
+    colMajorACopy = colMajorA;
+    std::vector<ValueType> eigenValues(globalSize);
+
+    lapack::heevd(lapack::Job::NoVec,
+                lapack::Uplo::Lower,
+                globalSize,
+                colMajorACopy.data(),
+                globalSize,
+                eigenValues.data());
+
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      colMajorA[i*globalSize + i] = colMajorA[i*globalSize + i] + std::max(0.0,-eigenValues[0]) + 
+              (1 - 0.1) * ((ValueType)std::rand() / (ValueType)RAND_MAX ) + 0.1;
+    } 
+
+  }
+
+  int err = utils::mpi::MPIAllreduce<Host>(
+    utils::mpi::MPIInPlace,
+    colMajorA.data(),
+    colMajorA.size(),
+    utils::mpi::Types<ValueType>::getMPIDatatype(),
+    utils::mpi::MPISum,
+    utils::mpi::MPICommWorld);
+
+}
 
 // Create an operatorContext class
 
@@ -60,7 +143,7 @@ using ValueType = double;
   template <typename ValueTypeOperator,
 	   typename ValueTypeOperand>
 	     class OperatorContextA: public 
-        linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand ,utils::MemorySpace::HOST>
+        linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand ,Host>
 	   {
 	     public:
 	       OperatorContextA(const std::vector<ValueTypeOperator> & globalA, const unsigned int globalSize):
@@ -68,9 +151,9 @@ using ValueType = double;
 	     {}
 
 	     void
-		   apply(linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &x,
+		   apply(linearAlgebra::MultiVector<ValueTypeOperand, Host> &x,
 		     linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-		     utils::MemorySpace::HOST> &y) const override 
+		     Host> &y) const override 
 		  {
         using ValueType = linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
@@ -79,14 +162,14 @@ using ValueType = double;
         std::pair<global_size_type, global_size_type> locallyOwnedRange = locallyOwnedRanges[0];
         size_type locallyOwnedSize = x.locallyOwnedSize();
 
-        utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+        utils::MemoryStorage<ValueType, Host>
           Xglobal(d_globalSize*x.getNumberComponents(),(ValueType)0.0);
 
           std::copy (x.data(), 
                       x.data()+x.getNumberComponents()*x.locallyOwnedSize(), 
                       Xglobal.data()+locallyOwnedRange.first*x.getNumberComponents());
 
-        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        int err = utils::mpi::MPIAllreduce<Host>(
           utils::mpi::MPIInPlace,
           Xglobal.data(),
           Xglobal.size(),
@@ -94,7 +177,7 @@ using ValueType = double;
           utils::mpi::MPISum,
           utils::mpi::MPICommWorld);
         
-        linearAlgebra::blasLapack::gemm<ValueType, ValueType, utils::MemorySpace::HOST>(
+        linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
             linearAlgebra::blasLapack::Layout::ColMajor,
             linearAlgebra::blasLapack::Op::NoTrans,
             linearAlgebra::blasLapack::Op::Trans,
@@ -134,8 +217,6 @@ int main()
 {
 #ifdef DFTEFE_WITH_MPI
 
-  const utils::MemorySpace Host = utils::MemorySpace::HOST;
-
   linearAlgebra::blasLapack::BlasQueue<Host> queue;
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> linAlgOpContext = 
     std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
@@ -151,11 +232,10 @@ int main()
   int rank;
   utils::mpi::MPICommRank(utils::mpi::MPICommWorld, &rank);
 
-  size_type numOwnedIndices = 10;
-  size_type maxNumGhostIndices = 0;
-  size_type numComponents = 1;
-  size_type numEigWantedLow = 3;
-  size_type numEigWantedUp = 3;
+  size_type numOwnedIndices = 5;
+  size_type maxNumGhostIndices = 3;
+  size_type numEigWantedLow = 1;
+  size_type numEigWantedUp = 1;
  
   std::srand(std::time(nullptr)*(rank+1));
   const global_size_type numGlobalIndices = numProcs*numOwnedIndices;
@@ -192,50 +272,38 @@ int main()
   global_size_type globalSize = numGlobalIndices;
 
   std::vector<ValueType> colMajorA(globalSize*globalSize, 0.0);
-  dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
-  if(rank == 0)
-  {
-    // for( global_size_type i = 0 ; i < globalSize ; i++ )
-    // {
-    //   for( global_size_type j = 0 ; j < globalSize ; j++ )
-    //   {
-    //     colMajorA[j*globalSize + i] = static_cast<ValueType>(std::rand()) / RAND_MAX;
-    //   }
-    // }
+  std::vector<ValueType> colMajorB(globalSize*globalSize, 0.0);
+  std::vector<ValueType> colMajorBCopy(0);
+  std::vector<ValueType> colMajorBInv(0);
+  std::vector<ValueType> eigenVectorsBenchMark(globalSize*globalSize, 0.0);
+  std::vector<ValueType> eigenValuesBenchMark(globalSize);
 
-    ValueType min = -1.0, max = 1.0;
-    for( global_size_type i = 0 ; i < globalSize ; i++ )
-    {
-      colMajorA[i*globalSize + i] = (max - min) * ( (ValueType)rand() / (ValueType)RAND_MAX ) + min;
-    }
+  generateHermitianPosDefColMajorMatrix(colMajorA, globalSize, rank);
 
-    colMajorA[0*globalSize + 0] = -4;
-    colMajorA[1*globalSize + 1] = -8;
-    colMajorA[(globalSize-2)*globalSize + globalSize-2] = 7;
-    colMajorA[(globalSize-1)*globalSize + globalSize-1] = 13.44;
+  generateHermitianPosDefColMajorMatrix(colMajorB, globalSize, rank);
+  colMajorBInv = colMajorB;
 
-  }
-
-  int err = utils::mpi::MPIAllreduce<Host>(
-    utils::mpi::MPIInPlace,
-    colMajorA.data(),
-    colMajorA.size(),
-    utils::mpi::Types<ValueType>::getMPIDatatype(),
-    utils::mpi::MPISum,
-    utils::mpi::MPICommWorld);
+  linearAlgebra::blasLapack::inverse<ValueType, Host>((size_type)globalSize, colMajorBInv.data());
 
   std::shared_ptr<linearAlgebra::OperatorContext<ValueType, ValueType, Host>> opContextA
     = std::make_shared<OperatorContextA<ValueType, ValueType>> 
       (colMajorA, globalSize);
 
+  std::shared_ptr<linearAlgebra::OperatorContext<ValueType, ValueType, Host>> opContextB
+    = std::make_shared<OperatorContextA<ValueType, ValueType>> 
+      (colMajorB, globalSize);
+
+  std::shared_ptr<linearAlgebra::OperatorContext<ValueType, ValueType, Host>> opContextBInv
+    = std::make_shared<OperatorContextA<ValueType, ValueType>> 
+      (colMajorBInv, globalSize);
   
   std::vector<ValueType> tolerance(numEigWantedLow + numEigWantedUp);
   for(auto &i : tolerance)
-    i = 1e-2;
+    i = 1e-4;
 
   std::shared_ptr<linearAlgebra::HermitianIterativeEigenSolver<ValueType, ValueType, Host>> lanczos
     = std::make_shared<linearAlgebra::LanczosExtremeEigenSolver<ValueType, ValueType, Host>> 
-        (40,
+        (100,
          numEigWantedLow,
          numEigWantedUp,
          tolerance,
@@ -243,11 +311,15 @@ int main()
          mpiPatternP2P,
          linAlgOpContext);
 
-  linearAlgebra::MultiVector<ValueType, Host> eigenVectors;
+  linearAlgebra::MultiVector<ValueType, Host> eigenVectors(mpiPatternP2P,linAlgOpContext,numEigWantedLow+numEigWantedUp);
+  linearAlgebra::MultiVector<ValueType, Host> BxEigenVectorsProjectionToBenchmark(eigenVectors, (ValueType)0);
   std::vector<ValueType> eigenValues(numEigWantedLow+numEigWantedUp);
   lanczos->solve(*opContextA,
                   eigenValues,
-                  eigenVectors);
+                  eigenVectors,
+                  true,
+                  *opContextB,
+                  *opContextBInv);
 
   std::cout << "EigenValues: ";
   for(auto i : eigenValues)
@@ -256,8 +328,173 @@ int main()
   }
   std::cout << "\n";
 
+    for(size_type procId = 0 ; procId < numProcs ; procId++)
+    {
+    if(procId == rank)
+    {
+    std::cout << "EigenVectors: \n" ;
+    for(size_type j = 0 ; j < eigenVectors.getNumberComponents() ; j++)
+    {
+      std::cout << "[";
+      for(size_type i = 0 ; i < eigenVectors.locallyOwnedSize() ; i++)
+      { 
+        std::cout << *(eigenVectors.data()+i*eigenVectors.getNumberComponents()+j) << ",";
+      }
+      std::cout << "]\n";
+    }
+    }
+    std::cout << std::flush;
+    dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+    }
+
+  std::vector<ValueType> eigenVectorsBenchMarkProjection(globalSize*globalSize, (ValueType)0);
+
+  eigenVectorsBenchMark = colMajorA;
+  colMajorBCopy = colMajorB;
+  lapack::hegv(1, 
+              lapack::Job::Vec, 
+              lapack::Uplo::Lower, 
+              globalSize,
+              eigenVectorsBenchMark.data(), 
+              globalSize,
+              colMajorBCopy.data(), 
+              globalSize,
+              eigenValuesBenchMark.data() );
+
+  // eigenValuesBenchMark.resize(globalSize);
+  // eigenVectorsBenchMark = colMajorA;
+  // lapack::heevd(lapack::Job::Vec,
+  //             lapack::Uplo::Lower,
+  //             globalSize,
+  //             eigenVectorsBenchMark.data(),
+  //             globalSize,
+  //             eigenValuesBenchMark.data()); 	
+
+  for(size_type procId = 0 ; procId < numProcs ; procId++)
+  {
+  if(procId == 0)
+  {
+  std::cout << "eigenValuesBenchMark: \n" ;
+  for(size_type j = 0 ; j < globalSize ; j++)
+  {
+    std::cout << *(eigenValuesBenchMark.data()+j) << ",";
+  }
+  std::cout << "\n";
+  // std::cout << "eigenVectorsBenchMark: \n" ;
+  // for(size_type j = 0 ; j < globalSize ; j++)
+  // {
+  //   std::cout << "[";
+  //   for(size_type i = 0 ; i < globalSize ; i++)
+  //   { 
+  //     std::cout << *(eigenVectorsBenchMark.data()+i*globalSize+j) << ",";
+  //   }
+  //   std::cout << "]\n";
+  // }
+  }
+  std::cout << std::flush;
+  dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+  }
+
+// check the projection error in the eigenvectors (I-XX^HB)Y < tolerance
+
+  linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
+      linearAlgebra::blasLapack::Layout::ColMajor,
+      linearAlgebra::blasLapack::Op::NoTrans,
+      linearAlgebra::blasLapack::Op::ConjTrans,
+      globalSize,
+      globalSize,
+      globalSize,
+      (ValueType)1.0,
+      eigenVectorsBenchMark.data(),
+      globalSize,
+      eigenVectorsBenchMark.data(),
+      globalSize,
+      (ValueType)0.0,
+      eigenVectorsBenchMarkProjection.data(),
+      globalSize,
+      *linAlgOpContext);
+
+  linearAlgebra::MultiVector<ValueType, Host> BxEigenVectors(mpiPatternP2P,linAlgOpContext,numEigWantedLow+numEigWantedUp);
+  opContextB->apply(eigenVectors, BxEigenVectors);
+
+      utils::MemoryStorage<ValueType, Host>
+        BxEigenVectorsglobal(globalSize*BxEigenVectors.getNumberComponents(),(ValueType)0.0);
+
+        std::copy (BxEigenVectors.data(), 
+                    BxEigenVectors.data()+eigenVectors.getNumberComponents()*eigenVectors.locallyOwnedSize(), 
+                    BxEigenVectorsglobal.data()+locallyOwnedRange.first*eigenVectors.getNumberComponents());
+
+        int err = utils::mpi::MPIAllreduce<Host>(
+          utils::mpi::MPIInPlace,
+          BxEigenVectorsglobal.data(),
+          BxEigenVectorsglobal.size(),
+          utils::mpi::Types<ValueType>::getMPIDatatype(),
+          utils::mpi::MPISum,
+          utils::mpi::MPICommWorld);
+
+  linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
+      linearAlgebra::blasLapack::Layout::ColMajor,
+      linearAlgebra::blasLapack::Op::NoTrans,
+      linearAlgebra::blasLapack::Op::Trans,
+      eigenVectors.getNumberComponents(),
+      eigenVectors.locallyOwnedSize(),
+      globalSize,
+      (ValueType)1.0,
+      BxEigenVectorsglobal.data(),
+      eigenVectors.getNumberComponents(),
+      eigenVectorsBenchMarkProjection.data()+locallyOwnedRange.first,
+      globalSize,
+      (ValueType)0.0,
+      BxEigenVectorsProjectionToBenchmark.data(),
+      eigenVectors.getNumberComponents(),
+      *eigenVectors.getLinAlgOpContext());
+
+      // for(size_type procId = 0 ; procId < numProcs ; procId++)
+      // {
+      // if(procId == rank)
+      // {
+      // std::cout << "BxEigenVectorsProjectionToBenchmark: \n" ;
+      // for(size_type j = 0 ; j < eigenVectors.getNumberComponents() ; j++)
+      // {
+      //   std::cout << "[";
+      //   for(size_type i = 0 ; i < eigenVectors.locallyOwnedSize() ; i++)
+      //   { 
+      //     std::cout << *(BxEigenVectorsProjectionToBenchmark.data()+i*eigenVectors.getNumberComponents()+j) << ",";
+      //   }
+      //   std::cout << "]\n";
+      // }
+      // }
+      // std::cout << std::flush;
+      // dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+      // }
+
+  bool isEigenVectorsSame = false;
+  for(size_type i = 0; i < BxEigenVectorsProjectionToBenchmark.locallyOwnedSize(); ++i)
+   {
+    for(size_type j = 0 ; j < BxEigenVectorsProjectionToBenchmark.getNumberComponents(); j++)
+    {
+      if(std::fabs(*(BxEigenVectorsProjectionToBenchmark.data() + i*BxEigenVectorsProjectionToBenchmark.getNumberComponents() + j)- 
+        *(eigenVectors.data() + i*eigenVectors.getNumberComponents() + j)) > 1e-12)
+      {
+          std::string msg = "At index " + std::to_string(i) +
+                            " mismatch of entries";
+          std::cout << msg << "\n";
+          isEigenVectorsSame = false;
+          throw std::runtime_error(msg);
+      }
+      else
+        isEigenVectorsSame = true;
+    }
+   }
+
+   if(isEigenVectorsSame)
+   {
+    std::cout << "Hurray!! EigenVectors are same from lapack and lanczos.\n";
+   }
 
 /*
+
+  // Test to see that OperatorContextA is working fine for parallel case
 
   linearAlgebra::MultiVector<ValueType, Host> X(mpiPatternP2P,linAlgOpContext,numComponents);
 
@@ -313,7 +550,7 @@ int main()
     utils::mpi::MPISum,
     utils::mpi::MPICommWorld);
 
-    linearAlgebra::blasLapack::gemm<ValueType, ValueType, utils::MemorySpace::HOST>(
+    linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
         linearAlgebra::blasLapack::Layout::ColMajor,
         linearAlgebra::blasLapack::Op::NoTrans,
         linearAlgebra::blasLapack::Op::Trans,
