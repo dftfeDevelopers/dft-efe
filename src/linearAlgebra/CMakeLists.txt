@@ -23,7 +23,10 @@ if (NOT TARGET dft-efe-linalg)
         PreconditionerNone.cpp
         OrthonormalizationFunctions.cpp
         IdentityOperatorContext.cpp
-        LanczosExtremeEigenSolver.cpp)
+        LanczosExtremeEigenSolver.cpp
+        ChebyshevFilter.cpp
+        RayleighRitzEigenSolver.cpp
+        ChebyshevFilteredEigenSolver.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

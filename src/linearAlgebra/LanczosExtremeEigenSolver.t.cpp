@@ -174,19 +174,21 @@ namespace dftefe
       utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
       std::srand(std::time(nullptr) * (rank + 1));
 
-      Vector<ValueType, memorySpace> initialGuess(mpiPatternP2P,
-                                                  linAlgOpContext);
+      Vector<ValueTypeOperand, memorySpace> initialGuess(mpiPatternP2P,
+                                                         linAlgOpContext);
 
       d_initialGuess = initialGuess;
 
-      std::vector<ValueType> initialGuessSTL(d_initialGuess.locallyOwnedSize());
+      std::vector<ValueTypeOperand> initialGuessSTL(
+        d_initialGuess.locallyOwnedSize());
 
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
         d_initialGuess.locallyOwnedSize(),
         initialGuessSTL.data(),
         d_initialGuess.data());
 
-      LanczosExtremeEigenSolverInternal::generate<ValueType> generateNumber;
+      LanczosExtremeEigenSolverInternal::generate<ValueTypeOperand>
+        generateNumber;
       // todo - implement random class in utils and modify this
       for (size_type i = 0; i < d_initialGuess.locallyOwnedSize(); i++)
         {
@@ -244,10 +246,10 @@ namespace dftefe
 
       ValueType ones = (ValueType)1.0, nBeta, nAlpha;
 
-      Vector<ValueType, memorySpace> temp(d_initialGuess, 0.0);
-      Vector<ValueType, memorySpace> v(d_initialGuess, 0.0);
-      Vector<ValueType, memorySpace> q(d_initialGuess, 0.0);
-      Vector<ValueType, memorySpace> qPrev(d_initialGuess, 0.0);
+      Vector<ValueType, memorySpace> temp(d_initialGuess, (ValueType)0.0);
+      Vector<ValueType, memorySpace> v(d_initialGuess, (ValueType)0.0);
+      Vector<ValueType, memorySpace> q(d_initialGuess, (ValueType)0.0);
+      Vector<ValueType, memorySpace> qPrev(d_initialGuess, (ValueType)0.0);
 
       std::vector<ValueType> qSTL(q.locallyOwnedSize());
       std::vector<ValueType> vSTL(q.locallyOwnedSize());
@@ -270,15 +272,17 @@ namespace dftefe
 
       B.apply(d_initialGuess, temp);
 
-      dot<ValueType, ValueType, memorySpace>(d_initialGuess,
-                                             temp,
-                                             alpha,
-                                             blasLapack::ScalarOp::Conj,
-                                             blasLapack::ScalarOp::Identity);
+      dot<ValueTypeOperand, ValueType, memorySpace>(
+        d_initialGuess,
+        temp,
+        alpha,
+        blasLapack::ScalarOp::Conj,
+        blasLapack::ScalarOp::Identity);
 
       alpha[0] = std::sqrt(alpha[0]);
 
-      std::vector<ValueType> initialGuessSTL(d_initialGuess.locallyOwnedSize());
+      std::vector<ValueTypeOperand> initialGuessSTL(
+        d_initialGuess.locallyOwnedSize());
 
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
         d_initialGuess.locallyOwnedSize(),

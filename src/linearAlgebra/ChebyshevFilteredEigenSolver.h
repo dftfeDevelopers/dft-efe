@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeLanczosExtremeEigenSolver_h
-#define dftefeLanczosExtremeEigenSolver_h
+#ifndef dftefeChebyshevFilteredEigenSolver_h
+#define dftefeChebyshevFilteredEigenSolver_h
 
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -32,8 +32,9 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <linearAlgebra/IdentityOperatorContext.h>
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
+#include <linearAlgebra/RayleighRitzEigenSolver.h>
+#include <linearAlgebra/ChebyshevFilter.h>
 #include <memory>
 
 namespace dftefe
@@ -54,7 +55,7 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LanczosExtremeEigenSolver
+    class ChebyshevFilteredEigenSolver
       : public HermitianIterativeEigenSolver<ValueTypeOperator,
                                              ValueTypeOperand,
                                              memorySpace>
@@ -74,50 +75,34 @@ namespace dftefe
                                                ValueTypeOperand,
                                                memorySpace>::OpContext;
 
+    public:
       /**
        * @brief Constructor
        */
-      LanczosExtremeEigenSolver(
-        const size_type                              maxKrylovSubspaceSize,
-        const size_type                              numLowerExtermeEigenValues,
-        const size_type                              numUpperExtermeEigenValues,
-        std::vector<double> &                        tolerance,
-        double                                       lanczosBetaTolerance,
-        const Vector<ValueTypeOperand, memorySpace> &initialGuess);
-
-      LanczosExtremeEigenSolver(
-        const size_type      maxKrylovSubspaceSize,
-        const size_type      numLowerExtermeEigenValues,
-        const size_type      numUpperExtermeEigenValues,
-        std::vector<double> &tolerance,
-        double               lanczosBetaTolerance,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                      mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      ChebyshevFilteredEigenSolver(
+        const double wantedSpectrumLowerBound,
+        const double wantedSpectrumUpperBound,
+        const double unWantedSpectrumUpperBound,
+        const double polynomialDegree,
+        const double illConditionTolerance,
+        const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const size_type eigenVectorBlockSize = 0);
 
       /**
        *@brief Default Destructor
        *
        */
-      ~LanczosExtremeEigenSolver() = default;
+      ~ChebyshevFilteredEigenSolver() = default;
 
       void
-      reinit(const size_type      maxKrylovSubspaceSize,
-             const size_type      numLowerExtermeEigenValues,
-             const size_type      numUpperExtermeEigenValues,
-             std::vector<double> &tolerance,
-             double               lanczosBetaTolerance,
-             const Vector<ValueTypeOperand, memorySpace> &initialGuess);
-
-      void
-      reinit(const size_type      maxKrylovSubspaceSize,
-             const size_type      numLowerExtermeEigenValues,
-             const size_type      numUpperExtermeEigenValues,
-             std::vector<double> &tolerance,
-             double               lanczosBetaTolerance,
-             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                           mpiPatternP2P,
-             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      reinit(
+        const double wantedSpectrumLowerBound,
+        const double wantedSpectrumUpperBound,
+        const double unWantedSpectrumUpperBound,
+        const double polynomialDegree,
+        const double illConditionTolerance,
+        const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const size_type                                   eigenVectorBlockSize);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -133,16 +118,21 @@ namespace dftefe
                                       memorySpace>()) override;
 
     private:
-      Vector<ValueTypeOperand, memorySpace> d_initialGuess;
-      size_type                             d_maxKrylovSubspaceSize;
-      size_type                             d_numLowerExtermeEigenValues;
-      size_type                             d_numUpperExtermeEigenValues;
-      std::vector<double>                   d_tolerance;
-      double                                d_lanczosBetaTolerance;
+      double                                     d_wantedSpectrumLowerBound;
+      double                                     d_wantedSpectrumUpperBound;
+      double                                     d_unWantedSpectrumUpperBound;
+      double                                     d_polynomialDegree;
+      double                                     d_illConditionTolerance;
+      MultiVector<ValueTypeOperand, memorySpace> d_eigenSubspaceGuess;
+      size_type                                  d_eigenVectorBlockSize;
 
+      std::shared_ptr<HermitianIterativeEigenSolver<ValueTypeOperator,
+                                                    ValueTypeOperand,
+                                                    memorySpace>>
+        d_rr;
 
-    }; // end of class LanczosExtremeEigenSolver
-  }    // namespace linearAlgebra
+    }; // end of class ChebyshevFilteredEigenSolver
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#include <linearAlgebra/LanczosExtremeEigenSolver.t.cpp>
-#endif // dftefeLanczosExtremeEigenSolver_h
+#include <linearAlgebra/ChebyshevFilteredEigenSolver.t.cpp>
+#endif // dftefeChebyshevFilteredEigenSolver_h

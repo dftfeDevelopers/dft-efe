@@ -23,50 +23,52 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeOrthonormalizationFunctions_h
-#define dftefeOrthonormalizationFunctions_h
+#ifndef dftefeChebyshevFilter_h
+#define dftefeChebyshevFilter_h
 
-#include <utils/TypeConfig.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <string>
 #include <utils/MemorySpaceType.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <linearAlgebra/IdentityOperatorContext.h>
+#include <memory>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
+    /**
+     *@brief A class to get chebyshevFiletered subspace "filteredSubspace" from original subspace "eigenSubspaceGuess".
+     * Note both of these vectors have to be apriori allocated and both will
+     *change after the function is called.
+     *
+     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
+     * on which the operator will act
+     * @tparam memorySpace The meory space (HOST, DEVICE, HOST_PINNED, etc.) in which the data of the operator
+     * and its operands reside
+     *
+     */
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class OrthonormalizationFunctions
-    {
-    public:
-      using ValueType =
-        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
-      using OpContext =
-        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
+    void
+    ChebyshevFilter(
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &A,
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &                                               BInv,
+      const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+      const size_type                                   polynomialDegree,
+      const double              wantedSpectrumLowerBound,
+      const double              wantedSpectrumUpperBound,
+      const double              unWantedSpectrumUpperBound,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &filteredSubspace);
 
-      /**
-       *@brief Default Destructor
-       *
-       */
-      ~OrthonormalizationFunctions() = default;
-
-      static OrthonormalizationError
-      CholeskyGramSchmidt(
-        const MultiVector<ValueTypeOperand, memorySpace> &X,
-        MultiVector<ValueType, memorySpace> &             orthogonalizedX,
-        const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
-                                                     ValueTypeOperand,
-                                                     memorySpace>());
-
-    }; // end of class OrthonormalizationFunctions
-  }    // end of namespace linearAlgebra
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#include <linearAlgebra/OrthonormalizationFunctions.t.cpp>
-#endif
+#include <linearAlgebra/ChebyshevFilter.t.cpp>
+#endif // dftefeChebyshevFilter_h

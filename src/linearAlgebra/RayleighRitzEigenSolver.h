@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeLanczosExtremeEigenSolver_h
-#define dftefeLanczosExtremeEigenSolver_h
+#ifndef dftefeRayleighRitzEigenSolver_h
+#define dftefeRayleighRitzEigenSolver_h
 
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -32,7 +32,6 @@
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <linearAlgebra/IdentityOperatorContext.h>
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
 
@@ -54,7 +53,7 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LanczosExtremeEigenSolver
+    class RayleighRitzEigenSolver
       : public HermitianIterativeEigenSolver<ValueTypeOperator,
                                              ValueTypeOperand,
                                              memorySpace>
@@ -74,50 +73,23 @@ namespace dftefe
                                                ValueTypeOperand,
                                                memorySpace>::OpContext;
 
+    public:
       /**
        * @brief Constructor
        */
-      LanczosExtremeEigenSolver(
-        const size_type                              maxKrylovSubspaceSize,
-        const size_type                              numLowerExtermeEigenValues,
-        const size_type                              numUpperExtermeEigenValues,
-        std::vector<double> &                        tolerance,
-        double                                       lanczosBetaTolerance,
-        const Vector<ValueTypeOperand, memorySpace> &initialGuess);
-
-      LanczosExtremeEigenSolver(
-        const size_type      maxKrylovSubspaceSize,
-        const size_type      numLowerExtermeEigenValues,
-        const size_type      numUpperExtermeEigenValues,
-        std::vector<double> &tolerance,
-        double               lanczosBetaTolerance,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                      mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      RayleighRitzEigenSolver(
+        const MultiVector<ValueTypeOperand, memorySpace> &X,
+        const double illConditionTolerance);
 
       /**
        *@brief Default Destructor
        *
        */
-      ~LanczosExtremeEigenSolver() = default;
+      ~RayleighRitzEigenSolver() = default;
 
       void
-      reinit(const size_type      maxKrylovSubspaceSize,
-             const size_type      numLowerExtermeEigenValues,
-             const size_type      numUpperExtermeEigenValues,
-             std::vector<double> &tolerance,
-             double               lanczosBetaTolerance,
-             const Vector<ValueTypeOperand, memorySpace> &initialGuess);
-
-      void
-      reinit(const size_type      maxKrylovSubspaceSize,
-             const size_type      numLowerExtermeEigenValues,
-             const size_type      numUpperExtermeEigenValues,
-             std::vector<double> &tolerance,
-             double               lanczosBetaTolerance,
-             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                           mpiPatternP2P,
-             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+      reinit(const MultiVector<ValueTypeOperand, memorySpace> &X,
+             const double illConditionTolerance);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -133,16 +105,11 @@ namespace dftefe
                                       memorySpace>()) override;
 
     private:
-      Vector<ValueTypeOperand, memorySpace> d_initialGuess;
-      size_type                             d_maxKrylovSubspaceSize;
-      size_type                             d_numLowerExtermeEigenValues;
-      size_type                             d_numUpperExtermeEigenValues;
-      std::vector<double>                   d_tolerance;
-      double                                d_lanczosBetaTolerance;
+      MultiVector<ValueTypeOperand, memorySpace> d_X;
+      double                                     d_illConditionTolerance;
 
-
-    }; // end of class LanczosExtremeEigenSolver
-  }    // namespace linearAlgebra
+    }; // end of class RayleighRitzEigenSolver
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#include <linearAlgebra/LanczosExtremeEigenSolver.t.cpp>
-#endif // dftefeLanczosExtremeEigenSolver_h
+#include <linearAlgebra/RayleighRitzEigenSolver.t.cpp>
+#endif // dftefeRayleighRitzEigenSolver_h

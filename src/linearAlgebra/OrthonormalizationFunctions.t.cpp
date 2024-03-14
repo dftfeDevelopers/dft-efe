@@ -32,15 +32,24 @@ namespace dftefe
   {
     namespace OrthonormalizationFunctionsInternal
     {
-      template <typename ValueType, utils::MemorySpace memorySpace>
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace>
       void
-      CholeskyGramSchmidtImpl(const size_type               vecSize,
-                              const size_type               numVec,
-                              const ValueType *             X,
-                              ValueType *                   orthogonalizedX,
-                              LinAlgOpContext<memorySpace> &linAlgOpContext,
-                              const utils::mpi::MPIComm &   comm)
+      CholeskyGramSchmidtImpl(
+        const size_type         vecSize,
+        const size_type         numVec,
+        const ValueTypeOperand *X,
+        const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+          &B,
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>
+          *                           orthogonalizedX,
+        LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const utils::mpi::MPIComm &   comm)
       {
+        using ValueType =
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
         // allocate memory for overlap matrix
         utils::MemoryStorage<ValueType, memorySpace> S(
           numVec * numVec, utils::Types<ValueType>::zero);
@@ -50,10 +59,14 @@ namespace dftefe
         const ValueType alpha = 1.0;
         const ValueType beta  = 0.0;
 
-        // Input data is read is X^T (numVec is fastest index and then vecSize)
-        // Operation : S^T = (X^T)*(X^T)^H
+        utils::MemoryStorage<ValueType, memorySpace> temp(X, (ValueType)0);
 
-        blasLapack::gemm<ValueType, ValueType, memorySpace>(
+        B.apply(X, temp);
+
+        // Input data is read is X^T (numVec is fastest index and then vecSize)
+        // Operation : S^T = ((B*X)^T)*(X^T)^H
+
+        blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
           blasLapack::Layout::ColMajor,
           blasLapack::Op::NoTrans,
           blasLapack::Op::ConjTrans,
@@ -61,7 +74,7 @@ namespace dftefe
           numVec,
           vecSize,
           alpha,
-          X,
+          temp,
           numVec,
           X,
           numVec,
@@ -140,7 +153,7 @@ namespace dftefe
         // XOrth^T = (LInv^H)^T*X^T
         // Out data as XOrtho^T
 
-        blasLapack::gemm<ValueType, ValueType, memorySpace>(
+        blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
           blasLapack::Layout::ColMajor,
           blasLapack::Op::Trans,
           blasLapack::Op::NoTrans,
@@ -159,11 +172,16 @@ namespace dftefe
       }
     } // namespace OrthonormalizationFunctionsInternal
 
-    template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     OrthonormalizationError
-    OrthonormalizationFunctions<ValueType, memorySpace>::CholeskyGramSchmidt(
-      const MultiVector<ValueType, memorySpace> &X,
-      MultiVector<ValueType, memorySpace> &      orthogonalizedX)
+    OrthonormalizationFunctions<ValueTypeOperator,
+                                ValueTypeOperand,
+                                memorySpace>::
+      CholeskyGramSchmidt(const MultiVector<ValueTypeOperand, memorySpace> &X,
+                          MultiVector<ValueType, memorySpace> &orthogonalizedX,
+                          const OpContext &                    B)
     {
       OrthonormalizationErrorCode err;
       orthogonalizedX.setValue((ValueType)0.0);
@@ -175,10 +193,12 @@ namespace dftefe
       else
         {
           OrthonormalizationFunctionsInternal::CholeskyGramSchmidtImpl<
-            ValueType,
+            ValueTypeOperator,
+            ValueTypeOperand,
             memorySpace>(X.locallyOwnedSize(),
                          X.getNumberComponents(),
                          X.data(),
+                         B,
                          orthogonalizedX.data(),
                          *X.getLinAlgOpContext(),
                          X.getMPIPatternP2P()->mpiCommunicator());
