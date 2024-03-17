@@ -59,8 +59,8 @@ namespace dftefe
 
       static OrthonormalizationError
       CholeskyGramSchmidt(
-        const MultiVector<ValueTypeOperand, memorySpace> &X,
-        MultiVector<ValueType, memorySpace> &             orthogonalizedX,
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,
                                                      memorySpace>());

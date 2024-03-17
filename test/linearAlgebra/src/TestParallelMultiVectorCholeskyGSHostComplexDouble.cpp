@@ -48,6 +48,8 @@ using namespace dftefe;
 using size_type = size_type;
 using global_size_type = global_size_type;
 using ValueType = std::complex<double>;
+using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
+const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
 global_size_type getAGhostIndex(const global_size_type numGlobalIndices,
     const global_size_type ownedIndexStart,
@@ -60,11 +62,129 @@ global_size_type getAGhostIndex(const global_size_type numGlobalIndices,
    return ghostIndex;
 }
 
+void generateHermitianPosDefColMajorMatrix(std::vector<ValueType> &colMajorA, global_size_type globalSize, int rank)
+{
+
+  std::vector<ValueType> colMajorACopy(0);
+  std::vector<ValueType> a(globalSize*globalSize, 0);
+  dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+  if(rank == 0)
+  {
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      for( global_size_type j = 0 ; j < globalSize ; j++ )
+      {
+        a[j*globalSize + i].real(static_cast<RealType>(std::rand()) / RAND_MAX);
+        a[j*globalSize + i].imag(static_cast<RealType>(std::rand()) / RAND_MAX);
+      }
+    }
+
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      for( global_size_type j = 0 ; j < globalSize ; j++ )
+      {
+        colMajorA[j*globalSize + i] = (a[j*globalSize + i] + std::conj(a[i*globalSize + j]))/2.0 ;
+      }
+    }
+
+    colMajorACopy = colMajorA;
+    std::vector<RealType> eigenValues(globalSize);
+
+    lapack::heevd(lapack::Job::NoVec,
+                lapack::Uplo::Lower,
+                globalSize,
+                colMajorACopy.data(),
+                globalSize,
+                eigenValues.data());
+
+    for( global_size_type i = 0 ; i < globalSize ; i++ )
+    {
+      colMajorA[i*globalSize + i] = colMajorA[i*globalSize + i] + std::max(0.0,-eigenValues[0]) + 
+              (1 - 0.1) * ((RealType)std::rand() / (RealType)RAND_MAX ) + 0.1;
+    }
+
+  }
+
+  int err = utils::mpi::MPIAllreduce<Host>(
+    utils::mpi::MPIInPlace,
+    colMajorA.data(),
+    colMajorA.size(),
+    utils::mpi::Types<ValueType>::getMPIDatatype(),
+    utils::mpi::MPISum,
+    utils::mpi::MPICommWorld);
+
+}
+
+// Create an operatorContext class
+
+  //
+  // A test OperatorContext for Ax
+  //
+  template <typename ValueTypeOperator,
+	   typename ValueTypeOperand>
+	     class OperatorContextA: public 
+        linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand ,Host>
+	   {
+	     public:
+	       OperatorContextA(const std::vector<ValueTypeOperator> & globalA, const unsigned int globalSize):
+		      d_globalSize(globalSize), d_globalA(globalA)
+	     {}
+
+	     void
+		   apply(linearAlgebra::MultiVector<ValueTypeOperand, Host> &x,
+		     linearAlgebra::MultiVector<linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+		     Host> &y) const override 
+		  {
+        using ValueType = linearAlgebra::blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
+        std::vector<std::pair<global_size_type, global_size_type>> locallyOwnedRanges = 
+          x.getMPIPatternP2P()->getLocallyOwnedRanges();
+        std::pair<global_size_type, global_size_type> locallyOwnedRange = locallyOwnedRanges[0];
+        size_type locallyOwnedSize = x.locallyOwnedSize();
+
+        utils::MemoryStorage<ValueType, Host>
+          Xglobal(d_globalSize*x.getNumberComponents(),(ValueType)0.0);
+
+          std::copy (x.data(), 
+                      x.data()+x.getNumberComponents()*x.locallyOwnedSize(), 
+                      Xglobal.data()+locallyOwnedRange.first*x.getNumberComponents());
+
+        int err = utils::mpi::MPIAllreduce<Host>(
+          utils::mpi::MPIInPlace,
+          Xglobal.data(),
+          Xglobal.size(),
+          utils::mpi::Types<ValueType>::getMPIDatatype(),
+          utils::mpi::MPISum,
+          utils::mpi::MPICommWorld);
+        
+        linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
+            linearAlgebra::blasLapack::Layout::ColMajor,
+            linearAlgebra::blasLapack::Op::NoTrans,
+            linearAlgebra::blasLapack::Op::Trans,
+            x.getNumberComponents(),
+            locallyOwnedSize,
+            d_globalSize,
+            (ValueType)1.0,
+            Xglobal.data(),
+            x.getNumberComponents(),
+            d_globalA.data()+locallyOwnedRange.first,
+            d_globalSize,
+            (ValueType)0.0,
+            y.data(),
+            x.getNumberComponents(),
+            *x.getLinAlgOpContext());
+
+        y.updateGhostValues();
+
+		  }
+	     private:
+	       unsigned int d_globalSize;
+	       std::vector<ValueTypeOperator> d_globalA;
+	   };// end of clas OperatorContextA
+
 int main()
 {
 #ifdef DFTEFE_WITH_MPI
-
-  const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
   linearAlgebra::blasLapack::BlasQueue<Host> queue;
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> linAlgOpContext = 
@@ -153,10 +273,21 @@ int main()
   }
   
   linearAlgebra::MultiVector<ValueType, Host> orthogonalizedX(X, 0.0);
-  linearAlgebra::MultiVector<ValueType, Host> X0X0HX(X, 0.0);
+  linearAlgebra::MultiVector<ValueType, Host> X0X0HAX(X, 0.0);
+  linearAlgebra::MultiVector<ValueType, Host> AX(X, 0.0);
 
-  linearAlgebra::OrthonormalizationFunctions<ValueType, Host>::CholeskyGramSchmidt(X, orthogonalizedX);
-  utils::MemoryStorage<ValueType, Host> X0HX(numVec*numVec);
+  global_size_type globalSize = numGlobalIndices;
+
+  std::vector<ValueType> colMajorA(globalSize*globalSize, 0.0);
+
+  generateHermitianPosDefColMajorMatrix(colMajorA, globalSize, rank);
+
+  std::shared_ptr<linearAlgebra::OperatorContext<ValueType, ValueType, Host>> opContextA
+    = std::make_shared<OperatorContextA<ValueType, ValueType>> 
+      (colMajorA, globalSize);
+
+  linearAlgebra::OrthonormalizationFunctions<ValueType, ValueType, Host>::CholeskyGramSchmidt(X, orthogonalizedX, *opContextA);
+  utils::MemoryStorage<ValueType, Host> X0HAX(numVec*numVec);
 
   orthogonalizedX.updateGhostValues();
 
@@ -179,6 +310,7 @@ int main()
   dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
   }
 
+  opContextA->apply(X,AX);
   linearAlgebra::blasLapack::gemm<ValueType,
           ValueType,
           Host>
@@ -189,12 +321,12 @@ int main()
         numVec,
         vecSize,
         1,
-        X.data(),
+        AX.data(),
         numVec,
         orthogonalizedX.data(),
         numVec,
         0,
-        X0HX.data(),
+        X0HAX.data(),
         numVec,
         *linAlgOpContext);
 
@@ -202,8 +334,8 @@ int main()
   
   int err = utils::mpi::MPIAllreduce<Host>(
     utils::mpi::MPIInPlace,
-    X0HX.data(),
-    X0HX.size(),
+    X0HAX.data(),
+    X0HAX.size(),
     utils::mpi::Types<ValueType>::getMPIDatatype(),
     utils::mpi::MPISum,
     utils::mpi::MPICommWorld);
@@ -223,28 +355,30 @@ int main()
         vecSize,
         numVec,
         1,
-        X0HX.data(),
+        X0HAX.data(),
         numVec,
         orthogonalizedX.data(),
         numVec,
         0,
-        X0X0HX.data(),
+        X0X0HAX.data(),
         numVec,
         *linAlgOpContext);
 
-    X0X0HX.updateGhostValues();
+    X0X0HAX.updateGhostValues();
+
+// check the projection error in the eigenvectors (I-X0X0^HB)X < tolerance
 
   for(size_type procId = 0 ; procId < numProcs ; procId++)
   {
   if(procId == rank)
   {
-  std::cout << "X0X0HX: \n" ;
+  std::cout << "X0X0HAX: \n" ;
   for(size_type j = 0 ; j < numVec ; j++)
   {
     std::cout << "[";
     for(size_type i = 0 ; i < vecSize ; i++)
     { 
-      std::cout << *(X0X0HX.data()+i*numVec+j) << ",";
+      std::cout << *(X0X0HAX.data()+i*numVec+j) << ",";
     }
     std::cout << "]\n";
   }
@@ -253,13 +387,13 @@ int main()
   dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
   }
 
-  for(size_type i = 0; i < X0X0HX.localSize(); ++i)
+  for(size_type i = 0; i < X0X0HAX.localSize(); ++i)
    {
-    for(size_type j = 0 ; j < X0X0HX.numVectors(); j++)
+    for(size_type j = 0 ; j < X0X0HAX.numVectors(); j++)
     {
-      if((std::fabs((X0X0HX.data() + i*numComponents + j)->real()- 
+      if((std::fabs((X0X0HAX.data() + i*numComponents + j)->real()- 
         (X.data() + i*numComponents + j)->real()) > 1e-12) && 
-        (std::fabs((X0X0HX.data() + i*numComponents + j)->imag()- 
+        (std::fabs((X0X0HAX.data() + i*numComponents + j)->imag()- 
         (X.data() + i*numComponents + j)->imag()) > 1e-12))
       {
           std::string msg = "At index " + std::to_string(i) +

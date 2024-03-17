@@ -37,18 +37,21 @@ namespace dftefe
                 utils::MemorySpace memorySpace>
       void
       CholeskyGramSchmidtImpl(
-        const size_type         vecSize,
-        const size_type         numVec,
-        const ValueTypeOperand *X,
+        MultiVector<ValueTypeOperand, memorySpace> &X,
         const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
           &B,
-        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>
-          *                           orthogonalizedX,
-        LinAlgOpContext<memorySpace> &linAlgOpContext,
-        const utils::mpi::MPIComm &   comm)
+        MultiVector<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+          memorySpace> &orthogonalizedX)
       {
         using ValueType =
           blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
+        const utils::mpi::MPIComm comm =
+          X.getMPIPatternP2P()->mpiCommunicator();
+        LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
+        const size_type              vecSize         = X.locallyOwnedSize();
+        const size_type              numVec          = X.getNumberComponents();
 
         // allocate memory for overlap matrix
         utils::MemoryStorage<ValueType, memorySpace> S(
@@ -59,7 +62,7 @@ namespace dftefe
         const ValueType alpha = 1.0;
         const ValueType beta  = 0.0;
 
-        utils::MemoryStorage<ValueType, memorySpace> temp(X, (ValueType)0);
+        MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
 
         B.apply(X, temp);
 
@@ -74,9 +77,9 @@ namespace dftefe
           numVec,
           vecSize,
           alpha,
-          temp,
+          temp.data(),
           numVec,
-          X,
+          X.data(),
           numVec,
           beta,
           S.data(),
@@ -163,10 +166,10 @@ namespace dftefe
           alpha,
           S.data(),
           numVec,
-          X,
+          X.data(),
           numVec,
           beta,
-          orthogonalizedX,
+          orthogonalizedX.data(),
           numVec,
           linAlgOpContext);
       }
@@ -179,7 +182,7 @@ namespace dftefe
     OrthonormalizationFunctions<ValueTypeOperator,
                                 ValueTypeOperand,
                                 memorySpace>::
-      CholeskyGramSchmidt(const MultiVector<ValueTypeOperand, memorySpace> &X,
+      CholeskyGramSchmidt(MultiVector<ValueTypeOperand, memorySpace> &X,
                           MultiVector<ValueType, memorySpace> &orthogonalizedX,
                           const OpContext &                    B)
     {
@@ -195,13 +198,7 @@ namespace dftefe
           OrthonormalizationFunctionsInternal::CholeskyGramSchmidtImpl<
             ValueTypeOperator,
             ValueTypeOperand,
-            memorySpace>(X.locallyOwnedSize(),
-                         X.getNumberComponents(),
-                         X.data(),
-                         B,
-                         orthogonalizedX.data(),
-                         *X.getLinAlgOpContext(),
-                         X.getMPIPatternP2P()->mpiCommunicator());
+            memorySpace>(X, B, orthogonalizedX);
 
           err = OrthonormalizationErrorCode::SUCCESS;
         }

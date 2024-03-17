@@ -41,7 +41,7 @@ namespace dftefe
         const MultiVector<ValueTypeOperand, memorySpace> &X,
         const double                                      illConditionTolerance)
     {
-      reinit(X);
+      reinit(X, illConditionTolerance);
     }
 
     template <typename ValueTypeOperator,
@@ -105,6 +105,8 @@ namespace dftefe
         *d_X.getLinAlgOpContext());
 
       utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(S.size());
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> ShostCopy(
+        S.size());
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
         S.size(), Shost.data(), S.data());
 
@@ -126,11 +128,13 @@ namespace dftefe
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
+      ShostCopy = Shost;
+
       eigenValuesS.resize(numVec);
       lapack::heevd(lapack::Job::NoVec,
                     lapack::Uplo::Lower,
                     numVec,
-                    Shost.data(),
+                    ShostCopy.data(),
                     numVec,
                     eigenValuesS.data());
 
@@ -159,17 +163,43 @@ namespace dftefe
               numVec,
               *d_X.getLinAlgOpContext());
 
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+            XprojectedAhost(XprojectedA.size());
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            XprojectedA.size(), XprojectedAhost.data(), XprojectedA.data());
+
+          // TODO: Copy only the real part because XprojectedA is real
+          // Reason: Reduced flops.
+
+          // MPI_AllReduce to get the XprojectedA from all procs
+
+          int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            XprojectedAhost.data(),
+            XprojectedAhost.size(),
+            utils::mpi::Types<ValueType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_X.getMPIPatternP2P()->mpiCommunicator());
+
+          std::pair<bool, std::string> mpiIsSuccessAndMsg =
+            utils::mpi::MPIErrIsSuccessAndMsg(err);
+          utils::throwException(mpiIsSuccessAndMsg.first,
+                                "MPI Error:" + mpiIsSuccessAndMsg.second);
+
           // Solve generalized eigenvalue problem
 
           lapack::hegv(1,
                        lapack::Job::Vec,
                        lapack::Uplo::Lower,
                        numVec,
-                       XprojectedA.data(),
+                       XprojectedAhost.data(),
                        numVec,
-                       S.data(),
+                       Shost.data(),
                        numVec,
                        eigenValues.data());
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            XprojectedAhost.size(), XprojectedA.data(), XprojectedAhost.data());
 
           // Rotation X_febasis = XQ.
 
@@ -223,14 +253,40 @@ namespace dftefe
             numVec,
             *d_X.getLinAlgOpContext());
 
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+            XprojectedAhost(XprojectedA.size());
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            XprojectedA.size(), XprojectedAhost.data(), XprojectedA.data());
+
+          // TODO: Copy only the real part because XprojectedA is real
+          // Reason: Reduced flops.
+
+          // MPI_AllReduce to get the XprojectedA from all procs
+
+          int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            XprojectedAhost.data(),
+            XprojectedAhost.size(),
+            utils::mpi::Types<ValueType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_X.getMPIPatternP2P()->mpiCommunicator());
+
+          std::pair<bool, std::string> mpiIsSuccessAndMsg =
+            utils::mpi::MPIErrIsSuccessAndMsg(err);
+          utils::throwException(mpiIsSuccessAndMsg.first,
+                                "MPI Error:" + mpiIsSuccessAndMsg.second);
+
           // Solve the standard eigenvalue problem
 
           lapack::heevd(lapack::Job::Vec,
                         lapack::Uplo::Lower,
                         numVec,
-                        XprojectedA.data(),
+                        XprojectedAhost.data(),
                         numVec,
                         eigenValues.data());
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            XprojectedAhost.size(), XprojectedA.data(), XprojectedAhost.data());
 
           // Rotation X_febasis = X_O Q.
 

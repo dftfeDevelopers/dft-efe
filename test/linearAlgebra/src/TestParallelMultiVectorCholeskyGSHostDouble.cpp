@@ -154,7 +154,7 @@ int main()
   linearAlgebra::MultiVector<ValueType, Host> orthogonalizedX(X, 0.0);
   linearAlgebra::MultiVector<ValueType, Host> X0X0TX(X, 0.0);
 
-  linearAlgebra::OrthonormalizationFunctions<ValueType, Host>::CholeskyGramSchmidt(X, orthogonalizedX);
+  linearAlgebra::OrthonormalizationFunctions<ValueType, ValueType, Host>::CholeskyGramSchmidt(X, orthogonalizedX);
   utils::MemoryStorage<ValueType, Host> X0TX(numVec*numVec);
 
   orthogonalizedX.updateGhostValues();
