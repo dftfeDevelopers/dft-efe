@@ -168,12 +168,13 @@ namespace dftefe
       std::shared_ptr<const BasisDofHandler>
       getCFEBasisDofHandler() const;
 
-      std::unordered_map<global_size_type,
-                         std::shared_ptr<utils::OptimizedIndexSet<size_type>>>
-      getEnrichmentIdToClassicalLocalIdMap() const;
+      const std::unordered_map<global_size_type,
+                               utils::OptimizedIndexSet<size_type>> &
+      getClassicalComponentLocalIdsMap() const;
 
-      std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
-      getEnrichmentIdToInterfaceCoeffMap() const;
+      const std::unordered_map<global_size_type,
+                               std::vector<ValueTypeBasisData>> &
+      getClassicalComponentCoeffMap() const;
 
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
@@ -238,12 +239,8 @@ namespace dftefe
       std::vector<std::vector<global_size_type>>
         d_overlappingEnrichmentIdsInCells;
 
-      std::unordered_map<global_size_type,
-                         std::shared_ptr<utils::OptimizedIndexSet<size_type>>>
+      std::unordered_map<global_size_type, utils::OptimizedIndexSet<size_type>>
         d_enrichmentIdToClassicalLocalIdMap;
-
-      std::unordered_map<global_size_type, std::set<size_type>>
-        d_enrichmentIdToClassicalLocalIdMapSet;
 
       std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
         d_enrichmentIdToInterfaceCoeffMap;

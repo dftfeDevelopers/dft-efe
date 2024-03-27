@@ -345,7 +345,10 @@ namespace dftefe
 
       d_enrichmentIdToClassicalLocalIdMap.clear();
       d_enrichmentIdToInterfaceCoeffMap.clear();
-      d_enrichmentIdToClassicalLocalIdMapSet.clear();
+
+      std::unordered_map<global_size_type, std::set<size_type>>
+        enrichmentIdToClassicalLocalIdMapSet;
+      enrichmentIdToClassicalLocalIdMapSet.clear();
 
       for (size_type i = 0; i < d_cfeBasisManager->nLocal(); i++)
         {
@@ -354,7 +357,7 @@ namespace dftefe
               if (std::abs(*(basisInterfaceCoeffSTL.data() +
                              i * nTotalEnrichmentIds + j)) > 1e-12)
                 {
-                  d_enrichmentIdToClassicalLocalIdMapSet[j].insert(i);
+                  enrichmentIdToClassicalLocalIdMapSet[j].insert(i);
                   d_enrichmentIdToInterfaceCoeffMap[j].push_back(
                     *(basisInterfaceCoeffSTL.data() + i * nTotalEnrichmentIds +
                       j));
@@ -362,14 +365,12 @@ namespace dftefe
             }
         }
 
-      int count = 0;
-      for (auto i = d_enrichmentIdToClassicalLocalIdMapSet.begin();
-           i != d_enrichmentIdToClassicalLocalIdMapSet.end();
+      for (auto i = enrichmentIdToClassicalLocalIdMapSet.begin();
+           i != enrichmentIdToClassicalLocalIdMapSet.end();
            i++)
         {
           d_enrichmentIdToClassicalLocalIdMap[i->first] =
-            std::make_shared<utils::OptimizedIndexSet<size_type>>(i->second);
-          count++;
+            utils::OptimizedIndexSet<size_type>(i->second);
         }
     }
 
@@ -539,12 +540,12 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::unordered_map<global_size_type,
-                       std::shared_ptr<utils::OptimizedIndexSet<size_type>>>
+    const std::unordered_map<global_size_type,
+                             utils::OptimizedIndexSet<size_type>> &
     EnrichmentClassicalInterfaceSpherical<
       ValueTypeBasisData,
       memorySpace,
-      dim>::getEnrichmentIdToClassicalLocalIdMap() const
+      dim>::getClassicalComponentLocalIdsMap() const
     {
       if (!d_isOrthogonalized)
         utils::throwException(
@@ -557,11 +558,12 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
-    EnrichmentClassicalInterfaceSpherical<
-      ValueTypeBasisData,
-      memorySpace,
-      dim>::getEnrichmentIdToInterfaceCoeffMap() const
+    const std::unordered_map<global_size_type,
+                             std::vector<ValueTypeBasisData>> &
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::getClassicalComponentCoeffMap()
+      const
     {
       if (!d_isOrthogonalized)
         utils::throwException(
