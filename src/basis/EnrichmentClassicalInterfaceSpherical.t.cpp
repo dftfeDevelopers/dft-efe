@@ -30,6 +30,7 @@
 #include <utils/ScalarSpatialFunction.h>
 #include <linearAlgebra/CGLinearSolver.h>
 #include <algorithm>
+#include <set>
 #include <string>
 //#include <basis/FEOverlapInverseOperatorContext.h>
 
@@ -67,6 +68,7 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_overlappingEnrichmentIdsInCells(0)
       , d_basisInterfaceCoeff(nullptr)
+      , d_linAlgOpContext(linAlgOpContext)
     {
       d_isOrthogonalized = true;
 
@@ -195,7 +197,7 @@ namespace dftefe
           *cfeBasisDataStorageOverlapMatrix,
           L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
 
-      size_type nTotalEnrichmentIds =
+      global_size_type nTotalEnrichmentIds =
         d_enrichmentIdsPartition->nTotalEnrichmentIds();
 
       d_basisInterfaceCoeff = std::make_shared<
@@ -328,6 +330,47 @@ namespace dftefe
       //                                               linAlgOpContext);
 
       // MInvContext->apply(d,*d_basisInterfaceCoeff);
+
+      // populate a unordered_map<id, <vec1, vec2>>  i.e. map from enrichedId ->
+      // pair(localId, coeff)
+
+      std::vector<ValueTypeBasisData> basisInterfaceCoeffSTL(
+        nTotalEnrichmentIds * d_cfeBasisManager->nLocal(),
+        ValueTypeBasisData());
+
+      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+        nTotalEnrichmentIds * d_cfeBasisManager->nLocal(),
+        basisInterfaceCoeffSTL.data(),
+        d_basisInterfaceCoeff->data());
+
+      d_enrichmentIdToClassicalLocalIdMap.clear();
+      d_enrichmentIdToInterfaceCoeffMap.clear();
+      d_enrichmentIdToClassicalLocalIdMapSet.clear();
+
+      for (size_type i = 0; i < d_cfeBasisManager->nLocal(); i++)
+        {
+          for (global_size_type j = 0; j < nTotalEnrichmentIds; j++)
+            {
+              if (std::abs(*(basisInterfaceCoeffSTL.data() +
+                             i * nTotalEnrichmentIds + j)) > 1e-12)
+                {
+                  d_enrichmentIdToClassicalLocalIdMapSet[j].insert(i);
+                  d_enrichmentIdToInterfaceCoeffMap[j].push_back(
+                    *(basisInterfaceCoeffSTL.data() + i * nTotalEnrichmentIds +
+                      j));
+                }
+            }
+        }
+
+      int count = 0;
+      for (auto i = d_enrichmentIdToClassicalLocalIdMapSet.begin();
+           i != d_enrichmentIdToClassicalLocalIdMapSet.end();
+           i++)
+        {
+          d_enrichmentIdToClassicalLocalIdMap[i->first] =
+            std::make_shared<utils::OptimizedIndexSet<size_type>>(i->second);
+          count++;
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -354,6 +397,7 @@ namespace dftefe
       , d_triangulation(triangulation)
       , d_overlappingEnrichmentIdsInCells(0)
       , d_basisInterfaceCoeff(nullptr)
+      , d_linAlgOpContext(nullptr)
     {
       d_isOrthogonalized = false;
 
@@ -490,6 +534,57 @@ namespace dftefe
           "Cannot call getCFEBasisDofHandler() for no orthogonalization of EFE mesh.");
 
       return d_cfeBasisDofHandler;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::unordered_map<global_size_type,
+                       std::shared_ptr<utils::OptimizedIndexSet<size_type>>>
+    EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getEnrichmentIdToClassicalLocalIdMap() const
+    {
+      if (!d_isOrthogonalized)
+        utils::throwException(
+          false,
+          "Cannot call getEnrichmentIdToClassicalLocalIdMap() for no orthogonalization of EFE mesh.");
+
+      return d_enrichmentIdToClassicalLocalIdMap;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
+    EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getEnrichmentIdToInterfaceCoeffMap() const
+    {
+      if (!d_isOrthogonalized)
+        utils::throwException(
+          false,
+          "Cannot call getEnrichmentIdToClassicalLocalIdCoeffMap() for no orthogonalization of EFE mesh.");
+
+      return d_enrichmentIdToInterfaceCoeffMap;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::getLinAlgOpContext() const
+    {
+      if (!d_isOrthogonalized)
+        utils::throwException(
+          false,
+          "Cannot call getLinAlgOpContext() for no orthogonalization of EFE mesh.");
+
+      return d_linAlgOpContext;
     }
 
     template <typename ValueTypeBasisData,

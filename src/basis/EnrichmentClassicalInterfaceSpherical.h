@@ -30,6 +30,8 @@
 #include <utils/TypeConfig.h>
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <utils/OptimizedIndexSet.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <memory>
@@ -166,6 +168,16 @@ namespace dftefe
       std::shared_ptr<const BasisDofHandler>
       getCFEBasisDofHandler() const;
 
+      std::unordered_map<global_size_type,
+                         std::shared_ptr<utils::OptimizedIndexSet<size_type>>>
+      getEnrichmentIdToClassicalLocalIdMap() const;
+
+      std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
+      getEnrichmentIdToInterfaceCoeffMap() const;
+
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+      getLinAlgOpContext() const;
+
       const linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> &
       getBasisInterfaceCoeff() const;
 
@@ -225,6 +237,19 @@ namespace dftefe
       const std::string               d_fieldName;
       std::vector<std::vector<global_size_type>>
         d_overlappingEnrichmentIdsInCells;
+
+      std::unordered_map<global_size_type,
+                         std::shared_ptr<utils::OptimizedIndexSet<size_type>>>
+        d_enrichmentIdToClassicalLocalIdMap;
+
+      std::unordered_map<global_size_type, std::set<size_type>>
+        d_enrichmentIdToClassicalLocalIdMapSet;
+
+      std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
+        d_enrichmentIdToInterfaceCoeffMap;
+
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
 
     }; // end of class
   }    // end of namespace basis
