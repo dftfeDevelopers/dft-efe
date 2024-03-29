@@ -79,7 +79,7 @@ namespace dftefe
 
       d_rr = std::make_shared<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
-        eigenSubspaceGuess, illConditionTolerance);
+        eigenSubspaceGuess);
     }
 
     template <typename ValueTypeOperator,
@@ -113,11 +113,26 @@ namespace dftefe
         d_unWantedSpectrumUpperBound,
         filteredSubspace);
 
+
+      MultiVector<ValueType, memorySpace> filteredSubspaceOrtho(
+        filteredSubspace, (ValueType)0);
+
+      // B orthogonalization required of X -> X_O
+
+      OrthonormalizationFunctions<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::CholeskyGramSchmidt(filteredSubspace,
+                                          filteredSubspaceOrtho,
+                                          B);
+
       // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspace
 
-      d_rr->reinit(filteredSubspace);
-
-      d_rr->solve(A, eigenValues, eigenVectors, computeEigenVectors, B);
+      d_rr->solve(A,
+                  filteredSubspaceOrtho,
+                  eigenValues,
+                  eigenVectors,
+                  computeEigenVectors);
 
       return retunValue;
     }

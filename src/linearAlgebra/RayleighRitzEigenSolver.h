@@ -31,8 +31,8 @@
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
 
 namespace dftefe
@@ -54,9 +54,6 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     class RayleighRitzEigenSolver
-      : public HermitianIterativeEigenSolver<ValueTypeOperator,
-                                             ValueTypeOperand,
-                                             memorySpace>
     {
     public:
       /**
@@ -69,17 +66,13 @@ namespace dftefe
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
       using RealType = blasLapack::real_type<ValueType>;
       using OpContext =
-        typename HermitianIterativeEigenSolver<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace>::OpContext;
+        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
 
     public:
       /**
        * @brief Constructor
        */
-      RayleighRitzEigenSolver(
-        const MultiVector<ValueTypeOperand, memorySpace> &X,
-        const double illConditionTolerance);
+      RayleighRitzEigenSolver();
 
       /**
        *@brief Default Destructor
@@ -87,27 +80,22 @@ namespace dftefe
        */
       ~RayleighRitzEigenSolver() = default;
 
-      void
-      reinit(const MultiVector<ValueTypeOperand, memorySpace> &X,
-             const double illConditionTolerance);
+      EigenSolverError
+      solve(const OpContext &                                 A,
+            const MultiVector<ValueTypeOperand, memorySpace> &X,
+            std::vector<RealType> &                           eigenValues,
+            MultiVector<ValueType, memorySpace> &             eigenVectors,
+            bool computeEigenVectors = false) override;
 
       EigenSolverError
-      solve(const OpContext &                    A,
-            std::vector<RealType> &              eigenValues,
-            MultiVector<ValueType, memorySpace> &eigenVectors,
-            bool                                 computeEigenVectors = false,
-            const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
-                                                         ValueTypeOperand,
-                                                         memorySpace>(),
-            const OpContext &BInv =
-              IdentityOperatorContext<ValueTypeOperator,
-                                      ValueTypeOperand,
-                                      memorySpace>()) override;
+      solve(const OpContext &                                 A,
+            const OpContext &                                 B,
+            const MultiVector<ValueTypeOperand, memorySpace> &X,
+            std::vector<RealType> &                           eigenValues,
+            MultiVector<ValueType, memorySpace> &             eigenVectors,
+            bool computeEigenVectors = false) override;
 
     private:
-      MultiVector<ValueTypeOperand, memorySpace> d_X;
-      double                                     d_illConditionTolerance;
-
     }; // end of class RayleighRitzEigenSolver
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe

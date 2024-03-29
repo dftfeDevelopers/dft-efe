@@ -65,6 +65,17 @@ namespace dftefe
                                                      ValueTypeOperand,
                                                      memorySpace>());
 
+      // static OrthonormalizationError
+      // MultipassLowdin(
+      //   MultiVector<ValueTypeOperand, memorySpace> &X,
+      //   size_type                                  maxPass,
+      //   size_type                                  shiftTolerance,
+      //   size_type                                  identityTolerance,
+      //   MultiVector<ValueType, memorySpace> &       orthogonalizedX,
+      //   const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+      //                                                ValueTypeOperand,
+      //                                                memorySpace>());
+
     }; // end of class OrthonormalizationFunctions
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe

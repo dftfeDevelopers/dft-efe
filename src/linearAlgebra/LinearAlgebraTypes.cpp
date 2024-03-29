@@ -29,6 +29,19 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
+    const std::map<LapackErrorCode, std::string> LapackErrorMsg::d_errToMsgMap = {
+      {LapackErrorCode::SUCCESS, "Success"},
+      {LapackErrorCode::FAILED_DENSE_MATRIX_INVERSE,
+       "Dense matrix inversion failed with either lapack::getrf or lapack::getri with error codes "},
+      {LapackErrorCode::FAILED_TRIA_MATRIX_INVERSE,
+       "Triangular matrix inversion failed with error code "},
+      {LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION,
+       "Cholesky factorization failed with error code "},
+      {LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM,
+       "Standard eigenproblem decomposition failed with error code "},
+      {LapackErrorCode::FAILED_GENERALIZED_EIGENPROBLEM,
+       "Generalized eigenproblem decomposition failed with error code "}};
+
     const std::map<LinearSolverErrorCode, std::string>
       LinearSolverErrorMsg::d_errToMsgMap = {
         {LinearSolverErrorCode::SUCCESS, "Success"},
@@ -74,6 +87,28 @@ namespace dftefe
         {
           utils::throwException<utils::InvalidArgument>(
             false, "Invalid linearAlgebra::LinearSolverErrorCode passed.");
+        }
+      return ret;
+    }
+
+    LapackError
+    LapackErrorMsg::isSuccessAndMsg(const LapackErrorCode &error)
+    {
+      LapackError ret;
+      auto        it = d_errToMsgMap.find(error);
+      if (it != d_errToMsgMap.end())
+        {
+          if (error == LapackErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false, "Invalid linearAlgebra::LapackErrorCode passed.");
         }
       return ret;
     }

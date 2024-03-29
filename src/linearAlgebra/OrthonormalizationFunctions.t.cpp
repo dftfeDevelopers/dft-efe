@@ -209,5 +209,97 @@ namespace dftefe
       return retunValue;
     }
 
+    // template <typename ValueTypeOperator,
+    //           typename ValueTypeOperand,
+    //           utils::MemorySpace memorySpace>
+    // OrthonormalizationError
+    // OrthonormalizationFunctions<ValueTypeOperator,
+    //                             ValueTypeOperand,
+    //                             memorySpace>::
+    //   MultipassLowdin(MultiVector<ValueTypeOperand, memorySpace> &X,
+    //                         size_type maxPass, size_type shiftTolerance,
+    //                         size_type identityTolerance,
+    //                         MultiVector<ValueType, memorySpace> &
+    //                         orthogonalizedX, const OpContext & B)
+    // {
+    //   OrthonormalizationErrorCode err;
+    //   orthogonalizedX.setValue((ValueType)0.0);
+    //   double u = std::numeric_limits<double>::epsilon();
+
+    //   // allocate memory for overlap matrix
+    //   utils::MemoryStorage<ValueType, memorySpace> S(
+    //     numVec * numVec, utils::Types<ValueType>::zero);
+
+    //   // compute overlap matrix
+
+    //   const ValueType alpha = 1.0;
+    //   const ValueType beta  = 0.0;
+
+    //   MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
+
+    //   if (X.globalSize() < X.getNumberComponents())
+    //     {
+    //       err =
+    //       OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR;
+    //     }
+    //   else
+    //     {
+    //       /* Get S = X^T B X */
+
+    //       // Input data is read is X^T (numVec is fastest index and then
+    //       vecSize)
+    //       // Operation : S^T = ((B*X)^T)*(X^T)^H
+
+    //       B.apply(X, temp);
+
+    //       blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
+    //         blasLapack::Layout::ColMajor,
+    //         blasLapack::Op::NoTrans,
+    //         blasLapack::Op::ConjTrans,
+    //         numVec,
+    //         numVec,
+    //         vecSize,
+    //         alpha,
+    //         temp.data(),
+    //         numVec,
+    //         X.data(),
+    //         numVec,
+    //         beta,
+    //         S.data(),
+    //         numVec,
+    //         linAlgOpContext);
+
+    //       /* do a eigendecomposition and get min eigenvalue and get shift*/
+
+
+
+    //       /* Shift by D->D+shift*/
+
+    //       /* Do Y = XVD^(-1/2) */
+
+    //       /* Do cholesky factorization until Frobenius(||Y^T B Y -
+    //       I||)/root(size of I) < identityTolerance
+    //       *  To reduce computation one does not compute the above but get a
+    //       rough
+    //       * estimate by doing prefactor * e_machine/root(e_min) <
+    //       identityTolerance*root(size of I) */
+
+    //       bool isOrthogonalized = false;
+
+    //       while(!isOrthogonalized)
+    //       {
+    //         if( u/std::sqrt(eigenValMinS + shift) )
+    //       }
+
+
+    //       err = OrthonormalizationErrorCode::SUCCESS;
+    //     }
+
+    //   OrthonormalizationError retunValue =
+    //     OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+
+    //   return retunValue;
+    // }
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

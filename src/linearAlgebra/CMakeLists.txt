@@ -12,7 +12,6 @@ if (NOT TARGET dft-efe-linalg)
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu
-            QueueManager.cpp
             LinAlgOpContext.cpp
             VectorAttributes.cpp
 	    Vector.cpp

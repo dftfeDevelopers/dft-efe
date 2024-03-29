@@ -251,8 +251,8 @@ namespace dftefe
       Vector<ValueType, memorySpace> q(d_initialGuess, (ValueType)0.0);
       Vector<ValueType, memorySpace> qPrev(d_initialGuess, (ValueType)0.0);
 
-      std::vector<ValueType> qSTL(q.locallyOwnedSize());
-      std::vector<ValueType> vSTL(q.locallyOwnedSize());
+      // std::vector<ValueType> qSTL(q.locallyOwnedSize());
+      // std::vector<ValueType> vSTL(q.locallyOwnedSize());
 
       std::vector<Vector<ValueType, memorySpace>> krylovSubspOrthoVec(0);
       utils::MemoryStorage<ValueType, memorySpace>
@@ -281,21 +281,28 @@ namespace dftefe
 
       alpha[0] = std::sqrt(alpha[0]);
 
-      std::vector<ValueTypeOperand> initialGuessSTL(
-        d_initialGuess.locallyOwnedSize());
+      // std::vector<ValueTypeOperand> initialGuessSTL(
+      //   d_initialGuess.locallyOwnedSize());
 
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+      blasLapack::ascale<ValueType, ValueTypeOperand, memorySpace>(
         d_initialGuess.locallyOwnedSize(),
-        initialGuessSTL.data(),
-        d_initialGuess.data());
+        (ValueType)(1.0 / alpha[0]),
+        d_initialGuess.data(),
+        q.data(),
+        *d_initialGuess.getLinAlgOpContext());
 
-      for (size_type h = 0; h < d_initialGuess.locallyOwnedSize(); h++)
-        {
-          *(qSTL.data() + h) = *(initialGuessSTL.data() + h) / alpha[0];
-        }
+      // utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+      //   d_initialGuess.locallyOwnedSize(),
+      //   initialGuessSTL.data(),
+      //   d_initialGuess.data());
 
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        qSTL.size(), q.data(), qSTL.data());
+      // for (size_type h = 0; h < d_initialGuess.locallyOwnedSize(); h++)
+      //   {
+      //     *(qSTL.data() + h) = *(initialGuessSTL.data() + h) / alpha[0];
+      //   }
+
+      // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+      //   qSTL.size(), q.data(), qSTL.data());
 
       for (size_type iter = 1; iter <= d_maxKrylovSubspaceSize; iter++)
         {
@@ -454,22 +461,28 @@ namespace dftefe
               break;
             }
 
-          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-            v.locallyOwnedSize(), vSTL.data(), v.data());
-
           betaVec.push_back((RealType)beta[0]);
-
-          // get q_i+1 = v/\beta_i
-
-          for (size_type h = 0; h < v.locallyOwnedSize(); h++)
-            {
-              *(qSTL.data() + h) = *(vSTL.data() + h) / beta[0];
-            }
 
           qPrev = q;
 
-          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-            qSTL.size(), q.data(), qSTL.data());
+          // utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+          //   v.locallyOwnedSize(), vSTL.data(), v.data());
+
+          // for (size_type h = 0; h < v.locallyOwnedSize(); h++)
+          //   {
+          //     *(qSTL.data() + h) = *(vSTL.data() + h) / beta[0];
+          //   }
+
+          // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          //   qSTL.size(), q.data(), qSTL.data());
+
+          // get q_i+1 = v/\beta_i
+          blasLapack::ascale<ValueType, ValueType, memorySpace>(
+            v.locallyOwnedSize(),
+            (ValueType)(1.0 / beta[0]),
+            v.data(),
+            q.data(),
+            *d_initialGuess.getLinAlgOpContext());
         }
 
       if (krylovSubspaceSize > d_maxKrylovSubspaceSize)

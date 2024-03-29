@@ -126,9 +126,8 @@ namespace dftefe
       MultiVector<ValueTypeOperand, memorySpace> d_eigenSubspaceGuess;
       size_type                                  d_eigenVectorBlockSize;
 
-      std::shared_ptr<HermitianIterativeEigenSolver<ValueTypeOperator,
-                                                    ValueTypeOperand,
-                                                    memorySpace>>
+      std::shared_ptr<
+        RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
         d_rr;
 
     }; // end of class ChebyshevFilteredEigenSolver

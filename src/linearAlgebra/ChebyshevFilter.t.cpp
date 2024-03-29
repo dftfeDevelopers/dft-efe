@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
 #include <utils/TypeConfig.h>
@@ -55,10 +55,14 @@ namespace dftefe
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
+      const size_type locallyOwnedMultivecSize =
+        eigenSubspaceGuess.locallyOwnedSize() *
+        eigenSubspaceGuess.getNumberComponents();
+
       const double e =
-        (1 / 2) * (unWantedSpectrumUpperBound - wantedSpectrumUpperBound);
+        (0.5) * (unWantedSpectrumUpperBound - wantedSpectrumUpperBound);
       const double c =
-        (1 / 2) * (unWantedSpectrumUpperBound + wantedSpectrumUpperBound);
+        (0.5) * (unWantedSpectrumUpperBound + wantedSpectrumUpperBound);
       double sigma = e / (wantedSpectrumLowerBound - c);
 
       const double sigma1 = sigma;
@@ -79,7 +83,7 @@ namespace dftefe
       // filteredSubspace = (\sigma1/e)(B^-1A eigenSubspaceGuess - c
       // eigenSubspaceGuess)
       blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
-        eigenSubspaceGuess.locallyOwnedSize(),
+        locallyOwnedMultivecSize,
         sigma1 / e,
         scratch2.data(),
         -sigma1 / e * c,
@@ -97,7 +101,7 @@ namespace dftefe
 
           // temp = (2\sigma2/e)(B^-1A filteredSubspace - c filteredSubspace)
           blasLapack::axpby<ValueType, ValueType, memorySpace>(
-            eigenSubspaceGuess.locallyOwnedSize(),
+            locallyOwnedMultivecSize,
             2 * sigma2 / e,
             scratch2.data(),
             -2 * sigma2 / e * c,
@@ -107,7 +111,7 @@ namespace dftefe
 
           // filteredSubspaceNew = temp - \sigma*\sigma2*eigenSubspaceGuess
           blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
-            eigenSubspaceGuess.locallyOwnedSize(),
+            locallyOwnedMultivecSize,
             (ValueType)1,
             scratch1.data(),
             -sigma * sigma2,

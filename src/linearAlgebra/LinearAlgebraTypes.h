@@ -56,6 +56,16 @@ namespace dftefe
       ALL
     };
 
+    enum class LapackErrorCode
+    {
+      SUCCESS,
+      FAILED_DENSE_MATRIX_INVERSE,
+      FAILED_TRIA_MATRIX_INVERSE,
+      FAILED_CHOLESKY_FACTORIZATION,
+      FAILED_STANDARD_EIGENPROBLEM,
+      FAILED_GENERALIZED_EIGENPROBLEM,
+    };
+
     enum class LinearSolverErrorCode
     {
       SUCCESS,
@@ -80,6 +90,13 @@ namespace dftefe
       NON_ORTHONORMALIZABLE_MULTIVECTOR
     };
 
+    struct LapackError
+    {
+      bool            isSuccess;
+      LapackErrorCode err;
+      std::string     msg;
+    };
+
     struct LinearSolverError
     {
       bool                  isSuccess;
@@ -100,6 +117,20 @@ namespace dftefe
       OrthonormalizationErrorCode err;
       std::string                 msg;
     };
+
+    /**
+     * @brief A class to map Error to a message.
+     * @note: This class only has static const data members.
+     */
+    class LapackErrorMsg
+    {
+    public:
+      static LapackError
+      isSuccessAndMsg(const LapackErrorCode &errorCode);
+
+    private:
+      static const std::map<LapackErrorCode, std::string> d_errToMsgMap;
+    }; // end of class LapackErrorMsg
 
     /**
      * @brief A class to map Error to a message.

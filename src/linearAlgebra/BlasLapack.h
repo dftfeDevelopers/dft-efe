@@ -20,18 +20,17 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian
+ * @author Vishal Subramanian, Avirup Sircar
  */
 
 #ifndef dftefeBlasWrappers_h
 #define dftefeBlasWrappers_h
 
+#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/TypeConfig.h>
-#define LAPACK_COMPLEX_CPP
-#define HAVE_LAPACK_CONFIG_H
-#include <lapack.hh>
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -424,15 +423,70 @@ namespace dftefe
                             const size_type *                    lddc,
                             LinAlgOpContext<memorySpace> &       context);
 
+
       /**
-       * @brief Matrix inversion
-       *
-       * @note: Assumes the matrix to be square (no pseudoinverse)
+       * @brief Dense Matrix inversion
        */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
-      void
-      inverse(size_type n, ValueType *A);
+      LapackErrorCode
+      inverse(size_type n, ValueType *A, LinAlgOpContext<memorySpace> &context);
+
+      /**
+       * @brief Triangular Matrix inversion
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackErrorCode
+      trtri(Uplo                          uplo,
+            Diag                          diag,
+            size_type                     n,
+            ValueType *                   A,
+            size_type                     lda,
+            LinAlgOpContext<memorySpace> &context);
+
+      /**
+       * @brief Cholesky factorization
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackErrorCode
+      potrf(Uplo                          uplo,
+            size_type                     n,
+            ValueType *                   A,
+            size_type                     lda,
+            LinAlgOpContext<memorySpace> &context);
+
+      /**
+       * @brief Standard eigenvalue decomposition
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackErrorCode
+      heevd(Job                           jobz,
+            Uplo                          uplo,
+            size_type                     n,
+            ValueType *                   A,
+            size_type                     lda,
+            real_type<ValueType> *        W,
+            LinAlgOpContext<memorySpace> &context);
+
+      /**
+       * @brief Generalized eigenvalue decomposition
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackErrorCode
+      hegv(size_type                     itype,
+           Job                           jobz,
+           Uplo                          uplo,
+           size_type                     n,
+           ValueType *                   A,
+           size_type                     lda,
+           ValueType *                   B,
+           size_type                     ldb,
+           real_type<ValueType> *        W,
+           LinAlgOpContext<memorySpace> &context);
 
     } // namespace blasLapack
   }   // namespace linearAlgebra
