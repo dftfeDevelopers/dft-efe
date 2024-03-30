@@ -240,8 +240,7 @@ namespace dftefe
       bool              isSuccess = false;
       size_type         krylovSubspaceSize;
 
-      std::vector<RealType> alphaVec(0), betaVec(0), eigenValuesIter(0),
-        betaVecTemp(0);
+      std::vector<RealType>  alphaVec(0), betaVec(0);
       std::vector<ValueType> alpha(1, (ValueType)0), beta(1, (ValueType)0);
 
       ValueType ones = (ValueType)1.0, nBeta, nAlpha;
@@ -251,16 +250,13 @@ namespace dftefe
       Vector<ValueType, memorySpace> q(d_initialGuess, (ValueType)0.0);
       Vector<ValueType, memorySpace> qPrev(d_initialGuess, (ValueType)0.0);
 
-      // std::vector<ValueType> qSTL(q.locallyOwnedSize());
-      // std::vector<ValueType> vSTL(q.locallyOwnedSize());
-
       std::vector<Vector<ValueType, memorySpace>> krylovSubspOrthoVec(0);
       utils::MemoryStorage<ValueType, memorySpace>
         krylovSubspOrthoVecMemStorage(0);
 
       // memory for the eigenVectors
-      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-        eigenVectorsKrylovSubspace(0);
+      utils::MemoryStorage<ValueType, memorySpace> eigenVectorsKrylovSubspace(
+        0);
       utils::MemoryStorage<ValueType, memorySpace>
         wantedEigenVectorsKrylovSubspace(0);
 
@@ -281,28 +277,12 @@ namespace dftefe
 
       alpha[0] = std::sqrt(alpha[0]);
 
-      // std::vector<ValueTypeOperand> initialGuessSTL(
-      //   d_initialGuess.locallyOwnedSize());
-
       blasLapack::ascale<ValueType, ValueTypeOperand, memorySpace>(
         d_initialGuess.locallyOwnedSize(),
         (ValueType)(1.0 / alpha[0]),
         d_initialGuess.data(),
         q.data(),
         *d_initialGuess.getLinAlgOpContext());
-
-      // utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-      //   d_initialGuess.locallyOwnedSize(),
-      //   initialGuessSTL.data(),
-      //   d_initialGuess.data());
-
-      // for (size_type h = 0; h < d_initialGuess.locallyOwnedSize(); h++)
-      //   {
-      //     *(qSTL.data() + h) = *(initialGuessSTL.data() + h) / alpha[0];
-      //   }
-
-      // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-      //   qSTL.size(), q.data(), qSTL.data());
 
       for (size_type iter = 1; iter <= d_maxKrylovSubspaceSize; iter++)
         {
@@ -344,44 +324,58 @@ namespace dftefe
           if (iter >= numWantedEigenValues)
             {
               krylovSubspaceSize = iter;
-              eigenValuesIter    = alphaVec;
-              betaVecTemp        = betaVec;
+
+              utils::MemoryStorage<ValueType, memorySpace> eigenValuesIter(
+                alphaVec.size());
+              eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
+                alphaVec.data());
+              utils::MemoryStorage<ValueType, memorySpace> betaVecTemp(
+                betaVec.size());
+              betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
+                betaVec.data());
+
               if (computeEigenVectors)
                 {
                   eigenVectorsKrylovSubspace.resize(
                     krylovSubspaceSize * krylovSubspaceSize,
                     utils::Types<ValueType>::zero);
-                  size_type lapackReturn =
-                    lapack::steqr(lapack::Job::Vec,
-                                  krylovSubspaceSize,
-                                  eigenValuesIter.data(),
-                                  betaVecTemp.data(),
-                                  eigenVectorsKrylovSubspace.data(),
-                                  krylovSubspaceSize);
+                  LapackError lapackReturn =
+                    blasLapack::steqr<ValueType, memorySpace>(
+                      blasLapack::Job::Vec,
+                      krylovSubspaceSize,
+                      eigenValuesIter.data(),
+                      betaVecTemp.data(),
+                      eigenVectorsKrylovSubspace.data(),
+                      krylovSubspaceSize,
+                      *d_initialGuess.getLinAlgOpContext());
 
-                  if (lapackReturn != 0)
+                  if (lapackReturn.err ==
+                      LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
                     {
-                      err        = EigenSolverErrorCode::LAPACK_STEQR_ERROR;
+                      err        = EigenSolverErrorCode::LAPACK_ERROR;
                       retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                      retunValue.msg += std::to_string(lapackReturn);
+                      retunValue.msg += lapackReturn.msg;
                       break;
                     }
                 }
               else
                 {
-                  size_type lapackReturn =
-                    lapack::steqr(lapack::Job::NoVec,
-                                  krylovSubspaceSize,
-                                  eigenValuesIter.data(),
-                                  betaVecTemp.data(),
-                                  eigenVectorsKrylovSubspace.data(),
-                                  krylovSubspaceSize);
+                  LapackError lapackReturn =
+                    blasLapack::steqr<ValueType, memorySpace>(
+                      blasLapack::Job::NoVec,
+                      krylovSubspaceSize,
+                      eigenValuesIter.data(),
+                      betaVecTemp.data(),
+                      eigenVectorsKrylovSubspace.data(),
+                      krylovSubspaceSize,
+                      *d_initialGuess.getLinAlgOpContext());
 
-                  if (lapackReturn != 0)
+                  if (lapackReturn.err ==
+                      LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
                     {
-                      err        = EigenSolverErrorCode::LAPACK_STEQR_ERROR;
+                      err        = EigenSolverErrorCode::LAPACK_ERROR;
                       retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                      retunValue.msg += std::to_string(lapackReturn);
+                      retunValue.msg += lapackReturn.msg;
                       break;
                     }
                 }
@@ -399,18 +393,14 @@ namespace dftefe
               // }
               // std::cout << "\n";
 
-              auto start = eigenValuesIter.begin();
-              auto end =
-                eigenValuesIter.begin() + d_numLowerExtermeEigenValues + 1;
+              eigenValuesIter.template copyTo<utils::MemorySpace::HOST>(
+                eigenValues.data(), d_numLowerExtermeEigenValues, 0, 0);
 
-              std::copy(start, end, eigenValues.begin());
-
-              start = eigenValuesIter.end() - d_numUpperExtermeEigenValues;
-              end   = eigenValuesIter.end();
-
-              std::copy(start,
-                        end,
-                        eigenValues.begin() + d_numLowerExtermeEigenValues);
+              eigenValuesIter.template copyTo<utils::MemorySpace::HOST>(
+                eigenValues.data(),
+                d_numUpperExtermeEigenValues,
+                eigenValuesIter.size() - d_numUpperExtermeEigenValues,
+                d_numLowerExtermeEigenValues);
 
               for (size_type eigId = 0; eigId < numWantedEigenValues; eigId++)
                 {
@@ -464,17 +454,6 @@ namespace dftefe
           betaVec.push_back((RealType)beta[0]);
 
           qPrev = q;
-
-          // utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-          //   v.locallyOwnedSize(), vSTL.data(), v.data());
-
-          // for (size_type h = 0; h < v.locallyOwnedSize(); h++)
-          //   {
-          //     *(qSTL.data() + h) = *(vSTL.data() + h) / beta[0];
-          //   }
-
-          // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          //   qSTL.size(), q.data(), qSTL.data());
 
           // get q_i+1 = v/\beta_i
           blasLapack::ascale<ValueType, ValueType, memorySpace>(
@@ -532,12 +511,12 @@ namespace dftefe
           //   std::cout << "]\n";
           // }
 
-          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
             d_numLowerExtermeEigenValues * krylovSubspaceSize,
             wantedEigenVectorsKrylovSubspace.data(),
             eigenVectorsKrylovSubspace.data());
 
-          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
             d_numUpperExtermeEigenValues * krylovSubspaceSize,
             wantedEigenVectorsKrylovSubspace.data() +
               d_numLowerExtermeEigenValues * krylovSubspaceSize,

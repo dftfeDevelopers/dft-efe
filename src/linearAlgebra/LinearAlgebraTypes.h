@@ -62,6 +62,7 @@ namespace dftefe
       FAILED_DENSE_MATRIX_INVERSE,
       FAILED_TRIA_MATRIX_INVERSE,
       FAILED_CHOLESKY_FACTORIZATION,
+      FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM,
       FAILED_STANDARD_EIGENPROBLEM,
       FAILED_GENERALIZED_EIGENPROBLEM,
     };
@@ -78,7 +79,7 @@ namespace dftefe
     enum class EigenSolverErrorCode
     {
       SUCCESS,
-      LAPACK_STEQR_ERROR,
+      LAPACK_ERROR,
       LANCZOS_BETA_ZERO,
       LANCZOS_SUBSPACE_INSUFFICIENT,
       OTHER_ERROR
@@ -87,6 +88,7 @@ namespace dftefe
     enum class OrthonormalizationErrorCode
     {
       SUCCESS,
+      LAPACK_ERROR,
       NON_ORTHONORMALIZABLE_MULTIVECTOR
     };
 

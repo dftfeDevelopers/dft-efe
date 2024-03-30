@@ -478,9 +478,9 @@ namespace dftefe
       LapackError
       inverse(size_type n, ValueType *A, LinAlgOpContext<memorySpace> &context)
       {
-        LapackError                                         returnVal;
-        global_size_type                                    error1, error2;
-        utils::MemoryStorage<global_size_type, memorySpace> ipiv(n);
+        LapackError                                 returnVal;
+        global_size_type                            error1, error2;
+        utils::MemoryStorage<long int, memorySpace> ipiv(n);
 
         error1 = lapack::getrf(n, n, A, n, ipiv.data());
 
@@ -544,6 +544,34 @@ namespace dftefe
           {
             returnVal = LapackErrorMsg::isSuccessAndMsg(
               LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION);
+            returnVal.msg += std::to_string(error) + " .";
+          }
+        else
+          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
+
+        return returnVal;
+      }
+
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackError
+      steqr(Job                           jobz,
+            size_type                     n,
+            real_type<ValueType> *        D,
+            real_type<ValueType> *        E,
+            ValueType *                   Z,
+            size_type                     ldz,
+            LinAlgOpContext<memorySpace> &context)
+      {
+        LapackError      returnVal;
+        global_size_type error;
+
+        error = lapack::steqr(jobz, n, D, E, Z, ldz);
+
+        if (error != 0)
+          {
+            returnVal = LapackErrorMsg::isSuccessAndMsg(
+              LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM);
             returnVal.msg += std::to_string(error) + " .";
           }
         else
@@ -621,8 +649,8 @@ namespace dftefe
         LapackError      returnVal;
         global_size_type error1, error2;
 
-        utils::MemoryStorage<global_size_type, dftefe::utils::MemorySpace::HOST>
-          ipiv(n);
+        utils::MemoryStorage<long int, dftefe::utils::MemorySpace::HOST> ipiv(
+          n);
         utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
           n * n);
 
@@ -714,6 +742,57 @@ namespace dftefe
           {
             returnVal = LapackErrorMsg::isSuccessAndMsg(
               LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION);
+            returnVal.msg += std::to_string(error) + " .";
+          }
+        else
+          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
+
+        return returnVal;
+      }
+
+      template <typename ValueType>
+      LapackError
+      steqr(Job                                                  jobz,
+            size_type                                            n,
+            real_type<ValueType> *                               D,
+            real_type<ValueType> *                               E,
+            ValueType *                                          Z,
+            size_type                                            ldz,
+            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
+      {
+        LapackError      returnVal;
+        global_size_type error;
+
+        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Dhost(
+          n);
+        utils::MemoryTransfer<utils::MemorySpace::HOST,
+                              utils::MemorySpace::DEVICE>::copy(n, Dhost, D);
+        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ehost(
+          n - 1);
+        utils::MemoryTransfer<utils::MemorySpace::HOST,
+                              utils::MemorySpace::DEVICE>::copy(n - 1,
+                                                                Ehost,
+                                                                E);
+        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Zhost(
+          n * n);
+        utils::MemoryTransfer<utils::MemorySpace::HOST,
+                              utils::MemorySpace::DEVICE>::copy(n * n,
+                                                                Zhost,
+                                                                Z);
+
+        error = lapack::steqr(jobz, n, Dhost, Ehost, Zhost, ldz);
+
+        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
+                              utils::MemorySpace::HOST>::copy(n, D, Dhost);
+        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
+                              utils::MemorySpace::HOST>::copy(n - 1, E, Ehost);
+        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
+                              utils::MemorySpace::HOST>::copy(n * n, Z, Zhost);
+
+        if (error != 0)
+          {
+            returnVal = LapackErrorMsg::isSuccessAndMsg(
+              LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM);
             returnVal.msg += std::to_string(error) + " .";
           }
         else

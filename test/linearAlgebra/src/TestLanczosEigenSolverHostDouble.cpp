@@ -217,9 +217,10 @@ int main()
 {
 #ifdef DFTEFE_WITH_MPI
 
-  linearAlgebra::blasLapack::BlasQueue<Host> queue;
+  std::shared_ptr<linearAlgebra::blasLapack::BlasQueue<Host>> blasqueue;
+  std::shared_ptr<linearAlgebra::blasLapack::LapackQueue<Host>> lapackqueue;
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> linAlgOpContext = 
-    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
+    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(blasqueue, lapackqueue);
   
   // initialize the MPI environment
   utils::mpi::MPIInit(NULL, NULL);
@@ -283,7 +284,7 @@ int main()
   generateHermitianPosDefColMajorMatrix(colMajorB, globalSize, rank);
   colMajorBInv = colMajorB;
 
-  linearAlgebra::blasLapack::inverse<ValueType, Host>((size_type)globalSize, colMajorBInv.data());
+  linearAlgebra::blasLapack::inverse<ValueType, Host>((size_type)globalSize, colMajorBInv.data(), *linAlgOpContext);
 
   std::shared_ptr<linearAlgebra::OperatorContext<ValueType, ValueType, Host>> opContextA
     = std::make_shared<OperatorContextA<ValueType, ValueType>> 

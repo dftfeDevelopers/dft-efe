@@ -66,10 +66,11 @@ int main()
 
   const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
-  linearAlgebra::blasLapack::BlasQueue<Host> queue;
+  std::shared_ptr<linearAlgebra::blasLapack::BlasQueue<Host>> blasqueue;
+  std::shared_ptr<linearAlgebra::blasLapack::LapackQueue<Host>> lapackqueue;
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> linAlgOpContext = 
-    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
-  
+    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(blasqueue, lapackqueue);
+    
   // initialize the MPI environment
   utils::mpi::MPIInit(NULL, NULL);
 

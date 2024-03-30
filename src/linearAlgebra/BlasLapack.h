@@ -429,7 +429,7 @@ namespace dftefe
        */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
-      LapackErrorCode
+      LapackError
       inverse(size_type n, ValueType *A, LinAlgOpContext<memorySpace> &context);
 
       /**
@@ -437,7 +437,7 @@ namespace dftefe
        */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
-      LapackErrorCode
+      LapackError
       trtri(Uplo                          uplo,
             Diag                          diag,
             size_type                     n,
@@ -450,7 +450,7 @@ namespace dftefe
        */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
-      LapackErrorCode
+      LapackError
       potrf(Uplo                          uplo,
             size_type                     n,
             ValueType *                   A,
@@ -458,11 +458,25 @@ namespace dftefe
             LinAlgOpContext<memorySpace> &context);
 
       /**
-       * @brief Standard eigenvalue decomposition
+       * @brief Real Tridiagonal hermitian matrix standard eigenvalue decomposition
        */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
-      LapackErrorCode
+      LapackError
+      steqr(Job                           jobz,
+            size_type                     n,
+            real_type<ValueType> *        D,
+            real_type<ValueType> *        E,
+            ValueType *                   Z,
+            size_type                     ldz,
+            LinAlgOpContext<memorySpace> &context);
+
+      /**
+       * @brief Standard hermitian eigenvalue decomposition
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackError
       heevd(Job                           jobz,
             Uplo                          uplo,
             size_type                     n,
@@ -472,11 +486,11 @@ namespace dftefe
             LinAlgOpContext<memorySpace> &context);
 
       /**
-       * @brief Generalized eigenvalue decomposition
+       * @brief Generalized hermitian eigenvalue decomposition
        */
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
-      LapackErrorCode
+      LapackError
       hegv(size_type                     itype,
            Job                           jobz,
            Uplo                          uplo,

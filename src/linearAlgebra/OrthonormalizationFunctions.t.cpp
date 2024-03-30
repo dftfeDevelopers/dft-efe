@@ -30,151 +30,6 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace OrthonormalizationFunctionsInternal
-    {
-      template <typename ValueTypeOperator,
-                typename ValueTypeOperand,
-                utils::MemorySpace memorySpace>
-      void
-      CholeskyGramSchmidtImpl(
-        MultiVector<ValueTypeOperand, memorySpace> &X,
-        const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &B,
-        MultiVector<
-          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-          memorySpace> &orthogonalizedX)
-      {
-        using ValueType =
-          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
-
-        const utils::mpi::MPIComm comm =
-          X.getMPIPatternP2P()->mpiCommunicator();
-        LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
-        const size_type              vecSize         = X.locallyOwnedSize();
-        const size_type              numVec          = X.getNumberComponents();
-
-        // allocate memory for overlap matrix
-        utils::MemoryStorage<ValueType, memorySpace> S(
-          numVec * numVec, utils::Types<ValueType>::zero);
-
-        // compute overlap matrix
-
-        const ValueType alpha = 1.0;
-        const ValueType beta  = 0.0;
-
-        MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
-
-        B.apply(X, temp);
-
-        // Input data is read is X^T (numVec is fastest index and then vecSize)
-        // Operation : S^T = ((B*X)^T)*(X^T)^H
-
-        blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
-          blasLapack::Layout::ColMajor,
-          blasLapack::Op::NoTrans,
-          blasLapack::Op::ConjTrans,
-          numVec,
-          numVec,
-          vecSize,
-          alpha,
-          temp.data(),
-          numVec,
-          X.data(),
-          numVec,
-          beta,
-          S.data(),
-          numVec,
-          linAlgOpContext);
-
-        utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
-          S.size());
-        utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-          S.size(), Shost.data(), S.data());
-
-        // TODO: Copy only the real part because S is real and then do cholesky
-        // Reason: Reduced flops.
-
-        // MPI_AllReduce to get the S from all procs
-
-        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-          utils::mpi::MPIInPlace,
-          Shost.data(),
-          Shost.size(),
-          utils::mpi::Types<ValueType>::getMPIDatatype(),
-          utils::mpi::MPISum,
-          comm);
-
-        std::pair<bool, std::string> mpiIsSuccessAndMsg =
-          utils::mpi::MPIErrIsSuccessAndMsg(err);
-        utils::throwException(mpiIsSuccessAndMsg.first,
-                              "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-        // cholesky factorization of overlap matrix
-        // Operation = S^T = L^C*L^T = (L^C)*(L^C)^H ; Out: L^C
-
-        lapack::potrf(lapack::Uplo::Lower, numVec, Shost.data(), numVec);
-
-        // Compute LInv^C
-
-        lapack::trtri(lapack::Uplo::Lower,
-                      lapack::Diag::NonUnit,
-                      numVec,
-                      Shost.data(),
-                      numVec);
-
-        // complete the upper triangular part
-        // (LInv^C)^T ; Out: LInv^H
-
-        for (size_type i = 0; i < numVec; i++) // column
-          {
-            for (size_type j = 0; j < numVec; j++) // row
-              {
-                if (i < j) // if colid < rowid i.e. lower tri
-                  {
-                    *(Shost.data() + j * numVec + i) =
-                      *(Shost.data() + i * numVec + j);
-                    *(Shost.data() + i * numVec + j) = (ValueType)0.0;
-                  }
-              }
-          }
-
-        // std::cout << "LInvhostafter: \n";
-        // for (size_type i = 0; i < numVec; i++)
-        //   {
-        //     std::cout << "[";
-        //     for (size_type j = 0; j < numVec; j++)
-        //       {
-        //         std::cout << *(Shost.data() + j * numVec + i) << ",";
-        //       }
-        //     std::cout << "]\n";
-        //   }
-
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          Shost.size(), S.data(), Shost.data());
-
-        // compute orthogonalizedX
-        // XOrth^T = (LInv^H)^T*X^T
-        // Out data as XOrtho^T
-
-        blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
-          blasLapack::Layout::ColMajor,
-          blasLapack::Op::Trans,
-          blasLapack::Op::NoTrans,
-          numVec,
-          vecSize,
-          numVec,
-          alpha,
-          S.data(),
-          numVec,
-          X.data(),
-          numVec,
-          beta,
-          orthogonalizedX.data(),
-          numVec,
-          linAlgOpContext);
-      }
-    } // namespace OrthonormalizationFunctionsInternal
-
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -187,25 +42,154 @@ namespace dftefe
                           const OpContext &                    B)
     {
       OrthonormalizationErrorCode err;
+      OrthonormalizationError     retunValue;
       orthogonalizedX.setValue((ValueType)0.0);
 
       if (X.globalSize() < X.getNumberComponents())
         {
           err = OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR;
+          OrthonormalizationError retunValue =
+            OrthonormalizationErrorMsg::isSuccessAndMsg(err);
         }
       else
         {
-          OrthonormalizationFunctionsInternal::CholeskyGramSchmidtImpl<
-            ValueTypeOperator,
-            ValueTypeOperand,
-            memorySpace>(X, B, orthogonalizedX);
+          const utils::mpi::MPIComm comm =
+            X.getMPIPatternP2P()->mpiCommunicator();
+          LinAlgOpContext<memorySpace> linAlgOpContext =
+            *X.getLinAlgOpContext();
+          const size_type vecSize = X.locallyOwnedSize();
+          const size_type numVec  = X.getNumberComponents();
 
-          err = OrthonormalizationErrorCode::SUCCESS;
+          // allocate memory for overlap matrix
+          utils::MemoryStorage<ValueType, memorySpace> S(
+            numVec * numVec, utils::Types<ValueType>::zero);
+
+          // compute overlap matrix
+
+          const ValueType alpha = 1.0;
+          const ValueType beta  = 0.0;
+
+          MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
+
+          B.apply(X, temp);
+
+          // Input data is read is X^T (numVec is fastest index and then
+          // vecSize) Operation : S^T = ((B*X)^T)*(X^T)^H
+
+          blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
+            blasLapack::Layout::ColMajor,
+            blasLapack::Op::NoTrans,
+            blasLapack::Op::ConjTrans,
+            numVec,
+            numVec,
+            vecSize,
+            alpha,
+            temp.data(),
+            numVec,
+            X.data(),
+            numVec,
+            beta,
+            S.data(),
+            numVec,
+            linAlgOpContext);
+
+          // TODO: Copy only the real part because S is real and then do
+          // cholesky Reason: Reduced flops.
+
+          // MPI_AllReduce to get the S from all procs
+
+          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+            utils::mpi::MPIInPlace,
+            S.data(),
+            S.size(),
+            utils::mpi::Types<ValueType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            comm);
+
+          std::pair<bool, std::string> mpiIsSuccessAndMsg =
+            utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
+          utils::throwException(mpiIsSuccessAndMsg.first,
+                                "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+          // cholesky factorization of overlap matrix
+          // Operation = S^T = L^C*L^T = (L^C)*(L^C)^H ; Out: L^C
+
+          LapackError lapackReturn1 = blasLapack::potrf<ValueType, memorySpace>(
+            blasLapack::Uplo::Lower, numVec, S.data(), numVec, linAlgOpContext);
+
+          // Compute LInv^C
+
+          LapackError lapackReturn2 =
+            blasLapack::trtri<ValueType, memorySpace>(blasLapack::Uplo::Lower,
+                                                      blasLapack::Diag::NonUnit,
+                                                      numVec,
+                                                      S.data(),
+                                                      numVec,
+                                                      linAlgOpContext);
+
+          // complete the lower triangular part
+          // (LInv^C)
+
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
+            S.size());
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            S.size(), Shost.data(), S.data());
+
+          for (size_type i = 0; i < numVec; i++) // column
+            {
+              for (size_type j = 0; j < numVec; j++) // row
+                {
+                  if (i < j) // if colid < rowid i.e. upper tri
+                    {
+                      *(Shost.data() + j * numVec + i) = (ValueType)0.0;
+                    }
+                }
+            }
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            Shost.size(), S.data(), Shost.data());
+
+          // compute orthogonalizedX
+          // XOrth^T = (LInv^C)^T*X^T
+          // Out data as XOrtho^T
+
+          blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
+            blasLapack::Layout::ColMajor,
+            blasLapack::Op::NoTrans,
+            blasLapack::Op::NoTrans,
+            numVec,
+            vecSize,
+            numVec,
+            alpha,
+            S.data(),
+            numVec,
+            X.data(),
+            numVec,
+            beta,
+            orthogonalizedX.data(),
+            numVec,
+            linAlgOpContext);
+
+          if (lapackReturn1.err ==
+              LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION)
+            {
+              err        = OrthonormalizationErrorCode::LAPACK_ERROR;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+              retunValue.msg += lapackReturn1.msg;
+            }
+          else if (lapackReturn2.err ==
+                   LapackErrorCode::FAILED_TRIA_MATRIX_INVERSE)
+            {
+              err        = OrthonormalizationErrorCode::LAPACK_ERROR;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+              retunValue.msg += lapackReturn2.msg;
+            }
+          else
+            {
+              err        = OrthonormalizationErrorCode::SUCCESS;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+            }
         }
-
-      OrthonormalizationError retunValue =
-        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-
       return retunValue;
     }
 

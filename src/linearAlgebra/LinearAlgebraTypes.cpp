@@ -37,6 +37,8 @@ namespace dftefe
        "Triangular matrix inversion failed with error code "},
       {LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION,
        "Cholesky factorization failed with error code "},
+      {LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM,
+       "Real Tridiagonal Standard eigenproblem decomposition failed with error code "},
       {LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM,
        "Standard eigenproblem decomposition failed with error code "},
       {LapackErrorCode::FAILED_GENERALIZED_EIGENPROBLEM,
@@ -54,8 +56,7 @@ namespace dftefe
     const std::map<EigenSolverErrorCode, std::string>
       EigenSolverErrorMsg::d_errToMsgMap = {
         {EigenSolverErrorCode::SUCCESS, "Success"},
-        {EigenSolverErrorCode::LAPACK_STEQR_ERROR,
-         "LAPACK STEQR failed with the error code "},
+        {EigenSolverErrorCode::LAPACK_ERROR, "LAPACK function failed. "},
         {EigenSolverErrorCode::LANCZOS_BETA_ZERO,
          "Could not create more B-orthonormal krylov subspace vectors in Lanczos."},
         {EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT,
