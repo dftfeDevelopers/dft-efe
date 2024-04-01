@@ -45,13 +45,15 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     EigenSolverError
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      solve(const OpContext &                                 A,
-            const MultiVector<ValueTypeOperand, memorySpace> &X,
-            std::vector<RealType> &                           eigenValues,
-            MultiVector<ValueType, memorySpace> &             eigenVectors,
-            bool computeEigenVectors)
+      solve(const OpContext &                           A,
+            MultiVector<ValueTypeOperand, memorySpace> &X,
+            std::vector<RealType> &                     eigenValues,
+            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            bool                                        computeEigenVectors)
     {
-      EigenSolverError retunValue;
+      EigenSolverError     retunValue;
+      EigenSolverErrorCode err;
+      LapackError          lapackReturn;
 
       size_type                           numVec  = X.getNumberComponents();
       size_type                           vecSize = X.locallyOwnedSize();
@@ -81,59 +83,91 @@ namespace dftefe
         numVec,
         *X.getLinAlgOpContext());
 
-      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> XprojectedAhost(
-        XprojectedA.size());
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        XprojectedA.size(), XprojectedAhost.data(), XprojectedA.data());
-
       // TODO: Copy only the real part because XprojectedA is real
       // Reason: Reduced flops.
 
       // MPI_AllReduce to get the XprojectedA from all procs
 
-      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,
-        XprojectedAhost.data(),
-        XprojectedAhost.size(),
+        XprojectedA.data(),
+        XprojectedA.size(),
         utils::mpi::Types<ValueType>::getMPIDatatype(),
         utils::mpi::MPISum,
         X.getMPIPatternP2P()->mpiCommunicator());
 
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
       // Solve the standard eigenvalue problem
 
-      lapack::heevd(lapack::Job::Vec,
-                    lapack::Uplo::Lower,
-                    numVec,
-                    XprojectedAhost.data(),
-                    numVec,
-                    eigenValues.data());
+      if (computeEigenVectors)
+        {
+          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
+            numVec);
 
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        XprojectedAhost.size(), XprojectedA.data(), XprojectedAhost.data());
+          lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+            blasLapack::Job::Vec,
+            blasLapack::Uplo::Lower,
+            numVec,
+            XprojectedA.data(),
+            numVec,
+            eigenValuesMemSpace.data(),
+            *X.getLinAlgOpContext());
 
-      // Rotation X_febasis = X_O Q.
+          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
+            eigenValues.data(), numVec, 0, 0);
 
-      blasLapack::gemm<ValueType, ValueType, memorySpace>(
-        blasLapack::Layout::ColMajor,
-        blasLapack::Op::Trans,
-        blasLapack::Op::Trans,
-        numVec,
-        vecSize,
-        numVec,
-        (ValueType)1,
-        XprojectedA.data(),
-        numVec,
-        X.data(),
-        vecSize,
-        (ValueType)0,
-        eigenVectors.data(),
-        numVec,
-        *X.getLinAlgOpContext());
+          // Rotation X_febasis = X_O Q.
+
+          blasLapack::gemm<ValueType, ValueType, memorySpace>(
+            blasLapack::Layout::ColMajor,
+            blasLapack::Op::Trans,
+            blasLapack::Op::Trans,
+            numVec,
+            vecSize,
+            numVec,
+            (ValueType)1,
+            XprojectedA.data(),
+            numVec,
+            X.data(),
+            vecSize,
+            (ValueType)0,
+            eigenVectors.data(),
+            numVec,
+            *X.getLinAlgOpContext());
+        }
+      else
+        {
+          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
+            numVec);
+
+          lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+            blasLapack::Job::NoVec,
+            blasLapack::Uplo::Lower,
+            numVec,
+            XprojectedA.data(),
+            numVec,
+            eigenValuesMemSpace.data(),
+            *X.getLinAlgOpContext());
+
+          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
+            eigenValues.data(), numVec, 0, 0);
+        }
+
+      if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
+        {
+          err        = EigenSolverErrorCode::LAPACK_ERROR;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+          retunValue.msg += lapackReturn.msg;
+        }
+      else
+        {
+          err        = EigenSolverErrorCode::SUCCESS;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+        }
 
       return retunValue;
     }
@@ -143,14 +177,16 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     EigenSolverError
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      solve(const OpContext &                                 A,
-            const OpContext &                                 B,
-            const MultiVector<ValueTypeOperand, memorySpace> &X,
-            std::vector<RealType> &                           eigenValues,
-            MultiVector<ValueType, memorySpace> &             eigenVectors,
-            bool computeEigenVectors)
+      solve(const OpContext &                           A,
+            const OpContext &                           B,
+            MultiVector<ValueTypeOperand, memorySpace> &X,
+            std::vector<RealType> &                     eigenValues,
+            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            bool                                        computeEigenVectors)
     {
-      EigenSolverError retunValue;
+      EigenSolverError     retunValue;
+      EigenSolverErrorCode err;
+      LapackError          lapackReturn;
 
       size_type                           numVec  = X.getNumberComponents();
       size_type                           vecSize = X.locallyOwnedSize();
@@ -159,8 +195,6 @@ namespace dftefe
       // allocate memory for overlap matrix
       utils::MemoryStorage<ValueType, memorySpace> S(
         numVec * numVec, utils::Types<ValueType>::zero);
-
-      std::vector<RealType> eigenValuesS(numVec);
 
       utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
         numVec * numVec, utils::Types<ValueType>::zero);
@@ -186,25 +220,21 @@ namespace dftefe
         numVec,
         *X.getLinAlgOpContext());
 
-      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(S.size());
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        S.size(), Shost.data(), S.data());
-
       // TODO: Copy only the real part because S is real
       // Reason: Reduced flops.
 
       // MPI_AllReduce to get the S from all procs
 
-      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,
-        Shost.data(),
-        Shost.size(),
+        S.data(),
+        S.size(),
         utils::mpi::Types<ValueType>::getMPIDatatype(),
         utils::mpi::MPISum,
         X.getMPIPatternP2P()->mpiCommunicator());
 
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
@@ -230,61 +260,97 @@ namespace dftefe
         numVec,
         *X.getLinAlgOpContext());
 
-      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> XprojectedAhost(
-        XprojectedA.size());
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        XprojectedA.size(), XprojectedAhost.data(), XprojectedA.data());
-
       // TODO: Copy only the real part because XprojectedA is real
       // Reason: Reduced flops.
 
       // MPI_AllReduce to get the XprojectedA from all procs
 
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+      mpierr = utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,
-        XprojectedAhost.data(),
-        XprojectedAhost.size(),
+        XprojectedA.data(),
+        XprojectedA.size(),
         utils::mpi::Types<ValueType>::getMPIDatatype(),
         utils::mpi::MPISum,
         X.getMPIPatternP2P()->mpiCommunicator());
 
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
       // Solve generalized eigenvalue problem
 
-      lapack::hegv(1,
-                   lapack::Job::Vec,
-                   lapack::Uplo::Lower,
-                   numVec,
-                   XprojectedAhost.data(),
-                   numVec,
-                   Shost.data(),
-                   numVec,
-                   eigenValues.data());
+      if (computeEigenVectors)
+        {
+          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
+            numVec);
 
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        XprojectedAhost.size(), XprojectedA.data(), XprojectedAhost.data());
+          lapackReturn =
+            blasLapack::hegv<ValueType, memorySpace>(1,
+                                                     blasLapack::Job::Vec,
+                                                     blasLapack::Uplo::Lower,
+                                                     numVec,
+                                                     XprojectedA.data(),
+                                                     numVec,
+                                                     S.data(),
+                                                     numVec,
+                                                     eigenValuesMemSpace.data(),
+                                                     *X.getLinAlgOpContext());
 
-      // Rotation X_febasis = XQ.
+          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
+            eigenValues.data(), numVec, 0, 0);
 
-      blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
-        blasLapack::Layout::ColMajor,
-        blasLapack::Op::Trans,
-        blasLapack::Op::Trans,
-        numVec,
-        vecSize,
-        numVec,
-        (ValueType)1,
-        XprojectedA.data(),
-        numVec,
-        X.data(),
-        vecSize,
-        (ValueType)0,
-        eigenVectors.data(),
-        numVec,
-        *X.getLinAlgOpContext());
+
+          // Rotation X_febasis = XQ.
+
+          blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
+            blasLapack::Layout::ColMajor,
+            blasLapack::Op::Trans,
+            blasLapack::Op::Trans,
+            numVec,
+            vecSize,
+            numVec,
+            (ValueType)1,
+            XprojectedA.data(),
+            numVec,
+            X.data(),
+            vecSize,
+            (ValueType)0,
+            eigenVectors.data(),
+            numVec,
+            *X.getLinAlgOpContext());
+        }
+      else
+        {
+          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
+            numVec);
+
+          lapackReturn =
+            blasLapack::hegv<ValueType, memorySpace>(1,
+                                                     blasLapack::Job::NoVec,
+                                                     blasLapack::Uplo::Lower,
+                                                     numVec,
+                                                     XprojectedA.data(),
+                                                     numVec,
+                                                     S.data(),
+                                                     numVec,
+                                                     eigenValuesMemSpace.data(),
+                                                     *X.getLinAlgOpContext());
+
+          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
+            eigenValues.data(), numVec, 0, 0);
+        }
+
+      if (lapackReturn.err == LapackErrorCode::FAILED_GENERALIZED_EIGENPROBLEM)
+        {
+          err        = EigenSolverErrorCode::LAPACK_ERROR;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+          retunValue.msg += lapackReturn.msg;
+        }
+      else
+        {
+          err        = EigenSolverErrorCode::SUCCESS;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+        }
 
       return retunValue;
     }

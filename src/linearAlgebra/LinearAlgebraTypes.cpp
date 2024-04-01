@@ -59,6 +59,10 @@ namespace dftefe
         {EigenSolverErrorCode::LAPACK_ERROR, "LAPACK function failed. "},
         {EigenSolverErrorCode::LANCZOS_BETA_ZERO,
          "Could not create more B-orthonormal krylov subspace vectors in Lanczos."},
+        {EigenSolverErrorCode::CHFSI_ORTHONORMALIZATION_ERROR,
+         "Orthonormalization error in CHFSI. "},
+        {EigenSolverErrorCode::CHFSI_RAYLEIGH_RITZ_ERROR,
+         "Rayleigh-Ritz error in CHFSI. "},
         {EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT,
          "Maximum Krylov Subspace Size given is insufficient for Lanczos convergence."},
         {EigenSolverErrorCode::OTHER_ERROR, "Other error encountered"}};
@@ -66,6 +70,9 @@ namespace dftefe
     const std::map<OrthonormalizationErrorCode, std::string>
       OrthonormalizationErrorMsg::d_errToMsgMap = {
         {OrthonormalizationErrorCode::SUCCESS, "Success"},
+        {OrthonormalizationErrorCode::LAPACK_ERROR, "LAPACK function failed. "},
+        {OrthonormalizationErrorCode::MAX_PASS_EXCEEDED,
+         "Maximum pass for multipass orthogonalization exceeded."},
         {OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR,
          "Failed to converge"}};
 

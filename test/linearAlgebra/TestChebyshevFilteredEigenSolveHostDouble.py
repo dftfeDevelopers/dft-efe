@@ -32,10 +32,10 @@ parallel: Parallel tests that requires mpi or openmp
 """
 
 @rfm.simple_test
-class BuildOnlyTestRayleighRitzDoubleHost(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestRayleighRitzDoubleHost using CMake'
+class BuildOnlyTestChebyshevFilteredEigenSolveHostDouble(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestChebyshevFilteredEigenSolveHostDouble using CMake'
     build_system = 'CMake'
-    make_opts = ['TestRayleighRitzDoubleHost']
+    make_opts = ['TestChebyshevFilteredEigenSolveHostDouble']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -84,11 +84,11 @@ class BuildOnlyTestRayleighRitzDoubleHost(rfm.CompileOnlyRegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class BuildAndRunTestRayleighRitzDoubleHost(rfm.RegressionTest):
+class BuildAndRunTestChebyshevFilteredEigenSolveHostDouble(rfm.RegressionTest):
     descr = '''Compile and run test for computing norms of SerialMultiVector with double datatype'''
     build_system = 'CMake'
-    make_opts = ['TestRayleighRitzDoubleHost']
-    executable = './TestRayleighRitzDoubleHost.x'
+    make_opts = ['TestChebyshevFilteredEigenSolveHostDouble']
+    executable = './TestChebyshevFilteredEigenSolveHostDouble.x'
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -121,9 +121,9 @@ class BuildAndRunTestRayleighRitzDoubleHost(rfm.RegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestRayleighRitzDoubleHost."
-        msgThrownException = "Found exceptions in TestRayleighRitzDoubleHost."
-        msgAssertFail = "Found assert fail(s) in TestRayleighRitzDoubleHost."
+        msgError = "Found error(s) in TestChebyshevFilteredEigenSolveHostDouble."
+        msgThrownException = "Found exceptions in TestChebyshevFilteredEigenSolveHostDouble."
+        msgAssertFail = "Found assert fail(s) in TestChebyshevFilteredEigenSolveHostDouble."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -157,9 +157,9 @@ class BuildAndRunTestRayleighRitzDoubleHost(rfm.RegressionTest):
         return sn.assert_true(hasTestPassed, msg=msg)
 
 @rfm.simple_test
-class RunOnlyTestRayleighRitzDoubleHost(rfm.RunOnlyRegressionTest):
+class RunOnlyTestChebyshevFilteredEigenSolveHostDouble(rfm.RunOnlyRegressionTest):
     descr = '''Run only test for computing norms of SerialMultiVector with double datatype'''
-    target_name = 'TestRayleighRitzDoubleHost'
+    target_name = 'TestChebyshevFilteredEigenSolveHostDouble'
     build_system = 'CMake'
     make_opts = [target_name]
     executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
@@ -191,9 +191,9 @@ class RunOnlyTestRayleighRitzDoubleHost(rfm.RunOnlyRegressionTest):
         hasAssertFail = True
         hasThrownException = True
         hasError = True
-        msgError = "Found error(s) in TestRayleighRitzDoubleHost."
-        msgThrownException = "Found exceptions in TestRayleighRitzDoubleHost."
-        msgAssertFail = "Found assert fail(s) in TestRayleighRitzDoubleHost."
+        msgError = "Found error(s) in TestChebyshevFilteredEigenSolveHostDouble."
+        msgThrownException = "Found exceptions in TestChebyshevFilteredEigenSolveHostDouble."
+        msgAssertFail = "Found assert fail(s) in TestChebyshevFilteredEigenSolveHostDouble."
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

@@ -78,8 +78,7 @@ namespace dftefe
       d_unWantedSpectrumUpperBound = unWantedSpectrumUpperBound;
 
       d_rr = std::make_shared<
-        RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
-        eigenSubspaceGuess);
+        RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>();
     }
 
     template <typename ValueTypeOperator,
@@ -96,7 +95,10 @@ namespace dftefe
                           const OpContext &B,
                           const OpContext &BInv)
     {
-      EigenSolverError retunValue;
+      EigenSolverError        retunValue;
+      EigenSolverErrorCode    err;
+      OrthonormalizationError orthoerr;
+      EigenSolverError        rrerr;
 
       MultiVector<ValueType, memorySpace> filteredSubspace(d_eigenSubspaceGuess,
                                                            (ValueType)0);
@@ -119,7 +121,7 @@ namespace dftefe
 
       // B orthogonalization required of X -> X_O
 
-      OrthonormalizationFunctions<
+      orthoerr = OrthonormalizationFunctions<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace>::CholeskyGramSchmidt(filteredSubspace,
@@ -128,11 +130,29 @@ namespace dftefe
 
       // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspace
 
-      d_rr->solve(A,
-                  filteredSubspaceOrtho,
-                  eigenValues,
-                  eigenVectors,
-                  computeEigenVectors);
+      rrerr = d_rr->solve(A,
+                          filteredSubspaceOrtho,
+                          eigenValues,
+                          eigenVectors,
+                          computeEigenVectors);
+
+      if (!orthoerr.isSuccess)
+        {
+          err        = EigenSolverErrorCode::CHFSI_ORTHONORMALIZATION_ERROR;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+          retunValue.msg += orthoerr.msg;
+        }
+      if (!rrerr.isSuccess)
+        {
+          err        = EigenSolverErrorCode::CHFSI_RAYLEIGH_RITZ_ERROR;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+          retunValue.msg += rrerr.msg;
+        }
+      else
+        {
+          err        = EigenSolverErrorCode::SUCCESS;
+          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+        }
 
       return retunValue;
     }

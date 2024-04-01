@@ -325,11 +325,11 @@ namespace dftefe
             {
               krylovSubspaceSize = iter;
 
-              utils::MemoryStorage<ValueType, memorySpace> eigenValuesIter(
+              utils::MemoryStorage<RealType, memorySpace> eigenValuesIter(
                 alphaVec.size());
               eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
                 alphaVec.data());
-              utils::MemoryStorage<ValueType, memorySpace> betaVecTemp(
+              utils::MemoryStorage<RealType, memorySpace> betaVecTemp(
                 betaVec.size());
               betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
                 betaVec.data());

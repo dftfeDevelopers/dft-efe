@@ -186,9 +186,10 @@ int main()
 {
 #ifdef DFTEFE_WITH_MPI
 
-  linearAlgebra::blasLapack::BlasQueue<Host> queue;
+  std::shared_ptr<linearAlgebra::blasLapack::BlasQueue<Host>> blasqueue;
+  std::shared_ptr<linearAlgebra::blasLapack::LapackQueue<Host>> lapackqueue;
   std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> linAlgOpContext = 
-    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
+    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(blasqueue, lapackqueue);
   
   // initialize the MPI environment
   utils::mpi::MPIInit(NULL, NULL);
@@ -201,8 +202,8 @@ int main()
   int rank;
   utils::mpi::MPICommRank(utils::mpi::MPICommWorld, &rank);
 
-  size_type numOwnedIndices = 1000;
-  size_type maxNumGhostIndices = 100;
+  size_type numOwnedIndices = 100;
+  size_type maxNumGhostIndices = 50;
   size_type numRandomIds = 80;
  
   std::srand(std::time(nullptr)*(rank+1));
@@ -355,14 +356,12 @@ int main()
     = std::make_shared<OperatorContextA<ValueType, ValueType>> 
       (colMajorB, globalSize);
 
-    std::shared_ptr<linearAlgebra::HermitianIterativeEigenSolver<ValueType,ValueType,Host>> rr 
-      = std::make_shared<linearAlgebra::RayleighRitzEigenSolver<ValueType, ValueType, Host>>
-        (eigenSubspace, 1e-6);
+  linearAlgebra::RayleighRitzEigenSolver<ValueType, ValueType, Host> rr;
 
     std::vector<ValueType> eigenValues(numRandomIds);
     linearAlgebra::MultiVector<ValueType, Host> eigenVectors(mpiPatternP2P,linAlgOpContext,numRandomIds);
 
-    rr->solve(*opContextA, eigenValues, eigenVectors, true, *opContextB);
+    rr.solve(*opContextA, *opContextB, eigenSubspace, eigenValues, eigenVectors, true);
 
   // std::cout << "\neigenValues: ";
   //  for (auto i : eigenValues)

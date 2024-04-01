@@ -81,19 +81,19 @@ namespace dftefe
       ~RayleighRitzEigenSolver() = default;
 
       EigenSolverError
-      solve(const OpContext &                                 A,
-            const MultiVector<ValueTypeOperand, memorySpace> &X,
-            std::vector<RealType> &                           eigenValues,
-            MultiVector<ValueType, memorySpace> &             eigenVectors,
-            bool computeEigenVectors = false) override;
+      solve(const OpContext &                           A,
+            MultiVector<ValueTypeOperand, memorySpace> &X,
+            std::vector<RealType> &                     eigenValues,
+            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            bool computeEigenVectors = false);
 
       EigenSolverError
-      solve(const OpContext &                                 A,
-            const OpContext &                                 B,
-            const MultiVector<ValueTypeOperand, memorySpace> &X,
-            std::vector<RealType> &                           eigenValues,
-            MultiVector<ValueType, memorySpace> &             eigenVectors,
-            bool computeEigenVectors = false) override;
+      solve(const OpContext &                           A,
+            const OpContext &                           B,
+            MultiVector<ValueTypeOperand, memorySpace> &X,
+            std::vector<RealType> &                     eigenValues,
+            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            bool computeEigenVectors = false);
 
     private:
     }; // end of class RayleighRitzEigenSolver
