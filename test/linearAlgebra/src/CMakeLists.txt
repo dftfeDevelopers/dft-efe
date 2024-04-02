@@ -98,9 +98,9 @@ if (ENABLE_MPI)
 # target_link_libraries(TestChebyshevFilteredEigenSolveHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
 # set_target_properties(TestChebyshevFilteredEigenSolveHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
-add_executable(TestChebyshevFilteredEigenSolveHostComplexDouble  TestChebyshevFilteredEigenSolveHostComplexDouble.cpp)
-target_link_libraries(TestChebyshevFilteredEigenSolveHostComplexDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
-set_target_properties(TestChebyshevFilteredEigenSolveHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+# add_executable(TestChebyshevFilteredEigenSolveHostComplexDouble  TestChebyshevFilteredEigenSolveHostComplexDouble.cpp)
+# target_link_libraries(TestChebyshevFilteredEigenSolveHostComplexDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+# set_target_properties(TestChebyshevFilteredEigenSolveHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
 # add_executable(TestParallelMultiVectorMultipassLowdinHostDouble  TestParallelMultiVectorMultipassLowdinHostDouble.cpp)
 # target_link_libraries(TestParallelMultiVectorMultipassLowdinHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)

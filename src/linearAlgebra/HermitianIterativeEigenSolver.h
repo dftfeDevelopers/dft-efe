@@ -68,14 +68,14 @@ namespace dftefe
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
-      using ScalarType = blasLapack::real_type<ValueType>;
+      using RealType = blasLapack::real_type<ValueType>;
 
     public:
       virtual ~HermitianIterativeEigenSolver() = default;
 
       virtual EigenSolverError
       solve(const OpContext &                                   A,
-            std::vector<ScalarType> &                           eigenValues,
+            std::vector<RealType> &                             eigenValues,
             linearAlgebra::MultiVector<ValueType, memorySpace> &eigenVectors,
             bool             computeEigenVectors = false,
             const OpContext &B    = IdentityOperatorContext<ValueTypeOperator,
