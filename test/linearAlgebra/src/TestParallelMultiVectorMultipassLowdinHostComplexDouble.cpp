@@ -48,7 +48,7 @@ using namespace dftefe;
 using size_type = size_type;
 using global_size_type = global_size_type;
 using ValueType = std::complex<double>;
-using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
+using TypeReal = RealType<ValueType>::Type;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
 global_size_type getAGhostIndex(const global_size_type numGlobalIndices,
@@ -74,8 +74,8 @@ void generateHermitianPosDefColMajorMatrix(std::vector<ValueType> &colMajorA, gl
     {
       for( global_size_type j = 0 ; j < globalSize ; j++ )
       {
-        a[j*globalSize + i].real(static_cast<RealType>(std::rand()) / RAND_MAX);
-        a[j*globalSize + i].imag(static_cast<RealType>(std::rand()) / RAND_MAX);
+        a[j*globalSize + i].real(static_cast<TypeReal>(std::rand()) / RAND_MAX);
+        a[j*globalSize + i].imag(static_cast<TypeReal>(std::rand()) / RAND_MAX);
       }
     }
 
@@ -88,7 +88,7 @@ void generateHermitianPosDefColMajorMatrix(std::vector<ValueType> &colMajorA, gl
     }
 
     colMajorACopy = colMajorA;
-    std::vector<RealType> eigenValues(globalSize);
+    std::vector<TypeReal> eigenValues(globalSize);
 
     lapack::heevd(lapack::Job::NoVec,
                 lapack::Uplo::Lower,
@@ -100,7 +100,7 @@ void generateHermitianPosDefColMajorMatrix(std::vector<ValueType> &colMajorA, gl
     for( global_size_type i = 0 ; i < globalSize ; i++ )
     {
       colMajorA[i*globalSize + i] = colMajorA[i*globalSize + i] + std::max(0.0,-eigenValues[0]) + 
-              (1 - 0.1) * ((RealType)std::rand() / (RealType)RAND_MAX ) + 0.1;
+              (1 - 0.1) * ((TypeReal)std::rand() / (TypeReal)RAND_MAX ) + 0.1;
     }
 
   }

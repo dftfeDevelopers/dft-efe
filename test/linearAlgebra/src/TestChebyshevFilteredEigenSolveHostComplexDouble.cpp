@@ -51,7 +51,7 @@
 using namespace dftefe;
 using size_type = size_type;
 using global_size_type = global_size_type;
-using ValueType = double;
+using ValueType = std::complex<double>;
 using TypeReal = RealType<ValueType>::Type;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
@@ -69,7 +69,8 @@ void generateHermitianPosDefColMajorMatrix(global_size_type globalSize,
     {
       for( global_size_type j = 0 ; j < globalSize ; j++ )
       {
-        a[j*globalSize + i] = static_cast<ValueType>(std::rand()) / RAND_MAX;
+        a[j*globalSize + i].real(static_cast<TypeReal>(std::rand()) / RAND_MAX);
+        a[j*globalSize + i].imag(static_cast<TypeReal>(std::rand()) / RAND_MAX);
       }
     }
 
@@ -77,12 +78,12 @@ void generateHermitianPosDefColMajorMatrix(global_size_type globalSize,
     {
       for( global_size_type j = 0 ; j < globalSize ; j++ )
       {
-        colMajorA[j*globalSize + i] = (a[j*globalSize + i] + a[i*globalSize + j])/2.0 ;
+        colMajorA[j*globalSize + i] = (a[j*globalSize + i] + std::conj(a[i*globalSize + j]))/2.0 ;
       }
     }
 
     colMajorACopy = colMajorA;
-    std::vector<ValueType> eigenValues(globalSize);
+    std::vector<TypeReal> eigenValues(globalSize);
 
     lapack::heevd(lapack::Job::NoVec,
                 lapack::Uplo::Lower,
@@ -94,7 +95,7 @@ void generateHermitianPosDefColMajorMatrix(global_size_type globalSize,
     for( global_size_type i = 0 ; i < globalSize ; i++ )
     {
       colMajorA[i*globalSize + i] = colMajorA[i*globalSize + i] + std::max(0.0,-eigenValues[0]) + 
-              (1 - 0.1) * ((ValueType)std::rand() / (ValueType)RAND_MAX ) + 0.1;
+              (1 - 0.1) * ((TypeReal)std::rand() / (TypeReal)RAND_MAX ) + 0.1;
     } 
 
   }
@@ -180,7 +181,7 @@ void generateHermitianColMajorMatrix(const std::vector<ValueType> &colMajorB,
       }     
 
     // get LQortho = temp1
-    linearAlgebra::blasLapack::gemm<TypeReal, ValueType, Host>(
+    linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
       linearAlgebra::blasLapack::Layout::ColMajor,
       linearAlgebra::blasLapack::Op::NoTrans,
       linearAlgebra::blasLapack::Op::ConjTrans,
@@ -441,7 +442,7 @@ int main()
     = std::make_shared<OperatorContextA<ValueType, ValueType>> 
       (colMajorBInv, globalSize);
 
-  std::vector<ValueType> tol = {1e-6,1e-6};
+  std::vector<double> tol = {1e-6,1e-6};
   std::shared_ptr<linearAlgebra::HermitianIterativeEigenSolver<ValueType, ValueType, Host>> lanczos
     = std::make_shared<linearAlgebra::LanczosExtremeEigenSolver<ValueType, ValueType, Host>> 
         (100,
@@ -453,7 +454,7 @@ int main()
          linAlgOpContext);
 
   linearAlgebra::MultiVector<ValueType, Host> eigenVectorsLanczos;
-  std::vector<ValueType> eigenValuesLanczos(2);
+  std::vector<TypeReal> eigenValuesLanczos(2);
   lanczos->solve(*opContextA,
                   eigenValuesLanczos,
                   eigenVectorsLanczos,
@@ -476,7 +477,7 @@ int main()
   dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
   }              
 
-  ValueType wantedSpectrumUpperBound = b; //(eigenValuesLanczos[1] - eigenValuesLanczos[0])*((ValueType)(numWantedEigenValues+(int)(0.05*numWantedEigenValues))/globalSize) + eigenValuesLanczos[0];
+  double wantedSpectrumUpperBound = b; //(eigenValuesLanczos[1] - eigenValuesLanczos[0])*((ValueType)(numWantedEigenValues+(int)(0.05*numWantedEigenValues))/globalSize) + eigenValuesLanczos[0];
 
   std::cout << "wantedSpectrumUpperBound: "<<wantedSpectrumUpperBound<<std::endl;
   linearAlgebra::MultiVector<ValueType, Host> eigenSubspaceGuess(mpiPatternP2P,linAlgOpContext,numWantedEigenValues);
@@ -516,7 +517,7 @@ int main()
   std::cout << err.msg << "\n";
 
   std::vector<ValueType> eigenVectorsBenchMark(globalSize*globalSize, (ValueType)0);
-  std::vector<ValueType> eigenValuesBenchMark(globalSize, (ValueType)0);
+  std::vector<TypeReal> eigenValuesBenchMark(globalSize, (TypeReal)0);
 
   eigenVectorsBenchMark = colMajorA;
   std::vector<ValueType> colMajorBCopy(0);
@@ -546,14 +547,14 @@ int main()
   {
     std::cout << *(eigenValuesCHFSI.data()+j) << ",";
   }
-  std::cout << "\n";
-  // std::cout << "eigenVectorsBenchMark: \n" ;
-  // for(size_type j = 0 ; j < globalSize ; j++)
+  // std::cout << "\n";
+  // std::cout << "eigenVectorsCHFSI: \n" ;
+  // for(size_type i = 0 ; i < eigenVectorsCHFSI.locallyOwnedSize() ; i++)
   // {
   //   std::cout << "[";
-  //   for(size_type i = 0 ; i < globalSize ; i++)
+  //   for(size_type j = 0 ; j < numWantedEigenValues ; j++)
   //   { 
-  //     std::cout << *(eigenVectorsBenchMark.data()+i*globalSize+j) << ",";
+  //     std::cout << *(eigenVectorsCHFSI.data()+i*numWantedEigenValues+j) << ",";
   //   }
   //   std::cout << "]\n";
   // }

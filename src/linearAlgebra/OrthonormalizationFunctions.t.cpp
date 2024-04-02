@@ -25,55 +25,12 @@
 #include <limits.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <utils/DataTypeOverloads.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace orthonormalizationFunctionsInternal
-    {
-      template <typename T>
-      inline T
-      conjugate(const T &x)
-      {
-        return std::conj(x);
-      }
-
-      template <>
-      inline double
-      conjugate(const double &x)
-      {
-        return x;
-      }
-
-      template <>
-      inline float
-      conjugate(const float &x)
-      {
-        return x;
-      }
-      template <typename T>
-      inline blasLapack::real_type<T>
-      real(const T &x)
-      {
-        return x.real();
-      }
-
-      template <>
-      inline double
-      real(const double &x)
-      {
-        return x;
-      }
-
-      template <>
-      inline float
-      real(const float &x)
-      {
-        return x;
-      }
-    } // namespace orthonormalizationFunctionsInternal
-
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -350,19 +307,18 @@ namespace dftefe
                   for (size_type j = 0; j < numVec; j++)
                     {
                       if (i != j)
-                        orthoErrValueType +=
-                          *(Shost.data() + i * numVec + j) *
-                          orthonormalizationFunctionsInternal::conjugate(
-                            *(Shost.data() + i * numVec + j));
+                        orthoErrValueType += *(Shost.data() + i * numVec + j) *
+                                             utils::conjugate<ValueType>(*(
+                                               Shost.data() + i * numVec + j));
                       else
                         orthoErrValueType +=
                           (*(Shost.data() + i * numVec + j) - (ValueType)1.0) *
-                          orthonormalizationFunctionsInternal::conjugate(
+                          utils::conjugate<ValueType>(
                             *(Shost.data() + i * numVec + j) - (ValueType)1.0);
                     }
                 }
-              orthoErr = std::sqrt(
-                orthonormalizationFunctionsInternal::real(orthoErrValueType));
+              orthoErr =
+                std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
               if (orthoErr < identityTolerance * std::sqrt(numVec))
                 break;
 

@@ -305,7 +305,7 @@ namespace dftefe
             blasLapack::ScalarOp::Conj,
             blasLapack::ScalarOp::Identity);
 
-          alphaVec.push_back((RealType)alpha[0]);
+          alphaVec.push_back(utils::realPart<ValueType>(alpha[0]));
 
           // std::cout << "alphaVec: ";
           // for(auto i : alphaVec)
@@ -441,7 +441,8 @@ namespace dftefe
 
                   residual = std::sqrt(residual);
 
-                  *(eigenValues.data() + eigenValues.size() - 1) += residual;
+                  *(eigenValues.data() + eigenValues.size() - 1) +=
+                    utils::realPart<ValueType>(residual);
 
                   break;
                 }
@@ -468,7 +469,7 @@ namespace dftefe
 
           beta[0] = std::sqrt(beta[0]);
 
-          if (beta[0] < d_lanczosBetaTolerance)
+          if (utils::realPart<ValueType>(beta[0]) < d_lanczosBetaTolerance)
             {
               if (krylovSubspaceSize >= numWantedEigenValues)
                 isSuccess = true;
@@ -477,7 +478,7 @@ namespace dftefe
               break;
             }
 
-          betaVec.push_back((RealType)beta[0]);
+          betaVec.push_back(utils::realPart<ValueType>(beta[0]));
 
           qPrev = q;
 
