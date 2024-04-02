@@ -48,6 +48,7 @@ namespace dftefe
     public:
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
       using OpContext =
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
 
@@ -69,8 +70,8 @@ namespace dftefe
       MultipassLowdin(
         MultiVector<ValueTypeOperand, memorySpace> &X,
         size_type                                   maxPass,
-        size_type                                   shiftTolerance,
-        size_type                                   identityTolerance,
+        RealType                                    shiftTolerance,
+        RealType                                    identityTolerance,
         MultiVector<ValueType, memorySpace> &       orthogonalizedX,
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,

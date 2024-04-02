@@ -94,9 +94,17 @@ if (ENABLE_MPI)
 # target_link_libraries(TestRayleighRitzHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
 # set_target_properties(TestRayleighRitzHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
-add_executable(TestChebyshevFilteredEigenSolveHostDouble  TestChebyshevFilteredEigenSolveHostDouble.cpp)
-target_link_libraries(TestChebyshevFilteredEigenSolveHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
-set_target_properties(TestChebyshevFilteredEigenSolveHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+# add_executable(TestChebyshevFilteredEigenSolveHostDouble  TestChebyshevFilteredEigenSolveHostDouble.cpp)
+# target_link_libraries(TestChebyshevFilteredEigenSolveHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+# set_target_properties(TestChebyshevFilteredEigenSolveHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+
+# add_executable(TestParallelMultiVectorMultipassLowdinHostDouble  TestParallelMultiVectorMultipassLowdinHostDouble.cpp)
+# target_link_libraries(TestParallelMultiVectorMultipassLowdinHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+# set_target_properties(TestParallelMultiVectorMultipassLowdinHostDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
+
+add_executable(TestParallelMultiVectorMultipassLowdinHostComplexDouble  TestParallelMultiVectorMultipassLowdinHostComplexDouble.cpp)
+target_link_libraries(TestParallelMultiVectorMultipassLowdinHostComplexDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)
+set_target_properties(TestParallelMultiVectorMultipassLowdinHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 
 # add_executable(TestCGLinearSolverSerialHostDouble  TestCGLinearSolverSerialHostDouble.cpp)
 # target_link_libraries(TestCGLinearSolverSerialHostDouble PUBLIC dft-efe-linalg mkl_intel_lp64 mkl_sequential mkl_core)

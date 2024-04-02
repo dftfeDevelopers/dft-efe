@@ -52,6 +52,26 @@ namespace dftefe
       {
         return x;
       }
+      template <typename T>
+      inline blasLapack::real_type<T>
+      real(const T &x)
+      {
+        return x.real();
+      }
+
+      template <>
+      inline double
+      real(const double &x)
+      {
+        return x;
+      }
+
+      template <>
+      inline float
+      real(const float &x)
+      {
+        return x;
+      }
     } // namespace orthonormalizationFunctionsInternal
 
     template <typename ValueTypeOperator,
@@ -226,15 +246,14 @@ namespace dftefe
                                 memorySpace>::
       MultipassLowdin(MultiVector<ValueTypeOperand, memorySpace> &X,
                       size_type                                   maxPass,
-                      size_type                            shiftTolerance,
-                      size_type                            identityTolerance,
+                      RealType                             shiftTolerance,
+                      RealType                             identityTolerance,
                       MultiVector<ValueType, memorySpace> &orthogonalizedX,
                       const OpContext &                    B)
     {
       OrthonormalizationErrorCode err;
       OrthonormalizationError     retunValue;
       LapackError                 lapackReturn;
-      using RealType = blasLapack::real_type<ValueType>;
 
       const utils::mpi::MPIComm comm = X.getMPIPatternP2P()->mpiCommunicator();
       LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
@@ -249,8 +268,10 @@ namespace dftefe
         numVec * numVec, utils::Types<ValueType>::zero);
       utils::MemoryStorage<ValueType, memorySpace> eigenVectorsS(
         numVec * numVec, utils::Types<ValueType>::zero);
-      utils::MemoryStorage<ValueType, memorySpace> sqrtShiftedEigenValMatrix(
+      utils::MemoryStorage<ValueType, memorySpace> scratch(
         numVec * numVec, utils::Types<ValueType>::zero);
+      utils::MemoryStorage<RealType, memorySpace> sqrtInvShiftedEigenValMatrix(
+        numVec * numVec, utils::Types<RealType>::zero);
       MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
 
       // compute overlap matrix
@@ -264,7 +285,7 @@ namespace dftefe
         }
       else
         {
-          RealType eigenValueMin = (ValueType)0;
+          RealType eigenValueMin = (RealType)0;
           RealType orthoErr      = (RealType)0;
 
           /* Do cholesky factorization until Frobenius(||Y^T B Y -
@@ -274,10 +295,9 @@ namespace dftefe
           * estimate by doing prefactor * e_machine/root(e_min) <
           identityTolerance*root(size of I) */
 
-          bool      isOrthogonalized = false;
-          size_type iPass            = 0;
+          size_type iPass = 0;
 
-          while (iPass < maxPass)
+          while (iPass <= maxPass)
             {
               /* Get S = X^T B X */
 
@@ -323,29 +343,28 @@ namespace dftefe
                                                        Shost.data(),
                                                        S.data());
 
-              orthoErr = 0;
+              ValueType orthoErrValueType = 0;
               // calculate frobenus norm |S - I|
               for (size_type i = 0; i < numVec; i++)
                 {
                   for (size_type j = 0; j < numVec; j++)
                     {
                       if (i != j)
-                        orthoErr +=
-                          *(Shost + i * numVec + j) *
+                        orthoErrValueType +=
+                          *(Shost.data() + i * numVec + j) *
                           orthonormalizationFunctionsInternal::conjugate(
-                            *(Shost + i * numVec + j));
+                            *(Shost.data() + i * numVec + j));
                       else
-                        orthoErr +=
-                          (*(Shost + i * numVec + j) - (ValueType)1.0) *
+                        orthoErrValueType +=
+                          (*(Shost.data() + i * numVec + j) - (ValueType)1.0) *
                           orthonormalizationFunctionsInternal::conjugate(
-                            *(Shost + i * numVec + j) - (ValueType)1.0);
+                            *(Shost.data() + i * numVec + j) - (ValueType)1.0);
                     }
                 }
-              orthoErr = std::sqrt(orthoErr);
-              if (orthoErr > identityTolerance * std::sqrt(numVec))
-                {
-                  break;
-                }
+              orthoErr = std::sqrt(
+                orthonormalizationFunctionsInternal::real(orthoErrValueType));
+              if (orthoErr < identityTolerance * std::sqrt(numVec))
+                break;
 
               eigenVectorsS = S;
 
@@ -371,8 +390,7 @@ namespace dftefe
                   break;
                 }
 
-              utils::MemoryStorage<RealType, utils::MemorySpace::HOST>
-                eigenValuesS(numVec);
+              std::vector<RealType> eigenValuesS(numVec);
               utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::
                 copy(eigenValuesSmemory.size(),
                      eigenValuesS.data(),
@@ -382,27 +400,27 @@ namespace dftefe
 
               RealType shift = (RealType)0;
               if (eigenValueMin > shiftTolerance)
-                shift = (ValueType)0;
+                shift = (RealType)0;
               else
                 shift = shiftTolerance - eigenValueMin;
 
-              /* Shift by D->D+shift and do D^(-1/2)*/
+              /* Shift by D<-D+shift and do D^(-1/2)*/
 
-              std::vector<RealType> sqrtShiftedEigenValMatrixSTL(numVec *
-                                                                 numVec);
+              std::vector<RealType> sqrtInvShiftedEigenValMatrixSTL(numVec *
+                                                                    numVec);
 
               for (size_type i = 0; i < numVec; i++)
-                sqrtShiftedEigenValMatrixSTL[i * numVec + i] =
-                  std::sqrt(eigenValuesS[i] + shift);
+                sqrtInvShiftedEigenValMatrixSTL[i * numVec + i] =
+                  (RealType)(1.0 / std::sqrt(eigenValuesS[i] + shift));
 
               utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
-                copy(sqrtShiftedEigenValMatrixSTL.size(),
-                     sqrtShiftedEigenValMatrix.data(),
-                     sqrtShiftedEigenValMatrixSTL.data());
+                copy(sqrtInvShiftedEigenValMatrixSTL.size(),
+                     sqrtInvShiftedEigenValMatrix.data(),
+                     sqrtInvShiftedEigenValMatrixSTL.data());
 
-              /* Do Y = XVD^(-1/2) */
-
-              blasLapack::gemm<ValueType, ValueType, memorySpace>(
+              /* Do Y = XVD^(-1/2)V^H */
+              // S = VD^(-1/2)
+              blasLapack::gemm<ValueType, RealType, memorySpace>(
                 blasLapack::Layout::ColMajor,
                 blasLapack::Op::NoTrans,
                 blasLapack::Op::NoTrans,
@@ -412,10 +430,28 @@ namespace dftefe
                 alpha,
                 eigenVectorsS.data(),
                 numVec,
-                sqrtShiftedEigenValMatrix.data(),
+                sqrtInvShiftedEigenValMatrix.data(),
                 numVec,
                 beta,
                 S.data(),
+                numVec,
+                linAlgOpContext);
+
+              // S = VD^(-1/2)V^H
+              blasLapack::gemm<ValueType, ValueType, memorySpace>(
+                blasLapack::Layout::ColMajor,
+                blasLapack::Op::NoTrans,
+                blasLapack::Op::ConjTrans,
+                numVec,
+                numVec,
+                numVec,
+                alpha,
+                S.data(),
+                numVec,
+                eigenVectorsS.data(),
+                numVec,
+                beta,
+                scratch.data(),
                 numVec,
                 linAlgOpContext);
 
@@ -425,12 +461,12 @@ namespace dftefe
                 blasLapack::Op::NoTrans,
                 numVec,
                 vecSize,
-                vecSize,
+                numVec,
                 alpha,
+                scratch.data(),
+                numVec,
                 X.data(),
                 numVec,
-                S.data(),
-                vecSize,
                 beta,
                 orthogonalizedX.data(),
                 numVec,
