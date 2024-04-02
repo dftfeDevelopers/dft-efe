@@ -121,12 +121,22 @@ namespace dftefe
 
       // B orthogonalization required of X -> X_O
 
-      orthoerr = OrthonormalizationFunctions<
-        ValueTypeOperator,
-        ValueTypeOperand,
-        memorySpace>::CholeskyGramSchmidt(filteredSubspace,
-                                          filteredSubspaceOrtho,
-                                          B);
+      // orthoerr = OrthonormalizationFunctions<
+      //   ValueTypeOperator,
+      //   ValueTypeOperand,
+      //   memorySpace>::CholeskyGramSchmidt(filteredSubspace,
+      //                                     filteredSubspaceOrtho,
+      //                                     B);
+
+      orthoerr = linearAlgebra::OrthonormalizationFunctions<
+        ValueType,
+        ValueType,
+        memorySpace>::MultipassLowdin(filteredSubspace,
+                                      10,
+                                      1e-12,
+                                      1e-12,
+                                      filteredSubspaceOrtho,
+                                      B);
 
       // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspace
 

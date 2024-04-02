@@ -373,7 +373,7 @@ int main()
   size_type maxNumGhostIndices = 50;
   RealType a = -10;
   RealType b = 10;
-  RealType c = 1000;
+  RealType c = 100;
   size_type numWantedEigenValues = 40;
  
   std::srand(std::time(nullptr)*(rank+1));
@@ -497,8 +497,8 @@ int main()
     = std::make_shared<linearAlgebra::ChebyshevFilteredEigenSolver<ValueType, ValueType, Host>>
                           (eigenValuesLanczos[0],
                            wantedSpectrumUpperBound,
-                           eigenValuesLanczos[1]+10.0,
-                           80,
+                           eigenValuesLanczos[1],
+                           100,
                            1e-14,
                            eigenSubspaceGuess,
                            50);
@@ -561,6 +561,107 @@ int main()
   std::cout << std::flush;
   dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
   }              
+
+// check the projection error in the eigenvectors (I-XX^HB)Y < tolerance
+
+  std::vector<ValueType> eigenVectorsBenchMarkProjection(globalSize*globalSize, (ValueType)0);
+
+  linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
+      linearAlgebra::blasLapack::Layout::ColMajor,
+      linearAlgebra::blasLapack::Op::NoTrans,
+      linearAlgebra::blasLapack::Op::ConjTrans,
+      globalSize,
+      globalSize,
+      globalSize,
+      (ValueType)1.0,
+      eigenVectorsBenchMark.data(),
+      globalSize,
+      eigenVectorsBenchMark.data(),
+      globalSize,
+      (ValueType)0.0,
+      eigenVectorsBenchMarkProjection.data(),
+      globalSize,
+      *linAlgOpContext);
+
+  linearAlgebra::MultiVector<ValueType, Host> BxEigenVectors(mpiPatternP2P,linAlgOpContext,numWantedEigenValues);
+  opContextB->apply(eigenVectorsCHFSI, BxEigenVectors);
+
+      utils::MemoryStorage<ValueType, Host>
+        BxEigenVectorsglobal(globalSize*BxEigenVectors.getNumberComponents(),(ValueType)0.0);
+
+        std::copy (BxEigenVectors.data(), 
+                    BxEigenVectors.data()+eigenVectorsCHFSI.getNumberComponents()*eigenVectorsCHFSI.locallyOwnedSize(), 
+                    BxEigenVectorsglobal.data()+locallyOwnedRange.first*eigenVectorsCHFSI.getNumberComponents());
+
+        int mpierr = utils::mpi::MPIAllreduce<Host>(
+          utils::mpi::MPIInPlace,
+          BxEigenVectorsglobal.data(),
+          BxEigenVectorsglobal.size(),
+          utils::mpi::Types<ValueType>::getMPIDatatype(),
+          utils::mpi::MPISum,
+          utils::mpi::MPICommWorld);
+
+  linearAlgebra::MultiVector<ValueType, Host> BxEigenVectorsProjectionToBenchmark(eigenVectorsCHFSI, (ValueType)0);
+
+  linearAlgebra::blasLapack::gemm<ValueType, ValueType, Host>(
+      linearAlgebra::blasLapack::Layout::ColMajor,
+      linearAlgebra::blasLapack::Op::NoTrans,
+      linearAlgebra::blasLapack::Op::Trans,
+      eigenVectorsCHFSI.getNumberComponents(),
+      eigenVectorsCHFSI.locallyOwnedSize(),
+      globalSize,
+      (ValueType)1.0,
+      BxEigenVectorsglobal.data(),
+      eigenVectorsCHFSI.getNumberComponents(),
+      eigenVectorsBenchMarkProjection.data()+locallyOwnedRange.first,
+      globalSize,
+      (ValueType)0.0,
+      BxEigenVectorsProjectionToBenchmark.data(),
+      eigenVectorsCHFSI.getNumberComponents(),
+      *eigenVectorsCHFSI.getLinAlgOpContext());
+
+      // for(size_type procId = 0 ; procId < numProcs ; procId++)
+      // {
+      // if(procId == rank)
+      // {
+      // std::cout << "BxEigenVectorsProjectionToBenchmark: \n" ;
+      // for(size_type j = 0 ; j < eigenVectors.getNumberComponents() ; j++)
+      // {
+      //   std::cout << "[";
+      //   for(size_type i = 0 ; i < eigenVectors.locallyOwnedSize() ; i++)
+      //   { 
+      //     std::cout << *(BxEigenVectorsProjectionToBenchmark.data()+i*eigenVectors.getNumberComponents()+j) << ",";
+      //   }
+      //   std::cout << "]\n";
+      // }
+      // }
+      // std::cout << std::flush;
+      // dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
+      // }
+
+  bool isEigenVectorsSame = false;
+  for(size_type i = 0; i < BxEigenVectorsProjectionToBenchmark.locallyOwnedSize(); ++i)
+   {
+    for(size_type j = 0 ; j < BxEigenVectorsProjectionToBenchmark.getNumberComponents(); j++)
+    {
+      if(std::fabs(*(BxEigenVectorsProjectionToBenchmark.data() + i*BxEigenVectorsProjectionToBenchmark.getNumberComponents() + j)- 
+        *(eigenVectorsCHFSI.data() + i*eigenVectorsCHFSI.getNumberComponents() + j)) > 1e-12)
+      {
+          std::string msg = "At index " + std::to_string(i) +
+                            " mismatch of entries";
+          std::cout << msg << "\n";
+          isEigenVectorsSame = false;
+          throw std::runtime_error(msg);
+      }
+      else
+        isEigenVectorsSame = true;
+    }
+   }
+
+   if(isEigenVectorsSame)
+   {
+    std::cout << "Hurray!! EigenVectors are same from lapack and lanczos.\n";
+   }
 
   utils::mpi::MPIFinalize();
 #endif 

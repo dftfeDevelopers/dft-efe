@@ -417,6 +417,32 @@ namespace dftefe
                   err        = EigenSolverErrorCode::SUCCESS;
                   retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
                   isSuccess  = true;
+
+                  // Get the residual
+                  // get v = v - \alpha_i * q_i - \beta_i-1 * q_i-1
+
+                  nAlpha = (ValueType)(-1.0) * (ValueType)alpha[0];
+                  nBeta  = (ValueType)(-1.0) * (ValueType)beta[0];
+
+                  add(ones, v, nAlpha, q, v);
+                  add(ones, v, nBeta, qPrev, v);
+
+                  // compute \beta_i = bnorm v
+                  temp.setValue((ValueType)0.0);
+                  B.apply(v, temp);
+
+                  ValueType residual;
+                  dot<ValueType, ValueType, memorySpace>(
+                    v,
+                    temp,
+                    residual,
+                    blasLapack::ScalarOp::Conj,
+                    blasLapack::ScalarOp::Identity);
+
+                  residual = std::sqrt(residual);
+
+                  *(eigenValues.data() + eigenValues.size() - 1) += residual;
+
                   break;
                 }
               eigenValuesPrev = eigenValues;
