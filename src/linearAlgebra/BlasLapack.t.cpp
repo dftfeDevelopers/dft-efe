@@ -478,9 +478,9 @@ namespace dftefe
       LapackError
       inverse(size_type n, ValueType *A, LinAlgOpContext<memorySpace> &context)
       {
-        LapackError                                 returnVal;
-        global_size_type                            error1, error2;
-        utils::MemoryStorage<long int, memorySpace> ipiv(n);
+        LapackError                                  returnVal;
+        global_size_type                             error1, error2;
+        utils::MemoryStorage<LapackInt, memorySpace> ipiv(n);
 
         error1 = lapack::getrf(n, n, A, n, ipiv.data());
 
@@ -649,7 +649,7 @@ namespace dftefe
         LapackError      returnVal;
         global_size_type error1, error2;
 
-        utils::MemoryStorage<long int, dftefe::utils::MemorySpace::HOST> ipiv(
+        utils::MemoryStorage<LapackInt, dftefe::utils::MemorySpace::HOST> ipiv(
           n);
         utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
           n * n);

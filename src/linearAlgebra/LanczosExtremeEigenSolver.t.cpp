@@ -142,15 +142,16 @@ namespace dftefe
              double               lanczosBetaTolerance,
              const Vector<ValueTypeOperand, memorySpace> &initialGuess)
     {
-      d_maxKrylovSubspaceSize      = ((global_size_type)maxKrylovSubspaceSize <=
-                                 d_initialGuess.globalSize()) ?
-                                       maxKrylovSubspaceSize :
-                                       d_initialGuess.globalSize();
+      d_maxKrylovSubspaceSize      = maxKrylovSubspaceSize;
       d_initialGuess               = initialGuess;
       d_numLowerExtermeEigenValues = numLowerExtermeEigenValues;
       d_numUpperExtermeEigenValues = numUpperExtermeEigenValues;
       d_tolerance                  = tolerance;
       d_lanczosBetaTolerance       = lanczosBetaTolerance;
+      d_isSolved                   = false;
+
+      DFTEFE_Assert(numLowerExtermeEigenValues + numUpperExtermeEigenValues <=
+                    d_initialGuess.globalSize());
     }
 
     template <typename ValueTypeOperator,
@@ -198,15 +199,15 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         initialGuessSTL.size(), d_initialGuess.data(), initialGuessSTL.data());
 
-      d_maxKrylovSubspaceSize = ((global_size_type)maxKrylovSubspaceSize <=
-                                 d_initialGuess.globalSize()) ?
-                                  maxKrylovSubspaceSize :
-                                  d_initialGuess.globalSize();
+      d_maxKrylovSubspaceSize = maxKrylovSubspaceSize;
+      DFTEFE_Assert(numLowerExtermeEigenValues + numUpperExtermeEigenValues <=
+                    d_initialGuess.globalSize());
 
       d_numLowerExtermeEigenValues = numLowerExtermeEigenValues;
       d_numUpperExtermeEigenValues = numUpperExtermeEigenValues;
       d_tolerance                  = tolerance;
       d_lanczosBetaTolerance       = lanczosBetaTolerance;
+      d_isSolved                   = false;
     }
 
     template <typename ValueTypeOperator,
@@ -224,6 +225,7 @@ namespace dftefe
                           const OpContext &BInv)
     {
       EigenSolverError retunValue;
+      d_isSolved = true;
 
       size_type numWantedEigenValues =
         d_numLowerExtermeEigenValues + d_numUpperExtermeEigenValues;
@@ -240,7 +242,9 @@ namespace dftefe
       bool              isSuccess = false;
       size_type         krylovSubspaceSize;
 
-      std::vector<RealType>  alphaVec(0), betaVec(0);
+      std::vector<RealType> alphaVec, betaVec;
+      alphaVec.reserve(d_maxKrylovSubspaceSize);
+      betaVec.reserve(d_maxKrylovSubspaceSize);
       std::vector<ValueType> alpha(1, (ValueType)0), beta(1, (ValueType)0);
 
       ValueType ones = (ValueType)1.0, nBeta, nAlpha;
@@ -321,7 +325,49 @@ namespace dftefe
           // }
           // std::cout << "\n";
 
-          if (iter >= numWantedEigenValues)
+          nAlpha = (ValueType)(-1.0) * (ValueType)alpha[0];
+          nBeta  = (ValueType)(-1.0) * (ValueType)beta[0];
+
+          // get v = v - \alpha_i * q_i - \beta_i-1 * q_i-1
+
+          add(ones, v, nAlpha, q, v);
+          add(ones, v, nBeta, qPrev, v);
+
+          // compute \beta_i = bnorm v
+          temp.setValue((ValueType)0.0);
+          B.apply(v, temp);
+
+          dot<ValueType, ValueType, memorySpace>(
+            v,
+            temp,
+            beta,
+            blasLapack::ScalarOp::Conj,
+            blasLapack::ScalarOp::Identity);
+
+          beta[0] = std::sqrt(beta[0]);
+
+          if (utils::realPart<ValueType>(beta[0]) < d_lanczosBetaTolerance)
+            {
+              if (krylovSubspaceSize >= numWantedEigenValues)
+                isSuccess = true;
+              err        = EigenSolverErrorCode::LANCZOS_BETA_ZERO;
+              retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+              break;
+            }
+
+          betaVec.push_back(utils::realPart<ValueType>(beta[0]));
+
+          qPrev = q;
+
+          // get q_i+1 = v/\beta_i
+          blasLapack::ascale<ValueType, ValueType, memorySpace>(
+            v.locallyOwnedSize(),
+            (ValueType)(1.0 / beta[0]),
+            v.data(),
+            q.data(),
+            *d_initialGuess.getLinAlgOpContext());
+
+          if (iter >= numWantedEigenValues && iter <= d_maxKrylovSubspaceSize)
             {
               krylovSubspaceSize = iter;
 
@@ -330,9 +376,9 @@ namespace dftefe
               eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
                 alphaVec.data());
               utils::MemoryStorage<RealType, memorySpace> betaVecTemp(
-                betaVec.size());
+                betaVec.size() - 1);
               betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
-                betaVec.data());
+                betaVec.data(), betaVec.size() - 1, 0, 0);
 
               if (computeEigenVectors)
                 {
@@ -417,79 +463,14 @@ namespace dftefe
                   err        = EigenSolverErrorCode::SUCCESS;
                   retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
                   isSuccess  = true;
-
-                  // Get the residual
-                  // get v = v - \alpha_i * q_i - \beta_i-1 * q_i-1
-
-                  nAlpha = (ValueType)(-1.0) * (ValueType)alpha[0];
-                  nBeta  = (ValueType)(-1.0) * (ValueType)beta[0];
-
-                  add(ones, v, nAlpha, q, v);
-                  add(ones, v, nBeta, qPrev, v);
-
-                  // compute \beta_i = bnorm v
-                  temp.setValue((ValueType)0.0);
-                  B.apply(v, temp);
-
-                  ValueType residual;
-                  dot<ValueType, ValueType, memorySpace>(
-                    v,
-                    temp,
-                    residual,
-                    blasLapack::ScalarOp::Conj,
-                    blasLapack::ScalarOp::Identity);
-
-                  residual = std::sqrt(residual);
-
-                  *(eigenValues.data() + eigenValues.size() - 1) +=
-                    utils::realPart<ValueType>(residual);
-
                   break;
                 }
               eigenValuesPrev = eigenValues;
             }
-          nAlpha = (ValueType)(-1.0) * (ValueType)alpha[0];
-          nBeta  = (ValueType)(-1.0) * (ValueType)beta[0];
-
-          // get v = v - \alpha_i * q_i - \beta_i-1 * q_i-1
-
-          add(ones, v, nAlpha, q, v);
-          add(ones, v, nBeta, qPrev, v);
-
-          // compute \beta_i = bnorm v
-          temp.setValue((ValueType)0.0);
-          B.apply(v, temp);
-
-          dot<ValueType, ValueType, memorySpace>(
-            v,
-            temp,
-            beta,
-            blasLapack::ScalarOp::Conj,
-            blasLapack::ScalarOp::Identity);
-
-          beta[0] = std::sqrt(beta[0]);
-
-          if (utils::realPart<ValueType>(beta[0]) < d_lanczosBetaTolerance)
-            {
-              if (krylovSubspaceSize >= numWantedEigenValues)
-                isSuccess = true;
-              err        = EigenSolverErrorCode::LANCZOS_BETA_ZERO;
-              retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-              break;
-            }
-
-          betaVec.push_back(utils::realPart<ValueType>(beta[0]));
-
-          qPrev = q;
-
-          // get q_i+1 = v/\beta_i
-          blasLapack::ascale<ValueType, ValueType, memorySpace>(
-            v.locallyOwnedSize(),
-            (ValueType)(1.0 / beta[0]),
-            v.data(),
-            q.data(),
-            *d_initialGuess.getLinAlgOpContext());
         }
+
+      d_diagonal    = alphaVec;
+      d_subDiagonal = betaVec;
 
       if (krylovSubspaceSize > d_maxKrylovSubspaceSize)
         {
@@ -597,5 +578,29 @@ namespace dftefe
 
       return retunValue;
     }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    LanczosExtremeEigenSolver<ValueTypeOperator,
+                              ValueTypeOperand,
+                              memorySpace>::
+      getTridiagonalMatrix(std::vector<RealType> &diagonal,
+                           std::vector<RealType> &subDiagonal) const
+    {
+      if (d_isSolved)
+        {
+          diagonal.resize(0);
+          subDiagonal.resize(0);
+          diagonal    = d_diagonal;
+          subDiagonal = d_subDiagonal;
+        }
+      else
+        utils::throwException(
+          false,
+          "Cannot call getTridiagonalMatrix() without calling solve() in LanczosExtremeEigenSolver");
+    }
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

@@ -132,6 +132,10 @@ namespace dftefe
                                       ValueTypeOperand,
                                       memorySpace>()) override;
 
+      void
+      getTridiagonalMatrix(std::vector<RealType> &diagonal,
+                           std::vector<RealType> &subDiagonal) const;
+
     private:
       Vector<ValueTypeOperand, memorySpace> d_initialGuess;
       size_type                             d_maxKrylovSubspaceSize;
@@ -139,6 +143,9 @@ namespace dftefe
       size_type                             d_numUpperExtermeEigenValues;
       std::vector<double>                   d_tolerance;
       double                                d_lanczosBetaTolerance;
+      std::vector<RealType>                 d_diagonal;
+      std::vector<RealType>                 d_subDiagonal;
+      bool                                  d_isSolved;
 
 
     }; // end of class LanczosExtremeEigenSolver

@@ -50,6 +50,8 @@ namespace dftefe
       using Uplo = lapack::Uplo; // Uplo::Lower, Uplo::Upper
       using Diag = lapack::Diag; // Diag::NonUnit, Diag::Unit
 
+      using LapackInt = int64_t;
+
       enum class ScalarOp
       {
         Identity,

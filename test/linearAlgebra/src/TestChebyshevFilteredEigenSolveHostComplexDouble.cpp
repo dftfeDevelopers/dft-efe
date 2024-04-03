@@ -443,7 +443,7 @@ int main()
       (colMajorBInv, globalSize);
 
   std::vector<double> tol = {1e-6,1e-6};
-  std::shared_ptr<linearAlgebra::HermitianIterativeEigenSolver<ValueType, ValueType, Host>> lanczos
+  std::shared_ptr<linearAlgebra::LanczosExtremeEigenSolver<ValueType, ValueType, Host>> lanczos
     = std::make_shared<linearAlgebra::LanczosExtremeEigenSolver<ValueType, ValueType, Host>> 
         (100,
          1,
@@ -462,6 +462,10 @@ int main()
                   *opContextB,
                   *opContextBInv);
 
+  std::vector<TypeReal> diagonal(0), subDiagonal(0);
+  lanczos->getTridiagonalMatrix(diagonal, subDiagonal);
+  TypeReal residual = subDiagonal[subDiagonal.size()-1];                  
+
   for(size_type procId = 0 ; procId < numProcs ; procId++)
   {
   if(procId == 0)
@@ -475,7 +479,8 @@ int main()
   }
   std::cout << std::flush;
   dftefe::utils::mpi::MPIBarrier(utils::mpi::MPICommWorld);
-  }              
+  }      
+  std::cout << "residual: \n"<<residual<<"\n" ;          
 
   double wantedSpectrumUpperBound = b; //(eigenValuesLanczos[1] - eigenValuesLanczos[0])*((ValueType)(numWantedEigenValues+(int)(0.05*numWantedEigenValues))/globalSize) + eigenValuesLanczos[0];
 
@@ -498,7 +503,7 @@ int main()
     = std::make_shared<linearAlgebra::ChebyshevFilteredEigenSolver<ValueType, ValueType, Host>>
                           (eigenValuesLanczos[0],
                            wantedSpectrumUpperBound,
-                           eigenValuesLanczos[1],
+                           eigenValuesLanczos[1]+residual,
                            100,
                            1e-14,
                            eigenSubspaceGuess,
