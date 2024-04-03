@@ -20,38 +20,6 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian
+ * @author Avirup Sircar
  */
-
-#ifndef dftefeQueueManager_h
-#define dftefeQueueManager_h
-
-#include <blas.hh>
-#include "BlasLapackTypedef.h"
-
-namespace dftefe
-{
-  namespace linearAlgebra
-  {
-    class QueueManager
-    {
-    public:
-      //      blasLapack::Queue &
-      //      getBlasQueue();
-      //
-      //      void
-      //      createBlasQueue();
-
-    private:
-      int cpuQueue;
-
-      // FIXME Should this is be inside DFTEFE_WITH_GPU ????
-      static blasLapack::Queue blasGpuQueue;
-    };
-
-  } // namespace linearAlgebra
-
-} // namespace dftefe
-
-#include "QueueManager.t.cpp"
-#endif // define queueManager_h
+#include "OrthonormalizationFunctions.h"

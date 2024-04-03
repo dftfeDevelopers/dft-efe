@@ -20,14 +20,17 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das, Vishal Subramanian
+ * @author Sambit Das, Vishal Subramanian, Avirup Sircar
  */
 
 #ifndef dftefeBlasWrapperTypedef_h
 #define dftefeBlasWrapperTypedef_h
 
 #include <blas.hh>
-// #include <lapack.hh>
+#define LAPACK_COMPLEX_CPP
+#define HAVE_LAPACK_CONFIG_H
+#include <lapack.hh>
+#include <lapack/device.hh>
 #include <utils/MemoryStorage.h>
 
 namespace dftefe
@@ -41,7 +44,13 @@ namespace dftefe
       using Diag   = blas::Diag;
       using Uplo   = blas::Uplo;
       using Layout = blas::Layout;
-      using Queue  = blas::Queue;
+
+      // lapack
+      using Job  = lapack::Job;  // Job::Vec, Job::NoVec
+      using Uplo = lapack::Uplo; // Uplo::Lower, Uplo::Upper
+      using Diag = lapack::Diag; // Diag::NonUnit, Diag::Unit
+
+      using LapackInt = int64_t;
 
       enum class ScalarOp
       {
@@ -87,6 +96,33 @@ namespace dftefe
       template <dftefe::utils::MemorySpace memorySpace>
       using BlasQueue = typename BlasQueueTypedef<memorySpace>::TYPE;
 
+      template <dftefe::utils::MemorySpace memorySpace>
+      struct LapackQueueTypedef
+      {
+        typedef void LAPACKTYPE; //  default
+      };
+
+      // template specified mapping
+      template <>
+      struct LapackQueueTypedef<dftefe::utils::MemorySpace::HOST>
+      {
+        typedef int LAPACKTYPE;
+      };
+
+      template <>
+      struct LapackQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
+      {
+        typedef int LAPACKTYPE;
+      };
+
+      template <>
+      struct LapackQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
+      {
+        typedef lapack::Queue LAPACKTYPE;
+      };
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      using LapackQueue = typename LapackQueueTypedef<memorySpace>::LAPACKTYPE;
 
     } // namespace blasLapack
 

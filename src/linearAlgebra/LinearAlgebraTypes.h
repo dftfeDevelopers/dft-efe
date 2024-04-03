@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Avirup Sircar
  */
 
 #ifndef dftefeLinearAlgebraTypes_h
@@ -49,7 +49,25 @@ namespace dftefe
       LBFGS
     };
 
-    enum class Error
+    enum class ParallelPrintType
+    {
+      NONE,
+      ROOT_ONLY,
+      ALL
+    };
+
+    enum class LapackErrorCode
+    {
+      SUCCESS,
+      FAILED_DENSE_MATRIX_INVERSE,
+      FAILED_TRIA_MATRIX_INVERSE,
+      FAILED_CHOLESKY_FACTORIZATION,
+      FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM,
+      FAILED_STANDARD_EIGENPROBLEM,
+      FAILED_GENERALIZED_EIGENPROBLEM,
+    };
+
+    enum class LinearSolverErrorCode
     {
       SUCCESS,
       FAILED_TO_CONVERGE,
@@ -58,26 +76,102 @@ namespace dftefe
       OTHER_ERROR
     };
 
-    enum class ParallelPrintType
+    enum class EigenSolverErrorCode
     {
-      NONE,
-      ROOT_ONLY,
-      ALL
+      SUCCESS,
+      LAPACK_ERROR,
+      LANCZOS_BETA_ZERO,
+      LANCZOS_SUBSPACE_INSUFFICIENT,
+      CHFSI_ORTHONORMALIZATION_ERROR,
+      CHFSI_RAYLEIGH_RITZ_ERROR,
+      OTHER_ERROR
+    };
+
+    enum class OrthonormalizationErrorCode
+    {
+      SUCCESS,
+      LAPACK_ERROR,
+      NON_ORTHONORMALIZABLE_MULTIVECTOR,
+      MAX_PASS_EXCEEDED
+    };
+
+    struct LapackError
+    {
+      bool            isSuccess;
+      LapackErrorCode err;
+      std::string     msg;
+    };
+
+    struct LinearSolverError
+    {
+      bool                  isSuccess;
+      LinearSolverErrorCode err;
+      std::string           msg;
+    };
+
+    struct EigenSolverError
+    {
+      bool                 isSuccess;
+      EigenSolverErrorCode err;
+      std::string          msg;
+    };
+
+    struct OrthonormalizationError
+    {
+      bool                        isSuccess;
+      OrthonormalizationErrorCode err;
+      std::string                 msg;
     };
 
     /**
      * @brief A class to map Error to a message.
      * @note: This class only has static const data members.
      */
-    class ErrorMsg
+    class LapackErrorMsg
     {
     public:
-      static std::pair<bool, std::string>
-      isSuccessAndMsg(const Error &error);
+      static LapackError
+      isSuccessAndMsg(const LapackErrorCode &errorCode);
 
     private:
-      static const std::map<Error, std::string> d_errToMsgMap;
-    }; // end of class ErrorMsg
-  }    // end of namespace linearAlgebra
+      static const std::map<LapackErrorCode, std::string> d_errToMsgMap;
+    }; // end of class LapackErrorMsg
+
+    /**
+     * @brief A class to map Error to a message.
+     * @note: This class only has static const data members.
+     */
+    class LinearSolverErrorMsg
+    {
+    public:
+      static LinearSolverError
+      isSuccessAndMsg(const LinearSolverErrorCode &errorCode);
+
+    private:
+      static const std::map<LinearSolverErrorCode, std::string> d_errToMsgMap;
+    }; // end of class LinearSolverErrorMsg
+
+    class EigenSolverErrorMsg
+    {
+    public:
+      static EigenSolverError
+      isSuccessAndMsg(const EigenSolverErrorCode &errorCode);
+
+    private:
+      static const std::map<EigenSolverErrorCode, std::string> d_errToMsgMap;
+    }; // end of class EigenSolverErrorMsg
+
+    class OrthonormalizationErrorMsg
+    {
+    public:
+      static OrthonormalizationError
+      isSuccessAndMsg(const OrthonormalizationErrorCode &errorCode);
+
+    private:
+      static const std::map<OrthonormalizationErrorCode, std::string>
+        d_errToMsgMap;
+    }; // end of class OrthonormalizationErrorMsg
+
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeLinearAlgebraTypes_h

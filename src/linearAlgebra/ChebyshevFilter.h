@@ -20,67 +20,55 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#ifndef dftefeLinearSolverImpl_h
-#define dftefeLinearSolverImpl_h
+#ifndef dftefeChebyshevFilter_h
+#define dftefeChebyshevFilter_h
 
-#include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <memory>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
     /**
+     *@brief A class to get chebyshevFiletered subspace "filteredSubspace" from original subspace "eigenSubspaceGuess".
+     * Note both of these vectors have to be apriori allocated and both will
+     *change after the function is called.
      *
-     * @brief Abstract class that implements the LinearSolver algorithm.
-     *  For example, the derived classes of it, such as CGLinearSolver,
-     *  GMRESLinearSolver implement the Conjugate-Gradient (CG) and
-     *  Generalized Minimum Residual (GMRES) Krylov subspace based approches,
-     *  respectively, to solve a linear system of equations.
-     *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
-     * etc.) for the operator (e.g. Matrix) associated with the linear solve
-     * @tparam ValueTypeOperand The datatype (float, double, complex<double>,
-     * etc.) of the vector, matrices, etc.
+     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
      * on which the operator will act
-     * @tparam memorySpace The meory space (HOST, DEVICE, HOST_PINNED, etc.)
-     * in which the data of the operator
+     * @tparam memorySpace The meory space (HOST, DEVICE, HOST_PINNED, etc.) in which the data of the operator
      * and its operands reside
      *
      */
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LinearSolverImpl
-    {
-    public:
-      /**
-       * @brief Default Destructor
-       */
-      virtual ~LinearSolverImpl() = default;
+    void
+    ChebyshevFilter(
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &A,
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &                                               BInv,
+      const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+      const size_type                                   polynomialDegree,
+      const double              wantedSpectrumLowerBound,
+      const double              wantedSpectrumUpperBound,
+      const double              unWantedSpectrumUpperBound,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &filteredSubspace);
 
-      /**
-       * @brief Function that initiates the linear solve
-       *
-       * @param[in] linearSolverFunction Reference to a LinearSolverFunction
-       *  object that encapsulates the discrete partial differential equation
-       *  that is being solved as a linear solve. Typically, the
-       *  linearSolverFunction provides the right hand side
-       *  vector (i.e., \f$\mathbf{b}$\f) and the handle to the action of the
-       *  discrete operator on a Vector. It also stores the final solution
-       *  \f$\mathbf{x}$\f
-       *
-       */
-      virtual LinearSolverError
-      solve(
-        LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) = 0;
-    }; // end of class LinearSolverImpl
-  }    // end of namespace linearAlgebra
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearSolverImpl_h
+#include <linearAlgebra/ChebyshevFilter.t.cpp>
+#endif // dftefeChebyshevFilter_h

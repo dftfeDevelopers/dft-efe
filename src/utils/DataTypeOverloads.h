@@ -3,6 +3,7 @@
 
 #include <complex>
 #include <algorithm>
+#include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace utils
@@ -84,6 +85,120 @@ namespace dftefe
     absCompare(ValueType a, ValueType b)
     {
       return (abs_(a) < abs_(b));
+    }
+
+    // Get real part
+
+    template <typename T>
+    inline typename RealType<T>::Type
+    realPart(const T &x)
+    {
+      throwException(false, "realPart() not implemented for datatype.");
+      return 0;
+    }
+
+    template <>
+    inline RealType<float>::Type
+    realPart(const float &x)
+    {
+      return x;
+    }
+
+    template <>
+    inline RealType<double>::Type
+    realPart(const double &x)
+    {
+      return x;
+    }
+
+    template <>
+    inline RealType<std::complex<float>>::Type
+    realPart(const std::complex<float> &x)
+    {
+      return x.real();
+    }
+
+    template <>
+    inline RealType<std::complex<double>>::Type
+    realPart(const std::complex<double> &x)
+    {
+      return x.real();
+    }
+
+    // Get imaginary part
+
+    template <typename T>
+    inline typename RealType<T>::Type
+    imagPart(const T &x)
+    {
+      throwException(false, "imagPart() not implemented for datatype.");
+      return 0;
+    }
+
+    template <>
+    inline RealType<float>::Type
+    imagPart(const float &x)
+    {
+      return x;
+    }
+
+    template <>
+    inline RealType<double>::Type
+    imagPart(const double &x)
+    {
+      return x;
+    }
+
+    template <>
+    inline RealType<std::complex<float>>::Type
+    imagPart(const std::complex<float> &x)
+    {
+      return x.imag();
+    }
+
+    template <>
+    inline RealType<std::complex<double>>::Type
+    imagPart(const std::complex<double> &x)
+    {
+      return x.imag();
+    }
+
+    // Get the complex conjugate
+
+    template <typename T>
+    inline T
+    conjugate(const T &x)
+    {
+      throwException(false, "conjugate() not implemented for datatype.");
+      return 0;
+    }
+
+    template <>
+    inline float
+    conjugate(const float &x)
+    {
+      return x;
+    }
+
+    template <>
+    inline double
+    conjugate(const double &x)
+    {
+      return x;
+    }
+
+    template <>
+    inline std::complex<float>
+    conjugate(const std::complex<float> &x)
+    {
+      return std::conj(x);
+    }
+
+    template <>
+    inline std::complex<double>
+    conjugate(const std::complex<double> &x)
+    {
+      return std::conj(x);
     }
 
   } // namespace utils

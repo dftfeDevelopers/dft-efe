@@ -20,67 +20,65 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#ifndef dftefeLinearSolverImpl_h
-#define dftefeLinearSolverImpl_h
+#ifndef dftefeOrthonormalizationFunctions_h
+#define dftefeOrthonormalizationFunctions_h
 
 #include <utils/TypeConfig.h>
-#include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
+#include <string>
+#include <utils/MemorySpaceType.h>
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/IdentityOperatorContext.h>
 
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    /**
-     *
-     * @brief Abstract class that implements the LinearSolver algorithm.
-     *  For example, the derived classes of it, such as CGLinearSolver,
-     *  GMRESLinearSolver implement the Conjugate-Gradient (CG) and
-     *  Generalized Minimum Residual (GMRES) Krylov subspace based approches,
-     *  respectively, to solve a linear system of equations.
-     *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
-     * etc.) for the operator (e.g. Matrix) associated with the linear solve
-     * @tparam ValueTypeOperand The datatype (float, double, complex<double>,
-     * etc.) of the vector, matrices, etc.
-     * on which the operator will act
-     * @tparam memorySpace The meory space (HOST, DEVICE, HOST_PINNED, etc.)
-     * in which the data of the operator
-     * and its operands reside
-     *
-     */
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LinearSolverImpl
+    class OrthonormalizationFunctions
     {
     public:
-      /**
-       * @brief Default Destructor
-       */
-      virtual ~LinearSolverImpl() = default;
+      using ValueType =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
+      using OpContext =
+        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
 
       /**
-       * @brief Function that initiates the linear solve
-       *
-       * @param[in] linearSolverFunction Reference to a LinearSolverFunction
-       *  object that encapsulates the discrete partial differential equation
-       *  that is being solved as a linear solve. Typically, the
-       *  linearSolverFunction provides the right hand side
-       *  vector (i.e., \f$\mathbf{b}$\f) and the handle to the action of the
-       *  discrete operator on a Vector. It also stores the final solution
-       *  \f$\mathbf{x}$\f
+       *@brief Default Destructor
        *
        */
-      virtual LinearSolverError
-      solve(
-        LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) = 0;
-    }; // end of class LinearSolverImpl
+      ~OrthonormalizationFunctions() = default;
+
+      static OrthonormalizationError
+      CholeskyGramSchmidt(
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
+        const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>());
+
+      static OrthonormalizationError
+      MultipassLowdin(
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        size_type                                   maxPass,
+        RealType                                    shiftTolerance,
+        RealType                                    identityTolerance,
+        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
+        const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>());
+
+    }; // end of class OrthonormalizationFunctions
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearSolverImpl_h
+#include <linearAlgebra/OrthonormalizationFunctions.t.cpp>
+#endif

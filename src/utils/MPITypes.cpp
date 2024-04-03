@@ -38,6 +38,7 @@ namespace dftefe
     mpi::MPIStatus *mpi::MPIStatusIgnore   = MPI_STATUS_IGNORE;
     mpi::MPIStatus *mpi::MPIStatusesIgnore = MPI_STATUSES_IGNORE;
     int *           mpi::MPIErrCodesIgnore = MPI_ERRCODES_IGNORE;
+    void *          mpi::MPIInPlace        = MPI_IN_PLACE;
 
     //
     // Datatype objects
@@ -111,6 +112,7 @@ namespace dftefe
     mpi::MPIStatus *mpi::MPIStatusIgnore   = nullptr;
     mpi::MPIStatus *mpi::MPIStatusesIgnore = nullptr;
     int *           mpi::MPIErrCodesIgnore = nullptr;
+    void *          mpi::MPIInPlace        = (void *)-1;
 
     //
     // Datatype objects

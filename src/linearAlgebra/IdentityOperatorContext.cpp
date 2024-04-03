@@ -20,50 +20,6 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin, Sambit Das
+ * @author Avirup Sircar
  */
-
-namespace dftefe
-{
-  namespace linearAlgebra
-  {
-    template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   blasQueue,
-      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue)
-      : d_blasQueue(blasQueue)
-      , d_lapackQueue(lapackQueue)
-    {}
-
-    template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setBlasQueue(
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> blasQueue)
-    {
-      d_blasQueue = blasQueue;
-    }
-
-    template <utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
-    {
-      return *d_blasQueue;
-    }
-
-    template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setLapackQueue(
-      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue)
-    {
-      d_lapackQueue = lapackQueue;
-    }
-
-    template <utils::MemorySpace memorySpace>
-    blasLapack::LapackQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getLapackQueue() const
-    {
-      return *d_lapackQueue;
-    }
-
-  } // end of namespace linearAlgebra
-} // end of namespace dftefe
+#include "IdentityOperatorContext.h"

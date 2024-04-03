@@ -20,67 +20,65 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#ifndef dftefeLinearSolverImpl_h
-#define dftefeLinearSolverImpl_h
+#ifndef dftefeIdentityOperatorContext_h
+#define dftefeIdentityOperatorContext_h
 
-#include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
-
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
     /**
+     *@brief Abstract class to encapsulate the action of a discrete operator on vectors, matrices, etc.
      *
-     * @brief Abstract class that implements the LinearSolver algorithm.
-     *  For example, the derived classes of it, such as CGLinearSolver,
-     *  GMRESLinearSolver implement the Conjugate-Gradient (CG) and
-     *  Generalized Minimum Residual (GMRES) Krylov subspace based approches,
-     *  respectively, to solve a linear system of equations.
-     *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
-     * etc.) for the operator (e.g. Matrix) associated with the linear solve
-     * @tparam ValueTypeOperand The datatype (float, double, complex<double>,
-     * etc.) of the vector, matrices, etc.
+     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
+     * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
      * on which the operator will act
-     * @tparam memorySpace The meory space (HOST, DEVICE, HOST_PINNED, etc.)
-     * in which the data of the operator
+     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNES, etc.) in which the data of the operator
      * and its operands reside
      *
      */
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LinearSolverImpl
+    class IdentityOperatorContext
+      : public OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
+      //
+      // typedefs
+      //
+    public:
+      //
+      // alias to define the union of ValueTypeOperator and ValueTypeOperand
+      // (e.g., the union of double and complex<double> is complex<double>)
+      //
+      using ValueTypeUnion =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+
     public:
       /**
-       * @brief Default Destructor
+       * @brief Default Constructor
        */
-      virtual ~LinearSolverImpl() = default;
+      IdentityOperatorContext();
 
       /**
-       * @brief Function that initiates the linear solve
-       *
-       * @param[in] linearSolverFunction Reference to a LinearSolverFunction
-       *  object that encapsulates the discrete partial differential equation
-       *  that is being solved as a linear solve. Typically, the
-       *  linearSolverFunction provides the right hand side
-       *  vector (i.e., \f$\mathbf{b}$\f) and the handle to the action of the
-       *  discrete operator on a Vector. It also stores the final solution
-       *  \f$\mathbf{x}$\f
+       *@brief Default Destructor
        *
        */
-      virtual LinearSolverError
-      solve(
-        LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) = 0;
-    }; // end of class LinearSolverImpl
-  }    // end of namespace linearAlgebra
+      ~IdentityOperatorContext() = default;
+
+      void
+      apply(MultiVector<ValueTypeOperand, memorySpace> &X,
+            MultiVector<ValueTypeUnion, memorySpace> &  Y) const override;
+    };
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearSolverImpl_h
+#include <linearAlgebra/IdentityOperatorContext.t.cpp>
+#endif // dftefeIdentityOperatorContext_h

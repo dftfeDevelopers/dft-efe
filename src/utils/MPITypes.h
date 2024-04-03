@@ -102,6 +102,7 @@ namespace dftefe
       extern MPIStatus *MPIStatusIgnore;
       extern MPIStatus *MPIStatusesIgnore;
       extern int *      MPIErrCodesIgnore;
+      extern void *     MPIInPlace;
 
       extern MPIDatatype MPIChar;
       extern MPIDatatype MPISignedChar;

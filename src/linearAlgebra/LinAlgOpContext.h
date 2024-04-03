@@ -27,6 +27,7 @@
 #define dftefeLinAlgOpContext_h
 
 #include <utils/MemorySpaceType.h>
+#include <memory>
 #include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
@@ -36,16 +37,27 @@ namespace dftefe
     class LinAlgOpContext
     {
     public:
-      LinAlgOpContext(blasLapack::BlasQueue<memorySpace> *blasQueue);
+      LinAlgOpContext(
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   blasQueue,
+        std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
 
       void
-      setBlasQueue(blasLapack::BlasQueue<memorySpace> *blasQueue);
+      setBlasQueue(
+        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> blasQueue);
+
+      void
+      setLapackQueue(
+        std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
 
       blasLapack::BlasQueue<memorySpace> &
       getBlasQueue() const;
 
+      blasLapack::LapackQueue<memorySpace> &
+      getLapackQueue() const;
+
     private:
-      blasLapack::BlasQueue<memorySpace> *d_blasQueue;
+      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   d_blasQueue;
+      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> d_lapackQueue;
 
     }; // end of LinAlgOpContext
   }    // end of namespace linearAlgebra

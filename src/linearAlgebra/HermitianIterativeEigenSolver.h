@@ -20,16 +20,22 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#ifndef dftefeLinearSolverImpl_h
-#define dftefeLinearSolverImpl_h
+#ifndef dftefeHermitianIterativeEigenSolver_h
+#define dftefeHermitianIterativeEigenSolver_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
+#include <utils/MPITypes.h>
+#include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/IdentityOperatorContext.h>
+#include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
 
 namespace dftefe
 {
@@ -37,11 +43,10 @@ namespace dftefe
   {
     /**
      *
-     * @brief Abstract class that implements the LinearSolver algorithm.
-     *  For example, the derived classes of it, such as CGLinearSolver,
-     *  GMRESLinearSolver implement the Conjugate-Gradient (CG) and
-     *  Generalized Minimum Residual (GMRES) Krylov subspace based approches,
-     *  respectively, to solve a linear system of equations.
+     * @brief An abstract class that encapsulates a generalized eigen value
+     * problem solver. That is, in a discrete sense it represents the equation
+     * \f$ \mathbf{Ax}=\mathbf{\lambda B x}$\f.
+     *
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>,
      * etc.) for the operator (e.g. Matrix) associated with the linear solve
@@ -56,31 +61,31 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    class LinearSolverImpl
+    class HermitianIterativeEigenSolver
     {
     public:
-      /**
-       * @brief Default Destructor
-       */
-      virtual ~LinearSolverImpl() = default;
+      using OpContext =
+        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
+      using ValueType =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
 
-      /**
-       * @brief Function that initiates the linear solve
-       *
-       * @param[in] linearSolverFunction Reference to a LinearSolverFunction
-       *  object that encapsulates the discrete partial differential equation
-       *  that is being solved as a linear solve. Typically, the
-       *  linearSolverFunction provides the right hand side
-       *  vector (i.e., \f$\mathbf{b}$\f) and the handle to the action of the
-       *  discrete operator on a Vector. It also stores the final solution
-       *  \f$\mathbf{x}$\f
-       *
-       */
-      virtual LinearSolverError
-      solve(
-        LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
-          &linearSolverFunction) = 0;
-    }; // end of class LinearSolverImpl
+    public:
+      virtual ~HermitianIterativeEigenSolver() = default;
+
+      virtual EigenSolverError
+      solve(const OpContext &                                   A,
+            std::vector<RealType> &                             eigenValues,
+            linearAlgebra::MultiVector<ValueType, memorySpace> &eigenVectors,
+            bool             computeEigenVectors = false,
+            const OpContext &B    = IdentityOperatorContext<ValueTypeOperator,
+                                                         ValueTypeOperand,
+                                                         memorySpace>(),
+            const OpContext &BInv = IdentityOperatorContext<ValueTypeOperator,
+                                                            ValueTypeOperand,
+                                                            memorySpace>()) = 0;
+
+    }; // end of class HermitianIterativeEigenSolver
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
-#endif // dftefeLinearSolverImpl_h
+#endif // dftefeHermitianIterativeEigenSolver_h

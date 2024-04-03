@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2022.                                                        *
+ * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
@@ -20,29 +20,6 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian
+ * @author Avirup Sircar
  */
-
-#include "utils/Exceptions.h"
-
-namespace dftefe
-{
-  namespace linearAlgebra
-  {
-    //    blasLapack::Queue &
-    //    QueueManager::getBlasQueue()
-    //    {
-    //      return blasGpuQueue;
-    //    }
-    //
-    //    void
-    //    QueueManager::createBlasQueue()
-    //    {
-    //      DFTEFE_AssertWithMsg(0, "createBlasQueue() not implemented yet....
-    //      ");
-    //    }
-
-
-
-  } // namespace linearAlgebra
-} // namespace dftefe
+#include "LanczosExtremeEigenSolver.h"
