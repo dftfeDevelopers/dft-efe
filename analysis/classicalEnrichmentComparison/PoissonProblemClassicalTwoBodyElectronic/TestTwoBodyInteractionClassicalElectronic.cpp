@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 #include <linearAlgebra/LinearSolverFunction.h>
-#include <physics/PoissonLinearSolverFunctionFE.h>
+#include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/CGLinearSolver.h>
 
@@ -280,10 +280,19 @@ int main(int argc, char** argv)
   dftefe::utils::mpi::MPICommRank(comm, &rank);
 
   int blasQueue = 0;
-  dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
-
-  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext =
-    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
+  int lapackQueue = 0;
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue
+    <dftefe::utils::MemorySpace::HOST>> blasQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::BlasQueue
+        <dftefe::utils::MemorySpace::HOST>>(blasQueue);
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::LapackQueue
+    <dftefe::utils::MemorySpace::HOST>> lapackQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::LapackQueue
+        <dftefe::utils::MemorySpace::HOST>>(lapackQueue);
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext
+    <dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
+    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext
+    <dftefe::utils::MemorySpace::HOST>>(blasQueuePtr, lapackQueuePtr);
 
 
   // Read the parameter files and atom coordinate files
@@ -588,7 +597,7 @@ dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> linearSolverFunction =
-    std::make_shared<dftefe::physics::PoissonLinearSolverFunctionFE<double,
+    std::make_shared<dftefe::electrostatics::PoissonLinearSolverFunctionFE<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>

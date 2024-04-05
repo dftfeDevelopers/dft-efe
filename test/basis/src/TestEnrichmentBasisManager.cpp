@@ -41,11 +41,20 @@ int main()
   dftefe::utils::mpi::MPIComm comm = dftefe::utils::mpi::MPICommWorld;
 
   int blasQueue = 0;
-  dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
-
-  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
-    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
-
+  int lapackQueue = 0;
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue
+    <dftefe::utils::MemorySpace::HOST>> blasQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::BlasQueue
+        <dftefe::utils::MemorySpace::HOST>>(blasQueue);
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::LapackQueue
+    <dftefe::utils::MemorySpace::HOST>> lapackQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::LapackQueue
+        <dftefe::utils::MemorySpace::HOST>>(lapackQueue);
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext
+    <dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
+    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext
+    <dftefe::utils::MemorySpace::HOST>>(blasQueuePtr, lapackQueuePtr);
+    
   // Set up Triangulation
   const unsigned int dim = 3;
   std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =

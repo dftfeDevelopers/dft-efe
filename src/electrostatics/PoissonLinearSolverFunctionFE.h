@@ -31,7 +31,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <physics/LaplaceOperatorContextFE.h>
+#include <electrostatics/LaplaceOperatorContextFE.h>
 #include <linearAlgebra/PreconditionerJacobi.h>
 #include <linearAlgebra/PreconditionerNone.h>
 #include <basis/FEBasisManager.h>
@@ -43,7 +43,7 @@
 
 namespace dftefe
 {
-  namespace physics
+  namespace electrostatics
   {
     /**
      *@brief A derived class of linearAlgebra::LinearSolverFunction
@@ -158,7 +158,7 @@ namespace dftefe
         d_fieldInHomoDBCVec;
 
     }; // end of class PoissonLinearSolverFunctionFE
-  }    // namespace physics
+  }    // namespace electrostatics
 } // end of namespace dftefe
-#include <physics/PoissonLinearSolverFunctionFE.t.cpp>
+#include <electrostatics/PoissonLinearSolverFunctionFE.t.cpp>
 #endif // dftefePoissonLinearSolverFunctionFE_h

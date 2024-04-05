@@ -39,7 +39,7 @@
 
 namespace dftefe
 {
-  namespace physics
+  namespace electrostatics
   {
     /**
      *@brief A derived class of linearAlgebra::OperatorContext to encapsulate
@@ -107,7 +107,7 @@ namespace dftefe
         *             d_feBasisDataStorage;
       const size_type d_maxCellTimesNumVecs;
     }; // end of class LaplaceOperatorContextFE
-  }    // end of namespace physics
+  }    // end of namespace electrostatics
 } // end of namespace dftefe
-#include <physics/LaplaceOperatorContextFE.t.cpp>
+#include <electrostatics/LaplaceOperatorContextFE.t.cpp>
 #endif // dftefeLaplaceOperatorContextFE_h

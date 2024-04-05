@@ -23,4 +23,4 @@
  * @author Avirup Sircar
  */
 
-#include <physics/LaplaceOperatorContextFE.h>
+#include <electrostatics/PoissonLinearSolverFunctionFE.h>

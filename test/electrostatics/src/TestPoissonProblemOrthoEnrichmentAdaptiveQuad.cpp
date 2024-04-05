@@ -19,7 +19,7 @@
 #include <fstream>
 #include <memory>
 #include <linearAlgebra/LinearSolverFunction.h>
-#include <physics/PoissonLinearSolverFunctionFE.h>
+#include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/CGLinearSolver.h>
 
@@ -130,17 +130,26 @@ int main()
     int numProcs;
     dftefe::utils::mpi::MPICommSize(comm, &numProcs);
 
-    int blasQueue = 0;
-    dftefe::linearAlgebra::blasLapack::BlasQueue<dftefe::utils::MemorySpace::HOST> *blasQueuePtr = &blasQueue;
-
-    std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
-    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(blasQueuePtr);
+  int blasQueue = 0;
+  int lapackQueue = 0;
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue
+    <dftefe::utils::MemorySpace::HOST>> blasQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::BlasQueue
+        <dftefe::utils::MemorySpace::HOST>>(blasQueue);
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::LapackQueue
+    <dftefe::utils::MemorySpace::HOST>> lapackQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::LapackQueue
+        <dftefe::utils::MemorySpace::HOST>>(lapackQueue);
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext
+    <dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
+    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext
+    <dftefe::utils::MemorySpace::HOST>>(blasQueuePtr, lapackQueuePtr);
 
     // Set up Triangulation
     const unsigned int dim = 3;
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
     std::make_shared<dftefe::basis::TriangulationDealiiParallel<dim>>(comm);
-    std::vector<unsigned int>         subdivisions = {10, 10, 10};
+    std::vector<unsigned int>         subdivisions = {15, 15, 15};
     std::vector<bool>                 isPeriodicFlags(dim, false);
     std::vector<dftefe::utils::Point> domainVectors(dim,
                                                     dftefe::utils::Point(dim, 0.0));
@@ -175,7 +184,7 @@ int main()
     // otherwise else executes
     if (dftefe_path != NULL) 
     {
-      sourceDir = (std::string)dftefe_path + "/test/physics/src/";
+      sourceDir = (std::string)dftefe_path + "/test/electrostatics/src/";
     }
     else
     {
@@ -270,11 +279,13 @@ int main()
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
     }
 
-  // Make pristine EFE basis
+  // Make orthogonalized EFE basis
 
   // 1. Make EnrichmentClassicalInterface object for Pristine enrichment
-  // 2. Input to the EFEBasisManager(eci, feOrder) 
-  // 3. Make EFEBasisDataStorage with input as quadratureContainer.
+  // 2. Make CFEBasisDataStorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GAUSS)
+  // 3. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
+  // 4. Input to the EFEBasisDofHandler(eci, feOrder) 
+  // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
   unsigned int feOrder = 3;
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
@@ -315,6 +326,9 @@ int main()
 
     dftefe::quadrature::QuadratureRuleAttributes quadAttrAdaptive(dftefe::quadrature::QuadratureFamily::ADAPTIVE,false);
 
+    unsigned int num1DGllSize =4;
+    dftefe::quadrature::QuadratureRuleAttributes quadAttrGll(dftefe::quadrature::QuadratureFamily::GLL,true,num1DGllSize);
+
     // Set up base quadrature rule for adaptive quadrature 
 
     unsigned int num1DGaussSize =4;
@@ -338,7 +352,46 @@ int main()
       smallestCellVolume,
       maxRecursion);
 
-  // initialize the basis Manager
+    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
+  std::shared_ptr<const dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> cfeBasisDofHandler =  
+   std::make_shared<dftefe::basis::CFEBasisDofHandlerDealii<double, dftefe::utils::MemorySpace::HOST,dim>>(triangulationBase, feOrder, comm);
+
+  dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
+
+    // Set up the CFE Basis Data Storage for Overlap Matrix
+    std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageOverlapMatrix =
+      std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double,dftefe::utils::MemorySpace::HOST, dim>>
+      (cfeBasisDofHandler, quadAttrGll, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageOverlapMatrix->evaluateBasisData(quadAttrGll, basisAttrMap);
+
+    // Set up the CFE Basis Data Storage for Rhs
+    std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageRhs =
+      std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double,dftefe::utils::MemorySpace::HOST, dim>>
+      (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
+
+    // Create the enrichmentClassicalInterface object
+    enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
+                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          (cfeBasisDataStorageOverlapMatrix,
+                          cfeBasisDataStorageRhs,
+                          atomSphericalDataContainer,
+                          atomPartitionTolerance,
+                          atomSymbolVec,
+                          atomCoordinatesVec,
+                          fieldName,
+                          linAlgOpContext,
+                          comm);
+
+  // initialize the basis 
   std::shared_ptr<dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
     std::make_shared<dftefe::basis::EFEBasisDofHandlerDealii<double, double,dftefe::utils::MemorySpace::HOST,dim>>(
       enrichClassIntfce, feOrder, comm);
@@ -349,7 +402,6 @@ int main()
   std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
   std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
-    dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
     basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
     basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
     basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
@@ -366,13 +418,13 @@ int main()
     feBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
 
-  std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
+    std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
     potentialFunction = std::make_shared<ScalarSpatialPotentialFunctionReal>(atomCoordinatesVec, rc);
 
   // // Set up BasisManager
-  std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
-    std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisDofHandler, potentialFunction);
+    std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
+        std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+        (basisDofHandler, potentialFunction);
 
     // Set up basis Operations
     dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
@@ -411,7 +463,7 @@ int main()
     std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                     double,
                                                     dftefe::utils::MemorySpace::HOST>> linearSolverFunction =
-    std::make_shared<dftefe::physics::PoissonLinearSolverFunctionFE<double,
+    std::make_shared<dftefe::electrostatics::PoissonLinearSolverFunctionFE<double,
                                                     double,
                                                     dftefe::utils::MemorySpace::HOST,
                                                     dim>>
@@ -472,7 +524,7 @@ int main()
             count = count + 1;
         }
         integral[1] += *(i+iterRho) * *(i+iterPotNumeric) * JxW[i] * 0.5/(4*M_PI);
-        integral[2] += *(i+iterRho) * JxW[i]/(4*M_PI);
+    integral[2] += *(i+iterRho) * JxW[i]/(4*M_PI);
     }
 
     dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(

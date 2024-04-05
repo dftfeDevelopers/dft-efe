@@ -1,15 +1,15 @@
-if (NOT TARGET dft-efe-physics)
+if (NOT TARGET dft-efe-electrostatics)
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 # Add source files here
-set(DFT-EFE-PHYSICS-SOURCES
+set(DFT-EFE-ELECTROSTATICS-SOURCES
 	PoissonLinearSolverFunctionFE.cpp
 	LaplaceOperatorContextFE.cpp)
 
-add_library(dft-efe-physics SHARED ${DFT-EFE-PHYSICS-SOURCES})
+add_library(dft-efe-electrostatics SHARED ${DFT-EFE-ELECTROSTATICS-SOURCES})
 
 if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
@@ -31,11 +31,11 @@ if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 	if (NOT MPI_FOUND)
 		find_package(MPI REQUIRED)
-		target_include_directories(dft-efe-physics PUBLIC ${MPI_CXX_INCLUDE_PATH})
+		target_include_directories(dft-efe-electrostatics PUBLIC ${MPI_CXX_INCLUDE_PATH})
 		set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 	endif()
 endif()
 
 include_directories(../)
-target_link_libraries(dft-efe-physics PUBLIC dft-efe-utils dft-efe-basis dft-efe-linalg dft-efe-quadrature ${DFTEFE_MPI_LIBRARIES})
+target_link_libraries(dft-efe-electrostatics PUBLIC dft-efe-utils dft-efe-basis dft-efe-linalg dft-efe-quadrature ${DFTEFE_MPI_LIBRARIES})
 endif()

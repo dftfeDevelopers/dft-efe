@@ -77,9 +77,21 @@ main(int argc, char **argv)
 
  double alpha = 1.0, beta = 0.0;
 
- BlasQueue<Host> queue;
+ //BlasQueue<Host> queue;
 
- gemm(Layout::ColMajor,
+  int blasQueue = 0;
+  int lapackQueue = 0;
+  std::shared_ptr<BlasQueue
+    <Host>> blasQueuePtr = std::make_shared
+      <BlasQueue
+        <Host>>(blasQueue);
+  std::shared_ptr<LapackQueue
+    <Host>> lapackQueuePtr = std::make_shared
+      <LapackQueue
+        <Host>>(lapackQueue);
+  dftefe::linearAlgebra::LinAlgOpContext<Host> laoc(blasQueuePtr, lapackQueuePtr);
+
+ gemm<double, double, Host>(Layout::ColMajor,
       Op::NoTrans,
       Op::NoTrans,
       Am,
@@ -93,7 +105,7 @@ main(int argc, char **argv)
       beta,
       C.data(),
       ldc,
-      queue);
+      laoc);
 
  for(dftefe::size_type i = 0; i < C.size(); ++i)
    {
@@ -145,7 +157,7 @@ main(int argc, char **argv)
 
  lda = An, ldb = Bn, ldc = Cn;
 
- gemm(Layout::RowMajor,
+ gemm<double, double, Host>(Layout::RowMajor,
       Op::NoTrans,
       Op::NoTrans,
       Am,
@@ -159,7 +171,7 @@ main(int argc, char **argv)
       beta,
       C.data(),
       ldc,
-      queue);
+      laoc);
 
  for(dftefe::size_type i = 0; i < C.size(); ++i)
    {
