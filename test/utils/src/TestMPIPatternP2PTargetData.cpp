@@ -158,7 +158,7 @@ int main()
     if(numOwnedIndices > 0)
     {
       auto ownedLocalIndicesFromMPIPatternP2P = 
-	mpiPatternP2P.getOwnedLocalIndices(iProc);
+	mpiPatternP2P.getOwnedLocalIndicesForTargetProc(iProc);
       size_type numOwnedIndicesFromMPIPatternP2P = 
 	ownedLocalIndicesFromMPIPatternP2P.size();
       std::string msg = "In rank " + std::to_string(rank) + 

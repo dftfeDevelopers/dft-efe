@@ -38,9 +38,9 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 '''
-TestPhysicsBuild
-This test compiles all tests in the DFTEFE_PATH/test/physics folder and copies 
-the executable to DFTEFE_PATH/test/physics/executable. 
+TestElectrostaticsBuild
+This test compiles all tests in the DFTEFE_PATH/test/electrostatics folder and copies 
+the executable to DFTEFE_PATH/test/electrostatics/executable. 
 This test should be run before any RunOnlyTests. 
 The BuildOnly test takes CMake options from CMakeConfigOptions.txt stored in
 the DFT-EFE main directory to ensure that the CMake configuration is consistent 
@@ -49,7 +49,7 @@ The process of building and running a test is as follows
 
 1. set DFTEFE_PATH to the main directory (i.e., "export DFTEFE_PATH="/path/to/dft-efe/")
 2. python configure.py in the main directory of DFT-EFE to generate CMakeConfigOptions.txt
-3. In the test/physics directory, run "reframe -C ../config/mysettings.py -c TestPhysicsBuild.py -r" 
+3. In the test/electrostatics directory, run "reframe -C ../config/mysettings.py -c TestElectrostaticsBuild.py -r" 
    to compile the tests. To retain the stage files in reframe add --keep-stage-files --dont-restage
 4. to run all cpu tests, use the command
    reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest*' --system=<system::partition> -t cpu -r
@@ -57,7 +57,7 @@ The process of building and running a test is as follows
    reframe -C ../config/mysettings.py -c ./ -R -n 'RunOnlyTest*' --system=<system::partition> -t gpu -r
 '''
 @rfm.simple_test
-class BuildOnlyTestPhysics(rfm.CompileOnlyRegressionTest):
+class BuildOnlyTestElectrostatics(rfm.CompileOnlyRegressionTest):
     descr = 'A build only test using CMake'
     build_system = 'CMake'
     make_opts = []

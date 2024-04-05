@@ -29,7 +29,7 @@
 
 namespace dftefe
 {
-  namespace physics
+  namespace electrostatics
   {
     namespace LaplaceOperatorContextFEInternal
     {
@@ -369,5 +369,5 @@ namespace dftefe
       Y.updateGhostValues();
     }
 
-  } // end of namespace physics
+  } // end of namespace electrostatics
 } // end of namespace dftefe

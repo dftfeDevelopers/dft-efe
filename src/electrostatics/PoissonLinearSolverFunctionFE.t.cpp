@@ -26,7 +26,7 @@
 #include <utils/Defaults.h>
 namespace dftefe
 {
-  namespace physics
+  namespace electrostatics
   {
     namespace PoissonLinearSolverFunctionFEInternal
     {
@@ -397,5 +397,5 @@ namespace dftefe
       return d_feBasisManagerHomo->getMPIPatternP2P()->mpiCommunicator();
     }
 
-  } // end of namespace physics
+  } // end of namespace electrostatics
 } // end of namespace dftefe
