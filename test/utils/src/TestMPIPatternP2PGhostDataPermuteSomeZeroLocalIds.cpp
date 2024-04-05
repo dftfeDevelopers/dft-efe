@@ -310,7 +310,7 @@ int main()
         if(numGhostInProc > 0)
         {
             auto ghostLocalIndicesFromMPIPatternP2P = 
-                mpiPatternP2P.getGhostLocalIndices(iProc);
+                mpiPatternP2P.getGhostLocalIndicesForGhostProc(iProc);
             size_type numGhostIndicesFromMPIPatternP2P = 
                 ghostLocalIndicesFromMPIPatternP2P.size();
             std::vector<size_type> expectedGhostLocalIndices = 
