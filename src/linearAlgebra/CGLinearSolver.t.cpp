@@ -64,12 +64,13 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
-    Error
+    LinearSolverError
     CGLinearSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::solve(
       LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
         &linearSolverFunction)
     {
-      auto mpiComm = linearSolverFunction.getMPIComm();
+      LinearSolverError retunValue;
+      auto              mpiComm = linearSolverFunction.getMPIComm();
 
       // register the start of the algorithm
       d_profiler.registerStart(mpiComm);
@@ -122,11 +123,11 @@ namespace dftefe
       //
       // CG loop
       //
-      std::vector<double> rNorm(numComponents, 0.0);
-      size_type           precision = d_profiler.getPrecision();
-      Error               err       = Error::OTHER_ERROR;
-      size_type           iter      = 0;
-      std::vector<bool>   convergeFlag(0);
+      std::vector<double>   rNorm(numComponents, 0.0);
+      size_type             precision = d_profiler.getPrecision();
+      LinearSolverErrorCode err       = LinearSolverErrorCode::OTHER_ERROR;
+      size_type             iter      = 0;
+      std::vector<bool>     convergeFlag(0);
       convergeFlag.resize(numComponents, false);
       bool                   divergeFlag  = false;
       bool                   allConverged = false;
@@ -223,15 +224,15 @@ namespace dftefe
           std::vector<double> rNorm(0);
           rNorm = r.l2Norms();
 
-          if (rank == 0)
-            {
-              if (iter % 100 == 0)
-                {
-                  for (unsigned int i = 0; i < numComponents; i++)
-                    std::cout << rNorm[i] << ",";
-                  std::cout << "\n";
-                }
-            }
+          // if (rank == 0)
+          //   {
+          //     if (iter % 100 == 0)
+          //       {
+          //         for (unsigned int i = 0; i < numComponents; i++)
+          //           std::cout << rNorm[i] << ",";
+          //         std::cout << "\n";
+          //       }
+          //   }
 
           std::string msg;
           for (size_type i = 0; i < numComponents; i++)
@@ -240,7 +241,7 @@ namespace dftefe
                     std::max(d_absoluteTol, bNorm[i] * d_relativeTol) &&
                   convergeFlag[i] == false)
                 {
-                  err             = Error::SUCCESS;
+                  err             = LinearSolverErrorCode::SUCCESS;
                   convergeFlag[i] = true;
                   // copy x to xConverged of the ith comp vector
                   for (size_type j = 0; j < x.locallyOwnedSize(); j++)
@@ -250,7 +251,7 @@ namespace dftefe
 
               if (rNorm[i] > d_divergenceTol && divergeFlag == false)
                 {
-                  err         = Error::RESIDUAL_DIVERGENCE;
+                  err         = LinearSolverErrorCode::RESIDUAL_DIVERGENCE;
                   divergeFlag = true;
                 }
 
@@ -281,25 +282,24 @@ namespace dftefe
 
       if (iter > d_maxIter)
         {
-          err = Error::FAILED_TO_CONVERGE;
+          err = LinearSolverErrorCode::FAILED_TO_CONVERGE;
         }
 
-      std::string                  msg = "";
-      std::pair<bool, std::string> successAndMsg =
-        ErrorMsg::isSuccessAndMsg(err);
+      std::string msg = "";
+      retunValue      = LinearSolverErrorMsg::isSuccessAndMsg(err);
 
-      if (successAndMsg.first)
+      if (retunValue.isSuccess)
         {
           msg = "CGLinear solve converged in maximum " + std::to_string(iter) +
                 " iterations";
         }
       else
-        msg = successAndMsg.second;
+        msg = retunValue.msg;
 
       // register end of CG
       d_profiler.registerEnd(msg);
 
-      return err;
+      return retunValue;
     }
 
     //    template <typename ValueTypeOperator,

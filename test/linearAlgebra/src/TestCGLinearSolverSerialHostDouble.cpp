@@ -310,10 +310,11 @@ namespace
 		   d_x =x;
 		 }
 
-	       linearAlgebra::MultiVector<ValueTypeOperand, utils::MemorySpace::HOST> &
-		 getSolution() override 
+	       void
+		 getSolution(linearAlgebra::MultiVector<
+                  ValueTypeOperand, utils::MemorySpace::HOST> &solution) override 
 		 {
-		   return d_x;
+		   solution = d_x;
 		 }
 
 
@@ -407,9 +408,20 @@ int main()
 
   const utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
 
-  linearAlgebra::blasLapack::BlasQueue<Host> queue;
-  std::shared_ptr<linearAlgebra::LinAlgOpContext<Host>> laoc = 
-    std::make_shared<linearAlgebra::LinAlgOpContext<Host>>(&queue);
+  int blasQueue = 0;
+  int lapackQueue = 0;
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue
+    <Host>> blasQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::BlasQueue
+        <Host>>(blasQueue);
+  std::shared_ptr<dftefe::linearAlgebra::blasLapack::LapackQueue
+    <Host>> lapackQueuePtr = std::make_shared
+      <dftefe::linearAlgebra::blasLapack::LapackQueue
+        <Host>>(lapackQueue);
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext
+    <Host>> laoc = 
+    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext
+    <Host>>(blasQueuePtr, lapackQueuePtr);
 
   //
   // create random symmetric positive definite matrix
@@ -455,9 +467,10 @@ int main()
   // find the solution to Ax=b by CG linear solve
   LinearSolverFunctionTest<double, double> lsf(A, b, N, laoc);
   linearAlgebra::CGLinearSolver<double, double, Host> cgls(maxIter, absTol, relTol, resDivTol, linearAlgebra::LinearAlgebraProfiler()); 
-  linearAlgebra::Error err = cgls.solve(lsf);
+  linearAlgebra::LinearSolverError err = cgls.solve(lsf);
   
-  const linearAlgebra::MultiVector<double, Host> & xcg = lsf.getSolution();
+  linearAlgebra::MultiVector<double, Host> xcg;
+  lsf.getSolution(xcg);
   const linearAlgebra::MultiVector<double, utils::MemorySpace::HOST> & bVec = lsf.getRhs();
   const std::vector<double> bNorm = bVec.l2Norms();
   double diffRelL2 = 0.0;

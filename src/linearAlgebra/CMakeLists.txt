@@ -12,7 +12,6 @@ if (NOT TARGET dft-efe-linalg)
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu
-            QueueManager.cpp
             LinAlgOpContext.cpp
             VectorAttributes.cpp
 	    Vector.cpp
@@ -20,7 +19,13 @@ if (NOT TARGET dft-efe-linalg)
 	    LinearSolver.cpp
 	    CGLinearSolver.cpp
         PreconditionerJacobi.cpp
-        PreconditionerNone.cpp)
+        PreconditionerNone.cpp
+        OrthonormalizationFunctions.cpp
+        IdentityOperatorContext.cpp
+        LanczosExtremeEigenSolver.cpp
+        ChebyshevFilter.cpp
+        RayleighRitzEigenSolver.cpp
+        ChebyshevFilteredEigenSolver.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

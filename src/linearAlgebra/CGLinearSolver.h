@@ -91,7 +91,7 @@ namespace dftefe
                      const double          absoluteTol,
                      const double          relativeTol,
                      const double          divergenceTol,
-                     LinearAlgebraProfiler profiler);
+                     LinearAlgebraProfiler profiler = LinearAlgebraProfiler());
 
       /**
        * @brief Default Destructor
@@ -110,7 +110,7 @@ namespace dftefe
        *  \f$\mathbf{x}$\f
        *
        */
-      Error
+      LinearSolverError
       solve(
         LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
           &linearSolverFunction) override;

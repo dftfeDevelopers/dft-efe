@@ -224,7 +224,9 @@ namespace dftefe
       // ipiv(d_nglobalEnrichmentIds);
 
       linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
-        d_nglobalEnrichmentIds, basisOverlapEnrichmentBlockSTL.data());
+        d_nglobalEnrichmentIds,
+        basisOverlapEnrichmentBlockSTL.data(),
+        *(d_diagonalInv.getLinAlgOpContext()));
 
       /* //do inversion of enrichment block using intel mkl
       EFEBlockInverse::inverse(basisOverlapEnrichmentBlockSTL.data(),

@@ -79,7 +79,17 @@ main(int argc, char **argv)
 
  int device;
  dftefe::utils::deviceGetDevice(&device);
- BlasQueue<Device> queue(device, 0);
+ //BlasQueue<Device> queue(device, 0);
+
+  std::shared_ptr<BlasQueue
+    <Device>> blasQueuePtr = std::make_shared
+      <BlasQueue
+        <Device>>(device, 0);
+  std::shared_ptr<LapackQueue
+    <Device>> lapackQueuePtr = std::make_shared
+      <LapackQueue
+        <Device>>(device, 0);
+  dftefe::linearAlgebra::LinAlgOpContext<Device> laoc(blasQueuePtr, lapackQueuePtr);
 
  dftefe::utils::MemoryStorage<double, Device> dA(colMajA.size(), 0);
  dftefe::utils::MemoryStorage<double, Device> dB(colMajB.size(), 0);
@@ -89,7 +99,7 @@ main(int argc, char **argv)
  dftefe::utils::MemoryTransfer<Device, Host>::copy(colMajB.size(), dB.data(), colMajB.data());
 
 
- gemm(Layout::ColMajor,
+ gemm<double, double, Device>(Layout::ColMajor,
       Op::NoTrans,
       Op::NoTrans,
       Am,
@@ -103,7 +113,7 @@ main(int argc, char **argv)
       beta,
       dC.data(),
       ldc,
-      queue);
+      laoc);
 
  dftefe::utils::MemoryTransfer<Host, Device>::copy(C.size(), C.data(), dC.data());
 
@@ -160,7 +170,7 @@ main(int argc, char **argv)
 
  lda = An, ldb = Bn, ldc = Cn;
 
- gemm(Layout::RowMajor,
+ gemm<double, double, Device>(Layout::RowMajor,
       Op::NoTrans,
       Op::NoTrans,
       Am,
@@ -174,7 +184,7 @@ main(int argc, char **argv)
       beta,
       dC.data(),
       ldc,
-      queue);
+      laoc);
 
  dftefe::utils::MemoryTransfer<Host, Device>::copy(C.size(), C.data(), dC.data());
 
