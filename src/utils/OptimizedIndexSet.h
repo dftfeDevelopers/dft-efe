@@ -65,6 +65,9 @@ namespace dftefe
       bool
       operator==(const OptimizedIndexSet<T> &rhs) const;
 
+      const std::vector<T> &
+      getContiguousRanges() const;
+
     private:
       /// Store the number of contiguous ranges in the input set of indices
       size_type d_numContiguousRanges;

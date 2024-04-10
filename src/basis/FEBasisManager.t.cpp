@@ -619,9 +619,13 @@ namespace dftefe
     {
       std::vector<global_size_type> vecGlobalNodeId(0);
       d_feBDH->getCellDofsGlobalIds(cellId, vecGlobalNodeId);
+      vecLocalNodeId.clear();
+      vecLocalNodeId.resize(vecGlobalNodeId.size(), 0);
+      size_type count = 0;
       for (auto i : vecGlobalNodeId)
         {
-          vecLocalNodeId.push_back(globalToLocalIndex(i));
+          vecLocalNodeId[count] = globalToLocalIndex(i);
+          count++;
         }
     }
 

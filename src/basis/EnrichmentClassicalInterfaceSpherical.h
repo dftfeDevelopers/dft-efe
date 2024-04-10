@@ -179,11 +179,8 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
 
-      const linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> &
-      getBasisInterfaceCoeff() const;
-
       bool
-      isOrthgonalized() const;
+      isOrthogonalized() const;
 
       std::vector<std::string>
       getAtomSymbolVec() const;
@@ -221,10 +218,7 @@ namespace dftefe
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                                d_atomSphericalDataContainer;
       std::shared_ptr<const TriangulationBase> d_triangulation;
-      std::shared_ptr<
-        linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>>
-           d_basisInterfaceCoeff;
-      bool d_isOrthogonalized;
+      bool                                     d_isOrthogonalized;
       std::shared_ptr<
         const FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>>
         d_cfeBasisDofHandler;

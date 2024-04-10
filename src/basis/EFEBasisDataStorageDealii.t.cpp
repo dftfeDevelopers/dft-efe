@@ -260,9 +260,22 @@ namespace dftefe
         const std::unordered_map<global_size_type,
                                  std::vector<ValueTypeBasisData>>
           *enrichmentIdToInterfaceCoeffMap = nullptr;
+        std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>>
+          cfeBasisManager = nullptr;
 
         if (efeBDH->isOrthogonalized())
           {
+            cfeBasisManager =
+              std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
+                efeBDH->getEnrichmentClassicalInterface()
+                  ->getCFEBasisManager());
+
             enrichmentIdToClassicalLocalIdMap =
               &(efeBDH->getEnrichmentClassicalInterface()
                   ->getClassicalComponentLocalIdsMap());
@@ -294,18 +307,6 @@ namespace dftefe
 
             if (efeBDH->isOrthogonalized())
               {
-                std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
-                  cfeBasisManager = std::dynamic_pointer_cast<
-                    const FEBasisManager<ValueTypeBasisData,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim>>(
-                    efeBDH->getEnrichmentClassicalInterface()
-                      ->getCFEBasisManager());
-
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
               }
@@ -346,8 +347,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -360,7 +361,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -464,7 +466,8 @@ namespace dftefe
                                   enrichmentIdToInterfaceCoeffMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  iter != enrichmentIdToInterfaceCoeffMap->end);
+                                  iter !=
+                                  enrichmentIdToInterfaceCoeffMap->end());
                                 const std::vector<ValueTypeBasisData>
                                   &coeffsInLocalIdsMap = iter->second;
                                 std::vector<ValueTypeBasisData> coeffsInCell(
@@ -479,7 +482,7 @@ namespace dftefe
                                         enrichmentId);
                                     DFTEFE_Assert(
                                       it !=
-                                      enrichmentIdToClassicalLocalIdMap->end);
+                                      enrichmentIdToClassicalLocalIdMap->end());
                                     it->second.getPosition(
                                       vecClassicalLocalNodeId[i], pos, found);
                                     if (found)
@@ -556,7 +559,8 @@ namespace dftefe
                                   enrichmentIdToInterfaceCoeffMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  iter != enrichmentIdToInterfaceCoeffMap->end);
+                                  iter !=
+                                  enrichmentIdToInterfaceCoeffMap->end());
                                 const std::vector<ValueTypeBasisData>
                                   &coeffsInLocalIdsMap = iter->second;
                                 std::vector<ValueTypeBasisData> coeffsInCell(
@@ -571,7 +575,7 @@ namespace dftefe
                                         enrichmentId);
                                     DFTEFE_Assert(
                                       it !=
-                                      enrichmentIdToClassicalLocalIdMap->end);
+                                      enrichmentIdToClassicalLocalIdMap->end());
                                     it->second.getPosition(
                                       vecClassicalLocalNodeId[i], pos, found);
                                     if (found)
@@ -656,9 +660,9 @@ namespace dftefe
                                     enrichmentIdj);
                                 DFTEFE_Assert(
                                   iteri !=
-                                    enrichmentIdToInterfaceCoeffMap->end &&
+                                    enrichmentIdToInterfaceCoeffMap->end() &&
                                   iterj !=
-                                    enrichmentIdToInterfaceCoeffMap->end);
+                                    enrichmentIdToInterfaceCoeffMap->end());
                                 const std::vector<ValueTypeBasisData>
                                   &coeffsInLocalIdsMapi = iteri->second;
                                 const std::vector<ValueTypeBasisData>
@@ -680,9 +684,9 @@ namespace dftefe
                                         enrichmentIdj);
                                     DFTEFE_Assert(
                                       iti != enrichmentIdToClassicalLocalIdMap
-                                               ->end &&
-                                      itj !=
-                                        enrichmentIdToClassicalLocalIdMap->end);
+                                               ->end() &&
+                                      itj != enrichmentIdToClassicalLocalIdMap
+                                               ->end());
                                     iti->second.getPosition(
                                       vecClassicalLocalNodeId[i], posi, foundi);
                                     itj->second.getPosition(
@@ -801,8 +805,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -815,7 +819,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -1126,6 +1131,11 @@ namespace dftefe
         const std::unordered_map<global_size_type,
                                  std::vector<ValueTypeBasisData>>
           *enrichmentIdToInterfaceCoeffMap = nullptr;
+        std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>>
+          cfeBasisManager = nullptr;
 
         if (efeBDH->isOrthogonalized())
           {
@@ -1136,6 +1146,14 @@ namespace dftefe
             enrichmentIdToInterfaceCoeffMap =
               &(efeBDH->getEnrichmentClassicalInterface()
                   ->getClassicalComponentCoeffMap());
+
+            cfeBasisManager =
+              std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
+                efeBDH->getEnrichmentClassicalInterface()
+                  ->getCFEBasisManager());
           }
 
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
@@ -1160,18 +1178,6 @@ namespace dftefe
 
             if (efeBDH->isOrthogonalized())
               {
-                std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
-                  cfeBasisManager = std::dynamic_pointer_cast<
-                    const FEBasisManager<ValueTypeBasisData,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim>>(
-                    efeBDH->getEnrichmentClassicalInterface()
-                      ->getCFEBasisManager());
-
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
               }
@@ -1216,8 +1222,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -1230,7 +1236,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -1334,8 +1341,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -1348,7 +1355,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -1457,8 +1465,8 @@ namespace dftefe
                             auto iterj = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentIdj);
                             DFTEFE_Assert(
-                              iteri != enrichmentIdToInterfaceCoeffMap->end &&
-                              iterj != enrichmentIdToInterfaceCoeffMap->end);
+                              iteri != enrichmentIdToInterfaceCoeffMap->end() &&
+                              iterj != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMapi = iteri->second;
                             const std::vector<ValueTypeBasisData>
@@ -1479,9 +1487,9 @@ namespace dftefe
                                     enrichmentIdj);
                                 DFTEFE_Assert(
                                   iti !=
-                                    enrichmentIdToClassicalLocalIdMap->end &&
+                                    enrichmentIdToClassicalLocalIdMap->end() &&
                                   itj !=
-                                    enrichmentIdToClassicalLocalIdMap->end);
+                                    enrichmentIdToClassicalLocalIdMap->end());
                                 iti->second.getPosition(
                                   vecClassicalLocalNodeId[i], posi, foundi);
                                 itj->second.getPosition(
@@ -1779,6 +1787,12 @@ namespace dftefe
         const std::unordered_map<global_size_type,
                                  std::vector<ValueTypeBasisData>>
           *enrichmentIdToInterfaceCoeffMap = nullptr;
+        std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>>
+          cfeBasisManager = nullptr;
+
 
         if (efeBDH->isOrthogonalized())
           {
@@ -1789,6 +1803,14 @@ namespace dftefe
             enrichmentIdToInterfaceCoeffMap =
               &(efeBDH->getEnrichmentClassicalInterface()
                   ->getClassicalComponentCoeffMap());
+
+            cfeBasisManager =
+              std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
+                efeBDH->getEnrichmentClassicalInterface()
+                  ->getCFEBasisManager());
           }
 
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
@@ -1839,18 +1861,6 @@ namespace dftefe
 
             if (efeBDH->isOrthogonalized())
               {
-                std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
-                  cfeBasisManager = std::dynamic_pointer_cast<
-                    const FEBasisManager<ValueTypeBasisData,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim>>(
-                    efeBDH->getEnrichmentClassicalInterface()
-                      ->getCFEBasisManager());
-
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
               }
@@ -1892,8 +1902,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -1906,7 +1916,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -2004,7 +2015,8 @@ namespace dftefe
                                   enrichmentIdToInterfaceCoeffMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  iter != enrichmentIdToInterfaceCoeffMap->end);
+                                  iter !=
+                                  enrichmentIdToInterfaceCoeffMap->end());
                                 const std::vector<ValueTypeBasisData>
                                   &coeffsInLocalIdsMap = iter->second;
                                 std::vector<ValueTypeBasisData> coeffsInCell(
@@ -2019,9 +2031,13 @@ namespace dftefe
                                         enrichmentId);
                                     DFTEFE_Assert(
                                       it !=
-                                      enrichmentIdToClassicalLocalIdMap->end);
+                                      enrichmentIdToClassicalLocalIdMap->end());
                                     it->second.getPosition(
                                       vecClassicalLocalNodeId[i], pos, found);
+                                    const utils::OptimizedIndexSet<size_type>
+                                      &opSet = it->second;
+                                    const std::vector<size_type> &opSetEntries =
+                                      opSet.getContiguousRanges();
                                     if (found)
                                       {
                                         coeffsInCell[i] =
@@ -2096,7 +2112,8 @@ namespace dftefe
                                   enrichmentIdToInterfaceCoeffMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  iter != enrichmentIdToInterfaceCoeffMap->end);
+                                  iter !=
+                                  enrichmentIdToInterfaceCoeffMap->end());
                                 const std::vector<ValueTypeBasisData>
                                   &coeffsInLocalIdsMap = iter->second;
                                 std::vector<ValueTypeBasisData> coeffsInCell(
@@ -2111,7 +2128,7 @@ namespace dftefe
                                         enrichmentId);
                                     DFTEFE_Assert(
                                       it !=
-                                      enrichmentIdToClassicalLocalIdMap->end);
+                                      enrichmentIdToClassicalLocalIdMap->end());
                                     it->second.getPosition(
                                       vecClassicalLocalNodeId[i], pos, found);
                                     if (found)
@@ -2196,9 +2213,9 @@ namespace dftefe
                                     enrichmentIdj);
                                 DFTEFE_Assert(
                                   iteri !=
-                                    enrichmentIdToInterfaceCoeffMap->end &&
+                                    enrichmentIdToInterfaceCoeffMap->end() &&
                                   iterj !=
-                                    enrichmentIdToInterfaceCoeffMap->end);
+                                    enrichmentIdToInterfaceCoeffMap->end());
                                 const std::vector<ValueTypeBasisData>
                                   &coeffsInLocalIdsMapi = iteri->second;
                                 const std::vector<ValueTypeBasisData>
@@ -2220,9 +2237,9 @@ namespace dftefe
                                         enrichmentIdj);
                                     DFTEFE_Assert(
                                       iti != enrichmentIdToClassicalLocalIdMap
-                                               ->end &&
-                                      itj !=
-                                        enrichmentIdToClassicalLocalIdMap->end);
+                                               ->end() &&
+                                      itj != enrichmentIdToClassicalLocalIdMap
+                                               ->end());
                                     iti->second.getPosition(
                                       vecClassicalLocalNodeId[i], posi, foundi);
                                     itj->second.getPosition(
@@ -2341,8 +2358,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -2355,7 +2372,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -2633,6 +2651,11 @@ namespace dftefe
         const std::unordered_map<global_size_type,
                                  std::vector<ValueTypeBasisData>>
           *enrichmentIdToInterfaceCoeffMap = nullptr;
+        std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>>
+          cfeBasisManager = nullptr;
 
         if (efeBDH->isOrthogonalized())
           {
@@ -2643,6 +2666,14 @@ namespace dftefe
             enrichmentIdToInterfaceCoeffMap =
               &(efeBDH->getEnrichmentClassicalInterface()
                   ->getClassicalComponentCoeffMap());
+
+            cfeBasisManager =
+              std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
+                efeBDH->getEnrichmentClassicalInterface()
+                  ->getCFEBasisManager());
           }
 
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
@@ -2685,18 +2716,6 @@ namespace dftefe
 
             if (efeBDH->isOrthogonalized())
               {
-                std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
-                  cfeBasisManager = std::dynamic_pointer_cast<
-                    const FEBasisManager<ValueTypeBasisData,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim>>(
-                    efeBDH->getEnrichmentClassicalInterface()
-                      ->getCFEBasisManager());
-
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
               }
@@ -2740,8 +2759,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -2754,7 +2773,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -2857,8 +2877,8 @@ namespace dftefe
                           {
                             auto iter = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentId);
-                            DFTEFE_Assert(iter !=
-                                          enrichmentIdToInterfaceCoeffMap->end);
+                            DFTEFE_Assert(
+                              iter != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMap = iter->second;
                             std::vector<ValueTypeBasisData> coeffsInCell(
@@ -2871,7 +2891,8 @@ namespace dftefe
                                   enrichmentIdToClassicalLocalIdMap->find(
                                     enrichmentId);
                                 DFTEFE_Assert(
-                                  it != enrichmentIdToClassicalLocalIdMap->end);
+                                  it !=
+                                  enrichmentIdToClassicalLocalIdMap->end());
                                 it->second.getPosition(
                                   vecClassicalLocalNodeId[i], pos, found);
                                 if (found)
@@ -2980,8 +3001,8 @@ namespace dftefe
                             auto iterj = enrichmentIdToInterfaceCoeffMap->find(
                               enrichmentIdj);
                             DFTEFE_Assert(
-                              iteri != enrichmentIdToInterfaceCoeffMap->end &&
-                              iterj != enrichmentIdToInterfaceCoeffMap->end);
+                              iteri != enrichmentIdToInterfaceCoeffMap->end() &&
+                              iterj != enrichmentIdToInterfaceCoeffMap->end());
                             const std::vector<ValueTypeBasisData>
                               &coeffsInLocalIdsMapi = iteri->second;
                             const std::vector<ValueTypeBasisData>
@@ -3002,9 +3023,9 @@ namespace dftefe
                                     enrichmentIdj);
                                 DFTEFE_Assert(
                                   iti !=
-                                    enrichmentIdToClassicalLocalIdMap->end &&
+                                    enrichmentIdToClassicalLocalIdMap->end() &&
                                   itj !=
-                                    enrichmentIdToClassicalLocalIdMap->end);
+                                    enrichmentIdToClassicalLocalIdMap->end());
                                 iti->second.getPosition(
                                   vecClassicalLocalNodeId[i], posi, foundi);
                                 itj->second.getPosition(
@@ -3130,7 +3151,6 @@ namespace dftefe
       , d_cellStartIdsBasisOverlap(0)
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_basisStorageAttributesBoolMap(basisStorageAttributesBoolMap)
-      , d_basisClassicalInterfaceQuadValues(nullptr)
     {
       d_evaluateBasisData = false;
       d_efeBDH            = std::dynamic_pointer_cast<
@@ -3492,13 +3512,6 @@ namespace dftefe
                   .find(BasisStorageAttributes::StoreGradNiGradNj)
                   ->second))
             {
-              d_basisClassicalInterfaceQuadValues = std::make_shared<
-                quadrature::QuadratureValuesContainer<ValueTypeBasisData,
-                                                      memorySpace>>(
-                d_quadratureRuleContainer,
-                nTotalEnrichmentIds,
-                (ValueTypeBasisData)0);
-
               BasisStorageAttributesBoolMap basisAttrMap;
               basisAttrMap[BasisStorageAttributes::StoreValues]       = true;
               basisAttrMap[BasisStorageAttributes::StoreGradient]     = false;
@@ -3522,20 +3535,6 @@ namespace dftefe
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
                                                      d_quadratureRuleContainer,
                                                      basisAttrMap);
-
-              FEBasisOperations<ValueTypeBasisData,
-                                ValueTypeBasisData,
-                                memorySpace,
-                                dim>
-                cfeBasisOp(cfeBasisDataStorage,
-                           L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
-              cfeBasisOp.interpolate(d_efeBDH->getEnrichmentClassicalInterface()
-                                       ->getBasisInterfaceCoeff(),
-                                     *d_efeBDH
-                                        ->getEnrichmentClassicalInterface()
-                                        ->getCFEBasisManager(),
-                                     *d_basisClassicalInterfaceQuadValues);
             }
           else if (!(basisStorageAttributesBoolMap
                        .find(BasisStorageAttributes::StoreValues)
@@ -3544,13 +3543,6 @@ namespace dftefe
                        .find(BasisStorageAttributes::StoreOverlap)
                        ->second))
             {
-              basisClassicalInterfaceQuadGradients = std::make_shared<
-                quadrature::QuadratureValuesContainer<ValueTypeBasisData,
-                                                      memorySpace>>(
-                d_quadratureRuleContainer,
-                nTotalEnrichmentIds * dim,
-                (ValueTypeBasisData)0);
-
               BasisStorageAttributesBoolMap basisAttrMap;
               basisAttrMap[BasisStorageAttributes::StoreValues]       = false;
               basisAttrMap[BasisStorageAttributes::StoreGradient]     = true;
@@ -3574,37 +3566,9 @@ namespace dftefe
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
                                                      d_quadratureRuleContainer,
                                                      basisAttrMap);
-
-              FEBasisOperations<ValueTypeBasisData,
-                                ValueTypeBasisData,
-                                memorySpace,
-                                dim>
-                cfeBasisOp(cfeBasisDataStorage,
-                           L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
-              cfeBasisOp.interpolateWithBasisGradient(
-                d_efeBDH->getEnrichmentClassicalInterface()
-                  ->getBasisInterfaceCoeff(),
-                *d_efeBDH->getEnrichmentClassicalInterface()
-                   ->getCFEBasisManager(),
-                *basisClassicalInterfaceQuadGradients);
             }
           else
             {
-              basisClassicalInterfaceQuadGradients = std::make_shared<
-                quadrature::QuadratureValuesContainer<ValueTypeBasisData,
-                                                      memorySpace>>(
-                d_quadratureRuleContainer,
-                nTotalEnrichmentIds * dim,
-                (ValueTypeBasisData)0);
-
-              d_basisClassicalInterfaceQuadValues = std::make_shared<
-                quadrature::QuadratureValuesContainer<ValueTypeBasisData,
-                                                      memorySpace>>(
-                d_quadratureRuleContainer,
-                nTotalEnrichmentIds,
-                (ValueTypeBasisData)0);
-
               BasisStorageAttributesBoolMap basisAttrMap;
               basisAttrMap[BasisStorageAttributes::StoreValues]       = true;
               basisAttrMap[BasisStorageAttributes::StoreGradient]     = true;
@@ -3628,27 +3592,6 @@ namespace dftefe
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
                                                      d_quadratureRuleContainer,
                                                      basisAttrMap);
-
-              FEBasisOperations<ValueTypeBasisData,
-                                ValueTypeBasisData,
-                                memorySpace,
-                                dim>
-                cfeBasisOp(cfeBasisDataStorage,
-                           L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
-              cfeBasisOp.interpolate(d_efeBDH->getEnrichmentClassicalInterface()
-                                       ->getBasisInterfaceCoeff(),
-                                     *d_efeBDH
-                                        ->getEnrichmentClassicalInterface()
-                                        ->getCFEBasisManager(),
-                                     *d_basisClassicalInterfaceQuadValues);
-
-              cfeBasisOp.interpolateWithBasisGradient(
-                d_efeBDH->getEnrichmentClassicalInterface()
-                  ->getBasisInterfaceCoeff(),
-                *d_efeBDH->getEnrichmentClassicalInterface()
-                   ->getCFEBasisManager(),
-                *basisClassicalInterfaceQuadGradients);
             }
         }
 
@@ -3695,8 +3638,7 @@ namespace dftefe
                cellStartIdsBasisGradientQuadStorage,
                cellStartIdsBasisHessianQuadStorage,
                basisStorageAttributesBoolMap,
-               d_basisClassicalInterfaceQuadValues,
-               basisClassicalInterfaceQuadGradients);
+               cfeBasisDataStorage);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -3752,7 +3694,6 @@ namespace dftefe
                 basisGradNiGradNj,
                 quadratureRuleAttributes,
                 d_quadratureRuleContainer,
-                basisClassicalInterfaceQuadGradients,
                 cfeBasisDataStorage);
           else
             EFEBasisDataStorageDealiiInternal::
@@ -3764,7 +3705,7 @@ namespace dftefe
                 basisGradNiGradNj,
                 quadratureRuleAttributes,
                 d_quadratureRuleContainer,
-                basisClassicalInterfaceQuadGradients);
+                cfeBasisDataStorage);
 
           d_basisGradNiGradNj = basisGradNiGradNj;
         }
@@ -4939,39 +4880,6 @@ namespace dftefe
     {
       return d_efeBDH;
     }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    const quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>
-      &
-      EFEBasisDataStorageDealii<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        memorySpace,
-        dim>::getEnrichmentFunctionClassicalComponentQuadValues() const
-    {
-      utils::throwException(
-        d_evaluateBasisData == true,
-        "Cannot call function before calling evaluateBasisData()");
-
-      utils::throwException(
-        d_efeBDH->isOrthogonalized(),
-        "Cannot call getBasisClassicalInterfaceQuadValues() for no orthogonalization of EFE mesh.");
-
-      utils::throwException(
-        d_basisStorageAttributesBoolMap
-            .find(BasisStorageAttributes::StoreValues)
-            ->second ||
-          d_basisStorageAttributesBoolMap
-            .find(BasisStorageAttributes::StoreOverlap)
-            ->second,
-        "enrichmentFunctionClassicalComponentQuadValues are not stored for the given QuadratureRuleAttributes");
-
-      return *d_basisClassicalInterfaceQuadValues;
-    }
-
 
   } // namespace basis
 } // namespace dftefe

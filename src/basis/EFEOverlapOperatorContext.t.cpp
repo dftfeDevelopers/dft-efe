@@ -26,6 +26,10 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FECellWiseDataOperations.h>
+#include <utils/OptimizedIndexSet.h>
+#include <unordered_map>
+#include <vector>
+#include <basis/EnrichmentClassicalInterfaceSpherical.h>
 
 namespace dftefe
 {
@@ -399,25 +403,8 @@ namespace dftefe
 
         size_type nTotalEnrichmentIds =
           eci->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
-        quadrature::QuadratureValuesContainer<ValueTypeOperator, memorySpace>
-          basisInterfaceCoeffClassicalQuadRuleValues(
-            enrichmentBlockClassicalBasisDataStorage
-              ->getQuadratureRuleContainer(),
-            nTotalEnrichmentIds,
-            (ValueTypeOperator)0);
-
-        basisOp1.interpolate(eci->getBasisInterfaceCoeff(),
-                             *eci->getCFEBasisManager(),
-                             basisInterfaceCoeffClassicalQuadRuleValues);
 
         // interpolate the ci 's to the enrichment quadRuleAttr quadpoints
-
-        quadrature::QuadratureValuesContainer<ValueTypeOperator, memorySpace>
-          basisInterfaceCoeffEnrichmentQuadRuleValues(
-            enrichmentBlockEnrichmentBasisDataStorage
-              .getQuadratureRuleContainer(),
-            nTotalEnrichmentIds,
-            (ValueTypeOperator)0);
 
         const EFEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorageEFE = dynamic_cast<
@@ -427,10 +414,6 @@ namespace dftefe
           &enrichmentBlockEnrichmentBasisDataStorageEFE != nullptr,
           "Could not cast FEBasisDataStorage to EFEBasisDataStorage "
           "in EFEOverlapOperatorContext for enrichmentBlockEnrichmentBasisDataStorage.");
-
-        basisInterfaceCoeffEnrichmentQuadRuleValues =
-          enrichmentBlockEnrichmentBasisDataStorageEFE
-            .getEnrichmentFunctionClassicalComponentQuadValues();
 
         // Set up the overlap matrix quadrature storages.
 
@@ -501,6 +484,26 @@ namespace dftefe
                   cumulativeEnrichmentBlockClassicalDofQuadPointsOffset  = 0,
                   cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset = 0;
 
+        //
+        const std::unordered_map<global_size_type,
+                                 utils::OptimizedIndexSet<size_type>>
+          *enrichmentIdToClassicalLocalIdMap =
+            &eci->getClassicalComponentLocalIdsMap();
+        const std::unordered_map<global_size_type,
+                                 std::vector<ValueTypeOperator>>
+          *enrichmentIdToInterfaceCoeffMap =
+            &eci->getClassicalComponentCoeffMap();
+        std::shared_ptr<const FEBasisManager<ValueTypeOperator,
+                                             ValueTypeOperator,
+                                             memorySpace,
+                                             dim>>
+          cfeBasisManager =
+            std::dynamic_pointer_cast<const FEBasisManager<ValueTypeOperator,
+                                                           ValueTypeOperator,
+                                                           memorySpace,
+                                                           dim>>(
+              eci->getCFEBasisManager());
+
         locallyOwnedCellIter = eefeBDH->beginLocallyOwnedCells();
         for (; locallyOwnedCellIter != eefeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -545,27 +548,14 @@ namespace dftefe
                 basisDataInAllCellsEnrichmentBlockEnrichment.data() +
                 cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset;
 
-            std::vector<ValueTypeOperator>
-              basisInterfaceCoeffClassicalQuadRuleValuesInCell(0),
-              basisInterfaceCoeffEnrichmentQuadRuleValuesInCell(0);
-            basisInterfaceCoeffClassicalQuadRuleValuesInCell.resize(
-              nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockClassical);
-            basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.resize(
-              nTotalEnrichmentIds * nQuadPointInCellEnrichmentBlockEnrichment);
-
-            basisInterfaceCoeffClassicalQuadRuleValues
-              .template getCellValues<utils::MemorySpace::HOST>(
-                cellIndex,
-                basisInterfaceCoeffClassicalQuadRuleValuesInCell.data());
-            basisInterfaceCoeffEnrichmentQuadRuleValues
-              .template getCellValues<utils::MemorySpace::HOST>(
-                cellIndex,
-                basisInterfaceCoeffEnrichmentQuadRuleValuesInCell.data());
-
             std::vector<utils::Point> quadRealPointsVec =
               enrichmentBlockEnrichmentBasisDataStorage
                 .getQuadratureRuleContainer()
                 ->getCellRealPoints(cellIndex);
+
+            std::vector<size_type> vecClassicalLocalNodeId(0);
+            cfeBasisManager->getCellDofsLocalIds(cellIndex,
+                                                 vecClassicalLocalNodeId);
 
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
@@ -592,7 +582,7 @@ namespace dftefe
 
                     else if (iNode >= dofsPerCellCFE && jNode < dofsPerCellCFE)
                       {
-                        size_type enrichmentId =
+                        global_size_type enrichmentId =
                           eci->getEnrichmentId(cellIndex,
                                                iNode - dofsPerCellCFE);
                         ValueTypeOperator NpiNcj = (ValueTypeOperator)0,
@@ -613,6 +603,72 @@ namespace dftefe
                                 qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
+
+                        // get the vectors of non-zero localIds and coeffs
+
+                        std::vector<ValueTypeOperator> classicalComponentInQuad(
+                          nQuadPointInCellEnrichmentBlockClassical,
+                          (ValueTypeOperator)0);
+
+                        auto iter =
+                          enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
+                        DFTEFE_Assert(iter !=
+                                      enrichmentIdToInterfaceCoeffMap->end());
+                        const std::vector<ValueTypeOperator>
+                          &coeffsInLocalIdsMap = iter->second;
+                        std::vector<ValueTypeOperator> coeffsInCell(
+                          dofsPerCellCFE, 0);
+                        for (size_type i = 0; i < dofsPerCellCFE; i++)
+                          {
+                            size_type pos   = 0;
+                            bool      found = false;
+                            auto it = enrichmentIdToClassicalLocalIdMap->find(
+                              enrichmentId);
+                            DFTEFE_Assert(
+                              it != enrichmentIdToClassicalLocalIdMap->end());
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            const utils::OptimizedIndexSet<size_type> &opSet =
+                              it->second;
+                            const std::vector<size_type> &opSetEntries =
+                              opSet.getContiguousRanges();
+                            if (found)
+                              {
+                                coeffsInCell[i] = coeffsInLocalIdsMap[pos];
+                              }
+                          }
+
+                        dftefe::utils::MemoryStorage<ValueTypeOperator,
+                                                     utils::MemorySpace::HOST>
+                          basisValInCell =
+                            enrichmentBlockClassicalBasisDataStorage
+                              ->getBasisDataInCell(cellIndex);
+
+                        // Do a gemm (\Sigma c_i N_i^classical)
+                        // and get the quad values in std::vector
+
+                        linearAlgebra::blasLapack::gemm<
+                          ValueTypeOperator,
+                          ValueTypeOperator,
+                          utils::MemorySpace::HOST>(
+                          linearAlgebra::blasLapack::Layout::ColMajor,
+                          linearAlgebra::blasLapack::Op::NoTrans,
+                          linearAlgebra::blasLapack::Op::Trans,
+                          1,
+                          nQuadPointInCellEnrichmentBlockClassical,
+                          dofsPerCellCFE,
+                          (ValueTypeOperator)1.0,
+                          coeffsInCell.data(),
+                          1,
+                          basisValInCell.data(),
+                          nQuadPointInCellEnrichmentBlockClassical,
+                          (ValueTypeOperator)0.0,
+                          classicalComponentInQuad.data(),
+                          1,
+                          *eci->getLinAlgOpContext());
+
+
                         // Ni_classical using Mc = d quadrature * interpolated
                         // ci's in Ni_classicalQuadrature of Mc = d
                         for (unsigned int qPoint = 0;
@@ -620,9 +676,7 @@ namespace dftefe
                              qPoint++)
                           {
                             NciNcj +=
-                              *(basisInterfaceCoeffClassicalQuadRuleValuesInCell
-                                  .data() +
-                                nTotalEnrichmentIds * qPoint + enrichmentId) *
+                              classicalComponentInQuad[qPoint] *
                               *(cumulativeEnrichmentBlockClassicalDofQuadPoints +
                                 nQuadPointInCellEnrichmentBlockClassical *
                                   jNode +
@@ -634,7 +688,7 @@ namespace dftefe
 
                     else if (iNode < dofsPerCellCFE && jNode >= dofsPerCellCFE)
                       {
-                        size_type enrichmentId =
+                        global_size_type enrichmentId =
                           eci->getEnrichmentId(cellIndex,
                                                jNode - dofsPerCellCFE);
                         ValueTypeOperator NciNpj = (ValueTypeOperator)0,
@@ -655,6 +709,67 @@ namespace dftefe
                                 quadRealPointsVec[qPoint]) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
+
+                        // get the vectors of non-zero localIds and coeffs
+
+                        std::vector<ValueTypeOperator> classicalComponentInQuad(
+                          nQuadPointInCellEnrichmentBlockClassical,
+                          (ValueTypeOperator)0);
+
+                        auto iter =
+                          enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
+                        DFTEFE_Assert(iter !=
+                                      enrichmentIdToInterfaceCoeffMap->end());
+                        const std::vector<ValueTypeOperator>
+                          &coeffsInLocalIdsMap = iter->second;
+                        std::vector<ValueTypeOperator> coeffsInCell(
+                          dofsPerCellCFE, 0);
+                        for (size_type i = 0; i < dofsPerCellCFE; i++)
+                          {
+                            size_type pos   = 0;
+                            bool      found = false;
+                            auto it = enrichmentIdToClassicalLocalIdMap->find(
+                              enrichmentId);
+                            DFTEFE_Assert(
+                              it != enrichmentIdToClassicalLocalIdMap->end());
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[i] = coeffsInLocalIdsMap[pos];
+                              }
+                          }
+
+                        dftefe::utils::MemoryStorage<ValueTypeOperator,
+                                                     utils::MemorySpace::HOST>
+                          basisValInCell =
+                            enrichmentBlockClassicalBasisDataStorage
+                              ->getBasisDataInCell(cellIndex);
+
+                        // Do a gemm (\Sigma c_i N_i^classical)
+                        // and get the quad values in std::vector
+
+                        linearAlgebra::blasLapack::gemm<
+                          ValueTypeOperator,
+                          ValueTypeOperator,
+                          utils::MemorySpace::HOST>(
+                          linearAlgebra::blasLapack::Layout::ColMajor,
+                          linearAlgebra::blasLapack::Op::NoTrans,
+                          linearAlgebra::blasLapack::Op::Trans,
+                          1,
+                          nQuadPointInCellEnrichmentBlockClassical,
+                          dofsPerCellCFE,
+                          (ValueTypeOperator)1.0,
+                          coeffsInCell.data(),
+                          1,
+                          basisValInCell.data(),
+                          nQuadPointInCellEnrichmentBlockClassical,
+                          (ValueTypeOperator)0.0,
+                          classicalComponentInQuad.data(),
+                          1,
+                          *eci->getLinAlgOpContext());
+
                         // Ni_classical using Mc = d quadrature * interpolated
                         // ci's in Ni_classicalQuadrature of Mc = d
                         for (unsigned int qPoint = 0;
@@ -666,9 +781,7 @@ namespace dftefe
                                 nQuadPointInCellEnrichmentBlockClassical *
                                   iNode +
                                 qPoint) *
-                              *(basisInterfaceCoeffClassicalQuadRuleValuesInCell
-                                  .data() +
-                                nTotalEnrichmentIds * qPoint + enrichmentId) *
+                              classicalComponentInQuad[qPoint] *
                               cellJxWValuesEnrichmentBlockClassical[qPoint];
                           }
                         *basisOverlapTmpIter += NciNpj - NciNcj;
@@ -676,10 +789,12 @@ namespace dftefe
 
                     else if (iNode >= dofsPerCellCFE && jNode >= dofsPerCellCFE)
                       {
-                        size_type enrichmentIdi =
+                        // get the enrichmentIds
+                        global_size_type enrichmentIdi =
                           eci->getEnrichmentId(cellIndex,
                                                iNode - dofsPerCellCFE);
-                        size_type enrichmentIdj =
+
+                        global_size_type enrichmentIdj =
                           eci->getEnrichmentId(cellIndex,
                                                jNode - dofsPerCellCFE);
 
@@ -703,6 +818,84 @@ namespace dftefe
                                 quadRealPointsVec[qPoint]) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
+                        // get the vectors of non-zero localIds and coeffs
+
+                        std::vector<ValueTypeOperator> classicalComponentInQuad(
+                          nQuadPointInCellEnrichmentBlockEnrichment * 2,
+                          (ValueTypeOperator)0);
+
+                        auto iteri =
+                          enrichmentIdToInterfaceCoeffMap->find(enrichmentIdi);
+                        auto iterj =
+                          enrichmentIdToInterfaceCoeffMap->find(enrichmentIdj);
+                        DFTEFE_Assert(
+                          iteri != enrichmentIdToInterfaceCoeffMap->end() &&
+                          iterj != enrichmentIdToInterfaceCoeffMap->end());
+                        const std::vector<ValueTypeOperator>
+                          &coeffsInLocalIdsMapi = iteri->second;
+                        const std::vector<ValueTypeOperator>
+                          &coeffsInLocalIdsMapj = iterj->second;
+                        std::vector<ValueTypeOperator> coeffsInCell(
+                          dofsPerCellCFE * 2, 0);
+                        for (size_type i = 0; i < dofsPerCellCFE; i++)
+                          {
+                            size_type posi   = 0;
+                            bool      foundi = false;
+                            size_type posj   = 0;
+                            bool      foundj = false;
+                            auto iti = enrichmentIdToClassicalLocalIdMap->find(
+                              enrichmentIdi);
+                            auto itj = enrichmentIdToClassicalLocalIdMap->find(
+                              enrichmentIdj);
+                            DFTEFE_Assert(
+                              iti != enrichmentIdToClassicalLocalIdMap->end() &&
+                              itj != enrichmentIdToClassicalLocalIdMap->end());
+                            iti->second.getPosition(vecClassicalLocalNodeId[i],
+                                                    posi,
+                                                    foundi);
+                            itj->second.getPosition(vecClassicalLocalNodeId[i],
+                                                    posj,
+                                                    foundj);
+                            if (foundi)
+                              {
+                                coeffsInCell[2 * i] =
+                                  coeffsInLocalIdsMapi[posi];
+                              }
+                            if (foundj)
+                              {
+                                coeffsInCell[2 * i + 1] =
+                                  coeffsInLocalIdsMapj[posj];
+                              }
+                          }
+
+                        dftefe::utils::MemoryStorage<ValueTypeOperator,
+                                                     utils::MemorySpace::HOST>
+                          basisValInCell =
+                            enrichmentBlockEnrichmentBasisDataStorage
+                              .getBasisDataInCell(cellIndex);
+
+                        // Do a gemm (\Sigma c_i N_i^classical)
+                        // and get the quad values in std::vector
+
+                        linearAlgebra::blasLapack::gemm<
+                          ValueTypeOperator,
+                          ValueTypeOperator,
+                          utils::MemorySpace::HOST>(
+                          linearAlgebra::blasLapack::Layout::ColMajor,
+                          linearAlgebra::blasLapack::Op::NoTrans,
+                          linearAlgebra::blasLapack::Op::Trans,
+                          2,
+                          nQuadPointInCellEnrichmentBlockEnrichment,
+                          dofsPerCellCFE,
+                          (ValueTypeOperator)1.0,
+                          coeffsInCell.data(),
+                          2,
+                          basisValInCell.data(),
+                          nQuadPointInCellEnrichmentBlockEnrichment,
+                          (ValueTypeOperator)0.0,
+                          classicalComponentInQuad.data(),
+                          2,
+                          *eci->getLinAlgOpContext());
                         // Ni_pristine* interpolated ci's in
                         // Ni_classicalQuadratureOfPristine at quadpoints
                         for (unsigned int qPoint = 0;
@@ -710,9 +903,7 @@ namespace dftefe
                              qPoint++)
                           {
                             NciNpj +=
-                              *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell
-                                  .data() +
-                                nTotalEnrichmentIds * qPoint + enrichmentIdi) *
+                              classicalComponentInQuad[2 * qPoint] *
                               eefeBDH->getEnrichmentValue(
                                 cellIndex,
                                 jNode - dofsPerCellCFE,
@@ -730,26 +921,20 @@ namespace dftefe
                                 cellIndex,
                                 iNode - dofsPerCellCFE,
                                 quadRealPointsVec[qPoint]) *
-                              *(basisInterfaceCoeffEnrichmentQuadRuleValuesInCell
-                                  .data() +
-                                nTotalEnrichmentIds * qPoint + enrichmentIdj) *
+                              classicalComponentInQuad[2 * qPoint + 1] *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         // interpolated ci's in Ni_classicalQuadrature of Mc = d
                         // * interpolated ci's in Ni_classicalQuadrature of Mc =
                         // d
                         for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockClassical;
+                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
                              qPoint++)
                           {
                             NciNcj +=
-                              *(basisInterfaceCoeffClassicalQuadRuleValuesInCell
-                                  .data() +
-                                nTotalEnrichmentIds * qPoint + enrichmentIdi) *
-                              *(basisInterfaceCoeffClassicalQuadRuleValuesInCell
-                                  .data() +
-                                nTotalEnrichmentIds * qPoint + enrichmentIdj) *
-                              cellJxWValuesEnrichmentBlockClassical[qPoint];
+                              classicalComponentInQuad[2 * qPoint] *
+                              classicalComponentInQuad[2 * qPoint + 1] *
+                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         *basisOverlapTmpIter +=
                           NpiNpj - NpiNcj - NciNpj + NciNcj;
