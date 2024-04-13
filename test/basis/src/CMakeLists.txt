@@ -36,9 +36,9 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/
 # target_link_libraries(TestEnrichmentIdsPartitionSerial PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 # set_target_properties(TestEnrichmentIdsPartitionSerial PROPERTIES OUTPUT_NAME "TestEnrichmentIdsPartitionSerial" SUFFIX ".x")
 
-# add_executable(TestInterpolateWithBasisGradient TestInterpolateWithBasisGradient.cpp )
-# target_link_libraries(TestInterpolateWithBasisGradient PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
-# set_target_properties(TestInterpolateWithBasisGradient PROPERTIES OUTPUT_NAME "TestInterpolateWithBasisGradient" SUFFIX ".x")
+add_executable(TestInterpolateWithBasisGradient TestInterpolateWithBasisGradient.cpp )
+target_link_libraries(TestInterpolateWithBasisGradient PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+set_target_properties(TestInterpolateWithBasisGradient PROPERTIES OUTPUT_NAME "TestInterpolateWithBasisGradient" SUFFIX ".x")
 
 # add_executable(TestTriangulationDealiiSerial TestTriangulationDealiiSerial.cpp)
 # target_link_libraries(TestTriangulationDealiiSerial PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
@@ -61,9 +61,9 @@ if(ENABLE_MPI)
 	# target_link_libraries(TestClassicalEnrichmentIdsMPICommunication PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	# set_target_properties(TestClassicalEnrichmentIdsMPICommunication PROPERTIES OUTPUT_NAME "TestClassicalEnrichmentIdsMPICommunication" SUFFIX ".x")
 
-	add_executable(TestEFEOverlapMatrix TestEFEOverlapMatrix.cpp )
-	target_link_libraries(TestEFEOverlapMatrix PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
-	set_target_properties(TestEFEOverlapMatrix PROPERTIES OUTPUT_NAME "TestEFEOverlapMatrix" SUFFIX ".x")
+	# add_executable(TestEFEOverlapMatrix TestEFEOverlapMatrix.cpp )
+	# target_link_libraries(TestEFEOverlapMatrix PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	# set_target_properties(TestEFEOverlapMatrix PROPERTIES OUTPUT_NAME "TestEFEOverlapMatrix" SUFFIX ".x")
 
 	# add_executable(TestEnrichmentBasisManager TestEnrichmentBasisManager.cpp )
 	# target_link_libraries(TestEnrichmentBasisManager PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)

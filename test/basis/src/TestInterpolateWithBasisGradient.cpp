@@ -221,10 +221,11 @@ int main()
   std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();                                                               
 
-  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents*dim);
+  std::vector<dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST>> quadValuesContainerVec(dim, 
+    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST>(quadRuleContainer, numComponents));
 
   // Interpolate the nodal data to the quad points
-  feBasisOp.interpolateWithBasisGradient( *X, *basisManager, quadValuesContainer);
+  feBasisOp.interpolateWithBasisGradient( *X, *basisManager, quadValuesContainerVec);
 
   bool testPass = true;
 
@@ -242,18 +243,19 @@ int main()
         analyticValue2.resize(dim);
         analyticValue2 = interpolatePolynomialGradient2( xLoc, yLoc, zLoc, xmax, ymax, zmax);
         std::vector<double> values(0);
-        values.resize(dim*numComponents);
-        quadValuesContainer.getCellQuadValues<dftefe::utils::MemorySpace::HOST>(iCell, iQuad, values.data());
         for(unsigned int iDim = 0 ; iDim < dim ; iDim++ )
         {
-          if ( std::abs(values[iDim*numComponents+0] - analyticValue1[iDim]) > 1e-8 )
+          values.clear();
+          values.resize(numComponents);
+          quadValuesContainerVec[iDim].getCellQuadValues<dftefe::utils::MemorySpace::HOST>(iCell, iQuad, values.data());
+          if ( std::abs(values[0] - analyticValue1[iDim]) > 1e-8 )
           {
-            std::cout << " Component = 0 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue1[iDim]<<" interValue = "<<values[iDim*numComponents+0]<<"\n";
+            std::cout << " Component = 0 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue1[iDim]<<" interValue = "<<values[0]<<"\n";
             testPass = false;
           } 
-          if ( std::abs(values[iDim*numComponents+1] - analyticValue2[iDim]) > 1e-8 )
+          if ( std::abs(values[1] - analyticValue2[iDim]) > 1e-8 )
           {
-            std::cout << " Component = 1 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue2[iDim]<<" interValue = "<<values[iDim*numComponents+1]<<"\n";
+            std::cout << " Component = 1 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue2[iDim]<<" interValue = "<<values[1]<<"\n";
             testPass = false;
           } 
         }

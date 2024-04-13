@@ -392,15 +392,6 @@ namespace dftefe
                                                       dim>>
           eci = eefeBDH->getEnrichmentClassicalInterface();
 
-        // interpolate the ci 's to the Mc=d classical quadRuleAttr quadpoints
-
-        FEBasisOperations<ValueTypeOperator,
-                          ValueTypeOperator,
-                          memorySpace,
-                          dim>
-          basisOp1(enrichmentBlockClassicalBasisDataStorage,
-                   L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
         size_type nTotalEnrichmentIds =
           eci->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
 
