@@ -134,5 +134,13 @@ namespace dftefe
       else
         return (d_contiguousRanges == rhs.d_contiguousRanges);
     }
+
+    template <typename T>
+    const std::vector<T> &
+    OptimizedIndexSet<T>::getContiguousRanges() const
+    {
+      return d_contiguousRanges;
+    }
+
   } // end of namespace utils
 } // end of namespace dftefe

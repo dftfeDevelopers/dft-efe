@@ -183,7 +183,7 @@ class ScalarSpatialPotentialFunctionReal : public dftefe::utils::ScalarSpatialFu
 
 int main(int argc, char** argv)
 {
-  // argv[1] = "PoissonProblemEnrichmentTwoBody/param.in"
+  // argv[1] = "PoissonProblemOrthoEnrichmentTwoBody/param.in"
 
   std::cout<<" Entering test two body interaction \n";
 

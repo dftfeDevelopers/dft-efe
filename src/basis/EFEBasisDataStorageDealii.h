@@ -189,12 +189,6 @@ namespace dftefe
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const override;
 
-      // ---- Only for Orthogonalized EFE basis--------
-
-      const quadrature::QuadratureValuesContainer<ValueTypeBasisData,
-                                                  memorySpace> &
-      getEnrichmentFunctionClassicalComponentQuadValues() const override;
-
     private:
       bool d_evaluateBasisData;
       std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
@@ -219,9 +213,6 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>>
-        d_basisClassicalInterfaceQuadValues;
     };
   } // end of namespace basis
 } // end of namespace dftefe

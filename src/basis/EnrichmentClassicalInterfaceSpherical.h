@@ -30,6 +30,8 @@
 #include <utils/TypeConfig.h>
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <utils/OptimizedIndexSet.h>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <memory>
@@ -166,11 +168,19 @@ namespace dftefe
       std::shared_ptr<const BasisDofHandler>
       getCFEBasisDofHandler() const;
 
-      const linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> &
-      getBasisInterfaceCoeff() const;
+      const std::unordered_map<global_size_type,
+                               utils::OptimizedIndexSet<size_type>> &
+      getClassicalComponentLocalIdsMap() const;
+
+      const std::unordered_map<global_size_type,
+                               std::vector<ValueTypeBasisData>> &
+      getClassicalComponentCoeffMap() const;
+
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+      getLinAlgOpContext() const;
 
       bool
-      isOrthgonalized() const;
+      isOrthogonalized() const;
 
       std::vector<std::string>
       getAtomSymbolVec() const;
@@ -208,10 +218,7 @@ namespace dftefe
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                                d_atomSphericalDataContainer;
       std::shared_ptr<const TriangulationBase> d_triangulation;
-      std::shared_ptr<
-        linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace>>
-           d_basisInterfaceCoeff;
-      bool d_isOrthogonalized;
+      bool                                     d_isOrthogonalized;
       std::shared_ptr<
         const FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>>
         d_cfeBasisDofHandler;
@@ -225,6 +232,15 @@ namespace dftefe
       const std::string               d_fieldName;
       std::vector<std::vector<global_size_type>>
         d_overlappingEnrichmentIdsInCells;
+
+      std::unordered_map<global_size_type, utils::OptimizedIndexSet<size_type>>
+        d_enrichmentIdToClassicalLocalIdMap;
+
+      std::unordered_map<global_size_type, std::vector<ValueTypeBasisData>>
+        d_enrichmentIdToInterfaceCoeffMap;
+
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
 
     }; // end of class
   }    // end of namespace basis

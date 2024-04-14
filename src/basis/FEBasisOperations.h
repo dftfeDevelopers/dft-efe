@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo, Vishal Subramanian, Avirup Sircar
  */
 
 #ifndef dftefeFEBasisOperations_h
@@ -95,10 +95,10 @@ namespace dftefe
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
         const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
-        quadrature::QuadratureValuesContainer<
+        std::vector<quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
-          memorySpace> &quadValuesContainer) const override;
+          memorySpace>> &quadValuesContainerVec) const override;
 
       void
       integrateWithBasisValues(
