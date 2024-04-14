@@ -12,10 +12,10 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/li
 add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/basis/lib/buildAtoms)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/quadrature ${MAIN_PROJECT_DIR}/test/basis/lib/buildQuadrature)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
-add_subdirectory(${MAIN_PROJECT_DIR}/src/physics ${MAIN_PROJECT_DIR}/test/physics/lib/physics)
+add_subdirectory(${MAIN_PROJECT_DIR}/src/electrostatics ${MAIN_PROJECT_DIR}/test/electrostatics/lib/electrostatics)
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 add_executable(TestPoissonProblemEnrichment ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/PoissonProblemEnrichmentTwoBodyForce/TestTwoBodyInteractionEnrichment.cpp)
-target_link_libraries(TestPoissonProblemEnrichment PUBLIC dft-efe-basis dft-efe-physics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+target_link_libraries(TestPoissonProblemEnrichment PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

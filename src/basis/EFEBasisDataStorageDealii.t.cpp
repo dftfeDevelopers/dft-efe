@@ -434,7 +434,8 @@ namespace dftefe
                           iDim * nQuadPointInCell * classicalDofsPerCell;
 
                         std::vector<ValueTypeBasisData>
-                          classicalComponentInQuadDim(nQuadPointInCell,
+                          classicalComponentInQuadDim(nQuadPointInCell *
+                                                        numEnrichmentIdsInCell,
                                                       (ValueTypeBasisData)0);
 
                         linearAlgebra::blasLapack::gemm<
@@ -1000,7 +1001,8 @@ namespace dftefe
                       iDim * nQuadPointInCell * classicalDofsPerCell;
 
                     std::vector<ValueTypeBasisData> classicalComponentInQuadDim(
-                      nQuadPointInCell, (ValueTypeBasisData)0);
+                      nQuadPointInCell * numEnrichmentIdsInCell,
+                      (ValueTypeBasisData)0);
 
                     linearAlgebra::blasLapack::gemm<ValueTypeBasisData,
                                                     ValueTypeBasisData,
@@ -1542,7 +1544,8 @@ namespace dftefe
                           iDim * nQuadPointInCell * classicalDofsPerCell;
 
                         std::vector<ValueTypeBasisData>
-                          classicalComponentInQuadDim(nQuadPointInCell,
+                          classicalComponentInQuadDim(nQuadPointInCell *
+                                                        numEnrichmentIdsInCell,
                                                       (ValueTypeBasisData)0);
 
                         linearAlgebra::blasLapack::gemm<
@@ -2090,7 +2093,8 @@ namespace dftefe
                       iDim * nQuadPointInCell * classicalDofsPerCell;
 
                     std::vector<ValueTypeBasisData> classicalComponentInQuadDim(
-                      nQuadPointInCell, (ValueTypeBasisData)0);
+                      nQuadPointInCell * numEnrichmentIdsInCell,
+                      (ValueTypeBasisData)0);
 
                     linearAlgebra::blasLapack::gemm<ValueTypeBasisData,
                                                     ValueTypeBasisData,
