@@ -349,11 +349,11 @@ int main()
 
 
     // Create OperatorContext for Basisoverlap CFE - GLL, EFE - Adaptive
-    std::shared_ptr<const dftefe::basis::EFEOverlapOperatorContext<double,
+    std::shared_ptr<const dftefe::basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
                                                   dim>> MContext =
-    std::make_shared<dftefe::basis::EFEOverlapOperatorContext<double,
+    std::make_shared<dftefe::basis::OrthoEFEOverlapOperatorContext<double,
                                                         double,
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>(

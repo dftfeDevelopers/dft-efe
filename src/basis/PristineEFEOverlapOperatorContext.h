@@ -61,7 +61,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class EFEOverlapOperatorContext
+    class PristineEFEOverlapOperatorContext
       : public linearAlgebra::
           OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
@@ -88,7 +88,7 @@ namespace dftefe
        * @tparam constraintsY Constraints for Y
        * @tparam maxCellTimesNumVecs cell times number of vectors
        */
-      EFEOverlapOperatorContext(
+      PristineEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
@@ -113,7 +113,7 @@ namespace dftefe
        * @tparam constraintsY Constraints for Y
        * @tparam maxCellTimesNumVecs cell times number of vectors
        */
-      EFEOverlapOperatorContext(
+      PristineEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
@@ -126,23 +126,6 @@ namespace dftefe
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             efeBasisDataStorage,
-        const size_type maxCellTimesNumVecs);
-
-      EFEOverlapOperatorContext(
-        const FEBasisManager<ValueTypeOperand,
-                             ValueTypeOperator,
-                             memorySpace,
-                             dim> &feBasisManagerX,
-        const FEBasisManager<ValueTypeOperand,
-                             ValueTypeOperator,
-                             memorySpace,
-                             dim> &feBasisManagerY,
-        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &classicalBlockBasisDataStorage,
-        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &enrichmentBlockEnrichmentBasisDataStorage,
-        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             enrichmentBlockClassicalBasisDataStorage,
         const size_type maxCellTimesNumVecs);
 
       /**
@@ -181,8 +164,8 @@ namespace dftefe
       std::vector<size_type>     d_cellStartIdsBasisOverlap;
       std::vector<size_type>     d_dofsInCell;
       const size_type            d_maxCellTimesNumVecs;
-    }; // end of class EFEOverlapOperatorContext
+    }; // end of class PristineEFEOverlapOperatorContext
   }    // end of namespace basis
 } // end of namespace dftefe
-#include <basis/EFEOverlapOperatorContext.t.cpp>
+#include <basis/PristineEFEOverlapOperatorContext.t.cpp>
 #endif // dftefeEFEOverlapOperatorContext_h

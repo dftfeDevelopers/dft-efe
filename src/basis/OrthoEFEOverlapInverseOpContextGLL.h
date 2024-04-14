@@ -33,7 +33,7 @@
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/EFEOverlapOperatorContext.h>
+#include <basis/OrthoEFEOverlapOperatorContext.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisDataStorage.h>
