@@ -26,7 +26,7 @@ set(DFT-EFE-BASIS-SOURCES
 	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
 	CFEOverlapInverseOperatorContext.cpp
-	EFEOverlapInverseOperatorContext.cpp
+	OrthoEFEOverlapInverseOpContextGLL.cpp
 	EFEBasisDataStorageDealii.cpp
 	EFEBasisDofHandlerDealii.cpp
 	EFEConstraintsLocalDealii.cpp

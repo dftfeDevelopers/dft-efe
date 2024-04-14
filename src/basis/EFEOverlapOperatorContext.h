@@ -141,9 +141,8 @@ namespace dftefe
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
-        std::shared_ptr<
-          const FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                        enrichmentBlockClassicalBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &             enrichmentBlockClassicalBasisDataStorage,
         const size_type maxCellTimesNumVecs);
 
       /**
@@ -168,14 +167,6 @@ namespace dftefe
       const Storage &
       getBasisOverlapInAllCells() const;
 
-      // get EFEBasisDataStorage
-      const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
-      getEFEBasisDataStorage() const;
-
-      // get CFEBasisDataStorage
-      const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
-      getCFEBasisDataStorage() const;
-
 
     private:
       const FEBasisManager<ValueTypeOperand,
@@ -186,14 +177,10 @@ namespace dftefe
                            ValueTypeOperator,
                            memorySpace,
                            dim> *d_feBasisManagerY;
-      const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *d_efeBasisDataStorage;
-      const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *                      d_cfeBasisDataStorage;
-      std::shared_ptr<Storage> d_basisOverlap;
-      std::vector<size_type>   d_cellStartIdsBasisOverlap;
-      std::vector<size_type>   d_dofsInCell;
-      const size_type          d_maxCellTimesNumVecs;
+      std::shared_ptr<Storage>   d_basisOverlap;
+      std::vector<size_type>     d_cellStartIdsBasisOverlap;
+      std::vector<size_type>     d_dofsInCell;
+      const size_type            d_maxCellTimesNumVecs;
     }; // end of class EFEOverlapOperatorContext
   }    // end of namespace basis
 } // end of namespace dftefe

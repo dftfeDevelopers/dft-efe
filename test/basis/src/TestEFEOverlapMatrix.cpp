@@ -28,7 +28,7 @@
 #include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <iostream>
-#include <basis/EFEOverlapInverseOperatorContext.h>
+#include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
 
 int main()
 {
@@ -361,7 +361,7 @@ int main()
                                                         *basisManager,
                                                         *cfeBasisDataStorageOverlapMatrix,
                                                         *feBasisData,
-                                                        cfeBasisDataStorageOverlapMatrix,
+                                                        *cfeBasisDataStorageOverlapMatrix,
                                                         50);
 
   // feBasisOp.interpolate( *dens, constraintHomwHan, *basisManager, quadValuesContainer);
@@ -369,12 +369,13 @@ int main()
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> MInvContext =
-    std::make_shared<dftefe::basis::EFEOverlapInverseOperatorContext<double,
+    std::make_shared<dftefe::basis::OrthoEFEOverlapInverseOpContextGLL<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (*basisManager,
-                                                    *MContext,
+                                                    *cfeBasisDataStorageOverlapMatrix,
+                                                    *feBasisData,
                                                     linAlgOpContext);
 
     MInvContext->apply(*X,*Y);
@@ -398,32 +399,32 @@ int main()
   for (int comp = 0 ; comp < numComponents ; comp++)
         std::cout << "Component "<<comp << ":" << "Error norm: "<<error->l2Norms()[0]<<" Relative error: "<<(error->l2Norms()[comp]/X->l2Norms()[comp])<<"\n";
 
-    // Form the Overlap Matrix
-    dftefe::global_size_type totalDofs = basisDofHandler->nGlobalNodes();
-    std::shared_ptr<dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
-      basisOverlapBlock = std::make_shared<dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>(totalDofs * totalDofs);
+    // // Form the Overlap Matrix
+    // dftefe::global_size_type totalDofs = basisDofHandler->nGlobalNodes();
+    // std::shared_ptr<dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
+    //   basisOverlapBlock = std::make_shared<dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>(totalDofs * totalDofs);
 
-    std::vector<double> basisOverlapBlockSTL(totalDofs * totalDofs,0), 
-    basisOverlapBlockSTLTmp(totalDofs * totalDofs,0);
-    dftefe::size_type cumulativeBasisDataInCells = 0;
-    for (dftefe::size_type iCell = 0; iCell < basisDofHandler->nLocallyOwnedCells() ; iCell++)
-    {
-      // get cell dof global ids
-      std::vector<dftefe::global_size_type> cellGlobalNodeIds(0);
-      basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
-      // loop over nodes of a cell
-      for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
-      {
-        for ( dftefe::size_type jNode = 0 ; jNode < cellGlobalNodeIds.size() ; jNode++)
-        {
-          *(basisOverlapBlockSTLTmp.data() + cellGlobalNodeIds[iNode]*totalDofs
-              + cellGlobalNodeIds[jNode]) +=
-            *(MContext->getBasisOverlapInAllCells().data() + cumulativeBasisDataInCells + 
-              cellGlobalNodeIds.size()*iNode + jNode);
-        }
-      }
-      cumulativeBasisDataInCells += dftefe::utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),2);
-    }
+    // std::vector<double> basisOverlapBlockSTL(totalDofs * totalDofs,0), 
+    // basisOverlapBlockSTLTmp(totalDofs * totalDofs,0);
+    // dftefe::size_type cumulativeBasisDataInCells = 0;
+    // for (dftefe::size_type iCell = 0; iCell < basisDofHandler->nLocallyOwnedCells() ; iCell++)
+    // {
+    //   // get cell dof global ids
+    //   std::vector<dftefe::global_size_type> cellGlobalNodeIds(0);
+    //   basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+    //   // loop over nodes of a cell
+    //   for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+    //   {
+    //     for ( dftefe::size_type jNode = 0 ; jNode < cellGlobalNodeIds.size() ; jNode++)
+    //     {
+    //       *(basisOverlapBlockSTLTmp.data() + cellGlobalNodeIds[iNode]*totalDofs
+    //           + cellGlobalNodeIds[jNode]) +=
+    //         *(MContext->getBasisOverlapInAllCells().data() + cumulativeBasisDataInCells + 
+    //           cellGlobalNodeIds.size()*iNode + jNode);
+    //     }
+    //   }
+    //   cumulativeBasisDataInCells += dftefe::utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),2);
+    // }
 
   // int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
   //   basisOverlapBlockSTLTmp.data(),
