@@ -33,7 +33,7 @@
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
-#include <basis/EFEOverlapOperatorContext.h>
+#include <basis/OrthoEFEOverlapOperatorContext.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisDataStorage.h>
@@ -52,7 +52,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class EFEOverlapInverseOperatorContext
+    class OrthoEFEOverlapInverseOpContextGLL
       : public linearAlgebra::
           OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
@@ -62,14 +62,14 @@ namespace dftefe
                                                ValueTypeOperand>;
 
     public:
-      EFEOverlapInverseOperatorContext(
+      OrthoEFEOverlapInverseOpContextGLL(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            &                                        feBasisManager,
-        const basis::EFEOverlapOperatorContext<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace,
-                                               dim> &efeOverlapOperatorContext,
+            &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockGLLBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
@@ -97,5 +97,5 @@ namespace dftefe
     }; // end of class BasisOverlapOperatorContext
   }    // namespace basis
 } // end of namespace dftefe
-#include <basis/EFEOverlapInverseOperatorContext.t.cpp>
+#include <basis/OrthoEFEOverlapInverseOpContextGLL.t.cpp>
 #endif // dftefeEFEOverlapInverseOperatorContext_h

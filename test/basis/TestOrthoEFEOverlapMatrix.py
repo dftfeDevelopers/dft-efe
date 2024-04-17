@@ -37,10 +37,10 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestEFEOverlapMatrix(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestEFEOverlapMatrix'
+class BuildOnlyTestOrthoEFEOverlapMatrix(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestOrthoEFEOverlapMatrix'
     build_system = 'CMake'
-    make_opts = ['TestEFEOverlapMatrix']
+    make_opts = ['TestOrthoEFEOverlapMatrix']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -88,8 +88,8 @@ class BuildOnlyTestEFEOverlapMatrix(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestEFEOverlapMatrix(rfm.RegressionTest):
-    target_name = 'TestEFEOverlapMatrix'
+class BuildAndRunTestOrthoEFEOverlapMatrix(rfm.RegressionTest):
+    target_name = 'TestOrthoEFEOverlapMatrix'
     descr = '''A build and run test to verify the accuracy of interpolation to quad points'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -134,11 +134,11 @@ class BuildAndRunTestEFEOverlapMatrix(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestEFEOverlapMatrix.'''
+        BuildAndRunTestOrthoEFEOverlapMatrix.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestEFEOverlapMatrix.'''
+        BuildAndRunTestOrthoEFEOverlapMatrix.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestEFEOverlapMatrix.'''
+        BuildAndRunTestOrthoEFEOverlapMatrix.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,8 +173,8 @@ class BuildAndRunTestEFEOverlapMatrix(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestEFEOverlapMatrix(rfm.RunOnlyRegressionTest):
-    target_name = 'TestEFEOverlapMatrix'
+class RunOnlyTestOrthoEFEOverlapMatrix(rfm.RunOnlyRegressionTest):
+    target_name = 'TestOrthoEFEOverlapMatrix'
     descr = '''A run only test to verify the accuracy of interpolation'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -211,11 +211,11 @@ class RunOnlyTestEFEOverlapMatrix(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestEFEOverlapMatrix.'''
+        RunOnlyTestOrthoEFEOverlapMatrix.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestEFEOverlapMatrix'''
+        RunOnlyTestOrthoEFEOverlapMatrix'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestEFEOverlapMatrix'''
+        RunOnlyTestOrthoEFEOverlapMatrix'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

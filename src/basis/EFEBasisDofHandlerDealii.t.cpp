@@ -184,7 +184,7 @@ namespace dftefe
       d_isDistributed = true;
       // Create Classical FE dof_handler
       d_enrichClassIntfce = enrichmentClassicalInterface;
-      d_isOrthogonalized  = enrichmentClassicalInterface->isOrthgonalized();
+      d_isOrthogonalized  = enrichmentClassicalInterface->isOrthogonalized();
       d_atomSphericalDataContainer =
         enrichmentClassicalInterface->getAtomSphericalDataContainer();
       d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();

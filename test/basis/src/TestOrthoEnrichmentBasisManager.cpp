@@ -11,7 +11,7 @@
 #include <atoms/AtomSevereFunction.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
-#include <basis/EFEOverlapOperatorContext.h>
+#include <basis/PristineEFEOverlapOperatorContext.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -269,17 +269,16 @@ int main()
 
     // Create OperatorContext for Basisoverlap
 
-    std::shared_ptr<const dftefe::basis::EFEOverlapOperatorContext<double,
+    std::shared_ptr<const dftefe::basis::PristineEFEOverlapOperatorContext<double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
                                                   dim>> overlapOperator =
-    std::make_shared<dftefe::basis::EFEOverlapOperatorContext<double,
+    std::make_shared<dftefe::basis::PristineEFEOverlapOperatorContext<double,
                                                         double,
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>(
                                                         *basisManager,
                                                         *basisManager,
-                                                        *cfeBasisDataStorageOverlapMatrix,
                                                         *feBasisData,
                                                         50);
 

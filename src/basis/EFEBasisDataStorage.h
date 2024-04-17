@@ -174,12 +174,6 @@ namespace dftefe
       virtual std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const = 0;
 
-      // ---- Only for Orthogonalized EFE basis--------
-
-      virtual const quadrature::QuadratureValuesContainer<ValueTypeBasisData,
-                                                          memorySpace> &
-      getEnrichmentFunctionClassicalComponentQuadValues() const = 0;
-
     }; // end of EFEBasisDataStorage
   }    // end of namespace basis
 } // end of namespace dftefe
