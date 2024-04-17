@@ -7,7 +7,9 @@ endif()
 # Add source files here
 set(DFT-EFE-KSDFT-SOURCES
 	KohnShamEigenSolver.cpp
-	KohnShamOperator.cpp)
+	KohnShamOperatorContextFE.cpp
+	KineticFE.cpp
+	ElectrostaticAllElectronFE.cpp)
 
 add_library(dft-efe-ksdft SHARED ${DFT-EFE-KSDFT-SOURCES})
 
