@@ -65,6 +65,14 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
         ValueType *                                         data);
 
+      static void
+      reshapeCellWiseData(
+        const dftefe::utils::MemoryStorage<ValueType, memorySpace>
+          &                                                 cellWiseStorage,
+        const size_type                                     numComponents,
+        const utils::MemoryStorage<size_type, memorySpace> &numCellVecs,
+        ValueType *                                         data);
+
 
     }; // end of class FECellWiseDataOperations
 
@@ -104,6 +112,13 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
         ValueType *                                         data);
+
+      static void
+      reshapeCellWiseData(const ValueType *cellWiseData,
+                          const size_type  numVec,
+                          const size_type  vecSize,
+                          const size_type  numCells,
+                          ValueType *      data);
 
 
     }; // end of class FECellWiseDataOperations

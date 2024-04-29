@@ -37,6 +37,24 @@ namespace dftefe
 {
   namespace basis
   {
+    namespace realspace
+    {
+      enum class VectorMathOp
+      {
+        DOT,
+        CROSS,
+        MULT,
+        ADD
+      };
+
+      enum class LinearLocalOp
+      {
+        IDENTITY,
+        GRAD,
+        LAPLACIAN,
+        CURL
+      };
+    } // end of namespace realspace
     /**
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
@@ -46,6 +64,17 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     class BasisOperations
     {
+    public:
+      using ValueTypeUnion =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData>;
+
+      using StorageBasis =
+        dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
+
+      using StorageUnion =
+        dftefe::utils::MemoryStorage<ValueTypeUnion, memorySpace>;
+
     public:
       virtual ~BasisOperations() = default;
 

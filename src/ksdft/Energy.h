@@ -35,7 +35,7 @@ namespace dftefe
     {
     public:
       virtual RealType
-      getEnergy() const = 0;         
+      getEnergy() const = 0;
 
     }; // end of Energy
   }    // end of namespace ksdft

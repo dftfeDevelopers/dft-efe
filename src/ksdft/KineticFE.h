@@ -51,38 +51,35 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class KineticFE
-      : public Hamiltonian<ValueTypeOperator, memorySpace>, public Energy<ValueTypeOperator>
+    class KineticFE : public Hamiltonian<ValueTypeOperator, memorySpace>,
+                      public Energy<ValueTypeOperator>
     {
     public:
       using Storage = Hamiltonian<ValueTypeOperator, memorySpace>::Storage;
+
     public:
       /**
        * @brief Constructor
        */
-      KineticFE(
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             feBasisDataStorage);
+      KineticFE(const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+                  &feBasisDataStorage);
 
       Storage
       getLocal() const override;
       void
-      evalEnergy(
-        const std::vector<RealType> & orbitalOccupancy,
-        const std::vector<RealType> & eigenEnergy,
-        const Storage & density,
-        const Storage & kohnShamPotential
-        ) const;
+      evalEnergy(const std::vector<RealType> &orbitalOccupancy,
+                 const std::vector<RealType> &eigenEnergy,
+                 const Storage &              density,
+                 const Storage &              kohnShamPotential) const;
       void
-      evalEnergy(
-        const std::vector<RealType> & orbitalOccupancy,
-        const MultiVector<ValueType, memorySpace> &waveFunction) const;
-      RealType 
-      getEnergy() const override;  
+      evalEnergy(const std::vector<RealType> &              orbitalOccupancy,
+                 const MultiVector<ValueType, memorySpace> &waveFunction) const;
+      RealType
+      getEnergy() const override;
 
     private:
       const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *             d_feBasisDataStorage;
+        *d_feBasisDataStorage;
     }; // end of class KineticFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

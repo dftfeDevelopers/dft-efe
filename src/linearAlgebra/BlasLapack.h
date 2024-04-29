@@ -188,6 +188,48 @@ namespace dftefe
                       scalar_type<ValueType1, ValueType2> *z,
                       LinAlgOpContext<memorySpace> &       context);
 
+      /**
+       * @brief Template for performing hadamard product of two columns
+       * of batches of matrix A and B having num col A = m,
+       * num common rows = k, num col B = n going through all the rows
+       * of A and B with column B having the faster index than columnA.
+       * This operation can be thought as the strided form of face-splitting
+       * product between two matrices of variable strides but with common
+       * rows in each stride. Also it is assumed that the matrices A and B
+       * are column major. So for scalarop it represents either identity or
+       * complex conjugate operation on a scalar. Size of C on output
+       * will be (m*k) cols and n rows with strides.
+       * @param[in] numMats number of batches
+       * @param[in] scalarOpA scalar op of A
+       * @param[in] scalarOpB scalar op of B
+       * @param[in] stridea stride of matrix A
+       * @param[in] stridea stride of matrix B
+       * @param[in] stridec stride of matrix C
+       * @param[in] m column of matrix A
+       * @param[in] n column of matrix B
+       * @param[in] k row of matrix B and A
+       * @param[in] dA matrix A
+       * @param[in] dB matrix B
+       * @param[out] dC matrix C
+       * @param[in] context memorySpace context
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      scaleStridedVarBatched(const size_type                      numMats,
+                             const ScalarOp *                     scalarOpA,
+                             const ScalarOp *                     scalarOpB,
+                             const size_type *                    stridea,
+                             const size_type *                    strideb,
+                             const size_type *                    stridec,
+                             const size_type *                    m,
+                             const size_type *                    n,
+                             const size_type *                    k,
+                             const ValueType1 *                   dA,
+                             const ValueType2 *                   dB,
+                             scalar_type<ValueType1, ValueType2> *dC,
+                             LinAlgOpContext<memorySpace> &       context);
 
       /**
        * @brief Template for performing

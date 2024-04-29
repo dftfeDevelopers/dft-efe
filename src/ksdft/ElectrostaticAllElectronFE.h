@@ -50,29 +50,34 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticAllElectronFE
-      : public ElectrostaticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>
+    class ElectrostaticAllElectronFE : public ElectrostaticFE<ValueTypeOperator,
+                                                              ValueTypeOperand,
+                                                              memorySpace,
+                                                              dim>
     {
     public:
-      using Storage = ElectrostaticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::Storage;
+      using Storage =
+        ElectrostaticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
+          Storage;
+
     public:
       /**
        * @brief Constructor
        */
       ElectrostaticAllElectronFE(
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             feBasisDataStorage);
+          &feBasisDataStorage);
 
       Storage
       getLocal() const override;
       void
       evalEnergy() const override;
-      RealType 
-      getEnergy() const override;  
+      RealType
+      getEnergy() const override;
 
     private:
       const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *             d_feBasisDataStorage;
+        *d_feBasisDataStorage;
     }; // end of class ElectrostaticAllElectronFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

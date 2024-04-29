@@ -83,7 +83,7 @@ namespace dftefe
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManagerY,
         std::vector<const Hamiltonian<ValueTypeOperator, memorySpace> *>
-          hamiltonianVec,
+                        hamiltonianVec,
         const size_type maxCellTimesNumVecs);
 
       void

@@ -3,6 +3,7 @@
 #include <utils/DataTypeOverloads.h>
 #include <complex>
 #include <algorithm>
+#include <iostream>
 
 namespace dftefe
 {
@@ -213,6 +214,49 @@ namespace dftefe
               sp;
             for (size_type i = 0; i < size; ++i)
               z[i] = sp.prod(x[i], y[i]);
+          }
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        scaleStridedVarBatched(const size_type                      numMats,
+                               const ScalarOp *                     scalarOpA,
+                               const ScalarOp *                     scalarOpB,
+                               const size_type *                    stridea,
+                               const size_type *                    strideb,
+                               const size_type *                    stridec,
+                               const size_type *                    m,
+                               const size_type *                    n,
+                               const size_type *                    k,
+                               const ValueType1 *                   dA,
+                               const ValueType2 *                   dB,
+                               scalar_type<ValueType1, ValueType2> *dC,
+                               LinAlgOpContext<memorySpace> &       context)
+      {
+        size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+          {
+            for (size_type icolA = 0; icolA < *(m + ibatch); ++icolA)
+              {
+                for (size_type icolB = 0; icolB < *(n + ibatch); ++icolB)
+                  {
+                    size_type numrows = *(k + ibatch);
+                    hadamardProduct(numrows,
+                                    (dA + cumulativeA + icolA * numrows),
+                                    (dB + cumulativeB + icolB * numrows),
+                                    *(scalarOpA + ibatch),
+                                    *(scalarOpB + ibatch),
+                                    (dC + cumulativeC +
+                                     icolA * *(n + ibatch) * numrows +
+                                     icolB * numrows));
+                  }
+              }
+            cumulativeA += *(stridea + ibatch);
+            cumulativeB += *(strideb + ibatch);
+            cumulativeC += *(stridec + ibatch);
           }
       }
 

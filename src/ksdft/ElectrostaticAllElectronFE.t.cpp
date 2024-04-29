@@ -32,12 +32,12 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticAllElectronFE<ValueTypeOperator,
-                             ValueTypeOperand,
-                             memorySpace,
-                             dim>::
+                               ValueTypeOperand,
+                               memorySpace,
+                               dim>::
       ElectrostaticAllElectronFE(
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             feBasisDataStorage)
+          &feBasisDataStorage)
       : d_feBasisDataStorage(&feBasisDataStorage)
     {}
 
@@ -46,37 +46,32 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     Storage
-    ElectrostaticAllElectronFE<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace,
-      dim>::getHamiltonian() const
-    {
-    }
+    ElectrostaticAllElectronFE<ValueTypeOperator,
+                               ValueTypeOperand,
+                               memorySpace,
+                               dim>::getHamiltonian() const
+    {}
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    ElectrostaticAllElectronFE<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace,
-      dim>::evalEnergy() const
-    {
-    }
+    ElectrostaticAllElectronFE<ValueTypeOperator,
+                               ValueTypeOperand,
+                               memorySpace,
+                               dim>::evalEnergy() const
+    {}
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
     RealType
-    ElectrostaticAllElectronFE<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace,
-      dim>::getEnergy() const
+    ElectrostaticAllElectronFE<ValueTypeOperator,
+                               ValueTypeOperand,
+                               memorySpace,
+                               dim>::getEnergy() const
     {
       return d_energy;
     }

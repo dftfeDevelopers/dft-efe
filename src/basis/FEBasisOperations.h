@@ -64,8 +64,17 @@ namespace dftefe
       // (.e.g, the union of double and complex<double> is complex<double>)
       //
       using ValueTypeUnion =
-        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData>;
+        typename BasisOperations<ValueTypeBasisCoeff,
+                                 ValueTypeBasisData,
+                                 memorySpace>::ValueTypeUnion;
+
+      using StorageUnion = typename BasisOperations<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace>::StorageUnion;
+
+      using StorageBasis = typename BasisOperations<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace>::StorageBasis;
 
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
@@ -116,24 +125,25 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const override;
 
+      /* FE functions for local kernel computations*/
+      void
+      computeFEMatrices(
+        realspace::LinearLocalOp L1,
+        realspace::VectorMathOp  Op1,
+        realspace::VectorMathOp  L2,
+        realspace::LinearLocalOp Op2,
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                                          f,
+        StorageUnion &                               cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
-      //        void
-      //      integrateWithBasisValues(
-      //        const quadrature::QuadratureValuesContainer<ValueTypeUnion,
-      //        memorySpace>
-      //          &                                         inp,
-      //        const quadrature::QuadratureRuleAttributes
-      //        &quadratureRuleAttributes, const
-      //        FEBasisManager<ValueTypeBasisCoeff, memorySpace,dim> &
-      //        feBasisManager, linearAlgebra::Vector<ValueTypeBasisCoeff,
-      //        memorySpace> &v) const override;
-
-      // virtual void
-      // integrateWithBasisValues(
-      //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
-      //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput)
-      //  const override;
+      void
+      computeFEMatrices(
+        realspace::LinearLocalOp                     L1,
+        realspace::VectorMathOp                      Op1,
+        realspace::LinearLocalOp                     L2,
+        StorageBasis &                               cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>

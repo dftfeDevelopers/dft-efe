@@ -177,17 +177,18 @@ namespace dftefe
             utils::MemoryStorage<size_type, memorySpace> strideC(
               numCellsInBlock);
 
-            KohnShamOperatorContextFEInternal::storeSizes(mSizes,
-                                                         nSizes,
-                                                         kSizes,
-                                                         ldaSizes,
-                                                         ldbSizes,
-                                                         ldcSizes,
-                                                         strideA,
-                                                         strideB,
-                                                         strideC,
-                                                         cellsInBlockNumDoFsSTL,
-                                                         numVecs);
+            KohnShamOperatorContextFEInternal::storeSizes(
+              mSizes,
+              nSizes,
+              kSizes,
+              ldaSizes,
+              ldbSizes,
+              ldcSizes,
+              strideA,
+              strideB,
+              strideC,
+              cellsInBlockNumDoFsSTL,
+              numVecs);
 
             // allocate memory for cell-wise data for y
             utils::MemoryStorage<
@@ -261,9 +262,9 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     KohnShamOperatorContextFE<ValueTypeOperator,
-                             ValueTypeOperand,
-                             memorySpace,
-                             dim>::
+                              ValueTypeOperand,
+                              memorySpace,
+                              dim>::
       KohnShamOperatorContextFE(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
@@ -272,7 +273,7 @@ namespace dftefe
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManagerY,
         std::vector<const Hamiltonian<ValueTypeOperator, memorySpace> *>
-          hamiltonianComponentsVec,
+                        hamiltonianComponentsVec,
         const size_type maxCellTimesNumVecs)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
@@ -333,9 +334,10 @@ namespace dftefe
       constraintsX.distributeParentToChild(X, numVecs);
 
       // access cell-wise discrete Laplace operator
-      Storage hamiltonianInAllCells = /* Here hamiltonian in all cells memstorage are added up.*/ 
+      Storage hamiltonianInAllCells = /* Here hamiltonian in all cells
+                                         memstorage are added up.*/
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+        const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
       Y.setValue(0.0);
 
       //

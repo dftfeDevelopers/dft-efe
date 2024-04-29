@@ -30,21 +30,21 @@ namespace dftefe
 {
   namespace ksdft
   {
-    template <typename ValueTypeOperator,
-              utils::MemorySpace memorySpace>
+    template <typename ValueTypeOperator, utils::MemorySpace memorySpace>
     class Hamiltonian
     {
     public:
       using Storage =
         dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
+
     public:
       virtual Storage
       getLocal() const = 0;
 
       // virtual void
-      // applyNonLocal(const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          // &X,const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          // & Y) const = 0;
+      // applyNonLocal(const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+      // memorySpace> &X,const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+      // memorySpace> & Y) const = 0;
 
     }; // end of Hamiltonian
   }    // end of namespace ksdft

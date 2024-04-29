@@ -120,5 +120,34 @@ namespace dftefe
         }
     }
 
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    FECellWiseDataOperations<ValueType, memorySpace>::reshapeCellWiseData(
+      const dftefe::utils::MemoryStorage<ValueType, memorySpace>
+        &                                                 cellWiseStorage,
+      const size_type                                     numComponents,
+      const utils::MemoryStorage<size_type, memorySpace> &numCellVecs,
+      ValueType *                                         data)
+    {
+      auto            itCellWiseStorageBegin     = cellWiseStorage.begin();
+      const size_type numCells                   = numCellVecs.size();
+      size_type       cumulativeCellVecsxnumComp = 0;
+      for (size_type iCell = 0; iCell < numCells; ++iCell)
+        {
+          const size_type cellVecs = *(numCellVecs.data() + iCell);
+          for (size_type iVec = 0; iVec < cellVecs; ++iVec)
+            {
+              for (size_type iComp = 0; iComp < numComponents; iComp++)
+                {
+                  *(data + cumulativeCellVecsxnumComp + iComp * cellVecs +
+                    iVec) =
+                    *(itCellWiseStorageBegin + cumulativeCellVecsxnumComp +
+                      iVec * numComponents + iComp);
+                }
+            }
+          cumulativeCellVecsxnumComp += cellVecs * numComponents;
+        }
+    }
+
   } // end of namespace basis
 } // end of namespace dftefe

@@ -51,19 +51,20 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticFE
-      : public Hamiltonian<ValueTypeOperator, memorySpace>, public Energy<ValueTypeOperator>
+    class ElectrostaticFE : public Hamiltonian<ValueTypeOperator, memorySpace>,
+                            public Energy<ValueTypeOperator>
     {
     public:
       using Storage = Hamiltonian<ValueTypeOperator, memorySpace>::Storage;
+
     public:
       virtual Storage
       getHamiltonian() const = 0;
       virtual void
       evalEnergy() const = 0;
-      virtual RealType 
+      virtual RealType
       getEnergy() const = 0;
-      
+
     }; // end of class ElectrostaticFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

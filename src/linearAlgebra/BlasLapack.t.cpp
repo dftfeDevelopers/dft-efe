@@ -155,6 +155,39 @@ namespace dftefe
           hadamardProduct(n, x, y, opx, opy, z);
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      scaleStridedVarBatched(const size_type                      numMats,
+                             const ScalarOp *                     scalarOpA,
+                             const ScalarOp *                     scalarOpB,
+                             const size_type *                    stridea,
+                             const size_type *                    strideb,
+                             const size_type *                    stridec,
+                             const size_type *                    m,
+                             const size_type *                    n,
+                             const size_type *                    k,
+                             const ValueType1 *                   dA,
+                             const ValueType2 *                   dB,
+                             scalar_type<ValueType1, ValueType2> *dC,
+                             LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          scaleStridedVarBatched(numMats,
+                                 scalarOpA,
+                                 scalarOpB,
+                                 stridea,
+                                 strideb,
+                                 stridec,
+                                 m,
+                                 n,
+                                 k,
+                                 dA,
+                                 dB,
+                                 dC,
+                                 context);
+      }
 
       template <typename ValueType1,
                 typename ValueType2,

@@ -43,7 +43,7 @@ namespace dftefe
   namespace ksdft
   {
     /**
-     *@brief 
+     *@brief
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
      * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
@@ -57,8 +57,8 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     class KohnShamEigenSolver
       : public linearAlgebra::HermitianIterativeEigenSolver<ValueTypeOperator,
-                                             ValueTypeOperand,
-                                             memorySpace>
+                                                            ValueTypeOperand,
+                                                            memorySpace>
     {
     public:
       /**
@@ -67,32 +67,34 @@ namespace dftefe
        * (e.g., between double and complex<double>, complex<double>
        * is the bigger set)
        */
-      using ValueType =
-        typename linearAlgebra::HermitianIterativeEigenSolver<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace>::ValueType;
-      using RealType = 
-        typename linearAlgebra::HermitianIterativeEigenSolver<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace>::RealType;
-      using OpContext =
-        typename linearAlgebra::HermitianIterativeEigenSolver<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace>::OpContext;
+      using ValueType = typename linearAlgebra::HermitianIterativeEigenSolver<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::ValueType;
+      using RealType = typename linearAlgebra::HermitianIterativeEigenSolver<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::RealType;
+      using OpContext = typename linearAlgebra::HermitianIterativeEigenSolver<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::OpContext;
 
     public:
       /**
        * @brief Constructor
        * The occupation Tolerance is such that one considers the
-       * Kohn Sham Orbitals occupied if occupationTolerance < f_i(from diftribution) < 1-1e-12
+       * Kohn Sham Orbitals occupied if occupationTolerance < f_i(from
+       * diftribution) < 1-1e-12
        */
       KohnShamEigenSolver(
         const utils::ScalarFunctionReal occupationDistribution,
-        const double occupationTolerance,
-        const double residualTolerance,
-        const size_type chebyshevPolynomialDegree,
-        const size_type maxChebyshevFilterPass,
-        const MultiVector<ValueTypeOperand, memorySpace> &waveFunctionSubspaceGuess,
+        const double                    occupationTolerance,
+        const double                    residualTolerance,
+        const size_type                 chebyshevPolynomialDegree,
+        const size_type                 maxChebyshevFilterPass,
+        const MultiVector<ValueTypeOperand, memorySpace>
+          &             waveFunctionSubspaceGuess,
         const size_type waveFunctionBlockSize = 0);
 
       /**
@@ -102,13 +104,13 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(
-        const utils::ScalarFunctionReal & occupationDistribution,
-        const double occupationTolerance,
-        const double residualTolerance,
-        const size_type maxChebyshevFilterPass,
-        const MultiVector<ValueTypeOperand, memorySpace> &waveFunctionSubspaceGuess,
-        const size_type waveFunctionBlockSize = 0);
+      reinit(const utils::ScalarFunctionReal &occupationDistribution,
+             const double                     occupationTolerance,
+             const double                     residualTolerance,
+             const size_type                  maxChebyshevFilterPass,
+             const MultiVector<ValueTypeOperand, memorySpace>
+               &             waveFunctionSubspaceGuess,
+             const size_type waveFunctionBlockSize = 0);
 
       EigenSolverError
       solve(const OpContext &                    kohnShamOperator,
@@ -126,12 +128,12 @@ namespace dftefe
     private:
       double                                     d_occupationTolerance;
       double                                     d_residualTolerance;
-      size_type                                     d_maxFilterPass;
-      size_type                                     d_polynomialDegree;
+      size_type                                  d_maxFilterPass;
+      size_type                                  d_polynomialDegree;
       MultiVector<ValueTypeOperand, memorySpace> d_waveFunctionSubspaceGuess;
 
     }; // end of class KohnShamEigenSolver
-  }    // end of namespace linearAlgebra
+  }    // namespace ksdft
 } // end of namespace dftefe
 #include <linearAlgebra/KohnShamEigenSolver.t.cpp>
 #endif // dftefeKohnShamEigenSolver_h
