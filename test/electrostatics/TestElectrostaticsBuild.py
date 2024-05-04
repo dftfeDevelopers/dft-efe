@@ -61,9 +61,9 @@ class BuildOnlyTestElectrostatics(rfm.CompileOnlyRegressionTest):
     descr = 'A build only test using CMake'
     build_system = 'CMake'
     make_opts = []
-    tagsDict = {'compileOrRun': 'compile'}
+    tagsDict = {'compileOrRun': 'compile', 'arch': 'cpu'}
     tags = {x.lower() for x in tagsDict.values()}
-    valid_systems = ['*']
+    valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
     config_opts = cmflags.getConfig()
 

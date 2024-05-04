@@ -221,47 +221,45 @@ int main()
   std::shared_ptr<const dftefe::quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();                                                               
 
-  std::vector<dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST>> quadValuesContainerVec(dim, 
-    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST>(quadRuleContainer, numComponents));
+  dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainer(quadRuleContainer, numComponents*dim);
 
   // Interpolate the nodal data to the quad points
-  feBasisOp.interpolateWithBasisGradient( *X, *basisManager, quadValuesContainerVec);
+  feBasisOp.interpolateWithBasisGradient( *X, *basisManager, quadValuesContainer);
 
   bool testPass = true;
-
+           
   for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
     {
       std::vector<dftefe::utils::Point> cellQuadPoints = quadRuleContainer->getCellRealPoints(iCell);
-      for(dftefe::size_type iQuad = 0 ; iQuad < cellQuadPoints.size() ; iQuad++ )
-      {
-        double xLoc = cellQuadPoints[iQuad][0];
-        double yLoc = cellQuadPoints[iQuad][1];
-        double zLoc = cellQuadPoints[iQuad][2];
-        std::vector<double> analyticValue1(0), analyticValue2(0);
-        analyticValue1.resize(dim);
-        analyticValue1 = interpolatePolynomialGradient1( xLoc, yLoc, zLoc, xmax, ymax, zmax);
-        analyticValue2.resize(dim);
-        analyticValue2 = interpolatePolynomialGradient2( xLoc, yLoc, zLoc, xmax, ymax, zmax);
-        std::vector<double> values(0);
-        for(unsigned int iDim = 0 ; iDim < dim ; iDim++ )
-        {
-          values.clear();
-          values.resize(numComponents);
-          quadValuesContainerVec[iDim].getCellQuadValues<dftefe::utils::MemorySpace::HOST>(iCell, iQuad, values.data());
-          if ( std::abs(values[0] - analyticValue1[iDim]) > 1e-8 )
+          std::vector<double> values(0);
+          values.resize(cellQuadPoints.size() * numComponents * dim);
+          quadValuesContainer.getCellValues<dftefe::utils::MemorySpace::HOST>(iCell, values.data());
+          for(dftefe::size_type iQuad = 0 ; iQuad < cellQuadPoints.size() ; iQuad++ )
           {
-            std::cout << " Component = 0 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue1[iDim]<<" interValue = "<<values[0]<<"\n";
-            testPass = false;
-          } 
-          if ( std::abs(values[1] - analyticValue2[iDim]) > 1e-8 )
+            double xLoc = cellQuadPoints[iQuad][0];
+            double yLoc = cellQuadPoints[iQuad][1];
+            double zLoc = cellQuadPoints[iQuad][2];
+            std::vector<double> analyticValue1(0), analyticValue2(0);
+            analyticValue1.resize(dim);
+            analyticValue1 = interpolatePolynomialGradient1( xLoc, yLoc, zLoc, xmax, ymax, zmax);
+            analyticValue2.resize(dim);
+            analyticValue2 = interpolatePolynomialGradient2( xLoc, yLoc, zLoc, xmax, ymax, zmax);
+          for(unsigned int iDim = 0 ; iDim < dim ; iDim++ )
           {
-            std::cout << " Component = 1 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue2[iDim]<<" interValue = "<<values[1]<<"\n";
-            testPass = false;
-          } 
-        }
+            if ( std::abs(values[iDim * numComponents * cellQuadPoints.size() + 0 * cellQuadPoints.size()  + iQuad] - analyticValue1[iDim]) > 1e-8 )
+            {
+              std::cout << " Component = 0 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue1[iDim]<<" interValue = "<<values[iDim * numComponents * cellQuadPoints.size() + 0 * cellQuadPoints.size()  + iQuad]<<"\n";
+              testPass = false;
+            }
+            if ( std::abs(values[iDim * numComponents * cellQuadPoints.size() + 1 * cellQuadPoints.size()  + iQuad] - analyticValue2[iDim]) > 1e-8 )
+            {
+              std::cout << " Component = 1 Dim = "<<iDim<<" x = "<<xLoc<<" y  = "<<yLoc<<" z = "<<zLoc<<" analVal = "<<analyticValue2[iDim]<<" interValue = "<<values[iDim * numComponents * cellQuadPoints.size() + 1 * cellQuadPoints.size()  + iQuad]<<"\n";
+              testPass = false;
+            }
+          }
       }
     }
-
+          
   std::cout<<" test status = "<<testPass<<"\n";
   return testPass;
 }

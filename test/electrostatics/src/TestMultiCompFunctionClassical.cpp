@@ -39,41 +39,17 @@
 // operand - V_H
 // memoryspace - HOST
 
-double rho(double x, double y, double z)
+double rho(double x, double y, double z, dftefe::size_type comp)
 {
   // The function should have inhomogeneous dirichlet BC
-    return 1;
+    return (2*((x)*(x-5)*(y)*(y-5))/6.0 + 2*((x)*(x-5)*(z)*(z-5))/6.0 + 2*((x)*(x-5)*(y)*(y-5))/6.0)*(comp+1);
 }
 
-double potential(double x, double y, double z)
+double potential(double x, double y, double z, dftefe::size_type comp)
 {
   // The function should have inhomogeneous dirichlet BC
-    return -((x)*(x) + (y)*(y) + (z)*(z))/6.0;
+    return -((x)*(x-5)*(y)*(y-5)*(z)*(z-5))*(comp+1)/6.0;
 }
-
- class ScalarSpatialPotentialFunctionReal : public dftefe::utils::ScalarSpatialFunctionReal
-  {
-    public:
-    ScalarSpatialPotentialFunctionReal(){}
-
-    double
-    operator()(const dftefe::utils::Point &point) const
-    {
-      return potential(point[0], point[1], point[2]);
-    }
-
-    std::vector<double>
-    operator()(const std::vector<dftefe::utils::Point> &points) const
-    {
-      std::vector<double> ret(0);
-      ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = potential(points[i][0], points[i][1], points[i][2]);
-      }
-      return ret;
-    }
-  };
 
 int main()
 {
@@ -124,7 +100,7 @@ int main()
   double xmax = 5.0;
   double ymax = 5.0;
   double zmax = 5.0;
-  unsigned int numComponents = 1;
+  unsigned int numComponents = 2;
   dftefe::size_type maxIter = 2e5;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -151,7 +127,7 @@ int main()
     dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
     dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
     dist = std::sqrt(dist); 
-    if ( (centerPoint[0] < 1.0) || (dist < 1.0) )
+    if ( (dist < 1.0) )
     {
      (*triaCellIter)->setRefineFlag();
     }
@@ -174,7 +150,7 @@ int main()
   std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
-  unsigned int num1DGaussSize = 6;
+  unsigned int num1DGaussSize = 4;
 
   dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
 
@@ -194,13 +170,10 @@ int main()
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
-  std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
-    potentialFunction = std::make_shared<ScalarSpatialPotentialFunctionReal>();
-
   // // Set up BasisManager
   std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
     std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisDofHandler, potentialFunction);
+    (basisDofHandler);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
@@ -240,7 +213,8 @@ int main()
          {
             dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
             basisManager->getBasisCenters(localId,nodeLoc);
-            *(itField + localId )  = potential(nodeLoc[0], nodeLoc[1], nodeLoc[2]);
+            for( dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp++)
+              *(itField + localId * numComponents + iComp )  = potential(nodeLoc[0], nodeLoc[1], nodeLoc[2], iComp);
          }
         }
     }
@@ -270,7 +244,7 @@ int main()
       std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
       for (auto j : quadRuleContainer->getCellRealPoints(i))
       {
-        a[quadId] = rho( j[0], j[1], j[2]);
+        a[quadId] = rho( j[0], j[1], j[2], iComp);
         quadId = quadId + 1;
       }
       double *b = a.data();
@@ -311,12 +285,43 @@ int main()
 
   linearSolverFunction->getSolution(*solution);
 
-   std::cout<<"solution norm: "<<solution->l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0]<<"\n";
+  for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
+  {
+    std::cout<<"solution norm: "<<solution->l2Norms()[iComp]<<", potential analytical norm: "<<vh->l2Norms()[iComp]<<"\n";
+  }
 
-//  for (unsigned int i = 0 ; i < solution.locallyOwnedSize() ; i++)
+//  for (unsigned int i = 0 ; i < solution->locallyOwnedSize() ; i++)
 //   {
-//     std::cout << "solution[" <<i<<"] : "<< *(solution.data()+i) << ","<<"exact["<<i<<"] : "<<*(vh->data()+i)<<"\n";
+//     if(std::abs(*(solution->data()+i) - *(vh->data()+i)) > 0.5)
+//     {
+//       basisManager->getBasisCenters(i,nodeLoc);
+//       std::cout << "solution[" <<i<<"] : "<< *(solution->data()+i) << ","<<"exact["<<i<<"] : "<<*(vh->data()+i)<<" ("<<nodeLoc[0]<< " ,"<<nodeLoc[1]<< " ,"<<nodeLoc[1]<< " ," <<")\n";
+//     }
 //   }
+
+
+  // for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
+  //   {
+  //     // get cell dof global ids
+  //     std::vector<dftefe::global_size_type> cellGlobalNodeIds;
+  //     basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+
+  //     // loop over nodes of a cell
+  //     for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+  //       {
+  //         // If node not constrained then get the local id and coordinates of the node
+  //         dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
+  //        if( !basisManager->getConstraints().isConstrained(globalId))
+  //        {
+  //           dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+  //           basisManager->getBasisCenters(localId,nodeLoc);
+  //           if(std::abs(*(solution->data()+localId) - *(vh->data()+localId)) > 0.5)
+  //           {
+  //             std::cout << "solution[" <<localId<<"] : "<< *(solution->data()+localId) << ","<<"exact["<<localId<<"] : "<<*(vh->data()+localId)<<" ("<<nodeLoc[0]<< " ,"<<nodeLoc[1]<< " ,"<<nodeLoc[1]<< " ," <<")\n";
+  //           }
+  //        }
+  //       }
+  //   }
 
   //gracefully end MPI
 
