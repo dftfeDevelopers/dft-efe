@@ -1,0 +1,52 @@
+<map id="src/electrostatics/PoissonLinearSolverFunctionFE.h" name="src/electrostatics/PoissonLinearSolverFunctionFE.h">
+<area shape="rect" id="node1" title=" " alt="" coords="2229,5,2451,45"/>
+<area shape="rect" id="node2" href="$TypeConfig_8h.html" title=" " alt="" coords="1430,768,1554,793"/>
+<area shape="rect" id="node4" href="$MemorySpaceType_8h.html" title=" " alt="" coords="2407,695,2577,720"/>
+<area shape="rect" id="node5" href="$LinearAlgebraTypes_8h.html" title=" " alt="" coords="587,269,768,309"/>
+<area shape="rect" id="node8" href="$LinearSolverFunction_8h.html" title=" " alt="" coords="4061,181,4235,221"/>
+<area shape="rect" id="node14" title=" " alt="" coords="5007,768,5065,793"/>
+<area shape="rect" id="node19" title=" " alt="" coords="2198,614,2266,639"/>
+<area shape="rect" id="node24" href="$OperatorContext_8h.html" title=" " alt="" coords="3601,277,3807,302"/>
+<area shape="rect" id="node25" href="$LaplaceOperatorContextFE_8h.html" title=" " alt="" coords="2479,181,2679,221"/>
+<area shape="rect" id="node26" href="$FEBasisManager_8h.html" title=" " alt="" coords="466,357,633,383"/>
+<area shape="rect" id="node30" href="$FEBasisDataStorage_8h.html" title=" " alt="" coords="1718,357,1906,383"/>
+<area shape="rect" id="node39" href="$PreconditionerJacobi_8h.html" title=" " alt="" coords="3361,93,3545,133"/>
+<area shape="rect" id="node42" href="$PreconditionerNone_8h.html" title=" " alt="" coords="3068,93,3252,133"/>
+<area shape="rect" id="node44" href="$FEBasisOperations_8h.html" title=" " alt="" coords="1343,277,1521,302"/>
+<area shape="rect" id="node47" href="$QuadratureValuesContainer_8h.html" title=" " alt="" coords="849,431,1039,471"/>
+<area shape="rect" id="node50" href="$PoissonLinearSolverFunctionFE_8t_8cpp.html" title=" " alt="" coords="2572,93,2759,133"/>
+<area shape="rect" id="node3" title=" " alt="" coords="3442,841,3513,867"/>
+<area shape="rect" id="node6" title=" " alt="" coords="729,695,775,720"/>
+<area shape="rect" id="node7" title=" " alt="" coords="650,695,705,720"/>
+<area shape="rect" id="node9" href="$MPITypes_8h.html" title=" " alt="" coords="4618,695,4737,720"/>
+<area shape="rect" id="node11" href="$Vector_8h.html" title=" " alt="" coords="3505,357,3655,383"/>
+<area shape="rect" id="node20" href="$BlasLapackTypedef_8h.html" title=" " alt="" coords="3641,607,3812,647"/>
+<area shape="rect" id="node21" href="$MultiVector_8h.html" title=" " alt="" coords="4034,438,4211,463"/>
+<area shape="rect" id="node10" href="$MPITypes_8t_8cpp.html" title=" " alt="" coords="4499,768,4639,793"/>
+<area shape="rect" id="node12" href="$utils_2Defaults_8h.html" title=" " alt="" coords="3423,526,3531,551"/>
+<area shape="rect" id="node13" href="$MemoryStorage_8h.html" title=" " alt="" coords="3707,695,3858,720"/>
+<area shape="rect" id="node15" href="$MPIPatternP2P_8h.html" title=" " alt="" coords="4290,614,4441,639"/>
+<area shape="rect" id="node16" href="$MPICommunicatorP2P_8h.html" title=" " alt="" coords="4567,526,4761,551"/>
+<area shape="rect" id="node17" href="$VectorAttributes_8h.html" title=" " alt="" coords="3556,526,3761,551"/>
+<area shape="rect" id="node18" href="$LinAlgOpContext_8h.html" title=" " alt="" coords="2834,526,3043,551"/>
+<area shape="rect" id="node23" href="$Vector_8t_8cpp.html" title=" " alt="" coords="3687,438,3857,463"/>
+<area shape="rect" id="node22" href="$MultiVector_8t_8cpp.html" title=" " alt="" coords="3938,526,4137,551"/>
+<area shape="rect" id="node33" href="$QuadratureAttributes_8h.html" title=" " alt="" coords="507,614,725,639"/>
+<area shape="rect" id="node38" href="$LaplaceOperatorContextFE_8t_8cpp.html" title=" " alt="" coords="3209,431,3409,471"/>
+<area shape="rect" id="node27" href="$BasisManager_8h.html" title=" " alt="" coords="1530,526,1681,551"/>
+<area shape="rect" id="node28" href="$FEBasisDofHandler_8h.html" title=" " alt="" coords="905,526,1087,551"/>
+<area shape="rect" id="node29" href="$FEBasisManager_8t_8cpp.html" title=" " alt="" coords="245,614,432,639"/>
+<area shape="rect" id="node31" href="$BasisDataStorage_8h.html" title=" " alt="" coords="653,438,825,463"/>
+<area shape="rect" id="node34" href="$LinearCellMappingDealii_8h.html" title=" " alt="" coords="4842,614,5049,639"/>
+<area shape="rect" id="node35" href="$QuadratureRuleGauss_8h.html" title=" " alt="" coords="1723,431,1901,471"/>
+<area shape="rect" id="node36" href="$QuadratureRuleGLL_8h.html" title=" " alt="" coords="1925,431,2102,471"/>
+<area shape="rect" id="node37" title=" " alt="" coords="2127,431,2252,471"/>
+<area shape="rect" id="node32" href="$QuadratureRuleContainer_8h.html" title=" " alt="" coords="703,519,881,559"/>
+<area shape="rect" id="node40" href="$Preconditioner_8h.html" title=" " alt="" coords="3281,189,3476,214"/>
+<area shape="rect" id="node41" href="$PreconditionerJacobi_8t_8cpp.html" title=" " alt="" coords="3601,181,3785,221"/>
+<area shape="rect" id="node43" href="$PreconditionerNone_8t_8cpp.html" title=" " alt="" coords="2753,181,2937,221"/>
+<area shape="rect" id="node45" href="$Field_8h.html" title=" " alt="" coords="1385,357,1479,383"/>
+<area shape="rect" id="node46" href="$BasisOperations_8h.html" title=" " alt="" coords="1097,357,1260,383"/>
+<area shape="rect" id="node49" href="$FEBasisOperations_8t_8cpp.html" title=" " alt="" coords="2833,438,3033,463"/>
+<area shape="rect" id="node48" href="$QuadratureValuesContainer_8t_8cpp.html" title=" " alt="" coords="1213,519,1403,559"/>
+</map>

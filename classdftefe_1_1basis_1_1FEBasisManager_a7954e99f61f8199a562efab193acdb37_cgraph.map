@@ -1,0 +1,9 @@
+<map id="dftefe::basis::FEBasisManager::reinit" name="dftefe::basis::FEBasisManager::reinit">
+<area shape="rect" id="node1" title=" " alt="" coords="5,113,203,153"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="304,5,489,45"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1basis_1_1FEBasisManagerInternal.html#ae57e10b323e84bf556fc7998c23f00ca" title=" " alt="" coords="284,70,509,125"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1FEBasisManagerInternal.html#a777e09e001b3314220879c7866ace999" title=" " alt="" coords="251,149,543,189"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="307,214,486,239"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1FEBasisDofHandler.html#a829eeb7836a91542d180d88adce4aa4f" title=" " alt="" coords="603,117,769,157"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1FEBasisDofHandler.html#aea4ec4e3ac306b04d977a3dd195f2fa6" title=" " alt="" coords="591,181,781,221"/>
+</map>

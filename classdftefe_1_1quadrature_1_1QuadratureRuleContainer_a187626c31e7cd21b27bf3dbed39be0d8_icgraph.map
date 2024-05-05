@@ -1,0 +1,4 @@
+<map id="dftefe::quadrature::QuadratureRuleContainer::getJxW" name="dftefe::quadrature::QuadratureRuleContainer::getJxW">
+<area shape="rect" id="node1" title="Function that returns a vector containing the Jacobian times quadrature weight for all the quad point..." alt="" coords="176,5,349,60"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1quadrature.html#a13a894c484cbef6a975cd195b1287fd9" title=" " alt="" coords="5,13,128,53"/>
+</map>

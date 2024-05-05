@@ -1,0 +1,6 @@
+<map id="dftefe::quadrature::integrate" name="dftefe::quadrature::integrate">
+<area shape="rect" id="node1" title=" " alt="" coords="5,91,128,131"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a187626c31e7cd21b27bf3dbed39be0d8" title="Function that returns a vector containing the Jacobian times quadrature weight for all the quad point..." alt="" coords="176,5,349,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a90cea91ab41710afaf049559dd20c57b" title="Function that returns a vector containing the real coordinates of the quad points in all cells." alt="" coords="176,84,349,139"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a8bb5c9166fbbe1fc86a3251dc873270d" title="A function to return the total number of quadrature points in all the cells." alt="" coords="176,163,349,217"/>
+</map>

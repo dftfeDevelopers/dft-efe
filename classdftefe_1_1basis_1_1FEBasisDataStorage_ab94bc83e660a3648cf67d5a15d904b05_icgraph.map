@@ -1,0 +1,5 @@
+<map id="dftefe::basis::FEBasisDataStorage::getBasisDataInCell" name="dftefe::basis::FEBasisDataStorage::getBasisDataInCell">
+<area shape="rect" id="node1" title=" " alt="" coords="515,13,699,53"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#a9245f8d7b2eade5e2f6f4ed278d206ad" title=" " alt="" coords="276,5,467,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#affadfb8f3e9e143aab49039ac72bdb20" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="5,5,228,60"/>
+</map>

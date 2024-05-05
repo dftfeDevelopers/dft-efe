@@ -1,0 +1,9 @@
+<map id="dftefe::electrostatics::LaplaceOperatorContextFE&lt; ValueTypeOperator, ValueTypeOperand, memorySpace, dim &gt;" name="dftefe::electrostatics::LaplaceOperatorContextFE&lt; ValueTypeOperator, ValueTypeOperand, memorySpace, dim &gt;">
+<area shape="rect" id="node1" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete operator on..." alt="" coords="912,77,1177,146"/>
+<area shape="rect" id="node2" title=" " alt="" coords="480,5,716,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisManager.html" title=" " alt="" coords="465,84,731,139"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1BasisManager.html" title="An abstract class to encapsulate the partitioning of a basis across multiple processors." alt="" coords="5,31,264,71"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1BasisManager.html" title=" " alt="" coords="13,95,257,135"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html" title=" " alt="" coords="501,163,695,217"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1BasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="33,163,236,217"/>
+</map>

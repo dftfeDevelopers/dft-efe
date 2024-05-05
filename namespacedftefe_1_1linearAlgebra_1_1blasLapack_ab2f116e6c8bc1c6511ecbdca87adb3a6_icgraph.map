@@ -1,0 +1,11 @@
+<map id="dftefe::linearAlgebra::blasLapack::gemm" name="dftefe::linearAlgebra::blasLapack::gemm">
+<area shape="rect" id="node1" title=" " alt="" coords="572,170,709,210"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#a9245f8d7b2eade5e2f6f4ed278d206ad" title=" " alt="" coords="305,5,495,60"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a74a0587553f93b9b09d41addd6570539" title=" " alt="" coords="295,84,505,139"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a176fd0bf249a09c927b1e132fb41af67" title=" " alt="" coords="276,163,524,217"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#afa8d4140dc6528a366af56183858d5f7" title=" " alt="" coords="291,241,509,296"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a05eb96c5674646d78baefdc76a2d239e" title=" " alt="" coords="291,320,509,375"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#affadfb8f3e9e143aab49039ac72bdb20" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="5,5,228,60"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="9,249,224,289"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a78328125bd68f060135431e907f51a4a" title=" " alt="" coords="9,327,224,367"/>
+</map>

@@ -1,0 +1,27 @@
+<map id="src/basis/CFEBasisDataStorageDealii.h" name="src/basis/CFEBasisDataStorageDealii.h">
+<area shape="rect" id="node1" title=" " alt="" coords="434,5,643,45"/>
+<area shape="rect" id="node2" href="$CFEBasisDataStorageDealii_8cpp.html" title=" " alt="" coords="206,93,415,133"/>
+<area shape="rect" id="node3" href="$CFEOverlapOperatorContext_8h.html" title=" " alt="" coords="439,93,638,133"/>
+<area shape="rect" id="node25" href="$EFEBasisDofHandlerDealii_8t_8cpp.html" title=" " alt="" coords="795,357,997,397"/>
+<area shape="rect" id="node4" href="$CFEOverlapInverseOperatorContext_8h.html" title=" " alt="" coords="443,181,635,221"/>
+<area shape="rect" id="node6" href="$CFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="659,181,858,221"/>
+<area shape="rect" id="node7" href="$EnrichmentClassicalInterfaceSpherical_8h.html" title=" " alt="" coords="323,357,520,397"/>
+<area shape="rect" id="node22" href="$L2ProjectionLinearSolverFunction_8h.html" title=" " alt="" coords="230,181,418,221"/>
+<area shape="rect" id="node5" href="$CFEOverlapInverseOperatorContext_8cpp.html" title=" " alt="" coords="604,269,796,309"/>
+<area shape="rect" id="node8" href="$EFEBasisDofHandler_8h.html" title=" " alt="" coords="427,453,637,478"/>
+<area shape="rect" id="node19" href="$EnrichmentClassicalInterfaceSpherical_8cpp.html" title=" " alt="" coords="661,445,859,485"/>
+<area shape="rect" id="node20" href="$OrthoEFEOverlapOperatorContext_8t_8cpp.html" title=" " alt="" coords="222,445,402,485"/>
+<area shape="rect" id="node21" href="$PristineEFEOverlapOperatorContext_8t_8cpp.html" title=" " alt="" coords="5,445,197,485"/>
+<area shape="rect" id="node9" href="$EFEBasisDataStorageDealii_8h.html" title=" " alt="" coords="643,621,851,661"/>
+<area shape="rect" id="node11" href="$EFEBasisDofHandlerDealii_8h.html" title=" " alt="" coords="721,533,922,573"/>
+<area shape="rect" id="node13" href="$OrthoEFEOverlapInverseOpContextGLL_8h.html" title=" " alt="" coords="438,621,618,661"/>
+<area shape="rect" id="node15" href="$OrthoEFEOverlapOperatorContext_8h.html" title=" " alt="" coords="273,533,453,573"/>
+<area shape="rect" id="node17" href="$PristineEFEOverlapOperatorContext_8h.html" title=" " alt="" coords="13,533,205,573"/>
+<area shape="rect" id="node10" href="$EFEBasisDataStorageDealii_8cpp.html" title=" " alt="" coords="643,709,851,749"/>
+<area shape="rect" id="node12" href="$EFEBasisDofHandlerDealii_8cpp.html" title=" " alt="" coords="875,621,1077,661"/>
+<area shape="rect" id="node14" href="$OrthoEFEOverlapInverseOpContextGLL_8cpp.html" title=" " alt="" coords="438,709,618,749"/>
+<area shape="rect" id="node16" href="$OrthoEFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="234,621,414,661"/>
+<area shape="rect" id="node18" href="$PristineEFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="13,621,205,661"/>
+<area shape="rect" id="node23" href="$EnrichmentClassicalInterfaceSpherical_8t_8cpp.html" title=" " alt="" coords="383,269,580,309"/>
+<area shape="rect" id="node24" href="$L2ProjectionLinearSolverFunction_8cpp.html" title=" " alt="" coords="170,269,358,309"/>
+</map>

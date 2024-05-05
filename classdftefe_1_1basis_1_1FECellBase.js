@@ -1,0 +1,28 @@
+var classdftefe_1_1basis_1_1FECellBase =
+[
+    [ "~FECellBase", "classdftefe_1_1basis_1_1FECellBase.html#ad32c7a9f4fadf96881102bb48115a62b", null ],
+    [ "cellNodeIdtoGlobalNodeId", "classdftefe_1_1basis_1_1FECellBase.html#aee4825c183c3f359c376e9f3c109e26a", null ],
+    [ "center", "classdftefe_1_1basis_1_1FECellBase.html#ac5b6db7b6ee9ef8bbabd14fa74c4ca82", null ],
+    [ "clearCoarsenFlag", "classdftefe_1_1basis_1_1FECellBase.html#a27427563dcb513525e7a2e3a723c6736", null ],
+    [ "clearRefineFlag", "classdftefe_1_1basis_1_1FECellBase.html#ad8077c47852e955ac9d9caef5db84f4b", null ],
+    [ "diameter", "classdftefe_1_1basis_1_1FECellBase.html#a97c3f30cba25eacbdcfccfa1e21d00a5", null ],
+    [ "getDim", "classdftefe_1_1basis_1_1FECellBase.html#af91b5ef094c760ee8a9ccdd930ca85a3", null ],
+    [ "getFaceBoundaryId", "classdftefe_1_1basis_1_1FECellBase.html#a04dd0fa5f56fc299a84b33745d1de2e5", null ],
+    [ "getFaceDoFGlobalIndices", "classdftefe_1_1basis_1_1FECellBase.html#a5fd6d3c615ab02e32d53620f84694bbe", null ],
+    [ "getFEOrder", "classdftefe_1_1basis_1_1FECellBase.html#ad0cc77f3bd7a46f6fed5322600178977", null ],
+    [ "getId", "classdftefe_1_1basis_1_1FECellBase.html#a38ade891388a3ec4822610f3f1dc38db", null ],
+    [ "getNodalPoints", "classdftefe_1_1basis_1_1FECellBase.html#a632b66f8555fc817f532d1d96258d7aa", null ],
+    [ "getParametricPoint", "classdftefe_1_1basis_1_1FECellBase.html#ab1d238277c8330ae9544d1fc85dc90de", null ],
+    [ "getRealPoint", "classdftefe_1_1basis_1_1FECellBase.html#a0e1413d11ff00d97f4b199be2dee4921", null ],
+    [ "getVertex", "classdftefe_1_1basis_1_1FECellBase.html#ad3c291915304a042851b42b5ed153c75", null ],
+    [ "getVertices", "classdftefe_1_1basis_1_1FECellBase.html#af15d5585086e53aec31ed96ec46c9be6", null ],
+    [ "isActive", "classdftefe_1_1basis_1_1FECellBase.html#a6303502f3e4aa76670e63587db24f377", null ],
+    [ "isArtificial", "classdftefe_1_1basis_1_1FECellBase.html#ab1af521e530aeaba869105e353f8f4d0", null ],
+    [ "isAtBoundary", "classdftefe_1_1basis_1_1FECellBase.html#a90c01ea59580d19df7e10e4372463f9d", null ],
+    [ "isAtBoundary", "classdftefe_1_1basis_1_1FECellBase.html#a4c953597e2cceccd269256ecb5f9d319", null ],
+    [ "isGhost", "classdftefe_1_1basis_1_1FECellBase.html#a8a346ca1410fd4389572e3093425d6fe", null ],
+    [ "isLocallyOwned", "classdftefe_1_1basis_1_1FECellBase.html#a69c10f9ff22075950e24a3f23ed36e5a", null ],
+    [ "isPointInside", "classdftefe_1_1basis_1_1FECellBase.html#ab706b2ce5c32791653f8bf3599aa3434", null ],
+    [ "setCoarsenFlag", "classdftefe_1_1basis_1_1FECellBase.html#a3b077ef11f259dc2a6b058e9b245fa6c", null ],
+    [ "setRefineFlag", "classdftefe_1_1basis_1_1FECellBase.html#ad7fbaf59349ad0eca3cbd5ddd2539e67", null ]
+];

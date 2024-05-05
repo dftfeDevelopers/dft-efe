@@ -1,0 +1,10 @@
+<map id="dftefe::basis::FEBasisDataStorage::getBasisDofHandler" name="dftefe::basis::FEBasisDataStorage::getBasisDofHandler">
+<area shape="rect" id="node1" title=" " alt="" coords="603,131,792,171"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1EFEOverlapOperatorContextInternal.html#a9245f8d7b2eade5e2f6f4ed278d206ad" title=" " alt="" coords="330,5,521,60"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a5b6332b0df2bf34ddd05a98788a9d11d" title=" " alt="" coords="330,84,521,139"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#ab959c37f2267a1543c9edba1421f0369" title=" " alt="" coords="301,163,549,217"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a97a9a4c99198bde654c9049cd5c6802e" title=" " alt="" coords="296,241,555,296"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#affadfb8f3e9e143aab49039ac72bdb20" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="15,5,238,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#ae9ae58e3cd5940be7152232c1a758c8d" title="Constructor." alt="" coords="5,84,248,139"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a43e2e161aff7c3872ceea00ac880f38a" title="Constructor for getting the overlap matrix operator." alt="" coords="9,163,244,217"/>
+</map>

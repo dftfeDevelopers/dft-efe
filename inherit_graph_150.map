@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,225,161,265"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOperatorContext.html" title=" " alt="" coords="216,5,481,75"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete operator on..." alt="" coords="217,99,481,154"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html" title=" " alt="" coords="209,178,488,233"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete operator on..." alt="" coords="217,257,481,311"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete operator on..." alt="" coords="217,335,481,390"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1electrostatics_1_1LaplaceOperatorContextFE.html" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete operator on..." alt="" coords="216,415,481,484"/>
+</map>
