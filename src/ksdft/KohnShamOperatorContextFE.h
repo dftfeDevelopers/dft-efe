@@ -73,13 +73,13 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      using Storage =
-        dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
 
-      using HamiltonianPtrVariant = std::variant<Hamiltonian<float, memorySpace>*, 
-                                              Hamiltonian<double, memorySpace>*,
-                                              Hamiltonian<std::complex<float>, memorySpace>*,
-                                              Hamiltonian<std::complex<double>, memorySpace>*>;        
+      using HamiltonianPtrVariant =
+        std::variant<Hamiltonian<float, memorySpace> *,
+                     Hamiltonian<double, memorySpace> *,
+                     Hamiltonian<std::complex<float>, memorySpace> *,
+                     Hamiltonian<std::complex<double>, memorySpace> *>;
 
     public:
       /**
@@ -88,9 +88,9 @@ namespace dftefe
       KohnShamOperatorContextFE(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-            &feBasisManager,
+            &                                    feBasisManager,
         std::vector<const HamiltonianPtrVariant> hamiltonianVec,
-        const size_type maxCellTimesNumVecs);
+        const size_type                          maxCellTimesNumVecs);
 
       void
       apply(
@@ -100,8 +100,8 @@ namespace dftefe
     private:
       const basis::
         FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-          *d_feBasisManager;
-      Storage d_hamiltonianInAllCells;
+          *           d_feBasisManager;
+      Storage         d_hamiltonianInAllCells;
       const size_type d_maxCellTimesNumVecs;
       const size_type d_cellWiseDataSize;
     }; // end of class KohnShamOperatorContextFE

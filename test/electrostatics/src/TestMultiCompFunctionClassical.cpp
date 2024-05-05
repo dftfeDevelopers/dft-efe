@@ -127,7 +127,7 @@ int main()
     dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
     dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
     dist = std::sqrt(dist); 
-    if ( (centerPoint[0] < 1.0) || (dist < 1.0) )
+    if ( (dist < 1.0) )
     {
      (*triaCellIter)->setRefineFlag();
     }
@@ -238,13 +238,17 @@ int main()
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
-    dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer->getCellRealPoints(i))
+    for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
     {
-      std::vector<double> a{rho( j[0], j[1], j[2],0), rho( j[0], j[1], j[2],1)};
+      dftefe::size_type quadId = 0;
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
+      {
+        a[quadId] = rho( j[0], j[1], j[2], iComp);
+        quadId = quadId + 1;
+      }
       double *b = a.data();
-      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-      quadId = quadId + 1;
+      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
     }
   }
 
@@ -296,28 +300,28 @@ int main()
 //   }
 
 
-//   for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
-//     {
-//       // get cell dof global ids
-//       std::vector<dftefe::global_size_type> cellGlobalNodeIds;
-//       basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+  // for (dftefe::size_type iCell = 0; iCell < numLocallyOwnedCells ; iCell++)
+  //   {
+  //     // get cell dof global ids
+  //     std::vector<dftefe::global_size_type> cellGlobalNodeIds;
+  //     basisDofHandler->getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
 
-//       // loop over nodes of a cell
-//       for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
-//         {
-//           // If node not constrained then get the local id and coordinates of the node
-//           dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
-//          if( !basisManager->getConstraints().isConstrained(globalId))
-//          {
-//             dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
-//             basisManager->getBasisCenters(localId,nodeLoc);
-//             if(std::abs(*(solution->data()+localId) - *(vh->data()+localId)) > 0.5)
-//             {
-//               std::cout << "solution[" <<localId<<"] : "<< *(solution->data()+localId) << ","<<"exact["<<localId<<"] : "<<*(vh->data()+localId)<<" ("<<nodeLoc[0]<< " ,"<<nodeLoc[1]<< " ,"<<nodeLoc[1]<< " ," <<")\n";
-//             }
-//          }
-//         }
-//     }
+  //     // loop over nodes of a cell
+  //     for ( dftefe::size_type iNode = 0 ; iNode < cellGlobalNodeIds.size() ; iNode++)
+  //       {
+  //         // If node not constrained then get the local id and coordinates of the node
+  //         dftefe::global_size_type globalId = cellGlobalNodeIds[iNode];
+  //        if( !basisManager->getConstraints().isConstrained(globalId))
+  //        {
+  //           dftefe::size_type localId = basisManager->globalToLocalIndex(globalId) ;
+  //           basisManager->getBasisCenters(localId,nodeLoc);
+  //           if(std::abs(*(solution->data()+localId) - *(vh->data()+localId)) > 0.5)
+  //           {
+  //             std::cout << "solution[" <<localId<<"] : "<< *(solution->data()+localId) << ","<<"exact["<<localId<<"] : "<<*(vh->data()+localId)<<" ("<<nodeLoc[0]<< " ,"<<nodeLoc[1]<< " ,"<<nodeLoc[1]<< " ," <<")\n";
+  //           }
+  //        }
+  //       }
+  //   }
 
   //gracefully end MPI
 

@@ -10,7 +10,6 @@
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleContainer.h>
-#include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FECellWiseDataOperations.h>
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>

@@ -104,10 +104,10 @@ namespace dftefe
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
         const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
-        std::vector<quadrature::QuadratureValuesContainer<
+        quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
-          memorySpace>> &quadValuesContainerVec) const override;
+          memorySpace> &quadValuesContainer) const override;
 
       void
       integrateWithBasisValues(

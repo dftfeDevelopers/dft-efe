@@ -83,7 +83,7 @@ namespace dftefe
       template <utils::MemorySpace memorySpaceSrc>
       void
       setCellQuadValues(const size_type  cellId,
-                        const size_type  quadId,
+                        const size_type  componentId,
                         const ValueType *values);
 
       template <utils::MemorySpace memorySpaceDst>
@@ -93,7 +93,7 @@ namespace dftefe
       template <utils::MemorySpace memorySpaceDst>
       void
       getCellQuadValues(const size_type cellId,
-                        const size_type quadId,
+                        const size_type componentId,
                         ValueType *     values) const;
 
       std::shared_ptr<const QuadratureRuleContainer>

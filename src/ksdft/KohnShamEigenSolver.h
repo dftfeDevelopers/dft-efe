@@ -87,15 +87,14 @@ namespace dftefe
        * Kohn Sham Orbitals occupied if occupationTolerance < f_i(from
        * diftribution) < 1-1e-12
        */
-      KohnShamEigenSolver(
-        const std::vector<RealType>     &occupation, /*f_i's*/
-        const double                    occupationTolerance,
-        const double                    residualTolerance,
-        const size_type                 chebyshevPolynomialDegree,
-        const size_type                 maxChebyshevFilterPass,
-        const MultiVector<ValueTypeOperand, memorySpace>
-          &             waveFunctionSubspaceGuess,
-        const size_type waveFunctionBlockSize = 0);
+      KohnShamEigenSolver(const std::vector<RealType> &occupation, /*f_i's*/
+                          const double                 occupationTolerance,
+                          const double                 residualTolerance,
+                          const size_type chebyshevPolynomialDegree,
+                          const size_type maxChebyshevFilterPass,
+                          const MultiVector<ValueTypeOperand, memorySpace>
+                            &             waveFunctionSubspaceGuess,
+                          const size_type waveFunctionBlockSize = 0);
 
       /**
        *@brief Default Destructor
@@ -105,9 +104,9 @@ namespace dftefe
 
       void
       reinit(const std::vector<RealType> &occupationDistribution,
-             const double                     occupationTolerance,
-             const double                     residualTolerance,
-             const size_type                  maxChebyshevFilterPass,
+             const double                 occupationTolerance,
+             const double                 residualTolerance,
+             const size_type              maxChebyshevFilterPass,
              const MultiVector<ValueTypeOperand, memorySpace>
                &             waveFunctionSubspaceGuess,
              const size_type waveFunctionBlockSize = 0);

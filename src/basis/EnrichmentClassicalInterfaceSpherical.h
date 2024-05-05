@@ -42,7 +42,6 @@
 #include <basis/FEBasisDataStorage.h>
 #include <basis/CFEOverlapOperatorContext.h>
 #include <basis/FEBasisOperations.h>
-#include <quadrature/QuadratureValuesContainer.h>
 #include <basis/AtomIdsPartition.h>
 #include <atoms/AtomSphericalDataContainer.h>
 #include <basis/EnrichmentIdsPartition.h>

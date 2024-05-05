@@ -264,13 +264,17 @@ int main()
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
-    dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer->getCellRealPoints(i))
+    for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
     {
-      double a = rho( j[0], j[1], j[2]);
-      double *b = &a;
-      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-      quadId = quadId + 1;
+      dftefe::size_type quadId = 0;
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
+      {
+        a[quadId] = rho( j[0], j[1], j[2]);
+        quadId = quadId + 1;
+      }
+      double *b = a.data();
+      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
     }
   }
 

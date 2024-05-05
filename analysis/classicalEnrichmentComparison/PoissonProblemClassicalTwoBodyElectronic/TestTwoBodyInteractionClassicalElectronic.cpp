@@ -575,24 +575,26 @@ dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace
     dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> 
       quadValuesContainerNumerical(quadRuleContainer, numComponents);
 
-  for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
-  {
-    dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer->getCellRealPoints(i))
+    for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
     {
-      std::vector<double> a(numComponents, 0);
-      for (unsigned int k = 0 ; k < numComponents ; k++)
-      if(atomsVecInDomain[iProb].size() == 1)
-        a[k] = bSmear( j, atomsVecInDomain[iProb], rc) * (4*M_PI) * (1.0/mpiReducedSmearedChargeDensity[iProb]);
-      else
-        a[k] = (bSmear( j, atomsVecInDomain[iProb], rc)* (1.0*atomsVecInDomain[iProb].size()/mpiReducedSmearedChargeDensity[iProb])
-          + std::abs(1.0*atomsVecInDomain[iProb].size()/mpiReducedTotalElectronicChargeDensity)
-          * rho(j, atomsVecInDomain[iProb], spline)) * (4*M_PI);
+    for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
+    {
+      dftefe::size_type quadId = 0;
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
+      {
+        if(atomsVecInDomain[iProb].size() == 1)
+          a[quadId] = bSmear( j, atomsVecInDomain[iProb], rc) * (4*M_PI) * (1.0/mpiReducedSmearedChargeDensity[iProb]);
+        else
+          a[quadId] = (bSmear( j, atomsVecInDomain[iProb], rc)* (1.0*atomsVecInDomain[iProb].size()/mpiReducedSmearedChargeDensity[iProb])
+            + std::abs(1.0*atomsVecInDomain[iProb].size()/mpiReducedTotalElectronicChargeDensity)
+            * rho(j, atomsVecInDomain[iProb], spline)) * (4*M_PI);
+          quadId = quadId + 1;
+      }
       double *b = a.data();
-      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-      quadId = quadId + 1;
+      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
     }
-  }
+    }
 
   std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                    double,

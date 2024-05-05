@@ -51,15 +51,18 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticFE : public Hamiltonian<linearAlgebra::blasLapack::scalar_type
-        <ValueTypeBasisData, ValueTypeBasisCoeff>, memorySpace>,
-          public Energy<linearAlgebra::blasLapack::scalar_type
-                        <ValueTypeBasisData, ValueTypeBasisCoeff>>
+    class ElectrostaticFE
+      : public Hamiltonian<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                 ValueTypeBasisCoeff>,
+          memorySpace>,
+        public Energy<linearAlgebra::blasLapack::
+                        scalar_type<ValueTypeBasisData, ValueTypeBasisCoeff>>
     {
     public:
-
-      using ValueType = linearAlgebra::blasLapack::scalar_type
-                        <ValueTypeBasisData, ValueTypeBasisCoeff>;
+      using ValueType =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                               ValueTypeBasisCoeff>;
       using Storage = Hamiltonian<ValueType, memorySpace>::Storage;
 
     public:

@@ -41,15 +41,17 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class KineticFE : public Hamiltonian<ValueTypeBasisData, memorySpace>,
-                      public Energy<linearAlgebra::blasLapack::scalar_type
-                        <ValueTypeBasisData, ValueTypeBasisCoeff>>
+    class KineticFE
+      : public Hamiltonian<ValueTypeBasisData, memorySpace>,
+        public Energy<linearAlgebra::blasLapack::
+                        scalar_type<ValueTypeBasisData, ValueTypeBasisCoeff>>
     {
     public:
       using Storage = Hamiltonian<ValueTypeBasisData, memorySpace>::Storage;
 
-      using ValueType = <linearAlgebra::blasLapack::scalar_type
-                        <ValueTypeBasisData, ValueTypeBasisCoeff>;
+      using ValueType =
+        < linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                 ValueTypeBasisCoeff>;
 
     public:
       /**
@@ -61,7 +63,7 @@ namespace dftefe
       void
       getLocal(Storage cellWiseStorage) const override;
       void
-      evalEnergy(const std::vector<RealType>               &orbitalOccupancy,
+      evalEnergy(const std::vector<RealType> &              orbitalOccupancy,
                  const MultiVector<ValueType, memorySpace> &waveFunction) const;
       RealType<ValueType>
       getEnergy() const override;

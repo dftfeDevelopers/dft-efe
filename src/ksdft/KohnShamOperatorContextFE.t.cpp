@@ -270,24 +270,24 @@ namespace dftefe
       KohnShamOperatorContextFE(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-            &feBasisManager,
+            &                                    feBasisManager,
         std::vector<const HamiltonianPtrVariant> hamiltonianComponentsVec,
-        const size_type maxCellTimesNumVecs)
+        const size_type                          maxCellTimesNumVecs)
       : d_feBasisManager(&feBasisManager)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {
-        const size_type numLocallyOwnedCells =
-          feBasisManager.nLocallyOwnedCells();
+      const size_type numLocallyOwnedCells =
+        feBasisManager.nLocallyOwnedCells();
 
-        d_cellWiseDataSize = 0;
+      d_cellWiseDataSize = 0;
 
-        for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
-          {
-            size_type x = feBasisManager.nLocallyOwnedCellDofs(iCell);
-            d_cellWiseDataSize += x * x;
-          }
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+        {
+          size_type x = feBasisManager.nLocallyOwnedCellDofs(iCell);
+          d_cellWiseDataSize += x * x;
+        }
 
-        reinit(hamiltonianComponentsVec);
+      reinit(hamiltonianComponentsVec);
     }
 
 
@@ -303,105 +303,117 @@ namespace dftefe
                               dim>::
       reinit(std::vector<const HamiltonianPtrVariant> hamiltonianComponentsVec)
     {
-        d_hamiltonianInAllCells(d_cellWiseDataSize, (ValueType)0);
+      d_hamiltonianInAllCells(d_cellWiseDataSize, (ValueType)0);
 
-        for(unsigned int i = 0; i < hamiltonianComponentsVec.size(); ++i)
+      for (unsigned int i = 0; i < hamiltonianComponentsVec.size(); ++i)
         {
           try
-          {
-            if(std::holds_alternative<Hamiltonian<double,memorySpace>*>(hamiltonianComponentsVec[i]))
             {
-              const Hamiltonian<double,memorySpace> & b = 
-                *(std::get<Hamiltonian<double,memorySpace>*>(hamiltonianComponentsVec.at(i)));
-              utils::MemoryStorage<double, memorySpace> temp(0);
-              i->getLocal(temp);
+              if (std::holds_alternative<Hamiltonian<double, memorySpace> *>(
+                    hamiltonianComponentsVec[i]))
+                {
+                  const Hamiltonian<double, memorySpace> &b =
+                    *(std::get<Hamiltonian<double, memorySpace> *>(
+                      hamiltonianComponentsVec.at(i)));
+                  utils::MemoryStorage<double, memorySpace> temp(0);
+                  i->getLocal(temp);
 
-              utils::throwException(
-                temp.size() == d_cellWiseDataSize,
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == d_cellWiseDataSize,
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::axpby
-                  <ValueType, double, memorySpace>
-                  (d_cellWiseDataSize,
-                  (ValueType)1.0,
-                  temp.data(),
-                  (double)1.0,
-                  d_hamiltonianInAllCells.data(),
-                  d_hamiltonianInAllCells.data(),
-                  linAlgOpContext);
+                  linearAlgebra::blasLapack::
+                    axpby<ValueType, double, memorySpace>(
+                      d_cellWiseDataSize,
+                      (ValueType)1.0,
+                      temp.data(),
+                      (double)1.0,
+                      d_hamiltonianInAllCells.data(),
+                      d_hamiltonianInAllCells.data(),
+                      linAlgOpContext);
+                }
+              else if (std::holds_alternative<Hamiltonian<float, a> *>(
+                         hamiltonianComponentsVec[i]))
+                {
+                  const Hamiltonian<float, memorySpace> &b =
+                    *(std::get<Hamiltonian<float, memorySpace> *>(
+                      hamiltonianComponentsVec.at(i)));
+                  utils::MemoryStorage<float, memorySpace> temp(0);
+                  i->getLocal(temp);
+
+                  utils::throwException(
+                    temp.size() == d_cellWiseDataSize,
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+
+                  linearAlgebra::blasLapack::
+                    axpby<ValueType, float, memorySpace>(
+                      d_cellWiseDataSize,
+                      (ValueType)1.0,
+                      temp.data(),
+                      (float)1.0,
+                      d_hamiltonianInAllCells.data(),
+                      d_hamiltonianInAllCells.data(),
+                      linAlgOpContext);
+                }
+              else if (std::holds_alternative<
+                         Hamiltonian<std::complex<float>, a> *>(
+                         hamiltonianComponentsVec[i]))
+                {
+                  const Hamiltonian<std::complex<float>, memorySpace> &b =
+                    *(std::get<Hamiltonian<std::complex<float>, memorySpace> *>(
+                      hamiltonianComponentsVec.at(i)));
+                  utils::MemoryStorage<std::complex<float>, memorySpace> temp(
+                    0);
+                  i->getLocal(temp);
+
+                  utils::throwException(
+                    temp.size() == d_cellWiseDataSize,
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+
+                  linearAlgebra::blasLapack::
+                    axpby<ValueType, std::complex<float>, memorySpace>(
+                      d_cellWiseDataSize,
+                      (ValueType)1.0,
+                      temp.data(),
+                      (std::complex<float>)1.0,
+                      d_hamiltonianInAllCells.data(),
+                      d_hamiltonianInAllCells.data(),
+                      linAlgOpContext);
+                }
+              else if (std::holds_alternative<
+                         Hamiltonian<std::complex<double>, a> *>(
+                         hamiltonianComponentsVec[i]))
+                {
+                  const Hamiltonian<std::complex<double>, memorySpace> &b = *(
+                    std::get<Hamiltonian<std::complex<double>, memorySpace> *>(
+                      hamiltonianComponentsVec.at(i)));
+                  utils::MemoryStorage<std::complex<double>, memorySpace> temp(
+                    0);
+                  i->getLocal(temp);
+
+                  utils::throwException(
+                    temp.size() == d_cellWiseDataSize,
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+
+                  linearAlgebra::blasLapack::
+                    axpby<ValueType, std::complex<double>, memorySpace>(
+                      d_cellWiseDataSize,
+                      (ValueType)1.0,
+                      temp.data(),
+                      (std::complex<double>)1.0,
+                      d_hamiltonianInAllCells.data(),
+                      d_hamiltonianInAllCells.data(),
+                      linAlgOpContext);
+                }
             }
-            else if(std::holds_alternative<Hamiltonian<float,a>*>(hamiltonianComponentsVec[i]))
+          catch (std::bad_variant_access const &ex)
             {
-              const Hamiltonian<float,memorySpace> & b = 
-                *(std::get<Hamiltonian<float,memorySpace>*>(hamiltonianComponentsVec.at(i)));
-              utils::MemoryStorage<float, memorySpace> temp(0);
-              i->getLocal(temp);
-
-              utils::throwException(
-                temp.size() == d_cellWiseDataSize,
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
-
-              linearAlgebra::blasLapack::axpby
-                  <ValueType, float, memorySpace>
-                  (d_cellWiseDataSize,
-                  (ValueType)1.0,
-                  temp.data(),
-                  (float)1.0,
-                  d_hamiltonianInAllCells.data(),
-                  d_hamiltonianInAllCells.data(),
-                  linAlgOpContext);
+              std::cout << ex.what() << std::endl;
             }
-            else if(std::holds_alternative<Hamiltonian<std::complex<float>,a>*>(hamiltonianComponentsVec[i]))
-            {
-              const Hamiltonian<std::complex<float>,memorySpace> & b = 
-                *(std::get<Hamiltonian<std::complex<float>,memorySpace>*>(hamiltonianComponentsVec.at(i)));
-              utils::MemoryStorage<std::complex<float>, memorySpace> temp(0);
-              i->getLocal(temp);
-
-              utils::throwException(
-                temp.size() == d_cellWiseDataSize,
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
-
-              linearAlgebra::blasLapack::axpby
-                  <ValueType, std::complex<float>, memorySpace>
-                  (d_cellWiseDataSize,
-                  (ValueType)1.0,
-                  temp.data(),
-                  (std::complex<float>)1.0,
-                  d_hamiltonianInAllCells.data(),
-                  d_hamiltonianInAllCells.data(),
-                  linAlgOpContext);
-            }
-            else if(std::holds_alternative<Hamiltonian<std::complex<double>,a>*>(hamiltonianComponentsVec[i]))
-            {
-              const Hamiltonian<std::complex<double>,memorySpace> & b = 
-                *(std::get<Hamiltonian<std::complex<double>,memorySpace>*>(hamiltonianComponentsVec.at(i)));
-              utils::MemoryStorage<std::complex<double>, memorySpace> temp(0);
-              i->getLocal(temp);
-
-              utils::throwException(
-                temp.size() == d_cellWiseDataSize,
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
-
-              linearAlgebra::blasLapack::axpby
-                  <ValueType, std::complex<double>, memorySpace>
-                  (d_cellWiseDataSize,
-                  (ValueType)1.0,
-                  temp.data(),
-                  (std::complex<double>)1.0,
-                  d_hamiltonianInAllCells.data(),
-                  d_hamiltonianInAllCells.data(),
-                  linAlgOpContext);
-            }
-          }
-          catch(std::bad_variant_access const& ex)
-          {
-            std::cout << ex.what() << std::endl;
-          }
         }
     }
 

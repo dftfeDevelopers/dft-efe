@@ -40,18 +40,21 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticAllElectronFE : public ElectrostaticFE<ValueTypeBasisData,
-                                                              ValueTypeBasisCoeff,
-                                                              memorySpace,
-                                                              dim>
+    class ElectrostaticAllElectronFE
+      : public ElectrostaticFE<ValueTypeBasisData,
+                               ValueTypeBasisCoeff,
+                               memorySpace,
+                               dim>
     {
     public:
-      using ValueType = 
-        ElectrostaticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-          ValueType;
-      using Storage =
-        ElectrostaticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-          Storage;
+      using ValueType = ElectrostaticFE<ValueTypeBasisData,
+                                        ValueTypeBasisCoeff,
+                                        memorySpace,
+                                        dim>::ValueType;
+      using Storage   = ElectrostaticFE<ValueTypeBasisData,
+                                      ValueTypeBasisCoeff,
+                                      memorySpace,
+                                      dim>::Storage;
 
     public:
       /**

@@ -448,17 +448,21 @@ int main()
     dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> quadValuesContainerNumerical(quadRuleContainer, numComponents);
 
 
-    for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
+  for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
+  {
+    for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
     {
-        dftefe::size_type quadId = 0;
-        for (auto j : quadRuleContainer->getCellRealPoints(i))
-        {
-            double a = rho( j, atomCoordinatesVec, rc);
-            double *b = &a;
-            quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-            quadId = quadId + 1;
-        }
+      dftefe::size_type quadId = 0;
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
+      {
+        a[quadId] = rho( j, atomCoordinatesVec, rc);
+        quadId = quadId + 1;
+      }
+      double *b = a.data();
+      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
     }
+  }
 
     std::shared_ptr<dftefe::linearAlgebra::LinearSolverFunction<double,
                                                     double,
@@ -493,17 +497,21 @@ int main()
 
     linearSolverFunction->getSolution(*solution);
 
-    for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
+  for(dftefe::size_type i = 0 ; i < quadValuesContainerAnalytical.nCells() ; i++)
+  {
+    for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
     {
-        dftefe::size_type quadId = 0;
-        for (auto j : quadRuleContainer->getCellRealPoints(i))
-        {
-            double a = potential( j, atomCoordinatesVec, rc);
-            double *b = &a;
-            quadValuesContainerAnalytical.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-            quadId = quadId + 1;
-        }
+      dftefe::size_type quadId = 0;
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
+      {
+        a[quadId] = potential( j, atomCoordinatesVec, rc);
+        quadId = quadId + 1;
+      }
+      double *b = a.data();
+      quadValuesContainerAnalytical.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
     }
+  }
 
     feBasisOp.interpolate( *solution, *basisManager, quadValuesContainerNumerical);
 

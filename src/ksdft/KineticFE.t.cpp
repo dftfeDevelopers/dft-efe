@@ -31,9 +31,9 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::KineticFE(
-      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
-        &feBasisDataStorage)
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      KineticFE(const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
+                  &feBasisDataStorage)
       : d_feBasisDataStorage(&feBasisDataStorage)
     {}
 
@@ -45,14 +45,17 @@ namespace dftefe
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getHamiltonian(Storage cellWiseStorage) const
     {
-
-      basis::FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim> 
+      basis::FEBasisOperations<ValueTypeBasisCoeff,
+                               ValueTypeBasisData,
+                               memorySpace,
+                               dim>
         feBasisOp(feBasisDataStorage, cellBlockSize);
 
-      feBasisOp.computeFEMatrices(dftefe::basis::realspace::LinearLocalOp::GRAD, 
-        dftefe::basis::realspace::VectorMathOp::DOT, dftefe::basis::realspace::
-          LinearLocalOp::GRAD, cellWiseStorage, *linAlgOpContext);
-
+      feBasisOp.computeFEMatrices(dftefe::basis::realspace::LinearLocalOp::GRAD,
+                                  dftefe::basis::realspace::VectorMathOp::DOT,
+                                  dftefe::basis::realspace::LinearLocalOp::GRAD,
+                                  cellWiseStorage,
+                                  *linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -61,7 +64,7 @@ namespace dftefe
               size_type          dim>
     void
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      evalEnergy(const std::vector<RealType<ValueType>>    &occupation,
+      evalEnergy(const std::vector<RealType<ValueType>> &   occupation,
                  const MultiVector<ValueType, memorySpace> &waveFunction) const
     {
       d_energy = /*\sum f_i c_i^2 \integral \grad N_i \grad N_i*/
