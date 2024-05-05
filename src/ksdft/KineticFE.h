@@ -37,48 +37,37 @@ namespace dftefe
 {
   namespace ksdft
   {
-    /**
-     *@brief A derived class of linearAlgebra::OperatorContext to encapsulate
-     * the action of a discrete operator on vectors, matrices, etc.
-     *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
-     * on which the operator will act
-     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNED, etc.) in which the data of the operator
-     * and its operands reside
-     *
-     */
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class KineticFE : public Hamiltonian<ValueTypeOperator, memorySpace>,
-                      public Energy<ValueTypeOperator>
+    class KineticFE : public Hamiltonian<ValueTypeBasisData, memorySpace>,
+                      public Energy<linearAlgebra::blasLapack::scalar_type
+                        <ValueTypeBasisData, ValueTypeBasisCoeff>>
     {
     public:
-      using Storage = Hamiltonian<ValueTypeOperator, memorySpace>::Storage;
+      using Storage = Hamiltonian<ValueTypeBasisData, memorySpace>::Storage;
+
+      using ValueType = <linearAlgebra::blasLapack::scalar_type
+                        <ValueTypeBasisData, ValueTypeBasisCoeff>;
 
     public:
       /**
        * @brief Constructor
        */
-      KineticFE(const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+      KineticFE(const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
                   &feBasisDataStorage);
 
-      Storage
-      getLocal() const override;
       void
-      evalEnergy(const std::vector<RealType> &orbitalOccupancy,
-                 const std::vector<RealType> &eigenEnergy,
-                 const Storage &              density,
-                 const Storage &              kohnShamPotential) const;
+      getLocal(Storage cellWiseStorage) const override;
       void
-      evalEnergy(const std::vector<RealType> &              orbitalOccupancy,
+      evalEnergy(const std::vector<RealType>               &orbitalOccupancy,
                  const MultiVector<ValueType, memorySpace> &waveFunction) const;
-      RealType
+      RealType<ValueType>
       getEnergy() const override;
 
     private:
-      const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
         *d_feBasisDataStorage;
     }; // end of class KineticFE
   }    // end of namespace ksdft

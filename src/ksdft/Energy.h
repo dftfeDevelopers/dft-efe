@@ -34,7 +34,7 @@ namespace dftefe
     class Energy
     {
     public:
-      virtual RealType
+      virtual RealType<ValueType>
       getEnergy() const = 0;
 
     }; // end of Energy

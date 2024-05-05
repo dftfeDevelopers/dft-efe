@@ -47,22 +47,27 @@ namespace dftefe
      * and its operands reside
      *
      */
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticFE : public Hamiltonian<ValueTypeOperator, memorySpace>,
-                            public Energy<ValueTypeOperator>
+    class ElectrostaticFE : public Hamiltonian<linearAlgebra::blasLapack::scalar_type
+        <ValueTypeBasisData, ValueTypeBasisCoeff>, memorySpace>,
+          public Energy<linearAlgebra::blasLapack::scalar_type
+                        <ValueTypeBasisData, ValueTypeBasisCoeff>>
     {
     public:
-      using Storage = Hamiltonian<ValueTypeOperator, memorySpace>::Storage;
+
+      using ValueType = linearAlgebra::blasLapack::scalar_type
+                        <ValueTypeBasisData, ValueTypeBasisCoeff>;
+      using Storage = Hamiltonian<ValueType, memorySpace>::Storage;
 
     public:
-      virtual Storage
-      getHamiltonian() const = 0;
+      virtual void
+      getHamiltonian(Storage cellWiseStorage) const = 0;
       virtual void
       evalEnergy() const = 0;
-      virtual RealType
+      virtual RealType<ValueType>
       getEnergy() const = 0;
 
     }; // end of class ElectrostaticFE

@@ -36,6 +36,7 @@
 #include <basis/FEBasisDataStorage.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <memory>
+#include <variant>
 
 namespace dftefe
 {
@@ -43,7 +44,7 @@ namespace dftefe
   {
     /**
      *@brief A derived class of linearAlgebra::OperatorContext to encapsulate
-     * the action of a discrete operator on vectors, matrices, etc.
+     * the action of a discrete Kohn-Sham operator on vectors.
      *
      * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
      * @tparam ValueTypeOperand The datatype (float, double, complex<double>, etc.) of the vector, matrices, etc.
@@ -54,6 +55,7 @@ namespace dftefe
      */
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class KohnShamOperatorContextFE
@@ -71,19 +73,23 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
+      using Storage =
+        dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+
+      using HamiltonianPtrVariant = std::variant<Hamiltonian<float, memorySpace>*, 
+                                              Hamiltonian<double, memorySpace>*,
+                                              Hamiltonian<std::complex<float>, memorySpace>*,
+                                              Hamiltonian<std::complex<double>, memorySpace>*>;        
+
     public:
       /**
        * @brief Constructor
        */
       KohnShamOperatorContextFE(
         const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            &feBasisManagerX,
-        const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            &feBasisManagerY,
-        std::vector<const Hamiltonian<ValueTypeOperator, memorySpace> *>
-                        hamiltonianVec,
+          FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
+            &feBasisManager,
+        std::vector<const HamiltonianPtrVariant> hamiltonianVec,
         const size_type maxCellTimesNumVecs);
 
       void
@@ -93,14 +99,11 @@ namespace dftefe
 
     private:
       const basis::
-        FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          *d_feBasisManagerX;
-      const basis::
-        FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          *d_feBasisManagerY;
-      const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *             d_feBasisDataStorage;
+        FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
+          *d_feBasisManager;
+      Storage d_hamiltonianInAllCells;
       const size_type d_maxCellTimesNumVecs;
+      const size_type d_cellWiseDataSize;
     }; // end of class KohnShamOperatorContextFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

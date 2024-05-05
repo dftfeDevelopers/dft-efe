@@ -34,12 +34,8 @@ namespace dftefe
     class Hamiltonian
     {
     public:
-      using Storage =
-        dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
-
-    public:
-      virtual Storage
-      getLocal() const = 0;
+      virtual void
+      getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace> cellWiseStorage) const = 0;
 
       // virtual void
       // applyNonLocal(const linearAlgebra::MultiVector<ValueTypeBasisCoeff,

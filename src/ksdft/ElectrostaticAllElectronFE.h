@@ -36,28 +36,21 @@ namespace dftefe
 {
   namespace ksdft
   {
-    /**
-     *@brief A derived class of linearAlgebra::OperatorContext to encapsulate
-     * the action of a discrete operator on vectors, matrices, etc.
-     *
-     * @tparam ValueTypeOperator The datatype (float, double, complex<double>, etc.) for the underlying operator
-     * on which the operator will act
-     * @tparam memorySpace The meory sapce (HOST, DEVICE, HOST_PINNED, etc.) in which the data of the operator
-     * and its operands reside
-     *
-     */
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticAllElectronFE : public ElectrostaticFE<ValueTypeOperator,
-                                                              ValueTypeOperand,
+    class ElectrostaticAllElectronFE : public ElectrostaticFE<ValueTypeBasisData,
+                                                              ValueTypeBasisCoeff,
                                                               memorySpace,
                                                               dim>
     {
     public:
+      using ValueType = 
+        ElectrostaticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+          ValueType;
       using Storage =
-        ElectrostaticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
+        ElectrostaticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
           Storage;
 
     public:
@@ -65,18 +58,18 @@ namespace dftefe
        * @brief Constructor
        */
       ElectrostaticAllElectronFE(
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
           &feBasisDataStorage);
 
-      Storage
-      getLocal() const override;
       void
-      evalEnergy() const override;
-      RealType
+      getLocal(Storage cellWiseStorage) const override;
+      void
+      evalEnergy() const;
+      RealType<ValueType>
       getEnergy() const override;
 
     private:
-      const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
         *d_feBasisDataStorage;
     }; // end of class ElectrostaticAllElectronFE
   }    // end of namespace ksdft

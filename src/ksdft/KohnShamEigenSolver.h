@@ -88,7 +88,7 @@ namespace dftefe
        * diftribution) < 1-1e-12
        */
       KohnShamEigenSolver(
-        const utils::ScalarFunctionReal occupationDistribution,
+        const std::vector<RealType>     &occupation, /*f_i's*/
         const double                    occupationTolerance,
         const double                    residualTolerance,
         const size_type                 chebyshevPolynomialDegree,
@@ -104,7 +104,7 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(const utils::ScalarFunctionReal &occupationDistribution,
+      reinit(const std::vector<RealType> &occupationDistribution,
              const double                     occupationTolerance,
              const double                     residualTolerance,
              const size_type                  maxChebyshevFilterPass,

@@ -27,64 +27,52 @@ namespace dftefe
 {
   namespace ksdft
   {
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    KineticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::KineticFE(
-      const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::KineticFE(
+      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
         &feBasisDataStorage)
       : d_feBasisDataStorage(&feBasisDataStorage)
     {}
 
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    Storage
-    KineticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
-      getHamiltonian() const
-    {
-      return d_feBasisDataStorage->getGradNiNjInAllCells();
-    }
-
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    KineticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
-      evalEnergy(const std::vector<RealType> &orbitalOccupancy,
-                 const std::vector<RealType> &eigenEnergy,
-                 const Storage &              density,
-                 const Storage &              kohnShamPotential) const
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      getHamiltonian(Storage cellWiseStorage) const
     {
-      RealType bandEnergy;
-      for (size_Type i = 0; i < orbitalOccupancy.size(); i++)
-        {
-          bandEnergy += orbitalOccupancy[i] * eigenEnergy[i];
-        }
-      d_energy = 2 * bandEnergy - kohnShamEnergy;
+
+      basis::FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim> 
+        feBasisOp(feBasisDataStorage, cellBlockSize);
+
+      feBasisOp.computeFEMatrices(dftefe::basis::realspace::LinearLocalOp::GRAD, 
+        dftefe::basis::realspace::VectorMathOp::DOT, dftefe::basis::realspace::
+          LinearLocalOp::GRAD, cellWiseStorage, *linAlgOpContext);
+
     }
 
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    KineticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
-      evalEnergy(const std::vector<RealType> &              orbitalOccupancy,
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      evalEnergy(const std::vector<RealType<ValueType>>    &occupation,
                  const MultiVector<ValueType, memorySpace> &waveFunction) const
     {
       d_energy = /*\sum f_i c_i^2 \integral \grad N_i \grad N_i*/
     }
 
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     RealType
-    KineticFE<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>::
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getEnergy() const
     {
       return d_energy;
