@@ -39,7 +39,6 @@
 #include <quadrature/QuadratureRuleGauss.h>
 #include <quadrature/QuadratureRuleGLL.h>
 #include <quadrature/QuadratureRuleAdaptive.h>
-#include <quadrature/QuadratureValuesContainer.h>
 #include <memory>
 #include <map>
 #include <vector>

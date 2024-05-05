@@ -27,6 +27,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <basis/L2ProjectionLinearSolverFunction.h>
+#include <quadrature/QuadratureValuesContainer.h>
 #include <utils/ScalarSpatialFunction.h>
 #include <linearAlgebra/CGLinearSolver.h>
 #include <algorithm>
@@ -231,37 +232,38 @@ namespace dftefe
             cfeBasisDataStorageRhs->getQuadratureRuleContainer()
               ->getCellRealPoints(cellIndex);
 
-          for (unsigned int qPoint = 0; qPoint < nQuadPointInCell; qPoint++)
+          // if the cell has enrichment ids then get the values of them at
+          // the quadpoints
+          for (auto enrichmentId : d_overlappingEnrichmentIdsInCells[cellIndex])
             {
               std::vector<ValueTypeBasisData> enrichmentQuadValue(0);
-              enrichmentQuadValue.resize(nTotalEnrichmentIds,
+              enrichmentQuadValue.resize(nQuadPointInCell,
                                          (ValueTypeBasisData)0);
-              // if the cell has enrichment ids then get the values of them at
-              // the quadpoints
-              for (auto enrichmentId :
-                   d_overlappingEnrichmentIdsInCells[cellIndex])
+
+              size_type atomId =
+                d_enrichmentIdsPartition->getAtomId(enrichmentId);
+              size_type qNumberId =
+                (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+                   enrichmentId))
+                  .localIdInAtom;
+              std::string  atomSymbol = d_atomSymbolVec[atomId];
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
+              std::vector<std::vector<int>> qNumbers(0);
+              qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
+                                                                   d_fieldName);
+              auto sphericalData =
+                d_atomSphericalDataContainer->getSphericalData(
+                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
+
+              for (unsigned int qPoint = 0; qPoint < nQuadPointInCell; qPoint++)
                 {
-                  size_type atomId =
-                    d_enrichmentIdsPartition->getAtomId(enrichmentId);
-                  size_type qNumberId =
-                    (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                       enrichmentId))
-                      .localIdInAtom;
-                  std::string  atomSymbol = d_atomSymbolVec[atomId];
-                  utils::Point origin(d_atomCoordinatesVec[atomId]);
-                  std::vector<std::vector<int>> qNumbers(0);
-                  qNumbers =
-                    d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                              d_fieldName);
-                  auto sphericalData =
-                    d_atomSphericalDataContainer->getSphericalData(
-                      atomSymbol, d_fieldName, qNumbers[qNumberId]);
-                  enrichmentQuadValue[enrichmentId] =
+                  enrichmentQuadValue[qPoint] =
                     sphericalData->getValue(quadRealPointsVec[qPoint], origin);
                 }
+
               quadValuesEnrichmentFunction
                 .template setCellQuadValues<utils::MemorySpace::HOST>(
-                  cellIndex, qPoint, enrichmentQuadValue.data());
+                  cellIndex, enrichmentId, enrichmentQuadValue.data());
             }
           cellIndex = cellIndex + 1;
         }

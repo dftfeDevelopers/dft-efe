@@ -445,15 +445,17 @@ int main(int argc, char** argv)
 
   for(dftefe::size_type i = 0 ; i < quadValuesContainer.nCells() ; i++)
   {
-    dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainer->getCellRealPoints(i))
+    for(dftefe::size_type iComp = 0 ; iComp < numComponents ; iComp ++)
     {
-      std::vector<double> a(numComponents, 0);
-      for (unsigned int k = 0 ; k < numComponents ; k++)
-      a[k] = rho( j, atomsVecInDomain[iProb], rc) * (4*M_PI) * (1.0*atomsVecInDomain[iProb].size()/mpiReducedChargeDensity[iProb]);
+      dftefe::size_type quadId = 0;
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(i));
+      for (auto j : quadRuleContainer->getCellRealPoints(i))
+      {
+        a[quadId] = rho( j, atomsVecInDomain[iProb], rc) * (4*M_PI) * (1.0*atomsVecInDomain[iProb].size()/mpiReducedChargeDensity[iProb]);
+        quadId = quadId + 1;
+      }
       double *b = a.data();
-      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-      quadId = quadId + 1;
+      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
     }
   }
 

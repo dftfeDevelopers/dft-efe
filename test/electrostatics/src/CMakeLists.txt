@@ -24,6 +24,10 @@ if(ENABLE_MPI)
 	target_link_libraries(TestFunctionClassical PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestFunctionClassical PROPERTIES OUTPUT_NAME "TestFunctionClassical" SUFFIX ".x")
 
+	add_executable(TestMultiCompFunctionClassical TestMultiCompFunctionClassical.cpp )
+	target_link_libraries(TestMultiCompFunctionClassical PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestMultiCompFunctionClassical PROPERTIES OUTPUT_NAME "TestMultiCompFunctionClassical" SUFFIX ".x")
+
 	add_executable(TestPoissonProblemClassical TestPoissonProblemClassical.cpp )
 	target_link_libraries(TestPoissonProblemClassical PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestPoissonProblemClassical PROPERTIES OUTPUT_NAME "TestPoissonProblemClassical" SUFFIX ".x")

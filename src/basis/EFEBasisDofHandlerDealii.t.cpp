@@ -29,7 +29,6 @@
 #include "FECellDealii.h"
 #include <utils/Point.h>
 #include <utils/PointImpl.h>
-#include <quadrature/QuadratureValuesContainer.h>
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureAttributes.h>
 #include "CFEBasisDofHandlerDealii.h"

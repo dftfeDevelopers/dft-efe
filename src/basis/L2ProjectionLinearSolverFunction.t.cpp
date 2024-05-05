@@ -180,11 +180,6 @@ namespace dftefe
 
       // Compute RHS
 
-      std::vector<ValueType> ones(0);
-      ones.resize(inp.getNumberComponents(), (ValueType)1.0);
-      std::vector<ValueType> nOnes(0);
-      nOnes.resize(inp.getNumberComponents(), (ValueType)-1.0);
-
       d_b.setValue(0.0);
 
       // Set up basis Operations for RHS

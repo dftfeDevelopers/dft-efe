@@ -2609,9 +2609,6 @@ namespace dftefe
 
       size_type nTotalEnrichmentIds =
         d_efeBDH->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>>
-        basisClassicalInterfaceQuadGradients(nullptr);
 
       std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>>
         cfeBasisDataStorage = nullptr;
