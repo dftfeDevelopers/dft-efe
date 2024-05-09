@@ -87,14 +87,12 @@ namespace dftefe
        * Kohn Sham Orbitals occupied if occupationTolerance < f_i(from
        * diftribution) < 1-1e-12
        */
-      KohnShamEigenSolver(const std::vector<RealType> &occupation, /*f_i's*/
-                          const double                 occupationTolerance,
-                          const double                 residualTolerance,
-                          const size_type chebyshevPolynomialDegree,
-                          const size_type maxChebyshevFilterPass,
-                          const MultiVector<ValueTypeOperand, memorySpace>
-                            &             waveFunctionSubspaceGuess,
-                          const size_type waveFunctionBlockSize = 0);
+      KohnShamEigenSolver(
+        const double                                eigenSolveResidualTolerance,
+        const size_type                             chebyshevPolynomialDegree,
+        const size_type                             maxChebyshevFilterPass,
+        MultiVector<ValueTypeOperand, memorySpace> &waveFunctionSubspaceGuess,
+        const size_type                             waveFunctionBlockSize = 0);
 
       /**
        *@brief Default Destructor
@@ -103,13 +101,8 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(const std::vector<RealType> &occupationDistribution,
-             const double                 occupationTolerance,
-             const double                 residualTolerance,
-             const size_type              maxChebyshevFilterPass,
-             const MultiVector<ValueTypeOperand, memorySpace>
-               &             waveFunctionSubspaceGuess,
-             const size_type waveFunctionBlockSize = 0);
+      reinit(
+        MultiVector<ValueTypeOperand, memorySpace> &waveFunctionSubspaceGuess);
 
       EigenSolverError
       solve(const OpContext &                    kohnShamOperator,
@@ -125,11 +118,12 @@ namespace dftefe
                                       memorySpace>()) override;
 
     private:
-      double                                     d_occupationTolerance;
-      double                                     d_residualTolerance;
-      size_type                                  d_maxFilterPass;
-      size_type                                  d_polynomialDegree;
-      MultiVector<ValueTypeOperand, memorySpace> d_waveFunctionSubspaceGuess;
+      double    d_eigenSolveResidualTolerance;
+      size_type d_maxChebyshevFilterPass;
+      size_type d_chebyshevPolynomialDegree;
+      size_type d_numWantedEigenvalues;
+      const MultiVector<ValueTypeOperand, memorySpace>
+        *d_waveFunctionSubspaceGuess;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

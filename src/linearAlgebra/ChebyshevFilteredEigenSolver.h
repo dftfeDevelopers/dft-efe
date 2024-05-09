@@ -80,13 +80,13 @@ namespace dftefe
        * @brief Constructor
        */
       ChebyshevFilteredEigenSolver(
-        const double wantedSpectrumLowerBound,
-        const double wantedSpectrumUpperBound,
-        const double unWantedSpectrumUpperBound,
-        const double polynomialDegree,
-        const double illConditionTolerance,
-        const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const size_type eigenVectorBlockSize = 0);
+        const double                                wantedSpectrumLowerBound,
+        const double                                wantedSpectrumUpperBound,
+        const double                                unWantedSpectrumUpperBound,
+        const double                                polynomialDegree,
+        const double                                illConditionTolerance,
+        MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const size_type                             eigenVectorBlockSize = 0);
 
       /**
        *@brief Default Destructor
@@ -95,14 +95,13 @@ namespace dftefe
       ~ChebyshevFilteredEigenSolver() = default;
 
       void
-      reinit(
-        const double wantedSpectrumLowerBound,
-        const double wantedSpectrumUpperBound,
-        const double unWantedSpectrumUpperBound,
-        const double polynomialDegree,
-        const double illConditionTolerance,
-        const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const size_type                                   eigenVectorBlockSize);
+      reinit(const double wantedSpectrumLowerBound,
+             const double wantedSpectrumUpperBound,
+             const double unWantedSpectrumUpperBound,
+             const double polynomialDegree,
+             const double illConditionTolerance,
+             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+             const size_type                             eigenVectorBlockSize);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -118,13 +117,13 @@ namespace dftefe
                                       memorySpace>()) override;
 
     private:
-      double                                     d_wantedSpectrumLowerBound;
-      double                                     d_wantedSpectrumUpperBound;
-      double                                     d_unWantedSpectrumUpperBound;
-      double                                     d_polynomialDegree;
-      double                                     d_illConditionTolerance;
-      MultiVector<ValueTypeOperand, memorySpace> d_eigenSubspaceGuess;
-      size_type                                  d_eigenVectorBlockSize;
+      double                                      d_wantedSpectrumLowerBound;
+      double                                      d_wantedSpectrumUpperBound;
+      double                                      d_unWantedSpectrumUpperBound;
+      double                                      d_polynomialDegree;
+      double                                      d_illConditionTolerance;
+      MultiVector<ValueTypeOperand, memorySpace> *d_eigenSubspaceGuess;
+      size_type                                   d_eigenVectorBlockSize;
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>

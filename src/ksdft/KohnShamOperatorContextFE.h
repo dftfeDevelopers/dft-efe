@@ -73,6 +73,9 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
+      using RealType = linearAlgebra::blasLapack::real_type<ValueTypeOperator,
+                                                            ValueTypeOperand>;
+
       using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
 
       using HamiltonianPtrVariant =

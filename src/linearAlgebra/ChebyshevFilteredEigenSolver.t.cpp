@@ -38,13 +38,13 @@ namespace dftefe
                                  ValueTypeOperand,
                                  memorySpace>::
       ChebyshevFilteredEigenSolver(
-        const double wantedSpectrumLowerBound,
-        const double wantedSpectrumUpperBound,
-        const double unWantedSpectrumUpperBound,
-        const double polynomialDegree,
-        const double illConditionTolerance,
-        const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const size_type                                   eigenVectorBlockSize)
+        const double                                wantedSpectrumLowerBound,
+        const double                                wantedSpectrumUpperBound,
+        const double                                unWantedSpectrumUpperBound,
+        const double                                polynomialDegree,
+        const double                                illConditionTolerance,
+        MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const size_type                             eigenVectorBlockSize)
     {
       reinit(wantedSpectrumLowerBound,
              wantedSpectrumUpperBound,
@@ -59,19 +59,18 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     void
-    ChebyshevFilteredEigenSolver<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace>::reinit(const double wantedSpectrumLowerBound,
-                           const double wantedSpectrumUpperBound,
-                           const double unWantedSpectrumUpperBound,
-                           const double polynomialDegree,
-                           const double illConditionTolerance,
-                           const MultiVector<ValueTypeOperand, memorySpace>
-                             &             eigenSubspaceGuess,
-                           const size_type eigenVectorBlockSize)
+    ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                 ValueTypeOperand,
+                                 memorySpace>::
+      reinit(const double wantedSpectrumLowerBound,
+             const double wantedSpectrumUpperBound,
+             const double unWantedSpectrumUpperBound,
+             const double polynomialDegree,
+             const double illConditionTolerance,
+             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+             const size_type                             eigenVectorBlockSize)
     {
-      d_eigenSubspaceGuess         = eigenSubspaceGuess;
+      d_eigenSubspaceGuess         = &eigenSubspaceGuess;
       d_polynomialDegree           = polynomialDegree;
       d_wantedSpectrumLowerBound   = wantedSpectrumLowerBound;
       d_wantedSpectrumUpperBound   = wantedSpectrumUpperBound;
@@ -100,15 +99,15 @@ namespace dftefe
       OrthonormalizationError orthoerr;
       EigenSolverError        rrerr;
 
-      MultiVector<ValueType, memorySpace> filteredSubspace(d_eigenSubspaceGuess,
-                                                           (ValueType)0);
+      MultiVector<ValueType, memorySpace> filteredSubspace(
+        *d_eigenSubspaceGuess, (ValueType)0);
 
       // [CF] Chebyshev filtering of \psi
 
       ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
         A,
         BInv,
-        d_eigenSubspaceGuess,
+        *d_eigenSubspaceGuess,
         d_polynomialDegree,
         d_wantedSpectrumLowerBound,
         d_wantedSpectrumUpperBound,

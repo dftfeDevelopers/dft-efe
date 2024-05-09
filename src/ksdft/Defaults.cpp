@@ -22,22 +22,28 @@
 /*
  * @author Avirup Sircar
  */
-
-#ifndef dftefeEnergy_h
-#define dftefeEnergy_h
-
+#include <ksdft/Defaults.h>
+#include <limits.h>
 namespace dftefe
 {
   namespace ksdft
   {
-    template <typename ValueType>
-    class Energy
-    {
-    public:
-      virtual ValueType
-      getEnergy() const = 0;
+    /**
+     * @brief Setting all the PoissonProblemDefaults
+     */
+    const linearAlgebra::PreconditionerType PoissonProblemDefaults::PC_TYPE =
+      linearAlgebra::PreconditionerType::JACOBI;
+    const size_type PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS = 50;
+    const size_type PoissonProblemDefaults::MAX_ITER               = 1e8;
+    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-13;
+    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-14;
+    const double    PoissonProblemDefaults::DIVERGENCE_TOL         = 1e6;
 
-    }; // end of Energy
-  }    // end of namespace ksdft
+    /**
+     * @brief Setting all the LinearEigenSolverDefaults
+     */
+    const double LinearEigenSolverDefaults::ILL_COND_TOL = 1e-14;
+    const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
+
+  } // end of namespace ksdft
 } // end of namespace dftefe
-#endif // dftefeEnergy_h

@@ -68,12 +68,25 @@ namespace dftefe
       getLocal(Storage cellWiseStorage) const override;
       void
       evalEnergy() const;
-      RealType<ValueType>
+      ValueType
       getEnergy() const override;
 
     private:
-      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
-        *d_feBasisDataStorage;
+      void
+      nuclearSelfEnergy();
+
+      const size_type d_numComponents;
+      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_totalChargeDensity;
+      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_nuclearChargesDensity;
+      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_totalChargePotentialQuad;
+      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim>>
+        d_feBasisOp;
     }; // end of class ElectrostaticAllElectronFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

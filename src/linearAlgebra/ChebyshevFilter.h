@@ -59,14 +59,14 @@ namespace dftefe
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
         &A,
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-        &                                               BInv,
-      const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-      const size_type                                   polynomialDegree,
-      const double              wantedSpectrumLowerBound,
-      const double              wantedSpectrumUpperBound,
-      const double              unWantedSpectrumUpperBound,
+        &                                         BInv,
+      MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+      const size_type                             polynomialDegree,
+      const double                                wantedSpectrumLowerBound,
+      const double                                wantedSpectrumUpperBound,
+      const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                  memorySpace> &filteredSubspace);
+                  memorySpace> &                  filteredSubspace);
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

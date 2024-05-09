@@ -43,8 +43,8 @@ namespace dftefe
               size_type          dim>
     class KineticFE
       : public Hamiltonian<ValueTypeBasisData, memorySpace>,
-        public Energy<linearAlgebra::blasLapack::
-                        scalar_type<ValueTypeBasisData, ValueTypeBasisCoeff>>
+        public Energy<linearAlgebra::blasLapack::real_type<ValueTypeBasisData,
+                                                           ValueTypeBasisCoeff>>
     {
     public:
       using Storage = Hamiltonian<ValueTypeBasisData, memorySpace>::Storage;
@@ -53,24 +53,33 @@ namespace dftefe
         < linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff>;
 
+      using RealType =
+        < linearAlgebra::blasLapack::real_type<ValueTypeBasisData,
+                                               ValueTypeBasisCoeff>;
+
     public:
       /**
        * @brief Constructor
        */
       KineticFE(const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
-                  &feBasisDataStorage);
+                  &             feBasisDataStorage,
+                const size_type cellBlockSize);
 
       void
       getLocal(Storage cellWiseStorage) const override;
       void
-      evalEnergy(const std::vector<RealType> &              orbitalOccupancy,
-                 const MultiVector<ValueType, memorySpace> &waveFunction) const;
-      RealType<ValueType>
+      evalEnergy(const std::vector<RealType> &orbitalOccupancy,
+                 const MultiVector<ValueTypeBasisCoeff, memorySpace>
+                   &waveFunction) const;
+      RealType
       getEnergy() const override;
 
     private:
-      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
-        *d_feBasisDataStorage;
+      const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                     ValueTypeBasisData,
+                                     memorySpace,
+                                     dim>
+        d_feBasisOp;
     }; // end of class KineticFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

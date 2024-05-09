@@ -23,21 +23,68 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeEnergy_h
-#define dftefeEnergy_h
+#ifndef dftefeDFTDefaults_h
+#define dftefeDFTDefaults_h
+
+#include <utils/TypeConfig.h>
+#include <string>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
 {
   namespace ksdft
   {
-    template <typename ValueType>
-    class Energy
+    class PoissonProblemDefaults
     {
     public:
-      virtual ValueType
-      getEnergy() const = 0;
+      //
+      // The CG Preconditioner Type chosen for L2 Projection
+      //
+      static const linearAlgebra::PreconditionerType PC_TYPE;
 
-    }; // end of Energy
-  }    // end of namespace ksdft
+      //
+      // The number of batched gemms done
+      //
+      static const size_type MAX_CELL_TIMES_NUMVECS;
+
+      //
+      // Maximum iteration for CG
+      //
+      static const size_type MAX_ITER;
+
+      //
+      // Absolute tolerance of the residual |AX-b|
+      //
+      static const double ABSOLUTE_TOL;
+
+      //
+      // Relative tolerance of the residual |AX-b|/|b|
+      //
+      static const double RELATIVE_TOL;
+
+      //
+      // Maximum residual tolerance for divergence
+      //
+      static const double DIVERGENCE_TOL;
+
+    }; // end of class PoissonProblemDefaults
+
+    class LinearEigenSolverDefaults
+    {
+    public:
+      //
+      // Tolerance of ill conditioning for the
+      // orthogonalization step in CHFSi
+      //
+      static const double ILL_COND_TOL;
+
+      //
+      // Tolerance for lanczos extreme eigenvalues
+      //
+      static const double LANCZOS_EXTREME_EIGENVAL_TOL;
+
+    }; // end of class PoissonProblemDefaults
+
+  } // end of namespace ksdft
 } // end of namespace dftefe
-#endif // dftefeEnergy_h
+#endif // dftefeDFTDefaults_h
