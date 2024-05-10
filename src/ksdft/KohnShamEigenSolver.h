@@ -26,16 +26,12 @@
 #ifndef dftefeKohnShamEigenSolver_h
 #define dftefeKohnShamEigenSolver_h
 
-#include <utils/ScalarFunction.h>
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
-#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
-#include <linearAlgebra/RayleighRitzEigenSolver.h>
-#include <linearAlgebra/ChebyshevFilter.h>
 #include <memory>
 
 namespace dftefe
@@ -88,11 +84,14 @@ namespace dftefe
        * diftribution) < 1-1e-12
        */
       KohnShamEigenSolver(
-        const double                                eigenSolveResidualTolerance,
-        const size_type                             chebyshevPolynomialDegree,
-        const size_type                             maxChebyshevFilterPass,
-        MultiVector<ValueTypeOperand, memorySpace> &waveFunctionSubspaceGuess,
-        const size_type                             waveFunctionBlockSize = 0);
+        const double    fermiEnergyTolerance,
+        const double    fracOccupancyTolerance,
+        const double    eigenSolveResidualTolerance,
+        const size_type chebyshevPolynomialDegree,
+        const size_type maxChebyshevFilterPass,
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+          &             waveFunctionSubspaceGuess,
+        const size_type waveFunctionBlockSize = 0);
 
       /**
        *@brief Default Destructor
@@ -101,32 +100,37 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(
-        MultiVector<ValueTypeOperand, memorySpace> &waveFunctionSubspaceGuess);
+      reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+               &waveFunctionSubspaceGuess);
 
-      EigenSolverError
-      solve(const OpContext &                    kohnShamOperator,
-            std::vector<RealType> &              kohnShamEnergies,
-            MultiVector<ValueType, memorySpace> &kohnShamWaveFunctions,
-            bool                                 computeWaveFunctions = false,
-            const OpContext &M = IdentityOperatorContext<ValueTypeOperator,
-                                                         ValueTypeOperand,
-                                                         memorySpace>(),
+      linearAlgebra::EigenSolverError
+      solve(const OpContext &      kohnShamOperator,
+            std::vector<RealType> &kohnShamEnergies,
+            linearAlgebra::MultiVector<ValueType, memorySpace>
+              &              kohnShamWaveFunctions,
+            bool             computeWaveFunctions = false,
+            const OpContext &M =
+              linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>(),
             const OpContext &MInv =
-              IdentityOperatorContext<ValueTypeOperator,
-                                      ValueTypeOperand,
-                                      memorySpace>()) override;
+              linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>()) override;
 
     private:
+      double    d_fermiEnergyTolerance;
+      double    d_fracOccupancyTolerance;
       double    d_eigenSolveResidualTolerance;
       size_type d_maxChebyshevFilterPass;
       size_type d_chebyshevPolynomialDegree;
       size_type d_numWantedEigenvalues;
-      const MultiVector<ValueTypeOperand, memorySpace>
+      size_type d_waveFunctionBlockSize;
+      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft
 } // end of namespace dftefe
-#include <linearAlgebra/KohnShamEigenSolver.t.cpp>
+#include <ksdft/KohnShamEigenSolver.t.cpp>
 #endif // dftefeKohnShamEigenSolver_h

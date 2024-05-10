@@ -6,11 +6,12 @@ endif()
 
 # Add source files here
 set(DFT-EFE-KSDFT-SOURCES
-	KohnShamEigenSolver.cpp
+	Defaults.cpp
+	FractionalOccupancyFunction.cpp
 	KohnShamOperatorContextFE.cpp
 	KineticFE.cpp
-	#other files
-	ElectrostaticAllElectronFE.cpp)
+	ElectrostaticAllElectronFE.cpp
+	KohnShamEigenSolver.cpp)
 
 add_library(dft-efe-ksdft SHARED ${DFT-EFE-KSDFT-SOURCES})
 

@@ -65,6 +65,12 @@ namespace dftefe
          "Rayleigh-Ritz error in CHFSI. "},
         {EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT,
          "Maximum Krylov Subspace Size given is insufficient for Lanczos convergence."},
+        {EigenSolverErrorCode::KS_MAX_PASS_ERROR,
+         "Insufficient max pass error given to reach tolerance in CHFSI loop in KohnShamEigenSolver. "},
+        {EigenSolverErrorCode::KS_CHFSI_ERROR,
+         "CHFSI error in KohnShamEigenSolver. "},
+        {EigenSolverErrorCode::KS_LANCZOS_ERROR,
+         "Lanczos solve error in KohnShamEigenSolver. "},
         {EigenSolverErrorCode::OTHER_ERROR, "Other error encountered"}};
 
     const std::map<OrthonormalizationErrorCode, std::string>

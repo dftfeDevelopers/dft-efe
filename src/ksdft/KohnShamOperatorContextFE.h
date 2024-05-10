@@ -29,12 +29,10 @@
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
-#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/FEBasisManager.h>
-#include <basis/FEBasisDataStorage.h>
-#include <quadrature/QuadratureAttributes.h>
+#include <ksdft/Hamiltonian.h>
 #include <memory>
 #include <variant>
 
@@ -73,9 +71,6 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      using RealType = linearAlgebra::blasLapack::real_type<ValueTypeOperator,
-                                                            ValueTypeOperand>;
-
       using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
 
       using HamiltonianPtrVariant =
@@ -91,9 +86,13 @@ namespace dftefe
       KohnShamOperatorContextFE(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-            &                                    feBasisManager,
-        std::vector<const HamiltonianPtrVariant> hamiltonianVec,
-        const size_type                          maxCellTimesNumVecs);
+            &                                        feBasisManager,
+        std::vector<const HamiltonianPtrVariant>     hamiltonianVec,
+        const size_type                              maxCellTimesNumVecs,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+
+      void
+      reinit(std::vector<const HamiltonianPtrVariant> hamiltonianVec);
 
       void
       apply(
@@ -103,10 +102,11 @@ namespace dftefe
     private:
       const basis::
         FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-          *           d_feBasisManager;
-      Storage         d_hamiltonianInAllCells;
-      const size_type d_maxCellTimesNumVecs;
-      const size_type d_cellWiseDataSize;
+          *                                       d_feBasisManager;
+      Storage                                     d_hamiltonianInAllCells;
+      const size_type                             d_maxCellTimesNumVecs;
+      const size_type                             d_cellWiseDataSize;
+      linearAlgebra::LinAlgOpContext<memorySpace> d_linAlgOpContext;
     }; // end of class KohnShamOperatorContextFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

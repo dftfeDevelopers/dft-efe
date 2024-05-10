@@ -26,12 +26,11 @@
 #ifndef dftefeKineticFE_h
 #define dftefeKineticFE_h
 
-#include <utils/MemorySpaceType.h>
-#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <ksdft/Hamiltonian.h>
 #include <ksdft/Energy.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisOperations.h>
 
 namespace dftefe
 {
@@ -43,43 +42,65 @@ namespace dftefe
               size_type          dim>
     class KineticFE
       : public Hamiltonian<ValueTypeBasisData, memorySpace>,
-        public Energy<linearAlgebra::blasLapack::real_type<ValueTypeBasisData,
-                                                           ValueTypeBasisCoeff>>
+        public Energy<linearAlgebra::blasLapack::real_type<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                 ValueTypeBasisCoeff>>>
     {
     public:
-      using Storage = Hamiltonian<ValueTypeBasisData, memorySpace>::Storage;
+      using Storage =
+        typename Hamiltonian<ValueTypeBasisData, memorySpace>::Storage;
 
       using ValueType =
-        < linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
-                                                 ValueTypeBasisCoeff>;
-
-      using RealType =
-        < linearAlgebra::blasLapack::real_type<ValueTypeBasisData,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
+
+      using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
     public:
       /**
        * @brief Constructor
        */
-      KineticFE(const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
-                  &             feBasisDataStorage,
-                const size_type cellBlockSize);
+      KineticFE(
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                        feBasisDataStorage,
+        const size_type cellBlockSize,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
+
+      void
+      reinit(std::shared_ptr<
+             const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+               feBasisDataStorage);
 
       void
       getLocal(Storage cellWiseStorage) const override;
       void
-      evalEnergy(const std::vector<RealType> &orbitalOccupancy,
-                 const MultiVector<ValueTypeBasisCoeff, memorySpace>
-                   &waveFunction) const;
-      RealType
-      getEnergy() const override;
+      evalEnergy(const std::vector<RealType> &                  occupation,
+                 const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>               feBMPsi,
+                 const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                  memorySpace> &waveFunc,
+                 const size_type waveFuncBatchSize) const;
+      void
+      getEnergy(RealType energy) const override;
 
     private:
-      const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                     ValueTypeBasisData,
-                                     memorySpace,
-                                     dim>
-        d_feBasisOp;
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+        d_feBasisDataStorage;
+      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim>>
+                      d_feBasisOp;
+      RealType        d_energy;
+      const size_type d_cellBlockSize;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
+
     }; // end of class KineticFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

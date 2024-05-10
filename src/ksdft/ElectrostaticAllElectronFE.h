@@ -27,10 +27,15 @@
 #define dftefeElectrostaticAllElectronFE_h
 
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <ksdft/ElectrostaticFE.h>
 #include <basis/FEBasisDataStorage.h>
+#include <quadrature/QuadratureValuesContainer.h>
+#include <basis/FEBasisManager.h>
+#include <linearAlgebra/LinearSolverFunction.h>
+#include <electrostatics/PoissonLinearSolverFunctionFE.h>
+#include <linearAlgebra/LinearAlgebraProfiler.h>
+#include <linearAlgebra/CGLinearSolver.h>
 
 namespace dftefe
 {
@@ -47,46 +52,119 @@ namespace dftefe
                                dim>
     {
     public:
-      using ValueType = ElectrostaticFE<ValueTypeBasisData,
-                                        ValueTypeBasisCoeff,
-                                        memorySpace,
-                                        dim>::ValueType;
-      using Storage   = ElectrostaticFE<ValueTypeBasisData,
-                                      ValueTypeBasisCoeff,
-                                      memorySpace,
-                                      dim>::Storage;
+      using ValueType = typename ElectrostaticFE<ValueTypeBasisData,
+                                                 ValueTypeBasisCoeff,
+                                                 memorySpace,
+                                                 dim>::ValueType;
+      using Storage   = typename ElectrostaticFE<ValueTypeBasisData,
+                                               ValueTypeBasisCoeff,
+                                               memorySpace,
+                                               dim>::Storage;
+      using RealType  = typename ElectrostaticFE<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace,
+                                                dim>::RealType;
 
     public:
       /**
        * @brief Constructor
        */
       ElectrostaticAllElectronFE(
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>
-          &feBasisDataStorage);
+        std::vector<utils::Point> atomCoordinates,
+        std::vector<double>       atomCharges,
+        std::vector<double>       smearedChargeRadius,
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &                                               electronChargeDensity,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>> feBMTotalCharge,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                        feBDTotalChargeRhs,
+        const size_type maxCellTimesNumVecs,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
+
+      void
+      reinitBasis(
+        std::vector<utils::Point>                         atomCoordinates,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>> feBMTotalCharge,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeRhs);
+
+      void
+      reinitField(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity);
 
       void
       getLocal(Storage cellWiseStorage) const override;
+
+      void
+      evalEnergy(
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs) const;
+
       void
       evalEnergy() const;
-      ValueType
-      getEnergy() const override;
+
+      void
+      getEnergy(RealType energy) const override;
 
     private:
-      void
-      nuclearSelfEnergy();
+      RealType
+      nuclearSelfEnergy(
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs);
 
-      const size_type d_numComponents;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+      const size_type           d_numComponents;
+      std::vector<utils::Point> d_atomCoordinates;
+      const std::vector<double> d_atomCharges;
+      const std::vector<double> d_smearedChargeRadius;
+      RealType                  d_energy;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_totalChargeDensity;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_nuclearChargesDensity;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         d_totalChargePotentialQuad;
       std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                      ValueTypeBasisData,
                                                      memorySpace,
                                                      dim>>
         d_feBasisOp;
+      std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                  ValueTypeBasisData,
+                                                  memorySpace,
+                                                  dim>>
+        d_feBMTotalCharge;
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+        d_feBDTotalChargeStiffnessMatrix;
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+        d_feBDTotalChargeRhs;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
     }; // end of class ElectrostaticAllElectronFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

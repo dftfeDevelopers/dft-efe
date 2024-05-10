@@ -38,7 +38,7 @@ namespace dftefe
     {
     public:
       //
-      // The CG Preconditioner Type chosen for L2 Projection
+      // The CG Preconditioner Type chosen for Poisson Problem
       //
       static const linearAlgebra::PreconditionerType PC_TYPE;
 
@@ -83,7 +83,12 @@ namespace dftefe
       //
       static const double LANCZOS_EXTREME_EIGENVAL_TOL;
 
-    }; // end of class PoissonProblemDefaults
+      //
+      // Tolerance for lanczos beta tolerance
+      //
+      static const double LANCZOS_BETA_TOL;
+
+    }; // end of class LinearEigenSolverDefaults
 
   } // end of namespace ksdft
 } // end of namespace dftefe

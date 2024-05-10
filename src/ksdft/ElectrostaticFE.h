@@ -27,7 +27,6 @@
 #define dftefeElectrostaticFE_h
 
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/MultiVector.h>
 #include <ksdft/Hamiltonian.h>
 #include <ksdft/Energy.h>
@@ -63,18 +62,16 @@ namespace dftefe
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
-      using Storage = Hamiltonian<ValueType, memorySpace>::Storage;
+      using Storage  = typename Hamiltonian<ValueType, memorySpace>::Storage;
+      using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
     public:
       virtual void
       getHamiltonian(Storage cellWiseStorage) const = 0;
       virtual void
-      evalEnergy() const = 0;
-      virtual RealType<ValueType>
-      getEnergy() const = 0;
+      getEnergy(RealType energy) const = 0;
 
     }; // end of class ElectrostaticFE
   }    // end of namespace ksdft
 } // end of namespace dftefe
-#include <ksdft/ElectrostaticFE.t.cpp>
 #endif // dftefeElectrostaticFE_h

@@ -44,6 +44,7 @@ namespace dftefe
      */
     const double LinearEigenSolverDefaults::ILL_COND_TOL = 1e-14;
     const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
+    const double LinearEigenSolverDefaults::LANCZOS_BETA_TOL = 1e-14;
 
   } // end of namespace ksdft
 } // end of namespace dftefe

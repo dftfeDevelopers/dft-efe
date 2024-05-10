@@ -23,6 +23,8 @@
  * @author Avirup Sircar
  */
 
+#include <basis/FECellWiseDataOperations.h>
+
 namespace dftefe
 {
   namespace ksdft
@@ -270,22 +272,25 @@ namespace dftefe
       KohnShamOperatorContextFE(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-            &                                    feBasisManager,
-        std::vector<const HamiltonianPtrVariant> hamiltonianComponentsVec,
-        const size_type                          maxCellTimesNumVecs)
+            &                                        feBasisManager,
+        std::vector<const HamiltonianPtrVariant>     hamiltonianComponentsVec,
+        const size_type                              maxCellTimesNumVecs,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_linAlgOpContext(linAlgOpContext)
     {
       const size_type numLocallyOwnedCells =
         feBasisManager.nLocallyOwnedCells();
 
-      d_cellWiseDataSize = 0;
-
+      size_type cellWiseDataSize = 0;
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
         {
           size_type x = feBasisManager.nLocallyOwnedCellDofs(iCell);
-          d_cellWiseDataSize += x * x;
+          cellWiseDataSize += x * x;
         }
+
+      d_cellWiseDataSize = cellWiseDataSize;
 
       reinit(hamiltonianComponentsVec);
     }
@@ -296,6 +301,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
+    void
     KohnShamOperatorContextFE<ValueTypeOperator,
                               ValueTypeOperand,
                               ValueTypeBasisData,
@@ -316,7 +322,7 @@ namespace dftefe
                     *(std::get<Hamiltonian<double, memorySpace> *>(
                       hamiltonianComponentsVec.at(i)));
                   utils::MemoryStorage<double, memorySpace> temp(0);
-                  i->getLocal(temp);
+                  b.getLocal(temp);
 
                   utils::throwException(
                     temp.size() == d_cellWiseDataSize,
@@ -331,16 +337,16 @@ namespace dftefe
                       (double)1.0,
                       d_hamiltonianInAllCells.data(),
                       d_hamiltonianInAllCells.data(),
-                      linAlgOpContext);
+                      d_linAlgOpContext);
                 }
-              else if (std::holds_alternative<Hamiltonian<float, a> *>(
-                         hamiltonianComponentsVec[i]))
+              else if (std::holds_alternative<Hamiltonian<float, memorySpace>
+                                                *>(hamiltonianComponentsVec[i]))
                 {
                   const Hamiltonian<float, memorySpace> &b =
                     *(std::get<Hamiltonian<float, memorySpace> *>(
                       hamiltonianComponentsVec.at(i)));
                   utils::MemoryStorage<float, memorySpace> temp(0);
-                  i->getLocal(temp);
+                  b.getLocal(temp);
 
                   utils::throwException(
                     temp.size() == d_cellWiseDataSize,
@@ -355,10 +361,10 @@ namespace dftefe
                       (float)1.0,
                       d_hamiltonianInAllCells.data(),
                       d_hamiltonianInAllCells.data(),
-                      linAlgOpContext);
+                      d_linAlgOpContext);
                 }
               else if (std::holds_alternative<
-                         Hamiltonian<std::complex<float>, a> *>(
+                         Hamiltonian<std::complex<float>, memorySpace> *>(
                          hamiltonianComponentsVec[i]))
                 {
                   const Hamiltonian<std::complex<float>, memorySpace> &b =
@@ -366,7 +372,7 @@ namespace dftefe
                       hamiltonianComponentsVec.at(i)));
                   utils::MemoryStorage<std::complex<float>, memorySpace> temp(
                     0);
-                  i->getLocal(temp);
+                  b.getLocal(temp);
 
                   utils::throwException(
                     temp.size() == d_cellWiseDataSize,
@@ -381,10 +387,10 @@ namespace dftefe
                       (std::complex<float>)1.0,
                       d_hamiltonianInAllCells.data(),
                       d_hamiltonianInAllCells.data(),
-                      linAlgOpContext);
+                      d_linAlgOpContext);
                 }
               else if (std::holds_alternative<
-                         Hamiltonian<std::complex<double>, a> *>(
+                         Hamiltonian<std::complex<double>, memorySpace> *>(
                          hamiltonianComponentsVec[i]))
                 {
                   const Hamiltonian<std::complex<double>, memorySpace> &b = *(
@@ -392,7 +398,7 @@ namespace dftefe
                       hamiltonianComponentsVec.at(i)));
                   utils::MemoryStorage<std::complex<double>, memorySpace> temp(
                     0);
-                  i->getLocal(temp);
+                  b.getLocal(temp);
 
                   utils::throwException(
                     temp.size() == d_cellWiseDataSize,
@@ -407,7 +413,7 @@ namespace dftefe
                       (std::complex<double>)1.0,
                       d_hamiltonianInAllCells.data(),
                       d_hamiltonianInAllCells.data(),
-                      linAlgOpContext);
+                      d_linAlgOpContext);
                 }
             }
           catch (std::bad_variant_access const &ex)

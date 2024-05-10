@@ -1,5 +1,5 @@
-#ifndef dftefeSmearChargeDensityFunction_h
-#define dftefeSmearChargeDensityFunction_h
+#ifndef dftefeSmearChargePotentialFunction_h
+#define dftefeSmearChargePotentialFunction_h
 
 #include "ScalarSpatialFunction.h"
 #include "MathConstants.h"
@@ -32,4 +32,4 @@ namespace dftefe
 
   } // namespace utils
 } // namespace dftefe
-#endif // dftefeSmearChargeDensityFunction_h
+#endif // dftefeSmearChargePotentialFunction_h

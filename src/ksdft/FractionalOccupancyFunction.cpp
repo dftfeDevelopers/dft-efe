@@ -1,6 +1,5 @@
 #include <cmath>
 #include <vector>
-#include <FractionalOccupancyFunction.h>
 
 namespace dftefe
 {
