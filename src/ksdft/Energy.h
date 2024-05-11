@@ -34,8 +34,8 @@ namespace dftefe
     class Energy
     {
     public:
-      virtual void
-      getEnergy(ValueType energy) const = 0;
+      virtual ValueType
+      getEnergy() const = 0;
 
     }; // end of Energy
   }    // end of namespace ksdft

@@ -429,8 +429,8 @@ namespace dftefe
         const QuadratureValuesContainer<ValueType2, memorySpace> &     v,
         QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
-          memorySpace> &                                   w,
-        const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+          memorySpace> &                             w,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       utils::throwException<utils::LengthError>(
         u.nEntries() == v.nEntries(),
@@ -440,7 +440,7 @@ namespace dftefe
         u.nEntries() == w.nEntries(),
         "Mismatch in sizes of input and output QuadratureValuesContainer passed"
         " for addition");
-      linearAlgebra::blasLapack::axpby(
+      linearAlgebra::blasLapack::axpby<ValueType1, ValueType2, memorySpace>(
         u.nEntries(), a, u.begin(), b, v.begin(), w.begin(), linAlgOpContext);
     }
 
@@ -453,13 +453,13 @@ namespace dftefe
         const QuadratureValuesContainer<ValueType, memorySpace> &u,
         ValueType                                                b,
         QuadratureValuesContainer<ValueType, memorySpace> &      v,
-        const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       utils::throwException<utils::LengthError>(
         u.nEntries() == v.nEntries(),
         "Mismatch in sizes of the two input QuadratureValuesContainer passed"
         " for addition");
-      linearAlgebra::blasLapack::axpby(
+      linearAlgebra::blasLapack::axpby<ValueType, ValueType, memorySpace>(
         u.nEntries(), a, u.begin(), b, v.begin(), v.begin(), linAlgOpContext);
     }
 
@@ -474,10 +474,10 @@ namespace dftefe
           const QuadratureValuesContainer<ValueType2, memorySpace> &u,
           QuadratureValuesContainer<
             linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
-            memorySpace> &                                   w,
-          const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+            memorySpace> &                             w,
+          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
-      linearAlgebra::blasLapack::ascale(
+      linearAlgebra::blasLapack::ascale<ValueType1, ValueType2, memorySpace>(
         w.nEntries(), alpha, u.begin(), w.begin(), linAlgOpContext);
     }
 
@@ -488,9 +488,9 @@ namespace dftefe
     void
     scale(ValueType                                          alpha,
           QuadratureValuesContainer<ValueType, memorySpace> &u,
-          const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+          linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext)
     {
-      linearAlgebra::blasLapack::ascale(
+      linearAlgebra::blasLapack::ascale<ValueType, ValueType, memorySpace>(
         u.nEntries(), alpha, u.begin(), u.begin(), linAlgOpContext);
     }
   } // namespace quadrature

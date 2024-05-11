@@ -47,14 +47,13 @@ namespace dftefe
                                                  ValueTypeBasisCoeff>>>
     {
     public:
-      using Storage =
-        typename Hamiltonian<ValueTypeBasisData, memorySpace>::Storage;
-
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
 
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
+
+      using Storage = utils::MemoryStorage<ValueType, memorySpace>;
 
     public:
       /**
@@ -63,10 +62,10 @@ namespace dftefe
       KineticFE(
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                        feBasisDataStorage,
-        const size_type cellBlockSize,
+          feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext);
+                        linAlgOpContext,
+        const size_type cellBlockSize);
 
       void
       reinit(std::shared_ptr<
@@ -83,9 +82,9 @@ namespace dftefe
                                              dim>               feBMPsi,
                  const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                   memorySpace> &waveFunc,
-                 const size_type waveFuncBatchSize) const;
-      void
-      getEnergy(RealType energy) const override;
+                 const size_type waveFuncBatchSize);
+      RealType
+      getEnergy() const override;
 
     private:
       std::shared_ptr<

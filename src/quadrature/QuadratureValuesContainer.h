@@ -179,8 +179,8 @@ namespace dftefe
         const QuadratureValuesContainer<ValueType2, memorySpace> &     v,
         QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
-          memorySpace> &                                   w,
-        const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+          memorySpace> &                             w,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
     /**
      * @brief Perform \f$ v = a*u + b*v \f$
@@ -196,7 +196,7 @@ namespace dftefe
         const QuadratureValuesContainer<ValueType, memorySpace> &u,
         ValueType                                                b,
         QuadratureValuesContainer<ValueType, memorySpace> &      v,
-        const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
     /**
      * @brief Perform \f$ w = a*u\f$
@@ -212,8 +212,8 @@ namespace dftefe
           const QuadratureValuesContainer<ValueType2, memorySpace> &u,
           QuadratureValuesContainer<
             linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
-            memorySpace> &                                   w,
-          const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+            memorySpace> &                             w,
+          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
     /**
      * @brief Perform \f$ u = a*u\f$
@@ -225,7 +225,7 @@ namespace dftefe
     void
     scale(ValueType                                          alpha,
           QuadratureValuesContainer<ValueType, memorySpace> &u,
-          const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+          linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext);
 
   } // end of namespace quadrature
 } // end of namespace dftefe

@@ -37,10 +37,10 @@ namespace dftefe
       KineticFE(
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                        feBasisDataStorage,
-        const size_type cellBlockSize,
+          feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext)
+                        linAlgOpContext,
+        const size_type cellBlockSize)
       : d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
@@ -94,12 +94,12 @@ namespace dftefe
                                              dim>               feBMPsi,
                  const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                   memorySpace> &waveFunc,
-                 const size_type waveFuncBatchSize) const
+                 const size_type waveFuncBatchSize)
     {
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
 
-      RealType d_energy = 0;
+      d_energy = 0;
 
       linearAlgebra::MultiVector<ValueType, memorySpace> psiBatch(
         waveFunc.getMPIPatternP2P(),
@@ -107,13 +107,13 @@ namespace dftefe
         waveFuncBatchSize,
         ValueType());
 
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        gradPsi(quadRuleContainer, waveFuncBatchSize * dim);
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace> gradPsi(
+        quadRuleContainer, waveFuncBatchSize * dim);
 
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         gradPsiModSq(quadRuleContainer, waveFuncBatchSize * dim);
 
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         gradPsiModSqJxW(quadRuleContainer, waveFuncBatchSize * dim);
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
@@ -169,11 +169,11 @@ namespace dftefe
           linearAlgebra::blasLapack::
             hadamardProduct<ValueType, ValueType, memorySpace>(
               gradPsi.nEntries(),
-              gradPsi.data(),
-              gradPsi.data(),
+              gradPsi.begin(),
+              gradPsi.begin(),
               linearAlgebra::blasLapack::ScalarOp::Conj,
               linearAlgebra::blasLapack::ScalarOp::Identity,
-              gradPsiModSq.data(),
+              gradPsiModSq.begin(),
               *d_linAlgOpContext);
 
           auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
@@ -249,11 +249,11 @@ namespace dftefe
               nSize.data(),
               kSize.data(),
               jxwStorage.data(),
-              gradPsiModSq.data(),
-              gradPsiModSqJxW.data(),
+              gradPsiModSq.begin(),
+              gradPsiModSqJxW.begin(),
               *d_linAlgOpContext);
 
-          std::vector<ValueType> integralModGradPsiSq(numPsiInBatch),
+          std::vector<RealType> integralModGradPsiSq(numPsiInBatch),
             energy(numPsiInBatch);
 
           for (size_type iCell = 0; iCell < gradPsiModSqJxW.nCells(); iCell++)
@@ -264,12 +264,12 @@ namespace dftefe
                     {
                       std::vector<ValueType> a(
                         quadRuleContainer->nCellQuadraturePoints(iCell));
-                      ValueType *b = a.data();
                       gradPsiModSqJxW
-                        .getCellQuadValues<utils::MemorySpace::HOST>(
-                          iCell, iDim * numPsiInBatch + iComp, b);
+                        .template getCellQuadValues<utils::MemorySpace::HOST>(
+                          iCell, iDim * numPsiInBatch + iComp, a.data());
                       integralModGradPsiSq[iComp] +=
-                        std::accumulate(b.begin(), b.end(), (ValueType)0);
+                        (RealType)(utils::realPart<ValueType>(
+                          std::accumulate(a.begin(), a.end(), (ValueType)0)));
                     }
                 }
             }
@@ -278,12 +278,12 @@ namespace dftefe
             utils::mpi::MPIInPlace,
             integralModGradPsiSq.data(),
             integralModGradPsiSq.size(),
-            utils::mpi::Types<ValueType>::getMPIDatatype(),
+            utils::mpi::Types<RealType>::getMPIDatatype(),
             utils::mpi::MPISum,
             waveFunc.getMPIPatternP2P()->mpiCommunicator());
 
           linearAlgebra::blasLapack::
-            hadamardProduct<ValueType, RealType, utils::MemorySpace::HOST>(
+            hadamardProduct<RealType, RealType, utils::MemorySpace::HOST>(
               integralModGradPsiSq.size(),
               integralModGradPsiSq.data(),
               occupation.data(),
@@ -292,8 +292,8 @@ namespace dftefe
               energy.data(),
               *d_linAlgOpContext);
 
-          d_energy += (RealType)(utils::realPart<ValueType>(
-            std::accumulate(energy.begin(), energy.end(), (ValueType)0)));
+          d_energy +=
+            std::accumulate(energy.begin(), energy.end(), (RealType)0);
         }
     }
 
@@ -301,11 +301,14 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    void
+    typename KineticFE<ValueTypeBasisData,
+                       ValueTypeBasisCoeff,
+                       memorySpace,
+                       dim>::RealType
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      getEnergy(RealType energy) const
+      getEnergy() const
     {
-      energy = d_energy;
+      return d_energy;
     }
 
   } // end of namespace ksdft

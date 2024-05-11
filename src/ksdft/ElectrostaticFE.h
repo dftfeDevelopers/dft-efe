@@ -55,21 +55,22 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff>,
           memorySpace>,
-        public Energy<linearAlgebra::blasLapack::
-                        scalar_type<ValueTypeBasisData, ValueTypeBasisCoeff>>
+        public Energy<linearAlgebra::blasLapack::real_type<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                 ValueTypeBasisCoeff>>>
     {
     public:
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
-      using Storage  = typename Hamiltonian<ValueType, memorySpace>::Storage;
+      using Storage  = utils::MemoryStorage<ValueType, memorySpace>;
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
     public:
       virtual void
-      getHamiltonian(Storage cellWiseStorage) const = 0;
-      virtual void
-      getEnergy(RealType energy) const = 0;
+      getLocal(Storage cellWiseStorage) const = 0;
+      virtual RealType
+      getEnergy() const = 0;
 
     }; // end of class ElectrostaticFE
   }    // end of namespace ksdft
