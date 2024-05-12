@@ -35,6 +35,8 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       KohnShamEigenSolver(
+        const size_type numElectronsInSystem,
+        const double    smearingTemperature,
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,
@@ -156,6 +158,18 @@ namespace dftefe
                                       MInv);
 
               /*// Calculate the chemical potential using newton raphson
+
+              std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
+                std::make_shared<ksdft::FractionalOccupancyFunction>(
+                                    kohnShamEnergies,
+                                    numElectrons,
+                                    kb,
+                                    T);
+
+              linearAlgebra::NewtonRaphsonSolver<RealType> nrs(1e3,
+              d_fermiEnergyTolerance, 1e-14); linearAlgebra::NewtonRaphsonError
+              err = nrs.solve(*fOcc); RealType chemPotential;
+              fOcc->getSolution(chemPotential);
 
               // Calculate the occupation vector
 

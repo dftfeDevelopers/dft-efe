@@ -70,6 +70,9 @@ add_executable(TestBlasLapackComplexDoubleGemmHost TestBlasLapackComplexDoubleGe
 target_link_libraries(TestBlasLapackComplexDoubleGemmHost PUBLIC dft-efe-linalg)
 set_target_properties(TestBlasLapackComplexDoubleGemmHost PROPERTIES OUTPUT_NAME "TestBlasLapackComplexDoubleGemmHost" SUFFIX ".x")
 
+add_executable(TestNewtonRaphsonSolverDouble TestNewtonRaphsonSolverDouble.cpp)
+target_link_libraries(TestNewtonRaphsonSolverDouble PUBLIC dft-efe-linalg)
+set_target_properties(TestNewtonRaphsonSolverDouble PROPERTIES OUTPUT_NAME "TestNewtonRaphsonSolverDouble" SUFFIX ".x")
 
 find_package(MKL REQUIRED)
 include_directories(${MKL_INCLUDE_DIRS})

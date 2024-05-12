@@ -53,12 +53,9 @@ namespace dftefe
                                    ValueTypeBasisCoeff,
                                    memorySpace,
                                    dim>::RealType,
-          memorySpace> &                              rho,
-        const typename ElectrostaticFE<ValueTypeBasisData,
-                                       ValueTypeBasisCoeff,
-                                       memorySpace,
-                                       dim>::Storage &jxwStorage,
-        size_type                                     numLocallyOwnedCells,
+          memorySpace> &                                             rho,
+        const utils::MemoryStorage<ValueTypeBasisData, memorySpace> &jxwStorage,
+        size_type numLocallyOwnedCells,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -333,7 +330,7 @@ namespace dftefe
                       *d_linAlgOpContext);
 
       // Scale by 4\pi
-      quadrature::scale((RealType)(4 * M_PI),
+      quadrature::scale((RealType)(4 * utils::mathConstants::pi),
                         *d_totalChargeDensity,
                         *d_linAlgOpContext);
 
@@ -489,7 +486,9 @@ namespace dftefe
             }
 
           // Scale by 4\pi
-          scale((RealType)(4 * M_PI), nuclearChargeDensity, *d_linAlgOpContext);
+          scale((RealType)(4 * utils::mathConstants::pi),
+                nuclearChargeDensity,
+                *d_linAlgOpContext);
 
           std::shared_ptr<
             linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
@@ -558,7 +557,7 @@ namespace dftefe
           energy += energyVec[0];
         }
 
-      return (energy * 0.5 * (1 / (4 * M_PI)));
+      return (energy * 0.5 * (1 / (4 * utils::mathConstants::pi)));
     }
 
     template <typename ValueTypeBasisData,
@@ -597,7 +596,7 @@ namespace dftefe
 
       RealType totalEnergy = totalEnergyVec[0];
 
-      totalEnergy = totalEnergy * 0.5 * (1 / (4 * M_PI));
+      totalEnergy = totalEnergy * 0.5 * (1 / (4 * utils::mathConstants::pi));
 
       RealType selfEnergy = nuclearSelfEnergy(feBDNuclearChargeStiffnessMatrix,
                                               feBDNuclearChargeRhs);
@@ -634,7 +633,7 @@ namespace dftefe
 
       RealType totalEnergy = totalEnergyVec[0];
 
-      totalEnergy = totalEnergy * 0.5 * (1 / (4 * M_PI));
+      totalEnergy = totalEnergy * 0.5 * (1 / (4 * utils::mathConstants::pi));
 
       double selfEnergy = 0;
 

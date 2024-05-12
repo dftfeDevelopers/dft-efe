@@ -22,33 +22,42 @@
 /*
  * @author Avirup Sircar
  */
-#include <ksdft/Defaults.h>
-#include <limits.h>
+
+#ifndef dftefeNewtonRaphsonSolverFunction_h
+#define dftefeNewtonRaphsonSolverFunction_h
+
+#include <utils/TypeConfig.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
+
 namespace dftefe
 {
-  namespace ksdft
+  namespace linearAlgebra
   {
-    /**
-     * @brief Setting all the PoissonProblemDefaults
-     */
-    const linearAlgebra::PreconditionerType PoissonProblemDefaults::PC_TYPE =
-      linearAlgebra::PreconditionerType::JACOBI;
-    const size_type PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS = 50;
-    const size_type PoissonProblemDefaults::MAX_ITER               = 2e7;
-    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-10;
-    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-12;
-    const double    PoissonProblemDefaults::DIVERGENCE_TOL         = 1e10;
+    template <typename ValueType>
+    class NewtonRaphsonSolverFunction
+    {
+    public:
+      virtual ~NewtonRaphsonSolverFunction() = default;
 
-    /**
-     * @brief Setting all the LinearEigenSolverDefaults
-     */
-    const double LinearEigenSolverDefaults::ILL_COND_TOL = 1e-14;
-    const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
-    const double LinearEigenSolverDefaults::LANCZOS_BETA_TOL = 1e-14;
+      virtual const ValueType
+      getValue(ValueType &x) const = 0;
 
-    const double Constants::BOLTZMANN_CONST_HARTREE = 3.166811429e-06;
-    const double Constants::LDA_EXCHANGE_ENERGY_CONST =
-      (-3.0 / 4) * std::pow((3 / utils::mathConstants::pi), (1.0 / 3));
+      virtual const ValueType
+      getForce(ValueType &x) const = 0;
 
-  } // end of namespace ksdft
+      virtual void
+      setSolution(const ValueType &x) = 0;
+
+      virtual void
+      getSolution(ValueType &solution) = 0;
+
+      virtual const ValueType &
+      getInitialGuess() const = 0;
+
+      virtual void
+      setInitialGuess(ValueType &x) = 0;
+
+    }; // end of class NewtonRaphsonSolverFunction
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
+#endif // dftefeNewtonRaphsonSolverFunction_h

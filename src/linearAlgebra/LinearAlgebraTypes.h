@@ -98,6 +98,14 @@ namespace dftefe
       MAX_PASS_EXCEEDED
     };
 
+    enum class NewtonRaphsonErrorCode
+    {
+      SUCCESS,
+      FORCE_TOLERANCE_ERR,
+      FAILED_TO_CONVERGE,
+      OTHER_ERROR
+    };
+
     struct LapackError
     {
       bool            isSuccess;
@@ -124,6 +132,13 @@ namespace dftefe
       bool                        isSuccess;
       OrthonormalizationErrorCode err;
       std::string                 msg;
+    };
+
+    struct NewtonRaphsonError
+    {
+      bool                   isSuccess;
+      NewtonRaphsonErrorCode err;
+      std::string            msg;
     };
 
     /**
@@ -174,6 +189,17 @@ namespace dftefe
       static const std::map<OrthonormalizationErrorCode, std::string>
         d_errToMsgMap;
     }; // end of class OrthonormalizationErrorMsg
+
+
+    class NewtonRaphsonErrorMsg
+    {
+    public:
+      static NewtonRaphsonError
+      isSuccessAndMsg(const NewtonRaphsonErrorCode &errorCode);
+
+    private:
+      static const std::map<NewtonRaphsonErrorCode, std::string> d_errToMsgMap;
+    }; // end of class NewtonRaphsonErrorMsg
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

@@ -25,6 +25,7 @@
 #include <linearAlgebra/CGLinearSolver.h>
 #include <ksdft/ElectrostaticAllElectronFE.h>
 #include <ksdft/KineticFE.h>
+#include <ksdft/ExchangeCorrelationFE.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -646,6 +647,28 @@ int main()
   hamitonianKin->evalEnergy(occupation, *basisManagerPsi, *waveFunc, 4);
 
   std::cout << "kinenergy: "<<hamitonianKin->getEnergy() << "\n";
+
+
+  std::shared_ptr<dftefe::ksdft::ExchangeCorrelationFE<double,
+                                                  double,
+                                                  dftefe::utils::MemorySpace::HOST,
+                                                  dim>> 
+                                            hamitonianXC =
+    std::make_shared<dftefe::ksdft::ExchangeCorrelationFE<double,
+                                                  double,
+                                                  dftefe::utils::MemorySpace::HOST,
+                                                  dim>>
+                                                  (electronChargeDensity,
+                                                  feBasisData,
+                                                  linAlgOpContext,
+                                                  50);
+
+
+  hamitonianXC->evalEnergy(comm);
+
+  std::cout << hamitonianXC->getEnergy() << "\n";
+
+
   //gracefully end MPI
 
   int mpiFinalFlag = 0;

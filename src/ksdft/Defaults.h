@@ -28,6 +28,7 @@
 
 #include <utils/TypeConfig.h>
 #include <string>
+#include <utils/MathConstants.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
@@ -89,6 +90,20 @@ namespace dftefe
       static const double LANCZOS_BETA_TOL;
 
     }; // end of class LinearEigenSolverDefaults
+
+    class Constants
+    {
+    public:
+      //
+      // Boltzman constant in hartree units
+      //
+      static const double BOLTZMANN_CONST_HARTREE;
+
+      //
+      // LDA exchange constant C = -3/4 * (3/pi)^1/3
+      //
+      static const double LDA_EXCHANGE_ENERGY_CONST;
+    }; // end of class Constants
 
   } // end of namespace ksdft
 } // end of namespace dftefe

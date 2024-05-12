@@ -22,33 +22,65 @@
 /*
  * @author Avirup Sircar
  */
-#include <ksdft/Defaults.h>
-#include <limits.h>
+
+#ifndef dftefeNewtonRaphsonSolver_h
+#define dftefeNewtonRaphsonSolver_h
+
+#include <utils/TypeConfig.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/NewtonRaphsonSolverFunction.h>
+
 namespace dftefe
 {
-  namespace ksdft
+  namespace linearAlgebra
   {
     /**
-     * @brief Setting all the PoissonProblemDefaults
+     *
+     * @brief A class that implements the Newton-Raphson solver to find root of a function.
+     *
+     * @tparam ValueType The datatype (float, double, complex<double>,
+     * etc.)
+     *
      */
-    const linearAlgebra::PreconditionerType PoissonProblemDefaults::PC_TYPE =
-      linearAlgebra::PreconditionerType::JACOBI;
-    const size_type PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS = 50;
-    const size_type PoissonProblemDefaults::MAX_ITER               = 2e7;
-    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-10;
-    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-12;
-    const double    PoissonProblemDefaults::DIVERGENCE_TOL         = 1e10;
+    template <typename ValueType>
+    class NewtonRaphsonSolver
+    {
+    public:
+      /**
+       * @brief Constructor
+       *
+       * @param[in] maxIter Maximum number of iterations to allow the solver
+       * to iterate.
+       * @param[in] tolerance Convergence tolerane on the root
+       * @param[in] forceTolerance See if derivative is cose to zero (extremum).
+       *
+       *
+       */
+      NewtonRaphsonSolver(const size_type maxIter,
+                          const double    tolerance,
+                          const double    forceTolerance);
 
-    /**
-     * @brief Setting all the LinearEigenSolverDefaults
-     */
-    const double LinearEigenSolverDefaults::ILL_COND_TOL = 1e-14;
-    const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
-    const double LinearEigenSolverDefaults::LANCZOS_BETA_TOL = 1e-14;
+      /**
+       * @brief Default Destructor
+       */
+      ~NewtonRaphsonSolver() = default;
 
-    const double Constants::BOLTZMANN_CONST_HARTREE = 3.166811429e-06;
-    const double Constants::LDA_EXCHANGE_ENERGY_CONST =
-      (-3.0 / 4) * std::pow((3 / utils::mathConstants::pi), (1.0 / 3));
+      /**
+       * @brief Function that initiates the NR solve
+       *
+       * @param[in] newtonRaphsonFunction
+       *
+       */
+      NewtonRaphsonError
+      solve(
+        NewtonRaphsonSolverFunction<ValueType> &newtonRaphsonSolverFunction);
 
-  } // end of namespace ksdft
+    private:
+      size_type d_maxIter;
+      double    d_tolerance;
+      double    d_forceTolerance;
+    }; // end of class NewtonRaphsonSolver
+  }    // end of namespace linearAlgebra
 } // end of namespace dftefe
+#include <linearAlgebra/NewtonRaphsonSolver.t.cpp>
+#endif // dftefeNewtonRaphsonSolver_h

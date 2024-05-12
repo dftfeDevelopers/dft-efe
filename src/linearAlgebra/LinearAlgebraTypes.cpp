@@ -82,6 +82,14 @@ namespace dftefe
         {OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR,
          "Failed to converge"}};
 
+    const std::map<NewtonRaphsonErrorCode, std::string>
+      NewtonRaphsonErrorMsg::d_errToMsgMap = {
+        {NewtonRaphsonErrorCode::SUCCESS, "Success. "},
+        {NewtonRaphsonErrorCode::FORCE_TOLERANCE_ERR,
+         "Force is less than given tolerance. "},
+        {NewtonRaphsonErrorCode::FAILED_TO_CONVERGE, "Failed to converge. "},
+        {NewtonRaphsonErrorCode::OTHER_ERROR, "Other error encountered. "}};
+
     LinearSolverError
     LinearSolverErrorMsg::isSuccessAndMsg(const LinearSolverErrorCode &error)
     {
@@ -169,6 +177,28 @@ namespace dftefe
           utils::throwException<utils::InvalidArgument>(
             false,
             "Invalid linearAlgebra::OrthonormalizationErrorCode passed.");
+        }
+      return ret;
+    }
+
+    NewtonRaphsonError
+    NewtonRaphsonErrorMsg::isSuccessAndMsg(const NewtonRaphsonErrorCode &error)
+    {
+      NewtonRaphsonError ret;
+      auto               it = d_errToMsgMap.find(error);
+      if (it != d_errToMsgMap.end())
+        {
+          if (error == NewtonRaphsonErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false, "Invalid linearAlgebra::NewtonRaphsonErrorCode passed.");
         }
       return ret;
     }

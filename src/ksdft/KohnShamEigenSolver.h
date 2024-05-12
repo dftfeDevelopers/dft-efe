@@ -84,6 +84,8 @@ namespace dftefe
        * diftribution) < 1-1e-12
        */
       KohnShamEigenSolver(
+        const size_type numElectronsInSystem,
+        const double    smearingTemperature,
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,

@@ -11,7 +11,8 @@ set(DFT-EFE-KSDFT-SOURCES
 	KohnShamOperatorContextFE.cpp
 	KineticFE.cpp
 	ElectrostaticAllElectronFE.cpp
-	KohnShamEigenSolver.cpp)
+	KohnShamEigenSolver.cpp
+	ExchangeCorrelationFE.cpp)
 
 add_library(dft-efe-ksdft SHARED ${DFT-EFE-KSDFT-SOURCES})
 

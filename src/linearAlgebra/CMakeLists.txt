@@ -25,7 +25,8 @@ if (NOT TARGET dft-efe-linalg)
         LanczosExtremeEigenSolver.cpp
         ChebyshevFilter.cpp
         RayleighRitzEigenSolver.cpp
-        ChebyshevFilteredEigenSolver.cpp)
+        ChebyshevFilteredEigenSolver.cpp
+        NewtonRaphsonSolver.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
