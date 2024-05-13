@@ -22,42 +22,57 @@
 /*
  * @author Avirup Sircar
  */
-#include <ksdft/Defaults.h>
-#include <limits.h>
+
+#ifndef dftefeFractionalOccupancyFunction_h
+#define dftefeFractionalOccupancyFunction_h
+
+#include <linearAlgebra/NewtonRaphsonSolver.h>
+#include <linearAlgebra/NewtonRaphsonSolverFunction.h>
+
 namespace dftefe
 {
   namespace ksdft
   {
-    /**
-     * @brief Setting all the PoissonProblemDefaults
-     */
-    const linearAlgebra::PreconditionerType PoissonProblemDefaults::PC_TYPE =
-      linearAlgebra::PreconditionerType::JACOBI;
-    const size_type PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS = 50;
-    const size_type PoissonProblemDefaults::MAX_ITER               = 2e7;
-    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-10;
-    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-12;
-    const double    PoissonProblemDefaults::DIVERGENCE_TOL         = 1e10;
+    class FractionalOccupancyFunction
+      : public linearAlgebra::NewtonRaphsonSolverFunction<double>
+    {
+    public:
+      /**
+       * @brief Constructor
+       */
+      FractionalOccupancyFunction(std::vector<double> &eigenValues,
+                                  const size_type      numElectrons,
+                                  const double         kb,
+                                  const double         T);
 
-    /**
-     * @brief Setting all the LinearEigenSolverDefaults
-     */
-    const double LinearEigenSolverDefaults::ILL_COND_TOL = 1e-14;
-    const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
-    const double LinearEigenSolverDefaults::LANCZOS_BETA_TOL = 1e-14;
+      ~FractionalOccupancyFunction() = default;
 
-    /**
-     * @brief Setting all the NewtonRaphsonSolverDefaults
-     */
-    const size_type NewtonRaphsonSolverDefaults::MAX_ITER  = 2e7;
-    const double    NewtonRaphsonSolverDefaults::FORCE_TOL = 1e-14;
+      const double
+      getValue(double &x) const override;
 
-    /**
-     * @brief Setting all the constants
-     */
-    const double Constants::BOLTZMANN_CONST_HARTREE = 3.166811429e-06;
-    const double Constants::LDA_EXCHANGE_ENERGY_CONST =
-      (-3.0 / 4) * std::pow((3 / utils::mathConstants::pi), (1.0 / 3));
+      const double
+      getForce(double &x) const override;
 
-  } // end of namespace ksdft
+      void
+      setSolution(const double &x) override;
+
+      void
+      getSolution(double &solution) override;
+
+      const double &
+      getInitialGuess() const override;
+
+      void
+      setInitialGuess(double &x) override;
+
+    private:
+      double              d_x;
+      std::vector<double> d_eigenValues;
+      size_type           d_numElectrons;
+      double              d_kb;
+      double              d_T;
+
+    }; // end of class FractionalOccupancyFunction
+  }    // end of namespace ksdft
 } // end of namespace dftefe
+#endif // dftefeFractionalOccupancyFunction_h

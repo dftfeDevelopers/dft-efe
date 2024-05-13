@@ -91,6 +91,21 @@ namespace dftefe
 
     }; // end of class LinearEigenSolverDefaults
 
+    class NewtonRaphsonSolverDefaults
+    {
+    public:
+      //
+      // Maximum iteration for NR
+      //
+      static const size_type MAX_ITER;
+
+      //
+      // Tolerance of force to check divergence
+      //
+      static const double FORCE_TOL;
+
+    }; // end of class NewtonRaphsonSolverDefaults
+
     class Constants
     {
     public:

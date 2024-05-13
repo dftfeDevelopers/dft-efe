@@ -26,6 +26,7 @@
 #include <ksdft/Defaults.h>
 #include <linearAlgebra/LanczosExtremeEigenSolver.h>
 #include <linearAlgebra/ChebyshevFilteredEigenSolver.h>
+#include <ksdft/FractionalOccupancyFunction.h>
 namespace dftefe
 {
   namespace ksdft
@@ -35,7 +36,6 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       KohnShamEigenSolver(
-        const size_type numElectronsInSystem,
         const double    smearingTemperature,
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
@@ -52,6 +52,8 @@ namespace dftefe
       , d_waveFunctionBlockSize(waveFunctionBlockSize)
       , d_fermiEnergyTolerance(fermiEnergyTolerance)
       , d_fracOccupancyTolerance(fracOccupancyTolerance)
+      , d_smearingTemperature(smearingTemperature)
+      , d_fracOccupancy(d_numWantedEigenvalues)
     {
       reinit(waveFunctionSubspaceGuess);
     }
@@ -64,6 +66,7 @@ namespace dftefe
       reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
                &waveFunctionSubspaceGuess)
     {
+      d_isSolved                  = false;
       d_waveFunctionSubspaceGuess = &waveFunctionSubspaceGuess;
     }
 
@@ -80,6 +83,7 @@ namespace dftefe
             const OpContext &M,
             const OpContext &MInv)
     {
+      d_isSolved                          = true;
       global_size_type globalSize         = kohnShamWaveFunctions.globalSize();
       double           eigenSolveResidual = 0;
 
@@ -126,9 +130,12 @@ namespace dftefe
             eigenValuesLanczos[0];
 
           linearAlgebra::MultiVector<ValueType, memorySpace> HX(
-            kohnShamWaveFunctions),
-            MX(kohnShamWaveFunctions),
-            residualEigenSolver(kohnShamWaveFunctions);
+            kohnShamWaveFunctions.getMPIPatternP2P(),
+            kohnShamWaveFunctions.getLinAlgOpContext(),
+            1),
+            MX(HX), residualEigenSolver(HX), waveFnResidualCheck(HX);
+
+          utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
             {
@@ -157,38 +164,70 @@ namespace dftefe
                                       M,
                                       MInv);
 
-              /*// Calculate the chemical potential using newton raphson
+              // Calculate the chemical potential using newton raphson
 
               std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
                 std::make_shared<ksdft::FractionalOccupancyFunction>(
-                                    kohnShamEnergies,
-                                    numElectrons,
-                                    kb,
-                                    T);
+                  kohnShamEnergies,
+                  d_numWantedEigenvalues,
+                  Constants::BOLTZMANN_CONST_HARTREE,
+                  d_smearingTemperature);
 
-              linearAlgebra::NewtonRaphsonSolver<RealType> nrs(1e3,
-              d_fermiEnergyTolerance, 1e-14); linearAlgebra::NewtonRaphsonError
-              err = nrs.solve(*fOcc); RealType chemPotential;
-              fOcc->getSolution(chemPotential);
+              linearAlgebra::NewtonRaphsonSolver<RealType> nrs(
+                NewtonRaphsonSolverDefaults::MAX_ITER,
+                d_fermiEnergyTolerance,
+                NewtonRaphsonSolverDefaults::FORCE_TOL);
 
-              // Calculate the occupation vector
+              linearAlgebra::NewtonRaphsonError err = nrs.solve(*fOcc);
+
+              fOcc->getSolution(d_fermiEnergy);
+
+              // Calculate the frac occupancy vector
+              for (size_type i = 0; i < d_fracOccupancy.size(); i++)
+                {
+                  d_fracOccupancy[i] =
+                    fermiDirac(kohnShamEnergies[i],
+                               d_fermiEnergy,
+                               Constants::BOLTZMANN_CONST_HARTREE,
+                               d_smearingTemperature);
+                }
+
+              // kohnshamenergies are in ascending order from lapack assumed
+              size_type residualCheckIndex;
+              for (size_type i = d_fracOccupancy.size(); i > 0; i--)
+                {
+                  if (d_fracOccupancy[i] > d_fracOccupancyTolerance)
+                    {
+                      residualCheckIndex = i;
+                      break;
+                    }
+                }
+
+              for (size_type iSize = 0;
+                   iSize < kohnShamWaveFunctions.locallyOwnedSize();
+                   iSize++)
+                memoryTransfer.copy(1,
+                                    waveFnResidualCheck.data(),
+                                    kohnShamWaveFunctions.data() +
+                                      iSize * d_numWantedEigenvalues +
+                                      residualCheckIndex);
 
               // calculate residualEigenSolver
-              kohnShamOperator.apply(kohnShamWaveFunctions, HX);
-              M.apply(kohnShamWaveFunctions, MX);
-
+              kohnShamOperator.apply(waveFnResidualCheck, HX);
+              M.apply(waveFnResidualCheck, MX);
+              RealType nenergyAtResidualCheck =
+                -kohnShamEnergies[waveFnResidualCheck];
               linearAlgebra::blasLapack::
                 axpbyBlocked<ValueType, ValueType, memorySpace>(
                   MX.locallyOwnedSize(),
-                  MX.getNumberComponents(),
-                  ones.data(),
+                  (ValueType)1.0,
                   HX.data(),
-                  kohnShamEnergiesMemSpace.data(),
+                  (ValueType)(nenergyAtResidualCheck),
                   MX.data(),
                   residualEigenSolver.data(),
                   *MX.getLinAlgOpContext());
 
-              eigenSolveResidual = ; //Calculate this*/
+              eigenSolveResidual = (residualEigenSolver.l2Norms())[0];
 
               if (eigenSolveResidual < d_eigenSolveResidualTolerance ||
                   !chfsiErr.isSuccess)
@@ -227,6 +266,37 @@ namespace dftefe
         }
 
       return returnValue;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    typename linearAlgebra::HermitianIterativeEigenSolver<ValueTypeOperator,
+                                                          ValueTypeOperand,
+                                                          memorySpace>::RealType
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      getFermiEnergy()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call getFermiEnergy() before solving the eigenproblem.");
+      return d_fermiEnergy;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    std::vector<typename linearAlgebra::HermitianIterativeEigenSolver<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace>::RealType>
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      getFractionalOccupancy()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call getFractionalOccupancy() before solving the eigenproblem.");
+      return d_fracOccupancy;
     }
 
   } // namespace ksdft

@@ -84,7 +84,6 @@ namespace dftefe
        * diftribution) < 1-1e-12
        */
       KohnShamEigenSolver(
-        const size_type numElectronsInSystem,
         const double    smearingTemperature,
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
@@ -105,6 +104,12 @@ namespace dftefe
       reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
                &waveFunctionSubspaceGuess);
 
+      RealType
+      getFermiEnergy();
+
+      std::vector<RealType>
+      getFractionalOccupancy();
+
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
             std::vector<RealType> &kohnShamEnergies,
@@ -121,6 +126,7 @@ namespace dftefe
                                                      memorySpace>()) override;
 
     private:
+      double    d_smearingTemperature;
       double    d_fermiEnergyTolerance;
       double    d_fracOccupancyTolerance;
       double    d_eigenSolveResidualTolerance;
@@ -129,7 +135,10 @@ namespace dftefe
       size_type d_numWantedEigenvalues;
       size_type d_waveFunctionBlockSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-        *d_waveFunctionSubspaceGuess;
+        *                   d_waveFunctionSubspaceGuess;
+      std::vector<RealType> d_fracOccupancy;
+      RealType              d_fermiEnergy;
+      bool                  d_isSolved;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft
