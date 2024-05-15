@@ -53,7 +53,7 @@ namespace dftefe
 
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
-      using Storage = utils::MemoryStorage<ValueType, memorySpace>;
+      using Storage = utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
 
     public:
       /**
@@ -73,7 +73,7 @@ namespace dftefe
                feBasisDataStorage);
 
       void
-      getLocal(Storage cellWiseStorage) const override;
+      getLocal(Storage &cellWiseStorage) const override;
       void
       evalEnergy(const std::vector<RealType> &                  occupation,
                  const basis::FEBasisManager<ValueTypeBasisCoeff,

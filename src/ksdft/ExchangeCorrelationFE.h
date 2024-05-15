@@ -79,7 +79,7 @@ namespace dftefe
                feBasisDataStorage);
 
       void
-      getLocal(Storage cellWiseStorage) const override;
+      getLocal(Storage &cellWiseStorage) const override;
 
       void
       evalEnergy(const utils::mpi::MPIComm &comm);

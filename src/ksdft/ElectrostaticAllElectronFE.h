@@ -109,7 +109,7 @@ namespace dftefe
           &electronChargeDensity);
 
       void
-      getLocal(Storage cellWiseStorage) const override;
+      getLocal(Storage &cellWiseStorage) const override;
 
       void
       evalEnergy(

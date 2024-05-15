@@ -275,7 +275,7 @@ namespace dftefe
     ExchangeCorrelationFE<ValueTypeBasisData,
                           ValueTypeBasisCoeff,
                           memorySpace,
-                          dim>::getLocal(Storage cellWiseStorage) const
+                          dim>::getLocal(Storage &cellWiseStorage) const
     {
       d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::IDENTITY,
                                      basis::realspace::VectorMathOp::MULT,

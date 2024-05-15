@@ -36,7 +36,7 @@ namespace dftefe
     public:
       virtual void
       getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace>
-                 cellWiseStorage) const = 0;
+                 &cellWiseStorage) const = 0;
 
       // virtual void
       // applyNonLocal(const linearAlgebra::MultiVector<ValueTypeBasisCoeff,

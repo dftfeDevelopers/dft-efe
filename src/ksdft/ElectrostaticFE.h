@@ -68,7 +68,7 @@ namespace dftefe
 
     public:
       virtual void
-      getLocal(Storage cellWiseStorage) const = 0;
+      getLocal(Storage &cellWiseStorage) const = 0;
       virtual RealType
       getEnergy() const = 0;
 

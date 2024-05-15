@@ -235,17 +235,25 @@ int main()
 
   dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> f(quadRuleContainerAdaptive, numComponents);
 
-  for(dftefe::size_type i = 0 ; i < f.nCells() ; i++)
-  {
-    dftefe::size_type quadId = 0;
-    for (auto j : quadRuleContainerAdaptive->getCellRealPoints(i))
+  for (dftefe::size_type iCell = 0; iCell < quadRuleContainerAdaptive->nCells();
+        iCell++)
     {
-      std::vector<double> a(numComponents, 3.0);
-      double *b = a.data();
-      f.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, quadId, b);
-      quadId = quadId + 1;
+      for (dftefe::size_type iComp = 0; iComp < numComponents; iComp++)
+        {
+          dftefe::size_type             quadId = 0;
+          std::vector<double> a(
+            quadRuleContainerAdaptive->nCellQuadraturePoints(iCell));
+          for (auto j : quadRuleContainerAdaptive->getCellRealPoints(iCell))
+            {
+              a[quadId] = 3.0;
+              quadId    = quadId + 1;
+            }
+          double *b = a.data();
+          f.setCellQuadValues<dftefe::utils::MemorySpace::HOST>(iCell,
+                                                                  iComp,
+                                                                  b);
+        }
     }
-  }
 
   dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>
     cellWiseFEData(0);

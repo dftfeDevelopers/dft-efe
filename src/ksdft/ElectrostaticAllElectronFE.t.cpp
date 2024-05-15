@@ -280,7 +280,7 @@ namespace dftefe
                   a[quadId] = (RealType)smfunc(j);
                   quadId    = quadId + 1;
                 }
-              double *b = a.data();
+              RealType *b = a.data();
               d_nuclearChargesDensity
                 ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
                                                                        iComp,
@@ -382,7 +382,7 @@ namespace dftefe
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                memorySpace,
-                               dim>::getLocal(Storage cellWiseStorage) const
+                               dim>::getLocal(Storage &cellWiseStorage) const
     {
       d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::IDENTITY,
                                      basis::realspace::VectorMathOp::MULT,
@@ -477,7 +477,7 @@ namespace dftefe
                       a[quadId] = (RealType)(*smfunc)(j);
                       quadId    = quadId + 1;
                     }
-                  double *b = a.data();
+                  RealType *b = a.data();
                   nuclearChargeDensity
                     .template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
                                                                           iComp,

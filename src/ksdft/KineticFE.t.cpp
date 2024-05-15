@@ -72,13 +72,19 @@ namespace dftefe
               size_type          dim>
     void
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      getLocal(Storage cellWiseStorage) const
+      getLocal(Storage &cellWiseStorage) const
     {
       d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
                                      basis::realspace::VectorMathOp::DOT,
                                      basis::realspace::LinearLocalOp::GRAD,
                                      cellWiseStorage,
                                      *d_linAlgOpContext);
+
+      linearAlgebra::blasLapack::ascale(cellWiseStorage.size(),
+                                        (ValueTypeBasisData)0.5,
+                                        cellWiseStorage.data(),
+                                        cellWiseStorage.data(),
+                                        *d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -294,6 +300,8 @@ namespace dftefe
 
           d_energy +=
             std::accumulate(energy.begin(), energy.end(), (RealType)0);
+
+          /*No multiplication by 1/2 due to spin up and down electrons*/
         }
     }
 

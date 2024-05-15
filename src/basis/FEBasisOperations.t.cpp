@@ -172,8 +172,8 @@ namespace dftefe
 
                 // variableStridedBlockScale
 
-                StorageUnion fxNBlock(numCumulativeQuadxDofsCellsInBlock,
-                                      ValueTypeUnion());
+                StorageUnion fxNConjBlock(numCumulativeQuadxDofsCellsInBlock,
+                                          ValueTypeUnion());
 
                 std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
                   numCellsInBlock,
@@ -193,7 +193,8 @@ namespace dftefe
                     nTmp[iCell]   = numCellsInBlockDofs[iCell];
                     kTmp[iCell]   = numCellsInBlockQuad[iCell];
                     stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
-                    stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
+                    if (!zeroStrideBasisVal)
+                      stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
                     stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
                   }
 
@@ -232,7 +233,7 @@ namespace dftefe
                   f.begin(cellStartId),
                   (feBasisDataStorage->getBasisDataInAllCells()).begin() +
                     NStartOffset,
-                  fxNBlock.data(),
+                  fxNConjBlock.data(),
                   linAlgOpContext);
 
                 /*
@@ -246,7 +247,7 @@ namespace dftefe
                                                                           f.data()
                 + cumulativeA, (feBasisDataStorage->getBasisDataInAllCells()).
                                                                             data()
-                + NStartOffset + cumulativeB, fxNBlock.data() + cumulativeC,
+                + NStartOffset + cumulativeB, fxNConjBlock.data() + cumulativeC,
                                                                           linAlgOpContext);
                     cumulativeA += numCellsInBlockQuad[iCell];
                     if(!zeroStrideBasisVal)
@@ -256,7 +257,7 @@ namespace dftefe
                   }
                 */
 
-                StorageBasis NxJxWBlock(numCumulativeQuadxDofsCellsInBlock,
+                StorageBasis JxWxNBlock(numCumulativeQuadxDofsCellsInBlock,
                                         ValueTypeBasisData());
 
                 std::fill(scalarOpB.begin(),
@@ -281,7 +282,7 @@ namespace dftefe
                     quadRuleContainer->getCellQuadStartId(cellStartId),
                   (feBasisDataStorage->getBasisDataInAllCells()).begin() +
                     NStartOffset,
-                  NxJxWBlock.data(),
+                  JxWxNBlock.data(),
                   linAlgOpContext);
 
                 std::vector<linearAlgebra::blasLapack::Op> transA(
@@ -308,8 +309,7 @@ namespace dftefe
                     ldcSizesTmp[iCell] = mSizesTmp[iCell];
                     strideATmp[iCell]  = mSizesTmp[iCell] * kSizesTmp[iCell];
                     strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
-                    if (!zeroStrideBasisVal)
-                      strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
+                    strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell];
                   }
 
                 utils::MemoryStorage<size_type, memorySpace> mSizes(
@@ -376,9 +376,9 @@ namespace dftefe
                                nSizes.data(),
                                kSizes.data(),
                                alpha,
-                               NxJxWBlock.data(),
+                               JxWxNBlock.data(),
                                ldaSizes.data(),
-                               fxNBlock.data(),
+                               fxNConjBlock.data(),
                                ldbSizes.data(),
                                beta,
                                C,
@@ -500,7 +500,7 @@ namespace dftefe
                   dim * numCumulativeDofsxDofsCellsInBlock,
                   (ValueTypeBasisData)0);
 
-                StorageBasis GradNxJxWBlock(numCumulativeQuadxDofsCellsInBlock *
+                StorageBasis JxWxGradNBlock(numCumulativeQuadxDofsCellsInBlock *
                                               dim,
                                             ValueTypeBasisData());
 
@@ -564,7 +564,7 @@ namespace dftefe
                   (feBasisDataStorage->getBasisGradientDataInAllCells())
                       .begin() +
                     GradNStartOffset,
-                  GradNxJxWBlock.data(),
+                  JxWxGradNBlock.data(),
                   linAlgOpContext);
                 /*
                     size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
@@ -580,7 +580,7 @@ namespace dftefe
                    cumulativeA,
                           (feBasisDataStorage->getBasisGradientDataInAllCells())
                                   .begin() + GradNStartOffset + cumulativeB,
-                          GradNxJxWBlock.data() + cumulativeC,
+                          JxWxGradNBlock.data() + cumulativeC,
                           linAlgOpContext);
                         cumulativeA += numCellsInBlockQuad[iCell];
                         cumulativeB += numCellsInBlockQuad[iCell] * dim *
@@ -690,7 +690,7 @@ namespace dftefe
                                nSizes.data(),
                                kSizes.data(),
                                alpha,
-                               GradNxJxWBlock.data(),
+                               JxWxGradNBlock.data(),
                                ldaSizes.data(),
                                GradN,
                                ldbSizes.data(),

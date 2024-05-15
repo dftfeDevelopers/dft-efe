@@ -26,6 +26,8 @@
 #include <utils/MPIWrapper.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <cmath>
+#include <utils/RandNumGen.h>
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -113,6 +115,47 @@ namespace dftefe
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
                                                                 d_numVectors);
+    }
+
+    //
+    // Constructor for \distributed random Vector using an existing
+    // MPIPatternP2P object
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    Vector<ValueType, memorySpace>::Vector(
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                    mpiPatternP2P,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      const ValueType                               min,
+      const ValueType                               max)
+    {
+      d_vectorAttributes =
+        VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
+      d_mpiPatternP2P    = mpiPatternP2P;
+      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_storage =
+        std::make_unique<typename Vector<ValueType, memorySpace>::Storage>(
+          d_localSize, (ValueType)0.0);
+      d_linAlgOpContext = linAlgOpContext;
+
+      // d_numVectors set to 1 as it is a single vector
+      d_numVectors         = 1;
+      d_mpiCommunicatorP2P = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
+                                                                d_numVectors);
+
+      utils::RandNumGen<ValueType> rand(min, max);
+      std::vector<ValueType>       randVec(d_locallyOwnedSize);
+      for (auto &i : randVec)
+        i = rand.generate();
+
+      d_storage->template copyFrom<utils::MemorySpace::HOST>(randVec.data(),
+                                                             d_locallyOwnedSize,
+                                                             0,
+                                                             0);
     }
 
     /**

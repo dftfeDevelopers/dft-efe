@@ -35,6 +35,7 @@
 #include <ksdft/Hamiltonian.h>
 #include <memory>
 #include <variant>
+#include <type_traits>
 
 namespace dftefe
 {
@@ -71,7 +72,7 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
+      using Storage = utils::MemoryStorage<ValueTypeOperator, memorySpace>;
 
       using HamiltonianPtrVariant =
         std::variant<Hamiltonian<float, memorySpace> *,
@@ -87,12 +88,16 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
             &                                        feBasisManager,
-        std::vector<const HamiltonianPtrVariant>     hamiltonianVec,
-        const size_type                              maxCellTimesNumVecs,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        std::vector<HamiltonianPtrVariant>           hamiltonianComponentsVec,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const size_type                              maxCellTimesNumVecs);
 
       void
-      reinit(std::vector<const HamiltonianPtrVariant> hamiltonianVec);
+      reinit(const basis::FEBasisManager<ValueTypeOperand,
+                                         ValueTypeBasisData,
+                                         memorySpace,
+                                         dim> & feBasisManager,
+             std::vector<HamiltonianPtrVariant> hamiltonianVec);
 
       void
       apply(
@@ -105,7 +110,6 @@ namespace dftefe
           *                                       d_feBasisManager;
       Storage                                     d_hamiltonianInAllCells;
       const size_type                             d_maxCellTimesNumVecs;
-      const size_type                             d_cellWiseDataSize;
       linearAlgebra::LinAlgOpContext<memorySpace> d_linAlgOpContext;
     }; // end of class KohnShamOperatorContextFE
   }    // end of namespace ksdft

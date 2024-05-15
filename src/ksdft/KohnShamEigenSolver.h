@@ -91,7 +91,8 @@ namespace dftefe
         const size_type chebyshevPolynomialDegree,
         const size_type maxChebyshevFilterPass,
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-          &             waveFunctionSubspaceGuess,
+          &waveFunctionSubspaceGuess,
+        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
         const size_type waveFunctionBlockSize = 0);
 
       /**
@@ -101,8 +102,10 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-               &waveFunctionSubspaceGuess);
+      reinit(
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+          &waveFunctionSubspaceGuess,
+        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess);
 
       RealType
       getFermiEnergy();
@@ -135,10 +138,11 @@ namespace dftefe
       size_type d_numWantedEigenvalues;
       size_type d_waveFunctionBlockSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-        *                   d_waveFunctionSubspaceGuess;
-      std::vector<RealType> d_fracOccupancy;
-      RealType              d_fermiEnergy;
-      bool                  d_isSolved;
+        *d_waveFunctionSubspaceGuess;
+      linearAlgebra::Vector<ValueTypeOperand, memorySpace> *d_lanczosGuess;
+      std::vector<RealType>                                 d_fracOccupancy;
+      RealType                                              d_fermiEnergy;
+      bool                                                  d_isSolved;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

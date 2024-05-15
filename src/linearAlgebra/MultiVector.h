@@ -211,6 +211,22 @@ namespace dftefe
                   const ValueType initVal = utils::Types<ValueType>::zero);
 
       /**
+       * @brief Constructor for a \b distributed random MultiVector based on an input MPIPatternP2P.
+       *
+       * @param[in] mpiPatternP2P A shared_ptr to const MPIPatternP2P
+       * based on which the distributed MultiVector will be created.
+       * @param[in] linAlgOpContext shared pointer to LinAlgOpContext object
+       * @param[in] numVectors number of vectors in the MultiVector
+       * @param[in] min, max value between for the random numbers
+       */
+      MultiVector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                                mpiPatternP2P,
+                  std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+                  const size_type                               numVectors,
+                  const ValueType                               min,
+                  const ValueType                               max);
+
+      /**
        * @brief Constructor for a \b distributed MultiVector with a predefined
        * MultiVector::Storage (i.e., utils::MemoryStorage) and MPIPatternP2P.
        * This constructor transfers the ownership of the input Storage to the
