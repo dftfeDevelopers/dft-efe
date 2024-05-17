@@ -106,9 +106,9 @@ int main()
 
   // Set up Triangulation
   const unsigned int dim = 3;
-  double xmax = 20.0;
-  double ymax = 20.0;
-  double zmax = 20.0;
+  double xmax = 10.0;
+  double ymax = 10.0;
+  double zmax = 10.0;
   double rc = 0.5;
   double hMin = 1e6;
   size_type maxIter = 2e7;
@@ -124,14 +124,15 @@ int main()
   double    fermiEnergyTolerance = 1e-10;
   double    fracOccupancyTolerance = 1e-3;
   double    eigenSolveResidualTolerance = 1e-4;
-  size_type chebyshevPolynomialDegree = 30;
-  size_type maxChebyshevFilterPass = 5;
-  size_type numWantedEigenvalues = 20;
+  size_type chebyshevPolynomialDegree = 50;
+  size_type maxChebyshevFilterPass = 100;
+  size_type numWantedEigenvalues = 15;
+  size_type numElectrons = 1;
   
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {10, 10, 10};
+  std::vector<unsigned int>         subdivisions = {20, 20, 20};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -139,11 +140,17 @@ int main()
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
+  std::vector<double> origin(0);
+  origin.resize(dim);
+  for(unsigned int i = 0 ; i < dim ; i++)
+    origin[i] = -domainVectors[i][i]*0.5;
+
   // initialize the triangulation
   triangulationBase->initializeTriangulationConstruction();
   triangulationBase->createUniformParallelepiped(subdivisions,
                                                  domainVectors,
                                                  isPeriodicFlags);
+  triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
     triangulationBase->finalizeTriangulationConstruction();
 
     char* dftefe_path = getenv("DFTEFE_PATH");
@@ -298,11 +305,15 @@ int main()
 
   std::cout << "Total nuclear charge in system: " << mpiReducedChargeDensity[0] << std::endl;
 
-    std::vector<double> atomChargesVec(atomCoordinatesVec.size(), 1.0);
+    std::vector<double> atomChargesVec(atomCoordinatesVec.size(), -1.0);
     std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
    quadrature::QuadratureValuesContainer<double, Host> 
-      electronChargeDensity(quadRuleContainer, 1, 0);
+      electronChargeDensity(quadRuleContainer, 1, 0.0);
+
+    std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
+          zeroFunction = std::make_shared
+            <utils::ScalarZeroFunctionReal>();
 
     std::shared_ptr<const basis::FEBasisManager
       <double, double, Host,dim>>
@@ -361,8 +372,7 @@ int main()
                     ksdft::Hamiltonian<std::complex<float>, Host> *,
                     ksdft::Hamiltonian<std::complex<double>, Host> *>;
 
-  std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{hamitonianKin.get(),
-                                                                    hamitonianElec.get()};
+  std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{hamitonianKin.get(), hamitonianElec.get()};
   // form the kohn sham operator
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   double,
@@ -405,7 +415,8 @@ int main()
     std::make_shared<ksdft::KohnShamEigenSolver<double,
                                                 double,
                                                 Host>>
-                                                (smearingTemperature,
+                                                (numElectrons,
+                                                smearingTemperature,
                                                 fermiEnergyTolerance,
                                                 fracOccupancyTolerance,
                                                 eigenSolveResidualTolerance,
@@ -479,8 +490,12 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                     kohnShamEnergies, 
                     kohnShamWaveFunctions,
                     true,
-                    *MContext,
-                    *MInvContext);                        
+                    *MContextForInv,
+                    *MInvContext);       
+
+  for(auto &i : kohnShamEnergies)
+    std::cout <<  i <<", ";       
+  std::cout << "\n";         
 
   //gracefully end MPI
 

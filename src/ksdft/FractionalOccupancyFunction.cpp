@@ -26,18 +26,20 @@ namespace dftefe
       const double factor = (eigenValue - fermiEnergy) / (kb * T);
       const double beta   = 1.0 / (kb * T);
       return (factor >= 0) ?
-               (-beta * std::exp(-factor) / (1.0 + std::exp(-factor)) /
+               (beta * std::exp(-factor) / (1.0 + std::exp(-factor)) /
                 (1.0 + std::exp(-factor))) :
-               (-beta * std::exp(factor) / (1.0 + std::exp(factor)) /
+               (beta * std::exp(factor) / (1.0 + std::exp(factor)) /
                 (1.0 + std::exp(factor)));
     }
 
     FractionalOccupancyFunction::FractionalOccupancyFunction(
-      std::vector<double> &eigenValues,
-      const size_type      numElectrons,
-      const double         kb,
-      const double         T)
-      : d_x((double)(0.1))
+      const std::vector<double> &eigenValues,
+      const size_type            numElectrons,
+      const double               kb,
+      const double               T,
+      const double               initialGuess)
+      : d_x(initialGuess)
+      , d_initialGuess(initialGuess)
       , d_eigenValues(eigenValues)
       , d_kb(kb)
       , d_T(T)
@@ -84,13 +86,7 @@ namespace dftefe
     const double &
     FractionalOccupancyFunction::getInitialGuess() const
     {
-      return d_x;
-    }
-
-    void
-    FractionalOccupancyFunction::setInitialGuess(double &x)
-    {
-      d_x = x;
+      return d_initialGuess;
     }
 
   } // namespace ksdft

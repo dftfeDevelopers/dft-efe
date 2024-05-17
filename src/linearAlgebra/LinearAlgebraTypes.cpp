@@ -71,6 +71,8 @@ namespace dftefe
          "CHFSI error in KohnShamEigenSolver. "},
         {EigenSolverErrorCode::KS_LANCZOS_ERROR,
          "Lanczos solve error in KohnShamEigenSolver. "},
+        {EigenSolverErrorCode::KS_NEWTON_RAPHSON_ERROR,
+         "Newton Raphson solve error in KohnShamEigenSolver. "},
         {EigenSolverErrorCode::OTHER_ERROR, "Other error encountered"}};
 
     const std::map<OrthonormalizationErrorCode, std::string>

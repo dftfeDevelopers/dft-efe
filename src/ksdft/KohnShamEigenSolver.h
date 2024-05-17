@@ -84,6 +84,7 @@ namespace dftefe
        * diftribution) < 1-1e-12
        */
       KohnShamEigenSolver(
+        const size_type numElectrons,
         const double    smearingTemperature,
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
@@ -143,6 +144,7 @@ namespace dftefe
       std::vector<RealType>                                 d_fracOccupancy;
       RealType                                              d_fermiEnergy;
       bool                                                  d_isSolved;
+      const size_type                                       d_numElectrons;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

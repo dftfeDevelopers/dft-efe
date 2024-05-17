@@ -87,6 +87,7 @@ namespace dftefe
       KS_MAX_PASS_ERROR,
       KS_CHFSI_ERROR,
       KS_LANCZOS_ERROR,
+      KS_NEWTON_RAPHSON_ERROR,
       OTHER_ERROR
     };
 

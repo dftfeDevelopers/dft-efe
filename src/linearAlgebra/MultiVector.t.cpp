@@ -152,14 +152,12 @@ namespace dftefe
                                                                 numVectors);
 
       utils::RandNumGen<ValueType> rand(min, max);
-      std::vector<ValueType>       randVec(d_locallyOwnedSize);
+      std::vector<ValueType>       randVec(d_locallyOwnedSize * d_numVectors);
       for (auto &i : randVec)
         i = rand.generate();
 
-      d_storage->template copyFrom<utils::MemorySpace::HOST>(randVec.data(),
-                                                             d_locallyOwnedSize,
-                                                             0,
-                                                             0);
+      d_storage->template copyFrom<utils::MemorySpace::HOST>(
+        randVec.data(), d_locallyOwnedSize * d_numVectors, 0, 0);
     }
 
     /**

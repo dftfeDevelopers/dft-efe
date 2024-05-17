@@ -36,6 +36,7 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       KohnShamEigenSolver(
+        const size_type numElectrons,
         const double    smearingTemperature,
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
@@ -55,6 +56,7 @@ namespace dftefe
       , d_fracOccupancyTolerance(fracOccupancyTolerance)
       , d_smearingTemperature(smearingTemperature)
       , d_fracOccupancy(d_numWantedEigenvalues)
+      , d_numElectrons(numElectrons)
     {
       reinit(waveFunctionSubspaceGuess, lanczosGuess);
     }
@@ -88,14 +90,18 @@ namespace dftefe
     {
       d_isSolved                  = true;
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
-
-      //--------------------CHANGE THIS ------------------------------
-      double eigenSolveResidual = 1e6;
-
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        linAlgOpContext = kohnShamWaveFunctions.getLinAlgOpContext();
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        mpiPatternP2P = kohnShamWaveFunctions.getMPIPatternP2P();
+      std::vector<double> eigenSolveResidual;
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+                                          memoryTransfer;
       linearAlgebra::EigenSolverError     returnValue;
       linearAlgebra::EigenSolverError     lanczosErr;
       linearAlgebra::EigenSolverError     chfsiErr;
       linearAlgebra::EigenSolverErrorCode err;
+      linearAlgebra::NewtonRaphsonError   nrErr;
 
       // get bounds from lanczos
       std::vector<double> tol{
@@ -111,93 +117,113 @@ namespace dftefe
                 ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
                 *d_lanczosGuess);
 
-      linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
-      std::vector<RealType>                              eigenValuesLanczos(2);
+      linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos(
+        mpiPatternP2P, linAlgOpContext, 2),
+        HXLanczos(eigenVectorsLanczos, 0), MXLanczos(eigenVectorsLanczos, 0),
+        residualLanczos(eigenVectorsLanczos, 0);
+
+      std::vector<RealType> eigenValuesLanczos(2);
       lanczosErr = lanczos.solve(kohnShamOperator,
                                  eigenValuesLanczos,
                                  eigenVectorsLanczos,
-                                 false,
+                                 true,
                                  M,
                                  MInv);
 
-      std::cout << "The lanczos values : " << eigenValuesLanczos[0] << " , "
-                << eigenValuesLanczos[1] << std::endl;
+      kohnShamOperator.apply(eigenVectorsLanczos, HXLanczos);
+      M.apply(eigenVectorsLanczos, MXLanczos);
+
+      linearAlgebra::Vector<ValueType, memorySpace> eigenValuesLanczosMemspace(
+        2, linAlgOpContext, (ValueType)0),
+        negOnes(eigenValuesLanczosMemspace, (ValueType)-1.0);
+
+      memoryTransfer.copy(2,
+                          eigenValuesLanczosMemspace.data(),
+                          eigenValuesLanczos.data());
+
+      linearAlgebra::blasLapack::
+        axpbyBlocked<ValueType, ValueType, memorySpace>(
+          MXLanczos.locallyOwnedSize(),
+          2,
+          negOnes.data(),
+          HXLanczos.data(),
+          eigenValuesLanczosMemspace.data(),
+          MXLanczos.data(),
+          residualLanczos.data(),
+          *linAlgOpContext);
+
+      eigenSolveResidual = residualLanczos.l2Norms();
+
+      std::vector<RealType> diagonal(0), subDiagonal(0);
+      lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
+      RealType residual = subDiagonal[subDiagonal.size() - 1];
 
       size_type iPass = 0;
       if (lanczosErr.isSuccess)
         {
-          std::cout << "entering chfsi\n ";
-          std::vector<RealType> diagonal(0), subDiagonal(0);
-          lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
-          RealType residual = subDiagonal[subDiagonal.size() - 1];
-
+          //--------------------CHANGE THIS ------------------------------
           double wantedSpectrumUpperBound = 0;
           // (eigenValuesLanczos[1] - eigenValuesLanczos[0]) *
           //   ((double)(d_numWantedEigenvalues) / globalSize) +
           // eigenValuesLanczos[0];
 
-          std::shared_ptr<
-            linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
-                                                        ValueTypeOperand,
-                                                        memorySpace>>
-            chfsi = std::make_shared<
-              linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
-                                                          ValueTypeOperand,
-                                                          memorySpace>>(
-              eigenValuesLanczos[0],
-              wantedSpectrumUpperBound,
-              eigenValuesLanczos[1] + residual,
-              d_chebyshevPolynomialDegree,
-              ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-              *d_waveFunctionSubspaceGuess,
-              d_waveFunctionBlockSize);
+          linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>
+            chfsi(eigenValuesLanczos[0],
+                  wantedSpectrumUpperBound,
+                  eigenValuesLanczos[1] + residual,
+                  d_chebyshevPolynomialDegree,
+                  ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+                  *d_waveFunctionSubspaceGuess,
+                  d_waveFunctionBlockSize);
 
           linearAlgebra::MultiVector<ValueType, memorySpace> HX(
-            kohnShamWaveFunctions.getMPIPatternP2P(),
-            kohnShamWaveFunctions.getLinAlgOpContext(),
-            1),
-            MX(HX, (ValueType)0), residualEigenSolver(HX, (ValueType)0),
-            waveFnResidualCheck(HX, (ValueType)0);
+            kohnShamWaveFunctions, (ValueType)0.0),
+            MX(kohnShamWaveFunctions, (ValueType)0.0),
+            residualEigenSolver(kohnShamWaveFunctions, (ValueType)0.0);
 
-          utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+          linearAlgebra::Vector<ValueType, memorySpace>
+            kohnShamEnergiesMemspace(d_numWantedEigenvalues,
+                                     linAlgOpContext,
+                                     (ValueType)0),
+            nOnes(kohnShamEnergiesMemspace, (ValueType)-1.0);
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
             {
               // do chebyshev filetered eigensolve
 
-              chfsiErr = chfsi->solve(kohnShamOperator,
-                                      kohnShamEnergies,
-                                      kohnShamWaveFunctions,
-                                      computeWaveFunctions,
-                                      M,
-                                      MInv);
+              chfsiErr = chfsi.solve(kohnShamOperator,
+                                     kohnShamEnergies,
+                                     kohnShamWaveFunctions,
+                                     computeWaveFunctions,
+                                     M,
+                                     MInv);
 
-              for (auto &i : kohnShamEnergies)
-                {
-                  std::cout << i << ", ";
-                }
-              std::cout << std::endl;
+              // for(auto &i : kohnShamEnergies)
+              //   std::cout <<  i <<", ";
+              // std::cout << "\n";
 
-              /*
               // Calculate the chemical potential using newton raphson
 
               std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
                 std::make_shared<ksdft::FractionalOccupancyFunction>(
                   kohnShamEnergies,
-                  d_numWantedEigenvalues,
+                  d_numElectrons,
                   Constants::BOLTZMANN_CONST_HARTREE,
-                  d_smearingTemperature);
+                  d_smearingTemperature,
+                  kohnShamEnergies[d_numElectrons - 1]);
 
-              linearAlgebra::NewtonRaphsonSolver<RealType> nrs(
+              linearAlgebra::NewtonRaphsonSolver<double> nrs(
                 NewtonRaphsonSolverDefaults::MAX_ITER,
                 d_fermiEnergyTolerance,
                 NewtonRaphsonSolverDefaults::FORCE_TOL);
 
-              linearAlgebra::NewtonRaphsonError err = nrs.solve(*fOcc);
+              nrErr = nrs.solve(*fOcc);
 
               fOcc->getSolution(d_fermiEnergy);
-              std::cout << "d_fermiEnergy: " <<d_fermiEnergy<<"\n";
-              std::cout << "d_fracOcc: ";
+
+              size_type numLevelsBelowFermiEnergy = 0;
               // Calculate the frac occupancy vector
               for (size_type i = 0; i < d_fracOccupancy.size(); i++)
                 {
@@ -206,61 +232,53 @@ namespace dftefe
                                d_fermiEnergy,
                                Constants::BOLTZMANN_CONST_HARTREE,
                                d_smearingTemperature);
-                  std::cout <<d_fracOccupancy[i]<<", ";
-                }
-                std::cout << "\n";
-
-              // kohnshamenergies are in ascending order from lapack assumed
-              size_type residualCheckIndex;
-              for (size_type i = d_fracOccupancy.size(); i > 0; i--)
-                {
                   if (d_fracOccupancy[i] > d_fracOccupancyTolerance)
-                    {
-                      residualCheckIndex = i;
-                      break;
-                    }
+                    numLevelsBelowFermiEnergy += 1;
                 }
 
-              for (size_type iSize = 0;
-                   iSize < kohnShamWaveFunctions.locallyOwnedSize();
-                   iSize++)
-                memoryTransfer.copy(1,
-                                    waveFnResidualCheck.data(),
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * d_numWantedEigenvalues +
-                                      residualCheckIndex);
-
+              // TODO : Implement blocked approach for wavefns
               // calculate residualEigenSolver
-              kohnShamOperator.apply(waveFnResidualCheck, HX);
-              M.apply(waveFnResidualCheck, MX);
-              RealType nenergyAtResidualCheck =
-                -kohnShamEnergies[residualCheckIndex];
+              kohnShamOperator.apply(kohnShamWaveFunctions, HX);
+              M.apply(kohnShamWaveFunctions, MX);
+
+              memoryTransfer.copy(d_numWantedEigenvalues,
+                                  kohnShamEnergiesMemspace.data(),
+                                  kohnShamEnergies.data());
+
               linearAlgebra::blasLapack::
-                axpby<ValueType, ValueType, memorySpace>(
+                axpbyBlocked<ValueType, ValueType, memorySpace>(
                   MX.locallyOwnedSize(),
-                  (ValueType)1.0,
+                  d_numWantedEigenvalues,
+                  nOnes.data(),
                   HX.data(),
-                  (ValueType)(nenergyAtResidualCheck),
+                  kohnShamEnergiesMemspace.data(),
                   MX.data(),
                   residualEigenSolver.data(),
-                  *MX.getLinAlgOpContext());
+                  *linAlgOpContext);
 
-              eigenSolveResidual = (residualEigenSolver.l2Norms())[0];
-              */
-              if (eigenSolveResidual < d_eigenSolveResidualTolerance ||
+              eigenSolveResidual = residualEigenSolver.l2Norms();
+              size_type numLevelsBelowFermiEnergyResidualConverged = 0;
+              for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+                {
+                  if (d_fracOccupancy[i] > d_fracOccupancyTolerance &&
+                      eigenSolveResidual[i] <= d_eigenSolveResidualTolerance)
+                    numLevelsBelowFermiEnergyResidualConverged += 1;
+                }
+
+              if (numLevelsBelowFermiEnergy ==
+                    numLevelsBelowFermiEnergyResidualConverged ||
                   !chfsiErr.isSuccess)
                 break;
               else
                 {
                   *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
-                  chfsi->reinit(eigenValuesLanczos[0],
-                                wantedSpectrumUpperBound,
-                                eigenValuesLanczos[1] + residual,
-                                d_chebyshevPolynomialDegree,
-                                ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-                                *d_waveFunctionSubspaceGuess,
-                                d_waveFunctionBlockSize);
-                  std::cout << eigenSolveResidual << "\n";
+                  chfsi.reinit(eigenValuesLanczos[0],
+                               wantedSpectrumUpperBound,
+                               eigenValuesLanczos[1] + residual,
+                               d_chebyshevPolynomialDegree,
+                               ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+                               *d_waveFunctionSubspaceGuess,
+                               d_waveFunctionBlockSize);
                 }
             }
         }
@@ -277,6 +295,13 @@ namespace dftefe
           returnValue =
             linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
           returnValue.msg += chfsiErr.msg;
+        }
+      else if (!nrErr.isSuccess)
+        {
+          err = linearAlgebra::EigenSolverErrorCode::KS_NEWTON_RAPHSON_ERROR;
+          returnValue =
+            linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
+          returnValue.msg += nrErr.msg;
         }
       else if (iPass > d_maxChebyshevFilterPass)
         {

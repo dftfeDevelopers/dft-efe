@@ -125,7 +125,7 @@ namespace dftefe
           blasLapack::gemm<ValueType, ValueType, memorySpace>(
             blasLapack::Layout::ColMajor,
             blasLapack::Op::Trans,
-            blasLapack::Op::Trans,
+            blasLapack::Op::NoTrans,
             numVec,
             vecSize,
             numVec,
@@ -133,7 +133,7 @@ namespace dftefe
             XprojectedA.data(),
             numVec,
             X.data(),
-            vecSize,
+            numVec,
             (ValueType)0,
             eigenVectors.data(),
             numVec,

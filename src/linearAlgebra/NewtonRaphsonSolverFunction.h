@@ -54,9 +54,6 @@ namespace dftefe
       virtual const ValueType &
       getInitialGuess() const = 0;
 
-      virtual void
-      setInitialGuess(ValueType &x) = 0;
-
     }; // end of class NewtonRaphsonSolverFunction
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe

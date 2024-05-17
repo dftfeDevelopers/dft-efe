@@ -23,6 +23,18 @@
  * @author Avirup Sircar
  */
 
+/*
+ * @brief This example tests the linear Conjugate Gradient (CG) algorithm for 
+ * a real symmetric positive definite matrix on the HOST (CPU). 
+ * We create a random symmetric positive definite matrix and constrain its 
+ * condition number to a pre-defined value. The size of the matrix and its 
+ * pre-defined condition number are hard-coded at the beginning of the main() 
+ * function. Further, the various tolerances for the CG solver are also 
+ * hard-coded at the beginning of the main() function.
+ * The test case is hardcoded for single vector case and NOT FOR MULTIVECTOR.
+ */
+
+
 #include <iomanip>
 #include <stdexcept>
 #include <cmath>
@@ -54,13 +66,13 @@ namespace test
 	       const ValueType
 		       getValue(ValueType &x) const override 
 		       {
-			      return x*x - 2;
+			      return x*x + 2*x + 1;
 		       }
 
 	       const ValueType
 		       getForce(ValueType &x) const override 
 		       {
-			        return 2*x;
+			        return 2*x + 2;
 		       }
 
 	       void
@@ -80,17 +92,125 @@ namespace test
           {
             return d_x;
           }
-
-          void
-          setInitialGuess(ValueType &x) override   
-          {
-            d_x = x;
-          }
-
           private:
             ValueType d_x;
 	   }; 
 
+    double
+    fermiDirac(const double eigenValue,
+               const double fermiEnergy,
+               const double kb,
+               const double T)
+    {
+      const double factor = (eigenValue - fermiEnergy) / (kb * T);
+
+      double retValue;
+
+      if(factor >= 0)
+        retValue = std::exp(-factor) / (1.0 + std::exp(-factor));
+      else 
+        retValue = 1.0 / (1.0 + std::exp(factor));
+
+      std::cout << "Value: " << factor << ", " << retValue << "\n";
+
+      return  retValue;                            
+    }
+
+    double
+    fermiDiracDer(const double eigenValue,
+                  const double fermiEnergy,
+                  const double kb,
+                  const double T)
+    {
+      const double factor = (eigenValue - fermiEnergy) / (kb * T);
+      const double beta   = 1.0 / (kb * T);
+
+      double retValue;
+
+      if(factor >= 0)
+        retValue = (beta * std::exp(-factor) / (1.0 + std::exp(-factor)) /
+                (1.0 + std::exp(-factor)));
+      else 
+        retValue = (beta * std::exp(factor) / (1.0 + std::exp(factor)) /
+                (1.0 + std::exp(factor)));
+
+      std::cout << "Der: " << factor << ", " << retValue << "\n";
+
+      return  retValue;
+    }
+
+  //
+  // A test NewtonRaphsonSovlerFunction
+  //
+	     class FractionalOccupancyFunction: public linearAlgebra::NewtonRaphsonSolverFunction<double>
+	   {
+	     public:
+	       FractionalOccupancyFunction(const std::vector<double> &eigenValues,
+          const size_type      numElectrons,
+          const double         kb,
+          const double         T,
+          const double         initialGuess)
+          : d_x(initialGuess)
+          , d_initialGuess(initialGuess)
+          , d_eigenValues(eigenValues)
+          , d_kb(kb)
+          , d_T(T)
+          , d_numElectrons(numElectrons)
+	        {}
+
+	       ~FractionalOccupancyFunction() = default;
+
+	       const double
+		       getValue(double &x) const override 
+		       {
+              double retValue = 0;
+
+              for (auto &i : d_eigenValues)
+                {
+                  retValue += 2 * fermiDirac(i, x, d_kb, d_T);
+                }
+              retValue -= (double)d_numElectrons;
+              return retValue;
+		       }
+
+	       const double
+		       getForce(double &x) const override 
+		       {
+              double retValue = 0;
+
+              for (auto &i : d_eigenValues)
+                {
+                  retValue += 2 * fermiDiracDer(i, x, d_kb, d_T);
+                }
+              return retValue;
+		       }
+
+	       void
+          setSolution(const double &x) override 
+          {
+            d_x =x;
+          }
+
+          void
+          getSolution(double &solution) override 
+          {
+            solution = d_x;
+          }
+
+          const double &
+          getInitialGuess() const override   
+          {
+            return d_x;
+          }
+
+          private:
+            double              d_x;
+            double              d_initialGuess;
+            std::vector<double> d_eigenValues;
+            size_type           d_numElectrons;
+            double              d_kb;
+            double              d_T;
+	   }; 
 
 }// end of local namespace  
 
@@ -98,11 +218,25 @@ int main()
 {
 
   test::FunctionTest<double> *lsf = new test::FunctionTest<double>();
-  linearAlgebra::NewtonRaphsonSolver<double> nrs(1e3, 1e-4, 1e-14); 
+  linearAlgebra::NewtonRaphsonSolver<double> nrs(5e1, 1e-10, 1e-14); 
   linearAlgebra::NewtonRaphsonError err = nrs.solve(*lsf);
   double solution;
   lsf->getSolution(solution);
   std::cout << solution << "\n";
   std::cout << err.msg <<"\n";
   delete lsf;
+
+  test::FractionalOccupancyFunction *lsf1 = new test::FractionalOccupancyFunction
+    ({-0.3871218951, 109.8516437, 110.1915159, 110.5144201, 110.6296845, 110.7654463, 111.0254295, 111.1454389, 111.2021994, 111.4086254, 111.5410011, 111.6166645, 111.9046748, 112.0428015, 112.2300994},
+      1,
+      3.166811429e-06,
+      10,
+      -0.3871218951);
+
+  err = nrs.solve(*lsf1);
+  lsf1->getSolution(solution);
+  std::cout << solution << "\n";
+  std::cout << err.msg <<"\n";
+  delete lsf1;
+
 }

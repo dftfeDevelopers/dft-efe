@@ -52,10 +52,11 @@ namespace dftefe
       /**
        * @brief Constructor
        */
-      FractionalOccupancyFunction(std::vector<double> &eigenValues,
-                                  const size_type      numElectrons,
-                                  const double         kb,
-                                  const double         T);
+      FractionalOccupancyFunction(const std::vector<double> &eigenValues,
+                                  const size_type            numElectrons,
+                                  const double               kb,
+                                  const double               T,
+                                  const double               initialGuess);
 
       ~FractionalOccupancyFunction() = default;
 
@@ -74,11 +75,9 @@ namespace dftefe
       const double &
       getInitialGuess() const override;
 
-      void
-      setInitialGuess(double &x) override;
-
     private:
       double              d_x;
+      double              d_initialGuess;
       std::vector<double> d_eigenValues;
       size_type           d_numElectrons;
       double              d_kb;
