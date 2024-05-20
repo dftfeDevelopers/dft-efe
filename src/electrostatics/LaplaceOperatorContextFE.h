@@ -86,6 +86,8 @@ namespace dftefe
           &             feBasisDataStorage,
         const size_type maxCellTimesNumVecs);
 
+      ~LaplaceOperatorContextFE() = default;
+
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
       //       linearAlgberba::Vector<ValueType, memorySpace> &y) const

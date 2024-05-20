@@ -88,6 +88,40 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs);
+      /*
+      ElectrostaticAllElectronFE(
+        std::vector<utils::Point> atomCoordinates,
+        std::vector<double>       atomCharges,
+        std::vector<double>       smearedChargeRadius,
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &                                               electronChargeDensity,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>> feBMTotalCharge,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearCorrectionStiffnessMat,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearCorrectionRhsMat,
+        std::shared_ptr<const utils::ScalarSpatialFunctionReal>
+                                        externalPotentialFunction,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDHamiltonian,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellTimesNumVecs);
+      */
+
+      ~ElectrostaticAllElectronFE();
 
       void
       reinitBasis(
@@ -102,7 +136,25 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDTotalChargeRhs);
-
+      /*
+            void
+            reinitBasis(
+              std::vector<utils::Point>                         atomCoordinates,
+              std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                          ValueTypeBasisData,
+                                                          memorySpace,
+                                                          dim>> feBMTotalCharge,
+              std::shared_ptr<
+                const basis::FEBasisDataStorage<ValueTypeBasisData,
+         memorySpace>> feBDTotalChargeStiffnessMatrix, std::shared_ptr< const
+         basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                feBDTotalChargeRhs,
+              std::shared_ptr<
+                const basis::FEBasisDataStorage<ValueTypeBasisData,
+         memorySpace>> feBDNuclearCorrectionStiffnessMat, std::shared_ptr< const
+         basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                feBDNuclearCorrectionRhsMat);
+      */
       void
       reinitField(
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
@@ -127,8 +179,11 @@ namespace dftefe
       getEnergy() const override;
 
     private:
-      RealType
-      nuclearSelfEnergy(
+      /* Solves the nuclear potential problem, gets \sum \integral b_sm*V_sm ,
+       * gets \sum \integral V_sm * rho, \sum V_smAtRhoQuadPts
+       */
+      void
+      nuclearPotentialSolve(
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclearChargeStiffnessMatrix,
@@ -141,15 +196,19 @@ namespace dftefe
       const std::vector<double> d_atomCharges;
       const std::vector<double> d_smearedChargeRadius;
       RealType                  d_energy;
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
-        d_totalChargeDensity;
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
-        d_nuclearChargesDensity;
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
-        d_totalChargePotentialQuad;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_totalChargeDensity;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_nuclearChargesDensity;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_totalChargePotentialQuad;
+      std::vector<linearAlgebra::MultiVector<ValueType, memorySpace> *>
+        d_nuclearChargesPotential;
+      std::vector<std::shared_ptr<basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                        ValueTypeBasisData,
+                                                        memorySpace,
+                                                        dim>>>
+        d_feBMNuclearCharge;
       std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                      ValueTypeBasisData,
                                                      memorySpace,

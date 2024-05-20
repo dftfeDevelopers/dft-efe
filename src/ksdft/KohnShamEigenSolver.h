@@ -94,7 +94,15 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const size_type waveFunctionBlockSize = 0);
+        const size_type  waveFunctionBlockSize = 0,
+        const OpContext &MLanczos =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MInvLanczos =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>());
 
       /**
        *@brief Default Destructor
@@ -103,10 +111,17 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(
-        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-          &waveFunctionSubspaceGuess,
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess);
+      reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+               &waveFunctionSubspaceGuess,
+             linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+             const OpContext &                                     MLanczos =
+               linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>(),
+             const OpContext &MInvLanczos =
+               linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>());
 
       RealType
       getFermiEnergy();
@@ -141,6 +156,8 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;
       linearAlgebra::Vector<ValueTypeOperand, memorySpace> *d_lanczosGuess;
+      const OpContext *                                     d_MLanczos;
+      const OpContext *                                     d_MInvLanczos;
       std::vector<RealType>                                 d_fracOccupancy;
       RealType                                              d_fermiEnergy;
       bool                                                  d_isSolved;

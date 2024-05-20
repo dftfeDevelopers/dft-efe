@@ -46,7 +46,9 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const size_type waveFunctionBlockSize)
+        const size_type  waveFunctionBlockSize,
+        const OpContext &MLanczos,
+        const OpContext &MInvLanczos)
       : d_numWantedEigenvalues(waveFunctionSubspaceGuess.getNumberComponents())
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
       , d_chebyshevPolynomialDegree(chebyshevPolynomialDegree)
@@ -58,7 +60,7 @@ namespace dftefe
       , d_fracOccupancy(d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
     {
-      reinit(waveFunctionSubspaceGuess, lanczosGuess);
+      reinit(waveFunctionSubspaceGuess, lanczosGuess, MLanczos, MInvLanczos);
     }
 
     template <typename ValueTypeOperator,
@@ -68,11 +70,15 @@ namespace dftefe
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
                &waveFunctionSubspaceGuess,
-             linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess)
+             linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+             const OpContext &                                     MLanczos,
+             const OpContext &                                     MInvLanczos)
     {
       d_isSolved                  = false;
       d_waveFunctionSubspaceGuess = &waveFunctionSubspaceGuess;
       d_lanczosGuess              = &lanczosGuess;
+      d_MLanczos                  = &MLanczos;
+      d_MInvLanczos               = &MInvLanczos;
     }
 
     template <typename ValueTypeOperator,
@@ -100,8 +106,9 @@ namespace dftefe
       linearAlgebra::EigenSolverError     returnValue;
       linearAlgebra::EigenSolverError     lanczosErr;
       linearAlgebra::EigenSolverError     chfsiErr;
-      linearAlgebra::EigenSolverErrorCode err;
-      linearAlgebra::NewtonRaphsonError   nrErr;
+      linearAlgebra::EigenSolverErrorCode err =
+        linearAlgebra::EigenSolverErrorCode::OTHER_ERROR;
+      linearAlgebra::NewtonRaphsonError nrErr;
 
       // get bounds from lanczos
       std::vector<double> tol{
@@ -117,42 +124,15 @@ namespace dftefe
                 ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
                 *d_lanczosGuess);
 
-      linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos(
-        mpiPatternP2P, linAlgOpContext, 2),
-        HXLanczos(eigenVectorsLanczos, 0), MXLanczos(eigenVectorsLanczos, 0),
-        residualLanczos(eigenVectorsLanczos, 0);
+      linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
 
       std::vector<RealType> eigenValuesLanczos(2);
       lanczosErr = lanczos.solve(kohnShamOperator,
                                  eigenValuesLanczos,
                                  eigenVectorsLanczos,
-                                 true,
-                                 M,
-                                 MInv);
-
-      kohnShamOperator.apply(eigenVectorsLanczos, HXLanczos);
-      M.apply(eigenVectorsLanczos, MXLanczos);
-
-      linearAlgebra::Vector<ValueType, memorySpace> eigenValuesLanczosMemspace(
-        2, linAlgOpContext, (ValueType)0),
-        negOnes(eigenValuesLanczosMemspace, (ValueType)-1.0);
-
-      memoryTransfer.copy(2,
-                          eigenValuesLanczosMemspace.data(),
-                          eigenValuesLanczos.data());
-
-      linearAlgebra::blasLapack::
-        axpbyBlocked<ValueType, ValueType, memorySpace>(
-          MXLanczos.locallyOwnedSize(),
-          2,
-          negOnes.data(),
-          HXLanczos.data(),
-          eigenValuesLanczosMemspace.data(),
-          MXLanczos.data(),
-          residualLanczos.data(),
-          *linAlgOpContext);
-
-      eigenSolveResidual = residualLanczos.l2Norms();
+                                 false,
+                                 *d_MLanczos,
+                                 *d_MInvLanczos);
 
       std::vector<RealType> diagonal(0), subDiagonal(0);
       lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
@@ -267,7 +247,7 @@ namespace dftefe
 
               if (numLevelsBelowFermiEnergy ==
                     numLevelsBelowFermiEnergyResidualConverged ||
-                  !chfsiErr.isSuccess)
+                  !chfsiErr.isSuccess || !nrErr.isSuccess)
                 break;
               else
                 {
@@ -281,41 +261,48 @@ namespace dftefe
                                d_waveFunctionBlockSize);
                 }
             }
+          if (!chfsiErr.isSuccess)
+            {
+              err = linearAlgebra::EigenSolverErrorCode::KS_CHFSI_ERROR;
+              returnValue =
+                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
+              returnValue.msg += chfsiErr.msg;
+            }
+          else if (!nrErr.isSuccess)
+            {
+              err =
+                linearAlgebra::EigenSolverErrorCode::KS_NEWTON_RAPHSON_ERROR;
+              returnValue =
+                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
+              returnValue.msg += nrErr.msg;
+            }
+          else if (iPass > d_maxChebyshevFilterPass)
+            {
+              err = linearAlgebra::EigenSolverErrorCode::KS_MAX_PASS_ERROR;
+              returnValue =
+                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
+            }
+          else if (iPass < d_maxChebyshevFilterPass && chfsiErr.isSuccess &&
+                   nrErr.isSuccess)
+            {
+              err = linearAlgebra::EigenSolverErrorCode::SUCCESS;
+              returnValue =
+                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
+              returnValue.msg += "Number of CHFSI passes required are " +
+                                 std::to_string(iPass) + ".";
+            }
+          else
+            {
+              returnValue =
+                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
+            }
         }
-      else if (!lanczosErr.isSuccess)
+      else
         {
           err = linearAlgebra::EigenSolverErrorCode::KS_LANCZOS_ERROR;
           returnValue =
             linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
           returnValue.msg += lanczosErr.msg;
-        }
-      else if (!chfsiErr.isSuccess)
-        {
-          err = linearAlgebra::EigenSolverErrorCode::KS_CHFSI_ERROR;
-          returnValue =
-            linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-          returnValue.msg += chfsiErr.msg;
-        }
-      else if (!nrErr.isSuccess)
-        {
-          err = linearAlgebra::EigenSolverErrorCode::KS_NEWTON_RAPHSON_ERROR;
-          returnValue =
-            linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-          returnValue.msg += nrErr.msg;
-        }
-      else if (iPass > d_maxChebyshevFilterPass)
-        {
-          err = linearAlgebra::EigenSolverErrorCode::KS_MAX_PASS_ERROR;
-          returnValue =
-            linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-        }
-      else
-        {
-          err = linearAlgebra::EigenSolverErrorCode::SUCCESS;
-          returnValue =
-            linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-          returnValue.msg += "Number of CHFSI passes required are " +
-                             std::to_string(iPass) + ".";
         }
 
       return returnValue;

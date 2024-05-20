@@ -71,6 +71,8 @@ namespace dftefe
                         linAlgOpContext,
         const size_type cellBlockSize);
 
+      ~ExchangeCorrelationFE() = default;
+
       void
       reinit(const quadrature::QuadratureValuesContainer<RealType, memorySpace>
                &electronChargeDensity,

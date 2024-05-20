@@ -107,6 +107,8 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs);
 
+      ~PoissonLinearSolverFunctionFE() = default;
+
       const linearAlgebra::
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
         getAxContext() const override;

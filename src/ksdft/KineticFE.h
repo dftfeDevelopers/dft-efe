@@ -67,6 +67,8 @@ namespace dftefe
                         linAlgOpContext,
         const size_type cellBlockSize);
 
+      ~KineticFE() = default;
+
       void
       reinit(std::shared_ptr<
              const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>

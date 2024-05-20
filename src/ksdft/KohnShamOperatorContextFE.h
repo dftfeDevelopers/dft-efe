@@ -92,6 +92,8 @@ namespace dftefe
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const size_type                              maxCellTimesNumVecs);
 
+      ~KohnShamOperatorContextFE() = default;
+
       void
       reinit(const basis::FEBasisManager<ValueTypeOperand,
                                          ValueTypeBasisData,
