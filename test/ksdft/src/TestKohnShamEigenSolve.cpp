@@ -29,6 +29,7 @@
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/CFEOverlapInverseOperatorContext.h>
+#include <utils/PointChargePotentialFunction.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -346,6 +347,9 @@ int main()
                                       linAlgOpContext,
                                       50);
 
+  const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
+    utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
+
   std::shared_ptr<ksdft::ElectrostaticAllElectronFE<double,
                                                   double,
                                                   Host,
@@ -362,6 +366,7 @@ int main()
                                                   basisManagerTotalPot,
                                                   feBasisData,
                                                   feBasisData,
+                                                  *externalPotentialFunction,
                                                   linAlgOpContext,
                                                   50);
                                                   
@@ -406,24 +411,6 @@ int main()
 
   waveFunctionSubspaceGuess.updateGhostValues();
   basisManagerWaveFn->getConstraints().distributeParentToChild(waveFunctionSubspaceGuess, numWantedEigenvalues);
-
-  // form the kohn sham operator
-  std::shared_ptr<ksdft::KohnShamEigenSolver<double,
-                                              double,
-                                              Host>> 
-                                            ksEigSolve =
-    std::make_shared<ksdft::KohnShamEigenSolver<double,
-                                                double,
-                                                Host>>
-                                                (numElectrons,
-                                                smearingTemperature,
-                                                fermiEnergyTolerance,
-                                                fracOccupancyTolerance,
-                                                eigenSolveResidualTolerance,
-                                                chebyshevPolynomialDegree,
-                                                maxChebyshevFilterPass,
-                                                waveFunctionSubspaceGuess,
-                                                lanczosGuess);
 
   std::vector<double> kohnShamEnergies(numWantedEigenvalues, 0.0);
   linearAlgebra::MultiVector<double, Host> kohnShamWaveFunctions(waveFunctionSubspaceGuess, 0.0);
@@ -486,16 +473,39 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   *MContextForInv,
                                                   linAlgOpContext);
 
-  ksEigSolve->solve(*hamitonianOperator, 
+  // form the kohn sham operator
+  std::shared_ptr<ksdft::KohnShamEigenSolver<double,
+                                              double,
+                                              Host>> 
+                                            ksEigSolve =
+    std::make_shared<ksdft::KohnShamEigenSolver<double,
+                                                double,
+                                                Host>>
+                                                (numElectrons,
+                                                smearingTemperature,
+                                                fermiEnergyTolerance,
+                                                fracOccupancyTolerance,
+                                                eigenSolveResidualTolerance,
+                                                chebyshevPolynomialDegree,
+                                                maxChebyshevFilterPass,
+                                                waveFunctionSubspaceGuess,
+                                                lanczosGuess,
+                                                50,
+                                                *MContextForInv,
+                                                *MInvContext);
+
+  linearAlgebra::EigenSolverError err = ksEigSolve->solve(*hamitonianOperator, 
                     kohnShamEnergies, 
                     kohnShamWaveFunctions,
                     true,
-                    *MContextForInv,
+                    *MContext,
                     *MInvContext);       
 
   for(auto &i : kohnShamEnergies)
-    std::cout <<  i <<", ";       
-  std::cout << "\n";         
+    std::cout <<  i <<", ";     
+  std::cout << "\n";     
+
+  std::cout << err.msg;             
 
   //gracefully end MPI
 

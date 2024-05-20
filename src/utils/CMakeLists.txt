@@ -39,7 +39,8 @@ set(DFT-EFE-UTILS-SOURCES
   Spline.cpp
   ScalarZeroFunctionReal.cpp
   SmearChargeDensityFunction.cpp
-  SmearChargePotentialFunction.cpp)
+  SmearChargePotentialFunction.cpp
+  PointChargePotentialFunction.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

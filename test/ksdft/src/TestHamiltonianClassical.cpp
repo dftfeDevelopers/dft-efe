@@ -205,6 +205,7 @@ int main()
   double refineradius = 3*rc;
   unsigned int feDegree = 3;
   unsigned int num1DGaussSize = 4;
+  unsigned int num1DGLLSize = 4;
   
   // Set up Triangulation
     std::shared_ptr<dftefe::basis::TriangulationBase> triangulationBase =
@@ -342,6 +343,22 @@ int main()
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
+  dftefe::quadrature::QuadratureRuleAttributes quadAttrGLL(dftefe::quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
+
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = true;
+
+  // Set up the FE Basis Data Storage
+  std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisDataGLL =
+    std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+    (basisDofHandler, quadAttrGLL, basisAttrMap);
+
+  // evaluate basis data
+  feBasisDataGLL->evaluateBasisData(quadAttrGLL, basisAttrMap);
 
   // Set up basis Operations
   dftefe::basis::FEBasisOperations<double, double, dftefe::utils::MemorySpace::HOST,dim> feBasisOp(feBasisData,50);
@@ -400,7 +417,7 @@ int main()
 
   std::cout << rank << "," << mpiReducedChargeDensity[0] << 
   "," << mpiReducedChargeDensity[1] << "," << mpiReducedChargeDensity[2] << std::endl;
-
+  
   std::vector<double> energy(nAtoms+1, 0.0), mpiReducedEnergy(energy.size(), 0.0);
   
   for( unsigned int iProb = 0 ; iProb < atomsVecInDomain.size() ; iProb++)
@@ -533,6 +550,7 @@ int main()
         << " Relative difference: "<<((mpiReducedEnergy[nAtoms] - numericalSelfEnergy) - 1.0/dist)*dist<<"\n";
     }
     
+    
 
   dftefe::utils::mpi::MPIBarrier(comm);
 
@@ -543,7 +561,7 @@ int main()
     std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
    dftefe::quadrature::QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST> 
-      electronChargeDensity(quadRuleContainer, numComponents);
+      electronChargeDensity(quadRuleContainer, numComponents, 0.0);
 
     std::shared_ptr<const dftefe::basis::FEBasisManager
       <double, double, dftefe::utils::MemorySpace::HOST,dim>>
@@ -551,6 +569,8 @@ int main()
       <dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
         (basisDofHandler, potentialFunction);
 
+  const dftefe::utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
+    dftefe::utils::ScalarZeroFunctionReal();
   std::shared_ptr<dftefe::ksdft::ElectrostaticAllElectronFE<double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
@@ -566,22 +586,17 @@ int main()
                                                   electronChargeDensity,
                                                   basisManager,
                                                   feBasisData,
-                                                  feBasisData,
+                                                  feBasisData,                                                
+                                                  *externalPotentialFunction,
                                                   linAlgOpContext,
                                                   50);
 
-  hamitonianElec->evalEnergy(feBasisData, feBasisData);   
+  hamitonianElec->evalEnergy(); 
 
   double energyksdft = hamitonianElec->getEnergy(); 
 
-  std::cout << "energyksdft_num: " << energyksdft << "\n";
-
-  hamitonianElec->evalEnergy(); 
-
-  energyksdft = hamitonianElec->getEnergy(); 
-
   std::cout << "energyksdft_analy: " << energyksdft << "\n";
-
+  
   std::shared_ptr<dftefe::ksdft::KineticFE<double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
