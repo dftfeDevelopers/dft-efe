@@ -287,30 +287,29 @@ namespace dftefe
                       eci->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeOperator> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < dofsPerCellCFE; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeOperator>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < dofsPerCellCFE; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }

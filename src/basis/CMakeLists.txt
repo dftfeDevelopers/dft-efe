@@ -26,7 +26,7 @@ set(DFT-EFE-BASIS-SOURCES
 	EnrichmentClassicalInterfaceSpherical.cpp
 	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
-	CFEOverlapInverseOperatorContext.cpp
+	CFEOverlapInverseOpContextGLL.cpp
 	OrthoEFEOverlapInverseOpContextGLL.cpp
 	EFEBasisDataStorageDealii.cpp
 	EFEBasisDofHandlerDealii.cpp

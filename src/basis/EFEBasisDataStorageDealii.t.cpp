@@ -331,7 +331,7 @@ namespace dftefe
                                                 (ValueTypeBasisData)0));
 
 
-            if (efeBDH->isOrthogonalized())
+            if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
@@ -349,30 +349,29 @@ namespace dftefe
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }
@@ -939,7 +938,7 @@ namespace dftefe
                                                 numEnrichmentIdsInCell,
                                               (ValueTypeBasisData)0));
 
-            if (efeBDH->isOrthogonalized())
+            if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
@@ -957,30 +956,29 @@ namespace dftefe
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }
@@ -1374,6 +1372,9 @@ namespace dftefe
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
+            // int rank;
+            // dftefe::utils::mpi::MPICommRank(efeBDH->getEnrichmentClassicalInterface()->getCFEBasisManager()->getMPIPatternP2P()->mpiCommunicator(),
+            // &rank); std::cout << "\n" <<rank << ", ";
             dofsPerCell = efeBDH->nCellDofs(cellIndex);
             // Get classical dof numbers
             size_type classicalDofsPerCell = utils::mathFunctions::sizeTypePow(
@@ -1458,31 +1459,59 @@ namespace dftefe
                       efeBDH->getEnrichmentClassicalInterface()
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
-                    // get the vectors of non-zero localIds and coeffs
+                    // // get the vectors of non-zero localIds and coeffs
 
+                    // auto iter =
+                    //   enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
+                    // DFTEFE_Assert(iter !=
+                    //               enrichmentIdToInterfaceCoeffMap->end());
+                    // const std::vector<ValueTypeBasisData>
+                    // &coeffsInLocalIdsMap =
+                    //   iter->second;
+
+                    // for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    //   {
+                    //     size_type pos   = 0;
+                    //     bool      found = false;
+                    //     auto      it =
+                    //       enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    //     DFTEFE_Assert(it !=
+                    //                   enrichmentIdToClassicalLocalIdMap->end());
+                    //     it->second.getPosition(vecClassicalLocalNodeId[i],
+                    //                            pos,
+                    //                            found);
+                    //     if (found)
+                    //       {
+                    //         coeffsInCell[numEnrichmentIdsInCell * i +
+                    //                      cellEnrichId] =
+                    //           coeffsInLocalIdsMap[pos];
+                    //       }
+                    //   }
+
+                    // get the vectors of non-zero localIds and coeffs
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }
@@ -2049,30 +2078,29 @@ namespace dftefe
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }

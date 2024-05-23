@@ -389,7 +389,6 @@ namespace dftefe
       , d_feBasisManagerY(&feBasisManagerY)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
-      , d_feBasisDataStorage(&feBasisDataStorage)
     {
       utils::throwException(
         &(feBasisManagerX.getBasisDofHandler()) ==
@@ -546,19 +545,6 @@ namespace dftefe
         basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId] +
           basisId1 * d_dofsInCell[cellId] + basisId2);
       return returnValue;
-    }
-
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
-    CFEOverlapOperatorContext<ValueTypeOperator,
-                              ValueTypeOperand,
-                              memorySpace,
-                              dim>::getFEBasisDataStorage() const
-    {
-      return *d_feBasisDataStorage;
     }
 
   } // namespace basis

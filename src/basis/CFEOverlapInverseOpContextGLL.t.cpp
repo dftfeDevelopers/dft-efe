@@ -26,6 +26,105 @@ namespace dftefe
 {
   namespace basis
   {
+    namespace CFEOverlapInverseOpContextGLLInternal
+    {
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      computeBasisOverlapMatrix(
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalGLLBasisDataStorage,
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>> cfeBDH,
+        utils::MemoryStorage<ValueTypeOperator, memorySpace> &NiNjInAllCells)
+      {
+        // Set up the overlap matrix quadrature storages.
+
+        const size_type numLocallyOwnedCells = cfeBDH->nLocallyOwnedCells();
+        std::vector<size_type> dofsInCellVec(0);
+        dofsInCellVec.resize(numLocallyOwnedCells, 0);
+        size_type cumulativeBasisOverlapId = 0;
+
+        size_type basisOverlapSize = 0;
+        size_type cellId           = 0;
+
+        size_type       dofsPerCell;
+        const size_type dofsPerCellCFE = cfeBDH->nCellDofs(cellId);
+
+        auto locallyOwnedCellIter = cfeBDH->beginLocallyOwnedCells();
+
+        for (; locallyOwnedCellIter != cfeBDH->endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsInCellVec[cellId] = cfeBDH->nCellDofs(cellId);
+            basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
+            cellId++;
+          }
+
+        std::vector<ValueTypeOperator> basisOverlapTmp(0);
+
+        NiNjInAllCells.resize(basisOverlapSize, ValueTypeOperator(0));
+        basisOverlapTmp.resize(basisOverlapSize, ValueTypeOperator(0));
+
+        auto      basisOverlapTmpIter = basisOverlapTmp.begin();
+        size_type cellIndex           = 0;
+
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          &basisDataInAllCellsClassicalBlock =
+            classicalGLLBasisDataStorage.getBasisDataInAllCells();
+
+        size_type cumulativeEnrichmentBlockDofQuadPointsOffset = 0;
+
+        locallyOwnedCellIter = cfeBDH->beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != cfeBDH->endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsPerCell = dofsInCellVec[cellIndex];
+            size_type nQuadPointInCellClassicalBlock =
+              classicalGLLBasisDataStorage.getQuadratureRuleContainer()
+                ->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesClassicalBlock =
+              classicalGLLBasisDataStorage.getQuadratureRuleContainer()
+                ->getCellJxW(cellIndex);
+
+            const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
+              basisDataInAllCellsClassicalBlock.data(); /*GLL Quad rule*/
+
+            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+              {
+                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                  {
+                    *basisOverlapTmpIter = 0.0;
+                    // Ni_classical* Ni_classical of the classicalBlockBasisData
+                    for (unsigned int qPoint = 0;
+                         qPoint < nQuadPointInCellClassicalBlock;
+                         qPoint++)
+                      {
+                        *basisOverlapTmpIter +=
+                          *(cumulativeClassicalBlockDofQuadPoints +
+                            nQuadPointInCellClassicalBlock * iNode + qPoint) *
+                          *(cumulativeClassicalBlockDofQuadPoints +
+                            nQuadPointInCellClassicalBlock * jNode + qPoint) *
+                          cellJxWValuesClassicalBlock[qPoint];
+                      }
+                    basisOverlapTmpIter++;
+                  }
+              }
+
+            cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
+            cellIndex++;
+          }
+
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          basisOverlapTmp.size(),
+          NiNjInAllCells.data(),
+          basisOverlapTmp.data());
+      }
+
+    } // namespace CFEOverlapInverseOpContextGLLInternal
+
     // Write M^-1 apply on a matrix for GLL with spectral finite element
     // M^-1 does not have a cell structure.
 
@@ -33,18 +132,16 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    CFEOverlapInverseOperatorContext<ValueTypeOperator,
-                                     ValueTypeOperand,
-                                     memorySpace,
-                                     dim>::
-      CFEOverlapInverseOperatorContext(
+    CFEOverlapInverseOpContextGLL<ValueTypeOperator,
+                                  ValueTypeOperand,
+                                  memorySpace,
+                                  dim>::
+      CFEOverlapInverseOpContextGLL(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            &                                        feBasisManager,
-        const basis::CFEOverlapOperatorContext<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace,
-                                               dim> &cfeOverlapOperatorContext,
+            &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalGLLBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
       : d_diagonalInv(d_feBasisManager->getMPIPatternP2P(), linAlgOpContext)
@@ -53,20 +150,21 @@ namespace dftefe
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
 
-      const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>
-        &basisDofHandler = dynamic_cast<
-          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim> &>(
-          feBasisManager.getBasisDofHandler());
+      std::shared_ptr<
+        const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+        cfeBDH = std::dynamic_pointer_cast<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+          classicalGLLBasisDataStorage.getBasisDofHandler());
       utils::throwException(
-        &basisDofHandler != nullptr,
-        "Could not cast BasisDofHandler of the input vector to FEBasisDofHandler ");
+        cfeBDH != nullptr,
+        "Could not cast BasisDofHandler to FEBasisDofHandler "
+        "in CFEOverlapInverseOpContext");
 
-      utils::throwException(basisDofHandler.totalRanges() == 1,
+      utils::throwException(cfeBDH->totalRanges() == 1,
                             "This function is only for classical FE basis.");
 
       utils::throwException(
-        cfeOverlapOperatorContext.getFEBasisDataStorage()
-            .getQuadratureRuleContainer()
+        classicalGLLBasisDataStorage.getQuadratureRuleContainer()
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily() == dftefe::quadrature::QuadratureFamily::GLL,
         "The quadrature rule for integration of Classical FE dofs has to be GLL."
@@ -80,8 +178,17 @@ namespace dftefe
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
       // access cell-wise discrete Laplace operator
-      auto NiNjInAllCells =
-        cfeOverlapOperatorContext.getBasisOverlapInAllCells();
+
+      utils::MemoryStorage<ValueTypeOperator, memorySpace> NiNjInAllCells(0);
+
+      CFEOverlapInverseOpContextGLLInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(classicalGLLBasisDataStorage, cfeBDH, NiNjInAllCells);
+
+      // auto NiNjInAllCells =
+      //   classicalGLLBasisDataStorage.getBasisOverlapInAllCells();
 
       std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
                                                          0);
@@ -106,6 +213,8 @@ namespace dftefe
       // its parent nodes
       d_feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
+      d_feBasisManager->getConstraints().setConstrainedNodes(diagonal, 1, 1.0);
+
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       diagonal.accumulateAddLocallyOwned();
@@ -117,6 +226,9 @@ namespace dftefe
                                              diagonal.data(),
                                              d_diagonalInv.data(),
                                              *(diagonal.getLinAlgOpContext()));
+
+      d_feBasisManager->getConstraints().setConstrainedNodesToZero(
+        d_diagonalInv, 1);
     }
 
     template <typename ValueTypeOperator,
@@ -124,7 +236,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    CFEOverlapInverseOperatorContext<
+    CFEOverlapInverseOpContextGLL<
       ValueTypeOperator,
       ValueTypeOperand,
       memorySpace,

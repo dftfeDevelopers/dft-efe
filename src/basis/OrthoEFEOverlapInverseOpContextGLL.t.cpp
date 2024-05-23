@@ -367,6 +367,8 @@ namespace dftefe
       // its parent nodes
       d_feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
+      d_feBasisManager->getConstraints().setConstrainedNodes(diagonal, 1, 1.0);
+
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       diagonal.accumulateAddLocallyOwned();
@@ -378,6 +380,9 @@ namespace dftefe
                                              diagonal.data(),
                                              d_diagonalInv.data(),
                                              *(diagonal.getLinAlgOpContext()));
+
+      d_feBasisManager->getConstraints().setConstrainedNodesToZero(
+        d_diagonalInv, 1);
 
       // Now form the enrichment block matrix.
       d_basisOverlapEnrichmentBlock =

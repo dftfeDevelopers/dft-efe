@@ -85,6 +85,7 @@ int main()
   double ymax = 10.;
   double zmax = 10.;
   unsigned int numComponents = 1;
+  bool isAdaptiveGrid = false;
 
   domainVectors[0][0] = xmax;
   domainVectors[1][1] = ymax;
@@ -140,6 +141,48 @@ int main()
   std::string fieldName = "vnuclear";
   double atomPartitionTolerance = 1e-6;
 
+  if(isAdaptiveGrid)
+  {
+    int flag = 1;
+    int mpiReducedFlag = 1;
+    bool refineFlag = true;
+    while(mpiReducedFlag)
+    {
+      flag = 1;
+      auto triaCellIter = triangulationBase->beginLocal();
+      for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
+      {
+        refineFlag = false;
+        dftefe::utils::Point centerPoint(dim, 0.0); 
+        (*triaCellIter)->center(centerPoint);
+        double dist = (centerPoint[0] - 5)* (centerPoint[0] - 5);  
+        dist += (centerPoint[1] - 5)* (centerPoint[1] - 5);
+        dist += (centerPoint[2] - 5)* (centerPoint[2] - 5);
+        dist = std::sqrt(dist); 
+        if((dist < 1.0) || centerPoint[0] < 1.0)
+          refineFlag = true;
+        if ( refineFlag )
+        {
+          (*triaCellIter)->setRefineFlag();
+          flag = 0;
+        }
+      }
+      triangulationBase->executeCoarseningAndRefinement();
+      triangulationBase->finalizeTriangulationConstruction();
+      // Mpi_allreduce that all the flags are 1 (mpi_max)
+      int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+        &flag,
+        &mpiReducedFlag,
+        1,
+        dftefe::utils::mpi::MPIInt,
+        dftefe::utils::mpi::MPIMin,
+        comm);
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
+      dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+    }
+  }
   // Make orthogonalized EFE basis
 
   // 1. Make EnrichmentClassicalInterface object for Pristine enrichment
@@ -228,7 +271,7 @@ int main()
 
     // Set up the CFE Basis Data Storage for Overlap Matrix
     std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageOverlapMatrix =
-      std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>
+      std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double,dftefe::utils::MemorySpace::HOST, dim>>
       (cfeBasisDofHandler, quadAttrGll, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageOverlapMatrix->evaluateBasisData(quadAttrGll, basisAttrMap);
@@ -242,7 +285,7 @@ int main()
 
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> cfeBasisDataStorageRhs =
-      std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST, dim>>
+      std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double,dftefe::utils::MemorySpace::HOST, dim>>
       (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
@@ -268,7 +311,7 @@ int main()
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisDofHandler->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " << basisDofHandler->nLocallyOwnedCells() << "\n";
+  std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
   std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
@@ -287,7 +330,7 @@ int main()
   feBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
   // Set up BasisManager
-  std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST, dim>> basisManager =
+  std::shared_ptr<const dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>> basisManager =
     std::make_shared<dftefe::basis::FEBasisManager<double, double, dftefe::utils::MemorySpace::HOST,dim>>
     (basisDofHandler);
 
@@ -337,7 +380,7 @@ int main()
             {
               double lower_bound = comp;
               double upper_bound = comp+1;
-              *(itField + localId*numComponents + comp )  = comp+1 ;//lower_bound + (upper_bound - lower_bound) * (random() % max_rand)/ max_rand;
+              *(itField + localId*numComponents + comp )  = lower_bound + (upper_bound - lower_bound) * (random() % max_rand)/ max_rand;
             }
               //((double) rand() / (RAND_MAX));
          }
@@ -377,9 +420,9 @@ int main()
                                                     *cfeBasisDataStorageOverlapMatrix,
                                                     *feBasisData,
                                                     linAlgOpContext);
-
     MInvContext->apply(*X,*Y);
     MContext->apply(*Y,*Z);
+
 
     for (int comp = 0 ; comp < numComponents ; comp++)
       std::cout << "Component "<<comp << ":" << X->l2Norms()[comp] << "," << Y->l2Norms()[comp] <<"," << Z->l2Norms()[comp] << "\n";
@@ -393,6 +436,9 @@ int main()
   ones.resize(numComponents, (double)1.0);
   std::vector<double> nOnes(0);
   nOnes.resize(numComponents, (double)-1.0);
+
+      basisManager->getConstraints().setConstrainedNodesToZero(*X,
+                                                              1);  
 
   dftefe::linearAlgebra::add(ones, *X, nOnes, *Z, *error);
 
