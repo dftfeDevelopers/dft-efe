@@ -163,7 +163,9 @@ namespace dftefe
       getLocal(Storage &cellWiseStorage) const override;
 
       void
-      evalEnergy();
+      evalEnergy(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity);
 
       RealType
       getEnergy() const override;

@@ -602,7 +602,6 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &electronChargeDensity)
     {
-      d_electronChargeDensity = &electronChargeDensity;
       utils::throwException(
         electronChargeDensity.getQuadratureRuleContainer() ==
           d_feBDTotalChargeRhs->getQuadratureRuleContainer(),
@@ -832,7 +831,10 @@ namespace dftefe
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                memorySpace,
-                               dim>::evalEnergy()
+                               dim>::
+      evalEnergy(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity)
     {
       auto jxwStorage = d_feBDTotalChargeRhs->getJxWInAllCells();
 
@@ -957,7 +959,7 @@ namespace dftefe
           ValueTypeBasisCoeff,
           memorySpace,
           dim>(*d_nuclearCorrectionPotQuad,
-               *d_electronChargeDensity,
+               *electronChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
                d_linAlgOpContext,

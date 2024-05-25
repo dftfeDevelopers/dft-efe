@@ -37,10 +37,10 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestKohnShamEigenSolve(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestKohnShamEigenSolve'
+class BuildOnlyTestKSAllElectronEigenSolveClassical(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestKSAllElectronEigenSolveClassical'
     build_system = 'CMake'
-    make_opts = ['TestKohnShamEigenSolve']
+    make_opts = ['TestKSAllElectronEigenSolveClassical']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -88,8 +88,8 @@ class BuildOnlyTestKohnShamEigenSolve(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestKohnShamEigenSolve(rfm.RegressionTest):
-    target_name = 'TestKohnShamEigenSolve'
+class BuildAndRunTestKSAllElectronEigenSolveClassical(rfm.RegressionTest):
+    target_name = 'TestKSAllElectronEigenSolveClassical'
     descr = '''A build and run test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -134,11 +134,11 @@ class BuildAndRunTestKohnShamEigenSolve(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestKohnShamEigenSolve.'''
+        BuildAndRunTestKSAllElectronEigenSolveClassical.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestKohnShamEigenSolve.'''
+        BuildAndRunTestKSAllElectronEigenSolveClassical.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestKohnShamEigenSolve.'''
+        BuildAndRunTestKSAllElectronEigenSolveClassical.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,8 +173,8 @@ class BuildAndRunTestKohnShamEigenSolve(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestKohnShamEigenSolve(rfm.RunOnlyRegressionTest):
-    target_name = 'TestKohnShamEigenSolve'
+class RunOnlyTestKSAllElectronEigenSolveClassical(rfm.RunOnlyRegressionTest):
+    target_name = 'TestKSAllElectronEigenSolveClassical'
     descr = '''A run only test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -211,11 +211,11 @@ class RunOnlyTestKohnShamEigenSolve(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestKohnShamEigenSolve.'''
+        RunOnlyTestKSAllElectronEigenSolveClassical.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestKohnShamEigenSolve'''
+        RunOnlyTestKSAllElectronEigenSolveClassical'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestKohnShamEigenSolve'''
+        RunOnlyTestKSAllElectronEigenSolveClassical'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

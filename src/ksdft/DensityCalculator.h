@@ -23,12 +23,10 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeKineticFE_h
-#define dftefeKineticFE_h
+#ifndef dftefeDensityCalculator_h
+#define dftefeDensityCalculator_h
 
 #include <linearAlgebra/MultiVector.h>
-#include <ksdft/Hamiltonian.h>
-#include <ksdft/Energy.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
 
@@ -40,11 +38,7 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class KineticFE
-      : public Hamiltonian<ValueTypeBasisData, memorySpace>,
-        public Energy<linearAlgebra::blasLapack::real_type<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
-                                                 ValueTypeBasisCoeff>>>
+    class DensityCalculator
     {
     public:
       using ValueType =
@@ -53,57 +47,75 @@ namespace dftefe
 
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
-      using Storage = utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
-
     public:
       /**
        * @brief Constructor
        */
-      KineticFE(
+
+      DensityCalculator(
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage,
+                                          feBasisDataStorage,
+        const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                    ValueTypeBasisData,
+                                    memorySpace,
+                                    dim> &feBMPsi,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize);
+        const size_type cellBlockSize,
+        const size_type waveFuncBatchSize);
 
-      ~KineticFE() = default;
+      /**
+       *@brief Default Destructor
+       *
+       */
+      ~DensityCalculator();
 
       void
       reinit(std::shared_ptr<
-             const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-               feBasisDataStorage);
+               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                               feBasisDataStorage,
+             const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                         ValueTypeBasisData,
+                                         memorySpace,
+                                         dim> &feBMPsi);
 
       void
-      getLocal(Storage &cellWiseStorage) const override;
-      void
-      evalEnergy(const std::vector<RealType> &                  occupation,
-                 const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                             ValueTypeBasisData,
-                                             memorySpace,
-                                             dim> &             feBMPsi,
-                 const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                  memorySpace> &waveFunc,
-                 const size_type waveFuncBatchSize);
-      RealType
-      getEnergy() const override;
+      computeRho(
+        const std::vector<RealType> &occupation,
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                           waveFunc,
+        quadrature::QuadratureValuesContainer<RealType, memorySpace> &rho);
 
     private:
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-        d_feBasisDataStorage;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+        d_quadRuleContainer;
       std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                      ValueTypeBasisData,
                                                      memorySpace,
                                                      dim>>
-                      d_feBasisOp;
-      RealType        d_energy;
-      const size_type d_cellBlockSize;
+                                  d_feBasisOp;
+      basis::FEBasisManager<ValueTypeBasisCoeff,
+                            ValueTypeBasisData,
+                            memorySpace,
+                            dim> *d_feBMPsi;
+      const size_type             d_cellBlockSize;
+      const size_type             d_waveFuncBatchSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 
-    }; // end of class KineticFE
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_psiBatchQuad;
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_psiModSqBatchQuad;
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace> *d_rhoBatch;
+
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> *d_psiBatch;
+
+    }; // end of class DensityCalculator
   }    // end of namespace ksdft
 } // end of namespace dftefe
-#include <ksdft/KineticFE.t.cpp>
-#endif // dftefeKineticFE_h
+#include <ksdft/DensityCalculator.t.cpp>
+#endif // dftefeDensityCalculator_h

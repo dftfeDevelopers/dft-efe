@@ -97,7 +97,7 @@ namespace dftefe
                  const basis::FEBasisManager<ValueTypeBasisCoeff,
                                              ValueTypeBasisData,
                                              memorySpace,
-                                             dim>               feBMPsi,
+                                             dim> &             feBMPsi,
                  const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                   memorySpace> &waveFunc,
                  const size_type waveFuncBatchSize)
@@ -131,6 +131,12 @@ namespace dftefe
           const size_type psiEndId = std::min(psiStartId + waveFuncBatchSize,
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
+
+          std::vector occupationInBatch(numPsiInBatch, 0);
+
+          std::copy(occupation.data() + psiStartId,
+                    occupation.data() + psiEndId,
+                    occupationInBatch.begin());
 
           if (numPsiInBatch < waveFuncBatchSize)
             {
@@ -292,7 +298,7 @@ namespace dftefe
             hadamardProduct<RealType, RealType, utils::MemorySpace::HOST>(
               integralModGradPsiSq.size(),
               integralModGradPsiSq.data(),
-              occupation.data(),
+              occupationInBatch.data(),
               linearAlgebra::blasLapack::ScalarOp::Identity,
               linearAlgebra::blasLapack::ScalarOp::Identity,
               energy.data(),
