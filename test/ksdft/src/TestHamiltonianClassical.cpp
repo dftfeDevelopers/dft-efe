@@ -591,7 +591,7 @@ int main()
                                                   linAlgOpContext,
                                                   50);
 
-  hamitonianElec->evalEnergy(); 
+  hamitonianElec->evalEnergy(electronChargeDensity); 
 
   double energyksdft = hamitonianElec->getEnergy(); 
 

@@ -30,6 +30,7 @@
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
+#include <ksdft/DensityCalculator.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -46,7 +47,7 @@ using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
 // e- charge density
-double rho(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
+double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
 {
   double ret = 0;
   for (unsigned int i = 0 ; i < origin.size() ; i++ )
@@ -57,7 +58,7 @@ double rho(const dftefe::utils::Point &point, const std::vector<dftefe::utils::P
       r += std::pow((point[j]-origin[i][j]),2);
     }
     r = std::sqrt(r);
-    ret += - (1/M_PI)*exp(-2*r);
+    ret += (1/M_PI)*exp(-2*r);
   }
   return ret;
 }
@@ -104,10 +105,10 @@ int main()
 
   // Set up Triangulation
   const unsigned int dim = 3;
-  double xmax = 10.0;
-  double ymax = 10.0;
-  double zmax = 10.0;
-  double rc = 0.5;
+  double xmax = 24.0;
+  double ymax = 24.0;
+  double zmax = 24.0;
+  double rc = 0.6;
   double hMin = 1e6;
   size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
@@ -126,12 +127,12 @@ int main()
   size_type maxChebyshevFilterPass = 100;
   size_type numWantedEigenvalues = 15;
   size_type numElectrons = 1;
-  double nuclearCharge = -1;
+  double nuclearCharge = -1.0;
   
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {15, 15, 15};
+  std::vector<unsigned int>         subdivisions = {30, 30, 30};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -273,7 +274,7 @@ int main()
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();
 
-  std::vector<double> chargeDensity(1, 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
+  std::vector<double> chargeDensity(atomCoordinatesVec.size(), 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
 
   const utils::SmearChargeDensityFunction smden(atomCoordinatesVec,
                                                 atomChargesVec,
@@ -300,15 +301,19 @@ int main()
         utils::mpi::MPISum,
         comm);
 
+  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
+  {
+    atomChargesVec[i] *= 1/std::abs(mpiReducedChargeDensity[i]);
+  }
   std::cout << "Total nuclear charge in system: " << mpiReducedChargeDensity[0] << std::endl;
 
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
 
-    std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>
+    std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
-
+            
     std::shared_ptr<const basis::FEBasisManager
       <double, double, Host,dim>>
     basisManagerWaveFn = std::make_shared
@@ -358,7 +363,9 @@ int main()
                                                   electronChargeDensity,
                                                   basisManagerTotalPot,
                                                   feBasisData,
-                                                  feBasisData,                                             
+                                                  feBasisData,   
+                                                  feBasisData,
+                                                  feBasisData,                                                                                             
                                                   *externalPotentialFunction,
                                                   linAlgOpContext,
                                                   50);
@@ -498,7 +505,64 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     std::cout <<  i <<", ";     
   std::cout << "\n";     
 
-  std::cout << err.msg << "\n";             
+  std::cout << err.msg << "\n";   
+
+  ksdft::DensityCalculator<double, double, Host, dim>
+                              densCalc(feBasisData,
+                              *basisManagerWaveFn,
+                              linAlgOpContext,
+                              50,
+                              4);
+
+  quadrature::QuadratureValuesContainer<double, Host>
+                  rho(quadRuleContainer, 1);
+
+  std::vector<double> occupation = ksEigSolve->getFractionalOccupancy();
+  densCalc.computeRho(occupation, kohnShamWaveFunctions, rho);
+  std::vector<double> intRho(2);
+  for (size_type iCell = 0; iCell < rho.nCells(); iCell++)
+    {
+      const std::vector<double> JxW = quadRuleContainer->getCellJxW(iCell);
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(iCell));
+      const std::vector<dftefe::utils::Point> point = quadRuleContainer->getCellRealPoints(iCell);
+      rho.getCellQuadValues<Host>(iCell, 0, a.data());
+      for (size_type i = 0; i < a.size(); i++)
+      {
+        intRho[0] += std::pow((a[i] - rho1sOrbital(point[i], atomCoordinatesVec)),2) * JxW[i];
+        intRho[1] += std::pow(rho1sOrbital(point[i], atomCoordinatesVec),2) * JxW[i];
+      }
+    }
+
+  int mpierr = utils::mpi::MPIAllreduce<Host>(
+    utils::mpi::MPIInPlace,
+    intRho.data(),
+    intRho.size(),
+    utils::mpi::Types<double>::getMPIDatatype(),
+    utils::mpi::MPISum,
+    comm);
+
+  std::cout << "Absolute L2 norm rho : "<< intRho[0] << "Relative L2 norm rho : "<<intRho[0]/intRho[1]<<"\n";
+
+  hamitonianKin->evalEnergy(occupation, *basisManagerWaveFn, kohnShamWaveFunctions, 4);
+
+  std::cout << "kin energy: "<<hamitonianKin->getEnergy() << "\n";
+
+  hamitonianElec->evalEnergy(rho); 
+  double elecEnergy = hamitonianElec->getEnergy();
+  std::cout << "elec energy: " << elecEnergy << "\n";
+
+  // calculate band energy
+  double bandEnergy;
+  for(size_type i = 0 ; i < occupation.size(); i++)
+  {
+    bandEnergy += 2 * occupation[i] * kohnShamEnergies[i];
+  }
+
+  std::cout << "band energy: "<< bandEnergy << "\n";
+
+  double totalEnergy = bandEnergy - elecEnergy;
+
+  std::cout << "Total Energy: " << totalEnergy << "\n";
 
   //gracefully end MPI
 

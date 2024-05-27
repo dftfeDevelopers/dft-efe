@@ -132,7 +132,7 @@ namespace dftefe
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
 
-          std::vector occupationInBatch(numPsiInBatch, 0);
+          std::vector<RealType> occupationInBatch(numPsiInBatch, 0);
 
           std::copy(occupation.data() + psiStartId,
                     occupation.data() + psiEndId,

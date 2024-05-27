@@ -944,8 +944,9 @@ namespace dftefe
                 d_smearedChargeRadius[iAtom]);
 
               double Ig = 10976. / (17875 * d_smearedChargeRadius[iAtom]);
-              selfEnergy +=
-                (RealType)(0.5 * (Ig - smfunc(d_atomCoordinates[iAtom])));
+              selfEnergy += (RealType)(0.5 * std::pow(d_atomCharges[iAtom], 2) *
+                                       (Ig - (smfunc(d_atomCoordinates[iAtom]) /
+                                              d_atomCharges[iAtom])));
             }
           selfEnergy *= -1;
         }
@@ -959,7 +960,7 @@ namespace dftefe
           ValueTypeBasisCoeff,
           memorySpace,
           dim>(*d_nuclearCorrectionPotQuad,
-               *electronChargeDensity,
+               electronChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
                d_linAlgOpContext,

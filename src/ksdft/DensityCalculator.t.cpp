@@ -37,9 +37,9 @@ namespace dftefe
       void
       computeRhoInBatch(
         const std::vector<RealType> &occupationInBatch,
-        const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &psiBatchQuad,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &psiModSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
@@ -114,7 +114,7 @@ namespace dftefe
                 nSizesTmp[iCell]   = 1;
                 kSizesTmp[iCell]   = numPsiInBatch;
                 ldaSizesTmp[iCell] = mSizesTmp[iCell];
-                ldbSizesTmp[iCell] = nSizesTmp[iCell];
+                ldbSizesTmp[iCell] = kSizesTmp[iCell];
                 ldcSizesTmp[iCell] = mSizesTmp[iCell];
                 strideBTmp[iCell]  = 0;
                 strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
@@ -174,9 +174,9 @@ namespace dftefe
             RealType alpha = 1.0;
             RealType beta  = 0.0;
 
-            const RealType *A = psiModSqBatchQuad.data() + AStartOffset;
+            const RealType *A = psiModSqBatchQuad.begin() + AStartOffset;
 
-            RealType *C = rhoBatch.data() + CStartOffset;
+            RealType *C = rhoBatch.begin() + CStartOffset;
 
             linearAlgebra::blasLapack::
               gemmStridedVarBatched<RealType, RealType, memorySpace>(
@@ -286,16 +286,16 @@ namespace dftefe
     {
       d_feBMPsi = &feBMPsi;
 
-      d_quadRuleContainer = feBasisDataStorage.getQuadratureRuleContainer();
+      d_quadRuleContainer = feBasisDataStorage->getQuadratureRuleContainer();
 
       // 4 scratch spaces ---- can be optimized ------
       d_psiBatchQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
-          d_quadRuleContainer, d_waveFuncBatchSize * dim);
+          d_quadRuleContainer, d_waveFuncBatchSize);
 
       d_psiModSqBatchQuad =
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-          d_quadRuleContainer, d_waveFuncBatchSize * dim);
+          d_quadRuleContainer, d_waveFuncBatchSize);
 
       d_rhoBatch =
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
@@ -344,7 +344,7 @@ namespace dftefe
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
 
-          std::vector occupationInBatch(numPsiInBatch, 0);
+          std::vector<RealType> occupationInBatch(numPsiInBatch, 0);
 
           std::copy(occupation.data() + psiStartId,
                     occupation.data() + psiEndId,

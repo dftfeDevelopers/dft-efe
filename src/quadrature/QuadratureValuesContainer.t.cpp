@@ -127,6 +127,7 @@ namespace dftefe
       const ValueType initVal /*= ValueType()*/)
     {
       d_quadratureRuleContainer = quadratureRuleContainer;
+      d_numberComponents        = numberComponents;
       QuadratureValuesContainerInternal::initialize<ValueType, memorySpace>(
         d_quadratureRuleContainer,
         d_numberComponents,

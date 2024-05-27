@@ -4,6 +4,8 @@
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/CFEBasisDofHandlerDealii.h>
 #include <basis/CFEBasisDataStorageDealii.h>
+#include <basis/EFEBasisDofHandlerDealii.h>
+#include <basis/EFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/CFEConstraintsLocalDealii.h>
 #include <basis/FEBasisManager.h>
@@ -30,6 +32,8 @@
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
+#include <ksdft/DensityCalculator.h>
+#include <atoms/AtomSevereFunction.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -46,7 +50,7 @@ using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
 // e- charge density
-double rho(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
+double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
 {
   double ret = 0;
   for (unsigned int i = 0 ; i < origin.size() ; i++ )
@@ -57,14 +61,16 @@ double rho(const dftefe::utils::Point &point, const std::vector<dftefe::utils::P
       r += std::pow((point[j]-origin[i][j]),2);
     }
     r = std::sqrt(r);
-    ret += - (1/M_PI)*exp(-2*r);
+    ret += (1/M_PI)*exp(-2*r);
   }
   return ret;
 }
 
-// operator - nabla^2 in weak form
-// operand - V_H
-// memoryspace - HOST
+
+// basisDofHandler for wave function
+// basisDofHandler for b_smear
+// single adaptive Quadrature with b_smear (highest) - same for Hamiltonian
+
 int main()
 {
   std::cout<<" Entering test kohn sham eigensolve ortho enrichment\n";
@@ -104,9 +110,9 @@ int main()
 
   // Set up Triangulation
   const unsigned int dim = 3;
-  double xmax = 10.0;
-  double ymax = 10.0;
-  double zmax = 10.0;
+  double xmax = 24.0;
+  double ymax = 24.0;
+  double zmax = 24.0;
   double rc = 0.5;
   double hMin = 1e6;
   size_type maxIter = 2e7;
@@ -116,12 +122,12 @@ int main()
   double refineradius = 3*rc;
   unsigned int feOrder = 3;
   unsigned int num1DGaussSize = 4;
-  unsigned int num1DGLLSize = 4;
+  unsigned int num1DGllSize = 4;
 
-  double    smearingTemperature = 10.0;
+  double    smearingTemperature = 500.0;
   double    fermiEnergyTolerance = 1e-10;
   double    fracOccupancyTolerance = 1e-3;
-  double    eigenSolveResidualTolerance = 1e-4;
+  double    eigenSolveResidualTolerance = 1e-3;
   size_type chebyshevPolynomialDegree = 50;
   size_type maxChebyshevFilterPass = 100;
   size_type numWantedEigenvalues = 15;
@@ -196,14 +202,15 @@ int main()
         atomSymbolToFilename[i] = sourceDir + i + ".xml";
     }
 
-    std::vector<std::string> fieldNames{"vnuclear"};
+    std::vector<std::string> fieldNames{"vnuclear","orbital"};
     std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
     std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
         std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
                                                         fieldNames,
                                                         metadataNames);
 
-    std::string fieldName = "vnuclear";
+    std::string vTotal = "vnuclear";
+    std::string orbital = "orbital";
     double atomPartitionTolerance = 1e-6;
 
     std::vector<double> atomChargesVec(atomCoordinatesVec.size(), nuclearCharge);
@@ -264,14 +271,14 @@ int main()
   // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, utils::MemorySpace::HOST, dim>>
-                          enrichClassIntfce = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, utils::MemorySpace::HOST, dim>>(triangulationBase,
+                          <double, Host, dim>>
+                          enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>(triangulationBase,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
                           atomSymbolVec,
                           atomCoordinatesVec,
-                          fieldName,
+                          vTotal,
                           comm);
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
@@ -283,11 +290,11 @@ int main()
     for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
     {
         functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            enrichClassIntfce->getEnrichmentIdsPartition(),
+            enrichClassIntfceTotalPot->getEnrichmentIdsPartition(),
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
-            fieldName,
+            vTotal,
             i);
         absoluteTolerances[i] = 1e-4;
         relativeTolerances[i] = 1e-4;
@@ -326,8 +333,8 @@ int main()
       maxRecursion);
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
-  std::shared_ptr<const basis::FEBasisDofHandler<double, utils::MemorySpace::HOST,dim>> cfeBasisDofHandler =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, utils::MemorySpace::HOST,dim>>(triangulationBase, feOrder, comm);
+  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandler =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrder, comm);
 
   basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -338,43 +345,62 @@ int main()
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Overlap Matrix
-    std::shared_ptr<basis::FEBasisDataStorage<double, utils::MemorySpace::HOST>> cfeBasisDataStorageGLL =
-      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,utils::MemorySpace::HOST, dim>>
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLL =
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
       (cfeBasisDofHandler, quadAttrGll, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageGLL->evaluateBasisData(quadAttrGll, basisAttrMap);
 
     // Set up the CFE Basis Data Storage for Rhs
-    std::shared_ptr<basis::FEBasisDataStorage<double, utils::MemorySpace::HOST>> cfeBasisDataStorageAdaptive =
-      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,utils::MemorySpace::HOST, dim>>
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageAdaptive =
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
       (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageAdaptive->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
-    // Create the enrichmentClassicalInterface object
-    enrichClassIntfce = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, utils::MemorySpace::HOST, dim>>
+    // Create the enrichmentClassicalInterface object for vtotal
+    enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
                           (cfeBasisDataStorageGLL,
                           cfeBasisDataStorageAdaptive,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
                           atomSymbolVec,
                           atomCoordinatesVec,
-                          fieldName,
+                          vTotal,
                           linAlgOpContext,
                           comm);
 
+    // Create the enrichmentClassicalInterface object for wavefn
+      std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
+                          enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
+                          (cfeBasisDataStorageGLL,
+                          cfeBasisDataStorageAdaptive,
+                          atomSphericalDataContainer,
+                          atomPartitionTolerance,
+                          atomSymbolVec,
+                          atomCoordinatesVec,
+                          orbital,
+                          linAlgOpContext,
+                          comm);                          
+
   // initialize the basis Manager
 
-  std::shared_ptr<basis::FEBasisDofHandler<double, utils::MemorySpace::HOST,dim>> basisDofHandler =  
-    std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,utils::MemorySpace::HOST,dim>>(
-      enrichClassIntfce, feOrder, comm);
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot =  
+    std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
+      enrichClassIntfceTotalPot, feOrder, comm);
+
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerOrbital =  
+    std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
+      enrichClassIntfceOrbital, feOrder, comm);
 
   std::map<global_size_type, utils::Point> dofCoords;
-  basisDofHandler->getBasisCenters(dofCoords);
+  basisDofHandlerTotalPot->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
-  std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
+  std::cout << "Locally owned cells : " <<basisDofHandlerTotalPot->nLocallyOwnedCells() << "\n";
+  std::cout << "Total Number of dofs : " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
 
@@ -386,17 +412,35 @@ int main()
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up Adaptive quadrature for EFE Basis Data Storage
-  std::shared_ptr<basis::FEBasisDataStorage<double, utils::MemorySpace::HOST>> efeBasisDataAdaptive =
-  std::make_shared<basis::EFEBasisDataStorageDealii<double, double, utils::MemorySpace::HOST,dim>>
-  (basisDofHandler, quadAttrAdaptive, basisAttrMap);
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptive =
+  std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
+  (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
 
   // evaluate basis data
   efeBasisDataAdaptive->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
+  // std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveTotPot = efeBasisDataAdaptive;
+
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataOrbitalAdaptive =
+  std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
+  (basisDofHandlerOrbital, quadAttrAdaptive, basisAttrMap);
+
+  // evaluate basis data
+  efeBasisDataOrbitalAdaptive->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
+
+  // std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveHamiltonian = efeBasisDataAdaptive;
+
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 efeBasisDataAdaptive->getQuadratureRuleContainer();
 
-  std::vector<double> chargeDensity(1, 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
+  std::vector<double> chargeDensity(atomCoordinatesVec.size(), 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
   
   const utils::SmearChargeDensityFunction smden(atomCoordinatesVec,
                                                 atomChargesVec,
@@ -423,7 +467,14 @@ int main()
         utils::mpi::MPISum,
         comm);
 
+  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
+  {
+    atomChargesVec[i] *= 1/std::abs(mpiReducedChargeDensity[i]);
+  }
   std::cout << "Total nuclear charge in system: " << mpiReducedChargeDensity[0] << std::endl;
+
+  quadRuleContainer =  
+                efeBasisDataOrbitalAdaptive->getQuadratureRuleContainer();
 
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
@@ -436,7 +487,7 @@ int main()
       <double, double, Host,dim>>
     basisManagerWaveFn = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
-        (basisDofHandler);
+        (basisDofHandlerOrbital);
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
       std::make_shared<const utils::SmearChargePotentialFunction>(
@@ -448,7 +499,7 @@ int main()
       <double, double, Host,dim>>
     basisManagerTotalPot = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
-        (basisDofHandler, smfunc);
+        (basisDofHandlerTotalPot, smfunc);
 
   std::shared_ptr<ksdft::KineticFE<double,
                                     double,
@@ -481,7 +532,7 @@ int main()
                                                   electronChargeDensity,
                                                   basisManagerTotalPot,
                                                   efeBasisDataAdaptive,
-                                                  efeBasisDataAdaptive,                                             
+                                                  efeBasisDataAdaptive,
                                                   *externalPotentialFunction,
                                                   linAlgOpContext,
                                                   50);
@@ -535,44 +586,44 @@ int main()
 
   std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                 double,
-                                                utils::MemorySpace::HOST,
+                                                Host,
                                                 dim>> MContext =
   std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
                                                       double,
-                                                      utils::MemorySpace::HOST,
+                                                      Host,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *basisManagerWaveFn,
                                                       *cfeBasisDataStorageAdaptive,
-                                                      *efeBasisDataAdaptive,
+                                                      *efeBasisDataOrbitalAdaptive,
                                                       *cfeBasisDataStorageGLL,
                                                       50); 
 
     std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
-                                                  utils::MemorySpace::HOST,
+                                                  Host,
                                                   dim>> MContextForInv =
     std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
                                                         double,
-                                                        utils::MemorySpace::HOST,
+                                                        Host,
                                                         dim>>(
                                                         *basisManagerWaveFn,
                                                         *basisManagerWaveFn,
                                                         *cfeBasisDataStorageGLL,
-                                                        *efeBasisDataAdaptive,
+                                                        *efeBasisDataOrbitalAdaptive,
                                                         *cfeBasisDataStorageGLL,
                                                         50);                                                      
 
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
-                                                   utils::MemorySpace::HOST>> MInvContext =
+                                                   Host>> MInvContext =
     std::make_shared<basis::OrthoEFEOverlapInverseOpContextGLL<double,
                                                    double,
-                                                   utils::MemorySpace::HOST,
+                                                   Host,
                                                    dim>>
                                                    (*basisManagerWaveFn,
                                                     *cfeBasisDataStorageGLL,
-                                                    *efeBasisDataAdaptive,
+                                                    *efeBasisDataOrbitalAdaptive,
                                                     linAlgOpContext);                                                  
 
   // form the kohn sham operator
@@ -607,7 +658,64 @@ int main()
     std::cout <<  i <<", ";     
   std::cout << "\n";     
 
-  std::cout << err.msg << "\n";             
+  std::cout << err.msg << "\n";      
+
+  ksdft::DensityCalculator<double, double, Host, dim>
+                              densCalc(efeBasisDataOrbitalAdaptive,
+                              *basisManagerWaveFn,
+                              linAlgOpContext,
+                              50,
+                              4);
+
+  quadrature::QuadratureValuesContainer<double, Host>
+                  rho(quadRuleContainer, 1);
+
+  std::vector<double> occupation = ksEigSolve->getFractionalOccupancy();
+  densCalc.computeRho(occupation, kohnShamWaveFunctions, rho);
+  std::vector<double> intRho(2);
+  for (size_type iCell = 0; iCell < rho.nCells(); iCell++)
+    {
+      const std::vector<double> JxW = quadRuleContainer->getCellJxW(iCell);
+      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(iCell));
+      const std::vector<dftefe::utils::Point> point = quadRuleContainer->getCellRealPoints(iCell);
+      rho.getCellQuadValues<Host>(iCell, 0, a.data());
+      for (size_type i = 0; i < a.size(); i++)
+      {
+        intRho[0] += std::pow((a[i] - rho1sOrbital(point[i], atomCoordinatesVec)),2) * JxW[i];
+        intRho[1] += std::pow(rho1sOrbital(point[i], atomCoordinatesVec),2) * JxW[i];
+      }
+    }
+
+  int mpierr = utils::mpi::MPIAllreduce<Host>(
+    utils::mpi::MPIInPlace,
+    intRho.data(),
+    intRho.size(),
+    utils::mpi::Types<double>::getMPIDatatype(),
+    utils::mpi::MPISum,
+    comm);
+
+  std::cout << "Absolute L2 norm rho : "<< intRho[0] << "Relative L2 norm rho : "<<intRho[0]/intRho[1]<<"\n";
+
+  hamitonianKin->evalEnergy(occupation, *basisManagerWaveFn, kohnShamWaveFunctions, 4);
+
+  std::cout << "kin energy: "<<hamitonianKin->getEnergy() << "\n";
+
+  hamitonianElec->evalEnergy(rho); 
+  double elecEnergy = hamitonianElec->getEnergy();
+  std::cout << "elec energy: " << elecEnergy << "\n";
+
+  // calculate band energy
+  double bandEnergy;
+  for(size_type i = 0 ; i < occupation.size(); i++)
+  {
+    bandEnergy += 2 * occupation[i] * kohnShamEnergies[i];
+  }
+
+  std::cout << "band energy: "<< bandEnergy << "\n";
+
+  double totalEnergy = bandEnergy - elecEnergy;
+
+  std::cout << "Total Energy: " << totalEnergy << "\n";       
 
   //gracefully end MPI
 

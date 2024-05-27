@@ -94,13 +94,13 @@ namespace dftefe
                                                      ValueTypeBasisData,
                                                      memorySpace,
                                                      dim>>
-                                  d_feBasisOp;
-      basis::FEBasisManager<ValueTypeBasisCoeff,
-                            ValueTypeBasisData,
-                            memorySpace,
-                            dim> *d_feBMPsi;
-      const size_type             d_cellBlockSize;
-      const size_type             d_waveFuncBatchSize;
+                                        d_feBasisOp;
+      const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData,
+                                  memorySpace,
+                                  dim> *d_feBMPsi;
+      const size_type                   d_cellBlockSize;
+      const size_type                   d_waveFuncBatchSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 
