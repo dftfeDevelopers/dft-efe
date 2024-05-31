@@ -24,6 +24,7 @@
  */
 
 #include <utils/DataTypeOverloads.h>
+#include <xc.h>
 
 namespace dftefe
 {

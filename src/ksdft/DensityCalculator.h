@@ -114,6 +114,17 @@ namespace dftefe
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> *d_psiBatch;
 
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_psiBatchSmallQuad;
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_psiModSqBatchSmallQuad;
+
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+        *d_psiBatchSmall;
+
+      size_type d_batchSizeSmall;
+
     }; // end of class DensityCalculator
   }    // end of namespace ksdft
 } // end of namespace dftefe

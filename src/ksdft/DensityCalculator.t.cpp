@@ -171,6 +171,13 @@ namespace dftefe
                                 strideC.data(),
                                 strideCTmp.data());
 
+            // Create occupancy in memspace
+            utils::MemoryStorage<RealType, memorySpace>
+              occupationInBatchMemspace(occupationInBatch.size());
+            memoryTransfer.copy(occupationInBatch.size(),
+                                occupationInBatchMemspace.data(),
+                                occupationInBatch.data());
+
             RealType alpha = 1.0;
             RealType beta  = 0.0;
 
@@ -193,7 +200,7 @@ namespace dftefe
                 alpha,
                 A,
                 ldaSizes.data(),
-                occupationInBatch.data(),
+                occupationInBatchMemspace.data(),
                 ldbSizes.data(),
                 beta,
                 C,
@@ -265,6 +272,21 @@ namespace dftefe
           delete d_psiBatch;
           d_psiBatch = nullptr;
         }
+      if (d_psiBatchSmallQuad != nullptr)
+        {
+          delete d_psiBatchSmallQuad;
+          d_psiBatchSmallQuad = nullptr;
+        }
+      if (d_psiModSqBatchSmallQuad != nullptr)
+        {
+          delete d_psiModSqBatchSmallQuad;
+          d_psiModSqBatchSmallQuad = nullptr;
+        }
+      if (d_psiBatchSmall != nullptr)
+        {
+          delete d_psiBatchSmall;
+          d_psiBatchSmall = nullptr;
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -284,7 +306,8 @@ namespace dftefe
                                          memorySpace,
                                          dim> &feBMPsi)
     {
-      d_feBMPsi = &feBMPsi;
+      d_feBMPsi        = &feBMPsi;
+      d_batchSizeSmall = UINT_MAX;
 
       d_quadRuleContainer = feBasisDataStorage->getQuadratureRuleContainer();
 
@@ -350,52 +373,13 @@ namespace dftefe
                     occupation.data() + psiEndId,
                     occupationInBatch.begin());
 
-          if (numPsiInBatch < d_waveFuncBatchSize)
-            {
-              quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-                psiBatchSmallQuad(d_quadRuleContainer, numPsiInBatch);
+          /*
+           * Use scratch space for case where "numPsiInBatch <
+           * d_waveFuncBatchSize". cases : if(n % nb1 == 0), if(n % nb1 ==
+           * d_nb2) else ( init nb_2 )
+           */
 
-              quadrature::QuadratureValuesContainer<RealType, memorySpace>
-                psiModSqBatchSmallQuad(d_quadRuleContainer, numPsiInBatch);
-
-              linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-                psiBatchSmall(waveFunc.getMPIPatternP2P(),
-                              d_linAlgOpContext,
-                              numPsiInBatch,
-                              ValueTypeBasisCoeff());
-
-              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
-                memoryTransfer.copy(numPsiInBatch,
-                                    psiBatchSmall.data() +
-                                      numPsiInBatch * iSize,
-                                    waveFunc.data() +
-                                      iSize * waveFunc.getNumberComponents() +
-                                      psiStartId);
-
-              d_feBasisOp->interpolate(psiBatchSmall,
-                                       *d_feBMPsi,
-                                       psiBatchSmallQuad);
-
-              DensityCalculatorInternal::
-                computeRhoInBatch<ValueType, RealType, memorySpace>(
-                  occupationInBatch,
-                  psiBatchSmallQuad,
-                  psiModSqBatchSmallQuad,
-                  d_quadRuleContainer,
-                  *d_rhoBatch,
-                  d_cellBlockSize,
-                  numLocallyOwnedCells,
-                  *d_linAlgOpContext);
-
-              // do add
-              quadrature::add((RealType)1.0,
-                              *d_rhoBatch,
-                              (RealType)1.0,
-                              rho,
-                              rho,
-                              *d_linAlgOpContext);
-            }
-          else
+          if (numPsiInBatch % d_waveFuncBatchSize == 0)
             {
               for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
                 memoryTransfer.copy(numPsiInBatch,
@@ -413,6 +397,94 @@ namespace dftefe
                   occupationInBatch,
                   *d_psiBatchQuad,
                   *d_psiModSqBatchQuad,
+                  d_quadRuleContainer,
+                  *d_rhoBatch,
+                  d_cellBlockSize,
+                  numLocallyOwnedCells,
+                  *d_linAlgOpContext);
+
+              // do add
+              quadrature::add((RealType)1.0,
+                              *d_rhoBatch,
+                              (RealType)1.0,
+                              rho,
+                              rho,
+                              *d_linAlgOpContext);
+            }
+          else if (numPsiInBatch % d_waveFuncBatchSize == d_batchSizeSmall)
+            {
+              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
+                memoryTransfer.copy(numPsiInBatch,
+                                    d_psiBatchSmall->data() +
+                                      numPsiInBatch * iSize,
+                                    waveFunc.data() +
+                                      iSize * waveFunc.getNumberComponents() +
+                                      psiStartId);
+
+              d_feBasisOp->interpolate(*d_psiBatchSmall,
+                                       *d_feBMPsi,
+                                       *d_psiBatchSmallQuad);
+
+              DensityCalculatorInternal::
+                computeRhoInBatch<ValueType, RealType, memorySpace>(
+                  occupationInBatch,
+                  *d_psiBatchSmallQuad,
+                  *d_psiModSqBatchSmallQuad,
+                  d_quadRuleContainer,
+                  *d_rhoBatch,
+                  d_cellBlockSize,
+                  numLocallyOwnedCells,
+                  *d_linAlgOpContext);
+
+              // do add
+              quadrature::add((RealType)1.0,
+                              *d_rhoBatch,
+                              (RealType)1.0,
+                              rho,
+                              rho,
+                              *d_linAlgOpContext);
+            }
+          // for the first iteration where batch size is not wavefnBatch,
+          // else is executed and d_batchSizeSmall is initialized
+          else
+            {
+              d_batchSizeSmall = numPsiInBatch;
+
+              d_psiBatchSmallQuad =
+                new quadrature::QuadratureValuesContainer<ValueType,
+                                                          memorySpace>(
+                  d_quadRuleContainer, numPsiInBatch);
+
+              d_psiModSqBatchSmallQuad =
+                new quadrature::QuadratureValuesContainer<ValueType,
+                                                          memorySpace>(
+                  d_quadRuleContainer, numPsiInBatch);
+
+              d_psiBatchSmall =
+                new linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                               memorySpace>(
+                  waveFunc.getMPIPatternP2P(),
+                  d_linAlgOpContext,
+                  numPsiInBatch,
+                  ValueTypeBasisCoeff());
+
+              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
+                memoryTransfer.copy(numPsiInBatch,
+                                    d_psiBatchSmall->data() +
+                                      numPsiInBatch * iSize,
+                                    waveFunc.data() +
+                                      iSize * waveFunc.getNumberComponents() +
+                                      psiStartId);
+
+              d_feBasisOp->interpolate(*d_psiBatchSmall,
+                                       *d_feBMPsi,
+                                       *d_psiBatchSmallQuad);
+
+              DensityCalculatorInternal::
+                computeRhoInBatch<ValueType, RealType, memorySpace>(
+                  occupationInBatch,
+                  *d_psiBatchSmallQuad,
+                  *d_psiModSqBatchSmallQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,

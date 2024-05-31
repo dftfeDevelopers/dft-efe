@@ -168,6 +168,11 @@ namespace dftefe
           &electronChargeDensity);
 
       RealType
+      getTotalChargePotentialTimesRho(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity) const;
+
+      RealType
       getEnergy() const override;
 
     private:
@@ -198,11 +203,11 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_electronChargeDensity;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        *d_totalChargePotentialQuad;
+        *d_totalAuxChargePotentialQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_nuclearCorrectionPotQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        *d_totalChargePotentialWithCorrectionQuad; /*Scratch space*/
+        *d_totalChargePotentialQuad;
       std::vector<linearAlgebra::MultiVector<ValueType, memorySpace> *>
         d_nuclearChargesPotential;
       std::vector<std::shared_ptr<basis::FEBasisManager<ValueTypeBasisCoeff,

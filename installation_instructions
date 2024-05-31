@@ -15,7 +15,7 @@ For a CPU only compilation
 CPU:
 export DFTEFE_PATH= <path to dftefe project> (eg: /home/$USER/dft-efe)
 
-python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --BOOST_DIR="/sw/pkgs/arc/stacks/gcc/10.3.0/boost/1.78.0" --SLATE_DIR="/home/vikramg/DFTEFE-softwares/slate/install" --DEALII_PATH="/home/vikramg/DFTEFE-softwares/dealii9.5/installmoduleboostkokkos" --ENABLE_MPI=ON --ENABLE_CUDA=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so"
+python configure.py  --CMAKE_BUILD_TYPE=Debug --CMAKE_C_COMPILER=gcc --CMAKE_CXX_COMPILER=g++ --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp" --MPI_C_COMPILER=mpicc --MPI_CXX_COMPILER=mpic++ --BOOST_DIR="/sw/pkgs/arc/stacks/gcc/10.3.0/boost/1.78.0" --SLATE_DIR="/home/vikramg/DFTEFE-softwares/slate/install" --DEALII_PATH="/home/vikramg/DFTEFE-softwares/dealii9.5/installmoduleboostkokkos" --ENABLE_MPI=ON --ENABLE_CUDA=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so" --LIBXC_DIR="/home/vikramg/DFTEFE-softwares/libxc/install" --LIBXC_LIBRARY="/home/vikramg/DFTEFE-softwares/libxc/install/lib64/libxc.so"
 
 python install.py
 

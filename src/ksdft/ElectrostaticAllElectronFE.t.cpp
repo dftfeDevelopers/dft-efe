@@ -299,20 +299,20 @@ namespace dftefe
           delete d_nuclearChargesDensity;
           d_nuclearChargesDensity = nullptr;
         }
-      if (d_totalChargePotentialQuad != nullptr)
+      if (d_totalAuxChargePotentialQuad != nullptr)
         {
-          delete d_totalChargePotentialQuad;
-          d_totalChargePotentialQuad = nullptr;
+          delete d_totalAuxChargePotentialQuad;
+          d_totalAuxChargePotentialQuad = nullptr;
         }
       if (d_nuclearCorrectionPotQuad != nullptr)
         {
           delete d_nuclearCorrectionPotQuad;
           d_nuclearCorrectionPotQuad = nullptr;
         }
-      if (d_totalChargePotentialWithCorrectionQuad != nullptr)
+      if (d_totalChargePotentialQuad != nullptr)
         {
-          delete d_totalChargePotentialWithCorrectionQuad;
-          d_totalChargePotentialWithCorrectionQuad = nullptr;
+          delete d_totalChargePotentialQuad;
+          d_totalChargePotentialQuad = nullptr;
         }
       for (auto &i : d_nuclearChargesPotential)
         {
@@ -376,11 +376,11 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
-      d_totalChargePotentialQuad =
+      d_totalAuxChargePotentialQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
-      d_totalChargePotentialWithCorrectionQuad =
+      d_totalChargePotentialQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
@@ -520,11 +520,11 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
-      d_totalChargePotentialQuad =
+      d_totalAuxChargePotentialQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
-      d_totalChargePotentialWithCorrectionQuad =
+      d_totalChargePotentialQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
@@ -667,7 +667,7 @@ namespace dftefe
 
       d_feBasisOp->interpolate(totalChargePotential,
                                *d_feBMTotalCharge,
-                               *d_totalChargePotentialQuad);
+                               *d_totalAuxChargePotentialQuad);
     }
 
     template <typename ValueTypeBasisData,
@@ -681,20 +681,20 @@ namespace dftefe
                                dim>::getLocal(Storage &cellWiseStorage) const
     {
       // add the correction quadValuesCOntainer for potential to
-      // d_totalChargePotentialQuad
+      // d_totalAuxChargePotentialQuad
 
       quadrature::add((ValueType)1.0,
-                      *d_totalChargePotentialQuad,
+                      *d_totalAuxChargePotentialQuad,
                       (ValueType)1.0,
                       *d_nuclearCorrectionPotQuad,
-                      *d_totalChargePotentialWithCorrectionQuad,
+                      *d_totalChargePotentialQuad,
                       *d_linAlgOpContext);
 
       d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::IDENTITY,
                                      basis::realspace::VectorMathOp::MULT,
                                      basis::realspace::VectorMathOp::MULT,
                                      basis::realspace::LinearLocalOp::IDENTITY,
-                                     *d_totalChargePotentialWithCorrectionQuad,
+                                     *d_totalChargePotentialQuad,
                                      cellWiseStorage,
                                      *d_linAlgOpContext);
     }
@@ -841,12 +841,21 @@ namespace dftefe
       const size_type numLocallyOwnedCells =
         d_feBMTotalCharge->nLocallyOwnedCells();
 
+      //----------------------Remove this part and do not have
+      // electronChargeDensity as parameter ------
+      quadrature::add((RealType)1.0,
+                      *d_nuclearChargesDensity,
+                      (RealType)1.0,
+                      electronChargeDensity,
+                      *d_totalChargeDensity,
+                      *d_linAlgOpContext);
+
       std::vector<RealType> totalEnergyVec =
         ElectrostaticAllElectronFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
           memorySpace,
-          dim>(*d_totalChargePotentialQuad,
+          dim>(*d_totalAuxChargePotentialQuad,
                *d_totalChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
@@ -855,7 +864,7 @@ namespace dftefe
 
       RealType totalEnergy = totalEnergyVec[0];
 
-      totalEnergy = totalEnergy * 0.5 * (1 / (4 * utils::mathConstants::pi));
+      totalEnergy = totalEnergy * 0.5;
 
       // self energy computation // TODO : Do this only once in reinitBasis
       RealType selfEnergy = 0;
@@ -969,6 +978,44 @@ namespace dftefe
       correctionEnergy = correctionEnergyVec[0];
 
       d_energy = totalEnergy - selfEnergy + correctionEnergy;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    typename ElectrostaticFE<ValueTypeBasisData,
+                             ValueTypeBasisCoeff,
+                             memorySpace,
+                             dim>::RealType
+    ElectrostaticAllElectronFE<ValueTypeBasisData,
+                               ValueTypeBasisCoeff,
+                               memorySpace,
+                               dim>::
+      getTotalChargePotentialTimesRho(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity) const
+    {
+      auto jxwStorage = d_feBDTotalChargeRhs->getJxWInAllCells();
+
+      const size_type numLocallyOwnedCells =
+        d_feBMTotalCharge->nLocallyOwnedCells();
+
+      std::vector<RealType> totalChargePotentialTimesRhoVec =
+        ElectrostaticAllElectronFEInternal::getIntegralFieldTimesRho<
+          ValueTypeBasisData,
+          ValueTypeBasisCoeff,
+          memorySpace,
+          dim>(*d_totalChargePotentialQuad,
+               electronChargeDensity,
+               jxwStorage,
+               numLocallyOwnedCells,
+               d_linAlgOpContext,
+               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+      RealType totalChargePotentialTimesRho =
+        totalChargePotentialTimesRhoVec[0];
+      return totalChargePotentialTimesRho;
     }
 
     template <typename ValueTypeBasisData,

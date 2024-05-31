@@ -544,6 +544,22 @@ namespace dftefe
            real_type<ValueType> *        W,
            LinAlgOpContext<memorySpace> &context);
 
+      /**
+       * @brief Computes the solution to a system of linear equations \(A X = B\),
+       * where A is an n-by-n matrix and X and B are n-by-nrhs matrices.
+       */
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackError
+      gesv(size_type                     n,
+           size_type                     nrhs,
+           ValueType *                   A,
+           size_type                     lda,
+           LapackInt *                   ipiv,
+           ValueType *                   B,
+           size_type                     ldb,
+           LinAlgOpContext<memorySpace> &context);
+
     } // namespace blasLapack
   }   // namespace linearAlgebra
 } // namespace dftefe

@@ -672,6 +672,35 @@ namespace dftefe
         return returnVal;
       }
 
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackError
+      gesv(size_type                     n,
+           size_type                     nrhs,
+           ValueType *                   A,
+           size_type                     lda,
+           LapackInt *                   ipiv,
+           ValueType *                   B,
+           size_type                     ldb,
+           LinAlgOpContext<memorySpace> &context)
+      {
+        LapackError      returnVal;
+        global_size_type error;
+
+        error = lapack::gesv(n, nrhs, A, lda, ipiv, B, ldb);
+
+        if (error != 0)
+          {
+            returnVal = LapackErrorMsg::isSuccessAndMsg(
+              LapackErrorCode::FAILED_LINEAR_SYSTEM_SOLVE);
+            returnVal.msg += std::to_string(error) + " .";
+          }
+        else
+          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
+
+        return returnVal;
+      }
+
       // ------------ lapack calls with device template specialization-------
       template <typename ValueType>
       LapackError
@@ -928,6 +957,30 @@ namespace dftefe
           }
         else
           returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
+
+        return returnVal;
+      }
+
+      template <typename ValueType>
+      LapackError
+      gesv(size_type                                            n,
+           size_type                                            nrhs,
+           ValueType *                                          A,
+           size_type                                            lda,
+           LapackInt *                                          ipiv,
+           ValueType *                                          B,
+           size_type                                            ldb,
+           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
+      {
+        LapackError      returnVal;
+        global_size_type error;
+
+        utils::throwException(
+          false,
+          "blasLapack::gesv() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+
+        returnVal =
+          LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::OTHER_ERROR);
 
         return returnVal;
       }

@@ -42,7 +42,10 @@ namespace dftefe
       {LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM,
        "Standard eigenproblem decomposition failed with error code: "},
       {LapackErrorCode::FAILED_GENERALIZED_EIGENPROBLEM,
-       "Generalized eigenproblem decomposition failed with error code: "}};
+       "Generalized eigenproblem decomposition failed with error code: "},
+      {LapackErrorCode::FAILED_LINEAR_SYSTEM_SOLVE,
+       "Linear System Solve with lapackpp gesv failed with error code: "},
+      {LapackErrorCode::OTHER_ERROR, "Other Error. "}};
 
     const std::map<LinearSolverErrorCode, std::string>
       LinearSolverErrorMsg::d_errToMsgMap = {
