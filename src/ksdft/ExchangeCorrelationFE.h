@@ -33,6 +33,7 @@
 #include <basis/FEBasisDofHandler.h>
 #include <basis/FEBasisOperations.h>
 #include <ksdft/Defaults.h>
+#include <xc.h>
 
 namespace dftefe
 {
@@ -71,14 +72,18 @@ namespace dftefe
                         linAlgOpContext,
         const size_type cellBlockSize);
 
-      ~ExchangeCorrelationFE() = default;
+      ~ExchangeCorrelationFE();
 
       void
-      reinit(const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-               &electronChargeDensity,
-             std::shared_ptr<
-               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-               feBasisDataStorage);
+      reinitBasis(
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage);
+
+      void
+      reinitField(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity);
 
       void
       getLocal(Storage &cellWiseStorage) const override;
@@ -110,6 +115,11 @@ namespace dftefe
       const size_type d_cellBlockSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
+
+      xc_func_type *d_funcX;
+      xc_func_type *d_funcC;
+
+      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> *d_rho;
 
     }; // end of class ExchangeCorrelationFE
   }    // end of namespace ksdft

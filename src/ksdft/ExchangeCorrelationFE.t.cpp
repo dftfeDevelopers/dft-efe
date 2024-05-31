@@ -24,7 +24,7 @@
  */
 
 #include <utils/DataTypeOverloads.h>
-#include <xc.h>
+#include <ksdft/Defaults.h>
 
 namespace dftefe
 {
@@ -199,7 +199,52 @@ namespace dftefe
       : d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
-      reinit(electronChargeDensity, feBasisDataStorage);
+      d_funcX = new xc_func_type;
+      d_funcC = new xc_func_type;
+      int err;
+      err             = xc_func_init(d_funcX, XC_LDA_X, XC_UNPOLARIZED);
+      std::string msg = "LDA Exchange Functional not found\n";
+      utils::throwException(err == 0, msg);
+      err = xc_func_init(d_funcC, XC_LDA_C_PW, XC_UNPOLARIZED);
+      msg = "LDA Correlation Functional not found\n";
+      utils::throwException(err == 0, msg);
+      xc_func_set_dens_threshold(
+        d_funcX, LibxcDefaults::DENSITY_ZERO_TOL); // makes e and v zero if \rho
+                                                   // < rho_zero_tol
+      xc_func_set_dens_threshold(
+        d_funcC, LibxcDefaults::DENSITY_ZERO_TOL); // makes e and v zero if \rho
+                                                   // < rho_zero_tol
+
+      reinitBasis(feBasisDataStorage);
+      reinitField(electronChargeDensity);
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::~ExchangeCorrelationFE()
+    {
+      if (d_funcX != nullptr)
+        {
+          xc_func_end(d_funcX);
+          delete d_funcX;
+          d_funcX = nullptr;
+        }
+      if (d_funcC != nullptr)
+        {
+          xc_func_end(d_funcC);
+          delete d_funcC;
+          d_funcC = nullptr;
+        }
+      if (d_rho != nullptr)
+        {
+          delete d_rho;
+          d_rho = nullptr;
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -211,18 +256,15 @@ namespace dftefe
                           ValueTypeBasisCoeff,
                           memorySpace,
                           dim>::
-      reinit(const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-               &electronChargeDensity,
-             std::shared_ptr<
-               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-               feBasisDataStorage)
+      reinitBasis(
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage)
     {
-      d_feBasisDataStorage    = feBasisDataStorage;
-      d_electronChargeDensity = &electronChargeDensity;
-      d_xcPotentialQuad       = std::make_shared<
+      d_feBasisDataStorage = feBasisDataStorage;
+      d_xcPotentialQuad    = std::make_shared<
         quadrature::QuadratureValuesContainer<RealType, memorySpace>>(
-        electronChargeDensity.getQuadratureRuleContainer(),
-        electronChargeDensity.getNumberComponents());
+        feBasisDataStorage->getQuadratureRuleContainer(), 1);
       d_feBasisOp =
         std::make_shared<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                         ValueTypeBasisData,
@@ -240,31 +282,65 @@ namespace dftefe
         "Could not cast BasisDofHandler of the input Field to FEBasisDofHandler "
         "in FEBasisOperations ExchangeCorrelationFE()");
 
-      // compute v_xc = (4/3)*C*\rho^1/3 where C = -3/4 * (3/pi)^1/3
+      d_rho = new utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(
+        d_xcPotentialQuad->getQuadratureRuleContainer()->nQuadraturePoints());
+    }
 
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::
+      reinitField(
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensity) /*Assumes rho has 1 component*/
+    {
+      d_electronChargeDensity = &electronChargeDensity;
+      size_type lenRho = d_electronChargeDensity->getQuadratureRuleContainer()
+                           ->nQuadraturePoints();
+
+      utils::throwException(
+        d_electronChargeDensity->getQuadratureRuleContainer() ==
+          d_xcPotentialQuad->getQuadratureRuleContainer(),
+        "The electron density should have same quadRuleContainer as input BasisDataStorage.");
+
+      /*
+       * Compute exc (energy density) and vxc (dexc/d\rho) from libxc
+       * note for spin up and down the parameters change as
+       * xc_lda_vxc(d_funcX,nPoints, nPoints, rhoUp.data(),
+       * rhoDown.data(),vxRho.data()); vx or vc has length 2*nPoints , where  as
+       * exc will be still nPoints length.
+       */
+
+      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> vcRho(lenRho),
+        vxRho(lenRho);
+
+      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>
+        memoryTransfer;
+      memoryTransfer.copy(lenRho, d_rho->data(), electronChargeDensity.begin());
+
+      xc_lda_vxc(d_funcX, lenRho, d_rho->data(), vxRho.data());
+      xc_lda_vxc(d_funcC, lenRho, d_rho->data(), vcRho.data());
+
+      int count = 0;
       for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
         {
-          for (size_type iComp = 0;
-               iComp < electronChargeDensity.getNumberComponents();
-               iComp++)
+          std::vector<RealType> a(
+            electronChargeDensity.getQuadratureRuleContainer()
+              ->nCellQuadraturePoints(iCell));
+          for (auto &i : a)
             {
-              std::vector<RealType> a(
-                electronChargeDensity.getQuadratureRuleContainer()
-                  ->nCellQuadraturePoints(iCell));
-              electronChargeDensity
-                .template getCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                      iComp,
-                                                                      a.data());
-              for (auto &i : a)
-                {
-                  i = (RealType)((4.0 / 3) *
-                                 Constants::LDA_EXCHANGE_ENERGY_CONST *
-                                 std::pow(i, (1.0 / 3)));
-                }
-              d_xcPotentialQuad
-                ->template setCellQuadValues<utils::MemorySpace::HOST>(
-                  iCell, iComp, a.data());
+              i = *(vxRho.data() + count) + *(vcRho.data() + count);
+              count++;
             }
+          d_xcPotentialQuad
+            ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                   0,
+                                                                   a.data());
         }
     }
 
@@ -297,12 +373,37 @@ namespace dftefe
                           memorySpace,
                           dim>::evalEnergy(const utils::mpi::MPIComm &comm)
     {
-      // compute e_xc = C*\rho^4/3 where C = -3/4 * (3/pi)^1/3
-
       auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
 
       const size_type numLocallyOwnedCells =
         d_feBasisDofHandler->nLocallyOwnedCells();
+
+      size_type lenRho = d_electronChargeDensity->getQuadratureRuleContainer()
+                           ->nQuadraturePoints();
+
+      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> ecRho(lenRho),
+        exRho(lenRho);
+
+      xc_lda_exc(d_funcX, lenRho, d_rho->data(), exRho.data());
+      xc_lda_exc(d_funcC, lenRho, d_rho->data(), ecRho.data());
+
+      int count = 0;
+      for (size_type iCell = 0; iCell < d_electronChargeDensity->nCells();
+           iCell++)
+        {
+          std::vector<RealType> a(
+            d_electronChargeDensity->getQuadratureRuleContainer()
+              ->nCellQuadraturePoints(iCell));
+          for (auto &i : a)
+            {
+              i = *(exRho.data() + count) + *(ecRho.data() + count);
+              count++;
+            }
+          d_xcPotentialQuad
+            ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                   0,
+                                                                   a.data());
+        }
 
       std::vector<RealType> totalEnergyVec =
         ExchangeCorrelationFEInternal::getIntegralFieldTimesRho<
@@ -315,7 +416,8 @@ namespace dftefe
                numLocallyOwnedCells,
                d_linAlgOpContext,
                comm);
-      d_energy = (3.0 / 4) * totalEnergyVec[0];
+
+      d_energy = totalEnergyVec[0];
     }
 
     template <typename ValueTypeBasisData,

@@ -120,6 +120,15 @@ namespace dftefe
       static const double LDA_EXCHANGE_ENERGY_CONST;
     }; // end of class Constants
 
+    class LibxcDefaults
+    {
+    public:
+      //
+      // tolerance below which density is assumed zero
+      //
+      static const double DENSITY_ZERO_TOL;
+    }; // end of class Constants
+
   } // end of namespace ksdft
 } // end of namespace dftefe
 #endif // dftefeDFTDefaults_h

@@ -59,5 +59,10 @@ namespace dftefe
     const double Constants::LDA_EXCHANGE_ENERGY_CONST =
       (-3.0 / 4) * std::pow((3 / utils::mathConstants::pi), (1.0 / 3));
 
+    /**
+     * @brief Setting all the LibxcDefaults
+     */
+    const double LibxcDefaults::DENSITY_ZERO_TOL = 1e-10;
+
   } // end of namespace ksdft
 } // end of namespace dftefe
