@@ -128,11 +128,18 @@ int main()
   size_type numWantedEigenvalues = 15;
   size_type numElectrons = 1;
   double nuclearCharge = -1.0;
+
+
+    double scfDensityResidualNormTolerance = 1e-6;
+    size_type maxSCFIter = 1;
+    size_type mixingHistory = 4;
+    size_type mixingParameter = 0.1;
+    size_type adaptAndersonMixingParameter = 0.1;
   
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {30, 30, 30};
+  std::vector<unsigned int>         subdivisions = {10, 10, 10};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -332,91 +339,8 @@ int main()
       <basis::FEBasisManager<double, double, Host,dim>>
         (basisDofHandler, smfunc);
 
-  std::shared_ptr<ksdft::KineticFE<double,
-                                    double,
-                                    Host,
-                                    dim>> 
-                                  hamitonianKin =
-    std::make_shared<ksdft::KineticFE<double,
-                                      double,
-                                      Host,
-                                      dim>>
-                                      (feBasisData,
-                                      linAlgOpContext,
-                                      50);
-
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
-
-  std::shared_ptr<ksdft::ElectrostaticAllElectronFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>> 
-                                            hamitonianElec =
-    std::make_shared<ksdft::ElectrostaticAllElectronFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>>
-                                                  (atomCoordinatesVec,
-                                                  atomChargesVec,
-                                                  smearedChargeRadiusVec,
-                                                  electronChargeDensity,
-                                                  basisManagerTotalPot,
-                                                  feBasisData,
-                                                  feBasisData,   
-                                                  feBasisData,
-                                                  feBasisData, 
-                                                  feBasisData                                                                                            
-                                                  *externalPotentialFunction,
-                                                  linAlgOpContext,
-                                                  50);
-                                                  
-
-    using HamiltonianPtrVariant =
-      std::variant<ksdft::Hamiltonian<float, Host> *,
-                    ksdft::Hamiltonian<double, Host> *,
-                    ksdft::Hamiltonian<std::complex<float>, Host> *,
-                    ksdft::Hamiltonian<std::complex<double>, Host> *>;
-
-  std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{hamitonianKin.get(), hamitonianElec.get()};
-  // form the kohn sham operator
-  std::shared_ptr<linearAlgebra::OperatorContext<double,
-                                                  double,
-                                                  Host>> 
-                                            hamitonianOperator =
-    std::make_shared<ksdft::KohnShamOperatorContextFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>>
-                                                  (*basisManagerWaveFn,
-                                                  hamiltonianComponentsVec,
-                                                  *linAlgOpContext,
-                                                  50);
-
-  // call the eigensolver
-
-  linearAlgebra::MultiVector<double, Host> waveFunctionSubspaceGuess(basisManagerWaveFn->getMPIPatternP2P(),
-                                                                     linAlgOpContext,
-                                                                     numWantedEigenvalues,
-                                                                     0.0,
-                                                                     1.0);    
-
-  linearAlgebra::Vector<double, Host> lanczosGuess(basisManagerWaveFn->getMPIPatternP2P(),
-                                                    linAlgOpContext,
-                                                    0.0,
-                                                    1.0); 
-
-  lanczosGuess.updateGhostValues();
-  basisManagerWaveFn->getConstraints().distributeParentToChild(lanczosGuess, 1);
-
-  waveFunctionSubspaceGuess.updateGhostValues();
-  basisManagerWaveFn->getConstraints().distributeParentToChild(waveFunctionSubspaceGuess, numWantedEigenvalues);
-
-  std::vector<double> kohnShamEnergies(numWantedEigenvalues, 0.0);
-  linearAlgebra::MultiVector<double, Host> kohnShamWaveFunctions(waveFunctionSubspaceGuess, 0.0);
 
   // Create OperatorContext for Basisoverlap
   std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
@@ -476,96 +400,52 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   *feBasisDataGLL,
                                                   linAlgOpContext);
 
-  // form the kohn sham operator
-  std::shared_ptr<ksdft::KohnShamEigenSolver<double,
-                                              double,
-                                              Host>> 
-                                            ksEigSolve =
-    std::make_shared<ksdft::KohnShamEigenSolver<double,
-                                                double,
-                                                Host>>
-                                                (numElectrons,
-                                                smearingTemperature,
-                                                fermiEnergyTolerance,
-                                                fracOccupancyTolerance,
-                                                eigenSolveResidualTolerance,
-                                                chebyshevPolynomialDegree,
-                                                maxChebyshevFilterPass,
-                                                waveFunctionSubspaceGuess,
-                                                lanczosGuess,
-                                                50,
-                                                *MContextForInv,
-                                                *MInvContext);
+  std::shared_ptr<const ksdft::KohnShamDFT<double,
+                                            double,
+                                            double,
+                                            double,
+                                            Host,
+                                            dim>> dftefeSolve =
+  std::make_shared<ksdft::KohnShamDFT<double,
+                                        double,
+                                        double,
+                                        double,
+                                        Host,
+                                        dim>>(
+                                        atomCoordinatesVec,
+                                        atomChargesVec,
+                                        smearedChargeRadiusVec,
+                                        numElectrons,
+                                        numWantedEigenvalues,
+                                        smearingTemperature,
+                                        fermiEnergyTolerance,
+                                        fracOccupancyTolerance,
+                                        eigenSolveResidualTolerance,
+                                        scfDensityResidualNormTolerance,
+                                        chebyshevPolynomialDegree,
+                                        maxChebyshevFilterPass,
+                                        maxSCFIter,
+                                        true,
+                                        mixingHistory,
+                                        mixingParameter,
+                                        adaptAndersonMixingParameter,
+                                        electronChargeDensity,
+                                        basisManagerTotalPot,
+                                        basisManagerWaveFn,
+                                        feBasisData,
+                                        feBasisData,   
+                                        feBasisData,
+                                        feBasisData, 
+                                        feBasisData                                                                                            
+                                        *externalPotentialFunction,
+                                        linAlgOpContext,
+                                        50,
+                                        50,
+                                        *MContextForInv,
+                                        *MContext,
+                                        *MInvContext);
 
-  linearAlgebra::EigenSolverError err = ksEigSolve->solve(*hamitonianOperator, 
-                    kohnShamEnergies, 
-                    kohnShamWaveFunctions,
-                    true,
-                    *MContext,
-                    *MInvContext);       
-
-  for(auto &i : kohnShamEnergies)
-    std::cout <<  i <<", ";     
-  std::cout << "\n";     
-
-  std::cout << err.msg << "\n";   
-
-  ksdft::DensityCalculator<double, double, Host, dim>
-                              densCalc(feBasisData,
-                              *basisManagerWaveFn,
-                              linAlgOpContext,
-                              50,
-                              4);
-
-  quadrature::QuadratureValuesContainer<double, Host>
-                  rho(quadRuleContainer, 1);
-
-  std::vector<double> occupation = ksEigSolve->getFractionalOccupancy();
-  densCalc.computeRho(occupation, kohnShamWaveFunctions, rho);
-  std::vector<double> intRho(2);
-  for (size_type iCell = 0; iCell < rho.nCells(); iCell++)
-    {
-      const std::vector<double> JxW = quadRuleContainer->getCellJxW(iCell);
-      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(iCell));
-      const std::vector<dftefe::utils::Point> point = quadRuleContainer->getCellRealPoints(iCell);
-      rho.getCellQuadValues<Host>(iCell, 0, a.data());
-      for (size_type i = 0; i < a.size(); i++)
-      {
-        intRho[0] += std::pow((a[i] - rho1sOrbital(point[i], atomCoordinatesVec)),2) * JxW[i];
-        intRho[1] += std::pow(rho1sOrbital(point[i], atomCoordinatesVec),2) * JxW[i];
-      }
-    }
-
-  int mpierr = utils::mpi::MPIAllreduce<Host>(
-    utils::mpi::MPIInPlace,
-    intRho.data(),
-    intRho.size(),
-    utils::mpi::Types<double>::getMPIDatatype(),
-    utils::mpi::MPISum,
-    comm);
-
-  std::cout << "Absolute L2 norm rho : "<< intRho[0] << "Relative L2 norm rho : "<<intRho[0]/intRho[1]<<"\n";
-
-  hamitonianKin->evalEnergy(occupation, *basisManagerWaveFn, kohnShamWaveFunctions, 4);
-
-  std::cout << "kin energy: "<<hamitonianKin->getEnergy() << "\n";
-
-  hamitonianElec->evalEnergy(); 
-  double elecEnergy = hamitonianElec->getEnergy();
-  std::cout << "elec energy: " << elecEnergy << "\n";
-
-  // calculate band energy
-  double bandEnergy;
-  for(size_type i = 0 ; i < occupation.size(); i++)
-  {
-    bandEnergy += 2 * occupation[i] * kohnShamEnergies[i];
-  }
-
-  std::cout << "band energy: "<< bandEnergy << "\n";
-
-  double totalEnergy = bandEnergy - elecEnergy;
-
-  std::cout << "Total Energy: " << totalEnergy << "\n";
+  dftefeSolve->solve();                                      
 
   //gracefully end MPI
 

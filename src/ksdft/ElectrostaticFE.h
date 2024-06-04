@@ -48,12 +48,15 @@ namespace dftefe
      */
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class ElectrostaticFE
       : public Hamiltonian<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
-                                                 ValueTypeBasisCoeff>,
+          linearAlgebra::blasLapack::scalar_type<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                   ValueTypeWaveFnBasisData>,
+            ValueTypeBasisCoeff>,
           memorySpace>,
         public Energy<linearAlgebra::blasLapack::real_type<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
@@ -63,7 +66,12 @@ namespace dftefe
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
-      using Storage  = utils::MemoryStorage<ValueType, memorySpace>;
+      using Storage = utils::MemoryStorage<
+        linearAlgebra::blasLapack::scalar_type<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                 ValueTypeWaveFnBasisData>,
+          ValueTypeBasisCoeff>,
+        memorySpace>;
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
     public:

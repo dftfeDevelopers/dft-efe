@@ -35,22 +35,26 @@ namespace dftefe
     {
       template <typename ValueTypeBasisData,
                 typename ValueTypeBasisCoeff,
+                typename ValueTypeWaveFnBasisData,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       std::vector<typename ElectrostaticFE<ValueTypeBasisData,
                                            ValueTypeBasisCoeff,
+                                           ValueTypeWaveFnBasisData,
                                            memorySpace,
                                            dim>::RealType>
       getIntegralFieldTimesRho(
         const quadrature::QuadratureValuesContainer<
           typename ElectrostaticFE<ValueTypeBasisData,
                                    ValueTypeBasisCoeff,
+                                   ValueTypeWaveFnBasisData,
                                    memorySpace,
                                    dim>::RealType,
           memorySpace> &field,
         const quadrature::QuadratureValuesContainer<
           typename ElectrostaticFE<ValueTypeBasisData,
                                    ValueTypeBasisCoeff,
+                                   ValueTypeWaveFnBasisData,
                                    memorySpace,
                                    dim>::RealType,
           memorySpace> &                                             rho,
@@ -62,6 +66,7 @@ namespace dftefe
       {
         using RealType = typename ElectrostaticFE<ValueTypeBasisData,
                                                   ValueTypeBasisCoeff,
+                                                  ValueTypeWaveFnBasisData,
                                                   memorySpace,
                                                   dim>::RealType;
 
@@ -182,10 +187,12 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::
       ElectrostaticAllElectronFE(
@@ -203,7 +210,10 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                feBDTotalChargeRhs,
+          feBDTotalChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
+                                          memorySpace>> feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -221,17 +231,20 @@ namespace dftefe
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
                   feBDTotalChargeStiffnessMatrix,
-                  feBDTotalChargeRhs);
+                  feBDTotalChargeRhs,
+                  feBDHamiltonian);
 
       reinitField(electronChargeDensity);
     }
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::
       ElectrostaticAllElectronFE(
@@ -255,7 +268,10 @@ namespace dftefe
           feBDNuclearChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                feBDNuclearChargeRhs,
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
+                                          memorySpace>> feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -275,17 +291,20 @@ namespace dftefe
                   feBDTotalChargeStiffnessMatrix,
                   feBDTotalChargeRhs,
                   feBDNuclearChargeStiffnessMatrix,
-                  feBDNuclearChargeRhs);
+                  feBDNuclearChargeRhs,
+                  feBDHamiltonian);
 
       reinitField(electronChargeDensity);
     }
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::~ElectrostaticAllElectronFE()
     {
@@ -327,11 +346,13 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::
       reinitBasis(
@@ -351,7 +372,10 @@ namespace dftefe
           feBDNuclearChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBDNuclearChargeRhs)
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
+                                          memorySpace>> feBDHamiltonian)
     {
       d_isNumerical                    = true;
       d_atomCoordinates                = atomCoordinates;
@@ -367,6 +391,13 @@ namespace dftefe
           d_feBDTotalChargeRhs,
           ksdft::PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS);
 
+      d_feBasisOpHamiltonian =
+        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                  ValueTypeWaveFnBasisData,
+                                                  memorySpace,
+                                                  dim>>(
+          feBDHamiltonian,
+          ksdft::PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBDTotalChargeRhs->getQuadratureRuleContainer();
@@ -476,11 +507,13 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::
       reinitBasis(
@@ -494,7 +527,10 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBDTotalChargeRhs)
+          feBDTotalChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
+                                          memorySpace>> feBDHamiltonian)
     {
       d_isNumerical                    = false;
       d_atomCoordinates                = atomCoordinates;
@@ -510,6 +546,13 @@ namespace dftefe
           d_feBDTotalChargeRhs,
           ksdft::PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS);
 
+      d_feBasisOpHamiltonian =
+        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                  ValueTypeWaveFnBasisData,
+                                                  memorySpace,
+                                                  dim>>(
+          feBDHamiltonian,
+          ksdft::PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBDTotalChargeRhs->getQuadratureRuleContainer();
@@ -591,17 +634,20 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::
       reinitField(
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &electronChargeDensity)
     {
+      d_electronChargeDensity = &electronChargeDensity;
       utils::throwException(
         electronChargeDensity.getQuadratureRuleContainer() ==
           d_feBDTotalChargeRhs->getQuadratureRuleContainer(),
@@ -630,6 +676,7 @@ namespace dftefe
                         *d_totalChargeDensity,
                         *d_linAlgOpContext);
 
+      // why create object here - compute diagonal A every scf iter
       std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
                                                           memorySpace>>
@@ -672,11 +719,13 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::getLocal(Storage &cellWiseStorage) const
     {
@@ -690,22 +739,25 @@ namespace dftefe
                       *d_totalChargePotentialQuad,
                       *d_linAlgOpContext);
 
-      d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::IDENTITY,
-                                     basis::realspace::VectorMathOp::MULT,
-                                     basis::realspace::VectorMathOp::MULT,
-                                     basis::realspace::LinearLocalOp::IDENTITY,
-                                     *d_totalChargePotentialQuad,
-                                     cellWiseStorage,
-                                     *d_linAlgOpContext);
+      d_feBasisOpHamiltonian->computeFEMatrices(
+        basis::realspace::LinearLocalOp::IDENTITY,
+        basis::realspace::VectorMathOp::MULT,
+        basis::realspace::VectorMathOp::MULT,
+        basis::realspace::LinearLocalOp::IDENTITY,
+        *d_totalChargePotentialQuad,
+        cellWiseStorage,
+        *d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::
       nuclearPotentialSolve(
@@ -825,28 +877,26 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
-                               dim>::
-      evalEnergy(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensity)
+                               dim>::evalEnergy()
     {
       auto jxwStorage = d_feBDTotalChargeRhs->getJxWInAllCells();
 
       const size_type numLocallyOwnedCells =
         d_feBMTotalCharge->nLocallyOwnedCells();
 
-      //----------------------Remove this part and do not have
-      // electronChargeDensity as parameter ------
+
       quadrature::add((RealType)1.0,
                       *d_nuclearChargesDensity,
                       (RealType)1.0,
-                      electronChargeDensity,
+                      *d_electronChargeDensity,
                       *d_totalChargeDensity,
                       *d_linAlgOpContext);
 
@@ -854,6 +904,7 @@ namespace dftefe
         ElectrostaticAllElectronFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
+          ValueTypeWaveFnBasisData,
           memorySpace,
           dim>(*d_totalAuxChargePotentialQuad,
                *d_totalChargeDensity,
@@ -929,6 +980,7 @@ namespace dftefe
                 ElectrostaticAllElectronFEInternal::getIntegralFieldTimesRho<
                   ValueTypeBasisData,
                   ValueTypeBasisCoeff,
+                  ValueTypeWaveFnBasisData,
                   memorySpace,
                   dim>(nuclearChargePotentialQuad,
                        nuclearChargeDensity,
@@ -967,9 +1019,10 @@ namespace dftefe
         ElectrostaticAllElectronFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
+          ValueTypeWaveFnBasisData,
           memorySpace,
           dim>(*d_nuclearCorrectionPotQuad,
-               electronChargeDensity,
+               *d_electronChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
                d_linAlgOpContext,
@@ -982,19 +1035,19 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     typename ElectrostaticFE<ValueTypeBasisData,
                              ValueTypeBasisCoeff,
+                             ValueTypeWaveFnBasisData,
                              memorySpace,
                              dim>::RealType
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
-                               dim>::
-      getTotalChargePotentialTimesRho(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensity) const
+                               dim>::getTotalChargePotentialTimesRho() const
     {
       auto jxwStorage = d_feBDTotalChargeRhs->getJxWInAllCells();
 
@@ -1005,9 +1058,10 @@ namespace dftefe
         ElectrostaticAllElectronFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
+          ValueTypeWaveFnBasisData,
           memorySpace,
           dim>(*d_totalChargePotentialQuad,
-               electronChargeDensity,
+               *d_electronChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
                d_linAlgOpContext,
@@ -1020,14 +1074,17 @@ namespace dftefe
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     typename ElectrostaticFE<ValueTypeBasisData,
                              ValueTypeBasisCoeff,
+                             ValueTypeWaveFnBasisData,
                              memorySpace,
                              dim>::RealType
     ElectrostaticAllElectronFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::getEnergy() const
     {

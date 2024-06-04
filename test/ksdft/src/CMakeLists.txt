@@ -29,4 +29,8 @@ if(ENABLE_MPI)
 	add_executable(TestKSAllElectronEigenSolveOrthoEFE TestKSAllElectronEigenSolveOrthoEFE.cpp )
 	target_link_libraries(TestKSAllElectronEigenSolveOrthoEFE PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms dft-efe-ksdft)
 	set_target_properties(TestKSAllElectronEigenSolveOrthoEFE PROPERTIES OUTPUT_NAME "TestKSAllElectronEigenSolveOrthoEFE" SUFFIX ".x")
+
+	add_executable(TestKSDFTClassical TestKSDFTClassical.cpp )
+	target_link_libraries(TestKSDFTClassical PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms dft-efe-ksdft)
+	set_target_properties(TestKSDFTClassical PROPERTIES OUTPUT_NAME "TestKSDFTClassical" SUFFIX ".x")	
 endif()

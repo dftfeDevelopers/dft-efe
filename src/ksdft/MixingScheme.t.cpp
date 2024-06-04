@@ -43,11 +43,9 @@ namespace dftefe
       const bool   adaptMixingValue)
     {
       d_variableHistoryIn[mixingVariableList] =
-        std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                        utils::MemorySpace::HOST>>();
+        std::deque<std::vector<ValueTypeMixingVariable>>();
       d_variableHistoryResidual[mixingVariableList] =
-        std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                        utils::MemorySpace::HOST>>();
+        std::deque<std::vector<ValueTypeMixingVariable>>();
       d_vectorDotProductWeights[mixingVariableList] = weightDotProducts;
 
       d_performMPIReduce[mixingVariableList]     = performMPIReduce;
@@ -87,12 +85,8 @@ namespace dftefe
     void
     MixingScheme<ValueTypeMixingVariable, ValueTypeWeights>::
       computeMixingMatrices(
-        const std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                              utils::MemorySpace::HOST>>
-          &inHist,
-        const std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                              utils::MemorySpace::HOST>>
-          &residualHist,
+        const std::deque<std::vector<ValueTypeMixingVariable>> &inHist,
+        const std::deque<std::vector<ValueTypeMixingVariable>> &residualHist,
         const utils::MemoryStorage<ValueTypeWeights, utils::MemorySpace::HOST>
           &                     weightDotProducts,
         const bool              isPerformMixing,
@@ -132,10 +126,11 @@ namespace dftefe
                         residualHist[N - 1 - k][iQuad];
                       Adensity[k * N + m] +=
                         (Fn - Fnm) * (Fn - Fnk) *
-                        weightDotProducts[iQuad]; // (m,k)^th entry
+                        *(weightDotProducts.data() + iQuad); // (m,k)^th entry
                     }
                   cDensity[m] +=
-                    (Fn - Fnm) * (Fn)*weightDotProducts[iQuad]; // (m)^th entry
+                    (Fn - Fnm) * (Fn) *
+                    *(weightDotProducts.data() + iQuad); // (m)^th entry
                 }
             }
 
@@ -204,7 +199,7 @@ namespace dftefe
     MixingScheme<ValueTypeMixingVariable, ValueTypeWeights>::
       computeAndersonMixingCoeff(
         const std::vector<mixingVariable> mixingVariablesList,
-        const linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>
           &linAlgOpContextHost)
     {
       // initialize data structures
@@ -316,8 +311,7 @@ namespace dftefe
                           const size_type                length)
     {
       d_variableHistoryIn[mixingVariableName].push_back(
-        utils::MemoryStorage<ValueTypeMixingVariable, utils::MemorySpace::HOST>(
-          length));
+        std::vector<ValueTypeMixingVariable>(length));
 
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>
         memoryTransfer;
@@ -341,8 +335,7 @@ namespace dftefe
         const size_type                length)
     {
       d_variableHistoryResidual[mixingVariableName].push_back(
-        utils::MemoryStorage<ValueTypeMixingVariable, utils::MemorySpace::HOST>(
-          length));
+        std::vector<ValueTypeMixingVariable>(length));
 
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>
         memoryTransfer;

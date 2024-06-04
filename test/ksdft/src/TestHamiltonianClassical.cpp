@@ -573,10 +573,12 @@ int main()
     dftefe::utils::ScalarZeroFunctionReal();
   std::shared_ptr<dftefe::ksdft::ElectrostaticAllElectronFE<double,
                                                   double,
+                                                  double,
                                                   dftefe::utils::MemorySpace::HOST,
                                                   dim>> 
                                             hamitonianElec =
     std::make_shared<dftefe::ksdft::ElectrostaticAllElectronFE<double,
+                                                  double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
                                                   dim>>
@@ -586,12 +588,13 @@ int main()
                                                   electronChargeDensity,
                                                   basisManager,
                                                   feBasisData,
-                                                  feBasisData,                                                
+                                                  feBasisData,    
+                                                  feBasisData,                                            
                                                   *externalPotentialFunction,
                                                   linAlgOpContext,
                                                   50);
 
-  hamitonianElec->evalEnergy(electronChargeDensity); 
+  hamitonianElec->evalEnergy(); 
 
   double energyksdft = hamitonianElec->getEnergy(); 
 

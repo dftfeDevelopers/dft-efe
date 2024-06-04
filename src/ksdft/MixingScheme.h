@@ -76,7 +76,7 @@ namespace dftefe
       void
       computeAndersonMixingCoeff(
         const std::vector<mixingVariable> mixingVariablesList,
-        const linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>
           &linAlgOpContextHost);
 
       /**
@@ -157,12 +157,8 @@ namespace dftefe
        */
       void
       computeMixingMatrices(
-        const std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                              utils::MemorySpace::HOST>>
-          &inHist,
-        const std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                              utils::MemorySpace::HOST>>
-          &outHist,
+        const std::deque<std::vector<ValueTypeMixingVariable>> &inHist,
+        const std::deque<std::vector<ValueTypeMixingVariable>> &outHist,
         const utils::MemoryStorage<ValueTypeWeights, utils::MemorySpace::HOST>
           &                     weightDotProducts,
         const bool              isPerformMixing,
@@ -173,9 +169,7 @@ namespace dftefe
       std::vector<ValueType> d_A, d_c;
       ValueType              d_cFinal;
 
-      std::map<mixingVariable,
-               std::deque<utils::MemoryStorage<ValueTypeMixingVariable,
-                                               utils::MemorySpace::HOST>>>
+      std::map<mixingVariable, std::deque<std::vector<ValueTypeMixingVariable>>>
         d_variableHistoryIn, d_variableHistoryResidual;
       std::map<mixingVariable,
                utils::MemoryStorage<ValueTypeWeights, utils::MemorySpace::HOST>>

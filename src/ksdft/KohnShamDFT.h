@@ -1,0 +1,218 @@
+/******************************************************************************
+ * Copyright (c) 2021.                                                        *
+ * The Regents of the University of Michigan and DFT-EFE developers.          *
+ *                                                                            *
+ * This file is part of the DFT-EFE code.                                     *
+ *                                                                            *
+ * DFT-EFE is free software: you can redistribute it and/or modify            *
+ *   it under the terms of the Lesser GNU General Public License as           *
+ *   published by the Free Software Foundation, either version 3 of           *
+ *   the License, or (at your option) any later version.                      *
+ *                                                                            *
+ * DFT-EFE is distributed in the hope that it will be useful, but             *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty                  *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
+ *   See the Lesser GNU General Public License for more details.              *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public           *
+ *   License at the top level of DFT-EFE distribution.  If not, see           *
+ *   <https://www.gnu.org/licenses/>.                                         *
+ ******************************************************************************/
+
+/*
+ * @author Avirup Sircar
+ */
+
+#ifndef dftefeKohnShamDFT_h
+#define dftefeKohnShamDFT_h
+
+#include <variant>
+#include <ksdft/ElectrostaticAllElectronFE.h>
+#include <ksdft/KineticFE.h>
+#include <ksdft/ExchangeCorrelationFE.h>
+#include <ksdft/KohnShamOperatorContextFE.h>
+#include <ksdft/KohnShamEigenSolver.h>
+#include <ksdft/DensityCalculator.h>
+#include <utils/ConditionalOStream.h>
+#include <ksdft/MixingScheme.h>
+
+namespace dftefe
+{
+  namespace ksdft
+  {
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    class KohnShamDFT
+    {
+    public:
+      using HamiltonianPtrVariant =
+        std::variant<Hamiltonian<float, memorySpace> *,
+                     Hamiltonian<double, memorySpace> *,
+                     Hamiltonian<std::complex<float>, memorySpace> *,
+                     Hamiltonian<std::complex<double>, memorySpace> *>;
+
+      using ValueTypeOperator =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
+                                               ValueTypeWaveFunctionBasis>;
+      using ValueTypeOperand =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
+                                               ValueTypeWaveFunctionCoeff>;
+      using ValueType =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperator>;
+      using RealType  = linearAlgebra::blasLapack::real_type<ValueType>;
+      using OpContext = typename linearAlgebra::HermitianIterativeEigenSolver<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::OpContext;
+
+    public:
+      KohnShamDFT(
+        /* Atom related info */
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
+        const size_type                  numElectrons,
+        /* SCF related info */
+        const size_type numWantedEigenvalues,
+        const double    smearingTemperature,
+        const double    fermiEnergyTolerance,
+        const double    fracOccupancyTolerance,
+        const double    eigenSolveResidualTolerance,
+        const double    scfDensityResidualNormTolerance,
+        const size_type chebyshevPolynomialDegree,
+        const size_type maxChebyshevFilterPass,
+        const size_type maxSCFIter,
+        const bool      evaluateEnergyEverySCF,
+        /* Mixing related info */
+        const size_type mixingHistory,
+        const double    mixingParameter,
+        const double    adaptAndersonMixingParameter,
+        /* Electron density related info */
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensityInput,
+        /* Basis related info */
+        /* Field boundary */
+        std::shared_ptr<
+          const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
+                                      ValueTypeElectrostaticsBasis,
+                                      memorySpace,
+                                      dim>>               feBMTotalCharge,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                    ValueTypeWaveFunctionBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,
+        /* Field data storages */
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDTotalChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>>
+          feBDNuclearChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDHamiltonian,
+        /* PSP/AE related info */
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* linAgOperations Context*/
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext,
+        /* Batch size related info */
+        const size_type cellBlockSize,
+        const size_type waveFunctionBatchSize,
+        /* basis overlap related info */
+        const OpContext &MContextForInv =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MInvContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>());
+
+      ~KohnShamDFT() = default;
+
+      void
+      solve();
+
+    private:
+      const size_type       d_numWantedEigenvalues;
+      std::vector<RealType> d_occupation;
+      const size_type       d_waveFunctionBatchSize;
+      const double          d_SCFTol;
+      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> d_jxwDataHost;
+      std::shared_ptr<
+        KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>
+        d_ksEigSolve;
+      std::shared_ptr<DensityCalculator<ValueTypeWaveFunctionBasis,
+                                        ValueTypeWaveFunctionCoeff,
+                                        memorySpace,
+                                        dim>>
+        d_densCalc;
+      std::shared_ptr<KohnShamOperatorContextFE<ValueTypeOperator,
+                                                ValueTypeOperand,
+                                                ValueTypeWaveFunctionBasis,
+                                                memorySpace,
+                                                dim>>
+        d_hamitonianOperator;
+      std::shared_ptr<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                            ValueTypeWaveFunctionCoeff,
+                                            memorySpace,
+                                            dim>>
+        d_hamitonianXC;
+      std::shared_ptr<ElectrostaticAllElectronFE<ValueTypeElectrostaticsBasis,
+                                                 ValueTypeElectrostaticsCoeff,
+                                                 ValueTypeWaveFunctionBasis,
+                                                 memorySpace,
+                                                 dim>>
+        d_hamitonianElec;
+      std::shared_ptr<KineticFE<ValueTypeWaveFunctionBasis,
+                                ValueTypeWaveFunctionCoeff,
+                                memorySpace,
+                                dim>>
+        d_hamitonianKin;
+
+      std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                  ValueTypeWaveFunctionBasis,
+                                                  memorySpace,
+                                                  dim>>
+                            d_feBMWaveFn;
+      std::vector<RealType> d_kohnShamEnergies;
+      linearAlgebra::MultiVector<ValueType, memorySpace>
+                                d_kohnShamWaveFunctions;
+      utils::ConditionalOStream d_rootCout;
+      size_type                 d_mixingHistory;
+      double                    d_mixingParameter;
+      double                    d_adaptAndersonMixingParameter;
+      bool                      d_evaluateEnergyEverySCF;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_densityInQuadValues, d_densityOutQuadValues,
+        d_densityResidualQuadValues;
+      size_type                        d_numMaxSCFIter;
+      const OpContext *                d_MContext, *d_MInvContext;
+      const utils::mpi::MPIComm &      d_mpiCommDomain;
+      MixingScheme<RealType, RealType> d_mixingScheme;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
+
+    }; // end of KohnShamDFT
+  }    // end of namespace ksdft
+} // end of namespace dftefe
+#include "KohnShamDFT.t.cpp"
+#endif // dftefeKohnShamDFT_h

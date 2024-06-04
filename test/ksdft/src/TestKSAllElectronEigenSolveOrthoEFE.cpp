@@ -519,10 +519,12 @@ int main()
 
   std::shared_ptr<ksdft::ElectrostaticAllElectronFE<double,
                                                   double,
+                                                  double,
                                                   Host,
                                                   dim>> 
                                             hamitonianElec =
     std::make_shared<ksdft::ElectrostaticAllElectronFE<double,
+                                                  double,
                                                   double,
                                                   Host,
                                                   dim>>
@@ -531,6 +533,7 @@ int main()
                                                   smearedChargeRadiusVec,
                                                   electronChargeDensity,
                                                   basisManagerTotalPot,
+                                                  efeBasisDataAdaptive,
                                                   efeBasisDataAdaptive,
                                                   efeBasisDataAdaptive,
                                                   *externalPotentialFunction,
@@ -700,7 +703,7 @@ int main()
 
   std::cout << "kin energy: "<<hamitonianKin->getEnergy() << "\n";
 
-  hamitonianElec->evalEnergy(rho); 
+  hamitonianElec->evalEnergy(); 
   double elecEnergy = hamitonianElec->getEnergy();
   std::cout << "elec energy: " << elecEnergy << "\n";
 
