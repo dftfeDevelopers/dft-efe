@@ -86,6 +86,44 @@ namespace dftefe
           }
         return std::sqrt(normValue);
       }
+
+      template <typename RealType, utils::MemorySpace memorySpace>
+      void
+      normalizeDensityQuadData(
+        quadrature::QuadratureValuesContainer<RealType, memorySpace> &inValues,
+        const size_type                              numElectrons,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const utils::mpi::MPIComm &                  mpiComm)
+      {
+        RealType totalDensityInQuad = 0.0;
+
+        for (size_type iCell = 0; iCell < inValues.nCells(); iCell++)
+          {
+            for (size_type iComp = 0; iComp < inValues.getNumberComponents();
+                 iComp++)
+              {
+                std::vector<RealType> a(inValues.nCellQuadraturePoints(iCell));
+                inValues.template getCellQuadValues<utils::MemorySpace::HOST>(
+                  iCell, iComp, a.data());
+                for (auto j : a)
+                  {
+                    totalDensityInQuad += j;
+                  }
+              }
+          }
+        utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          utils::mpi::MPIInPlace,
+          &totalDensityInQuad,
+          1,
+          utils::mpi::Types<RealType>::getMPIDatatype(),
+          utils::mpi::MPISum,
+          mpiComm);
+
+        quadrature::scale((RealType)(std::abs((RealType)numElectrons /
+                                              totalDensityInQuad)),
+                          inValues,
+                          linAlgOpContext);
+      }
     } // namespace KohnShamDFTInternal
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -176,6 +214,16 @@ namespace dftefe
       , d_waveFunctionBatchSize(waveFunctionBatchSize)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
+      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
+                                    linAlgOpContext,
+                                    numWantedEigenvalues,
+                                    0.0,
+                                    1.0)
+      , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       0.0,
+                       1.0)
+      , d_numElectrons(numElectrons)
     {
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
@@ -189,6 +237,13 @@ namespace dftefe
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      // normalize electroncharge density
+      KohnShamDFTInternal::normalizeDensityQuadData(d_densityInQuadValues,
+                                                    numElectrons,
+                                                    *d_linAlgOpContext,
+                                                    d_mpiCommDomain);
+
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
@@ -238,22 +293,12 @@ namespace dftefe
 
       // call the eigensolver
 
-      linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>
-        waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                  linAlgOpContext,
-                                  numWantedEigenvalues,
-                                  0.0,
-                                  1.0);
+      d_lanczosGuess.updateGhostValues();
+      feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      linearAlgebra::Vector<ValueTypeWaveFunctionCoeff, memorySpace>
-        lanczosGuess(feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, 0.0, 1.0);
-
-      lanczosGuess.updateGhostValues();
-      feBMWaveFn->getConstraints().distributeParentToChild(lanczosGuess, 1);
-
-      waveFunctionSubspaceGuess.updateGhostValues();
+      d_waveFunctionSubspaceGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
 
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
@@ -265,8 +310,8 @@ namespace dftefe
         eigenSolveResidualTolerance,
         chebyshevPolynomialDegree,
         maxChebyshevFilterPass,
-        waveFunctionSubspaceGuess,
-        lanczosGuess,
+        d_waveFunctionSubspaceGuess,
+        d_lanczosGuess,
         waveFunctionBatchSize,
         MContextForInv,
         MInvContext);
@@ -365,6 +410,13 @@ namespace dftefe
           // reinit the components of hamiltonian
           if (scfIter > 0)
             {
+              // normalize electroncharge density each scf
+              KohnShamDFTInternal::normalizeDensityQuadData(
+                d_densityInQuadValues,
+                d_numElectrons,
+                *d_linAlgOpContext,
+                d_mpiCommDomain);
+
               d_hamitonianElec->reinitField(d_densityInQuadValues);
               d_hamitonianXC->reinitField(d_densityInQuadValues);
               std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
@@ -431,7 +483,8 @@ namespace dftefe
               d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
             }
 
-          d_rootCout << "Density Residual Norm : " << norm << "\n";
+          if (scfIter > 0)
+            d_rootCout << "Density Residual Norm : " << norm << "\n";
           scfIter += 1;
         }
 

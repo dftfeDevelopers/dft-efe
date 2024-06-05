@@ -31,6 +31,7 @@
 #include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
+#include <ksdft/KohnShamDFT.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -68,7 +69,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
 // memoryspace - HOST
 int main()
 {
-  std::cout<<" Entering test kohn sham eigensolve classical \n";
+  std::cout<<" Entering test kohn sham dft classical \n";
   //initialize MPI
 
   int mpiInitFlag = 0;
@@ -119,22 +120,22 @@ int main()
   unsigned int num1DGaussSize = 4;
   unsigned int num1DGLLSize = 4;
 
-  double    smearingTemperature = 10.0;
+  double    smearingTemperature = 500.0;
   double    fermiEnergyTolerance = 1e-10;
   double    fracOccupancyTolerance = 1e-3;
   double    eigenSolveResidualTolerance = 1e-4;
-  size_type chebyshevPolynomialDegree = 50;
-  size_type maxChebyshevFilterPass = 100;
+  size_type chebyshevPolynomialDegree = 80;
+  size_type maxChebyshevFilterPass = 10;
   size_type numWantedEigenvalues = 15;
-  size_type numElectrons = 1;
+  size_type numElectrons = 2;
   double nuclearCharge = -1.0;
 
 
-    double scfDensityResidualNormTolerance = 1e-6;
-    size_type maxSCFIter = 1;
+    double scfDensityResidualNormTolerance = 1e-3;
+    size_type maxSCFIter = 4;
     size_type mixingHistory = 4;
-    size_type mixingParameter = 0.1;
-    size_type adaptAndersonMixingParameter = 0.1;
+    size_type mixingParameter = 0.2;
+    size_type adaptAndersonMixingParameter = 0.5;
   
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
@@ -281,41 +282,29 @@ int main()
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();
 
-  std::vector<double> chargeDensity(atomCoordinatesVec.size(), 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
-
-  const utils::SmearChargeDensityFunction smden(atomCoordinatesVec,
-                                                atomChargesVec,
-                                                smearedChargeRadiusVec);
-
-    double charge = 0;
-    for(size_type i = 0 ; i < quadRuleContainer->nCells() ; i++)
-    {
-      std::vector<double> JxW = quadRuleContainer->getCellJxW(i);
-      size_type quadId = 0;
-      for (auto j : quadRuleContainer->getCellRealPoints(i))
-      {
-        charge += smden(j) * JxW[quadId];
-        quadId = quadId + 1;
-      }
-    }
-    chargeDensity[0] = charge;
-  
-  utils::mpi::MPIAllreduce<Host>(
-        chargeDensity.data(),
-        mpiReducedChargeDensity.data(),
-        chargeDensity.size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        comm);
-
-  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
-  {
-    atomChargesVec[i] *= 1/std::abs(mpiReducedChargeDensity[i]);
-  }
-  std::cout << "Total nuclear charge in system: " << mpiReducedChargeDensity[0] << std::endl;
-
+  // scale the electronic charges
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
+
+  for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
+    {
+      for (size_type iComp = 0; iComp < 1; iComp++)
+        {
+          size_type             quadId = 0;
+          std::vector<double> a(
+            electronChargeDensity.nCellQuadraturePoints(iCell));
+          for (auto j : quadRuleContainer->getCellRealPoints(iCell))
+            {
+              a[quadId] = (double)rho1sOrbital(j, atomCoordinatesVec);
+              quadId    = quadId + 1;
+            }
+          double *b = a.data();
+          electronChargeDensity.template 
+            setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                        iComp,
+                                                        b);
+        }
+    }
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
@@ -327,17 +316,17 @@ int main()
       <basis::FEBasisManager<double, double, Host,dim>>
         (basisDofHandler);
 
-    std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
-      std::make_shared<const utils::SmearChargePotentialFunction>(
-        atomCoordinatesVec,
-        atomChargesVec,
-        smearedChargeRadiusVec);
+    // std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
+    //   std::make_shared<const utils::SmearChargePotentialFunction>(
+    //     atomCoordinatesVec,
+    //     atomChargesVec,
+    //     smearedChargeRadiusVec);
 
     std::shared_ptr<const basis::FEBasisManager
       <double, double, Host,dim>>
     basisManagerTotalPot = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
-        (basisDofHandler, smfunc);
+        (basisDofHandler, zeroFunction);
 
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
@@ -400,7 +389,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   *feBasisDataGLL,
                                                   linAlgOpContext);
 
-  std::shared_ptr<const ksdft::KohnShamDFT<double,
+  std::shared_ptr<ksdft::KohnShamDFT<double,
                                             double,
                                             double,
                                             double,
@@ -436,7 +425,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         feBasisData,   
                                         feBasisData,
                                         feBasisData, 
-                                        feBasisData                                                                                            
+                                        feBasisData,                                                                                    
                                         *externalPotentialFunction,
                                         linAlgOpContext,
                                         50,

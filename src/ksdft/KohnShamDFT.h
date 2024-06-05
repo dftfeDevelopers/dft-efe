@@ -210,6 +210,11 @@ namespace dftefe
       MixingScheme<RealType, RealType> d_mixingScheme;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
+      linearAlgebra::Vector<ValueTypeWaveFunctionCoeff, memorySpace>
+        d_lanczosGuess;
+      linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>
+                      d_waveFunctionSubspaceGuess;
+      const size_type d_numElectrons;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

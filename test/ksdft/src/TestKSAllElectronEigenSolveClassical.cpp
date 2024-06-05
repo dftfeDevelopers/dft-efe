@@ -132,7 +132,7 @@ int main()
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {30, 30, 30};
+  std::vector<unsigned int>         subdivisions = {10, 10, 10};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -274,39 +274,6 @@ int main()
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();
 
-  std::vector<double> chargeDensity(atomCoordinatesVec.size(), 0.0), mpiReducedChargeDensity(chargeDensity.size(), 0.0);
-
-  const utils::SmearChargeDensityFunction smden(atomCoordinatesVec,
-                                                atomChargesVec,
-                                                smearedChargeRadiusVec);
-
-    double charge = 0;
-    for(size_type i = 0 ; i < quadRuleContainer->nCells() ; i++)
-    {
-      std::vector<double> JxW = quadRuleContainer->getCellJxW(i);
-      size_type quadId = 0;
-      for (auto j : quadRuleContainer->getCellRealPoints(i))
-      {
-        charge += smden(j) * JxW[quadId];
-        quadId = quadId + 1;
-      }
-    }
-    chargeDensity[0] = charge;
-  
-  utils::mpi::MPIAllreduce<Host>(
-        chargeDensity.data(),
-        mpiReducedChargeDensity.data(),
-        chargeDensity.size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        comm);
-
-  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
-  {
-    atomChargesVec[i] *= 1/std::abs(mpiReducedChargeDensity[i]);
-  }
-  std::cout << "Total nuclear charge in system: " << mpiReducedChargeDensity[0] << std::endl;
-
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
 
@@ -368,7 +335,7 @@ int main()
                                                   feBasisData,   
                                                   feBasisData,
                                                   feBasisData, 
-                                                  feBasisData                                                                                            
+                                                  feBasisData,                                                                                          
                                                   *externalPotentialFunction,
                                                   linAlgOpContext,
                                                   50);
@@ -555,7 +522,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   std::cout << "elec energy: " << elecEnergy << "\n";
 
   // calculate band energy
-  double bandEnergy;
+  double bandEnergy = 0;
   for(size_type i = 0 ; i < occupation.size(); i++)
   {
     bandEnergy += 2 * occupation[i] * kohnShamEnergies[i];

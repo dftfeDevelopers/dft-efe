@@ -30,6 +30,7 @@ namespace dftefe
     MixingScheme<ValueTypeMixingVariable, ValueTypeWeights>::MixingScheme(
       const utils::mpi::MPIComm &mpiComm)
       : d_mpiComm(mpiComm)
+      , d_anyMixingParameterAdaptive(false)
     {}
 
     template <typename ValueTypeMixingVariable, typename ValueTypeWeights>
@@ -102,7 +103,7 @@ namespace dftefe
       cDensity.resize(c.size());
       std::fill(cDensity.begin(), cDensity.end(), 0.0);
 
-      size_type N             = inHist.size() - 1;
+      int       N             = inHist.size() - 1;
       size_type numQuadPoints = 0;
       if (N > 0)
         numQuadPoints = inHist[0].size();
@@ -117,10 +118,10 @@ namespace dftefe
           for (size_type iQuad = 0; iQuad < numQuadPoints; iQuad++)
             {
               ValueTypeMixingVariable Fn = residualHist[N][iQuad];
-              for (size_type m = 0; m < N; m++)
+              for (int m = 0; m < N; m++)
                 {
                   ValueTypeMixingVariable Fnm = residualHist[N - 1 - m][iQuad];
-                  for (size_type k = 0; k < N; k++)
+                  for (int k = 0; k < N; k++)
                     {
                       ValueTypeMixingVariable Fnk =
                         residualHist[N - 1 - k][iQuad];
@@ -204,16 +205,16 @@ namespace dftefe
     {
       // initialize data structures
       // assumes rho is a mixing variable
-      size_type N = d_variableHistoryIn[mixingVariable::rho].size() - 1;
+      int N = d_variableHistoryIn[mixingVariable::rho].size() - 1;
       if (N > 0)
         {
           size_type NRHS = 1, lda = N, ldb = N;
           std::vector<linearAlgebra::blasLapack::LapackInt> ipiv(N);
           d_A.resize(lda * N);
           d_c.resize(ldb * NRHS);
-          for (size_type i = 0; i < lda * N; i++)
+          for (int i = 0; i < lda * N; i++)
             d_A[i] = 0.0;
-          for (size_type i = 0; i < ldb * NRHS; i++)
+          for (int i = 0; i < ldb * NRHS; i++)
             d_c[i] = 0.0;
 
           for (const auto &key : mixingVariablesList)
@@ -231,7 +232,7 @@ namespace dftefe
             N, NRHS, &d_A[0], lda, &ipiv[0], &d_c[0], ldb, linAlgOpContextHost);
         }
       d_cFinal = 1.0;
-      for (size_type i = 0; i < N; i++)
+      for (int i = 0; i < N; i++)
         d_cFinal -= d_c[i];
       computeAdaptiveAndersonMixingParameter();
     }
@@ -375,7 +376,7 @@ namespace dftefe
           ValueType varInBar =
             d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
-          for (size_type i = 0; i < N; i++)
+          for (int i = 0; i < N; i++)
             {
               varResidualBar +=
                 d_c[i] *
