@@ -590,13 +590,14 @@ namespace dftefe
           for (size_type iComp = 0; iComp < d_numComponents; iComp++)
             {
               size_type             quadId = 0;
+              std::vector<double>   jxw = quadRuleContainer->getCellJxW(iCell);
               std::vector<RealType> a(
                 quadRuleContainer->nCellQuadraturePoints(iCell));
               for (auto j : quadRuleContainer->getCellRealPoints(iCell))
                 {
                   a[quadId] = (RealType)smfunc(j);
-                  quadId    = quadId + 1;
-                  totNuclearChargeQuad += a[quadId];
+                  totNuclearChargeQuad += (RealType)smfunc(j) * jxw[quadId];
+                  quadId = quadId + 1;
                 }
               RealType *b = a.data();
               d_nuclearChargesDensity
@@ -830,14 +831,16 @@ namespace dftefe
             {
               for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                 {
-                  size_type             quadId = 0;
+                  size_type           quadId = 0;
+                  std::vector<double> jxw =
+                    quadRuleContainer->getCellJxW(iCell);
                   std::vector<RealType> a(
                     quadRuleContainer->nCellQuadraturePoints(iCell));
                   for (auto j : quadRuleContainer->getCellRealPoints(iCell))
                     {
                       a[quadId] = (RealType)(*smfunc)(j);
-                      quadId    = quadId + 1;
-                      nuclearChargeQuad += a[quadId];
+                      nuclearChargeQuad += (RealType)(*smfunc)(j)*jxw[quadId];
+                      quadId = quadId + 1;
                     }
                   RealType *b = a.data();
                   nuclearChargeDensity
@@ -856,7 +859,9 @@ namespace dftefe
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           // Scale by 4\pi * d_atomCharges[iAtom]/nuclearChargeQuad
-          quadrature::scale((RealType)std::abs(4 * utils::mathConstants::pi),
+          quadrature::scale((RealType)std::abs(4 * utils::mathConstants::pi *
+                                               d_atomCharges[iAtom] /
+                                               nuclearChargeQuad),
                             nuclearChargeDensity,
                             *d_linAlgOpContext);
 

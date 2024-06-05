@@ -210,6 +210,14 @@ namespace dftefe
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    QuadratureValuesContainer<ValueType, memorySpace>::setValue(
+      const ValueType value)
+    {
+      d_storage.setValue(value);
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
     template <utils::MemorySpace memorySpaceSrc>
     void
     QuadratureValuesContainer<ValueType, memorySpace>::setCellQuadValues(

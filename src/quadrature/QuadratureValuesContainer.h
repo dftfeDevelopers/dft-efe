@@ -86,6 +86,9 @@ namespace dftefe
                         const size_type  componentId,
                         const ValueType *values);
 
+      void
+      setValue(const ValueType value);
+
       template <utils::MemorySpace memorySpaceDst>
       void
       getCellValues(const size_type cellId, ValueType *values) const;

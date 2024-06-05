@@ -132,7 +132,7 @@ int main()
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {10, 10, 10};
+  std::vector<unsigned int>         subdivisions = {20, 20, 20};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -274,6 +274,39 @@ int main()
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 feBasisData->getQuadratureRuleContainer();
 
+    std::vector<double> atomChargesVecScaled(atomCoordinatesVec.size());
+  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
+  {
+    std::vector<double> chargeDensity(1, 0.0), mpiReducedChargeDensity(1, 0.0);
+
+    const utils::SmearChargeDensityFunction smden(atomCoordinatesVec[i],
+                                                  atomChargesVec[i],
+                                                  smearedChargeRadiusVec[i]);
+
+      double charge = 0;
+      for(size_type i = 0 ; i < quadRuleContainer->nCells() ; i++)
+      {
+        std::vector<double> JxW = quadRuleContainer->getCellJxW(i);
+        size_type quadId = 0;
+        for (auto j : quadRuleContainer->getCellRealPoints(i))
+        {
+          charge += smden(j) * JxW[quadId];
+          quadId = quadId + 1;
+        }
+      }
+      chargeDensity[0] = charge;
+    
+    utils::mpi::MPIAllreduce<Host>(
+          chargeDensity.data(),
+          mpiReducedChargeDensity.data(),
+          chargeDensity.size(),
+          utils::mpi::MPIDouble,
+          utils::mpi::MPISum,
+          comm);
+
+    atomChargesVecScaled[i] *= 1/std::abs(mpiReducedChargeDensity[0]);
+  }
+
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
 
@@ -290,7 +323,7 @@ int main()
     std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
       std::make_shared<const utils::SmearChargePotentialFunction>(
         atomCoordinatesVec,
-        atomChargesVec,
+        atomChargesVecScaled,
         smearedChargeRadiusVec);
 
     std::shared_ptr<const basis::FEBasisManager

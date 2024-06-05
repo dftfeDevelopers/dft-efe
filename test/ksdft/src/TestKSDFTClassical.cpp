@@ -123,24 +123,24 @@ int main()
   double    smearingTemperature = 500.0;
   double    fermiEnergyTolerance = 1e-10;
   double    fracOccupancyTolerance = 1e-3;
-  double    eigenSolveResidualTolerance = 1e-4;
+  double    eigenSolveResidualTolerance = 1e-3;
   size_type chebyshevPolynomialDegree = 80;
   size_type maxChebyshevFilterPass = 10;
   size_type numWantedEigenvalues = 15;
-  size_type numElectrons = 2;
+  size_type numElectrons = 1;
   double nuclearCharge = -1.0;
 
 
-    double scfDensityResidualNormTolerance = 1e-3;
-    size_type maxSCFIter = 4;
-    size_type mixingHistory = 4;
-    size_type mixingParameter = 0.2;
-    size_type adaptAndersonMixingParameter = 0.5;
+  double scfDensityResidualNormTolerance = 1e-3;
+  size_type maxSCFIter = 4;
+  size_type mixingHistory = 4;
+  size_type mixingParameter = 0.2;
+  size_type adaptAndersonMixingParameter = 0.5;
   
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {10, 10, 10};
+  std::vector<unsigned int>         subdivisions = {20, 20, 20};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 

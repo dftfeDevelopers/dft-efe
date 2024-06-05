@@ -88,41 +88,54 @@ namespace dftefe
       }
 
       template <typename RealType, utils::MemorySpace memorySpace>
-      void
+      RealType
       normalizeDensityQuadData(
         quadrature::QuadratureValuesContainer<RealType, memorySpace> &inValues,
-        const size_type                              numElectrons,
+        const size_type numElectrons,
+        const utils::MemoryStorage<RealType, utils::MemorySpace::HOST> &JxW,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
-        const utils::mpi::MPIComm &                  mpiComm)
+        const utils::mpi::MPIComm &                  mpiComm,
+        bool                                         computeTotalDensity,
+        bool                                         scaleDensity)
       {
         RealType totalDensityInQuad = 0.0;
-
-        for (size_type iCell = 0; iCell < inValues.nCells(); iCell++)
+        if (computeTotalDensity || scaleDensity)
           {
-            for (size_type iComp = 0; iComp < inValues.getNumberComponents();
-                 iComp++)
+            int quadId = 0;
+            for (size_type iCell = 0; iCell < inValues.nCells(); iCell++)
               {
-                std::vector<RealType> a(inValues.nCellQuadraturePoints(iCell));
-                inValues.template getCellQuadValues<utils::MemorySpace::HOST>(
-                  iCell, iComp, a.data());
-                for (auto j : a)
+                for (size_type iComp = 0;
+                     iComp < inValues.getNumberComponents();
+                     iComp++)
                   {
-                    totalDensityInQuad += j;
+                    std::vector<RealType> a(
+                      inValues.nCellQuadraturePoints(iCell));
+                    inValues
+                      .template getCellQuadValues<utils::MemorySpace::HOST>(
+                        iCell, iComp, a.data());
+                    for (auto j : a)
+                      {
+                        totalDensityInQuad += j * *(JxW.data() + quadId);
+                        quadId += 1;
+                      }
                   }
               }
+            utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+              utils::mpi::MPIInPlace,
+              &totalDensityInQuad,
+              1,
+              utils::mpi::Types<RealType>::getMPIDatatype(),
+              utils::mpi::MPISum,
+              mpiComm);
           }
-        utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-          utils::mpi::MPIInPlace,
-          &totalDensityInQuad,
-          1,
-          utils::mpi::Types<RealType>::getMPIDatatype(),
-          utils::mpi::MPISum,
-          mpiComm);
 
-        quadrature::scale((RealType)(std::abs((RealType)numElectrons /
-                                              totalDensityInQuad)),
-                          inValues,
-                          linAlgOpContext);
+        if (scaleDensity)
+          quadrature::scale((RealType)(std::abs((RealType)numElectrons /
+                                                totalDensityInQuad)),
+                            inValues,
+                            linAlgOpContext);
+
+        return totalDensityInQuad;
       }
     } // namespace KohnShamDFTInternal
 
@@ -238,11 +251,23 @@ namespace dftefe
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
+      //************* CHANGE THIS **********************
+      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace> memTransfer;
+      auto jxwData = feBDHamiltonian->getJxWInAllCells();
+      d_jxwDataHost.resize(jxwData.size());
+      memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
+
       // normalize electroncharge density
-      KohnShamDFTInternal::normalizeDensityQuadData(d_densityInQuadValues,
-                                                    numElectrons,
-                                                    *d_linAlgOpContext,
-                                                    d_mpiCommDomain);
+      RealType totalDensityInQuad =
+        KohnShamDFTInternal::normalizeDensityQuadData(d_densityInQuadValues,
+                                                      numElectrons,
+                                                      d_jxwDataHost,
+                                                      *d_linAlgOpContext,
+                                                      d_mpiCommDomain,
+                                                      true,
+                                                      true);
+
+      d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
@@ -325,12 +350,6 @@ namespace dftefe
                                                  linAlgOpContext,
                                                  cellBlockSize,
                                                  waveFunctionBatchSize);
-
-      //************* CHANGE THIS **********************
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace> memTransfer;
-      auto jxwData = feBDHamiltonian->getJxWInAllCells();
-      d_jxwDataHost.resize(jxwData.size());
-      memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -411,11 +430,18 @@ namespace dftefe
           if (scfIter > 0)
             {
               // normalize electroncharge density each scf
-              KohnShamDFTInternal::normalizeDensityQuadData(
-                d_densityInQuadValues,
-                d_numElectrons,
-                *d_linAlgOpContext,
-                d_mpiCommDomain);
+              RealType totalDensityInQuad =
+                KohnShamDFTInternal::normalizeDensityQuadData(
+                  d_densityInQuadValues,
+                  d_numElectrons,
+                  d_jxwDataHost,
+                  *d_linAlgOpContext,
+                  d_mpiCommDomain,
+                  true,
+                  false);
+
+              d_rootCout << "Electron density in : " << totalDensityInQuad
+                         << "\n";
 
               d_hamitonianElec->reinitField(d_densityInQuadValues);
               d_hamitonianXC->reinitField(d_densityInQuadValues);
@@ -450,6 +476,18 @@ namespace dftefe
                                  d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
 
+          RealType totalDensityInQuad =
+            KohnShamDFTInternal::normalizeDensityQuadData(
+              d_densityOutQuadValues,
+              d_numElectrons,
+              d_jxwDataHost,
+              *d_linAlgOpContext,
+              d_mpiCommDomain,
+              true,
+              false);
+
+          d_rootCout << "Electron density out : " << totalDensityInQuad << "\n";
+
           // check residual in density if else
           if (d_evaluateEnergyEverySCF)
             {
@@ -470,7 +508,7 @@ namespace dftefe
               d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
 
               // calculate band energy
-              RealType bandEnergy;
+              RealType bandEnergy = 0;
               for (size_type i = 0; i < d_occupation.size(); i++)
                 {
                   bandEnergy += 2 * d_occupation[i] * d_kohnShamEnergies[i];
@@ -507,7 +545,7 @@ namespace dftefe
           d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
 
           // calculate band energy
-          RealType bandEnergy;
+          RealType bandEnergy = 0;
           for (size_type i = 0; i < d_occupation.size(); i++)
             {
               bandEnergy += 2 * d_occupation[i] * d_kohnShamEnergies[i];

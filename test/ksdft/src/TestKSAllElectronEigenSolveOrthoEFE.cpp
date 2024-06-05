@@ -438,6 +438,42 @@ int main()
   // std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveHamiltonian = efeBasisDataAdaptive;
 
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
+                efeBasisDataAdaptive->getQuadratureRuleContainer();
+
+    std::vector<double> atomChargesVecScaled(atomCoordinatesVec.size());
+  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
+  {
+    std::vector<double> chargeDensity(1, 0.0), mpiReducedChargeDensity(1, 0.0);
+
+    const utils::SmearChargeDensityFunction smden(atomCoordinatesVec[i],
+                                                  atomChargesVec[i],
+                                                  smearedChargeRadiusVec[i]);
+
+      double charge = 0;
+      for(size_type i = 0 ; i < quadRuleContainer->nCells() ; i++)
+      {
+        std::vector<double> JxW = quadRuleContainer->getCellJxW(i);
+        size_type quadId = 0;
+        for (auto j : quadRuleContainer->getCellRealPoints(i))
+        {
+          charge += smden(j) * JxW[quadId];
+          quadId = quadId + 1;
+        }
+      }
+      chargeDensity[0] = charge;
+    
+    utils::mpi::MPIAllreduce<Host>(
+          chargeDensity.data(),
+          mpiReducedChargeDensity.data(),
+          chargeDensity.size(),
+          utils::mpi::MPIDouble,
+          utils::mpi::MPISum,
+          comm);
+
+    atomChargesVecScaled[i] *= 1/std::abs(mpiReducedChargeDensity[0]);
+  }
+
+  quadRuleContainer =  
                 efeBasisDataOrbitalAdaptive->getQuadratureRuleContainer();
 
    quadrature::QuadratureValuesContainer<double, Host> 
@@ -456,7 +492,7 @@ int main()
     std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
       std::make_shared<const utils::SmearChargePotentialFunction>(
         atomCoordinatesVec,
-        atomChargesVec,
+        atomChargesVecScaled,
         smearedChargeRadiusVec);
 
     std::shared_ptr<const basis::FEBasisManager

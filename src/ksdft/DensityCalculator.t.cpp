@@ -355,6 +355,7 @@ namespace dftefe
           &                                                           waveFunc,
         quadrature::QuadratureValuesContainer<RealType, memorySpace> &rho)
     {
+      rho.setValue((RealType)0);
       const size_type numLocallyOwnedCells = d_feBMPsi->nLocallyOwnedCells();
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
