@@ -253,7 +253,9 @@ namespace dftefe
                                                      dim>>
         d_feBasisOpHamiltonian;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-        d_linAlgOpContext;
+                            d_linAlgOpContext;
+      std::vector<RealType> d_nuclearChargeQuad;
+
     }; // end of class ElectrostaticAllElectronFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

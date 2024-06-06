@@ -115,6 +115,75 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>> feBDTotalChargeRhs,
         std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDHamiltonian,
+        /* PSP/AE related info */
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* linAgOperations Context*/
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext,
+        /* Batch size related info */
+        const size_type cellBlockSize,
+        const size_type waveFunctionBatchSize,
+        /* basis overlap related info */
+        const OpContext &MContextForInv =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MInvContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>());
+
+
+      KohnShamDFT(
+        /* Atom related info */
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
+        const size_type                  numElectrons,
+        /* SCF related info */
+        const size_type numWantedEigenvalues,
+        const double    smearingTemperature,
+        const double    fermiEnergyTolerance,
+        const double    fracOccupancyTolerance,
+        const double    eigenSolveResidualTolerance,
+        const double    scfDensityResidualNormTolerance,
+        const size_type chebyshevPolynomialDegree,
+        const size_type maxChebyshevFilterPass,
+        const size_type maxSCFIter,
+        const bool      evaluateEnergyEverySCF,
+        /* Mixing related info */
+        const size_type mixingHistory,
+        const double    mixingParameter,
+        const bool      isAdaptiveAndersonMixingParameter,
+        /* Electron density related info */
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &electronChargeDensityInput,
+        /* Basis related info */
+        /* Field boundary */
+        std::shared_ptr<
+          const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
+                                      ValueTypeElectrostaticsBasis,
+                                      memorySpace,
+                                      dim>>               feBMTotalCharge,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                    ValueTypeWaveFunctionBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,
+        /* Field data storages */
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDTotalChargeRhs,
+        std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>>
           feBDNuclearChargeStiffnessMatrix,

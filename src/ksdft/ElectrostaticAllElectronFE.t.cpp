@@ -428,17 +428,20 @@ namespace dftefe
                                                      d_atomCharges,
                                                      d_smearedChargeRadius);
 
+      RealType totNuclearChargeQuad = 0;
       for (size_type iCell = 0; iCell < quadRuleContainer->nCells(); iCell++)
         {
           for (size_type iComp = 0; iComp < d_numComponents; iComp++)
             {
               size_type             quadId = 0;
+              std::vector<double>   jxw = quadRuleContainer->getCellJxW(iCell);
               std::vector<RealType> a(
                 quadRuleContainer->nCellQuadraturePoints(iCell));
               for (auto j : quadRuleContainer->getCellRealPoints(iCell))
                 {
                   a[quadId] = (RealType)smfunc(j);
-                  quadId    = quadId + 1;
+                  totNuclearChargeQuad += (RealType)smfunc(j) * jxw[quadId];
+                  quadId = quadId + 1;
                 }
               RealType *b = a.data();
               d_nuclearChargesDensity
@@ -447,6 +450,22 @@ namespace dftefe
                                                                        b);
             }
         }
+
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        &totNuclearChargeQuad,
+        1,
+        utils::mpi::Types<RealType>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+      double totalAtomCharges =
+        std::accumulate(d_atomCharges.begin(), d_atomCharges.end(), (double)0);
+      // d_nuclearChargesDensity by totalAtomCharges/totNuclearChargeQuad
+      quadrature::scale((RealType)std::abs(totalAtomCharges /
+                                           totNuclearChargeQuad),
+                        *d_nuclearChargesDensity,
+                        *d_linAlgOpContext);
 
       // create the correction quadValuesContainer for numerical solve
 
@@ -805,6 +824,7 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         nuclearChargeDensity(quadRuleContainer, d_numComponents);
 
+      d_nuclearChargeQuad.resize(d_numAtoms, 0);
       for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
         {
           std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
@@ -825,7 +845,7 @@ namespace dftefe
             d_atomCharges[iAtom],
             d_smearedChargeRadius[iAtom]);
 
-          RealType nuclearChargeQuad = 0;
+          d_nuclearChargeQuad[iAtom] = 0;
           for (size_type iCell = 0; iCell < quadRuleContainer->nCells();
                iCell++)
             {
@@ -839,7 +859,8 @@ namespace dftefe
                   for (auto j : quadRuleContainer->getCellRealPoints(iCell))
                     {
                       a[quadId] = (RealType)(*smfunc)(j);
-                      nuclearChargeQuad += (RealType)(*smfunc)(j)*jxw[quadId];
+                      d_nuclearChargeQuad[iAtom] +=
+                        (RealType)(*smfunc)(j)*jxw[quadId];
                       quadId = quadId + 1;
                     }
                   RealType *b = a.data();
@@ -852,16 +873,16 @@ namespace dftefe
 
           utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
             utils::mpi::MPIInPlace,
-            &nuclearChargeQuad,
+            &d_nuclearChargeQuad[iAtom],
             1,
             utils::mpi::Types<RealType>::getMPIDatatype(),
             utils::mpi::MPISum,
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-          // Scale by 4\pi * d_atomCharges[iAtom]/nuclearChargeQuad
+          // Scale by 4\pi * d_atomCharges[iAtom]/d_nuclearChargeQuad[iAtom]
           quadrature::scale((RealType)std::abs(4 * utils::mathConstants::pi *
                                                d_atomCharges[iAtom] /
-                                               nuclearChargeQuad),
+                                               d_nuclearChargeQuad[iAtom]),
                             nuclearChargeDensity,
                             *d_linAlgOpContext);
 
@@ -996,6 +1017,12 @@ namespace dftefe
                           iCell, iComp, b);
                     }
                 }
+
+              // Scale by d_atomCharges[iAtom]/d_nuclearChargeQuad[iAtom]
+              quadrature::scale((RealType)std::abs(d_atomCharges[iAtom] /
+                                                   d_nuclearChargeQuad[iAtom]),
+                                nuclearChargeDensity,
+                                *d_linAlgOpContext);
 
               basis::FEBasisOperations<ValueTypeBasisCoeff,
                                        ValueTypeBasisData,
