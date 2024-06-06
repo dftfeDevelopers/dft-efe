@@ -31,7 +31,12 @@ namespace dftefe
       const utils::mpi::MPIComm &mpiComm)
       : d_mpiComm(mpiComm)
       , d_anyMixingParameterAdaptive(false)
-    {}
+      , d_rootCout(std::cout)
+    {
+      int rank;
+      utils::mpi::MPICommRank(mpiComm, &rank);
+      d_rootCout.setCondition(rank == 0);
+    }
 
     template <typename ValueTypeMixingVariable, typename ValueTypeWeights>
     void
@@ -41,7 +46,7 @@ namespace dftefe
         &          weightDotProducts,
       const bool   performMPIReduce,
       const double mixingValue, /*param for linear mixing (a's)*/
-      const bool   adaptMixingValue)
+      const bool   isAdaptiveMixing)
     {
       d_variableHistoryIn[mixingVariableList] =
         std::deque<std::vector<ValueTypeMixingVariable>>();
@@ -49,11 +54,11 @@ namespace dftefe
         std::deque<std::vector<ValueTypeMixingVariable>>();
       d_vectorDotProductWeights[mixingVariableList] = weightDotProducts;
 
-      d_performMPIReduce[mixingVariableList]     = performMPIReduce;
-      d_mixingParameter[mixingVariableList]      = mixingValue;
-      d_adaptMixingParameter[mixingVariableList] = adaptMixingValue;
+      d_performMPIReduce[mixingVariableList] = performMPIReduce;
+      d_mixingParameter[mixingVariableList]  = mixingValue;
+      d_isAdaptiveMixing[mixingVariableList] = isAdaptiveMixing;
       d_anyMixingParameterAdaptive =
-        adaptMixingValue || d_anyMixingParameterAdaptive;
+        isAdaptiveMixing || d_anyMixingParameterAdaptive;
       d_adaptiveMixingParameterDecLastIteration = false;
       d_adaptiveMixingParameterDecAllIterations = true;
       d_adaptiveMixingParameterIncAllIterations = true;
@@ -293,13 +298,13 @@ namespace dftefe
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
       for (const auto &[key, value] : d_variableHistoryIn)
-        if (d_adaptMixingParameter[key])
+        if (d_isAdaptiveMixing[key])
           {
             d_mixingParameter[key] *= ci;
           }
-      if (d_adaptMixingParameter[mixingVariable::rho])
-        std::cout << "Adaptive Anderson mixing parameter for Rho: "
-                  << d_mixingParameter[mixingVariable::rho] << std::endl;
+      if (d_isAdaptiveMixing[mixingVariable::rho])
+        d_rootCout << "Adaptive Anderson mixing parameter for Rho: "
+                   << d_mixingParameter[mixingVariable::rho] << "\n";
     }
 
     // Fucntions to add to the history

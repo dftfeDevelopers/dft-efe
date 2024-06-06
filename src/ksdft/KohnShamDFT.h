@@ -91,7 +91,7 @@ namespace dftefe
         /* Mixing related info */
         const size_type mixingHistory,
         const double    mixingParameter,
-        const double    adaptAndersonMixingParameter,
+        const bool      isAdaptiveAndersonMixingParameter,
         /* Electron density related info */
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &electronChargeDensityInput,
@@ -199,7 +199,7 @@ namespace dftefe
       utils::ConditionalOStream d_rootCout;
       size_type                 d_mixingHistory;
       double                    d_mixingParameter;
-      double                    d_adaptAndersonMixingParameter;
+      bool                      d_isAdaptiveAndersonMixingParameter;
       bool                      d_evaluateEnergyEverySCF;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_densityInQuadValues, d_densityOutQuadValues,

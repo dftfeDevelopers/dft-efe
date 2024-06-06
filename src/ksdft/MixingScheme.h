@@ -32,6 +32,7 @@
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <utils/ConditionalOStream.h>
 
 namespace dftefe
 {
@@ -115,7 +116,7 @@ namespace dftefe
           &          weightDotProducts,
         const bool   performMPIReduce,
         const double mixingValue,
-        const bool   adaptMixingValue);
+        const bool   isAdaptiveMixing);
 
       /**
        * @brief Adds to the input history
@@ -179,13 +180,14 @@ namespace dftefe
       const MPI_Comm &d_mpiComm;
 
       std::map<mixingVariable, double> d_mixingParameter;
-      std::map<mixingVariable, bool>   d_adaptMixingParameter;
+      std::map<mixingVariable, bool>   d_isAdaptiveMixing;
       bool                             d_anyMixingParameterAdaptive;
       bool                           d_adaptiveMixingParameterDecLastIteration;
       bool                           d_adaptiveMixingParameterDecAllIterations;
       bool                           d_adaptiveMixingParameterIncAllIterations;
       size_type                      d_mixingHistory;
       std::map<mixingVariable, bool> d_performMixing;
+      utils::ConditionalOStream      d_rootCout;
     };
   } // namespace ksdft
 } //  end of namespace dftefe

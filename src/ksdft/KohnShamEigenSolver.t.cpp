@@ -276,7 +276,8 @@ namespace dftefe
                 linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
               returnValue.msg += nrErr.msg;
             }
-          else if (iPass == d_maxChebyshevFilterPass)
+          else if (iPass >= d_maxChebyshevFilterPass && chfsiErr.isSuccess &&
+                   nrErr.isSuccess)
             {
               err = linearAlgebra::EigenSolverErrorCode::KS_MAX_PASS_ERROR;
               returnValue =
@@ -289,7 +290,7 @@ namespace dftefe
               returnValue =
                 linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
               returnValue.msg += "Number of CHFSI passes required are " +
-                                 std::to_string(iPass) + ".";
+                                 std::to_string(iPass + 1) + ".";
             }
           else
             {

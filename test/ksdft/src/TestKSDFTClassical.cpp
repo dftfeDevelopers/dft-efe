@@ -132,10 +132,11 @@ int main()
 
 
   double scfDensityResidualNormTolerance = 1e-3;
-  size_type maxSCFIter = 4;
-  size_type mixingHistory = 4;
-  size_type mixingParameter = 0.2;
-  size_type adaptAndersonMixingParameter = 0.5;
+  size_type maxSCFIter = 40;
+  size_type mixingHistory = 10;
+  double mixingParameter = 0.2;
+  bool isAdaptiveAndersonMixingParameter = true;
+  bool evaluateEnergyEverySCF = true;
   
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
@@ -414,10 +415,10 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         chebyshevPolynomialDegree,
                                         maxChebyshevFilterPass,
                                         maxSCFIter,
-                                        true,
+                                        evaluateEnergyEverySCF,
                                         mixingHistory,
                                         mixingParameter,
-                                        adaptAndersonMixingParameter,
+                                        isAdaptiveAndersonMixingParameter,
                                         electronChargeDensity,
                                         basisManagerTotalPot,
                                         basisManagerWaveFn,

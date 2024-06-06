@@ -168,7 +168,7 @@ namespace dftefe
         const bool                       evaluateEnergyEverySCF,
         const size_type                  mixingHistory,
         const double                     mixingParameter,
-        const double                     adaptAndersonMixingParameter,
+        const bool                       isAdaptiveAndersonMixingParameter,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &electronChargeDensityInput,
         std::shared_ptr<
@@ -207,7 +207,7 @@ namespace dftefe
         const OpContext &MInvContext)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
-      , d_adaptAndersonMixingParameter(adaptAndersonMixingParameter)
+      , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
       , d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_densityInQuadValues(electronChargeDensityInput)
@@ -371,7 +371,7 @@ namespace dftefe
         d_jxwDataHost,
         true, // call MPI REDUCE while computing dot products
         d_mixingParameter,
-        d_adaptAndersonMixingParameter);
+        d_isAdaptiveAndersonMixingParameter);
 
       //
       // Begin SCF iteration
