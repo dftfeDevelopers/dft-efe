@@ -113,7 +113,7 @@ int main()
   double xmax = 24.0;
   double ymax = 24.0;
   double zmax = 24.0;
-  double rc = 0.5;
+  double rc = 0.6;
   double hMin = 1e6;
   size_type maxIter = 2e7;
   double absoluteTol = 1e-10;

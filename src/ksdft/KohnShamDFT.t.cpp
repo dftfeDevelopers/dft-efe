@@ -213,9 +213,6 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
-                                linAlgOpContext,
-                                d_numWantedEigenvalues)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_waveFunctionBatchSize(waveFunctionBatchSize)
       , d_SCFTol(scfDensityResidualNormTolerance)
@@ -225,6 +222,7 @@ namespace dftefe
                                     numWantedEigenvalues,
                                     0.0,
                                     1.0)
+      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -424,9 +422,6 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
-                                linAlgOpContext,
-                                d_numWantedEigenvalues)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_waveFunctionBatchSize(waveFunctionBatchSize)
       , d_SCFTol(scfDensityResidualNormTolerance)
@@ -436,6 +431,7 @@ namespace dftefe
                                     numWantedEigenvalues,
                                     0.0,
                                     1.0)
+      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -657,11 +653,20 @@ namespace dftefe
                                            hamiltonianComponentsVec);
             }
 
+          // reinit the chfsi bounds
+          if (scfIter > 0)
+            {
+              d_ksEigSolve->reinitBounds(
+                d_kohnShamEnergies[0],
+                d_numElectrons == 1 ? d_kohnShamEnergies[d_numElectrons] :
+                                      d_kohnShamEnergies[d_numElectrons - 1]);
+            }
+
           // Linear Eigen Solve
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
                                 d_kohnShamEnergies,
-                                d_kohnShamWaveFunctions,
+                                *d_kohnShamWaveFunctions,
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
@@ -677,7 +682,7 @@ namespace dftefe
 
           // compute output rho
           d_densCalc->computeRho(d_occupation,
-                                 d_kohnShamWaveFunctions,
+                                 *d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
 
           RealType totalDensityInQuad =
@@ -698,7 +703,7 @@ namespace dftefe
               d_hamitonianElec->reinitField(d_densityOutQuadValues);
               d_hamitonianKin->evalEnergy(d_occupation,
                                           *d_feBMWaveFn,
-                                          d_kohnShamWaveFunctions,
+                                          *d_kohnShamWaveFunctions,
                                           d_waveFunctionBatchSize);
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
@@ -735,7 +740,7 @@ namespace dftefe
           d_hamitonianElec->reinitField(d_densityOutQuadValues);
           d_hamitonianKin->evalEnergy(d_occupation,
                                       *d_feBMWaveFn,
-                                      d_kohnShamWaveFunctions,
+                                      *d_kohnShamWaveFunctions,
                                       d_waveFunctionBatchSize);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";

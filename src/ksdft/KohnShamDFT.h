@@ -264,7 +264,7 @@ namespace dftefe
                             d_feBMWaveFn;
       std::vector<RealType> d_kohnShamEnergies;
       linearAlgebra::MultiVector<ValueType, memorySpace>
-                                d_kohnShamWaveFunctions;
+        *                       d_kohnShamWaveFunctions;
       utils::ConditionalOStream d_rootCout;
       size_type                 d_mixingHistory;
       double                    d_mixingParameter;

@@ -33,6 +33,7 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
+#include <utils/ConditionalOStream.h>
 
 namespace dftefe
 {
@@ -111,17 +112,22 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-               &waveFunctionSubspaceGuess,
-             linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-             const OpContext &                                     MLanczos =
-               linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                      ValueTypeOperand,
-                                                      memorySpace>(),
-             const OpContext &MInvLanczos =
-               linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                      ValueTypeOperand,
-                                                      memorySpace>());
+      reinitBasis(
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+          &waveFunctionSubspaceGuess,
+        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        const OpContext &                                     MLanczos =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MInvLanczos =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>());
+
+      void
+      reinitBounds(double wantedSpectrumLowerBound,
+                   double wantedSpectrumUpperBound);
 
       RealType
       getFermiEnergy();
@@ -162,6 +168,10 @@ namespace dftefe
       RealType                                              d_fermiEnergy;
       bool                                                  d_isSolved;
       const size_type                                       d_numElectrons;
+      utils::ConditionalOStream                             d_rootCout;
+      double d_wantedSpectrumLowerBound;
+      double d_wantedSpectrumUpperBound;
+      bool   d_isBoundKnown;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

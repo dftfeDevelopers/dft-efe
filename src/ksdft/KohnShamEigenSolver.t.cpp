@@ -59,8 +59,12 @@ namespace dftefe
       , d_smearingTemperature(smearingTemperature)
       , d_fracOccupancy(d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
+      , d_rootCout(std::cout)
     {
-      reinit(waveFunctionSubspaceGuess, lanczosGuess, MLanczos, MInvLanczos);
+      reinitBasis(waveFunctionSubspaceGuess,
+                  lanczosGuess,
+                  MLanczos,
+                  MInvLanczos);
     }
 
     template <typename ValueTypeOperator,
@@ -68,17 +72,37 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      reinit(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-               &waveFunctionSubspaceGuess,
-             linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-             const OpContext &                                     MLanczos,
-             const OpContext &                                     MInvLanczos)
+      reinitBasis(
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
+          &waveFunctionSubspaceGuess,
+        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        const OpContext &                                     MLanczos,
+        const OpContext &                                     MInvLanczos)
     {
       d_isSolved                  = false;
+      d_isBoundKnown              = false;
       d_waveFunctionSubspaceGuess = &waveFunctionSubspaceGuess;
       d_lanczosGuess              = &lanczosGuess;
       d_MLanczos                  = &MLanczos;
       d_MInvLanczos               = &MInvLanczos;
+      int rank;
+      utils::mpi::MPICommRank(
+        lanczosGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);
+      d_rootCout.setCondition(rank == 0);
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      reinitBounds(double wantedSpectrumLowerBound,
+                   double wantedSpectrumUpperBound)
+    {
+      d_isSolved                 = false;
+      d_isBoundKnown             = true;
+      d_wantedSpectrumLowerBound = wantedSpectrumLowerBound;
+      d_wantedSpectrumUpperBound = wantedSpectrumUpperBound;
     }
 
     template <typename ValueTypeOperator,
@@ -98,8 +122,6 @@ namespace dftefe
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         linAlgOpContext = kohnShamWaveFunctions.getLinAlgOpContext();
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-        mpiPatternP2P = kohnShamWaveFunctions.getMPIPatternP2P();
       std::vector<double> eigenSolveResidual;
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
                                           memoryTransfer;
@@ -142,16 +164,27 @@ namespace dftefe
       if (lanczosErr.isSuccess)
         {
           //--------------------CHANGE THIS ------------------------------
-          double wantedSpectrumUpperBound = 0;
-          // (eigenValuesLanczos[1] - eigenValuesLanczos[0]) *
-          //   ((double)(d_numWantedEigenvalues) / globalSize) +
-          // eigenValuesLanczos[0];
+          if (!d_isBoundKnown)
+            {
+              d_wantedSpectrumLowerBound = eigenValuesLanczos[0];
+              d_wantedSpectrumUpperBound = 0;
+              // (eigenValuesLanczos[1] - eigenValuesLanczos[0]) *
+              //       ((double)(d_numWantedEigenvalues) / globalSize) +
+              //     eigenValuesLanczos[0];
+            }
+
+          d_rootCout << "wantedSpectrumLowerBound: "
+                     << d_wantedSpectrumLowerBound << "\n";
+          d_rootCout << "wantedSpectrumUpperBound: "
+                     << d_wantedSpectrumUpperBound << "\n";
+          d_rootCout << "unWantedSpectrumUpperBound: "
+                     << eigenValuesLanczos[1] + residual << "\n";
 
           linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
                                                       ValueTypeOperand,
                                                       memorySpace>
-            chfsi(eigenValuesLanczos[0],
-                  wantedSpectrumUpperBound,
+            chfsi(d_wantedSpectrumLowerBound,
+                  d_wantedSpectrumUpperBound,
                   eigenValuesLanczos[1] + residual,
                   d_chebyshevPolynomialDegree,
                   ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
@@ -251,9 +284,9 @@ namespace dftefe
                 break;
               else
                 {
-                  *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
-                  chfsi.reinit(eigenValuesLanczos[0],
-                               wantedSpectrumUpperBound,
+                  d_waveFunctionSubspaceGuess = &kohnShamWaveFunctions;
+                  chfsi.reinit(d_wantedSpectrumLowerBound,
+                               d_wantedSpectrumUpperBound,
                                eigenValuesLanczos[1] + residual,
                                d_chebyshevPolynomialDegree,
                                ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
