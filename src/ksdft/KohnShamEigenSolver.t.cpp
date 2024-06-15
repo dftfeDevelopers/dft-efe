@@ -167,14 +167,14 @@ namespace dftefe
           if (!d_isBoundKnown)
             {
               d_wantedSpectrumLowerBound = eigenValuesLanczos[0];
-              d_wantedSpectrumUpperBound = 0;
-              // (eigenValuesLanczos[1] - eigenValuesLanczos[0]) *
-              //       ((double)(d_numWantedEigenvalues) / globalSize) +
-              //     eigenValuesLanczos[0];
+              d_wantedSpectrumUpperBound =
+                (eigenValuesLanczos[1] - eigenValuesLanczos[0]) *
+                  ((double)(d_numWantedEigenvalues * 200.0) / globalSize) +
+                eigenValuesLanczos[0];
             }
 
           d_rootCout << "wantedSpectrumLowerBound: "
-                     << d_wantedSpectrumLowerBound << "\n";
+                     << d_wantedSpectrumLowerBound << std::endl;
           d_rootCout << "wantedSpectrumUpperBound: "
                      << d_wantedSpectrumUpperBound << "\n";
           d_rootCout << "unWantedSpectrumUpperBound: "
@@ -225,7 +225,8 @@ namespace dftefe
                   d_numElectrons,
                   Constants::BOLTZMANN_CONST_HARTREE,
                   d_smearingTemperature,
-                  kohnShamEnergies[d_numElectrons - 1]);
+                  kohnShamEnergies
+                    [std::ceil(static_cast<double>(d_numElectrons) / 2.0) - 1]);
 
               linearAlgebra::NewtonRaphsonSolver<double> nrs(
                 NewtonRaphsonSolverDefaults::MAX_ITER,

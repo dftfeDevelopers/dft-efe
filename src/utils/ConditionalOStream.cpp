@@ -49,15 +49,6 @@ namespace dftefe
       return d_activeFlag;
     }
 
-    inline const ConditionalOStream &
-    ConditionalOStream::operator<<(std::ostream &(*p)(std::ostream &)) const
-    {
-      if (d_activeFlag == true)
-        d_outputStream << p;
-
-      return *this;
-    }
-
     inline std::ostream &
     ConditionalOStream::getOStream() const
     {

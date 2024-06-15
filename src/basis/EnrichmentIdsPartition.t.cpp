@@ -195,8 +195,33 @@ namespace dftefe
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
         double                                       additionalCutoff,
-        const std::vector<std::vector<utils::Point>> &cellVerticesVector)
+        const std::vector<bool> &                    isPeriodicFlags,
+        const std::vector<std::vector<utils::Point>> &cellVerticesVector,
+        const utils::mpi::MPIComm &                   comm)
       {
+        std::vector<double> minboundGlobalDomain(dim, 0.),
+          maxboundGlobalDomain(dim, 0.);
+        if (!(std::all_of(isPeriodicFlags.begin(),
+                          isPeriodicFlags.end(),
+                          [](bool v) { return v; })))
+          {
+            int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+              minbound.data(),
+              minboundGlobalDomain.data(),
+              minbound.size(),
+              utils::mpi::MPIDouble,
+              utils::mpi::MPIMin,
+              comm);
+
+            err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+              maxbound.data(),
+              maxboundGlobalDomain.data(),
+              maxbound.size(),
+              utils::mpi::MPIDouble,
+              utils::mpi::MPIMax,
+              comm);
+          }
+
         std::vector<size_type> newAtomIds = atomIdsPartition->newAtomIds();
         std::vector<double>    minCellBound;
         std::vector<double>    maxCellBound;
@@ -264,6 +289,28 @@ namespace dftefe
 
                         DFTEFE_Assert(b >= a);
                         DFTEFE_Assert(d >= c);
+
+                        // check that enrichment functions do not spill bounding
+                        // box for non-periodic cases.
+                        if (!isPeriodicFlags[k] &&
+                            !(c - additionalCutoff > minboundGlobalDomain[k] &&
+                              d + additionalCutoff < maxboundGlobalDomain[k]))
+                          {
+                            std::string msg =
+                              "The enrichment functions may spill to a"
+                              " non-periodic face of the triangulation domain which is not allowed."
+                              " Increase the "
+                              " domain boundary or reduce to the ball radius of the enrichment "
+                              " function cutoff. ";
+                            if (additionalCutoff != 0)
+                              msg +=
+                                "Recommended domain boundary increase, if wanted, can be by " +
+                                std::to_string(additionalCutoff) +
+                                " bohr on each side of origin.";
+                            utils::throwException<utils::InvalidArgument>(false,
+                                                                          msg);
+                          }
+
                         if (!((c < a && d < a) || (c > b && d > b)))
                           flag = true;
                         else
@@ -366,9 +413,34 @@ namespace dftefe
       const std::vector<double> &                   minbound,
       const std::vector<double> &                   maxbound,
       double                                        additionalCutoff,
+      const std::vector<utils::Point> &             globalDomainBoundVec,
+      const std::vector<bool> &                     isPeriodicFlags,
       const std::vector<std::vector<utils::Point>> &cellVerticesVector,
       const utils::mpi::MPIComm &                   comm)
     {
+      utils::throwException<utils::InvalidArgument>(
+        !(std::any_of(isPeriodicFlags.begin(),
+                      isPeriodicFlags.end(),
+                      [](bool v) { return v; })),
+        "EnrichmentIdsPartition can only handle non-periodic boundary conditions."
+        " Contact Developers to get it extended to periodic systems.");
+
+      double sum = 0.0;
+      for (size_type i = 0; i < globalDomainBoundVec.size(); i++)
+        {
+          for (size_type j = 0; j < dim; j++)
+            {
+              if (i != j)
+                sum += globalDomainBoundVec[i][j];
+            }
+        }
+      utils::throwException<utils::InvalidArgument>(
+        sum < 1e-12,
+        "EnrichmentIdsPartition can only handle orthogonal domains with cartesian"
+        "coordinate domain vectors {(1,0,0), (0,1,0, (0,0,1)}. Contact Developers"
+        " to get it extended to non orthogonal systems.");
+      // Note this class cannot handle rotated orthogonal domain also...
+
       std::vector<double>    rCutoffMax;
       std::vector<size_type> atomIds;
       rCutoffMax.resize(atomSymbol.size(), 0.);
@@ -396,12 +468,15 @@ namespace dftefe
         atomSymbol,
         fieldName,
         comm);
+
       EnrichmentIdsPartitionInternal::getLocalEnrichmentIds<dim>(
         d_locallyOwnedEnrichmentIds,
         d_newAtomIdToEnrichmentIdOffset,
         atomIdsPartition);
+
       EnrichmentIdsPartitionInternal::getOverlappingAtomIdsInBox<dim>(
         atomIds, rCutoffMax, atomCoordinates, minbound, maxbound);
+
       EnrichmentIdsPartitionInternal::getOverlappingEnrichmentIdsInCells<dim>(
         d_overlappingEnrichmentIdsInCells,
         atomIds,
@@ -414,7 +489,10 @@ namespace dftefe
         minbound,
         maxbound,
         additionalCutoff,
-        cellVerticesVector);
+        isPeriodicFlags,
+        cellVerticesVector,
+        comm);
+
       EnrichmentIdsPartitionInternal::getGhostEnrichmentIds<dim>(
         atomIdsPartition,
         d_enrichmentIdsInProcessor,

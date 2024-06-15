@@ -76,6 +76,12 @@ namespace dftefe
       void
       clearRefineFlag() override;
 
+      double
+      minimumVertexDistance() const override;
+
+      double
+      distanceToUnitCell(dftefe::utils::Point &parametricPoint) const override;
+
       void
       setCoarsenFlag() override;
 

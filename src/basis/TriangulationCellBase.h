@@ -53,6 +53,12 @@ namespace dftefe
       virtual void
       clearRefineFlag() = 0;
 
+      virtual double
+      minimumVertexDistance() const = 0;
+
+      virtual double
+      distanceToUnitCell(dftefe::utils::Point &parametricPoint) const = 0;
+
       virtual void
       getParametricPoint(const utils::Point &   realPoint,
                          const CellMappingBase &cellMapping,

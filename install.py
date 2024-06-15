@@ -2,10 +2,10 @@ import CMakeFlagsParser as cmflags
 import os
 import sys
 import textwrap
-opts_dict={'build_dir' : './build'}
+opts_dict={'build_dir' : './build', 'n' : ''}
 
 def getUsageMsg():
-    msg = '''The correct usage is python install.py '''\
+    msg = '''The correct usage is python install.py [--n=<numprocs>]\n'''\
           '''[--build_dir=/path/to/build/directory]\n'''\
           '''[--src_dir=/path/to/source/directory]\n'''\
           '''The optional [--build_dir=/path/to/build/directory] specifies '''\
@@ -79,6 +79,7 @@ if __name__ == "__main__":
             y = y + " " + x
             print(x, end=" ")
 
+        nprocs = opts_dict['n']
         print()
         os.system(y)
-        os.system('make -j')
+        os.system('make -j '+nprocs)

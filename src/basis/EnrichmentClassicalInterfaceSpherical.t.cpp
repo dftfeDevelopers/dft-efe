@@ -147,7 +147,9 @@ namespace dftefe
           fieldName,
           minbound,
           maxbound,
-          d_triangulation->maxCellDiameter(),
+          d_triangulation->maxElementLength(),
+          d_triangulation->getDomainVectors(),
+          d_triangulation->getPeriodicFlags(),
           cellVerticesVector,
           comm);
 
@@ -465,6 +467,8 @@ namespace dftefe
           minbound,
           maxbound,
           0,
+          triangulation->getDomainVectors(),
+          d_triangulation->getPeriodicFlags(),
           cellVerticesVector,
           comm);
 

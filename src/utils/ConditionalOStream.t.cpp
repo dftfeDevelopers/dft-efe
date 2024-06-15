@@ -39,5 +39,14 @@ namespace dftefe
 
       return *this;
     }
+
+    inline const ConditionalOStream &
+    ConditionalOStream::operator<<(std::ostream &(*p)(std::ostream &)) const
+    {
+      if (d_activeFlag == true)
+        d_outputStream << p;
+
+      return *this;
+    }
   } // end of namespace utils
 } // end of namespace dftefe

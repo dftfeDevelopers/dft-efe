@@ -1,8 +1,11 @@
 #include <utils/Exceptions.h>
+#include <utils/MPIWrapper.h>
+#include <utils/MPITypes.h>
 #include "DealiiConversions.h"
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/base/point.h>
+#include <deal.II/grid/grid_out.h>
 #include <fstream>
 
 namespace dftefe
@@ -16,6 +19,7 @@ namespace dftefe
       , isInitialized(false)
       , isFinalized(false)
       , d_isPeriodicFlags(0)
+      , d_mpiDomainCommunicator(mpi_communicator)
     {}
 
     template <unsigned int dim>
@@ -124,6 +128,8 @@ namespace dftefe
 
       d_isPeriodicFlags.resize(dim);
       d_isPeriodicFlags = isPeriodicFlags;
+
+      d_domainVectors = domainVectors;
     }
 
     template <unsigned int dim>
@@ -290,9 +296,50 @@ namespace dftefe
 
     template <unsigned int dim>
     double
-    TriangulationDealiiParallel<dim>::maxCellDiameter() const
+    TriangulationDealiiParallel<dim>::maxElementLength() const
     {
-      return dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
+      double maxElemLength = 0.0;
+      auto   cell          = beginLocal();
+      auto   endc          = endLocal();
+      for (; cell != endc; ++cell)
+        {
+          if ((*cell)->minimumVertexDistance() > maxElemLength)
+            maxElemLength = (*cell)->minimumVertexDistance();
+        }
+
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        &maxElemLength,
+        1,
+        utils::mpi::Types<double>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        d_mpiDomainCommunicator);
+
+      return maxElemLength;
+    }
+
+    template <unsigned int dim>
+    double
+    TriangulationDealiiParallel<dim>::minElementLength() const
+    {
+      double minElemLength = 1e8;
+      auto   cell          = beginLocal();
+      auto   endc          = endLocal();
+      for (; cell != endc; ++cell)
+        {
+          if ((*cell)->minimumVertexDistance() < minElemLength)
+            minElemLength = (*cell)->minimumVertexDistance();
+        }
+
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        &minElemLength,
+        1,
+        utils::mpi::Types<double>::getMPIDatatype(),
+        utils::mpi::MPIMin,
+        d_mpiDomainCommunicator);
+
+      return minElemLength;
     }
 
     template <unsigned int dim>
@@ -335,6 +382,29 @@ namespace dftefe
     TriangulationDealiiParallel<dim>::getPeriodicFlags() const
     {
       return d_isPeriodicFlags;
+    }
+
+    template <unsigned int dim>
+    void
+    TriangulationDealiiParallel<dim>::saveRefineFlags(
+      std::vector<bool> &v) const
+    {
+      d_triangulationDealii.save_refine_flags(v);
+    }
+
+    template <unsigned int dim>
+    void
+    TriangulationDealiiParallel<dim>::writeToVtkFile(std::ostream &out) const
+    {
+      dealii::GridOut grid_out;
+      grid_out.write_vtk(d_triangulationDealii, out);
+    }
+
+    template <unsigned int dim>
+    std::vector<utils::Point>
+    TriangulationDealiiParallel<dim>::getDomainVectors() const
+    {
+      return d_domainVectors;
     }
 
     template <unsigned int dim>

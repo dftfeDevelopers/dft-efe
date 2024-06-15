@@ -81,4 +81,8 @@ if(ENABLE_MPI)
 	target_link_libraries(TestOrthoEnrichmentBasisManager PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestOrthoEnrichmentBasisManager PROPERTIES OUTPUT_NAME "TestOrthoEnrichmentBasisManager" SUFFIX ".x")
 
+	add_executable(TestGenerateMesh TestGenerateMesh.cpp )
+	target_link_libraries(TestGenerateMesh PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestGenerateMesh PROPERTIES OUTPUT_NAME "TestGenerateMesh" SUFFIX ".x")
+
 endif()

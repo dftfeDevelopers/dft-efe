@@ -41,7 +41,9 @@ namespace dftefe
       unsigned int
       nLocallyOwnedCells() const override;
       double
-      maxCellDiameter() const override;
+      maxElementLength() const override;
+      double
+      minElementLength() const override;
       size_type
       nGlobalCells() const override;
       size_type
@@ -66,6 +68,12 @@ namespace dftefe
       getDim() const override;
       std::vector<bool>
       getPeriodicFlags() const override;
+      void
+      saveRefineFlags(std::vector<bool> &v) const override;
+      void
+      writeToVtkFile(std::ostream &out) const override;
+      std::vector<utils::Point>
+      getDomainVectors() const override;
 
       // class specific member function
       const dealii::Triangulation<dim> &
@@ -89,6 +97,7 @@ namespace dftefe
       dealii::Triangulation<dim>                          d_triangulationDealii;
       std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorCell;
       std::vector<bool>                                   d_isPeriodicFlags;
+      std::vector<utils::Point>                           d_domainVectors;
 
     }; // end of class TriangulationDealiiSerial
 

@@ -658,8 +658,7 @@ namespace dftefe
             {
               d_ksEigSolve->reinitBounds(
                 d_kohnShamEnergies[0],
-                d_numElectrons == 1 ? d_kohnShamEnergies[d_numElectrons] :
-                                      d_kohnShamEnergies[d_numElectrons - 1]);
+                d_kohnShamEnergies[d_numWantedEigenvalues - 1]);
             }
 
           // Linear Eigen Solve

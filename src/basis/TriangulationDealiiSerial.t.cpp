@@ -3,6 +3,7 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/base/point.h>
+#include <deal.II/grid/grid_out.h>
 #include <fstream>
 
 namespace dftefe
@@ -97,6 +98,8 @@ namespace dftefe
 
       d_isPeriodicFlags.resize(dim);
       d_isPeriodicFlags = isPeriodicFlags;
+
+      d_domainVectors = domainVectors;
     }
 
     template <unsigned int dim>
@@ -258,9 +261,34 @@ namespace dftefe
 
     template <unsigned int dim>
     double
-    TriangulationDealiiSerial<dim>::maxCellDiameter() const
+    TriangulationDealiiSerial<dim>::maxElementLength() const
     {
-      return dealii::GridTools::maximal_cell_diameter(d_triangulationDealii);
+      double maxElemLength = 0.0;
+      auto   cell          = beginLocal();
+      auto   endc          = endLocal();
+      for (; cell != endc; ++cell)
+        {
+          if ((*cell)->minimumVertexDistance() > maxElemLength)
+            maxElemLength = (*cell)->minimumVertexDistance();
+        }
+
+      return maxElemLength;
+    }
+
+    template <unsigned int dim>
+    double
+    TriangulationDealiiSerial<dim>::minElementLength() const
+    {
+      double minElemLength = 1e8;
+      auto   cell          = beginLocal();
+      auto   endc          = endLocal();
+      for (; cell != endc; ++cell)
+        {
+          if ((*cell)->minimumVertexDistance() < minElemLength)
+            minElemLength = (*cell)->minimumVertexDistance();
+        }
+
+      return minElemLength;
     }
 
     template <unsigned int dim>
@@ -303,6 +331,28 @@ namespace dftefe
     TriangulationDealiiSerial<dim>::getPeriodicFlags() const
     {
       return d_isPeriodicFlags;
+    }
+
+    template <unsigned int dim>
+    void
+    TriangulationDealiiSerial<dim>::saveRefineFlags(std::vector<bool> &v) const
+    {
+      d_triangulationDealii.save_refine_flags(v);
+    }
+
+    template <unsigned int dim>
+    void
+    TriangulationDealiiSerial<dim>::writeToVtkFile(std::ostream &out) const
+    {
+      dealii::GridOut grid_out;
+      grid_out.write_vtk(d_triangulationDealii, out);
+    }
+
+    template <unsigned int dim>
+    std::vector<utils::Point>
+    TriangulationDealiiSerial<dim>::getDomainVectors() const
+    {
+      return d_domainVectors;
     }
 
     template <unsigned int dim>

@@ -46,7 +46,9 @@ namespace dftefe
       virtual unsigned int
       nLocallyOwnedCells() const = 0;
       virtual double
-      maxCellDiameter() const = 0; // Test this for mpi triangulation
+      maxElementLength() const = 0;
+      virtual double
+      minElementLength() const = 0;
       virtual unsigned int
       nLocalCells() const = 0;
       virtual size_type
@@ -67,6 +69,12 @@ namespace dftefe
       getDim() const = 0;
       virtual std::vector<bool>
       getPeriodicFlags() const = 0;
+      virtual void
+      saveRefineFlags(std::vector<bool> &v) const = 0;
+      virtual void
+      writeToVtkFile(std::ostream &out) const = 0;
+      virtual std::vector<utils::Point>
+      getDomainVectors() const = 0;
 
     }; // end of class TriangulationBase
   }    // end of namespace basis
