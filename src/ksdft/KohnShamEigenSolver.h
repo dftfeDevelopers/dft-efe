@@ -135,6 +135,9 @@ namespace dftefe
       std::vector<RealType>
       getFractionalOccupancy();
 
+      std::vector<RealType>
+      getEigenSolveResidualNorm();
+
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
             std::vector<RealType> &kohnShamEnergies,
@@ -165,6 +168,7 @@ namespace dftefe
       const OpContext *                                     d_MLanczos;
       const OpContext *                                     d_MInvLanczos;
       std::vector<RealType>                                 d_fracOccupancy;
+      std::vector<RealType>                                 d_eigSolveResNorm;
       RealType                                              d_fermiEnergy;
       bool                                                  d_isSolved;
       const size_type                                       d_numElectrons;

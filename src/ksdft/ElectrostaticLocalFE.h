@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeElectrostaticAllElectronFE_h
-#define dftefeElectrostaticAllElectronFE_h
+#ifndef dftefeElectrostaticLocalFE_h
+#define dftefeElectrostaticLocalFE_h
 
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/MultiVector.h>
@@ -46,7 +46,7 @@ namespace dftefe
               typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class ElectrostaticAllElectronFE
+    class ElectrostaticLocalFE
       : public ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasisData,
@@ -74,7 +74,7 @@ namespace dftefe
       /**
        * @brief Constructor
        */
-      ElectrostaticAllElectronFE(
+      ElectrostaticLocalFE(
         std::vector<utils::Point> atomCoordinates,
         std::vector<double>       atomCharges,
         std::vector<double>       smearedChargeRadius,
@@ -98,7 +98,7 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs);
 
-      ElectrostaticAllElectronFE(
+      ElectrostaticLocalFE(
         std::vector<utils::Point> atomCoordinates,
         std::vector<double>       atomCharges,
         std::vector<double>       smearedChargeRadius,
@@ -129,7 +129,7 @@ namespace dftefe
         const size_type maxCellTimesNumVecs);
 
 
-      ~ElectrostaticAllElectronFE();
+      ~ElectrostaticLocalFE();
 
       void
       reinitBasis(
@@ -256,8 +256,8 @@ namespace dftefe
                             d_linAlgOpContext;
       std::vector<RealType> d_nuclearChargeQuad;
 
-    }; // end of class ElectrostaticAllElectronFE
+    }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft
 } // end of namespace dftefe
-#include <ksdft/ElectrostaticAllElectronFE.t.cpp>
-#endif // dftefeElectrostaticAllElectronFE_h
+#include <ksdft/ElectrostaticLocalFE.t.cpp>
+#endif // dftefeElectrostaticLocalFE_h

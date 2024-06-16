@@ -23,7 +23,7 @@
 #include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/CGLinearSolver.h>
-#include <ksdft/ElectrostaticAllElectronFE.h>
+#include <ksdft/ElectrostaticLocalFE.h>
 #include <ksdft/KineticFE.h>
 #include <ksdft/ExchangeCorrelationFE.h>
 
@@ -571,13 +571,13 @@ int main()
 
   const dftefe::utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     dftefe::utils::ScalarZeroFunctionReal();
-  std::shared_ptr<dftefe::ksdft::ElectrostaticAllElectronFE<double,
+  std::shared_ptr<dftefe::ksdft::ElectrostaticLocalFE<double,
                                                   double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,
                                                   dim>> 
                                             hamitonianElec =
-    std::make_shared<dftefe::ksdft::ElectrostaticAllElectronFE<double,
+    std::make_shared<dftefe::ksdft::ElectrostaticLocalFE<double,
                                                   double,
                                                   double,
                                                   dftefe::utils::MemorySpace::HOST,

@@ -33,20 +33,49 @@
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
 #include <basis/GenerateMesh.h>
-
-#include <deal.II/grid/tria.h>
-#include <deal.II/grid/grid_generator.h>
-#include <deal.II/dofs/dof_handler.h>
-#include <deal.II/fe/fe_q.h>
-#include <deal.II/fe/fe_values.h>
-#include <deal.II/base/quadrature_lib.h>
-#include <deal.II/fe/mapping_q1.h>
-#include <deal.II/dofs/dof_tools.h>
+#include <utils/ConditionalOStream.h>
 
 #include <iostream>
 
 using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
+
+template<typename T>
+T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStream &rootCout)
+{
+  T t(0);
+  std::string line;
+  std::fstream fstream;
+  fstream.open(ParamFile, std::fstream::in);
+  int count = 0;
+  while (std::getline(fstream, line))
+  {
+    for (int i = 0; i < line.length(); i++)
+    {
+        if (line[i] == ' ')
+        {
+            line.erase(line.begin() + i);
+            i--;
+        }
+    }
+    std::istringstream iss(line);
+    std::string type;
+    std::getline(iss, type, '=');
+    if (type.compare(param) == 0)
+    {
+      iss >> t;
+      count = 1;
+      break;
+    }
+  }
+  if(count == 0)
+  {
+    dftefe::utils::throwException(false, "The parameter is not found: "+ param);
+  }
+  fstream.close();
+  rootCout << "Reading parameter -- " << param << " = "<<t<<std::endl;
+  return t;
+}
 
 // e- charge density
 double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
@@ -65,12 +94,12 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
   return ret;
 }
 
-// operator - nabla^2 in weak form
 // operand - V_H
 // memoryspace - HOST
-int main()
+int main(int argc, char** argv)
 {
-  std::cout<<" Entering test kohn sham dft classical \n";
+  // argv[1] = "H_Atom.in"
+  // argv[2] = "KSDFTClassical/param.in"
   //initialize MPI
 
   int mpiInitFlag = 0;
@@ -85,6 +114,9 @@ int main()
     // Get the rank of the process
   int rank;
   utils::mpi::MPICommRank(comm, &rank);
+
+  utils::ConditionalOStream rootCout(std::cout);
+  rootCout.setCondition(rank == 0);
 
     // Get nProcs
     int numProcs;
@@ -105,44 +137,57 @@ int main()
     std::make_shared<linearAlgebra::LinAlgOpContext
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
-  // Set up Triangulation
-  const unsigned int dim = 3;
-  double xmax = 24.0;
-  double ymax = 24.0;
-  double zmax = 24.0;
-  double rc = 0.6;
-  double hMin = 1e6;
-  size_type maxIter = 2e7;
-  double absoluteTol = 1e-10;
-  double relativeTol = 1e-12;
-  double divergenceTol = 1e10;
-  double refineradius = 3*rc;
-  unsigned int feDegree = 3;
-  unsigned int num1DGaussSize = 4;
-  unsigned int num1DGLLSize = 4;
+  rootCout<<" Entering test kohn sham dft classical \n";
 
-  double    smearingTemperature = 500.0;
-  double    fermiEnergyTolerance = 1e-10;
-  double    fracOccupancyTolerance = 1e-3;
-  double    eigenSolveResidualTolerance = 1e-3;
-  size_type chebyshevPolynomialDegree = 80;
-  size_type maxChebyshevFilterPass = 10;
-  size_type numWantedEigenvalues = 15;
-  size_type numElectrons = 1;
-  double nuclearCharge = -1.0;
+  char* dftefe_path = getenv("DFTEFE_PATH");
+  std::string sourceDir;
+  // if executes if a non null value is returned
+  // otherwise else executes
+  if (dftefe_path != NULL) 
+  {
+    sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+  }
+  else
+  {
+    dftefe::utils::throwException(false,
+                          "dftefe_path does not exist!");
+  }
+  std::string atomDataFile = argv[1];
+  std::string inputFileName = sourceDir + atomDataFile;
+  std::string paramDataFile = argv[2];
+  std::string parameterInputFileName = sourceDir + paramDataFile;
 
+  // Read parameters
+  double xmax = readParameter<double>(parameterInputFileName, "xmax", rootCout);
+  double ymax = readParameter<double>(parameterInputFileName, "ymax", rootCout);
+  double zmax = readParameter<double>(parameterInputFileName, "zmax", rootCout);
+  double radiusAtAtom = readParameter<double>(parameterInputFileName, "radiusAtAtom", rootCout);;
+  double meshSizeAtAtom = readParameter<double>(parameterInputFileName, "meshSizeAtAtom", rootCout);;
+  double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);;
+  double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);;
+  double rc = readParameter<double>(parameterInputFileName, "rc", rootCout);
+  unsigned int num1DGaussSize = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSize", rootCout);
+  unsigned int num1DGLLSize = readParameter<unsigned int>(parameterInputFileName, "num1DGLLSize", rootCout);
+  unsigned int feOrder = readParameter<unsigned int>(parameterInputFileName, "feOrder", rootCout);
+  double    smearingTemperature = readParameter<double>(parameterInputFileName, "smearingTemperature", rootCout);
+  double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
+  double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
+  double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
+  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
+  size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
+  size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
+  size_type numElectrons = readParameter<size_type>(parameterInputFileName, "numElectrons", rootCout);
+  double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
+  size_type maxSCFIter = readParameter<size_type>(parameterInputFileName, "maxSCFIter", rootCout);
+  size_type mixingHistory = readParameter<size_type>(parameterInputFileName, "mixingHistory", rootCout);
+  double mixingParameter = readParameter<double>(parameterInputFileName, "mixingParameter", rootCout);
+  bool isAdaptiveAndersonMixingParameter = readParameter<bool>(parameterInputFileName, "isAdaptiveAndersonMixingParameter", rootCout);
+  bool evaluateEnergyEverySCF = readParameter<bool>(parameterInputFileName, "evaluateEnergyEverySCF", rootCout);
+  const size_type dim = 3;
 
-  double scfDensityResidualNormTolerance = 1e-3;
-  size_type maxSCFIter = 40;
-  size_type mixingHistory = 10;
-  double mixingParameter = 0.2;
-  bool isAdaptiveAndersonMixingParameter = true;
-  bool evaluateEnergyEverySCF = true;
-  
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {15, 15, 15};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -150,6 +195,9 @@ int main()
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
+  /*
+  // Uniform mesh creation
+  std::vector<unsigned int>         subdivisions = {15, 15, 15};
   std::vector<double> origin(0);
   origin.resize(dim);
   for(unsigned int i = 0 ; i < dim ; i++)
@@ -162,22 +210,7 @@ int main()
                                                  isPeriodicFlags);
   triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
     triangulationBase->finalizeTriangulationConstruction();
-
-    char* dftefe_path = getenv("DFTEFE_PATH");
-    std::string sourceDir;
-    // if executes if a non null value is returned
-    // otherwise else executes
-    if (dftefe_path != NULL) 
-    {
-      sourceDir = (std::string)dftefe_path + "/test/ksdft/src/";
-    }
-    else
-    {
-      utils::throwException(false,
-                            "dftefe_path does not exist!");
-    }
-    std::string atomDataFile = "SingleAtomData.in";
-    std::string inputFileName = sourceDir + atomDataFile;
+  */
 
   std::fstream fstream;
   fstream.open(inputFileName, std::fstream::in);
@@ -187,79 +220,52 @@ int main()
     std::vector<double> coordinates;
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec;
+  std::vector<double> atomChargesVec(0);
   std::string symbol;
+  double atomicNumber;
   atomSymbolVec.resize(0);
   std::string line;
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
+      ss >> atomicNumber; 
       for(unsigned int i=0 ; i<dim ; i++){
           ss >> coordinates[i]; 
       }
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
+      atomChargesVec.push_back((-1.0)*atomicNumber);
   }
   utils::mpi::MPIBarrier(comm);
+  fstream.close();
 
-  std::vector<double> atomChargesVec(atomCoordinatesVec.size(), nuclearCharge);
+  // Generate mesh
+   std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
+
+  basis::GenerateMesh adaptiveMesh(atomCoordinatesVec, 
+                            domainVectors,
+                            radiusAtAtom,
+                            meshSizeAtAtom,
+                            radiusAroundAtom,
+                            meshSizeAroundAtom,
+                            isPeriodicFlags,
+                            *cellMapping,
+                            comm);
+
+  adaptiveMesh.createMesh(*triangulationBase); 
+
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
-
-  int flag = 1;
-  int mpiReducedFlag = 1;
-  bool radiusRefineFlag = true;
-  while(mpiReducedFlag)
-  {
-    flag = 0;
-    auto triaCellIter = triangulationBase->beginLocal();
-    for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
-    {
-      radiusRefineFlag = false;
-      (*triaCellIter)->clearRefineFlag();
-      utils::Point centerPoint(dim, 0.0); 
-      (*triaCellIter)->center(centerPoint);
-      for ( unsigned int i=0 ; i<atomCoordinatesVec.size() ; i++)
-      {
-        double dist = 0;
-        for (unsigned int j = 0 ; j < dim ; j++ )
-        {
-          dist += std::pow((centerPoint[j]-atomCoordinatesVec[i][j]),2);
-        }
-        dist = std::sqrt(dist);
-        if(dist < refineradius)
-          radiusRefineFlag = true;
-      }
-      if (radiusRefineFlag && (*triaCellIter)->diameter() > hMin)
-      {
-        (*triaCellIter)->setRefineFlag();
-        flag = 1;
-      }
-    }
-    triangulationBase->executeCoarseningAndRefinement();
-    triangulationBase->finalizeTriangulationConstruction();
-    // Mpi_allreduce that all the flags are 1 (mpi_max)
-    int err = utils::mpi::MPIAllreduce<Host>(
-      &flag,
-      &mpiReducedFlag,
-      1,
-      utils::mpi::MPIInt,
-      utils::mpi::MPIMax,
-      comm);
-    std::pair<bool, std::string> mpiIsSuccessAndMsg =
-      utils::mpi::MPIErrIsSuccessAndMsg(err);
-    utils::throwException(mpiIsSuccessAndMsg.first,
-                          "MPI Error:" + mpiIsSuccessAndMsg.second);
-  }
 
   // initialize the basis Manager
 
   std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> basisDofHandler =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feDegree, comm);
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrder, comm);
 
   std::map<global_size_type, utils::Point> dofCoords;
   basisDofHandler->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
-  std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
+  //std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
+  rootCout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
 
@@ -390,7 +396,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   (*basisManagerWaveFn,
                                                   *feBasisDataGLL,
                                                   linAlgOpContext);
-
+  rootCout << "Entering KohnSham DFT Class....\n\n";
   std::shared_ptr<ksdft::KohnShamDFT<double,
                                             double,
                                             double,

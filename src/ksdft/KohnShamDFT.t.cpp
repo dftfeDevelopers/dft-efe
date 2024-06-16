@@ -267,22 +267,23 @@ namespace dftefe
                                                          linAlgOpContext,
                                                          cellBlockSize);
 
-      d_hamitonianElec = std::make_shared<
-        ElectrostaticAllElectronFE<ValueTypeElectrostaticsBasis,
-                                   ValueTypeElectrostaticsCoeff,
-                                   ValueTypeWaveFunctionBasis,
-                                   memorySpace,
-                                   dim>>(atomCoordinates,
-                                         atomCharges,
-                                         smearedChargeRadius,
-                                         d_densityInQuadValues,
-                                         feBMTotalCharge,
-                                         feBDTotalChargeStiffnessMatrix,
-                                         feBDTotalChargeRhs,
-                                         feBDHamiltonian,
-                                         externalPotentialFunction,
-                                         linAlgOpContext,
-                                         cellBlockSize);
+      d_hamitonianElec =
+        std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                              ValueTypeElectrostaticsCoeff,
+                                              ValueTypeWaveFunctionBasis,
+                                              memorySpace,
+                                              dim>>(
+          atomCoordinates,
+          atomCharges,
+          smearedChargeRadius,
+          d_densityInQuadValues,
+          feBMTotalCharge,
+          feBDTotalChargeStiffnessMatrix,
+          feBDTotalChargeRhs,
+          feBDHamiltonian,
+          externalPotentialFunction,
+          linAlgOpContext,
+          cellBlockSize);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -476,24 +477,25 @@ namespace dftefe
                                                          linAlgOpContext,
                                                          cellBlockSize);
 
-      d_hamitonianElec = std::make_shared<
-        ElectrostaticAllElectronFE<ValueTypeElectrostaticsBasis,
-                                   ValueTypeElectrostaticsCoeff,
-                                   ValueTypeWaveFunctionBasis,
-                                   memorySpace,
-                                   dim>>(atomCoordinates,
-                                         atomCharges,
-                                         smearedChargeRadius,
-                                         d_densityInQuadValues,
-                                         feBMTotalCharge,
-                                         feBDTotalChargeStiffnessMatrix,
-                                         feBDTotalChargeRhs,
-                                         feBDNuclearChargeStiffnessMatrix,
-                                         feBDNuclearChargeRhs,
-                                         feBDHamiltonian,
-                                         externalPotentialFunction,
-                                         linAlgOpContext,
-                                         cellBlockSize);
+      d_hamitonianElec =
+        std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                              ValueTypeElectrostaticsCoeff,
+                                              ValueTypeWaveFunctionBasis,
+                                              memorySpace,
+                                              dim>>(
+          atomCoordinates,
+          atomCharges,
+          smearedChargeRadius,
+          d_densityInQuadValues,
+          feBMTotalCharge,
+          feBDTotalChargeStiffnessMatrix,
+          feBDTotalChargeRhs,
+          feBDNuclearChargeStiffnessMatrix,
+          feBDNuclearChargeRhs,
+          feBDHamiltonian,
+          externalPotentialFunction,
+          linAlgOpContext,
+          cellBlockSize);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -670,14 +672,22 @@ namespace dftefe
                                 *d_MContext,
                                 *d_MInvContext);
 
-          d_rootCout << err.msg << "\n";
-          d_rootCout << "*****************The EigenValues are: "
-                        "******************\n";
-          for (auto &i : d_kohnShamEnergies)
-            d_rootCout << i << ", ";
-          d_rootCout << "\n";
-
           d_occupation = d_ksEigSolve->getFractionalOccupancy();
+
+          std::vector<RealType> eigSolveResNorm =
+            d_ksEigSolve->getEigenSolveResidualNorm();
+
+          d_rootCout << err.msg << "\n";
+          d_rootCout << "*****************The CHFSI results are: "
+                        "******************\n";
+          d_rootCout << "Fermi Energy is : " << d_ksEigSolve->getFermiEnergy()
+                     << "\n";
+          d_rootCout
+            << "Kohn Sham Energy\t\tFractional Occupancy\t\tEigen Solve Residual Norm\n";
+          for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+            d_rootCout << d_kohnShamEnergies[i] << "\t\t" << d_occupation[i]
+                       << "\t\t" << eigSolveResNorm[i] << "\n";
+          d_rootCout << "\n";
 
           // compute output rho
           d_densCalc->computeRho(d_occupation,

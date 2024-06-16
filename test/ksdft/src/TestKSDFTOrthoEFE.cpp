@@ -25,7 +25,7 @@
 #include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/CGLinearSolver.h>
-#include <ksdft/ElectrostaticAllElectronFE.h>
+#include <ksdft/ElectrostaticLocalFE.h>
 #include <ksdft/KineticFE.h>
 #include <ksdft/ExchangeCorrelationFE.h>
 #include <ksdft/KohnShamOperatorContextFE.h>

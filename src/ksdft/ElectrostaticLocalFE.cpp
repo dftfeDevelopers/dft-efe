@@ -23,4 +23,4 @@
  * @author Avirup Sircar
  */
 
-#include <ksdft/ElectrostaticAllElectronFE.h>
+#include <ksdft/ElectrostaticLocalFE.h>

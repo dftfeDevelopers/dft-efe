@@ -27,7 +27,7 @@
 #define dftefeKohnShamDFT_h
 
 #include <variant>
-#include <ksdft/ElectrostaticAllElectronFE.h>
+#include <ksdft/ElectrostaticLocalFE.h>
 #include <ksdft/KineticFE.h>
 #include <ksdft/ExchangeCorrelationFE.h>
 #include <ksdft/KohnShamOperatorContextFE.h>
@@ -245,11 +245,11 @@ namespace dftefe
                                             memorySpace,
                                             dim>>
         d_hamitonianXC;
-      std::shared_ptr<ElectrostaticAllElectronFE<ValueTypeElectrostaticsBasis,
-                                                 ValueTypeElectrostaticsCoeff,
-                                                 ValueTypeWaveFunctionBasis,
-                                                 memorySpace,
-                                                 dim>>
+      std::shared_ptr<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                           ValueTypeElectrostaticsCoeff,
+                                           ValueTypeWaveFunctionBasis,
+                                           memorySpace,
+                                           dim>>
         d_hamitonianElec;
       std::shared_ptr<KineticFE<ValueTypeWaveFunctionBasis,
                                 ValueTypeWaveFunctionCoeff,

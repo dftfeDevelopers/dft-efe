@@ -305,7 +305,9 @@ namespace dftefe
         msg = retunValue.msg;
 
       // register end of CG
-      d_profiler.registerEnd(msg);
+      // --------- TODO : fix the profiler class------------
+      if (rank == 0)
+        d_profiler.registerEnd(msg);
 
       return retunValue;
     }

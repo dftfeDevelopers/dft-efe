@@ -58,6 +58,7 @@ namespace dftefe
       , d_fracOccupancyTolerance(fracOccupancyTolerance)
       , d_smearingTemperature(smearingTemperature)
       , d_fracOccupancy(d_numWantedEigenvalues)
+      , d_eigSolveResNorm(d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
     {
@@ -122,7 +123,6 @@ namespace dftefe
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         linAlgOpContext = kohnShamWaveFunctions.getLinAlgOpContext();
-      std::vector<double> eigenSolveResidual;
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
                                           memoryTransfer;
       linearAlgebra::EigenSolverError     returnValue;
@@ -270,12 +270,12 @@ namespace dftefe
                   residualEigenSolver.data(),
                   *linAlgOpContext);
 
-              eigenSolveResidual = residualEigenSolver.l2Norms();
+              d_eigSolveResNorm = residualEigenSolver.l2Norms();
               size_type numLevelsBelowFermiEnergyResidualConverged = 0;
               for (size_type i = 0; i < d_numWantedEigenvalues; i++)
                 {
                   if (d_fracOccupancy[i] > d_fracOccupancyTolerance &&
-                      eigenSolveResidual[i] <= d_eigenSolveResidualTolerance)
+                      d_eigSolveResNorm[i] <= d_eigenSolveResidualTolerance)
                     numLevelsBelowFermiEnergyResidualConverged += 1;
                 }
 
@@ -372,6 +372,22 @@ namespace dftefe
         d_isSolved,
         "Cannot call getFractionalOccupancy() before solving the eigenproblem.");
       return d_fracOccupancy;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    std::vector<typename linearAlgebra::HermitianIterativeEigenSolver<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace>::RealType>
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      getEigenSolveResidualNorm()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call getEigenSolveResidualNorm() before solving the eigenproblem.");
+      return d_eigSolveResNorm;
     }
 
   } // namespace ksdft

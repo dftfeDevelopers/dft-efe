@@ -10,7 +10,7 @@ set(DFT-EFE-KSDFT-SOURCES
 	FractionalOccupancyFunction.cpp
 	KohnShamOperatorContextFE.cpp
 	KineticFE.cpp
-	ElectrostaticAllElectronFE.cpp
+	ElectrostaticLocalFE.cpp
 	KohnShamEigenSolver.cpp
 	ExchangeCorrelationFE.cpp
 	DensityCalculator.cpp

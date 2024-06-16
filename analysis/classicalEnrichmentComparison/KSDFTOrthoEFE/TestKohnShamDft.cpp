@@ -4,8 +4,6 @@
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/CFEBasisDofHandlerDealii.h>
 #include <basis/CFEBasisDataStorageDealii.h>
-#include <basis/EFEBasisDofHandlerDealii.h>
-#include <basis/EFEBasisDataStorageDealii.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/CFEConstraintsLocalDealii.h>
 #include <basis/FEBasisManager.h>
@@ -30,24 +28,54 @@
 #include <ksdft/ExchangeCorrelationFE.h>
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
-#include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
+#include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
-#include <atoms/AtomSevereFunction.h>
-
-#include <deal.II/grid/tria.h>
-#include <deal.II/grid/grid_generator.h>
-#include <deal.II/dofs/dof_handler.h>
-#include <deal.II/fe/fe_q.h>
-#include <deal.II/fe/fe_values.h>
-#include <deal.II/base/quadrature_lib.h>
-#include <deal.II/fe/mapping_q1.h>
-#include <deal.II/dofs/dof_tools.h>
+#include <ksdft/KohnShamDFT.h>
+#include <basis/GenerateMesh.h>
+#include <utils/ConditionalOStream.h>
 
 #include <iostream>
 
 using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
+
+template<typename T>
+T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStream &rootCout)
+{
+  T t(0);
+  std::string line;
+  std::fstream fstream;
+  fstream.open(ParamFile, std::fstream::in);
+  int count = 0;
+  while (std::getline(fstream, line))
+  {
+    for (int i = 0; i < line.length(); i++)
+    {
+        if (line[i] == ' ')
+        {
+            line.erase(line.begin() + i);
+            i--;
+        }
+    }
+    std::istringstream iss(line);
+    std::string type;
+    std::getline(iss, type, '=');
+    if (type.compare(param) == 0)
+    {
+      iss >> t;
+      count = 1;
+      break;
+    }
+  }
+  if(count == 0)
+  {
+    dftefe::utils::throwException(false, "The parameter is not found: "+ param);
+  }
+  fstream.close();
+  rootCout << "Reading parameter -- " << param << " = "<<t<<std::endl;
+  return t;
+}
 
 // e- charge density
 double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
@@ -66,14 +94,13 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
   return ret;
 }
 
-
-// basisDofHandler for wave function
-// basisDofHandler for b_smear
-// single adaptive Quadrature with b_smear (highest) - same for Hamiltonian
-
-int main()
+// operand - V_H
+// memoryspace - HOST
+int main(int argc, char** argv)
 {
-  std::cout<<" Entering test kohn sham eigensolve ortho enrichment\n";
+  // argv[1] = "H_Atom.in"
+  // argv[2] = "KSDFTClassical/param.in"
+  // argv[3] = "H.xml"
   //initialize MPI
 
   int mpiInitFlag = 0;
@@ -88,6 +115,9 @@ int main()
     // Get the rank of the process
   int rank;
   utils::mpi::MPICommRank(comm, &rank);
+
+  utils::ConditionalOStream rootCout(std::cout);
+  rootCout.setCondition(rank == 0);
 
     // Get nProcs
     int numProcs;
@@ -108,36 +138,57 @@ int main()
     std::make_shared<linearAlgebra::LinAlgOpContext
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
-  // Set up Triangulation
-  const unsigned int dim = 3;
-  double xmax = 24.0;
-  double ymax = 24.0;
-  double zmax = 24.0;
-  double rc = 0.6;
-  double hMin = 1e6;
-  size_type maxIter = 2e7;
-  double absoluteTol = 1e-10;
-  double relativeTol = 1e-12;
-  double divergenceTol = 1e10;
-  double refineradius = 3*rc;
-  unsigned int feOrder = 3;
-  unsigned int num1DGaussSize = 4;
-  unsigned int num1DGllSize = 4;
+  rootCout<<" Entering test kohn sham dft classical \n";
 
-  double    smearingTemperature = 500.0;
-  double    fermiEnergyTolerance = 1e-10;
-  double    fracOccupancyTolerance = 1e-3;
-  double    eigenSolveResidualTolerance = 1e-3;
-  size_type chebyshevPolynomialDegree = 50;
-  size_type maxChebyshevFilterPass = 100;
-  size_type numWantedEigenvalues = 15;
-  size_type numElectrons = 1;
-  double nuclearCharge = -1.0;
-  
+  char* dftefe_path = getenv("DFTEFE_PATH");
+  std::string sourceDir;
+  // if executes if a non null value is returned
+  // otherwise else executes
+  if (dftefe_path != NULL) 
+  {
+    sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+  }
+  else
+  {
+    dftefe::utils::throwException(false,
+                          "dftefe_path does not exist!");
+  }
+  std::string atomDataFile = argv[1];
+  std::string inputFileName = sourceDir + atomDataFile;
+  std::string paramDataFile = argv[2];
+  std::string parameterInputFileName = sourceDir + paramDataFile;
+
+  // Read parameters
+  double xmax = readParameter<double>(parameterInputFileName, "xmax", rootCout);
+  double ymax = readParameter<double>(parameterInputFileName, "ymax", rootCout);
+  double zmax = readParameter<double>(parameterInputFileName, "zmax", rootCout);
+  double radiusAtAtom = readParameter<double>(parameterInputFileName, "radiusAtAtom", rootCout);;
+  double meshSizeAtAtom = readParameter<double>(parameterInputFileName, "meshSizeAtAtom", rootCout);;
+  double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);;
+  double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);;
+  double rc = readParameter<double>(parameterInputFileName, "rc", rootCout);
+  unsigned int num1DGaussSize = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSize", rootCout);
+  unsigned int num1DGLLSize = readParameter<unsigned int>(parameterInputFileName, "num1DGLLSize", rootCout);
+  unsigned int feOrder = readParameter<unsigned int>(parameterInputFileName, "feOrder", rootCout);
+  double    smearingTemperature = readParameter<double>(parameterInputFileName, "smearingTemperature", rootCout);
+  double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
+  double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
+  double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
+  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
+  size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
+  size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
+  size_type numElectrons = readParameter<size_type>(parameterInputFileName, "numElectrons", rootCout);
+  double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
+  size_type maxSCFIter = readParameter<size_type>(parameterInputFileName, "maxSCFIter", rootCout);
+  size_type mixingHistory = readParameter<size_type>(parameterInputFileName, "mixingHistory", rootCout);
+  double mixingParameter = readParameter<double>(parameterInputFileName, "mixingParameter", rootCout);
+  bool isAdaptiveAndersonMixingParameter = readParameter<bool>(parameterInputFileName, "isAdaptiveAndersonMixingParameter", rootCout);
+  bool evaluateEnergyEverySCF = readParameter<bool>(parameterInputFileName, "evaluateEnergyEverySCF", rootCout);
+  const size_type dim = 3;
+
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {15, 15, 15};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -145,6 +196,9 @@ int main()
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
+  /*
+  // Uniform mesh creation
+  std::vector<unsigned int>         subdivisions = {15, 15, 15};
   std::vector<double> origin(0);
   origin.resize(dim);
   for(unsigned int i = 0 ; i < dim ; i++)
@@ -155,112 +209,53 @@ int main()
   triangulationBase->createUniformParallelepiped(subdivisions,
                                                  domainVectors,
                                                  isPeriodicFlags);
-  triangulationBase->shiftTriangulation(utils::Point(origin));
+  triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
     triangulationBase->finalizeTriangulationConstruction();
-
-    char* dftefe_path = getenv("DFTEFE_PATH");
-    std::string sourceDir;
-    // if executes if a non null value is returned
-    // otherwise else executes
-    if (dftefe_path != NULL) 
-    {
-      sourceDir = (std::string)dftefe_path + "/test/ksdft/src/";
-    }
-    else
-    {
-      utils::throwException(false,
-                            "dftefe_path does not exist!");
-    }
-    std::string atomDataFile = "SingleAtomData.in";
-    std::string inputFileName = sourceDir + atomDataFile;
+  */
 
   std::fstream fstream;
   fstream.open(inputFileName, std::fstream::in);
   
-    // read the input file and create atomSymbolVec vector and atom coordinates vector.
-    std::vector<utils::Point> atomCoordinatesVec;
+  // read the input file and create atomsymbol vector and atom coordinates vector.
+  std::vector<utils::Point> atomCoordinatesVec(0,utils::Point(dim, 0.0));
     std::vector<double> coordinates;
-    coordinates.resize(dim,0.);
-    std::vector<std::string> atomSymbolVec;
-    std::string symbol;
-    atomSymbolVec.resize(0);
-    std::string line;
-    while (std::getline(fstream, line)){
-        std::stringstream ss(line);
-        ss >> symbol; 
-        for(unsigned int i=0 ; i<dim ; i++){
-            ss >> coordinates[i]; 
-        }
-        atomCoordinatesVec.push_back(coordinates);
-        atomSymbolVec.push_back(symbol);
-    }
-    utils::mpi::MPIBarrier(comm);
-        
-    std::map<std::string, std::string> atomSymbolToFilename;
-    for (auto i:atomSymbolVec )
-    {
-        atomSymbolToFilename[i] = sourceDir + i + ".xml";
-    }
-
-    std::vector<std::string> fieldNames{"vnuclear","orbital"};
-    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-    std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
-        std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
-                                                        fieldNames,
-                                                        metadataNames);
-
-    std::string vTotal = "vnuclear";
-    std::string orbital = "orbital";
-    double atomPartitionTolerance = 1e-6;
-
-    std::vector<double> atomChargesVec(atomCoordinatesVec.size(), nuclearCharge);
-    std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
-
-  int flag = 1;
-  int mpiReducedFlag = 1;
-  bool radiusRefineFlag = true;
-  while(mpiReducedFlag)
-  {
-    flag = 0;
-    auto triaCellIter = triangulationBase->beginLocal();
-    for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
-    {
-      radiusRefineFlag = false;
-      (*triaCellIter)->clearRefineFlag();
-      utils::Point centerPoint(dim, 0.0); 
-      (*triaCellIter)->center(centerPoint);
-      for ( unsigned int i=0 ; i<atomCoordinatesVec.size() ; i++)
-      {
-        double dist = 0;
-        for (unsigned int j = 0 ; j < dim ; j++ )
-        {
-          dist += std::pow((centerPoint[j]-atomCoordinatesVec[i][j]),2);
-        }
-        dist = std::sqrt(dist);
-        if(dist < refineradius)
-          radiusRefineFlag = true;
+  coordinates.resize(dim,0.);
+  std::vector<std::string> atomSymbolVec;
+  std::vector<double> atomChargesVec(0);
+  std::string symbol;
+  double atomicNumber;
+  atomSymbolVec.resize(0);
+  std::string line;
+  while (std::getline(fstream, line)){
+      std::stringstream ss(line);
+      ss >> symbol; 
+      ss >> atomicNumber; 
+      for(unsigned int i=0 ; i<dim ; i++){
+          ss >> coordinates[i]; 
       }
-      if (radiusRefineFlag && (*triaCellIter)->diameter() > hMin)
-      {
-        (*triaCellIter)->setRefineFlag();
-        flag = 1;
-      }
-    }
-    triangulationBase->executeCoarseningAndRefinement();
-    triangulationBase->finalizeTriangulationConstruction();
-    // Mpi_allreduce that all the flags are 1 (mpi_max)
-    int err = utils::mpi::MPIAllreduce<Host>(
-      &flag,
-      &mpiReducedFlag,
-      1,
-      utils::mpi::MPIInt,
-      utils::mpi::MPIMax,
-      comm);
-    std::pair<bool, std::string> mpiIsSuccessAndMsg =
-      utils::mpi::MPIErrIsSuccessAndMsg(err);
-    utils::throwException(mpiIsSuccessAndMsg.first,
-                          "MPI Error:" + mpiIsSuccessAndMsg.second);
+      atomCoordinatesVec.push_back(coordinates);
+      atomSymbolVec.push_back(symbol);
+      atomChargesVec.push_back((-1.0)*atomicNumber);
   }
+  utils::mpi::MPIBarrier(comm);
+  fstream.close();
+
+  // Generate mesh
+   std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
+
+  basis::GenerateMesh adaptiveMesh(atomCoordinatesVec, 
+                            domainVectors,
+                            radiusAtAtom,
+                            meshSizeAtAtom,
+                            radiusAroundAtom,
+                            meshSizeAroundAtom,
+                            isPeriodicFlags,
+                            *cellMapping,
+                            comm);
+
+  adaptiveMesh.createMesh(*triangulationBase); 
+
+  std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
   // Make orthogonalized EFE basis
 
@@ -308,7 +303,7 @@ int main()
 
     quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
 
-    quadrature::QuadratureRuleAttributes quadAttrGll(quadrature::QuadratureFamily::GLL,true,num1DGllSize);
+    quadrature::QuadratureRuleAttributes quadAttrGll(quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
 
     // Set up base quadrature rule for adaptive quadrature 
 
@@ -399,8 +394,8 @@ int main()
   std::map<global_size_type, utils::Point> dofCoords;
   basisDofHandlerTotalPot->getBasisCenters(dofCoords);
 
-  std::cout << "Locally owned cells : " <<basisDofHandlerTotalPot->nLocallyOwnedCells() << "\n";
-  std::cout << "Total Number of dofs : " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
+  //std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
+  rootCout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
 
@@ -440,150 +435,57 @@ int main()
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
                 efeBasisDataAdaptive->getQuadratureRuleContainer();
 
-    std::vector<double> atomChargesVecScaled(atomCoordinatesVec.size());
-  for(size_type i = 0 ; i < atomCoordinatesVec.size() ; i++)
-  {
-    std::vector<double> chargeDensity(1, 0.0), mpiReducedChargeDensity(1, 0.0);
-
-    const utils::SmearChargeDensityFunction smden(atomCoordinatesVec[i],
-                                                  atomChargesVec[i],
-                                                  smearedChargeRadiusVec[i]);
-
-      double charge = 0;
-      for(size_type i = 0 ; i < quadRuleContainer->nCells() ; i++)
-      {
-        std::vector<double> JxW = quadRuleContainer->getCellJxW(i);
-        size_type quadId = 0;
-        for (auto j : quadRuleContainer->getCellRealPoints(i))
-        {
-          charge += smden(j) * JxW[quadId];
-          quadId = quadId + 1;
-        }
-      }
-      chargeDensity[0] = charge;
-    
-    utils::mpi::MPIAllreduce<Host>(
-          chargeDensity.data(),
-          mpiReducedChargeDensity.data(),
-          chargeDensity.size(),
-          utils::mpi::MPIDouble,
-          utils::mpi::MPISum,
-          comm);
-
-    atomChargesVecScaled[i] *= 1/std::abs(mpiReducedChargeDensity[0]);
-  }
-
+  // scale the electronic charges
   quadRuleContainer =  
                 efeBasisDataOrbitalAdaptive->getQuadratureRuleContainer();
 
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
 
+  for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
+    {
+      for (size_type iComp = 0; iComp < 1; iComp++)
+        {
+          size_type             quadId = 0;
+          std::vector<double> a(
+            electronChargeDensity.nCellQuadraturePoints(iCell));
+          for (auto j : quadRuleContainer->getCellRealPoints(iCell))
+            {
+              a[quadId] = (double)rho1sOrbital(j, atomCoordinatesVec);
+              quadId    = quadId + 1;
+            }
+          double *b = a.data();
+          electronChargeDensity.template 
+            setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                        iComp,
+                                                        b);
+        }
+    }
+
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
-
+            
     std::shared_ptr<const basis::FEBasisManager
       <double, double, Host,dim>>
     basisManagerWaveFn = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
         (basisDofHandlerOrbital);
 
-    std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
-      std::make_shared<const utils::SmearChargePotentialFunction>(
-        atomCoordinatesVec,
-        atomChargesVecScaled,
-        smearedChargeRadiusVec);
+    // std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
+    //   std::make_shared<const utils::SmearChargePotentialFunction>(
+    //     atomCoordinatesVec,
+    //     atomChargesVec,
+    //     smearedChargeRadiusVec);
 
     std::shared_ptr<const basis::FEBasisManager
       <double, double, Host,dim>>
     basisManagerTotalPot = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
-        (basisDofHandlerTotalPot, smfunc);
-
-  std::shared_ptr<ksdft::KineticFE<double,
-                                    double,
-                                    Host,
-                                    dim>> 
-                                  hamitonianKin =
-    std::make_shared<ksdft::KineticFE<double,
-                                      double,
-                                      Host,
-                                      dim>>
-                                      (efeBasisDataAdaptive,
-                                      linAlgOpContext,
-                                      50);
+        (basisDofHandlerTotalPot, zeroFunction);
 
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
-
-  std::shared_ptr<ksdft::ElectrostaticLocalFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>> 
-                                            hamitonianElec =
-    std::make_shared<ksdft::ElectrostaticLocalFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>>
-                                                  (atomCoordinatesVec,
-                                                  atomChargesVec,
-                                                  smearedChargeRadiusVec,
-                                                  electronChargeDensity,
-                                                  basisManagerTotalPot,
-                                                  efeBasisDataAdaptive,
-                                                  efeBasisDataAdaptive,
-                                                  efeBasisDataAdaptive,
-                                                  *externalPotentialFunction,
-                                                  linAlgOpContext,
-                                                  50);
-                                                  
-
-    using HamiltonianPtrVariant =
-      std::variant<ksdft::Hamiltonian<float, Host> *,
-                    ksdft::Hamiltonian<double, Host> *,
-                    ksdft::Hamiltonian<std::complex<float>, Host> *,
-                    ksdft::Hamiltonian<std::complex<double>, Host> *>;
-
-  std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{hamitonianKin.get(), hamitonianElec.get()};
-  // form the kohn sham operator
-  std::shared_ptr<linearAlgebra::OperatorContext<double,
-                                                  double,
-                                                  Host>> 
-                                            hamitonianOperator =
-    std::make_shared<ksdft::KohnShamOperatorContextFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>>
-                                                  (*basisManagerWaveFn,
-                                                  hamiltonianComponentsVec,
-                                                  *linAlgOpContext,
-                                                  50);
-
-  // call the eigensolver
-
-  linearAlgebra::MultiVector<double, Host> waveFunctionSubspaceGuess(basisManagerWaveFn->getMPIPatternP2P(),
-                                                                     linAlgOpContext,
-                                                                     numWantedEigenvalues,
-                                                                     0.0,
-                                                                     1.0);    
-
-  linearAlgebra::Vector<double, Host> lanczosGuess(basisManagerWaveFn->getMPIPatternP2P(),
-                                                    linAlgOpContext,
-                                                    0.0,
-                                                    1.0); 
-
-  lanczosGuess.updateGhostValues();
-  basisManagerWaveFn->getConstraints().distributeParentToChild(lanczosGuess, 1);
-
-  waveFunctionSubspaceGuess.updateGhostValues();
-  basisManagerWaveFn->getConstraints().distributeParentToChild(waveFunctionSubspaceGuess, numWantedEigenvalues);
-
-  std::vector<double> kohnShamEnergies(numWantedEigenvalues, 0.0);
-  linearAlgebra::MultiVector<double, Host> kohnShamWaveFunctions(waveFunctionSubspaceGuess, 0.0);
 
   // Create OperatorContext for Basisoverlap
 
@@ -629,96 +531,52 @@ int main()
                                                     *efeBasisDataOrbitalAdaptive,
                                                     linAlgOpContext);                                                  
 
-  // form the kohn sham operator
-  std::shared_ptr<ksdft::KohnShamEigenSolver<double,
-                                              double,
-                                              Host>> 
-                                            ksEigSolve =
-    std::make_shared<ksdft::KohnShamEigenSolver<double,
-                                                double,
-                                                Host>>
-                                                (numElectrons,
-                                                smearingTemperature,
-                                                fermiEnergyTolerance,
-                                                fracOccupancyTolerance,
-                                                eigenSolveResidualTolerance,
-                                                chebyshevPolynomialDegree,
-                                                maxChebyshevFilterPass,
-                                                waveFunctionSubspaceGuess,
-                                                lanczosGuess,
-                                                50,
-                                                *MContextForInv,
-                                                *MInvContext);
+  rootCout << "Entering KohnSham DFT Class....\n\n";
 
-  linearAlgebra::EigenSolverError err = ksEigSolve->solve(*hamitonianOperator, 
-                    kohnShamEnergies, 
-                    kohnShamWaveFunctions,
-                    true,
-                    *MContext,
-                    *MInvContext);       
+  std::shared_ptr<ksdft::KohnShamDFT<double,
+                                            double,
+                                            double,
+                                            double,
+                                            Host,
+                                            dim>> dftefeSolve =
+  std::make_shared<ksdft::KohnShamDFT<double,
+                                        double,
+                                        double,
+                                        double,
+                                        Host,
+                                        dim>>(
+                                        atomCoordinatesVec,
+                                        atomChargesVec,
+                                        smearedChargeRadiusVec,
+                                        numElectrons,
+                                        numWantedEigenvalues,
+                                        smearingTemperature,
+                                        fermiEnergyTolerance,
+                                        fracOccupancyTolerance,
+                                        eigenSolveResidualTolerance,
+                                        scfDensityResidualNormTolerance,
+                                        chebyshevPolynomialDegree,
+                                        maxChebyshevFilterPass,
+                                        maxSCFIter,
+                                        evaluateEnergyEverySCF,
+                                        mixingHistory,
+                                        mixingParameter,
+                                        isAdaptiveAndersonMixingParameter,
+                                        electronChargeDensity,
+                                        basisManagerTotalPot,
+                                        basisManagerWaveFn,
+                                        efeBasisDataAdaptive,
+                                        efeBasisDataAdaptive,
+                                        efeBasisDataAdaptive,                                                                                  
+                                        *externalPotentialFunction,
+                                        linAlgOpContext,
+                                        50,
+                                        50,
+                                        *MContextForInv,
+                                        *MContext,
+                                        *MInvContext);
 
-  for(auto &i : kohnShamEnergies)
-    std::cout <<  i <<", ";     
-  std::cout << "\n";     
-
-  std::cout << err.msg << "\n";      
-
-  ksdft::DensityCalculator<double, double, Host, dim>
-                              densCalc(efeBasisDataOrbitalAdaptive,
-                              *basisManagerWaveFn,
-                              linAlgOpContext,
-                              50,
-                              4);
-
-  quadrature::QuadratureValuesContainer<double, Host>
-                  rho(quadRuleContainer, 1);
-
-  std::vector<double> occupation = ksEigSolve->getFractionalOccupancy();
-  densCalc.computeRho(occupation, kohnShamWaveFunctions, rho);
-  std::vector<double> intRho(2);
-  for (size_type iCell = 0; iCell < rho.nCells(); iCell++)
-    {
-      const std::vector<double> JxW = quadRuleContainer->getCellJxW(iCell);
-      std::vector<double> a(quadRuleContainer->nCellQuadraturePoints(iCell));
-      const std::vector<dftefe::utils::Point> point = quadRuleContainer->getCellRealPoints(iCell);
-      rho.getCellQuadValues<Host>(iCell, 0, a.data());
-      for (size_type i = 0; i < a.size(); i++)
-      {
-        intRho[0] += std::pow((a[i] - rho1sOrbital(point[i], atomCoordinatesVec)),2) * JxW[i];
-        intRho[1] += std::pow(rho1sOrbital(point[i], atomCoordinatesVec),2) * JxW[i];
-      }
-    }
-
-  int mpierr = utils::mpi::MPIAllreduce<Host>(
-    utils::mpi::MPIInPlace,
-    intRho.data(),
-    intRho.size(),
-    utils::mpi::Types<double>::getMPIDatatype(),
-    utils::mpi::MPISum,
-    comm);
-
-  std::cout << "Absolute L2 norm rho : "<< intRho[0] << "Relative L2 norm rho : "<<intRho[0]/intRho[1]<<"\n";
-
-  hamitonianKin->evalEnergy(occupation, *basisManagerWaveFn, kohnShamWaveFunctions, 4);
-
-  std::cout << "kin energy: "<<hamitonianKin->getEnergy() << "\n";
-
-  hamitonianElec->evalEnergy(); 
-  double elecEnergy = hamitonianElec->getEnergy();
-  std::cout << "elec energy: " << elecEnergy << "\n";
-
-  // calculate band energy
-  double bandEnergy = 0;
-  for(size_type i = 0 ; i < occupation.size(); i++)
-  {
-    bandEnergy += 2 * occupation[i] * kohnShamEnergies[i];
-  }
-
-  std::cout << "band energy: "<< bandEnergy << "\n";
-
-  double totalEnergy = bandEnergy - elecEnergy;
-
-  std::cout << "Total Energy: " << totalEnergy << "\n";       
+  dftefeSolve->solve();                                      
 
   //gracefully end MPI
 
