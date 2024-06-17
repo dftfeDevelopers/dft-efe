@@ -182,8 +182,10 @@ namespace dftefe
       void
       evalEnergy();
 
+      /*
       RealType
       getTotalChargePotentialTimesRho() const;
+      */
 
       RealType
       getEnergy() const override;
@@ -209,6 +211,8 @@ namespace dftefe
       const std::vector<double>               d_smearedChargeRadius;
       RealType                                d_energy;
       const utils::ScalarSpatialFunctionReal &d_externalPotentialFunction;
+      linearAlgebra::MultiVector<ValueType, memorySpace>
+        *d_totalChargePotential;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_totalChargeDensity;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
@@ -218,7 +222,11 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_totalAuxChargePotentialQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_totalAuxChargePotAtbSmearQuad;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_nuclearCorrectionPotQuad;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_nuclearCorrectionPotAtRhoQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_totalChargePotentialQuad;
       std::vector<linearAlgebra::MultiVector<ValueType, memorySpace> *>

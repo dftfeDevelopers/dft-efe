@@ -43,7 +43,10 @@ namespace dftefe
                                                     dim>>      feBasisManager,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-          feBasisDataStorage)
+          feBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type cellBlockSize)
       {
         const size_type numLocallyOwnedCells =
           feBasisManager->nLocallyOwnedCells();
@@ -54,9 +57,31 @@ namespace dftefe
         auto itCellLocalIdsBegin =
           feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
-        // access cell-wise discrete Laplace operator
-        auto gradNiGradNjInAllCells =
-          feBasisDataStorage->getBasisGradNiGradNjInAllCells();
+        const basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
+                                       memorySpace,
+                                       dim>
+          feBasisOp(feBasisDataStorage, cellBlockSize);
+
+        size_type cellWiseDataSize = 0;
+        for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+          {
+            size_type x = feBasisManager->nLocallyOwnedCellDofs(iCell);
+            cellWiseDataSize += x * x;
+          }
+
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          gradNiGradNjInAllCells(cellWiseDataSize, (ValueTypeOperator)0);
+
+        feBasisOp.computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
+                                    basis::realspace::VectorMathOp::DOT,
+                                    basis::realspace::LinearLocalOp::GRAD,
+                                    gradNiGradNjInAllCells,
+                                    *linAlgOpContext);
+
+        // // access cell-wise discrete Laplace operator
+        // auto gradNiGradNjInAllCells =
+        //   feBasisDataStorage->getBasisGradNiGradNjInAllCells();
 
         std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
                                                            0);
@@ -193,7 +218,8 @@ namespace dftefe
                                                               dim>>(
         *d_feBasisManagerHomo,
         *d_feBasisManagerHomo,
-        *feBasisDataStorageStiffnessMatrix,
+        feBasisDataStorageStiffnessMatrix,
+        linAlgOpContext,
         maxCellTimesNumVecs); // solving the AX = b
 
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
@@ -206,7 +232,8 @@ namespace dftefe
                                                     dim>>(
             *d_feBasisManagerField,
             *d_feBasisManagerHomo,
-            *feBasisDataStorageStiffnessMatrix,
+            feBasisDataStorageStiffnessMatrix,
+            linAlgOpContext,
             maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
@@ -218,7 +245,9 @@ namespace dftefe
             getDiagonal<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
               diagonal,
               d_feBasisManagerHomo,
-              feBasisDataStorageStiffnessMatrix);
+              feBasisDataStorageStiffnessMatrix,
+              linAlgOpContext,
+              maxCellTimesNumVecs);
 
 
           d_feBasisManagerHomo->getConstraints().setConstrainedNodes(diagonal,

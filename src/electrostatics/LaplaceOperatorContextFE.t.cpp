@@ -275,18 +275,49 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManagerY,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             feBasisDataStorage,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          feBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
         const size_type maxCellTimesNumVecs)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_feBasisDataStorage(&feBasisDataStorage)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {
       utils::throwException(
         &(feBasisManagerX.getBasisDofHandler()) ==
           &(feBasisManagerY.getBasisDofHandler()),
         "feBasisManager of X and Y vectors are not from same basisDofhandler");
+
+      // TODO: ------------------Change later------------------------
+      const size_type cellBlockSize = d_maxCellTimesNumVecs;
+
+      basis::
+        FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+          feBasisOp(feBasisDataStorage, cellBlockSize);
+
+      const size_type numLocallyOwnedCells =
+        d_feBasisManagerX->nLocallyOwnedCells();
+
+      size_type cellWiseDataSize = 0;
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+        {
+          size_type x = feBasisManagerX.nLocallyOwnedCellDofs(iCell);
+          cellWiseDataSize += x * x;
+        }
+
+      d_gradNiGradNjInAllCells.resize(cellWiseDataSize, (ValueTypeOperator)0);
+
+      feBasisOp.computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
+                                  basis::realspace::VectorMathOp::DOT,
+                                  basis::realspace::LinearLocalOp::GRAD,
+                                  d_gradNiGradNjInAllCells,
+                                  *linAlgOpContext);
+
+      // access cell-wise discrete Laplace operator
+      // auto d_gradNiGradNjInAllCells =
+      //   feBasisDataStorage->getBasisGradNiGradNjInAllCells();
     }
 
     template <typename ValueTypeOperator,
@@ -336,10 +367,6 @@ namespace dftefe
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
-      // access cell-wise discrete Laplace operator
-      auto gradNiGradNjInAllCells =
-        d_feBasisDataStorage->getBasisGradNiGradNjInAllCells();
-
       const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
       Y.setValue(0.0);
 
@@ -348,7 +375,7 @@ namespace dftefe
       // (A = discrete Laplace operator)
       //
       LaplaceOperatorContextFEInternal::computeAxCellWiseLocal(
-        gradNiGradNjInAllCells,
+        d_gradNiGradNjInAllCells,
         X.begin(),
         Y.begin(),
         numVecs,

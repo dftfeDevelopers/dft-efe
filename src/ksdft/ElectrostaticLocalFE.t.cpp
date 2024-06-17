@@ -328,6 +328,21 @@ namespace dftefe
           delete d_nuclearCorrectionPotQuad;
           d_nuclearCorrectionPotQuad = nullptr;
         }
+      if (d_totalAuxChargePotAtbSmearQuad != nullptr)
+        {
+          delete d_totalAuxChargePotAtbSmearQuad;
+          d_totalAuxChargePotAtbSmearQuad = nullptr;
+        }
+      if (d_nuclearCorrectionPotAtRhoQuad != nullptr)
+        {
+          delete d_nuclearCorrectionPotAtRhoQuad;
+          d_nuclearCorrectionPotAtRhoQuad = nullptr;
+        }
+      if (d_totalChargePotential != nullptr)
+        {
+          delete d_totalChargePotential;
+          d_totalChargePotential = nullptr;
+        }
       if (d_totalChargePotentialQuad != nullptr)
         {
           delete d_totalChargePotentialQuad;
@@ -425,6 +440,21 @@ namespace dftefe
       d_nuclearCorrectionPotQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
+
+      d_totalAuxChargePotAtbSmearQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainer, d_numComponents);
+
+      d_nuclearCorrectionPotAtRhoQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainer, d_numComponents);
+
+      // Init the phi_el multivector
+      d_totalChargePotential =
+        new linearAlgebra::MultiVector<ValueType, memorySpace>(
+          d_feBMTotalCharge->getMPIPatternP2P(),
+          d_linAlgOpContext,
+          d_numComponents);
 
       // get the input quadraturevaluescontainer for poisson solve
       d_nuclearChargesDensity =
@@ -529,6 +559,59 @@ namespace dftefe
                       totalExternalPotentialQuad,
                       *d_nuclearCorrectionPotQuad,
                       *d_linAlgOpContext);
+
+      // Do this for energy evaluation with b+rho quad
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        nuclearChargePotentialAtRhoQuad(quadRuleContainer, d_numComponents);
+
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        totalNuclearChargePotentialAtRhoQuad(quadRuleContainer,
+                                             d_numComponents);
+
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        totalExternalPotentialAtRhoQuad(quadRuleContainer, d_numComponents);
+
+      for (size_type iCell = 0; iCell < quadRuleContainer->nCells(); iCell++)
+        {
+          for (size_type iComp = 0; iComp < d_numComponents; iComp++)
+            {
+              std::vector<ValueType> a(
+                quadRuleContainer->nCellQuadraturePoints(iCell), 0);
+              size_type quadId = 0;
+
+              for (auto j : quadRuleContainer->getCellRealPoints(iCell))
+                {
+                  a[quadId] = (ValueType)(d_externalPotentialFunction)(j);
+                  quadId    = quadId + 1;
+                }
+              ValueType *b = a.data();
+              totalExternalPotentialAtRhoQuad
+                .template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                      iComp,
+                                                                      b);
+            }
+        }
+
+      for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+        {
+          d_feBasisOp->interpolate(*d_nuclearChargesPotential[iAtom],
+                                   *d_feBMNuclearCharge[iAtom],
+                                   nuclearChargePotentialAtRhoQuad);
+
+          quadrature::add((ValueType)1.0,
+                          nuclearChargePotentialAtRhoQuad,
+                          (ValueType)1.0,
+                          totalNuclearChargePotentialAtRhoQuad,
+                          totalNuclearChargePotentialAtRhoQuad,
+                          *d_linAlgOpContext);
+        }
+
+      quadrature::add((ValueType)-1.0,
+                      totalNuclearChargePotentialAtRhoQuad,
+                      (ValueType)1.0,
+                      totalExternalPotentialAtRhoQuad,
+                      *d_nuclearCorrectionPotAtRhoQuad,
+                      *d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -609,6 +692,21 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
+      d_totalAuxChargePotAtbSmearQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainer, d_numComponents);
+
+      d_nuclearCorrectionPotAtRhoQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainer, d_numComponents);
+
+      // Init the phi_el multivector
+      d_totalChargePotential =
+        new linearAlgebra::MultiVector<ValueType, memorySpace>(
+          d_feBMTotalCharge->getMPIPatternP2P(),
+          d_linAlgOpContext,
+          d_numComponents);
+
       const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
                                                      d_atomCharges,
                                                      d_smearedChargeRadius);
@@ -678,6 +776,28 @@ namespace dftefe
                                                                        b);
             }
         }
+
+      for (size_type iCell = 0; iCell < quadRuleContainer->nCells(); iCell++)
+        {
+          for (size_type iComp = 0; iComp < d_numComponents; iComp++)
+            {
+              std::vector<ValueType> a(
+                quadRuleContainer->nCellQuadraturePoints(iCell), 0);
+              size_type quadId = 0;
+
+              for (auto j : quadRuleContainer->getCellRealPoints(iCell))
+                {
+                  a[quadId] = (ValueType)(d_externalPotentialFunction)(j) -
+                              (ValueType)(smfuncPot)(j);
+                  quadId = quadId + 1;
+                }
+              ValueType *b = a.data();
+              d_nuclearCorrectionPotAtRhoQuad
+                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                       iComp,
+                                                                       b);
+            }
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -705,12 +825,6 @@ namespace dftefe
       /*---- solve poisson problem for b+rho system ---*/
 
       // add nuclear and electron charge densities
-
-      // Init the phi_el multivector
-      linearAlgebra::MultiVector<ValueType, memorySpace> totalChargePotential(
-        d_feBMTotalCharge->getMPIPatternP2P(),
-        d_linAlgOpContext,
-        d_numComponents);
 
       quadrature::add((RealType)1.0,
                       *d_nuclearChargesDensity,
@@ -758,9 +872,9 @@ namespace dftefe
 
       CGSolve->solve(*linearSolverFunction);
 
-      linearSolverFunction->getSolution(totalChargePotential);
+      linearSolverFunction->getSolution(*d_totalChargePotential);
 
-      d_feBasisOpHamiltonian->interpolate(totalChargePotential,
+      d_feBasisOpHamiltonian->interpolate(*d_totalChargePotential,
                                           *d_feBMTotalCharge,
                                           *d_totalAuxChargePotentialQuad);
     }
@@ -956,6 +1070,9 @@ namespace dftefe
       const size_type numLocallyOwnedCells =
         d_feBMTotalCharge->nLocallyOwnedCells();
 
+      d_feBasisOp->interpolate(*d_totalChargePotential,
+                               *d_feBMTotalCharge,
+                               *d_totalAuxChargePotAtbSmearQuad);
 
       quadrature::add((RealType)1.0,
                       *d_nuclearChargesDensity,
@@ -970,7 +1087,7 @@ namespace dftefe
           ValueTypeBasisCoeff,
           ValueTypeWaveFnBasisData,
           memorySpace,
-          dim>(*d_totalAuxChargePotentialQuad,
+          dim>(*d_totalAuxChargePotAtbSmearQuad,
                *d_totalChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
@@ -1091,7 +1208,7 @@ namespace dftefe
           ValueTypeBasisCoeff,
           ValueTypeWaveFnBasisData,
           memorySpace,
-          dim>(*d_nuclearCorrectionPotQuad,
+          dim>(*d_nuclearCorrectionPotAtRhoQuad,
                *d_electronChargeDensity,
                jxwStorage,
                numLocallyOwnedCells,
@@ -1103,6 +1220,7 @@ namespace dftefe
       d_energy = totalEnergy - selfEnergy + correctionEnergy;
     }
 
+    /**
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
@@ -1141,6 +1259,7 @@ namespace dftefe
         totalChargePotentialTimesRhoVec[0];
       return totalChargePotentialTimesRho;
     }
+    **/
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,

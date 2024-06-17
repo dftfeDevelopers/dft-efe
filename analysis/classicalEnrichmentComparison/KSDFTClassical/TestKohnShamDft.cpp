@@ -185,6 +185,9 @@ int main(int argc, char** argv)
   bool evaluateEnergyEverySCF = readParameter<bool>(parameterInputFileName, "evaluateEnergyEverySCF", rootCout);
   const size_type dim = 3;
 
+  unsigned int num1DGaussSizeVCorrecPlusPhi = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeVCorrecPlusPhi", rootCout);
+  bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
+
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
@@ -276,7 +279,7 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up the FE Basis Data Storage
@@ -397,52 +400,150 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   *feBasisDataGLL,
                                                   linAlgOpContext);
   rootCout << "Entering KohnSham DFT Class....\n\n";
-  std::shared_ptr<ksdft::KohnShamDFT<double,
-                                            double,
-                                            double,
-                                            double,
-                                            Host,
-                                            dim>> dftefeSolve =
-  std::make_shared<ksdft::KohnShamDFT<double,
+
+  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = feBasisData;
+  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = feBasisData;
+  
+  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBasisData;
+  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBasisData;
+
+  quadrature::QuadratureRuleAttributes quadAttrVCorrecPlusPhi(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSizeVCorrecPlusPhi);
+
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = 
+    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
+      (basisDofHandler, quadAttrVCorrecPlusPhi, basisAttrMap);
+
+  // evaluate basis data
+  feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrVCorrecPlusPhi, basisAttrMap);
+
+  if(isNumericalNuclearSolve)
+  {
+
+    unsigned int num1DGaussSizeSmearNucl = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeSmearNucl", rootCout);
+    quadrature::QuadratureRuleAttributes quadAttrSmearNucl(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSizeSmearNucl);
+
+    basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+    basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+    // Set up the FE Basis Data Storage
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs =
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
+        (basisDofHandler, quadAttrSmearNucl, basisAttrMap);
+
+    // evaluate basis data
+    feBDNuclearChargeRhs->evaluateBasisData(quadAttrSmearNucl, basisAttrMap);
+
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBasisData;
+
+    std::shared_ptr<ksdft::KohnShamDFT<double,
                                         double,
                                         double,
                                         double,
                                         Host,
-                                        dim>>(
-                                        atomCoordinatesVec,
-                                        atomChargesVec,
-                                        smearedChargeRadiusVec,
-                                        numElectrons,
-                                        numWantedEigenvalues,
-                                        smearingTemperature,
-                                        fermiEnergyTolerance,
-                                        fracOccupancyTolerance,
-                                        eigenSolveResidualTolerance,
-                                        scfDensityResidualNormTolerance,
-                                        chebyshevPolynomialDegree,
-                                        maxChebyshevFilterPass,
-                                        maxSCFIter,
-                                        evaluateEnergyEverySCF,
-                                        mixingHistory,
-                                        mixingParameter,
-                                        isAdaptiveAndersonMixingParameter,
-                                        electronChargeDensity,
-                                        basisManagerTotalPot,
-                                        basisManagerWaveFn,
-                                        feBasisData,
-                                        feBasisData,   
-                                        feBasisData,
-                                        feBasisData, 
-                                        feBasisData,                                                                                    
-                                        *externalPotentialFunction,
-                                        linAlgOpContext,
-                                        50,
-                                        50,
-                                        *MContextForInv,
-                                        *MContext,
-                                        *MInvContext);
+                                        dim>> dftefeSolve =
+    std::make_shared<ksdft::KohnShamDFT<double,
+                                          double,
+                                          double,
+                                          double,
+                                          Host,
+                                          dim>>(
+                                          atomCoordinatesVec,
+                                          atomChargesVec,
+                                          smearedChargeRadiusVec,
+                                          numElectrons,
+                                          numWantedEigenvalues,
+                                          smearingTemperature,
+                                          fermiEnergyTolerance,
+                                          fracOccupancyTolerance,
+                                          eigenSolveResidualTolerance,
+                                          scfDensityResidualNormTolerance,
+                                          chebyshevPolynomialDegree,
+                                          maxChebyshevFilterPass,
+                                          maxSCFIter,
+                                          evaluateEnergyEverySCF,
+                                          mixingHistory,
+                                          mixingParameter,
+                                          isAdaptiveAndersonMixingParameter,
+                                          electronChargeDensity,
+                                          basisManagerTotalPot,
+                                          basisManagerWaveFn,
+                                          feBDTotalChargeStiffnessMatrix,
+                                          feBDTotalChargeRhs,   
+                                          feBDNuclearChargeStiffnessMatrix,
+                                          feBDNuclearChargeRhs, 
+                                          feBDKineticHamiltonian,     
+                                          feBDElectrostaticsHamiltonian, 
+                                          feBDEXCHamiltonian,                                                                                
+                                          *externalPotentialFunction,
+                                          linAlgOpContext,
+                                          50,
+                                          50,
+                                          *MContextForInv,
+                                          *MContext,
+                                          *MInvContext);
 
-  dftefeSolve->solve();                                      
+    dftefeSolve->solve();                                            
+  }
+  else
+  {
+    std::shared_ptr<ksdft::KohnShamDFT<double,
+                                        double,
+                                        double,
+                                        double,
+                                        Host,
+                                        dim>> dftefeSolve =
+    std::make_shared<ksdft::KohnShamDFT<double,
+                                          double,
+                                          double,
+                                          double,
+                                          Host,
+                                          dim>>(
+                                          atomCoordinatesVec,
+                                          atomChargesVec,
+                                          smearedChargeRadiusVec,
+                                          numElectrons,
+                                          numWantedEigenvalues,
+                                          smearingTemperature,
+                                          fermiEnergyTolerance,
+                                          fracOccupancyTolerance,
+                                          eigenSolveResidualTolerance,
+                                          scfDensityResidualNormTolerance,
+                                          chebyshevPolynomialDegree,
+                                          maxChebyshevFilterPass,
+                                          maxSCFIter,
+                                          evaluateEnergyEverySCF,
+                                          mixingHistory,
+                                          mixingParameter,
+                                          isAdaptiveAndersonMixingParameter,
+                                          electronChargeDensity,
+                                          basisManagerTotalPot,
+                                          basisManagerWaveFn,
+                                          feBDTotalChargeStiffnessMatrix,
+                                          feBDTotalChargeRhs,
+                                          feBDKineticHamiltonian,     
+                                          feBDElectrostaticsHamiltonian, 
+                                          feBDEXCHamiltonian,                                                                                
+                                          *externalPotentialFunction,
+                                          linAlgOpContext,
+                                          50,
+                                          50,
+                                          *MContextForInv,
+                                          *MContext,
+                                          *MInvContext);
+
+    dftefeSolve->solve();                                           
+  }
 
   //gracefully end MPI
 

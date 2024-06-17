@@ -1,7 +1,7 @@
 xmax = 24.    
 ymax = 24.
 zmax = 24.
-radiusAtAtom = 1.0
+radiusAtAtom = 0
 meshSizeAtAtom = 0.1
 radiusAroundAtom = 2.0
 meshSizeAroundAtom = 0.5
@@ -23,3 +23,6 @@ mixingHistory = 10
 mixingParameter = 0.2
 isAdaptiveAndersonMixingParameter = 1
 evaluateEnergyEverySCF = 1
+num1DGaussSizeVCorrecPlusPhi = 6
+isNumericalNuclearSolve = 1
+num1DGaussSizeSmearNucl = 6

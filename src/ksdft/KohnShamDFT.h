@@ -106,7 +106,7 @@ namespace dftefe
                                                     ValueTypeWaveFunctionBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
-        /* Field data storages */
+        /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>>
@@ -114,9 +114,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>> feBDTotalChargeRhs,
+        /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDHamiltonian,
+                                          memorySpace>> feBDKineticHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDElectrostaticsHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         /* linAgOperations Context*/
@@ -175,7 +183,7 @@ namespace dftefe
                                                     ValueTypeWaveFunctionBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
-        /* Field data storages */
+        /* Field data storages poisson solves */
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>>
@@ -190,9 +198,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>> feBDNuclearChargeRhs,
+        /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDHamiltonian,
+                                          memorySpace>> feBDKineticHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDElectrostaticsHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         /* linAgOperations Context*/

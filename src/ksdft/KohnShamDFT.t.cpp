@@ -189,7 +189,14 @@ namespace dftefe
                                           memorySpace>> feBDTotalChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDHamiltonian,
+                                          memorySpace>> feBDKineticHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDElectrostaticsHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDEXCHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
@@ -234,17 +241,22 @@ namespace dftefe
                             "Electron density should have only one component.");
 
       utils::throwException(
-        feBDHamiltonian->getQuadratureRuleContainer() ==
+        feBDEXCHamiltonian->getQuadratureRuleContainer() ==
           electronChargeDensityInput.getQuadratureRuleContainer(),
-        "The QuadratureRuleContainer for feBDHamiltonian and electronChargeDensity should be same.");
+        "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
+
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+        quadRuleContainerRho =
+          electronChargeDensityInput.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
       //************* CHANGE THIS **********************
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace> memTransfer;
-      auto jxwData = feBDHamiltonian->getJxWInAllCells();
+      utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
+           memTransfer;
+      auto jxwData = quadRuleContainerRho->getJxW();
       d_jxwDataHost.resize(jxwData.size());
       memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
 
@@ -263,7 +275,7 @@ namespace dftefe
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
-                                                   dim>>(feBDHamiltonian,
+                                                   dim>>(feBDKineticHamiltonian,
                                                          linAlgOpContext,
                                                          cellBlockSize);
 
@@ -280,7 +292,7 @@ namespace dftefe
           feBMTotalCharge,
           feBDTotalChargeStiffnessMatrix,
           feBDTotalChargeRhs,
-          feBDHamiltonian,
+          feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
           cellBlockSize);
@@ -289,7 +301,7 @@ namespace dftefe
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
                                                dim>>(d_densityInQuadValues,
-                                                     feBDHamiltonian,
+                                                     feBDEXCHamiltonian,
                                                      linAlgOpContext,
                                                      cellBlockSize);
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
@@ -335,7 +347,7 @@ namespace dftefe
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
                                            ValueTypeWaveFunctionCoeff,
                                            memorySpace,
-                                           dim>>(feBDHamiltonian,
+                                           dim>>(feBDEXCHamiltonian,
                                                  *feBMWaveFn,
                                                  linAlgOpContext,
                                                  cellBlockSize,
@@ -399,7 +411,14 @@ namespace dftefe
                                           memorySpace>> feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDHamiltonian,
+                                          memorySpace>> feBDKineticHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDElectrostaticsHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDEXCHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
@@ -444,17 +463,22 @@ namespace dftefe
                             "Electron density should have only one component.");
 
       utils::throwException(
-        feBDHamiltonian->getQuadratureRuleContainer() ==
+        feBDEXCHamiltonian->getQuadratureRuleContainer() ==
           electronChargeDensityInput.getQuadratureRuleContainer(),
         "The QuadratureRuleContainer for feBDHamiltonian and electronChargeDensity should be same.");
+
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+        quadRuleContainerRho =
+          electronChargeDensityInput.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
       //************* CHANGE THIS **********************
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace> memTransfer;
-      auto jxwData = feBDHamiltonian->getJxWInAllCells();
+      utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
+           memTransfer;
+      auto jxwData = quadRuleContainerRho->getJxW();
       d_jxwDataHost.resize(jxwData.size());
       memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
 
@@ -473,7 +497,7 @@ namespace dftefe
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
-                                                   dim>>(feBDHamiltonian,
+                                                   dim>>(feBDKineticHamiltonian,
                                                          linAlgOpContext,
                                                          cellBlockSize);
 
@@ -492,7 +516,7 @@ namespace dftefe
           feBDTotalChargeRhs,
           feBDNuclearChargeStiffnessMatrix,
           feBDNuclearChargeRhs,
-          feBDHamiltonian,
+          feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
           cellBlockSize);
@@ -501,7 +525,7 @@ namespace dftefe
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
                                                dim>>(d_densityInQuadValues,
-                                                     feBDHamiltonian,
+                                                     feBDEXCHamiltonian,
                                                      linAlgOpContext,
                                                      cellBlockSize);
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
@@ -547,7 +571,7 @@ namespace dftefe
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
                                            ValueTypeWaveFunctionCoeff,
                                            memorySpace,
-                                           dim>>(feBDHamiltonian,
+                                           dim>>(feBDEXCHamiltonian,
                                                  *feBMWaveFn,
                                                  linAlgOpContext,
                                                  cellBlockSize,
