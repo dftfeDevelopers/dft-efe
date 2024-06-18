@@ -297,7 +297,8 @@ namespace dftefe
                               d + additionalCutoff < maxboundGlobalDomain[k]))
                           {
                             std::string msg =
-                              "The enrichment functions may spill to a"
+                              "The enrichment functions for " + fieldName +
+                              " may spill to a"
                               " non-periodic face of the triangulation domain which is not allowed."
                               " Increase the "
                               " domain boundary or reduce to the ball radius of the enrichment "

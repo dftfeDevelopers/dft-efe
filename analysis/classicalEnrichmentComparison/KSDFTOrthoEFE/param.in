@@ -1,6 +1,6 @@
-xmax = 24.    
-ymax = 24.
-zmax = 24.
+xmax = 28.    
+ymax = 28.
+zmax = 28.
 radiusAtAtom = 0
 meshSizeAtAtom = 1e6
 radiusAroundAtom = 2.0

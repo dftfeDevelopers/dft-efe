@@ -78,44 +78,40 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
   return t;
 }
 
-// e- charge density
-double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
-{
-  double ret = 0;
-  for (unsigned int i = 0 ; i < origin.size() ; i++ )
-  {
-    double r = 0;
-    for (unsigned int j = 0 ; j < point.size() ; j++ )
-    {
-      r += std::pow((point[j]-origin[i][j]),2);
-    }
-    r = std::sqrt(r);
-    ret += (1/M_PI)*exp(-2*r);
-  }
-  return ret;
-}
-
-  
-  class AtomEnergyFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  class RhoFunction : public dftefe::utils::ScalarSpatialFunctionReal
   {
   private:
-    std::vector<dftefe::utils::Point> d_atomCoordinatesVec;
-    double d_rc;
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
 
   public:
-    AtomEnergyFunction(
-      const std::vector<dftefe::utils::Point> &atomCoordinatesVec,
-      double rc)
-      : d_atomCoordinatesVec(atomCoordinatesVec),
-        d_rc(rc)
+    RhoFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
       {}
 
     double
     operator()(const dftefe::utils::Point &point) const
     {
-      return 0;
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
+          {
+            retValue = retValue + enrichmentObjId->getValue(point, origin);
+          }
+        }
+      return retValue;
     }
-
     std::vector<double>
     operator()(const std::vector<dftefe::utils::Point> &points) const
     {
@@ -123,7 +119,170 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
       ret.resize(points.size());
       for (unsigned int i = 0 ; i < points.size() ; i++)
       {
-        ret[i] = 0;
+        ret[i] = (*this)(points[i]);
+      }
+      return ret;
+    }
+  };
+
+  class BPlusRhoTimesVTotalFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_b, d_rho;
+
+  public:
+    BPlusRhoTimesVTotalFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      {
+        d_b = std::make_shared
+                <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
+        d_rho = std::make_shared
+                <RhoFunction>(atomSphericalDataContainer, atomSymbol, atomCoordinates);
+      }
+
+    double
+    operator()(const dftefe::utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
+          {
+            retValue = retValue + enrichmentObjId->getValue(point, origin) *
+                                    ((*d_b)(point) + (*d_rho)(point));
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<dftefe::utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = (*this)(points[i]);
+      }
+      return ret;
+    }
+  };
+
+  class BTimesVNuclearFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_b;
+
+  public:
+    BTimesVNuclearFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      {
+        d_b = std::make_shared
+                <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
+      }
+
+    double
+    operator()(const dftefe::utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear"))
+          {
+            retValue = retValue + enrichmentObjId->getValue(point, origin) *
+                                    ((*d_b)(point));
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<dftefe::utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = (*this)(points[i]);
+      }
+      return ret;
+    }
+  };
+
+  class VExternalTimesOrbitalSqFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_vext;
+
+  public:
+    VExternalTimesOrbitalSqFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      {
+        d_vext = std::make_shared
+                <utils::PointChargePotentialFunction>(atomCoordinates, atomCharges);
+      }
+
+    double
+    operator()(const dftefe::utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital"))
+          {
+            retValue = retValue + enrichmentObjId->getValue(point, origin) *
+                                    (*d_vext)(point);
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<dftefe::utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = (*this)(points[i]);
       }
       return ret;
     }
@@ -289,7 +448,7 @@ int main(int argc, char** argv)
       atomSymbolToFilename[i] = sourceDir + i + ".xml";
   }
 
-  std::vector<std::string> fieldNames{"vtotal","orbital","vnuclear"};
+  std::vector<std::string> fieldNames{"density","vtotal","orbital","vnuclear"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
   std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
       std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
@@ -313,38 +472,7 @@ int main(int argc, char** argv)
 
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
-  // Make orthogonalized EFE basis for all the fields
-
-  // 1. Make EnrichmentClassicalInterface object for Pristine enrichment
-  // 2. Make CFEBasisDataStorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GAUSS)
-  // 3. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
-  // 4. Input to the EFEBasisDofHandler(eci, feOrder) 
-  // 5. Make EFEBasisDataStorage with input as quadratureContainer.
-
   // Compute Adaptive QuadratureRuleContainer for electrostaics
-  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-                          enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>(triangulationBase,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          "vtotal",
-                          comm);
-
-    std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-                          enrichClassIntfceNucPot = nullptr;
-  if(isNumericalNuclearSolve)
-    enrichClassIntfceNucPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>(triangulationBase,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          "vnuclear",
-                          comm);
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
@@ -359,16 +487,18 @@ int main(int argc, char** argv)
     {
       if( i < 2)
         functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            enrichClassIntfceTotalPot->getEnrichmentIdsPartition(),
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
             "vtotal",
             i);
       else
-          functionsVec[i] = std::make_shared<AtomEnergyFunction>(
-            atomCoordinatesVec,
-            rc);
+          functionsVec[i] = std::make_shared<BPlusRhoTimesVTotalFunction>(
+            atomSphericalDataContainer,
+            atomSymbolVec,
+            atomChargesVec,
+            smearedChargeRadiusVec,
+            atomCoordinatesVec);
       absoluteTolerances[i] = adaptiveQuadAbsTolerance;
       relativeTolerances[i] = adaptiveQuadRelTolerance;
       integralThresholds[i] = integralThreshold;
@@ -379,16 +509,18 @@ int main(int argc, char** argv)
       {
         if( i < 2)
           functionsVec[i+3] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            enrichClassIntfceNucPot->getEnrichmentIdsPartition(),
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
             "vnuclear",
             i);
         else
-            functionsVec[i+3] = std::make_shared<AtomEnergyFunction>(
-              atomCoordinatesVec,
-              rc);
+            functionsVec[i+3] = std::make_shared<BTimesVNuclearFunction>(
+            atomSphericalDataContainer,
+            atomSymbolVec,
+            atomChargesVec,
+            smearedChargeRadiusVec,
+            atomCoordinatesVec);
         absoluteTolerances[i+3] = adaptiveQuadAbsTolerance;
         relativeTolerances[i+3] = adaptiveQuadRelTolerance;
         integralThresholds[i+3] = integralThreshold;
@@ -422,56 +554,18 @@ int main(int argc, char** argv)
       smallestCellVolume,
       maxRecursion);
 
-    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
-  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandler =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrder, comm);
+    unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
+    int mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuad,
+      1,
+      utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPISum,
+      comm);
 
-  basis::BasisStorageAttributesBoolMap basisAttrMap;
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
-
-    // Set up the CFE Basis Data Storage for Overlap Matrix
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLL =
-      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
-      (cfeBasisDofHandler, quadAttrGll, basisAttrMap);
-  // evaluate basis data
-  cfeBasisDataStorageGLL->evaluateBasisData(quadAttrGll, basisAttrMap);
-
-    // Set up the CFE Basis Data Storage for Rhs
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageElecAdaptive =
-      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
-      (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
-  // evaluate basis data
-  cfeBasisDataStorageElecAdaptive->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
-
-    // Create the enrichmentClassicalInterface object for vtotal
-    enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-                          (cfeBasisDataStorageGLL,
-                          cfeBasisDataStorageElecAdaptive,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          "vtotal",
-                          linAlgOpContext,
-                          comm);
+  rootCout << "Number of quadrature points in electrostatics adaptive quadrature: "<< nQuad<<"\n";
 
   // Compute Adaptive QuadratureRuleContainer for wavefn
-  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-                          enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>(triangulationBase,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          "orbital",
-                          comm);
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     numfun = 3;
@@ -483,16 +577,17 @@ int main(int argc, char** argv)
     {
       if( i < 2)
         functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            enrichClassIntfceOrbital->getEnrichmentIdsPartition(),
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
             "orbital",
             i);
         else
-          functionsVec[i] = std::make_shared<AtomEnergyFunction>(
-            atomCoordinatesVec,
-            rc);
+          functionsVec[i] = std::make_shared<VExternalTimesOrbitalSqFunction>(
+            atomSphericalDataContainer,
+            atomSymbolVec,
+            atomChargesVec,
+            atomCoordinatesVec);
         absoluteTolerances[i] = adaptiveQuadAbsTolerance;
         relativeTolerances[i] = adaptiveQuadRelTolerance;
         integralThresholds[i] = integralThreshold;
@@ -515,6 +610,50 @@ int main(int argc, char** argv)
       smallestCellVolume,
       maxRecursion);
 
+    nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
+    mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuad,
+      1,
+       utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPISum,
+      comm);
+
+  rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
+
+  // Make orthogonalized EFE basis for all the fields
+
+  // 1. Make CFEBasisDataStorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GLL)
+  // 2. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
+  // 3. Input to the EFEBasisDofHandler(eci, feOrder) 
+  // 4. Make EFEBasisDataStorage with input as quadratureContainer.
+
+    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
+  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandler =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrder, comm);
+
+  basis::BasisStorageAttributesBoolMap basisAttrMap;
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+    // Set up the CFE Basis Data Storage for Overlap Matrix
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLL =
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
+      (cfeBasisDofHandler, quadAttrGll, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageGLL->evaluateBasisData(quadAttrGll, basisAttrMap);
+
+    // Set up the CFE Basis Data Storage for Rhs
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageAdaptiveElec =
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
+      (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
+  // evaluate basis data
+  cfeBasisDataStorageAdaptiveElec->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -531,7 +670,24 @@ int main(int argc, char** argv)
   // evaluate basis data
   cfeBasisDataStorageAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
+    // Create the enrichmentClassicalInterface object for vtotal
+      std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
+        enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
+                          (cfeBasisDataStorageGLL,
+                          cfeBasisDataStorageAdaptiveElec,
+                          atomSphericalDataContainer,
+                          atomPartitionTolerance,
+                          atomSymbolVec,
+                          atomCoordinatesVec,
+                          "vtotal",
+                          linAlgOpContext,
+                          comm);
+
     // Create the enrichmentClassicalInterface object for wavefn
+  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
                           (cfeBasisDataStorageGLL,
@@ -595,6 +751,9 @@ int main(int argc, char** argv)
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainerRho, 1, 0.0);
 
+    std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho = std::make_shared
+                <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec);
+ 
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
       for (size_type iComp = 0; iComp < 1; iComp++)
@@ -602,16 +761,10 @@ int main(int argc, char** argv)
           size_type             quadId = 0;
           std::vector<double> a(
             electronChargeDensity.nCellQuadraturePoints(iCell));
-          for (auto j : quadRuleContainerRho->getCellRealPoints(iCell))
-            {
-              a[quadId] = (double)rho1sOrbital(j, atomCoordinatesVec);
-              quadId    = quadId + 1;
-            }
+          a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
           double *b = a.data();
           electronChargeDensity.template 
-            setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                        iComp,
-                                                        b);
+            setCellQuadValues<Host>(iCell, iComp, b);
         }
     }
 
@@ -697,10 +850,12 @@ int main(int argc, char** argv)
   {
 
     // Create the enrichmentClassicalInterface object for vnuclear
-    enrichClassIntfceNucPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+        std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
+                          <double, Host, dim>>
+          enrichClassIntfceNucPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
                           (cfeBasisDataStorageGLL,
-                          cfeBasisDataStorageElecAdaptive,
+                          cfeBasisDataStorageAdaptiveElec,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
                           atomSymbolVec,

@@ -41,23 +41,18 @@ namespace dftefe
     class AtomSevereFunction : public utils::ScalarSpatialFunctionReal
     {
     public:
-      AtomSevereFunction(
-        std::shared_ptr<const basis::EnrichmentIdsPartition<dim>>
-          enrichmentIdsPartition,
-        std::shared_ptr<const AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<utils::Point> &atomCoordinates,
-        const std::string                fieldName,
-        const size_type                  derivativeType); // give arguments here
+      AtomSevereFunction(std::shared_ptr<const AtomSphericalDataContainer>
+                           atomSphericalDataContainer,
+                         const std::vector<std::string> & atomSymbol,
+                         const std::vector<utils::Point> &atomCoordinates,
+                         const std::string                fieldName,
+                         const size_type derivativeType); // give arguments here
       double
       operator()(const utils::Point &point) const override;
       std::vector<double>
       operator()(const std::vector<utils::Point> &points) const override;
 
     private:
-      std::shared_ptr<const basis::EnrichmentIdsPartition<dim>>
-        d_enrichmentIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
       std::vector<std::string>  d_atomSymbolVec;
