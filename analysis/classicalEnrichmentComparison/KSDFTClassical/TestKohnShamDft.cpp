@@ -34,6 +34,8 @@
 #include <ksdft/KohnShamDFT.h>
 #include <basis/GenerateMesh.h>
 #include <utils/ConditionalOStream.h>
+#include <atoms/AtomSphericalDataContainer.h>
+#include <atoms/SphericalHarmonics.h>
 
 #include <iostream>
 
@@ -70,13 +72,13 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
   }
   if(count == 0)
   {
-    dftefe::utils::throwException(false, "The parameter is not found: "+ param);
+    utils::throwException(false, "The parameter is not found: "+ param);
   }
   fstream.close();
   rootCout << "Reading parameter -- " << param << " = "<<t<<std::endl;
   return t;
 }
-
+/*
 // e- charge density
 double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe::utils::Point> &origin)
 {
@@ -93,6 +95,58 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
   }
   return ret;
 }
+*/
+
+  class RhoFunction : public utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::vector<double> d_atomChargesVec;
+
+  public:
+    RhoFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      , d_atomChargesVec(atomCharges)
+      {}
+
+    double
+    operator()(const utils::Point &point) const
+    {
+      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
+          {
+            retValue = retValue + std::abs(d_atomChargesVec[atomId] * enrichmentObjId->getValue(point, origin) * (1/ylm00));
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = (*this)(points[i]);
+      }
+      return ret;
+    }
+  };
 
 // operand - V_H
 // memoryspace - HOST
@@ -149,7 +203,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    dftefe::utils::throwException(false,
+    utils::throwException(false,
                           "dftefe_path does not exist!");
   }
   std::string atomDataFile = argv[1];
@@ -211,7 +265,7 @@ int main(int argc, char** argv)
   triangulationBase->createUniformParallelepiped(subdivisions,
                                                  domainVectors,
                                                  isPeriodicFlags);
-  triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
+  triangulationBase->shiftTriangulation(utils::Point(origin));
     triangulationBase->finalizeTriangulationConstruction();
   */
 
@@ -297,6 +351,22 @@ int main(int argc, char** argv)
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainer, 1, 0.0);
 
+  std::map<std::string, std::string> atomSymbolToFilename;
+  for (auto i:atomSymbolVec )
+  {
+      atomSymbolToFilename[i] = sourceDir + i + ".xml";
+  }
+
+  std::vector<std::string> fieldNames{"density"};
+  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
+  std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
+      std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
+                                                      fieldNames,
+                                                      metadataNames);
+
+    std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho = std::make_shared
+                <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomChargesVec, atomCoordinatesVec);
+ 
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
       for (size_type iComp = 0; iComp < 1; iComp++)
@@ -304,16 +374,10 @@ int main(int argc, char** argv)
           size_type             quadId = 0;
           std::vector<double> a(
             electronChargeDensity.nCellQuadraturePoints(iCell));
-          for (auto j : quadRuleContainer->getCellRealPoints(iCell))
-            {
-              a[quadId] = (double)rho1sOrbital(j, atomCoordinatesVec);
-              quadId    = quadId + 1;
-            }
+          a = (*rho)(quadRuleContainer->getCellRealPoints(iCell));
           double *b = a.data();
           electronChargeDensity.template 
-            setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                        iComp,
-                                                        b);
+            setCellQuadValues<Host>(iCell, iComp, b);
         }
     }
 
@@ -358,18 +422,18 @@ int main(int argc, char** argv)
 
   // Set up the quadrature rule
 
-  dftefe::quadrature::QuadratureRuleAttributes quadAttrGLL(dftefe::quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
+  quadrature::QuadratureRuleAttributes quadAttrGLL(quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
 
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreJxW] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = false;
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisDataGLL =
-    std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataGLL =
+    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
     (basisDofHandler, quadAttrGLL, basisAttrMap);
 
   // evaluate basis data

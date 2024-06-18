@@ -35,6 +35,7 @@
 #include <basis/GenerateMesh.h>
 #include <utils/ConditionalOStream.h>
 #include <atoms/AtomSevereFunction.h>
+#include <atoms/SphericalHarmonics.h>
 
 #include <iostream>
 
@@ -71,35 +72,39 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
   }
   if(count == 0)
   {
-    dftefe::utils::throwException(false, "The parameter is not found: "+ param);
+    utils::throwException(false, "The parameter is not found: "+ param);
   }
   fstream.close();
   rootCout << "Reading parameter -- " << param << " = "<<t<<std::endl;
   return t;
 }
 
-  class RhoFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  class RhoFunction : public utils::ScalarSpatialFunctionReal
   {
   private:
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                 d_atomSphericalDataContainer;
       std::vector<std::string>  d_atomSymbolVec;
       std::vector<utils::Point> d_atomCoordinatesVec;
+      std::vector<double> d_atomChargesVec;
 
   public:
     RhoFunction(
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainer,
         const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
         const std::vector<utils::Point> &atomCoordinates)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
+      , d_atomChargesVec(atomCharges)
       {}
 
     double
-    operator()(const dftefe::utils::Point &point) const
+    operator()(const utils::Point &point) const
     {
+      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       double   retValue = 0;
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
         {
@@ -107,13 +112,13 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
           {
-            retValue = retValue + enrichmentObjId->getValue(point, origin);
+            retValue = retValue + std::abs(d_atomChargesVec[atomId] * enrichmentObjId->getValue(point, origin) * (1/ylm00));
           }
         }
       return retValue;
     }
     std::vector<double>
-    operator()(const std::vector<dftefe::utils::Point> &points) const
+    operator()(const std::vector<utils::Point> &points) const
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
@@ -125,7 +130,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     }
   };
 
-  class BPlusRhoTimesVTotalFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  class BPlusRhoTimesVTotalFunction : public utils::ScalarSpatialFunctionReal
   {
   private:
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
@@ -149,11 +154,11 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
         d_b = std::make_shared
                 <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
         d_rho = std::make_shared
-                <RhoFunction>(atomSphericalDataContainer, atomSymbol, atomCoordinates);
+                <RhoFunction>(atomSphericalDataContainer, atomSymbol, atomCharges, atomCoordinates);
       }
 
     double
-    operator()(const dftefe::utils::Point &point) const
+    operator()(const utils::Point &point) const
     {
       double   retValue = 0;
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
@@ -169,7 +174,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       return retValue;
     }
     std::vector<double>
-    operator()(const std::vector<dftefe::utils::Point> &points) const
+    operator()(const std::vector<utils::Point> &points) const
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
@@ -181,7 +186,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     }
   };
 
-  class BTimesVNuclearFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  class BTimesVNuclearFunction : public utils::ScalarSpatialFunctionReal
   {
   private:
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
@@ -207,7 +212,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       }
 
     double
-    operator()(const dftefe::utils::Point &point) const
+    operator()(const utils::Point &point) const
     {
       double   retValue = 0;
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
@@ -223,7 +228,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       return retValue;
     }
     std::vector<double>
-    operator()(const std::vector<dftefe::utils::Point> &points) const
+    operator()(const std::vector<utils::Point> &points) const
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
@@ -235,7 +240,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     }
   };
 
-  class VExternalTimesOrbitalSqFunction : public dftefe::utils::ScalarSpatialFunctionReal
+  class VExternalTimesOrbitalSqFunction : public utils::ScalarSpatialFunctionReal
   {
   private:
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
@@ -260,7 +265,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       }
 
     double
-    operator()(const dftefe::utils::Point &point) const
+    operator()(const utils::Point &point) const
     {
       double   retValue = 0;
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
@@ -276,7 +281,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       return retValue;
     }
     std::vector<double>
-    operator()(const std::vector<dftefe::utils::Point> &points) const
+    operator()(const std::vector<utils::Point> &points) const
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
@@ -343,7 +348,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    dftefe::utils::throwException(false,
+    utils::throwException(false,
                           "dftefe_path does not exist!");
   }
   std::string atomDataFile = argv[1];
@@ -411,7 +416,7 @@ int main(int argc, char** argv)
   triangulationBase->createUniformParallelepiped(subdivisions,
                                                  domainVectors,
                                                  isPeriodicFlags);
-  triangulationBase->shiftTriangulation(dftefe::utils::Point(origin));
+  triangulationBase->shiftTriangulation(utils::Point(origin));
     triangulationBase->finalizeTriangulationConstruction();
   */
 
@@ -752,7 +757,7 @@ int main(int argc, char** argv)
       electronChargeDensity(quadRuleContainerRho, 1, 0.0);
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho = std::make_shared
-                <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec);
+                <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomChargesVec, atomCoordinatesVec);
  
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
