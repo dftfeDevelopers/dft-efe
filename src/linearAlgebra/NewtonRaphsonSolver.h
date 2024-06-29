@@ -75,10 +75,15 @@ namespace dftefe
       solve(
         NewtonRaphsonSolverFunction<ValueType> &newtonRaphsonSolverFunction);
 
+      ValueType
+      getResidual();
+
     private:
       size_type d_maxIter;
       double    d_tolerance;
       double    d_forceTolerance;
+      ValueType d_residual;
+      bool      d_isSolved;
     }; // end of class NewtonRaphsonSolver
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe

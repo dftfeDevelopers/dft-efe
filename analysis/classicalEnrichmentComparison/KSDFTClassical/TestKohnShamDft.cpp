@@ -130,7 +130,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
           {
-            retValue = retValue + std::abs(d_atomChargesVec[atomId] * enrichmentObjId->getValue(point, origin) * (1/ylm00));
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/ylm00));
           }
         }
       return retValue;
@@ -156,6 +156,8 @@ int main(int argc, char** argv)
   // argv[2] = "KSDFTClassical/param.in"
   //initialize MPI
 
+  // freopen(argv[3],"w",stdout);
+  
   int mpiInitFlag = 0;
   utils::mpi::MPIInitialized(&mpiInitFlag);
   if(!mpiInitFlag)
@@ -211,6 +213,9 @@ int main(int argc, char** argv)
   std::string paramDataFile = argv[2];
   std::string parameterInputFileName = sourceDir + paramDataFile;
 
+  rootCout << "Reading input file: "<<inputFileName<<std::endl;
+  rootCout << "Reading parameter file: "<<parameterInputFileName<<std::endl;  
+
   // Read parameters
   double xmax = readParameter<double>(parameterInputFileName, "xmax", rootCout);
   double ymax = readParameter<double>(parameterInputFileName, "ymax", rootCout);
@@ -230,7 +235,6 @@ int main(int argc, char** argv)
   size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
-  size_type numElectrons = readParameter<size_type>(parameterInputFileName, "numElectrons", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
   size_type maxSCFIter = readParameter<size_type>(parameterInputFileName, "maxSCFIter", rootCout);
   size_type mixingHistory = readParameter<size_type>(parameterInputFileName, "mixingHistory", rootCout);
@@ -296,6 +300,11 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
+  size_type numElectrons = 0;
+  for(auto &i : atomChargesVec)
+  {
+    numElectrons += (size_type)(std::abs(i));
+  }
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
 

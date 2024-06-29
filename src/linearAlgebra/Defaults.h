@@ -96,6 +96,25 @@ namespace dftefe
       // L2 norm of the residual exceeds it
       static const double DIVERGENCE_TOL;
     }; // end of class LinearSolverDefaults
+
+    class MultiPassLowdinDefaults
+    {
+    public:
+      //
+      // maximum pass of lowdin orthonormalizations
+      //
+      static const size_type MAX_PASS;
+
+      //
+      // Min tolerance of min eigenvalue below which to shift the eigenvalue by
+      // this tolerance.
+      //
+      static const double SHIFT_TOL;
+
+      //
+      // calculate frobenus norm |S - I| < this tolerance
+      static const double IDENTITY_TOL;
+    }; // end of class MultiPassLowdinDefaults
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeLinearAlgebraDefaults_h

@@ -96,7 +96,8 @@ namespace dftefe
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const utils::mpi::MPIComm &                  mpiComm,
         bool                                         computeTotalDensity,
-        bool                                         scaleDensity)
+        bool                                         scaleDensity,
+        utils::ConditionalOStream &                  rootCout)
       {
         RealType totalDensityInQuad = 0.0;
         if (computeTotalDensity || scaleDensity)
@@ -130,10 +131,14 @@ namespace dftefe
           }
 
         if (scaleDensity)
-          quadrature::scale((RealType)(std::abs((RealType)numElectrons /
-                                                totalDensityInQuad)),
-                            inValues,
-                            linAlgOpContext);
+          {
+            rootCout << "Electronic Density with the rho quadrature: "
+                     << totalDensityInQuad << std::endl;
+            quadrature::scale((RealType)(std::abs((RealType)numElectrons /
+                                                  totalDensityInQuad)),
+                              inValues,
+                              linAlgOpContext);
+          }
 
         return totalDensityInQuad;
       }
@@ -268,7 +273,8 @@ namespace dftefe
                                                       *d_linAlgOpContext,
                                                       d_mpiCommDomain,
                                                       true,
-                                                      true);
+                                                      true,
+                                                      d_rootCout);
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
@@ -490,7 +496,8 @@ namespace dftefe
                                                       *d_linAlgOpContext,
                                                       d_mpiCommDomain,
                                                       true,
-                                                      true);
+                                                      true,
+                                                      d_rootCout);
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
@@ -592,6 +599,11 @@ namespace dftefe
                 memorySpace,
                 dim>::solve()
     {
+      d_hamitonianElec->evalEnergy();
+      RealType elecEnergy = d_hamitonianElec->getEnergy();
+      d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
+                 << "\n";
+
       d_mixingScheme.addMixingVariable(
         mixingVariable::rho,
         d_jxwDataHost,
@@ -664,7 +676,8 @@ namespace dftefe
                   *d_linAlgOpContext,
                   d_mpiCommDomain,
                   true,
-                  false);
+                  false,
+                  d_rootCout);
 
               d_rootCout << "Electron density in : " << totalDensityInQuad
                          << "\n";
@@ -701,18 +714,6 @@ namespace dftefe
           std::vector<RealType> eigSolveResNorm =
             d_ksEigSolve->getEigenSolveResidualNorm();
 
-          d_rootCout << err.msg << "\n";
-          d_rootCout << "*****************The CHFSI results are: "
-                        "******************\n";
-          d_rootCout << "Fermi Energy is : " << d_ksEigSolve->getFermiEnergy()
-                     << "\n";
-          d_rootCout
-            << "Kohn Sham Energy\t\tFractional Occupancy\t\tEigen Solve Residual Norm\n";
-          for (size_type i = 0; i < d_numWantedEigenvalues; i++)
-            d_rootCout << d_kohnShamEnergies[i] << "\t\t" << d_occupation[i]
-                       << "\t\t" << eigSolveResNorm[i] << "\n";
-          d_rootCout << "\n";
-
           // compute output rho
           d_densCalc->computeRho(d_occupation,
                                  *d_kohnShamWaveFunctions,
@@ -726,7 +727,8 @@ namespace dftefe
               *d_linAlgOpContext,
               d_mpiCommDomain,
               true,
-              false);
+              false,
+              d_rootCout);
 
           d_rootCout << "Electron density out : " << totalDensityInQuad << "\n";
 
@@ -745,6 +747,7 @@ namespace dftefe
               RealType elecEnergy = d_hamitonianElec->getEnergy();
               d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 
+              d_hamitonianXC->reinitField(d_densityOutQuadValues);
               d_hamitonianXC->evalEnergy(d_mpiCommDomain);
               RealType xcEnergy = d_hamitonianXC->getEnergy();
               d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
@@ -782,6 +785,7 @@ namespace dftefe
           RealType elecEnergy = d_hamitonianElec->getEnergy();
           d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 
+          d_hamitonianXC->reinitField(d_densityOutQuadValues);
           d_hamitonianXC->evalEnergy(d_mpiCommDomain);
           RealType xcEnergy = d_hamitonianXC->getEnergy();
           d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";

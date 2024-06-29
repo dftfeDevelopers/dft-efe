@@ -25,6 +25,9 @@
 
 #include <basis/FECellWiseDataOperations.h>
 #include <cstdlib>
+#include <utils/ConditionalOStream.h>
+#include <utils/MathFunctions.h>
+#include <basis/EFEBasisDofHandler.h>
 
 namespace dftefe
 {
@@ -683,6 +686,156 @@ namespace dftefe
                           hamiltonianComponentsVec[i],
                           d_linAlgOpContext);
         }
+
+      /**
+        //------------------------ print EE block---------------------------
+        const basis::BasisDofHandler &basisDofHandler =
+          feBasisManager.getBasisDofHandler();
+
+        const basis::EFEBasisDofHandler<ValueTypeOperand,
+                                ValueTypeOperator,
+                                memorySpace,
+                                dim> &efebasisDofHandler =
+          dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeOperand,
+                                                ValueTypeOperator,
+                                                memorySpace,
+                                                dim> &>(basisDofHandler);
+
+        const size_type numCellClassicalDofs =
+      utils::mathFunctions::sizeTypePow( (efebasisDofHandler.getFEOrder(0) + 1),
+      dim); const size_type nglobalEnrichmentIds =
+      efebasisDofHandler.nGlobalEnrichmentNodes(); const size_type
+      nglobalClassicalIds = (efebasisDofHandler.getGlobalRanges())[0].second;
+
+        std::vector<ValueTypeOperator> hamEnrichmentBlockSTL(
+          nglobalEnrichmentIds * nglobalEnrichmentIds, 0),
+          hamEnrichmentBlockSTLTmp(nglobalEnrichmentIds *
+                                              nglobalEnrichmentIds, 0);
+
+        size_type cellId                     = 0;
+        size_type cumulativeBasisDataInCells = 0;
+        for (auto enrichmentVecInCell :
+            efebasisDofHandler.getEnrichmentIdsPartition()
+              ->overlappingEnrichmentIdsInCells())
+          {
+            size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+            for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+              {
+                for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                  {
+                    *(hamEnrichmentBlockSTLTmp.data() +
+                      enrichmentVecInCell[j] * nglobalEnrichmentIds +
+                      enrichmentVecInCell[k]) +=
+                      *(d_hamiltonianInAllCells.data() +
+      cumulativeBasisDataInCells + (numCellClassicalDofs + nCellEnrichmentDofs)
+      * (numCellClassicalDofs + j) + numCellClassicalDofs + k);
+                  }
+              }
+            cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+              (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+            cellId += 1;
+          }
+
+        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          hamEnrichmentBlockSTLTmp.data(),
+          hamEnrichmentBlockSTL.data(),
+          hamEnrichmentBlockSTLTmp.size(),
+          utils::mpi::MPIDouble,
+          utils::mpi::MPISum,
+          d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::throwException(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+        int rank;
+        utils::mpi::MPICommRank(d_feBasisManager->getMPIPatternP2P()->mpiCommunicator(),
+      &rank);
+
+        utils::ConditionalOStream rootCout(std::cout);
+        rootCout.setCondition(rank == 0);
+
+        rootCout << "Hamiltonian Enrichment Block Matrix: "<<std::endl;
+        for(size_type i = 0 ; i < nglobalEnrichmentIds ; i++)
+        {
+          rootCout << "[";
+          for(size_type j = 0 ; j < nglobalEnrichmentIds ; j++)
+          {
+            rootCout << *(hamEnrichmentBlockSTL.data() + i*nglobalEnrichmentIds
+      + j) << "\t";
+          }
+          rootCout << "]" <<std::endl;
+        }
+
+        //------------------------ print EC block to
+      file--------------------------- std::vector<ValueTypeOperator>
+      hamECBlockSTL( (nglobalClassicalIds + nglobalEnrichmentIds) *
+      nglobalEnrichmentIds, 0), hamECBlockSTLTmp((nglobalClassicalIds +
+      nglobalEnrichmentIds) * nglobalEnrichmentIds, 0);
+
+
+        cumulativeBasisDataInCells = 0;
+        for (size_type iCell = 0; iCell <
+      efebasisDofHandler.nLocallyOwnedCells() ; iCell++)
+        {
+          // get cell dof global ids
+          std::vector<global_size_type> cellGlobalNodeIds(0);
+          efebasisDofHandler.getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+
+          std::vector<global_size_type> enrichmentVecInCell =
+      efebasisDofHandler.getEnrichmentIdsPartition()
+                  ->overlappingEnrichmentIdsInCells()[iCell];
+
+          size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+
+          // loop over nodes of a cell
+          for ( size_type iNode = 0 ; iNode < numCellClassicalDofs +
+      nCellEnrichmentDofs; iNode++)
+          {
+            for ( size_type jNode = 0 ; jNode < nCellEnrichmentDofs ; jNode++)
+            {
+              *(hamECBlockSTLTmp.data() +
+                cellGlobalNodeIds[iNode] * nglobalEnrichmentIds +
+                  enrichmentVecInCell[jNode]) +=
+                *(d_hamiltonianInAllCells.data() + cumulativeBasisDataInCells +
+                  (numCellClassicalDofs + nCellEnrichmentDofs) * iNode + jNode +
+      numCellClassicalDofs);
+            }
+          }
+          cumulativeBasisDataInCells +=
+      utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),2);
+        }
+
+        err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          hamECBlockSTLTmp.data(),
+          hamECBlockSTL.data(),
+          hamECBlockSTLTmp.size(),
+          utils::mpi::MPIDouble,
+          utils::mpi::MPISum,
+          d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+        mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::throwException(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+        std::ofstream myfile;
+        myfile.open("wings");
+        utils::ConditionalOStream rootCout1(myfile);
+        rootCout1.setCondition(rank == 0);
+
+        for(size_type i = 0 ; i < nglobalClassicalIds + nglobalEnrichmentIds ;
+      i++)
+        {
+          rootCout1 << i <<": [";
+          for(size_type j = 0 ; j < nglobalEnrichmentIds ; j++)
+          {
+            rootCout1 << *(hamECBlockSTL.data() + i*nglobalEnrichmentIds + j) <<
+      "\t";
+          }
+          rootCout1 << "]" <<std::endl;
+        }
+        myfile.close();
+      **/
     }
 
     template <typename ValueTypeOperator,

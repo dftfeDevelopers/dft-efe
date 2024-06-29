@@ -94,9 +94,15 @@ namespace dftefe
                 " is outside the range of number of processors(i.e., " +
                 std::to_string(d_numProcessors) + ")");
 
-            int &sendBuffer = d_sendBuffers[i];
-            auto err        = MPIIssend<MemorySpace::HOST>(
-              &sendBuffer, 1, MPIInt, rank, tag, d_comm, &d_sendRequests[i]);
+            // int &sendBuffer = d_sendBuffers[i];
+            auto err =
+              MPIIssend<MemorySpace::HOST>(&d_sendBuffers[i] /*&sendBuffer*/,
+                                           1,
+                                           MPIInt,
+                                           rank,
+                                           tag,
+                                           d_comm,
+                                           &d_sendRequests[i]);
 
             std::string errMsg = "Error occured while using MPI_ISsend. "
                                  "Error code: " +

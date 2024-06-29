@@ -39,6 +39,8 @@ namespace dftefe
       : d_maxIter(maxIter)
       , d_tolerance(tolerance)
       , d_forceTolerance(forceTolerance)
+      , d_residual((ValueType)0)
+      , d_isSolved(false)
     {}
 
 
@@ -48,7 +50,7 @@ namespace dftefe
       NewtonRaphsonSolverFunction<ValueType> &newtonRaphsonSolverFunction)
     {
       NewtonRaphsonError retunValue;
-
+      d_isSolved  = true;
       ValueType x = newtonRaphsonSolverFunction.getInitialGuess();
       ValueType xConverged;
 
@@ -71,7 +73,9 @@ namespace dftefe
           ValueType x1 = x - newtonRaphsonSolverFunction.getValue(x) /
                                newtonRaphsonSolverFunction.getForce(x);
 
-          if (utils::abs_(x1 - x) < d_tolerance)
+          d_residual = utils::abs_(x1 - x);
+
+          if (d_residual < d_tolerance)
             {
               err        = NewtonRaphsonErrorCode::SUCCESS;
               xConverged = x1;
@@ -106,6 +110,20 @@ namespace dftefe
         msg = retunValue.msg;
 
       return retunValue;
+    }
+
+    template <typename ValueType>
+    ValueType
+    NewtonRaphsonSolver<ValueType>::getResidual()
+    {
+      ValueType retVal = (ValueType)0;
+      if (d_isSolved)
+        retVal = d_residual;
+      else
+        utils::throwException(
+          false,
+          "Cannot call getResidual() before calling solve() in NewtonRaphsonSolver.");
+      return retVal;
     }
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

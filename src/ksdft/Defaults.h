@@ -80,6 +80,11 @@ namespace dftefe
       static const double ILL_COND_TOL;
 
       //
+      // Max krylov subspace
+      //
+      static const size_type LANCZOS_MAX_KRYLOV_SUBSPACE;
+
+      //
       // Tolerance for lanczos extreme eigenvalues
       //
       static const double LANCZOS_EXTREME_EIGENVAL_TOL;

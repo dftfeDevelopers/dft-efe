@@ -390,7 +390,10 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian)
+                                          memorySpace>> feBDHamiltonian
+        /*std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData,
+                                          memorySpace>> feBDHamiltonianElec*/)
     {
       d_isNumerical                    = true;
       d_atomCoordinates                = atomCoordinates;
@@ -874,9 +877,11 @@ namespace dftefe
 
       linearSolverFunction->getSolution(*d_totalChargePotential);
 
-      d_feBasisOpHamiltonian->interpolate(*d_totalChargePotential,
-                                          *d_feBMTotalCharge,
-                                          *d_totalAuxChargePotentialQuad);
+      /* Change this to feBasisOperations for electrostaic basis with same
+       * quadrulecontainer as hamiltonian*/
+      d_feBasisOp->interpolate(*d_totalChargePotential,
+                               *d_feBMTotalCharge,
+                               *d_totalAuxChargePotentialQuad);
     }
 
     template <typename ValueTypeBasisData,

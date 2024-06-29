@@ -77,6 +77,14 @@ namespace dftefe
                                                      ValueTypeOperand,
                                                      memorySpace>());
 
+      static OrthonormalizationError
+      ModifiedGramSchmidt(
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
+        const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>());
+
     }; // end of class OrthonormalizationFunctions
   }    // end of namespace linearAlgebra
 } // end of namespace dftefe

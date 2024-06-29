@@ -36,6 +36,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <map>
+#include <iterator>
 
 namespace dftefe
 {
@@ -296,8 +297,14 @@ namespace dftefe
                             !(c - additionalCutoff > minboundGlobalDomain[k] &&
                               d + additionalCutoff < maxboundGlobalDomain[k]))
                           {
+                            std::stringstream ss;
+                            std::copy(qNumberIter->begin(),
+                                      qNumberIter->end(),
+                                      std::ostream_iterator<int>(ss, " "));
+                            std::string s = ss.str();
                             std::string msg =
                               "The enrichment functions for " + fieldName +
+                              " " + s +
                               " may spill to a"
                               " non-periodic face of the triangulation domain which is not allowed."
                               " Increase the "
@@ -307,7 +314,7 @@ namespace dftefe
                               msg +=
                                 "Recommended domain boundary increase, if wanted, can be by " +
                                 std::to_string(additionalCutoff) +
-                                " bohr on each side of origin.";
+                                " bohr on each non-periodic side of origin.";
                             utils::throwException<utils::InvalidArgument>(false,
                                                                           msg);
                           }

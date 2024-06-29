@@ -112,7 +112,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
           {
-            retValue = retValue + std::abs(d_atomChargesVec[atomId] * enrichmentObjId->getValue(point, origin) * (1/ylm00));
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/ylm00));
           }
         }
       return retValue;
@@ -167,8 +167,8 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
           {
-            retValue = retValue + enrichmentObjId->getValue(point, origin) *
-                                    ((*d_b)(point) + (*d_rho)(point));
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) *
+                                    ((*d_b)(point) + (*d_rho)(point)));
           }
         }
       return retValue;
@@ -221,8 +221,8 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear"))
           {
-            retValue = retValue + enrichmentObjId->getValue(point, origin) *
-                                    ((*d_b)(point));
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) *
+                                    ((*d_b)(point)));
           }
         }
       return retValue;
@@ -274,8 +274,8 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital"))
           {
-            retValue = retValue + enrichmentObjId->getValue(point, origin) *
-                                    (*d_vext)(point);
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * enrichmentObjId->getValue(point, origin) *
+                                    (*d_vext)(point));
           }
         }
       return retValue;
@@ -300,6 +300,8 @@ int main(int argc, char** argv)
   // argv[1] = "H_Atom.in"
   // argv[2] = "KSDFTClassical/param.in"
   //initialize MPI
+
+  // freopen(argv[3],"w",stdout);
 
   int mpiInitFlag = 0;
   utils::mpi::MPIInitialized(&mpiInitFlag);
@@ -356,6 +358,9 @@ int main(int argc, char** argv)
   std::string paramDataFile = argv[2];
   std::string parameterInputFileName = sourceDir + paramDataFile;
 
+  rootCout << "Reading input file: "<<inputFileName<<std::endl;
+  rootCout << "Reading parameter file: "<<parameterInputFileName<<std::endl;
+
   // Read parameters
   double xmax = readParameter<double>(parameterInputFileName, "xmax", rootCout);
   double ymax = readParameter<double>(parameterInputFileName, "ymax", rootCout);
@@ -375,7 +380,6 @@ int main(int argc, char** argv)
   size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
-  size_type numElectrons = readParameter<size_type>(parameterInputFileName, "numElectrons", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
   size_type maxSCFIter = readParameter<size_type>(parameterInputFileName, "maxSCFIter", rootCout);
   size_type mixingHistory = readParameter<size_type>(parameterInputFileName, "mixingHistory", rootCout);
@@ -403,22 +407,22 @@ int main(int argc, char** argv)
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
-  /*
-  // Uniform mesh creation
-  std::vector<unsigned int>         subdivisions = {15, 15, 15};
-  std::vector<double> origin(0);
-  origin.resize(dim);
-  for(unsigned int i = 0 ; i < dim ; i++)
-    origin[i] = -domainVectors[i][i]*0.5;
+  
+  // // Uniform mesh creation
+  // std::vector<unsigned int>         subdivisions = {30, 30, 30};
+  // std::vector<double> origin(0);
+  // origin.resize(dim);
+  // for(unsigned int i = 0 ; i < dim ; i++)
+  //   origin[i] = -domainVectors[i][i]*0.5;
 
-  // initialize the triangulation
-  triangulationBase->initializeTriangulationConstruction();
-  triangulationBase->createUniformParallelepiped(subdivisions,
-                                                 domainVectors,
-                                                 isPeriodicFlags);
-  triangulationBase->shiftTriangulation(utils::Point(origin));
-    triangulationBase->finalizeTriangulationConstruction();
-  */
+  // // initialize the triangulation
+  // triangulationBase->initializeTriangulationConstruction();
+  // triangulationBase->createUniformParallelepiped(subdivisions,
+  //                                                domainVectors,
+  //                                                isPeriodicFlags);
+  // triangulationBase->shiftTriangulation(utils::Point(origin));
+  //   triangulationBase->finalizeTriangulationConstruction();
+  
 
   std::fstream fstream;
   fstream.open(inputFileName, std::fstream::in);
@@ -447,10 +451,17 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
+  size_type numElectrons = 0;
+  for(auto &i : atomChargesVec)
+  {
+    numElectrons += (size_type)(std::abs(i));
+  }
+
   std::map<std::string, std::string> atomSymbolToFilename;
   for (auto i:atomSymbolVec )
   {
       atomSymbolToFilename[i] = sourceDir + i + ".xml";
+      rootCout << "Reading xml file: "<<atomSymbolToFilename[i]<<std::endl; 
   }
 
   std::vector<std::string> fieldNames{"density","vtotal","orbital","vnuclear"};
@@ -483,55 +494,66 @@ int main(int argc, char** argv)
     std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
     unsigned int numfun = 0;
     if(!isNumericalNuclearSolve)
-      numfun = 3;
-    else
       numfun = 6;
+    else
+      numfun = 9;
     functionsVec.resize(numfun); // Enrichment Functions
     std::vector<double> absoluteTolerances(numfun), relativeTolerances(numfun), integralThresholds(numfun);
-    for ( unsigned int i=0 ;i < 3 ; i++ )
+    for ( unsigned int i=0 ;i < 2 ; i++ )
     {
-      if( i < 2)
-        functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            atomSphericalDataContainer,
-            atomSymbolVec,
-            atomCoordinatesVec,
-            "vtotal",
-            i);
-      else
-          functionsVec[i] = std::make_shared<BPlusRhoTimesVTotalFunction>(
-            atomSphericalDataContainer,
-            atomSymbolVec,
-            atomChargesVec,
-            smearedChargeRadiusVec,
-            atomCoordinatesVec);
-      absoluteTolerances[i] = adaptiveQuadAbsTolerance;
-      relativeTolerances[i] = adaptiveQuadRelTolerance;
-      integralThresholds[i] = integralThreshold;
+      functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          "vtotal",
+          i);      
     }
+    for ( unsigned int i=2 ;i < 4 ; i++ )
+    {
+      functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          "orbital",
+          i-2);      
+    }
+      functionsVec[4] = std::make_shared<BPlusRhoTimesVTotalFunction>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomChargesVec,
+        smearedChargeRadiusVec,
+        atomCoordinatesVec);
+      functionsVec[5] = std::make_shared<VExternalTimesOrbitalSqFunction>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomChargesVec,
+        atomCoordinatesVec);
     if(isNumericalNuclearSolve)
     {
       for ( unsigned int i=0 ;i < 3 ; i++ )
       {
         if( i < 2)
-          functionsVec[i+3] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
+          functionsVec[i+6] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
             "vnuclear",
             i);
         else
-            functionsVec[i+3] = std::make_shared<BTimesVNuclearFunction>(
+            functionsVec[i+6] = std::make_shared<BTimesVNuclearFunction>(
             atomSphericalDataContainer,
             atomSymbolVec,
             atomChargesVec,
             smearedChargeRadiusVec,
             atomCoordinatesVec);
-        absoluteTolerances[i+3] = adaptiveQuadAbsTolerance;
-        relativeTolerances[i+3] = adaptiveQuadRelTolerance;
-        integralThresholds[i+3] = integralThreshold;
       }
     }
-
+    for ( unsigned int i=0 ;i < numfun ; i++ )
+    {
+      absoluteTolerances[i] = adaptiveQuadAbsTolerance;
+      relativeTolerances[i] = adaptiveQuadRelTolerance;
+      integralThresholds[i] = integralThreshold;
+    }
     //Set up quadAttr for Rhs and OverlapMatrix
 
     quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
@@ -571,7 +593,7 @@ int main(int argc, char** argv)
   rootCout << "Number of quadrature points in electrostatics adaptive quadrature: "<< nQuad<<"\n";
 
   // Compute Adaptive QuadratureRuleContainer for wavefn
-
+/*
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     numfun = 3;
     functionsVec.resize(numfun); // Enrichment Functions
@@ -597,23 +619,11 @@ int main(int argc, char** argv)
         relativeTolerances[i] = adaptiveQuadRelTolerance;
         integralThresholds[i] = integralThreshold;
     }
-
+*/
     //Set up quadAttr for Rhs and OverlapMatrix
 
     // Set up base quadrature rule for adaptive quadrature 
-    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital =
-      std::make_shared<quadrature::QuadratureRuleContainer>
-      (quadAttrAdaptive, 
-      baseQuadRule, 
-      triangulationBase, 
-      *cellMapping, 
-      *parentToChildCellsManager,
-      functionsVec,
-      absoluteTolerances,
-      relativeTolerances,
-      integralThresholds,
-      smallestCellVolume,
-      maxRecursion);
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital = quadRuleContainerAdaptiveElec;
 
     nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
     mpierr = utils::mpi::MPIAllreduce<Host>(
@@ -736,6 +746,29 @@ int main(int argc, char** argv)
   (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
 
   efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+
+  // std::ofstream fout("filename.txt");
+  // utils::ConditionalOStream allCout(fout);
+  // auto basisDataAdapElec = efeBasisDataAdaptiveTotPot->getBasisDataInAllCells();
+  // for(int iProc = 0 ; iProc < numProcs ; iProc++)
+  // {
+  //   if(rank == iProc)
+  //   {
+  //     int quadId = 0;
+  //     for (size_type iCell = 0; iCell < quadRuleContainerAdaptiveSolPot->nCells(); iCell++)
+  //       {
+  //         for(auto &i : quadRuleContainerAdaptiveSolPot->getCellRealPoints(iCell))
+  //         {
+  //           if(std::abs(i[2]) <= 1e-12)
+  //             allCout << rank << " " << i[0] << " " << i[1] << " " << *(basisDataAdapElec.data() + quadId) << std::flush << std::endl;
+  //           quadId += 1;
+  //         }
+  //       }
+  //   }
+  //   utils::mpi::MPIBarrier(comm);
+  // }
+  // utils::mpi::MPIBarrier(comm);
+  // fout.close();
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;

@@ -26,6 +26,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <utils/DataTypeOverloads.h>
+#include <linearAlgebra/Defaults.h>
 
 namespace dftefe
 {
@@ -127,15 +128,21 @@ namespace dftefe
       //                                     filteredSubspaceOrtho,
       //                                     B);
 
-      orthoerr = linearAlgebra::OrthonormalizationFunctions<
-        ValueType,
-        ValueType,
-        memorySpace>::MultipassLowdin(filteredSubspace,
-                                      10,
-                                      1e-12,
-                                      1e-12,
-                                      filteredSubspaceOrtho,
-                                      B);
+      orthoerr = linearAlgebra::
+        OrthonormalizationFunctions<ValueType, ValueType, memorySpace>::
+          MultipassLowdin(filteredSubspace,
+                          linearAlgebra::MultiPassLowdinDefaults::MAX_PASS,
+                          linearAlgebra::MultiPassLowdinDefaults::SHIFT_TOL,
+                          linearAlgebra::MultiPassLowdinDefaults::IDENTITY_TOL,
+                          filteredSubspaceOrtho,
+                          B);
+
+      // orthoerr = linearAlgebra::OrthonormalizationFunctions<
+      //   ValueType,
+      //   ValueType,
+      //   memorySpace>::ModifiedGramSchmidt(filteredSubspace,
+      //                                     filteredSubspaceOrtho,
+      //                                     B);
 
       // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspace
 
@@ -151,7 +158,7 @@ namespace dftefe
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
           retunValue.msg += orthoerr.msg;
         }
-      if (!rrerr.isSuccess)
+      else if (!rrerr.isSuccess)
         {
           err        = EigenSolverErrorCode::CHFSI_RAYLEIGH_RITZ_ERROR;
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
@@ -161,6 +168,7 @@ namespace dftefe
         {
           err        = EigenSolverErrorCode::SUCCESS;
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+          retunValue.msg += orthoerr.msg;
         }
 
       return retunValue;

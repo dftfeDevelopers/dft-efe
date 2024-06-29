@@ -139,7 +139,7 @@ namespace dftefe
       linearAlgebra::LanczosExtremeEigenSolver<ValueTypeOperator,
                                                ValueTypeOperand,
                                                memorySpace>
-        lanczos(globalSize,
+        lanczos(ksdft::LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE,
                 1,
                 1,
                 tol,
@@ -161,7 +161,9 @@ namespace dftefe
       RealType residual = subDiagonal[subDiagonal.size() - 1];
 
       size_type iPass = 0;
-      if (lanczosErr.isSuccess)
+      if (lanczosErr.isSuccess ||
+          lanczosErr.err ==
+            linearAlgebra::EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT)
         {
           //--------------------CHANGE THIS ------------------------------
           if (!d_isBoundKnown)
@@ -212,6 +214,9 @@ namespace dftefe
                                      computeWaveFunctions,
                                      M,
                                      MInv);
+
+              d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
+                         << chfsiErr.msg << std::endl;
 
               // for(auto &i : kohnShamEnergies)
               //   std::cout <<  i <<", ";
@@ -279,6 +284,19 @@ namespace dftefe
                     numLevelsBelowFermiEnergyResidualConverged += 1;
                 }
 
+              d_rootCout << "*****************The CHFSI results are: "
+                            "******************\n";
+              d_rootCout << "Fermi Energy is : " << d_fermiEnergy << "\n";
+              d_rootCout << "Fermi Energy residual is : " << nrs.getResidual()
+                         << "\n";
+              d_rootCout
+                << "Kohn Sham Energy\t\tFractional Occupancy\t\tEigen Solve Residual Norm\n";
+              for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+                d_rootCout << kohnShamEnergies[i] << "\t\t"
+                           << d_fracOccupancy[i] << "\t\t"
+                           << d_eigSolveResNorm[i] << "\n";
+              d_rootCout << "\n";
+
               if (numLevelsBelowFermiEnergy ==
                     numLevelsBelowFermiEnergyResidualConverged ||
                   !chfsiErr.isSuccess || !nrErr.isSuccess)
@@ -286,6 +304,9 @@ namespace dftefe
               else
                 {
                   d_waveFunctionSubspaceGuess = &kohnShamWaveFunctions;
+                  d_wantedSpectrumLowerBound  = kohnShamEnergies[0];
+                  d_wantedSpectrumUpperBound =
+                    kohnShamEnergies[d_numWantedEigenvalues - 1];
                   chfsi.reinit(d_wantedSpectrumLowerBound,
                                d_wantedSpectrumUpperBound,
                                eigenValuesLanczos[1] + residual,
