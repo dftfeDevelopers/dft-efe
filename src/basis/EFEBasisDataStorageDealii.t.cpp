@@ -237,11 +237,15 @@ namespace dftefe
           }
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
 
         auto basisQuadStorageTmpIter = basisQuadStorageTmp.begin();
         auto basisGradientQuadStorageTmpIter =
@@ -870,11 +874,15 @@ namespace dftefe
           basisStiffnessSize);
         basisGradNiGradNjTmp.resize(basisStiffnessSize, ValueTypeBasisData(0));
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
         auto basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         cellIndex                     = 0;
 
@@ -1322,11 +1330,15 @@ namespace dftefe
 
         // Init cell iters and storage iters
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
 
         cellIndex = 0;
 
@@ -1968,11 +1980,15 @@ namespace dftefe
         basisGradNiGradNjTmp.resize(basisStiffnessSize, ValueTypeBasisData(0));
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
 
         auto basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         cellIndex                     = 0;

@@ -211,6 +211,10 @@ namespace dftefe
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
+      // NOTE ::: In a global matrix sense this step can be thought as doing
+      // a kind of mass lumping. It is seen that doing such mass lumping in
+      // overlap inverse made the scfs converge faster . Without this step the
+      // HX residual was not dropping below 1e-3 for non-conforming mesh.
       d_feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
       d_feBasisManager->getConstraints().setConstrainedNodes(diagonal, 1, 1.0);
@@ -265,7 +269,7 @@ namespace dftefe
       // TODO : The distributeChildToParent of the result of M_inv*X is
       // processor local and for adaptive quadrature the M_inv is not diagonal.
       // Implement that case here.
-      d_feBasisManager->getConstraints().distributeChildToParent(
+      d_feBasisManager->getConstraints().distributeParentToChild(
         Y, Y.getNumberComponents());
 
       // Function to update the ghost values of the result

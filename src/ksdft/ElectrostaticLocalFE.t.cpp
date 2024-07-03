@@ -544,9 +544,11 @@ namespace dftefe
 
       for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
         {
-          d_feBasisOpHamiltonian->interpolate(*d_nuclearChargesPotential[iAtom],
-                                              *d_feBMNuclearCharge[iAtom],
-                                              nuclearChargePotentialQuad);
+          /* Change this to feBasisOperations for electrostaic basis with same
+           * quadrulecontainer as hamiltonian*/
+          d_feBasisOp->interpolate(*d_nuclearChargesPotential[iAtom],
+                                   *d_feBMNuclearCharge[iAtom],
+                                   nuclearChargePotentialQuad);
 
           quadrature::add((ValueType)1.0,
                           nuclearChargePotentialQuad,

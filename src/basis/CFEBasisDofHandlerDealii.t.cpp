@@ -28,6 +28,7 @@
 #include "TriangulationDealiiSerial.h"
 #include "FECellDealii.h"
 #include <deal.II/fe/mapping_q1.h>
+#include <utils/ConditionalOStream.h>
 
 #include <utils/Exceptions.h>
 #include <deal.II/base/quadrature.h>
@@ -102,6 +103,7 @@ namespace dftefe
         const utils::mpi::MPIComm &              mpiComm)
       : d_isVariableDofsPerCell(false)
       , d_totalRanges(1)
+      , d_locallyOwnedRanges(0)
       , d_boundaryIds(0)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
@@ -117,6 +119,7 @@ namespace dftefe
         const size_type                          feOrder)
       : d_isVariableDofsPerCell(false)
       , d_totalRanges(1)
+      , d_locallyOwnedRanges(0)
       , d_boundaryIds(0)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
@@ -267,7 +270,47 @@ namespace dftefe
                                                   dim>(dealiiMatrixFree,
                                                        ghostIndicesSTLVec);
 
+      d_locallyOwnedRanges.resize(d_totalRanges);
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      std::pair<global_size_type, global_size_type> classicalRange =
+        std::make_pair(startId, endId);
+
+      d_locallyOwnedRanges[0] = classicalRange;
+
       //
+      // Sometimes dealii can have no locallyowned dofs in a processor and
+      // the classical dofid can give garbage value. It will return the maximum
+      // value of unsigend int as the dof id as dftefe has unsigned int as
+      // classical ids. To get through this, one has to accumulate the previous
+      // processors nlocallyOwnedDofs and set the start and end as the same
+      // in classical locallyowned dofs. getAllOwnedClassicalRanges() finds
+      // the accumulated locallyowned dof across procs.
+      //
+      std::vector<std::pair<global_size_type, global_size_type>> allOwnedRanges(
+        0);
+      getAllOwnedClassicalRanges(classicalRange, allOwnedRanges, mpiComm);
+
+      int         myProcRank = 0;
+      int         err        = utils::mpi::MPICommRank(mpiComm, &myProcRank);
+      std::string errMsg     = "Error occured while using MPI_Comm_rank. "
+                           "Error code: " +
+                           std::to_string(err);
+      utils::throwException(err == utils::mpi::MPISuccess, errMsg);
+
+      if (d_locallyOwnedRanges[0].first == d_locallyOwnedRanges[0].second)
+        {
+          if (myProcRank != 0)
+            d_locallyOwnedRanges[0].first =
+              allOwnedRanges[myProcRank - 1].second;
+          else
+            d_locallyOwnedRanges[0].first = 0;
+          d_locallyOwnedRanges[0].second = d_locallyOwnedRanges[0].first;
+
+          std::cout << "Warning : No locally owned cells in processor "
+                    << myProcRank << std::endl;
+        }
       // populate d_mpiPatternP2P - nbx consensus map for P2P communication
       //
       d_mpiPatternP2P =
@@ -504,6 +547,50 @@ namespace dftefe
                                                   dim>(dealiiMatrixFree,
                                                        ghostIndicesSTLVec);
 
+      d_locallyOwnedRanges.resize(d_totalRanges);
+      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
+      global_size_type startId        = *(dealiiIndexSet.begin());
+      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
+      std::pair<global_size_type, global_size_type> classicalRange =
+        std::make_pair(startId, endId);
+
+      d_locallyOwnedRanges[0] = classicalRange;
+
+      //
+      // Sometimes dealii can have no locallyowned dofs in a processor and
+      // the classical dofid can give garbage value. It will return the maximum
+      // value of unsigend int as the dof id as dftefe has unsigned int as
+      // classical ids. To get through this, one has to accumulate the previous
+      // processors nlocallyOwnedDofs and set the start and end as the same
+      // in classical locallyowned dofs. getAllOwnedClassicalRanges() finds
+      // the accumulated locallyowned dof across procs.
+      //
+      std::vector<std::pair<global_size_type, global_size_type>> allOwnedRanges(
+        0);
+      getAllOwnedClassicalRanges(classicalRange,
+                                 allOwnedRanges,
+                                 utils::mpi::MPICommSelf);
+
+      int myProcRank = 0;
+      int err = utils::mpi::MPICommRank(utils::mpi::MPICommSelf, &myProcRank);
+      std::string errMsg = "Error occured while using MPI_Comm_rank. "
+                           "Error code: " +
+                           std::to_string(err);
+      utils::throwException(err == utils::mpi::MPISuccess, errMsg);
+
+      if (startId == endId)
+        {
+          if (myProcRank != 0)
+            d_locallyOwnedRanges[0].first =
+              allOwnedRanges[myProcRank - 1].second;
+          else
+            d_locallyOwnedRanges[0].first = 0;
+          d_locallyOwnedRanges[0].second = d_locallyOwnedRanges[0].first;
+
+          std::cout << "Warning : No locally owned cells in processor "
+                    << myProcRank << std::endl;
+        }
+
       //
       // populate d_mpiPatternP2P - nbx consensus map for P2P communication
       //
@@ -729,16 +816,55 @@ namespace dftefe
     CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getLocallyOwnedRanges() const
     {
-      std::vector<std::pair<global_size_type, global_size_type>> returnValue(0);
-      auto             dealiiIndexSet = d_dofHandler->locally_owned_dofs();
-      global_size_type startId        = *(dealiiIndexSet.begin());
-      global_size_type endId = startId + d_dofHandler->n_locally_owned_dofs();
-      std::pair<global_size_type, global_size_type> classicalRange =
-        std::make_pair(startId, endId);
+      return d_locallyOwnedRanges;
+    }
 
-      returnValue.push_back(classicalRange);
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getAllOwnedClassicalRanges(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRanges,
+        std::vector<std::pair<global_size_type, global_size_type>>
+          &                        allOwnedRanges,
+        const utils::mpi::MPIComm &mpiComm) const
+    {
+      int         nprocs = 1;
+      int         err    = utils::mpi::MPICommSize(mpiComm, &nprocs);
+      std::string errMsg = "Error occured while using MPI_Comm_size. "
+                           "Error code: " +
+                           std::to_string(err);
+      utils::throwException(err == utils::mpi::MPISuccess, errMsg);
 
-      return returnValue;
+      std::vector<int> recvCounts(nprocs, 2);
+      std::vector<int> displs(nprocs, 0);
+      for (unsigned int i = 0; i < nprocs; ++i)
+        displs[i] = 2 * i;
+
+      allOwnedRanges.resize(nprocs);
+
+      std::vector<global_size_type> ownedRanges = {locallyOwnedRanges.first,
+                                                   locallyOwnedRanges.second};
+
+      std::vector<global_size_type> ownedRangesAcrossProcs(2 * nprocs);
+
+      utils::mpi::MPIAllgatherv<utils::MemorySpace::HOST>(
+        &ownedRanges[0],
+        2,
+        utils::mpi::MPIUnsignedLong,
+        &ownedRangesAcrossProcs[0],
+        &recvCounts[0],
+        &displs[0],
+        utils::mpi::MPIUnsignedLong,
+        mpiComm);
+
+      for (size_type iProc = 0; iProc < nprocs; ++iProc)
+        {
+          allOwnedRanges[iProc] =
+            std::make_pair(ownedRangesAcrossProcs[2 * iProc],
+                           ownedRangesAcrossProcs[2 * iProc + 1]);
+        }
     }
 
     template <typename ValueTypeBasisCoeff,

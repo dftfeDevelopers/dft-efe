@@ -278,6 +278,11 @@ namespace dftefe
             numEnrichmentIdsInCell, (ValueTypeOperator)0);
             **/
 
+            std::vector<ValueTypeOperator> enrichmentValuesVec(
+              numEnrichmentIdsInCell *
+                nQuadPointInCellEnrichmentBlockEnrichment,
+              0);
+
             if (numEnrichmentIdsInCell > 0)
               {
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
@@ -379,6 +384,20 @@ namespace dftefe
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
                 **/
+
+                for (size_type i = 0; i < numEnrichmentIdsInCell; i++)
+                  {
+                    for (unsigned int qPoint = 0;
+                         qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                         qPoint++)
+                      {
+                        *(enrichmentValuesVec.data() +
+                          nQuadPointInCellEnrichmentBlockEnrichment * i +
+                          qPoint) =
+                          eefeBDH->getEnrichmentValue(
+                            cellIndex, i, quadRealPointsVec[qPoint]);
+                      }
+                  }
               }
 
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
@@ -414,10 +433,10 @@ namespace dftefe
                              qPoint++)
                           {
                             NpiNcj +=
-                              eefeBDH->getEnrichmentValue(
-                                cellIndex,
-                                iNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (iNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
                                 nQuadPointInCellEnrichmentBlockEnrichment *
                                   jNode +
@@ -458,10 +477,10 @@ namespace dftefe
                                 nQuadPointInCellEnrichmentBlockEnrichment *
                                   iNode +
                                 qPoint) *
-                              eefeBDH->getEnrichmentValue(
-                                cellIndex,
-                                jNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (jNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
 

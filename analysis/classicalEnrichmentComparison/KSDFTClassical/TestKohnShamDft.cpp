@@ -353,13 +353,6 @@ int main(int argc, char** argv)
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
 
-  std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
-                feBasisData->getQuadratureRuleContainer();
-
-  // scale the electronic charges
-   quadrature::QuadratureValuesContainer<double, Host> 
-      electronChargeDensity(quadRuleContainer, 1, 0.0);
-
   std::map<std::string, std::string> atomSymbolToFilename;
   for (auto i:atomSymbolVec )
   {
@@ -375,21 +368,7 @@ int main(int argc, char** argv)
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho = std::make_shared
                 <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomChargesVec, atomCoordinatesVec);
- 
-  for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
-    {
-      for (size_type iComp = 0; iComp < 1; iComp++)
-        {
-          size_type             quadId = 0;
-          std::vector<double> a(
-            electronChargeDensity.nCellQuadraturePoints(iCell));
-          a = (*rho)(quadRuleContainer->getCellRealPoints(iCell));
-          double *b = a.data();
-          electronChargeDensity.template 
-            setCellQuadValues<Host>(iCell, iComp, b);
-        }
-    }
-
+                
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
@@ -475,15 +454,11 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   rootCout << "Entering KohnSham DFT Class....\n\n";
 
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = feBasisData;
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = feBasisData;
   
-  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBasisData;
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBasisData;
-
   quadrature::QuadratureRuleAttributes quadAttrVCorrecPlusPhi(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSizeVCorrecPlusPhi);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -495,6 +470,31 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   // evaluate basis data
   feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrVCorrecPlusPhi, basisAttrMap);
+
+  std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
+                feBDElectrostaticsHamiltonian->getQuadratureRuleContainer();
+
+  // scale the electronic charges
+   quadrature::QuadratureValuesContainer<double, Host> 
+      electronChargeDensity(quadRuleContainer, 1, 0.0);
+
+  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDElectrostaticsHamiltonian;
+  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;
+  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = feBDElectrostaticsHamiltonian;
+
+  for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
+    {
+      for (size_type iComp = 0; iComp < 1; iComp++)
+        {
+          size_type             quadId = 0;
+          std::vector<double> a(
+            electronChargeDensity.nCellQuadraturePoints(iCell));
+          a = (*rho)(quadRuleContainer->getCellRealPoints(iCell));
+          double *b = a.data();
+          electronChargeDensity.template 
+            setCellQuadValues<Host>(iCell, iComp, b);
+        }
+    }
 
   if(isNumericalNuclearSolve)
   {

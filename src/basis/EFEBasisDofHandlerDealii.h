@@ -296,6 +296,12 @@ namespace dftefe
       std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         d_constraintsLocal;
 
+      void
+      getAllOwnedClassicalRanges(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRanges,
+        std::vector<std::pair<global_size_type, global_size_type>>
+          &                        allOwnedRanges,
+        const utils::mpi::MPIComm &mpiComm) const;
 
     }; // end of EFEBasisDofHandlerDealii
   }    // end of namespace basis

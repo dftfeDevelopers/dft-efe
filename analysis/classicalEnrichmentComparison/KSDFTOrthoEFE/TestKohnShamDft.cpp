@@ -39,6 +39,9 @@
 
 #include <iostream>
 
+#include <chrono>
+using namespace std::chrono;
+
 using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
@@ -312,6 +315,9 @@ int main(int argc, char** argv)
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
 
+    utils::mpi::MPIBarrier(comm);
+    auto startTotal = std::chrono::high_resolution_clock::now();
+
     // Get the rank of the process
   int rank;
   utils::mpi::MPICommRank(comm, &rank);
@@ -567,6 +573,10 @@ int main(int argc, char** argv)
 
     std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
 
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    auto start = std::chrono::high_resolution_clock::now();
+
     std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveElec =
       std::make_shared<quadrature::QuadratureRuleContainer>
       (quadAttrAdaptive, 
@@ -581,6 +591,12 @@ int main(int argc, char** argv)
       smallestCellVolume,
       maxRecursion);
 
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      auto stop = std::chrono::high_resolution_clock::now();
+
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
     unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
     int mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
@@ -591,6 +607,8 @@ int main(int argc, char** argv)
       comm);
 
   rootCout << "Number of quadrature points in electrostatics adaptive quadrature: "<< nQuad<<"\n";
+
+  rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
 
   // Compute Adaptive QuadratureRuleContainer for wavefn
 /*
@@ -635,6 +653,10 @@ int main(int argc, char** argv)
       comm);
 
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
 
   // Make orthogonalized EFE basis for all the fields
 
@@ -725,6 +747,14 @@ int main(int argc, char** argv)
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
       enrichClassIntfceOrbital, feOrder, comm);
 
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  rootCout << "Time for Ortho EFE basis manager creation is(in secs) : " << duration.count()/1e6 << std::endl;
+
   std::map<global_size_type, utils::Point> dofCoords;
   basisDofHandlerTotalPot->getBasisCenters(dofCoords);
 
@@ -745,7 +775,21 @@ int main(int argc, char** argv)
   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
   (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
 
+  rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
   efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  rootCout << "Time for electrostatics basis datastorage evaluation is(in secs) : " << duration.count()/1e6 << std::endl;
 
   // std::ofstream fout("filename.txt");
   // utils::ConditionalOStream allCout(fout);
@@ -781,7 +825,19 @@ int main(int argc, char** argv)
   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
   (basisDofHandlerWaveFn, quadAttrAdaptive, basisAttrMap);
 
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
   efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  rootCout << "Time for orbital basis datastorage evaluation is(in secs) : " << duration.count()/1e6 << std::endl;
 
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho = 
                 efeBasisDataAdaptiveOrbital->getQuadratureRuleContainer();
@@ -831,6 +887,12 @@ int main(int argc, char** argv)
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
+  rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
   // Create OperatorContext for Basisoverlap
 
   std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
@@ -848,6 +910,18 @@ int main(int argc, char** argv)
                                                       *cfeBasisDataStorageGLL,
                                                       50); 
 
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  rootCout << "Time for creation of MContext is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
     std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
                                                   Host,
@@ -861,7 +935,19 @@ int main(int argc, char** argv)
                                                         *cfeBasisDataStorageGLL,
                                                         *efeBasisDataAdaptiveOrbital,
                                                         *cfeBasisDataStorageGLL,
-                                                        50);                                                      
+                                                        50);  
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);                                                                                                            
+
+  rootCout << "Time for creation of MContextForInv is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
 
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
@@ -873,10 +959,17 @@ int main(int argc, char** argv)
                                                    (*basisManagerWaveFn,
                                                     *cfeBasisDataStorageGLL,
                                                     *efeBasisDataAdaptiveOrbital,
-                                                    linAlgOpContext);                                                  
+                                                    linAlgOpContext);    
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  rootCout << "Time for creation of MInv is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
 
   rootCout << "Entering KohnSham DFT Class....\n\n";
-
 
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = efeBasisDataAdaptiveTotPot;
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = efeBasisDataAdaptiveTotPot;
@@ -971,7 +1064,20 @@ int main(int argc, char** argv)
                                           *MContext,
                                           *MInvContext);
 
-    dftefeSolve->solve();                                            
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
+    dftefeSolve->solve();                 
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
+                             
   }
   else
   {
@@ -1020,8 +1126,29 @@ int main(int argc, char** argv)
                                           *MContext,
                                           *MInvContext);
 
-    dftefeSolve->solve();                                           
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
+    dftefeSolve->solve();                
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
+
   }                          
+
+  // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    auto stopTotal = std::chrono::high_resolution_clock::now();
+
+    auto durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
+
+    rootCout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
 
   //gracefully end MPI
 
