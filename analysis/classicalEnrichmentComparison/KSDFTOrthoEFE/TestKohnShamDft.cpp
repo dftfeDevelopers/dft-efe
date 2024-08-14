@@ -376,9 +376,8 @@ int main(int argc, char** argv)
   double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);;
   double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);;
   double rc = readParameter<double>(parameterInputFileName, "rc", rootCout);
-  unsigned int num1DGaussSize = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSize", rootCout);
-  unsigned int num1DGLLSize = readParameter<unsigned int>(parameterInputFileName, "num1DGLLSize", rootCout);
-  unsigned int feOrder = readParameter<unsigned int>(parameterInputFileName, "feOrder", rootCout);
+  unsigned int feOrderElec = readParameter<unsigned int>(parameterInputFileName, "feOrderElectrostatics", rootCout);
+  unsigned int feOrderEigen = readParameter<unsigned int>(parameterInputFileName, "feOrderEigenSolve", rootCout); 
   double    smearingTemperature = readParameter<double>(parameterInputFileName, "smearingTemperature", rootCout);
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
@@ -413,9 +412,8 @@ int main(int argc, char** argv)
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
-  
-  // // Uniform mesh creation
-  // std::vector<unsigned int>         subdivisions = {30, 30, 30};
+  // //Uniform mesh creation
+  // std::vector<unsigned int>         subdivisions = {10, 10, 10};
   // std::vector<double> origin(0);
   // origin.resize(dim);
   // for(unsigned int i = 0 ; i < dim ; i++)
@@ -427,8 +425,7 @@ int main(int argc, char** argv)
   //                                                domainVectors,
   //                                                isPeriodicFlags);
   // triangulationBase->shiftTriangulation(utils::Point(origin));
-  //   triangulationBase->finalizeTriangulationConstruction();
-  
+  // triangulationBase->finalizeTriangulationConstruction();
 
   std::fstream fstream;
   fstream.open(inputFileName, std::fstream::in);
@@ -437,7 +434,7 @@ int main(int argc, char** argv)
   std::vector<utils::Point> atomCoordinatesVec(0,utils::Point(dim, 0.0));
     std::vector<double> coordinates;
   coordinates.resize(dim,0.);
-  std::vector<std::string> atomSymbolVec;
+  std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
   std::string symbol;
   double atomicNumber;
@@ -467,7 +464,6 @@ int main(int argc, char** argv)
   for (auto i:atomSymbolVec )
   {
       atomSymbolToFilename[i] = sourceDir + i + ".xml";
-      rootCout << "Reading xml file: "<<atomSymbolToFilename[i]<<std::endl; 
   }
 
   std::vector<std::string> fieldNames{"density","vtotal","orbital","vnuclear"};
@@ -476,6 +472,22 @@ int main(int argc, char** argv)
       std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
                                                       fieldNames,
                                                       metadataNames);
+
+  for (auto i:atomSymbolVec )
+  {
+    rootCout << "Reading xml file: "<<atomSymbolToFilename[i]<<std::endl; 
+    rootCout << "Cutoff and smoothness for "<<i<<std::endl; 
+    for(auto j:fieldNames)
+    {
+      rootCout << " for "<<j<<" : "; 
+      for(auto &enrichmentObjId : 
+        atomSphericalDataContainer->getSphericalData(i, j))
+      {
+        rootCout << enrichmentObjId->getCutoff() << ","<<enrichmentObjId->getSmoothness()<<"\t";
+      }
+      rootCout << std::endl;
+    }
+  }
 
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
@@ -493,6 +505,23 @@ int main(int argc, char** argv)
   adaptiveMesh.createMesh(*triangulationBase); 
 
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
+
+  // Make orthogonalized EFE basis for all the fields
+
+  // 1. Make CFEBasisDataStorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GLL)
+  // 2. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
+  // 3. Input to the EFEBasisDofHandler(eci, feOrder) 
+  // 4. Make EFEBasisDataStorage with input as quadratureContainer.
+
+    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
+  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
+
+  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerEigen =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderEigen, comm);
+
+  rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
+  rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
 
   // Compute Adaptive QuadratureRuleContainer for electrostaics
 
@@ -564,12 +593,12 @@ int main(int argc, char** argv)
 
     quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
 
-    quadrature::QuadratureRuleAttributes quadAttrGll(quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
+    quadrature::QuadratureRuleAttributes quadAttrGllElec(quadrature::QuadratureFamily::GLL,true,feOrderElec + 1);
 
     // Set up base quadrature rule for adaptive quadrature 
 
-    std::shared_ptr<quadrature::QuadratureRule> baseQuadRule =
-      std::make_shared<quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
+    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleElec =
+      std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
 
     std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
 
@@ -580,7 +609,7 @@ int main(int argc, char** argv)
     std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveElec =
       std::make_shared<quadrature::QuadratureRuleContainer>
       (quadAttrAdaptive, 
-      baseQuadRule, 
+      baseQuadRuleElec, 
       triangulationBase, 
       *cellMapping, 
       *parentToChildCellsManager,
@@ -610,38 +639,39 @@ int main(int argc, char** argv)
 
   rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
 
-  // Compute Adaptive QuadratureRuleContainer for wavefn
-/*
-    // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
-    numfun = 3;
-    functionsVec.resize(numfun); // Enrichment Functions
-    absoluteTolerances.resize(numfun);
-    relativeTolerances.resize(numfun);
-    integralThresholds.resize(numfun);
-    for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
-    {
-      if( i < 2)
-        functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            atomSphericalDataContainer,
-            atomSymbolVec,
-            atomCoordinatesVec,
-            "orbital",
-            i);
-        else
-          functionsVec[i] = std::make_shared<VExternalTimesOrbitalSqFunction>(
-            atomSphericalDataContainer,
-            atomSymbolVec,
-            atomChargesVec,
-            atomCoordinatesVec);
-        absoluteTolerances[i] = adaptiveQuadAbsTolerance;
-        relativeTolerances[i] = adaptiveQuadRelTolerance;
-        integralThresholds[i] = integralThreshold;
-    }
-*/
     //Set up quadAttr for Rhs and OverlapMatrix
+    
+    quadrature::QuadratureRuleAttributes quadAttrGllEigen(quadrature::QuadratureFamily::GLL,true,feOrderEigen + 1);
 
     // Set up base quadrature rule for adaptive quadrature 
+
+    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1);
+      // feOrderEigen > feOrderElec ? std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1) : 
+      //   std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
     std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital = quadRuleContainerAdaptiveElec;
+      // std::make_shared<quadrature::QuadratureRuleContainer>
+      // (quadAttrAdaptive, 
+      // baseQuadRuleEigen, 
+      // triangulationBase, 
+      // *cellMapping, 
+      // *parentToChildCellsManager,
+      // functionsVec,
+      // absoluteTolerances,
+      // relativeTolerances,
+      // integralThresholds,
+      // smallestCellVolume,
+      // maxRecursion);
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
     nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
     mpierr = utils::mpi::MPIAllreduce<Host>(
@@ -654,21 +684,12 @@ int main(int argc, char** argv)
 
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
 
+  rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
+
     // add device synchronize for gpu
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
-
-  // Make orthogonalized EFE basis for all the fields
-
-  // 1. Make CFEBasisDataStorageDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GLL)
-  // 2. Make EnrichmentClassicalInterface object for Orthogonalized enrichment
-  // 3. Input to the EFEBasisDofHandler(eci, feOrder) 
-  // 4. Make EFEBasisDataStorage with input as quadratureContainer.
-
-    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
-  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandler =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrder, comm);
-
+        
   basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -678,16 +699,22 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Overlap Matrix
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLL =
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLLElec =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
-      (cfeBasisDofHandler, quadAttrGll, basisAttrMap);
+      (cfeBasisDofHandlerElec, quadAttrGllElec, basisAttrMap);
+
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLLEigen =
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
+      (cfeBasisDofHandlerEigen, quadAttrGllEigen, basisAttrMap);
+
   // evaluate basis data
-  cfeBasisDataStorageGLL->evaluateBasisData(quadAttrGll, basisAttrMap);
+  cfeBasisDataStorageGLLElec->evaluateBasisData(quadAttrGllElec, basisAttrMap);
+  cfeBasisDataStorageGLLEigen->evaluateBasisData(quadAttrGllEigen, basisAttrMap);
 
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageAdaptiveElec =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
-      (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
+      (cfeBasisDofHandlerElec, quadAttrAdaptive, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageAdaptiveElec->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
 
@@ -703,7 +730,7 @@ int main(int argc, char** argv)
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageAdaptiveOrbital =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
-      (cfeBasisDofHandler, quadAttrAdaptive, basisAttrMap);
+      (cfeBasisDofHandlerEigen, quadAttrAdaptive, basisAttrMap);
   // evaluate basis data
   cfeBasisDataStorageAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
@@ -712,7 +739,7 @@ int main(int argc, char** argv)
                           <double, Host, dim>>
         enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
-                          (cfeBasisDataStorageGLL,
+                          (cfeBasisDataStorageGLLElec,
                           cfeBasisDataStorageAdaptiveElec,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
@@ -727,7 +754,7 @@ int main(int argc, char** argv)
                           <double, Host, dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
-                          (cfeBasisDataStorageGLL,
+                          (cfeBasisDataStorageAdaptiveOrbital,
                           cfeBasisDataStorageAdaptiveOrbital,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
@@ -741,11 +768,11 @@ int main(int argc, char** argv)
 
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot =  
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-      enrichClassIntfceTotalPot, feOrder, comm);
+      enrichClassIntfceTotalPot, comm);
 
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerWaveFn =  
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-      enrichClassIntfceOrbital, feOrder, comm);
+      enrichClassIntfceOrbital, comm);
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -763,7 +790,7 @@ int main(int argc, char** argv)
 
   // Set up the quadrature rule
 
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
@@ -775,13 +802,24 @@ int main(int argc, char** argv)
   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
   (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
 
-  rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
-
     // add device synchronize for gpu
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-  efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+    efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+
+    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = efeBasisDataAdaptiveTotPot;
+
+    basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+    basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
+    feBDTotalChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -830,6 +868,10 @@ int main(int argc, char** argv)
     start = std::chrono::high_resolution_clock::now();
 
   efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+
+    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveOrbital;
+    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -887,40 +929,59 @@ int main(int argc, char** argv)
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
-  rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
+  //   // add device synchronize for gpu
+  //   utils::mpi::MPIBarrier(comm);
+  //   start = std::chrono::high_resolution_clock::now();
+
+  // // Create OperatorContext for Basisoverlap
+
+  // std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
+  //                                               double,
+  //                                               Host,
+  //                                               dim>> MContext =
+  // std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+  //                                                     double,
+  //                                                     Host,
+  //                                                     dim>>(
+  //                                                     *basisManagerWaveFn,
+  //                                                     *cfeBasisDataStorageAdaptiveOrbital,
+  //                                                     *efeBasisDataAdaptiveOrbital,
+  //                                                     /**cfeBasisDataStorageGLLEigen,*/
+  //                                                     50); 
+
+  //   // add device synchronize for gpu
+  //     utils::mpi::MPIBarrier(comm);
+  //     stop = std::chrono::high_resolution_clock::now();
+
+  //     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  // rootCout << "Time for creation of MContext is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
 
     // add device synchronize for gpu
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-  // Create OperatorContext for Basisoverlap
+  //   quadrature::QuadratureRuleAttributes quadAttrGaussEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen + 1);
 
-  std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
-                                                double,
-                                                Host,
-                                                dim>> MContext =
-  std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
-                                                      double,
-                                                      Host,
-                                                      dim>>(
-                                                      *basisManagerWaveFn,
-                                                      *basisManagerWaveFn,
-                                                      *cfeBasisDataStorageAdaptiveOrbital,
-                                                      *efeBasisDataAdaptiveOrbital,
-                                                      *cfeBasisDataStorageGLL,
-                                                      50); 
+  //   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGaussEigen =
+  //     std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
+  //     (cfeBasisDofHandlerEigen, quadAttrGaussEigen, basisAttrMap);
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
+  // cfeBasisDataStorageGaussEigen->evaluateBasisData(quadAttrGaussEigen , basisAttrMap);
 
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for creation of MContext is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+  //   std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
+  //                                                 double,
+  //                                                 Host,
+  //                                                 dim>> MContextTestGauss =
+  //   std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+  //                                                       double,
+  //                                                       Host,
+  //                                                       dim>>(
+  //                                                       *basisManagerWaveFn,
+  //                                                       *cfeBasisDataStorageGaussEigen,
+  //                                                       *efeBasisDataAdaptiveOrbital,
+  //                                                       /**cfeBasisDataStorageGLLEigen,*/
+  //                                                       50);  
 
     std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
@@ -931,11 +992,9 @@ int main(int argc, char** argv)
                                                         Host,
                                                         dim>>(
                                                         *basisManagerWaveFn,
-                                                        *basisManagerWaveFn,
-                                                        *cfeBasisDataStorageGLL,
+                                                        *cfeBasisDataStorageGLLEigen,
                                                         *efeBasisDataAdaptiveOrbital,
-                                                        *cfeBasisDataStorageGLL,
-                                                        50);  
+                                                        linAlgOpContext);  
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -957,7 +1016,7 @@ int main(int argc, char** argv)
                                                    Host,
                                                    dim>>
                                                    (*basisManagerWaveFn,
-                                                    *cfeBasisDataStorageGLL,
+                                                    *cfeBasisDataStorageGLLEigen,
                                                     *efeBasisDataAdaptiveOrbital,
                                                     linAlgOpContext);    
 
@@ -971,12 +1030,6 @@ int main(int argc, char** argv)
 
   rootCout << "Entering KohnSham DFT Class....\n\n";
 
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = efeBasisDataAdaptiveTotPot;
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = efeBasisDataAdaptiveTotPot;
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
-  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveOrbital;
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
-
   if(isNumericalNuclearSolve)
   {
 
@@ -985,7 +1038,7 @@ int main(int argc, char** argv)
                           <double, Host, dim>>
           enrichClassIntfceNucPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
-                          (cfeBasisDataStorageGLL,
+                          (cfeBasisDataStorageGLLElec,
                           cfeBasisDataStorageAdaptiveElec,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
@@ -997,7 +1050,7 @@ int main(int argc, char** argv)
 
     std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerNucl =  
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-      enrichClassIntfceNucPot, feOrder, comm);
+      enrichClassIntfceNucPot, comm);
 
     rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerNucl->nGlobalNodes() << "\n";
 
@@ -1061,7 +1114,7 @@ int main(int argc, char** argv)
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MInvContext);
 
     // add device synchronize for gpu
@@ -1123,7 +1176,7 @@ int main(int argc, char** argv)
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MInvContext);
 
     // add device synchronize for gpu

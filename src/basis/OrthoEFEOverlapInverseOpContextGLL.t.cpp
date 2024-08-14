@@ -36,6 +36,157 @@ namespace dftefe
   {
     namespace OrthoEFEOverlapInverseOpContextGLLInternal
     {
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      class OverlapMatrixInverseLinearSolverFunctionFE
+        : public linearAlgebra::LinearSolverFunction<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>
+      {
+      public:
+        /**
+         * @brief define ValueType as the superior (bigger set) of the
+         * ValueTypeOperator and ValueTypeOperand
+         * (e.g., between double and complex<double>, complex<double>
+         * is the bigger set)
+         */
+        using ValueType =
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>;
+
+      public:
+        /**
+         * @brief This constructor creates an instance of a base LinearSolverFunction called OverlapMatrixInverseLinearSolverFunctionFE
+         */
+        OverlapMatrixInverseLinearSolverFunctionFE(
+          const basis::FEBasisManager<ValueTypeOperand,
+                                      ValueTypeOperator,
+                                      memorySpace,
+                                      dim> &         feBasisManager,
+          const OrthoEFEOverlapOperatorContext<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace,
+                                               dim> &MContext,
+          std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                          linAlgOpContext,
+          const size_type maxCellTimesNumVecs)
+          : d_feBasisManager(&feBasisManager)
+          , d_linAlgOpContext(linAlgOpContext)
+          , d_AxContext(&MContext)
+        {
+          d_PCContext = std::make_shared<
+            linearAlgebra::PreconditionerNone<ValueTypeOperator,
+                                              ValueTypeOperand,
+                                              memorySpace>>();
+        }
+
+        void
+        reinit(linearAlgebra::MultiVector<ValueType, memorySpace> &X)
+        {
+          d_numComponents = X.getNumberComponents();
+
+          // set up MPIPatternP2P for the constraints
+          auto mpiPatternP2P = d_feBasisManager->getMPIPatternP2P();
+
+          linearAlgebra::MultiVector<ValueType, memorySpace> x(
+            mpiPatternP2P, d_linAlgOpContext, d_numComponents, ValueType());
+          d_x = x;
+          linearAlgebra::MultiVector<ValueType, memorySpace> initial(
+            mpiPatternP2P, d_linAlgOpContext, d_numComponents, ValueType());
+          d_initial = initial;
+
+          // Compute RHS
+          d_feBasisManager->getConstraints().distributeChildToParent(
+            X, d_numComponents);
+
+          d_b = X;
+        }
+
+        ~OverlapMatrixInverseLinearSolverFunctionFE() = default;
+
+        const linearAlgebra::
+          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+          getAxContext() const
+        {
+          return *d_AxContext;
+        }
+
+        const linearAlgebra::
+          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+          getPCContext() const
+        {
+          return *d_PCContext;
+        }
+
+        void
+        setSolution(const linearAlgebra::MultiVector<
+                    linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                           ValueTypeOperand>,
+                    memorySpace> &x)
+        {
+          d_x = x;
+        }
+
+
+        void
+        getSolution(linearAlgebra::MultiVector<
+                    linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                           ValueTypeOperand>,
+                    memorySpace> &solution)
+        {
+          size_type numComponents = solution.getNumberComponents();
+          solution.setValue(0.0);
+
+          solution = d_x;
+          solution.updateGhostValues();
+
+          d_feBasisManager->getConstraints().distributeParentToChild(
+            solution, numComponents);
+        }
+
+        const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
+        getRhs() const
+        {
+          return d_b;
+        }
+
+        const linearAlgebra::MultiVector<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &
+        getInitialGuess() const
+        {
+          return d_initial;
+        }
+
+        const utils::mpi::MPIComm &
+        getMPIComm() const
+        {
+          return d_feBasisManager->getMPIPatternP2P()->mpiCommunicator();
+        }
+
+      private:
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                  d_linAlgOpContext;
+        size_type d_numComponents;
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            *                                              d_feBasisManager;
+        const linearAlgebra::OperatorContext<ValueTypeOperator,
+                                             ValueTypeOperand,
+                                             memorySpace> *d_AxContext;
+        std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
+                                                             ValueTypeOperand,
+                                                             memorySpace>>
+                                                           d_PCContext;
+        linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
+        linearAlgebra::MultiVector<ValueType, memorySpace> d_b;
+        linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
+
+      }; // end of class PoissonLinearSolverFunctionFE
+
       /*
       // Functions from intel MKL library
       //   // LU decomoposition of a general matrix
@@ -259,7 +410,7 @@ namespace dftefe
                       }
                   }
 
-                dftefe::utils::MemoryStorage<ValueTypeOperator,
+                utils::MemoryStorage<ValueTypeOperator,
                                              utils::MemorySpace::HOST>
                   basisValInCellEC =
                     enrichmentBlockClassicalBasisDataStorage.getBasisDataInCell(
@@ -287,7 +438,7 @@ namespace dftefe
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
 
-                dftefe::utils::MemoryStorage<ValueTypeOperator,
+                utils::MemoryStorage<ValueTypeOperator,
                                              utils::MemorySpace::HOST>
                   basisValInCellEE =
                     enrichmentBlockEnrichmentBasisDataStorage.getBasisDataInCell(
@@ -476,6 +627,7 @@ namespace dftefe
       : d_feBasisManager(&feBasisManager)
       , d_linAlgOpContext(linAlgOpContext)
       , d_diagonalInv(d_feBasisManager->getMPIPatternP2P(), linAlgOpContext)
+      , d_isCGSolved(false)
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
@@ -504,7 +656,7 @@ namespace dftefe
       utils::throwException(
         classicalBlockGLLBasisDataStorage.getQuadratureRuleContainer()
             ->getQuadratureRuleAttributes()
-            .getQuadratureFamily() == dftefe::quadrature::QuadratureFamily::GLL,
+            .getQuadratureFamily() == quadrature::QuadratureFamily::GLL,
         "The quadrature rule for integration of Classical FE dofs has to be GLL."
         "Contact developers if extra options are needed.");
 
@@ -727,6 +879,56 @@ namespace dftefe
           basisOverlapEnrichmentBlockSTL.data());
     }
 
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    OrthoEFEOverlapInverseOpContextGLL<ValueTypeOperator,
+                                       ValueTypeOperand,
+                                       memorySpace,
+                                       dim>::
+      OrthoEFEOverlapInverseOpContextGLL(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                      feBasisManager,
+        const OrthoEFEOverlapOperatorContext<ValueTypeOperator,
+                                             ValueTypeOperand,
+                                             memorySpace,
+                                             dim> &MContext,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+             linAlgOpContext,
+        bool isCGSolved)
+      : d_feBasisManager(&feBasisManager)
+      , d_linAlgOpContext(linAlgOpContext)
+      , d_isCGSolved(isCGSolved)
+    {
+      if (d_isCGSolved)
+        {
+          d_overlapInvPoisson = std::make_shared<
+            OrthoEFEOverlapInverseOpContextGLLInternal::
+              OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
+                                                         ValueTypeOperand,
+                                                         memorySpace,
+                                                         dim>>(
+            *d_feBasisManager, MContext, linAlgOpContext, 50);
+
+          linearAlgebra::LinearAlgebraProfiler profiler;
+
+          d_CGSolve =
+            std::make_shared<linearAlgebra::CGLinearSolver<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace>>(
+              100000, 1e-10, 1e-12, 1e10, profiler);
+        }
+      else
+        {
+          utils::throwException(false,
+                                "Could not have other options than cgsolve.");
+        }
+    }
+
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
@@ -739,96 +941,119 @@ namespace dftefe
       dim>::apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
                   linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
     {
-      const size_type numComponents = X.getNumberComponents();
-      const size_type nlocallyOwnedEnrichmentIds =
-        d_feBasisManager->getLocallyOwnedRanges()[1].second -
-        d_feBasisManager->getLocallyOwnedRanges()[1].first;
-      const size_type nlocallyOwnedClassicalIds =
-        d_feBasisManager->getLocallyOwnedRanges()[0].second -
-        d_feBasisManager->getLocallyOwnedRanges()[0].first;
+      if (!d_isCGSolved)
+        {
+          const size_type numComponents = X.getNumberComponents();
+          const size_type nlocallyOwnedEnrichmentIds =
+            d_feBasisManager->getLocallyOwnedRanges()[1].second -
+            d_feBasisManager->getLocallyOwnedRanges()[1].first;
+          const size_type nlocallyOwnedClassicalIds =
+            d_feBasisManager->getLocallyOwnedRanges()[0].second -
+            d_feBasisManager->getLocallyOwnedRanges()[0].first;
 
-      X.updateGhostValues();
-      // update the child nodes based on the parent nodes
-      d_feBasisManager->getConstraints().distributeParentToChild(
-        X, X.getNumberComponents());
+          X.updateGhostValues();
+          // update the child nodes based on the parent nodes
+          d_feBasisManager->getConstraints().distributeParentToChild(
+            X, X.getNumberComponents());
 
-      Y.setValue(0.0);
+          Y.setValue(0.0);
 
-      linearAlgebra::blasLapack::khatriRaoProduct(
-        linearAlgebra::blasLapack::Layout::ColMajor,
-        1,
-        numComponents,
-        d_diagonalInv.localSize(),
-        d_diagonalInv.data(),
-        X.begin(),
-        Y.begin(),
-        *(d_diagonalInv.getLinAlgOpContext()));
+          linearAlgebra::blasLapack::khatriRaoProduct(
+            linearAlgebra::blasLapack::Layout::ColMajor,
+            1,
+            numComponents,
+            d_diagonalInv.localSize(),
+            d_diagonalInv.data(),
+            X.begin(),
+            Y.begin(),
+            *(d_diagonalInv.getLinAlgOpContext()));
 
-      utils::MemoryStorage<ValueTypeOperand, memorySpace> XenrichedGlobalVec(
-        d_nglobalEnrichmentIds * numComponents),
-        XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
-        YenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents);
+          utils::MemoryStorage<ValueTypeOperand, memorySpace>
+            XenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents),
+            XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
+            YenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents);
 
-      XenrichedGlobalVecTmp.template copyFrom<memorySpace>(
-        X.begin(),
-        nlocallyOwnedEnrichmentIds * numComponents,
-        nlocallyOwnedClassicalIds * numComponents,
-        ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
-         (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
-          numComponents);
+          XenrichedGlobalVecTmp.template copyFrom<memorySpace>(
+            X.begin(),
+            nlocallyOwnedEnrichmentIds * numComponents,
+            nlocallyOwnedClassicalIds * numComponents,
+            ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
+             (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
+              numComponents);
 
-      int err = utils::mpi::MPIAllreduce<memorySpace>(
-        XenrichedGlobalVecTmp.data(),
-        XenrichedGlobalVec.data(),
-        XenrichedGlobalVecTmp.size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+          int err = utils::mpi::MPIAllreduce<memorySpace>(
+            XenrichedGlobalVecTmp.data(),
+            XenrichedGlobalVec.data(),
+            XenrichedGlobalVecTmp.size(),
+            utils::mpi::MPIDouble,
+            utils::mpi::MPISum,
+            d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+          std::pair<bool, std::string> mpiIsSuccessAndMsg =
+            utils::mpi::MPIErrIsSuccessAndMsg(err);
+          utils::throwException(mpiIsSuccessAndMsg.first,
+                                "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      // Do dgemm
+          // Do dgemm
 
-      ValueType alpha = 1.0;
-      ValueType beta  = 0.0;
+          ValueType alpha = 1.0;
+          ValueType beta  = 0.0;
 
-      linearAlgebra::blasLapack::
-        gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
-          linearAlgebra::blasLapack::Layout::ColMajor,
-          linearAlgebra::blasLapack::Op::NoTrans,
-          linearAlgebra::blasLapack::Op::Trans,
-          numComponents,
-          d_nglobalEnrichmentIds,
-          d_nglobalEnrichmentIds,
-          alpha,
-          XenrichedGlobalVec.data(),
-          numComponents,
-          d_basisOverlapEnrichmentBlock->data(),
-          d_nglobalEnrichmentIds,
-          beta,
-          YenrichedGlobalVec.begin(),
-          numComponents,
-          *d_linAlgOpContext);
+          linearAlgebra::blasLapack::
+            gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+              linearAlgebra::blasLapack::Layout::ColMajor,
+              linearAlgebra::blasLapack::Op::NoTrans,
+              linearAlgebra::blasLapack::Op::Trans,
+              numComponents,
+              d_nglobalEnrichmentIds,
+              d_nglobalEnrichmentIds,
+              alpha,
+              XenrichedGlobalVec.data(),
+              numComponents,
+              d_basisOverlapEnrichmentBlock->data(),
+              d_nglobalEnrichmentIds,
+              beta,
+              YenrichedGlobalVec.begin(),
+              numComponents,
+              *d_linAlgOpContext);
 
-      YenrichedGlobalVec.template copyTo<memorySpace>(
-        Y.begin(),
-        nlocallyOwnedEnrichmentIds * numComponents,
-        ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
-         (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
-          numComponents,
-        nlocallyOwnedClassicalIds * numComponents);
+          YenrichedGlobalVec.template copyTo<memorySpace>(
+            Y.begin(),
+            nlocallyOwnedEnrichmentIds * numComponents,
+            ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
+             (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
+              numComponents,
+            nlocallyOwnedClassicalIds * numComponents);
 
-      Y.updateGhostValues();
+          Y.updateGhostValues();
 
-      // function to do a static condensation to send the constraint nodes to
-      // its parent nodes
-      d_feBasisManager->getConstraints().distributeParentToChild(
-        Y, Y.getNumberComponents());
+          // function to do a static condensation to send the constraint nodes
+          // to its parent nodes
+          d_feBasisManager->getConstraints().distributeChildToParent(
+            Y, Y.getNumberComponents());
 
-      // Function to update the ghost values of the Y
-      Y.updateGhostValues();
+          // Function to update the ghost values of the Y
+          Y.updateGhostValues();
+        }
+      else
+        {
+          std::shared_ptr<
+            OrthoEFEOverlapInverseOpContextGLLInternal::
+              OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
+                                                         ValueTypeOperand,
+                                                         memorySpace,
+                                                         dim>>
+            overlapInvPoisson = std::dynamic_pointer_cast<
+              OrthoEFEOverlapInverseOpContextGLLInternal::
+                OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace,
+                                                           dim>>(
+              d_overlapInvPoisson);
+          Y.setValue(0.0);
+          overlapInvPoisson->reinit(X);
+          d_CGSolve->solve(*overlapInvPoisson);
+          overlapInvPoisson->getSolution(Y);
+        }
     }
   } // namespace basis
 } // namespace dftefe

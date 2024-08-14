@@ -37,6 +37,7 @@
 #include <basis/FECellWiseDataOperations.h>
 #include <vector>
 #include <memory>
+#include <basis/EnrichmentClassicalInterfaceSpherical.h>
 
 namespace dftefe
 {
@@ -65,6 +66,19 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
+      // --------------DEBUG ONLY (direct inversion using CG solve)---------
+      CFEOverlapInverseOpContextGLL(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                 feBasisManager,
+        const CFEOverlapOperatorContext<ValueTypeOperator,
+                                        ValueTypeOperand,
+                                        memorySpace,
+                                        dim> &MContext,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+             linAlgOpContext,
+        bool isCGSolved = true);
+
       void
       apply(
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -77,6 +91,18 @@ namespace dftefe
                            dim> *                           d_feBasisManager;
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
       const std::string                                     d_constraints;
+
+      bool d_isCGSolved;
+      std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeOperator,
+                                                          ValueTypeOperand,
+                                                          memorySpace>>
+        d_overlapInvPoisson;
+      std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>>
+        d_CGSolve;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
 
     }; // end of class BasisOverlapOperatorContext
   }    // namespace basis

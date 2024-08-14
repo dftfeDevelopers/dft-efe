@@ -32,6 +32,157 @@ namespace dftefe
                 typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
+      class OverlapMatrixInverseLinearSolverFunctionFE
+        : public linearAlgebra::LinearSolverFunction<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>
+      {
+      public:
+        /**
+         * @brief define ValueType as the superior (bigger set) of the
+         * ValueTypeOperator and ValueTypeOperand
+         * (e.g., between double and complex<double>, complex<double>
+         * is the bigger set)
+         */
+        using ValueType =
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>;
+
+      public:
+        /**
+         * @brief This constructor creates an instance of a base LinearSolverFunction called OverlapMatrixInverseLinearSolverFunctionFE
+         */
+        OverlapMatrixInverseLinearSolverFunctionFE(
+          const basis::FEBasisManager<ValueTypeOperand,
+                                      ValueTypeOperator,
+                                      memorySpace,
+                                      dim> &    feBasisManager,
+          const CFEOverlapOperatorContext<ValueTypeOperator,
+                                          ValueTypeOperand,
+                                          memorySpace,
+                                          dim> &MContext,
+          std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                          linAlgOpContext,
+          const size_type maxCellTimesNumVecs)
+          : d_feBasisManager(&feBasisManager)
+          , d_linAlgOpContext(linAlgOpContext)
+          , d_AxContext(&MContext)
+        {
+          d_PCContext = std::make_shared<
+            linearAlgebra::PreconditionerNone<ValueTypeOperator,
+                                              ValueTypeOperand,
+                                              memorySpace>>();
+        }
+
+        void
+        reinit(linearAlgebra::MultiVector<ValueType, memorySpace> &X)
+        {
+          d_numComponents = X.getNumberComponents();
+
+          // set up MPIPatternP2P for the constraints
+          auto mpiPatternP2P = d_feBasisManager->getMPIPatternP2P();
+
+          linearAlgebra::MultiVector<ValueType, memorySpace> x(
+            mpiPatternP2P, d_linAlgOpContext, d_numComponents, ValueType());
+          d_x = x;
+          linearAlgebra::MultiVector<ValueType, memorySpace> initial(
+            mpiPatternP2P, d_linAlgOpContext, d_numComponents, ValueType());
+          d_initial = initial;
+
+          // Compute RHS
+          d_feBasisManager->getConstraints().distributeChildToParent(
+            X, d_numComponents);
+
+          d_b = X;
+        }
+
+        ~OverlapMatrixInverseLinearSolverFunctionFE() = default;
+
+        const linearAlgebra::
+          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+          getAxContext() const
+        {
+          return *d_AxContext;
+        }
+
+        const linearAlgebra::
+          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
+          getPCContext() const
+        {
+          return *d_PCContext;
+        }
+
+        void
+        setSolution(const linearAlgebra::MultiVector<
+                    linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                           ValueTypeOperand>,
+                    memorySpace> &x)
+        {
+          d_x = x;
+        }
+
+
+        void
+        getSolution(linearAlgebra::MultiVector<
+                    linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                           ValueTypeOperand>,
+                    memorySpace> &solution)
+        {
+          size_type numComponents = solution.getNumberComponents();
+          solution.setValue(0.0);
+
+          solution = d_x;
+          solution.updateGhostValues();
+
+          d_feBasisManager->getConstraints().distributeParentToChild(
+            solution, numComponents);
+        }
+
+        const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
+        getRhs() const
+        {
+          return d_b;
+        }
+
+        const linearAlgebra::MultiVector<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &
+        getInitialGuess() const
+        {
+          return d_initial;
+        }
+
+        const utils::mpi::MPIComm &
+        getMPIComm() const
+        {
+          return d_feBasisManager->getMPIPatternP2P()->mpiCommunicator();
+        }
+
+      private:
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                  d_linAlgOpContext;
+        size_type d_numComponents;
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            *                                              d_feBasisManager;
+        const linearAlgebra::OperatorContext<ValueTypeOperator,
+                                             ValueTypeOperand,
+                                             memorySpace> *d_AxContext;
+        std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
+                                                             ValueTypeOperand,
+                                                             memorySpace>>
+                                                           d_PCContext;
+        linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
+        linearAlgebra::MultiVector<ValueType, memorySpace> d_b;
+        linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
+
+      }; // end of class PoissonLinearSolverFunctionFE
+
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
       void
       computeBasisOverlapMatrix(
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
@@ -146,6 +297,7 @@ namespace dftefe
           linAlgOpContext)
       : d_diagonalInv(d_feBasisManager->getMPIPatternP2P(), linAlgOpContext)
       , d_feBasisManager(&feBasisManager)
+      , d_isCGSolved(false)
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
@@ -166,7 +318,7 @@ namespace dftefe
       utils::throwException(
         classicalGLLBasisDataStorage.getQuadratureRuleContainer()
             ->getQuadratureRuleAttributes()
-            .getQuadratureFamily() == dftefe::quadrature::QuadratureFamily::GLL,
+            .getQuadratureFamily() == quadrature::QuadratureFamily::GLL,
         "The quadrature rule for integration of Classical FE dofs has to be GLL."
         "Contact developers if extra options are needed.");
 
@@ -235,6 +387,55 @@ namespace dftefe
         d_diagonalInv, 1);
     }
 
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    CFEOverlapInverseOpContextGLL<ValueTypeOperator,
+                                  ValueTypeOperand,
+                                  memorySpace,
+                                  dim>::
+      CFEOverlapInverseOpContextGLL(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                 feBasisManager,
+        const CFEOverlapOperatorContext<ValueTypeOperator,
+                                        ValueTypeOperand,
+                                        memorySpace,
+                                        dim> &MContext,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+             linAlgOpContext,
+        bool isCGSolved)
+      : d_feBasisManager(&feBasisManager)
+      , d_linAlgOpContext(linAlgOpContext)
+      , d_isCGSolved(isCGSolved)
+    {
+      if (d_isCGSolved)
+        {
+          d_overlapInvPoisson = std::make_shared<
+            CFEOverlapInverseOpContextGLLInternal::
+              OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
+                                                         ValueTypeOperand,
+                                                         memorySpace,
+                                                         dim>>(
+            *d_feBasisManager, MContext, linAlgOpContext, 50);
+
+          linearAlgebra::LinearAlgebraProfiler profiler;
+
+          d_CGSolve =
+            std::make_shared<linearAlgebra::CGLinearSolver<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace>>(
+              100000, 1e-10, 1e-12, 1e10, profiler);
+        }
+      else
+        {
+          utils::throwException(false,
+                                "Could not have other options than cgsolve.");
+        }
+    }
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
@@ -247,33 +448,56 @@ namespace dftefe
       dim>::apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
                   linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
     {
-      X.updateGhostValues();
-      // update the child nodes based on the parent nodes
-      d_feBasisManager->getConstraints().distributeParentToChild(
-        X, X.getNumberComponents());
+      if (d_isCGSolved)
+        {
+          std::shared_ptr<
+            CFEOverlapInverseOpContextGLLInternal::
+              OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
+                                                         ValueTypeOperand,
+                                                         memorySpace,
+                                                         dim>>
+            overlapInvPoisson = std::dynamic_pointer_cast<
+              CFEOverlapInverseOpContextGLLInternal::
+                OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace,
+                                                           dim>>(
+              d_overlapInvPoisson);
+          Y.setValue(0.0);
+          overlapInvPoisson->reinit(X);
+          d_CGSolve->solve(*overlapInvPoisson);
+          overlapInvPoisson->getSolution(Y);
+        }
+      else
+        {
+          X.updateGhostValues();
+          // update the child nodes based on the parent nodes
+          d_feBasisManager->getConstraints().distributeParentToChild(
+            X, X.getNumberComponents());
 
-      Y.setValue(0.0);
+          Y.setValue(0.0);
 
-      linearAlgebra::blasLapack::khatriRaoProduct(
-        linearAlgebra::blasLapack::Layout::ColMajor,
-        1,
-        X.getNumberComponents(),
-        d_diagonalInv.localSize(),
-        d_diagonalInv.data(),
-        X.data(),
-        Y.data(),
-        *(d_diagonalInv.getLinAlgOpContext()));
+          linearAlgebra::blasLapack::khatriRaoProduct(
+            linearAlgebra::blasLapack::Layout::ColMajor,
+            1,
+            X.getNumberComponents(),
+            d_diagonalInv.localSize(),
+            d_diagonalInv.data(),
+            X.data(),
+            Y.data(),
+            *(d_diagonalInv.getLinAlgOpContext()));
 
-      // function to do a static condensation to send the constraint nodes to
-      // its parent nodes
-      // TODO : The distributeChildToParent of the result of M_inv*X is
-      // processor local and for adaptive quadrature the M_inv is not diagonal.
-      // Implement that case here.
-      d_feBasisManager->getConstraints().distributeParentToChild(
-        Y, Y.getNumberComponents());
+          // function to do a static condensation to send the constraint nodes
+          // to its parent nodes
+          // TODO : The distributeChildToParent of the result of M_inv*X is
+          // processor local and for adaptive quadrature the M_inv is not
+          // diagonal. Implement that case here.
+          d_feBasisManager->getConstraints().distributeChildToParent(
+            Y, Y.getNumberComponents());
 
-      // Function to update the ghost values of the result
-      Y.updateGhostValues();
+          // Function to update the ghost values of the result
+          Y.updateGhostValues();
+        }
     }
   } // namespace basis
 } // namespace dftefe

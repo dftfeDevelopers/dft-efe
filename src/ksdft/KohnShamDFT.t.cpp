@@ -240,6 +240,7 @@ namespace dftefe
                        0.0,
                        1.0)
       , d_numElectrons(numElectrons)
+      , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
     {
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
@@ -713,6 +714,125 @@ namespace dftefe
 
           std::vector<RealType> eigSolveResNorm =
             d_ksEigSolve->getEigenSolveResidualNorm();
+
+          /*
+          std::shared_ptr<const quadrature::QuadratureRuleContainer>
+            quadRuleContainer =
+              d_feBDEXCHamiltonian->getQuadratureRuleContainer();
+
+              std::shared_ptr<const
+          basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
+                                                                ValueTypeWaveFunctionBasis,
+                                                                memorySpace,
+                                                                dim>> feBasisOp
+          = std::make_shared<const
+          basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
+                                                                ValueTypeWaveFunctionBasis,
+                                                                memorySpace,
+                                                                dim>>(
+                  d_feBDEXCHamiltonian, 50);
+
+              quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+          waveFuncQuad( quadRuleContainer,
+          d_kohnShamWaveFunctions->getNumberComponents());
+
+              feBasisOp->interpolate(*d_kohnShamWaveFunctions,
+                                        *d_feBMWaveFn,
+                                        waveFuncQuad);
+
+              double denSum = 0;
+              for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+              {
+                std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
+                for(dftefe::size_type iComp = 0 ; iComp <
+          waveFuncQuad.getNumberComponents() ; iComp ++)
+                {
+                  std::vector<double>
+          a(quadRuleContainer->nCellQuadraturePoints(i), 0);
+                  waveFuncQuad.template
+          getCellQuadValues<utils::MemorySpace::HOST>(i, iComp, a.data()); for
+          (int j = 0 ; j < a.size() ; j++)
+                  {
+                    denSum += jxwCell[j] * std::abs(a[j]) * std::abs(a[j]);
+                  }
+                }
+              }
+
+              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
+                &denSum,
+                1,
+                utils::mpi::Types<double>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
+
+              std::cout << "Wavefn sum: "<< denSum << std::endl;
+
+              feBasisOp->interpolate(d_ksEigSolve->getOrthogonalizedFilteredSubspace(),
+                                        *d_feBMWaveFn,
+                                        waveFuncQuad);
+
+              denSum = 0;
+              for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+              {
+                std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
+                for(dftefe::size_type iComp = 0 ; iComp <
+          waveFuncQuad.getNumberComponents() ; iComp ++)
+                {
+                  std::vector<double>
+          a(quadRuleContainer->nCellQuadraturePoints(i), 0);
+                  waveFuncQuad.template
+          getCellQuadValues<utils::MemorySpace::HOST>(i, iComp, a.data()); for
+          (int j = 0 ; j < a.size() ; j++)
+                  {
+                    denSum += jxwCell[j] * std::abs(a[j]) * std::abs(a[j]);
+                  }
+                }
+              }
+
+              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
+                &denSum,
+                1,
+                utils::mpi::Types<double>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
+
+              std::cout << "getOrthogonalizedFilteredSubspace sum: "<< denSum <<
+          std::endl;
+
+              feBasisOp->interpolate(d_ksEigSolve->getFilteredSubspace(),
+                                        *d_feBMWaveFn,
+                                        waveFuncQuad);
+
+              denSum = 0;
+              for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+              {
+                std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
+                for(dftefe::size_type iComp = 0 ; iComp <
+          waveFuncQuad.getNumberComponents() ; iComp ++)
+                {
+                  std::vector<double>
+          a(quadRuleContainer->nCellQuadraturePoints(i), 0);
+                  waveFuncQuad.template
+          getCellQuadValues<utils::MemorySpace::HOST>(i, iComp, a.data()); for
+          (int j = 0 ; j < a.size() ; j++)
+                  {
+                    denSum += jxwCell[j] * std::abs(a[j]) * std::abs(a[j]);
+                  }
+                }
+              }
+
+              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
+                &denSum,
+                1,
+                utils::mpi::Types<double>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
+
+              std::cout << "getFilteredSubspace sum: "<< denSum << std::endl;
+          */
 
           // compute output rho
           d_densCalc->computeRho(d_occupation,

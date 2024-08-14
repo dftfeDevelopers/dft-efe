@@ -220,14 +220,13 @@ int main(int argc, char** argv)
   double xmax = readParameter<double>(parameterInputFileName, "xmax", rootCout);
   double ymax = readParameter<double>(parameterInputFileName, "ymax", rootCout);
   double zmax = readParameter<double>(parameterInputFileName, "zmax", rootCout);
-  double radiusAtAtom = readParameter<double>(parameterInputFileName, "radiusAtAtom", rootCout);;
-  double meshSizeAtAtom = readParameter<double>(parameterInputFileName, "meshSizeAtAtom", rootCout);;
-  double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);;
-  double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);;
+  double radiusAtAtom = readParameter<double>(parameterInputFileName, "radiusAtAtom", rootCout);
+  double meshSizeAtAtom = readParameter<double>(parameterInputFileName, "meshSizeAtAtom", rootCout);
+  double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);
+  double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);
   double rc = readParameter<double>(parameterInputFileName, "rc", rootCout);
-  unsigned int num1DGaussSize = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSize", rootCout);
-  unsigned int num1DGLLSize = readParameter<unsigned int>(parameterInputFileName, "num1DGLLSize", rootCout);
-  unsigned int feOrder = readParameter<unsigned int>(parameterInputFileName, "feOrder", rootCout);
+  unsigned int feOrderElec = readParameter<unsigned int>(parameterInputFileName, "feOrderElectrostatics", rootCout);
+  unsigned int feOrderEigen = readParameter<unsigned int>(parameterInputFileName, "feOrderEigenSolve", rootCout); 
   double    smearingTemperature = readParameter<double>(parameterInputFileName, "smearingTemperature", rootCout);
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
@@ -280,7 +279,7 @@ int main(int argc, char** argv)
   std::vector<utils::Point> atomCoordinatesVec(0,utils::Point(dim, 0.0));
     std::vector<double> coordinates;
   coordinates.resize(dim,0.);
-  std::vector<std::string> atomSymbolVec;
+  std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
   std::string symbol;
   double atomicNumber;
@@ -324,18 +323,18 @@ int main(int argc, char** argv)
 
   // initialize the basis Manager
 
-  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> basisDofHandler =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrder, comm);
+  std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
 
-  std::map<global_size_type, utils::Point> dofCoords;
-  basisDofHandler->getBasisCenters(dofCoords);
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerWaveFn =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderEigen, comm);
 
-  //std::cout << "Locally owned cells : " <<basisDofHandler->nLocallyOwnedCells() << "\n";
-  rootCout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
+  rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
+  rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
 
-  quadrature::QuadratureRuleAttributes quadAttr(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
+  quadrature::QuadratureRuleAttributes quadAttrElec(quadrature::QuadratureFamily::GAUSS,true,feOrderElec+1);
 
   basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -346,12 +345,12 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisData =
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataElec =
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-    (basisDofHandler, quadAttr, basisAttrMap);
+    (basisDofHandlerTotalPot, quadAttrElec, basisAttrMap);
 
   // evaluate basis data
-  feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
+  feBasisDataElec->evaluateBasisData(quadAttrElec, basisAttrMap);
 
   std::map<std::string, std::string> atomSymbolToFilename;
   for (auto i:atomSymbolVec )
@@ -377,7 +376,7 @@ int main(int argc, char** argv)
       <double, double, Host,dim>>
     basisManagerWaveFn = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
-        (basisDofHandler);
+        (basisDofHandlerWaveFn);
 
     // std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
     //   std::make_shared<const utils::SmearChargePotentialFunction>(
@@ -389,28 +388,27 @@ int main(int argc, char** argv)
       <double, double, Host,dim>>
     basisManagerTotalPot = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
-        (basisDofHandler, zeroFunction);
+        (basisDofHandlerTotalPot, zeroFunction);
 
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
-  // Create OperatorContext for Basisoverlap
-  std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
-                                                double,
-                                                Host,
-                                                dim>> MContext =
-  std::make_shared<basis::CFEOverlapOperatorContext<double,
-                                                      double,
-                                                      Host,
-                                                      dim>>(
-                                                      *basisManagerWaveFn,
-                                                      *basisManagerWaveFn,
-                                                      *feBasisData,
-                                                      50);
+  // // Create OperatorContext for Basisoverlap
+  // std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
+  //                                               double,
+  //                                               Host,
+  //                                               dim>> MContext =
+  // std::make_shared<basis::CFEOverlapOperatorContext<double,
+  //                                                     double,
+  //                                                     Host,
+  //                                                     dim>>(
+  //                                                     *basisManagerWaveFn,
+  //                                                     *feBasisData,
+  //                                                     50);
 
   // Set up the quadrature rule
 
-  quadrature::QuadratureRuleAttributes quadAttrGLL(quadrature::QuadratureFamily::GLL,true,num1DGLLSize);
+  quadrature::QuadratureRuleAttributes quadAttrGLLEigen(quadrature::QuadratureFamily::GLL,true,feOrderEigen + 1);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -420,12 +418,12 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = false;
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataGLL =
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataGLLEigen =
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-    (basisDofHandler, quadAttrGLL, basisAttrMap);
+    (basisDofHandlerWaveFn, quadAttrGLLEigen, basisAttrMap);
 
   // evaluate basis data
-  feBasisDataGLL->evaluateBasisData(quadAttrGLL, basisAttrMap);
+  feBasisDataGLLEigen->evaluateBasisData(quadAttrGLLEigen, basisAttrMap);
 
   // Create OperatorContext for Basisoverlap
   std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
@@ -437,9 +435,8 @@ int main(int argc, char** argv)
                                                       Host,
                                                       dim>>(
                                                       *basisManagerWaveFn,
-                                                      *basisManagerWaveFn,
-                                                      *feBasisDataGLL,
-                                                      50);
+                                                      *feBasisDataGLLEigen,
+                                                      linAlgOpContext);
 
 std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   double,
@@ -449,11 +446,11 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   Host,
                                                   dim>>
                                                   (*basisManagerWaveFn,
-                                                  *feBasisDataGLL,
+                                                  *feBasisDataGLLEigen,
                                                   linAlgOpContext);
   rootCout << "Entering KohnSham DFT Class....\n\n";
 
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = feBasisData;
+  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = feBasisDataElec;
   
   quadrature::QuadratureRuleAttributes quadAttrVCorrecPlusPhi(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSizeVCorrecPlusPhi);
 
@@ -466,21 +463,23 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = 
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-      (basisDofHandler, quadAttrVCorrecPlusPhi, basisAttrMap);
-
-  // evaluate basis data
+      (basisDofHandlerWaveFn, quadAttrVCorrecPlusPhi, basisAttrMap);
   feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrVCorrecPlusPhi, basisAttrMap);
 
-  std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =  
+  std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho =  
                 feBDElectrostaticsHamiltonian->getQuadratureRuleContainer();
 
   // scale the electronic charges
    quadrature::QuadratureValuesContainer<double, Host> 
-      electronChargeDensity(quadRuleContainer, 1, 0.0);
+      electronChargeDensity(quadRuleContainerRho, 1, 0.0);
 
   std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDElectrostaticsHamiltonian;
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = feBDElectrostaticsHamiltonian;
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = 
+    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrVCorrecPlusPhi, basisAttrMap);
+  feBDTotalChargeRhs->evaluateBasisData(quadAttrVCorrecPlusPhi, basisAttrMap);
 
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
@@ -489,7 +488,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
           size_type             quadId = 0;
           std::vector<double> a(
             electronChargeDensity.nCellQuadraturePoints(iCell));
-          a = (*rho)(quadRuleContainer->getCellRealPoints(iCell));
+          a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
           double *b = a.data();
           electronChargeDensity.template 
             setCellQuadValues<Host>(iCell, iComp, b);
@@ -512,12 +511,12 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     // Set up the FE Basis Data Storage
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-        (basisDofHandler, quadAttrSmearNucl, basisAttrMap);
+        (basisDofHandlerTotalPot, quadAttrSmearNucl, basisAttrMap);
 
     // evaluate basis data
     feBDNuclearChargeRhs->evaluateBasisData(quadAttrSmearNucl, basisAttrMap);
 
-    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBasisData;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBasisDataElec;
 
     std::shared_ptr<ksdft::KohnShamDFT<double,
                                         double,
@@ -563,7 +562,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MInvContext);
 
     dftefeSolve->solve();                                            
@@ -612,7 +611,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MInvContext);
 
     dftefeSolve->solve();                                           

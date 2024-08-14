@@ -75,6 +75,21 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
+
+      // --------------DEBUG ONLY (direct inversion)---------
+      OrthoEFEOverlapInverseOpContextGLL(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                      feBasisManager,
+        const OrthoEFEOverlapOperatorContext<ValueTypeOperator,
+                                             ValueTypeOperand,
+                                             memorySpace,
+                                             dim> &MContext,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+             linAlgOpContext,
+        bool isCGSolved = true);
+
+
       void
       apply(
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -95,6 +110,18 @@ namespace dftefe
       size_type d_nglobalEnrichmentIds;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
+
+
+      global_size_type d_nglobalIds;
+      bool             d_isCGSolved;
+      std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeOperator,
+                                                          ValueTypeOperand,
+                                                          memorySpace>>
+        d_overlapInvPoisson;
+      std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>>
+        d_CGSolve;
 
     }; // end of class BasisOverlapOperatorContext
   }    // namespace basis

@@ -96,11 +96,7 @@ namespace dftefe
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
-                             dim> &feBasisManagerX,
-        const FEBasisManager<ValueTypeOperand,
-                             ValueTypeOperator,
-                             memorySpace,
-                             dim> &feBasisManagerY,
+                             dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
@@ -108,6 +104,29 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockClassicalBasisDataStorage,
         const size_type maxCellTimesNumVecs);
+
+      OrthoEFEOverlapOperatorContext(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &             enrichmentBlockEnrichmentBasisDataStorage,
+        const size_type maxCellTimesNumVecs);
+
+      OrthoEFEOverlapOperatorContext(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockEnrichmentBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
 
       /**
        * @brief Apply AX = B where A is the discretized matrix, X is the operand and B is the result.
@@ -136,15 +155,23 @@ namespace dftefe
       const FEBasisManager<ValueTypeOperand,
                            ValueTypeOperator,
                            memorySpace,
-                           dim> *d_feBasisManagerX;
-      const FEBasisManager<ValueTypeOperand,
-                           ValueTypeOperator,
-                           memorySpace,
-                           dim> *d_feBasisManagerY;
+                           dim> *d_feBasisManager;
       std::shared_ptr<Storage>   d_basisOverlap;
       std::vector<size_type>     d_cellStartIdsBasisOverlap;
       std::vector<size_type>     d_dofsInCell;
       const size_type            d_maxCellTimesNumVecs;
+
+      bool d_isMassLumping;
+      std::shared_ptr<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>
+        d_diagonal;
+      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+                                     d_basisOverlapEnrichmentBlock;
+      const EFEBasisDofHandler<ValueTypeOperand,
+                               ValueTypeOperator,
+                               memorySpace,
+                               dim> *d_efebasisDofHandler;
+      size_type                      d_nglobalEnrichmentIds;
+
     }; // end of class OrthoEFEOverlapOperatorContext
   }    // end of namespace basis
 } // end of namespace dftefe

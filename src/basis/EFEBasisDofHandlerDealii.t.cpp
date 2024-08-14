@@ -120,7 +120,6 @@ namespace dftefe
           ValueTypeBasisData,
           memorySpace,
           dim>>                    EnrichmentClassicalInterface,
-        const size_type            feOrder,
         const utils::mpi::MPIComm &mpiComm)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
@@ -133,7 +132,7 @@ namespace dftefe
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
-      reinit(EnrichmentClassicalInterface, feOrder, mpiComm);
+      reinit(EnrichmentClassicalInterface, mpiComm);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -145,11 +144,11 @@ namespace dftefe
                              memorySpace,
                              dim>::
       EFEBasisDofHandlerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisData,
-          memorySpace,
-          dim>>         EnrichmentClassicalInterface,
-        const size_type feOrder)
+        std::shared_ptr<
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>
+          EnrichmentClassicalInterface)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
       , d_overlappingEnrichmentIdsInCells(0)
@@ -161,7 +160,7 @@ namespace dftefe
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
-      reinit(EnrichmentClassicalInterface, feOrder);
+      reinit(EnrichmentClassicalInterface);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -177,7 +176,6 @@ namespace dftefe
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
-             const size_type            feOrder,
              const utils::mpi::MPIComm &mpiComm)
     {
       d_isDistributed = true;
@@ -189,8 +187,9 @@ namespace dftefe
       d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
       d_atomCoordinatesVec =
         enrichmentClassicalInterface->getAtomCoordinatesVec();
-      d_fieldName = enrichmentClassicalInterface->getFieldName();
-      dealii::FE_Q<dim>                       feElem(feOrder);
+      d_fieldName               = enrichmentClassicalInterface->getFieldName();
+      size_type         feOrder = enrichmentClassicalInterface->getFEOrder();
+      dealii::FE_Q<dim> feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
         dynamic_cast<const TriangulationDealiiParallel<dim> *>(
           enrichmentClassicalInterface->getTriangulation().get());
@@ -503,8 +502,7 @@ namespace dftefe
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
                ValueTypeBasisData,
                memorySpace,
-               dim>>         enrichmentClassicalInterface,
-             const size_type feOrder)
+               dim>> enrichmentClassicalInterface)
     {
       d_isDistributed = false;
       // Create Classical FE dof_handler
@@ -515,8 +513,9 @@ namespace dftefe
       d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
       d_atomCoordinatesVec =
         enrichmentClassicalInterface->getAtomCoordinatesVec();
-      d_fieldName = enrichmentClassicalInterface->getFieldName();
-      dealii::FE_Q<dim>                       feElem(feOrder);
+      d_fieldName               = enrichmentClassicalInterface->getFieldName();
+      size_type         feOrder = enrichmentClassicalInterface->getFEOrder();
+      dealii::FE_Q<dim> feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
         dynamic_cast<const TriangulationDealiiParallel<dim> *>(
           enrichmentClassicalInterface->getTriangulation().get());

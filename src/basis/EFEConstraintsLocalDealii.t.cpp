@@ -287,16 +287,16 @@ namespace dftefe
     {
       bool printWarning = false;
 
-      std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
-      std::vector<size_type>        rowConstraintsIdsLocalTmp;
-      std::vector<size_type>        columnConstraintsIdsLocalTmp;
-      std::vector<size_type>        constraintRowSizesAccumulatedTmp;
-      std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
+      std::vector<global_size_type> rowConstraintsIdsGlobalTmp(0);
+      std::vector<size_type>        rowConstraintsIdsLocalTmp(0);
+      std::vector<size_type>        columnConstraintsIdsLocalTmp(0);
+      std::vector<size_type>        constraintRowSizesAccumulatedTmp(0);
+      std::vector<global_size_type> columnConstraintsIdsGlobalTmp(0);
 
-      std::vector<double>              columnConstraintsValuesTmp;
-      std::vector<ValueTypeBasisCoeff> constraintsInhomogenitiesTmp;
+      std::vector<double>              columnConstraintsValuesTmp(0);
+      std::vector<ValueTypeBasisCoeff> constraintsInhomogenitiesTmp(0);
 
-      std::vector<size_type> rowConstraintsSizesTmp;
+      std::vector<size_type> rowConstraintsSizesTmp(0);
 
       std::vector<std::pair<global_size_type, global_size_type>>
         locallyOwnedRanges = d_locallyOwnedRanges;

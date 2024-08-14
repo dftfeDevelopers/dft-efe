@@ -113,7 +113,7 @@ int main()
   double ymax = 24.0;
   double zmax = 24.0;
   double rc = 0.6;
-  double hMin = 1e6;
+  double hMin = 1.5;
   size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -125,10 +125,10 @@ int main()
 
   double    smearingTemperature = 500.0;
   double    fermiEnergyTolerance = 1e-10;
-  double    fracOccupancyTolerance = 1e-3;
-  double    eigenSolveResidualTolerance = 1e-4;
-  size_type chebyshevPolynomialDegree = 80;
-  size_type maxChebyshevFilterPass = 10;
+  double    fracOccupancyTolerance = 1e-7;
+  double    eigenSolveResidualTolerance = 1e-7;
+  size_type chebyshevPolynomialDegree = 500;
+  size_type maxChebyshevFilterPass = 100;
   size_type numWantedEigenvalues = 15;
   size_type numElectrons = 1;
   double nuclearCharge = -1.0;
@@ -144,7 +144,7 @@ int main()
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {15, 15, 15};
+  std::vector<unsigned int>         subdivisions = {12, 12, 12};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
@@ -277,17 +277,6 @@ int main()
   // 4. Input to the EFEBasisDofHandler(eci, feOrder) 
   // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
-  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-                          enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>(triangulationBase,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          vTotal,
-                          comm);
-
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
     unsigned int numfun = 2;
@@ -296,8 +285,7 @@ int main()
     std::vector<double> integralThresholds(numfun);
     for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
     {
-        functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
-            enrichClassIntfceTotalPot->getEnrichmentIdsPartition(),
+        functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
@@ -366,7 +354,8 @@ int main()
   cfeBasisDataStorageAdaptive->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
     // Create the enrichmentClassicalInterface object for vtotal
-    enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+    std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
+                    <double, Host, dim>> enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
                           (cfeBasisDataStorageGLL,
                           cfeBasisDataStorageAdaptive,
@@ -397,11 +386,11 @@ int main()
 
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot =  
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-      enrichClassIntfceTotalPot, feOrder, comm);
+      enrichClassIntfceTotalPot, comm);
 
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerOrbital =  
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-      enrichClassIntfceOrbital, feOrder, comm);
+      enrichClassIntfceOrbital, comm);
 
   std::map<global_size_type, utils::Point> dofCoords;
   basisDofHandlerTotalPot->getBasisCenters(dofCoords);
@@ -415,7 +404,7 @@ int main()
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up Adaptive quadrature for EFE Basis Data Storage
@@ -510,7 +499,6 @@ int main()
                                                       Host,
                                                       dim>>(
                                                       *basisManagerWaveFn,
-                                                      *basisManagerWaveFn,
                                                       *cfeBasisDataStorageAdaptive,
                                                       *efeBasisDataOrbitalAdaptive,
                                                       *cfeBasisDataStorageGLL,
@@ -525,11 +513,9 @@ int main()
                                                         Host,
                                                         dim>>(
                                                         *basisManagerWaveFn,
-                                                        *basisManagerWaveFn,
                                                         *cfeBasisDataStorageGLL,
                                                         *efeBasisDataOrbitalAdaptive,
-                                                        *cfeBasisDataStorageGLL,
-                                                        50);                                                      
+                                                        linAlgOpContext);                                                      
 
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
@@ -578,13 +564,15 @@ int main()
                                         basisManagerWaveFn,
                                         efeBasisDataAdaptive,
                                         efeBasisDataAdaptive,
-                                        efeBasisDataAdaptive,                                                                                  
+                                        efeBasisDataAdaptive,     
+                                        efeBasisDataAdaptive,
+                                        efeBasisDataAdaptive,                                                                                                                       
                                         *externalPotentialFunction,
                                         linAlgOpContext,
                                         50,
                                         50,
                                         *MContextForInv,
-                                        *MContext,
+                                        *MContextForInv,
                                         *MInvContext);
 
   dftefeSolve->solve();                                      

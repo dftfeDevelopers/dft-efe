@@ -301,6 +301,11 @@ namespace dftefe
                       d_waveFunctionSubspaceGuess;
       const size_type d_numElectrons;
 
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                        memorySpace>>
+        d_feBDEXCHamiltonian;
+
     }; // end of KohnShamDFT
   }    // end of namespace ksdft
 } // end of namespace dftefe

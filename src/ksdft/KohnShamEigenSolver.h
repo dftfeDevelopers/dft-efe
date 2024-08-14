@@ -153,6 +153,12 @@ namespace dftefe
                                                      ValueTypeOperand,
                                                      memorySpace>()) override;
 
+      linearAlgebra::MultiVector<ValueType, memorySpace> &
+      getFilteredSubspace();
+
+      linearAlgebra::MultiVector<ValueType, memorySpace> &
+      getOrthogonalizedFilteredSubspace();
+
     private:
       double    d_smearingTemperature;
       double    d_fermiEnergyTolerance;
@@ -176,6 +182,10 @@ namespace dftefe
       double d_wantedSpectrumLowerBound;
       double d_wantedSpectrumUpperBound;
       bool   d_isBoundKnown;
+
+      linearAlgebra::MultiVector<ValueType, memorySpace>
+        *d_filteredSubspaceOrtho;
+      linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

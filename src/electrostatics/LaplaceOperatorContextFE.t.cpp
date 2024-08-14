@@ -290,6 +290,11 @@ namespace dftefe
           &(feBasisManagerY.getBasisDofHandler()),
         "feBasisManager of X and Y vectors are not from same basisDofhandler");
 
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          (feBasisDataStorage->getBasisDofHandler()).get(),
+        "feBasisManager of X and Y vectors and feBasisDataStorage are not from the same basisDofHandler");
+
       // TODO: ------------------Change later------------------------
       const size_type cellBlockSize = d_maxCellTimesNumVecs;
 

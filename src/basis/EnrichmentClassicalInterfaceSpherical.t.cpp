@@ -91,6 +91,9 @@ namespace dftefe
 
       d_triangulation = d_cfeBasisDofHandler->getTriangulation();
 
+      // no p refinement assumed
+      d_feOrder = d_cfeBasisDofHandler->getFEOrder(0);
+
       // Partition the enriched dofs based on the BCs and Orthogonalized EFE
 
       std::vector<utils::Point> cellVertices(0, utils::Point(dim, 0.0));
@@ -194,7 +197,6 @@ namespace dftefe
                                                    ValueTypeBasisData,
                                                    memorySpace,
                                                    dim>>(
-          *d_cfeBasisManager,
           *d_cfeBasisManager,
           *cfeBasisDataStorageOverlapMatrix,
           L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
@@ -387,6 +389,7 @@ namespace dftefe
                                           dim>::
       EnrichmentClassicalInterfaceSpherical(
         std::shared_ptr<const TriangulationBase> triangulation,
+        size_type                                feOrder,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainer,
         const double                     atomPartitionTolerance,
@@ -403,6 +406,7 @@ namespace dftefe
       , d_triangulation(triangulation)
       , d_overlappingEnrichmentIdsInCells(0)
       , d_linAlgOpContext(nullptr)
+      , d_feOrder(feOrder)
     {
       d_isOrthogonalized = false;
 
@@ -648,6 +652,17 @@ namespace dftefe
                                           dim>::getTriangulation() const
     {
       return d_triangulation;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    size_type
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::getFEOrder() const
+    {
+      return d_feOrder;
     }
 
     template <typename ValueTypeBasisData,

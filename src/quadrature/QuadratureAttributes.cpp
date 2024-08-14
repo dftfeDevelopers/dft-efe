@@ -55,7 +55,8 @@ namespace dftefe
         }
 
       if (d_quadratureFamily == QuadratureFamily::GAUSS_VARIABLE ||
-          d_quadratureFamily == QuadratureFamily::GLL_VARIABLE)
+          d_quadratureFamily == QuadratureFamily::GLL_VARIABLE ||
+          d_quadratureFamily == QuadratureFamily::ADAPTIVE)
         {
           utils::throwException<utils::LogicError>(
             d_num1DPoints == 0,

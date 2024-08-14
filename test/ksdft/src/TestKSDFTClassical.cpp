@@ -111,7 +111,7 @@ int main()
   double ymax = 24.0;
   double zmax = 24.0;
   double rc = 0.6;
-  double hMin = 1e6;
+  double hMin = 1;
   size_type maxIter = 2e7;
   double absoluteTol = 1e-10;
   double relativeTol = 1e-12;
@@ -123,20 +123,20 @@ int main()
 
   double    smearingTemperature = 500.0;
   double    fermiEnergyTolerance = 1e-10;
-  double    fracOccupancyTolerance = 1e-3;
-  double    eigenSolveResidualTolerance = 1e-3;
-  size_type chebyshevPolynomialDegree = 80;
-  size_type maxChebyshevFilterPass = 10;
+  double    fracOccupancyTolerance = 1e-7;
+  double    eigenSolveResidualTolerance = 1e-7;
+  size_type chebyshevPolynomialDegree = 40;
+  size_type maxChebyshevFilterPass = 100;
   size_type numWantedEigenvalues = 15;
   size_type numElectrons = 1;
   double nuclearCharge = -1.0;
 
 
-  double scfDensityResidualNormTolerance = 1e-3;
+  double scfDensityResidualNormTolerance = 1e-5;
   size_type maxSCFIter = 40;
   size_type mixingHistory = 10;
   double mixingParameter = 0.2;
-  bool isAdaptiveAndersonMixingParameter = true;
+  bool isAdaptiveAndersonMixingParameter = false;
   bool evaluateEnergyEverySCF = true;
   
   // Set up Triangulation
@@ -204,6 +204,7 @@ int main()
   std::vector<double> atomChargesVec(atomCoordinatesVec.size(), nuclearCharge);
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
+
   int flag = 1;
   int mpiReducedFlag = 1;
   bool radiusRefineFlag = true;
@@ -270,7 +271,7 @@ int main()
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up the FE Basis Data Storage
@@ -343,7 +344,6 @@ int main()
                                                       Host,
                                                       dim>>(
                                                       *basisManagerWaveFn,
-                                                      *basisManagerWaveFn,
                                                       *feBasisData,
                                                       50);
 
@@ -376,9 +376,8 @@ int main()
                                                       Host,
                                                       dim>>(
                                                       *basisManagerWaveFn,
-                                                      *basisManagerWaveFn,
                                                       *feBasisDataGLL,
-                                                      50);
+                                                      linAlgOpContext);
 
 std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   double,
@@ -388,6 +387,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   Host,
                                                   dim>>
                                                   (*basisManagerWaveFn,
+                                                  /**MContextForInv,*/
                                                   *feBasisDataGLL,
                                                   linAlgOpContext);
 
@@ -427,13 +427,15 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         feBasisData,   
                                         feBasisData,
                                         feBasisData, 
-                                        feBasisData,                                                                                    
+                                        feBasisData,        
+                                        feBasisData, 
+                                        feBasisData,                                                                                                                      
                                         *externalPotentialFunction,
                                         linAlgOpContext,
                                         50,
                                         50,
                                         *MContextForInv,
-                                        *MContext,
+                                        *MContextForInv,
                                         *MInvContext);
 
   dftefeSolve->solve();                                      

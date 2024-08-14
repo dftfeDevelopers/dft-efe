@@ -181,8 +181,9 @@ namespace dftefe
             const OpContext &                           B,
             MultiVector<ValueTypeOperand, memorySpace> &X,
             std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       eigenVectors,
-            bool                                        computeEigenVectors)
+            MultiVector<ValueType, memorySpace>
+              &  eigenVectors, /* M ortho eigenvecs(in)/ out*/
+            bool computeEigenVectors)
     {
       EigenSolverError     retunValue;
       EigenSolverErrorCode err;
@@ -300,12 +301,12 @@ namespace dftefe
             eigenValues.data(), numVec, 0, 0);
 
 
-          // Rotation X_febasis = XQ.
+          // Rotation X_febasis = XQ. /* X_i, Y_i scratch of block size ;  */
 
-          blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
+          blasLapack::gemm<ValueType, ValueType, memorySpace>(
             blasLapack::Layout::ColMajor,
             blasLapack::Op::Trans,
-            blasLapack::Op::Trans,
+            blasLapack::Op::NoTrans,
             numVec,
             vecSize,
             numVec,
@@ -313,7 +314,7 @@ namespace dftefe
             XprojectedA.data(),
             numVec,
             X.data(),
-            vecSize,
+            numVec,
             (ValueType)0,
             eigenVectors.data(),
             numVec,

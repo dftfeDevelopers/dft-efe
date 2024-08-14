@@ -89,7 +89,7 @@ namespace dftefe
         const size_type                             eigenVectorBlockSize = 0);
 
       /**
-       *@brief Default Destructor
+       *@brief Destructor
        *
        */
       ~ChebyshevFilteredEigenSolver() = default;
@@ -116,6 +116,12 @@ namespace dftefe
                                       ValueTypeOperand,
                                       memorySpace>()) override;
 
+      MultiVector<ValueType, memorySpace> &
+      getFilteredSubspace();
+
+      MultiVector<ValueType, memorySpace> &
+      getOrthogonalizedFilteredSubspace();
+
     private:
       double                                      d_wantedSpectrumLowerBound;
       double                                      d_wantedSpectrumUpperBound;
@@ -124,6 +130,10 @@ namespace dftefe
       double                                      d_illConditionTolerance;
       MultiVector<ValueTypeOperand, memorySpace> *d_eigenSubspaceGuess;
       size_type                                   d_eigenVectorBlockSize;
+
+      std::shared_ptr<MultiVector<ValueType, memorySpace>>
+        d_filteredSubspaceOrtho;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_filteredSubspace;
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>

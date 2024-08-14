@@ -822,8 +822,15 @@ namespace dftefe
     {
       d_electronChargeDensity = &electronChargeDensity;
       utils::throwException(
-        electronChargeDensity.getQuadratureRuleContainer() ==
-          d_feBDTotalChargeRhs->getQuadratureRuleContainer(),
+        electronChargeDensity.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes()
+            .isCartesianTensorStructured() ?
+          electronChargeDensity.getQuadratureRuleContainer()
+              ->getQuadratureRuleAttributes() ==
+            d_feBDTotalChargeRhs->getQuadratureRuleContainer()
+              ->getQuadratureRuleAttributes() :
+          electronChargeDensity.getQuadratureRuleContainer() ==
+            d_feBDTotalChargeRhs->getQuadratureRuleContainer(),
         "The electronic and total charge rhs for poisson solve quadrature rule"
         " should be same, otherwise they cannot be added in ElectrostaticFE reinitField()");
 

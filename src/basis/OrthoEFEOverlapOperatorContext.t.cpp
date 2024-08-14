@@ -35,8 +35,181 @@ namespace dftefe
 {
   namespace basis
   {
-    namespace EFEOverlapOperatorContextInternal
+    namespace OrthoEFEOverlapOperatorContextInternal
     {
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      computeBasisOverlapMatrix(
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &cfeBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &efeBasisDataStorage,
+        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+          &                     basisOverlap,
+        std::vector<size_type> &cellStartIdsBasisOverlap,
+        std::vector<size_type> &dofsInCellVec)
+      {
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+          cfeBDH = std::dynamic_pointer_cast<
+            const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+            cfeBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          cfeBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler "
+          "in OrthoEFEOverlapOperatorContext");
+
+        std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>
+          efeBDH = std::dynamic_pointer_cast<
+            const EFEBasisDofHandler<ValueTypeOperand,
+                                     ValueTypeOperator,
+                                     memorySpace,
+                                     dim>>(
+            efeBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          efeBDH != nullptr,
+          "Could not cast BasisDofHandler to EFEBasisDofHandler "
+          "in OrthoEFEOverlapOperatorContext");
+
+        // NOTE: cellId 0 passed as we assume only H refined in this function
+
+        utils::throwException(
+          cfeBDH->getTriangulation() == efeBDH->getTriangulation() &&
+            cfeBDH->getFEOrder(0) == efeBDH->getFEOrder(0),
+          "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder. ");
+
+        const size_type numLocallyOwnedCells = efeBDH->nLocallyOwnedCells();
+        dofsInCellVec.resize(numLocallyOwnedCells, 0);
+        cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
+        size_type cumulativeBasisOverlapId = 0;
+
+        size_type       basisOverlapSize = 0;
+        size_type       cellId           = 0;
+        const size_type feOrder          = efeBDH->getFEOrder(cellId);
+
+        size_type       dofsPerCell;
+        const size_type dofsPerCellCFE = cfeBDH->nCellDofs(cellId);
+
+        bool isConstantDofsAndQuadPointsInCellCFE = false;
+        quadrature::QuadratureFamily quadFamily =
+          cfeBasisDataStorage.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes()
+            .getQuadratureFamily();
+        if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
+             quadFamily == quadrature::QuadratureFamily::GLL) &&
+            !cfeBDH->isVariableDofsPerCell())
+          isConstantDofsAndQuadPointsInCellCFE = true;
+
+        auto locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
+
+        for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsInCellVec[cellId] = efeBDH->nCellDofs(cellId);
+            basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
+            cellId++;
+          }
+
+        std::vector<ValueTypeOperator> basisOverlapTmp(0);
+
+        basisOverlap = std::make_shared<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          basisOverlapSize);
+        basisOverlapTmp.resize(basisOverlapSize, ValueTypeOperator(0));
+
+        auto      basisOverlapTmpIter = basisOverlapTmp.begin();
+        size_type cellIndex           = 0;
+
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace> &
+          basisDataInAllCellsCFE = cfeBasisDataStorage.getBasisDataInAllCells();
+        const utils::MemoryStorage<ValueTypeOperator, memorySpace> &
+          basisDataInAllCellsEFE = efeBasisDataStorage.getBasisDataInAllCells();
+
+        size_type cumulativeCFEDofQuadPointsOffset = 0,
+                  cumulativeEFEDofQuadPointsOffset = 0;
+
+        locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsPerCell = dofsInCellVec[cellIndex];
+            size_type nQuadPointInCellCFE =
+              cfeBasisDataStorage.getQuadratureRuleContainer()
+                ->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesCFE =
+              cfeBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(
+                cellIndex);
+
+            size_type nQuadPointInCellEFE =
+              efeBasisDataStorage.getQuadratureRuleContainer()
+                ->nCellQuadraturePoints(cellIndex);
+            std::vector<double> cellJxWValuesEFE =
+              efeBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(
+                cellIndex);
+
+            const ValueTypeOperator *cumulativeCFEDofQuadPoints =
+              basisDataInAllCellsCFE.data() + cumulativeCFEDofQuadPointsOffset;
+
+            const ValueTypeOperator *cumulativeEFEDofQuadPoints =
+              basisDataInAllCellsEFE.data() + cumulativeEFEDofQuadPointsOffset;
+
+            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+              {
+                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                  {
+                    *basisOverlapTmpIter = 0.0;
+                    if (iNode < dofsPerCellCFE && jNode < dofsPerCellCFE)
+                      {
+                        for (unsigned int qPoint = 0;
+                             qPoint < nQuadPointInCellCFE;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                              *(cumulativeCFEDofQuadPoints +
+                                nQuadPointInCellCFE * iNode + qPoint) *
+                              *(cumulativeCFEDofQuadPoints +
+                                nQuadPointInCellCFE * jNode + qPoint) *
+                              cellJxWValuesCFE[qPoint];
+                          }
+                      }
+                    else
+                      {
+                        for (unsigned int qPoint = 0;
+                             qPoint < nQuadPointInCellEFE;
+                             qPoint++)
+                          {
+                            *basisOverlapTmpIter +=
+                              *(cumulativeEFEDofQuadPoints +
+                                nQuadPointInCellEFE * iNode + qPoint) *
+                              *(cumulativeEFEDofQuadPoints +
+                                nQuadPointInCellEFE * jNode + qPoint) *
+                              cellJxWValuesEFE[qPoint];
+                          }
+                      }
+                    basisOverlapTmpIter++;
+                  }
+              }
+
+            cellStartIdsBasisOverlap[cellIndex] = cumulativeBasisOverlapId;
+            cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
+            cellIndex++;
+            if (!isConstantDofsAndQuadPointsInCellCFE)
+              cumulativeCFEDofQuadPointsOffset +=
+                nQuadPointInCellCFE * dofsPerCellCFE;
+            cumulativeEFEDofQuadPointsOffset +=
+              nQuadPointInCellEFE * dofsPerCell;
+          }
+
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+      }
+
       // Use this for data storage of orthogonalized EFE only
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
@@ -765,7 +938,7 @@ namespace dftefe
             utils::MemoryStorage<size_type, memorySpace> strideC(
               numCellsInBlock);
 
-            EFEOverlapOperatorContextInternal::storeSizes(
+            OrthoEFEOverlapOperatorContextInternal::storeSizes(
               mSizes,
               nSizes,
               kSizes,
@@ -842,7 +1015,7 @@ namespace dftefe
           }
       }
 
-    } // end of namespace EFEOverlapOperatorContextInternal
+    } // end of namespace OrthoEFEOverlapOperatorContextInternal
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
@@ -856,11 +1029,41 @@ namespace dftefe
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
-                             dim> &feBasisManagerX,
+                             dim> &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &             enrichmentBlockEnrichmentBasisDataStorage,
+        const size_type maxCellTimesNumVecs)
+      : d_feBasisManager(&feBasisManager)
+      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_cellStartIdsBasisOverlap(0)
+      , d_isMassLumping(false)
+    {
+      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(classicalBlockBasisDataStorage,
+             enrichmentBlockEnrichmentBasisDataStorage,
+             d_basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    OrthoEFEOverlapOperatorContext<ValueTypeOperator,
+                                   ValueTypeOperand,
+                                   memorySpace,
+                                   dim>::
+      OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
-                             dim> &feBasisManagerY,
+                             dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
@@ -868,29 +1071,230 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockClassicalBasisDataStorage,
         const size_type maxCellTimesNumVecs)
-      : d_feBasisManagerX(&feBasisManagerX)
-      , d_feBasisManagerY(&feBasisManagerY)
+      : d_feBasisManager(&feBasisManager)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
+      , d_isMassLumping(false)
     {
-      utils::throwException(
-        &(feBasisManagerX.getBasisDofHandler()) ==
-          &(feBasisManagerY.getBasisDofHandler()),
-        "feBasisManager of X and Y vectors are not from same basisDofhandler");
-
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlap;
-      EFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
         dim>(classicalBlockBasisDataStorage,
              enrichmentBlockEnrichmentBasisDataStorage,
              enrichmentBlockClassicalBasisDataStorage,
-             basisOverlap,
+             d_basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell);
-      d_basisOverlap = basisOverlap;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    OrthoEFEOverlapOperatorContext<ValueTypeOperator,
+                                   ValueTypeOperand,
+                                   memorySpace,
+                                   dim>::
+      OrthoEFEOverlapOperatorContext(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockEnrichmentBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext)
+      : d_feBasisManager(&feBasisManager)
+      , d_maxCellTimesNumVecs(0)
+      , d_cellStartIdsBasisOverlap(0)
+      , d_isMassLumping(true)
+    {
+      const size_type numLocallyOwnedCells =
+        d_feBasisManager->nLocallyOwnedCells();
+
+      const BasisDofHandler &basisDofHandler =
+        feBasisManager.getBasisDofHandler();
+
+      const EFEBasisDofHandler<ValueTypeOperand,
+                               ValueTypeOperator,
+                               memorySpace,
+                               dim> &efebasisDofHandler =
+        dynamic_cast<const EFEBasisDofHandler<ValueTypeOperand,
+                                              ValueTypeOperator,
+                                              memorySpace,
+                                              dim> &>(basisDofHandler);
+      utils::throwException(
+        &efebasisDofHandler != nullptr,
+        "Could not cast BasisDofHandler of the input to EFEBasisDofHandler.");
+
+      d_efebasisDofHandler = &efebasisDofHandler;
+
+      utils::throwException(
+        efebasisDofHandler.isOrthogonalized(),
+        "The Enrichment functions have to be orthogonalized for this class to do the application of overlap inverse.");
+
+      utils::throwException(
+        classicalBlockBasisDataStorage.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes()
+            .getQuadratureFamily() == quadrature::QuadratureFamily::GLL,
+        "The quadrature rule for integration of Classical FE dofs has to be GLL."
+        "Contact developers if extra options are needed.");
+
+      std::shared_ptr<
+        const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+        cfeBDH = std::dynamic_pointer_cast<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+          classicalBlockBasisDataStorage.getBasisDofHandler());
+      utils::throwException(
+        cfeBDH != nullptr,
+        "Could not cast BasisDofHandler to FEBasisDofHandler "
+        "in OrthoEFEOverlapInverseOperatorContext for the Classical data storage of classical dof block.");
+
+      const EFEBasisDataStorage<ValueTypeOperator, memorySpace>
+        &enrichmentBlockBasisDataStorageEFE = dynamic_cast<
+          const EFEBasisDataStorage<ValueTypeOperator, memorySpace> &>(
+          enrichmentBlockEnrichmentBasisDataStorage);
+      utils::throwException(
+        &enrichmentBlockBasisDataStorageEFE != nullptr,
+        "Could not cast FEBasisDataStorage to EFEBasisDataStorage "
+        "in EFEOverlapOperatorContext for enrichmentBlockEnrichmentBasisDataStorage.");
+
+      std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim>>
+        efeBDH =
+          std::dynamic_pointer_cast<const EFEBasisDofHandler<ValueTypeOperand,
+                                                             ValueTypeOperator,
+                                                             memorySpace,
+                                                             dim>>(
+            enrichmentBlockEnrichmentBasisDataStorage.getBasisDofHandler());
+      utils::throwException(
+        efeBDH != nullptr,
+        "Could not cast BasisDofHandler to EFEBasisDofHandler "
+        "in OrthoEFEOverlapInverseOperatorContext for the Enrichment data storage of enrichment dof blocks.");
+
+      utils::throwException(
+        cfeBDH->getTriangulation() == efeBDH->getTriangulation() &&
+          cfeBDH->getFEOrder(0) == efeBDH->getFEOrder(0),
+        "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder"
+        "in OrthoEFEOverlapInverseOperatorContext.");
+
+      utils::throwException(
+        &efebasisDofHandler == efeBDH.get(),
+        "In OrthoEFEOverlapInverseOperatorContext the feBasisManager and enrichmentBlockEnrichmentBasisDataStorage should"
+        "come from same basisDofHandler.");
+
+
+      const size_type numCellClassicalDofs = utils::mathFunctions::sizeTypePow(
+        (efebasisDofHandler.getFEOrder(0) + 1), dim);
+      d_nglobalEnrichmentIds = efebasisDofHandler.nGlobalEnrichmentNodes();
+
+      std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+        numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+
+      auto itCellLocalIdsBegin =
+        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+
+      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(classicalBlockBasisDataStorage,
+             enrichmentBlockEnrichmentBasisDataStorage,
+             d_basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
+
+      std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
+                                                         0);
+      std::copy(numCellDofs.begin(),
+                numCellDofs.begin() + numLocallyOwnedCells,
+                locallyOwnedCellsNumDoFsSTL.begin());
+
+      utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
+        numLocallyOwnedCells);
+      locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
+
+      d_diagonal =
+        std::make_shared<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
+          d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
+
+      // Create the diagonal of the classical block matrix which is diagonal for
+      // GLL with spectral quadrature
+      FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
+        addCellWiseBasisDataToDiagonalData(d_basisOverlap->data(),
+                                           itCellLocalIdsBegin,
+                                           locallyOwnedCellsNumDoFs,
+                                           d_diagonal->data());
+
+      d_feBasisManager->getConstraints().distributeChildToParent(*d_diagonal,
+                                                                 1);
+
+      // Function to add the values to the local node from its corresponding
+      // ghost nodes from other processors.
+      d_diagonal->accumulateAddLocallyOwned();
+
+      d_diagonal->updateGhostValues();
+
+      d_feBasisManager->getConstraints().setConstrainedNodesToZero(*d_diagonal,
+                                                                   1);
+
+      // Now form the enrichment block matrix.
+      d_basisOverlapEnrichmentBlock =
+        std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
+
+      std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(
+        d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0),
+        basisOverlapEnrichmentBlockSTLTmp(d_nglobalEnrichmentIds *
+                                            d_nglobalEnrichmentIds,
+                                          0);
+
+      size_type cellId                     = 0;
+      size_type cumulativeBasisDataInCells = 0;
+      for (auto enrichmentVecInCell :
+           efebasisDofHandler.getEnrichmentIdsPartition()
+             ->overlappingEnrichmentIdsInCells())
+        {
+          size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+          for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+            {
+              for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                {
+                  *(basisOverlapEnrichmentBlockSTLTmp.data() +
+                    enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                    enrichmentVecInCell[k]) +=
+                    *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                      (numCellClassicalDofs + nCellEnrichmentDofs) *
+                        (numCellClassicalDofs + j) +
+                      numCellClassicalDofs + k);
+                }
+            }
+          cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+            (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+          cellId += 1;
+        }
+
+      int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        basisOverlapEnrichmentBlockSTLTmp.data(),
+        basisOverlapEnrichmentBlockSTL.data(),
+        basisOverlapEnrichmentBlockSTLTmp.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      d_basisOverlapEnrichmentBlock
+        ->template copyFrom<utils::MemorySpace::HOST>(
+          basisOverlapEnrichmentBlockSTL.data());
     }
 
     template <typename ValueTypeOperator,
@@ -908,66 +1312,154 @@ namespace dftefe
                                                            ValueTypeOperand>,
                     memorySpace> &Y) const
     {
-      const size_type numLocallyOwnedCells =
-        d_feBasisManagerX->nLocallyOwnedCells();
-      std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
-      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = d_feBasisManagerX->nLocallyOwnedCellDofs(iCell);
+      if (d_isMassLumping)
+        {
+          const size_type numComponents = X.getNumberComponents();
+          const size_type nlocallyOwnedEnrichmentIds =
+            d_feBasisManager->getLocallyOwnedRanges()[1].second -
+            d_feBasisManager->getLocallyOwnedRanges()[1].first;
+          const size_type nlocallyOwnedClassicalIds =
+            d_feBasisManager->getLocallyOwnedRanges()[0].second -
+            d_feBasisManager->getLocallyOwnedRanges()[0].first;
 
-      auto itCellLocalIdsBeginX =
-        d_feBasisManagerX->locallyOwnedCellLocalDofIdsBegin();
+          X.updateGhostValues();
+          // update the child nodes based on the parent nodes
+          d_feBasisManager->getConstraints().distributeParentToChild(
+            X, X.getNumberComponents());
 
-      auto itCellLocalIdsBeginY =
-        d_feBasisManagerY->locallyOwnedCellLocalDofIdsBegin();
+          Y.setValue(0.0);
 
-      const size_type numVecs = X.getNumberComponents();
+          linearAlgebra::blasLapack::khatriRaoProduct(
+            linearAlgebra::blasLapack::Layout::ColMajor,
+            1,
+            numComponents,
+            d_diagonal->localSize(),
+            d_diagonal->data(),
+            X.begin(),
+            Y.begin(),
+            *(d_diagonal->getLinAlgOpContext()));
 
-      // get handle to constraints
-      const basis::ConstraintsLocal<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand>,
-        memorySpace> &constraintsX = d_feBasisManagerX->getConstraints();
+          utils::MemoryStorage<ValueTypeOperand, memorySpace>
+            XenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents),
+            XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
+            YenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents);
 
-      const basis::ConstraintsLocal<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand>,
-        memorySpace> &constraintsY = d_feBasisManagerY->getConstraints();
+          XenrichedGlobalVecTmp.template copyFrom<memorySpace>(
+            X.begin(),
+            nlocallyOwnedEnrichmentIds * numComponents,
+            nlocallyOwnedClassicalIds * numComponents,
+            ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
+             (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
+              numComponents);
 
-      X.updateGhostValues();
-      // update the child nodes based on the parent nodes
-      constraintsX.distributeParentToChild(X, numVecs);
+          int err = utils::mpi::MPIAllreduce<memorySpace>(
+            XenrichedGlobalVecTmp.data(),
+            XenrichedGlobalVec.data(),
+            XenrichedGlobalVecTmp.size(),
+            utils::mpi::MPIDouble,
+            utils::mpi::MPISum,
+            d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+          std::pair<bool, std::string> mpiIsSuccessAndMsg =
+            utils::mpi::MPIErrIsSuccessAndMsg(err);
+          utils::throwException(mpiIsSuccessAndMsg.first,
+                                "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      // access cell-wise discrete Overlap operator
-      const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        &basisOverlapInAllCells = *d_basisOverlap;
+          // Do dgemm
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
-      Y.setValue(0.0);
+          ValueType alpha = 1.0;
+          ValueType beta  = 0.0;
 
-      //
-      // perform Ax on the local part of A and x
-      // (A = discrete Overlap operator)
-      //
-      EFEOverlapOperatorContextInternal::computeAxCellWiseLocal(
-        basisOverlapInAllCells,
-        X.begin(),
-        Y.begin(),
-        numVecs,
-        numLocallyOwnedCells,
-        numCellDofs,
-        itCellLocalIdsBeginX,
-        itCellLocalIdsBeginY,
-        cellBlockSize,
-        *(X.getLinAlgOpContext()));
+          linearAlgebra::blasLapack::
+            gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+              linearAlgebra::blasLapack::Layout::ColMajor,
+              linearAlgebra::blasLapack::Op::NoTrans,
+              linearAlgebra::blasLapack::Op::Trans,
+              numComponents,
+              d_nglobalEnrichmentIds,
+              d_nglobalEnrichmentIds,
+              alpha,
+              XenrichedGlobalVec.data(),
+              numComponents,
+              d_basisOverlapEnrichmentBlock->data(),
+              d_nglobalEnrichmentIds,
+              beta,
+              YenrichedGlobalVec.begin(),
+              numComponents,
+              *(X.getLinAlgOpContext()));
 
-      // function to do a static condensation to send the constraint nodes to
-      // its parent nodes
-      constraintsY.distributeChildToParent(Y, numVecs);
+          YenrichedGlobalVec.template copyTo<memorySpace>(
+            Y.begin(),
+            nlocallyOwnedEnrichmentIds * numComponents,
+            ((d_feBasisManager->getLocallyOwnedRanges()[1].first) -
+             (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
+              numComponents,
+            nlocallyOwnedClassicalIds * numComponents);
 
-      // Function to add the values to the local node from its corresponding
-      // ghost nodes from other processors.
-      Y.accumulateAddLocallyOwned();
-      Y.updateGhostValues();
+          Y.updateGhostValues();
+
+          // function to do a static condensation to send the constraint nodes
+          // to its parent nodes
+          d_feBasisManager->getConstraints().distributeChildToParent(
+            Y, Y.getNumberComponents());
+
+          // Function to update the ghost values of the Y
+          Y.updateGhostValues();
+        }
+      else
+        {
+          const size_type numLocallyOwnedCells =
+            d_feBasisManager->nLocallyOwnedCells();
+          std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+          for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+            numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+
+          auto itCellLocalIdsBegin =
+            d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+
+          const size_type numVecs = X.getNumberComponents();
+
+          // get handle to constraints
+          const basis::ConstraintsLocal<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                   ValueTypeOperand>,
+            memorySpace> &constraints = d_feBasisManager->getConstraints();
+
+          X.updateGhostValues();
+          // update the child nodes based on the parent nodes
+          constraints.distributeParentToChild(X, numVecs);
+
+          // access cell-wise discrete Overlap operator
+          const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+            &basisOverlapInAllCells = *d_basisOverlap;
+
+          const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+          Y.setValue(0.0);
+
+          //
+          // perform Ax on the local part of A and x
+          // (A = discrete Overlap operator)
+          //
+          OrthoEFEOverlapOperatorContextInternal::computeAxCellWiseLocal(
+            basisOverlapInAllCells,
+            X.begin(),
+            Y.begin(),
+            numVecs,
+            numLocallyOwnedCells,
+            numCellDofs,
+            itCellLocalIdsBegin,
+            itCellLocalIdsBegin,
+            cellBlockSize,
+            *(X.getLinAlgOpContext()));
+
+          // function to do a static condensation to send the constraint nodes
+          // to its parent nodes
+          constraints.distributeChildToParent(Y, numVecs);
+
+          // Function to add the values to the local node from its corresponding
+          // ghost nodes from other processors.
+          Y.accumulateAddLocallyOwned();
+          Y.updateGhostValues();
+        }
     }
 
     template <typename ValueTypeOperator,

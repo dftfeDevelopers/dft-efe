@@ -170,7 +170,7 @@ namespace dftefe
             {
               d_wantedSpectrumLowerBound = eigenValuesLanczos[0];
               d_wantedSpectrumUpperBound =
-                (eigenValuesLanczos[1] - eigenValuesLanczos[0]) *
+                (eigenValuesLanczos[1] + residual - eigenValuesLanczos[0]) *
                   ((double)(d_numWantedEigenvalues * 200.0) / globalSize) +
                 eigenValuesLanczos[0];
             }
@@ -214,6 +214,59 @@ namespace dftefe
                                      computeWaveFunctions,
                                      M,
                                      MInv);
+
+              /*
+              // Compute projected hamiltonian = Y^H M Y
+
+              size_type                           numVec  =
+          kohnShamWaveFunctions.getNumberComponents(); size_type vecSize =
+          kohnShamWaveFunctions.locallyOwnedSize();
+              linearAlgebra::MultiVector<ValueType, memorySpace>
+          temp(kohnShamWaveFunctions, (ValueType)0);
+
+              utils::MemoryStorage<ValueType, memorySpace> temp1(
+                numVec * numVec, utils::Types<ValueType>::zero);
+
+              M.apply(kohnShamWaveFunctions, temp);
+
+              linearAlgebra::blasLapack::gemm<ValueType, ValueType,
+          memorySpace>( linearAlgebra::blasLapack::Layout::ColMajor,
+                linearAlgebra::blasLapack::Op::NoTrans,
+                linearAlgebra::blasLapack::Op::ConjTrans,
+                numVec,
+                numVec,
+                vecSize,
+                (ValueType)1,
+                temp.data(),
+                numVec,
+                kohnShamWaveFunctions.data(),
+                numVec,
+                (ValueType)0,
+                temp1.data(),
+                numVec,
+                *kohnShamWaveFunctions.getLinAlgOpContext());
+
+              int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+                utils::mpi::MPIInPlace,
+                temp1.data(),
+                temp1.size(),
+                utils::mpi::Types<ValueType>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                kohnShamWaveFunctions.getMPIPatternP2P()->mpiCommunicator());
+
+          d_rootCout<< "Y^TMY:" <<std::endl;
+            for(size_type i= 0 ; i < numVec ; i++)
+            {
+              d_rootCout << "[";
+              for(size_type j= 0 ; j < numVec ; j++)
+                d_rootCout << *(temp1.data() + numVec * i + j) << ",";
+              d_rootCout<< "]" << std::endl;
+            }
+            */
+
+              d_filteredSubspace = &chfsi.getFilteredSubspace();
+              d_filteredSubspaceOrtho =
+                &chfsi.getOrthogonalizedFilteredSubspace();
 
               d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
                          << chfsiErr.msg << std::endl;
@@ -409,6 +462,42 @@ namespace dftefe
         d_isSolved,
         "Cannot call getEigenSolveResidualNorm() before solving the eigenproblem.");
       return d_eigSolveResNorm;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    linearAlgebra::MultiVector<
+      typename linearAlgebra::HermitianIterativeEigenSolver<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::ValueType,
+      memorySpace> &
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      getFilteredSubspace()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call getEigenSolveResidualNorm() before solving the eigenproblem.");
+      return *d_filteredSubspace;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    linearAlgebra::MultiVector<
+      typename linearAlgebra::HermitianIterativeEigenSolver<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>::ValueType,
+      memorySpace> &
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      getOrthogonalizedFilteredSubspace()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call getEigenSolveResidualNorm() before solving the eigenproblem.");
+      return *d_filteredSubspaceOrtho;
     }
 
   } // namespace ksdft

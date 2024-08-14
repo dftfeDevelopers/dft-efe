@@ -66,7 +66,7 @@ namespace dftefe
       double sigma = e / (wantedSpectrumLowerBound - c);
 
       const double sigma1 = sigma;
-      const double gamma  = (2 / sigma1);
+      const double gamma  = (2.0 / sigma1);
       double       sigma2;
 
       MultiVector<ValueType, memorySpace> filteredSubspaceNew(
@@ -93,7 +93,7 @@ namespace dftefe
 
       for (size_type i = 2; i <= polynomialDegree; i++)
         {
-          sigma2 = 1 / (gamma - sigma);
+          sigma2 = 1.0 / (gamma - sigma);
 
           // Compute B^-1A filteredSubspace
           A.apply(filteredSubspace, scratch1);
@@ -102,9 +102,9 @@ namespace dftefe
           // temp = (2\sigma2/e)(B^-1A filteredSubspace - c filteredSubspace)
           blasLapack::axpby<ValueType, ValueType, memorySpace>(
             locallyOwnedMultivecSize,
-            2 * sigma2 / e,
+            2.0 * sigma2 / e,
             scratch2.data(),
-            -2 * sigma2 / e * c,
+            -2.0 * sigma2 / e * c,
             filteredSubspace.data(),
             scratch1.data(),
             *eigenSubspaceGuess.getLinAlgOpContext());
@@ -112,7 +112,7 @@ namespace dftefe
           // filteredSubspaceNew = temp - \sigma*\sigma2*eigenSubspaceGuess
           blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
             locallyOwnedMultivecSize,
-            (ValueType)1,
+            (ValueType)1.0,
             scratch1.data(),
             -sigma * sigma2,
             eigenSubspaceGuess.data(),

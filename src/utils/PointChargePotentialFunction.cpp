@@ -32,7 +32,7 @@ namespace dftefe
               r += std::pow((point[j] - d_atomCoordinates[i][j]), 2);
             }
           r = std::sqrt(r);
-          utils::throwException(r != 0,
+          utils::throwException(std::abs(r) >= 1e-12,
                                 "Value undefined at nucleus for 1/r potential");
           ret += 1 / r * d_z[i];
         }
@@ -58,7 +58,8 @@ namespace dftefe
                 }
               r = std::sqrt(r);
               utils::throwException(
-                r != 0, "Value undefined at nucleus for 1/r potential");
+                std::abs(r) >= 1e-12,
+                "Value undefined at nucleus for 1/r potential");
               ret += 1 / r * d_z[i];
             }
           returnValue[iPoint] = ret;
