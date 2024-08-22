@@ -223,8 +223,8 @@ namespace dftefe
           &classicalBlockGLLBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
-        /*const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &enrichmentBlockClassicalBasisDataStorage, */
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockClassicalBasisDataStorage, 
         std::shared_ptr<
           const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>> cfeBDH,
         std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
@@ -285,7 +285,7 @@ namespace dftefe
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
 
-        /**
+        
         const std::unordered_map<global_size_type,
                                  utils::OptimizedIndexSet<size_type>>
           *enrichmentIdToClassicalLocalIdMap =
@@ -305,7 +305,7 @@ namespace dftefe
                                                            memorySpace,
                                                            dim>>(
               eci->getCFEBasisManager());
-        **/
+        
 
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -327,14 +327,14 @@ namespace dftefe
                 .getQuadratureRuleContainer()
                 ->getCellJxW(cellIndex);
 
-            /**
+            
             size_type nQuadPointInCellEnrichmentBlockClassical =
               enrichmentBlockClassicalBasisDataStorage.getQuadratureRuleContainer()
                 ->nCellQuadraturePoints(cellIndex);
             std::vector<double> cellJxWValuesEnrichmentBlockClassical =
               enrichmentBlockClassicalBasisDataStorage.getQuadratureRuleContainer()
                 ->getCellJxW(cellIndex);
-            **/
+            
 
             const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
               basisDataInAllCellsClassicalBlock.data(); /*GLL Quad rule*/
@@ -344,7 +344,7 @@ namespace dftefe
                 basisDataInAllCellsEnrichmentBlockEnrichment.data() +
                 cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset;
 
-            /**
+            
             std::vector<utils::Point> quadRealPointsVec =
               enrichmentBlockEnrichmentBasisDataStorage
                 .getQuadratureRuleContainer()
@@ -466,7 +466,7 @@ namespace dftefe
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
               }
-            **/
+            
 
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
@@ -493,6 +493,7 @@ namespace dftefe
 
                     else if (iNode >= dofsPerCellCFE && jNode >= dofsPerCellCFE)
                       {
+                        /**
                         // Ni_pristine*Ni_pristine at quadpoints
                         for (unsigned int qPoint = 0;
                              qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
@@ -509,8 +510,8 @@ namespace dftefe
                                 qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
-
-                        /**
+                          **/
+                        
                         ValueTypeOperator NpiNpj = (ValueTypeOperator)0,
                                           ciNciNpj = (ValueTypeOperator)0,
                                           NpicjNcj = (ValueTypeOperator)0,
@@ -581,7 +582,7 @@ namespace dftefe
                           }
                         *basisOverlapTmpIter +=
                           NpiNpj - NpicjNcj - ciNciNpj + ciNcicjNcj;
-                        **/
+                        
                       }
                     basisOverlapTmpIter++;
                   }
@@ -620,8 +621,8 @@ namespace dftefe
           &classicalBlockGLLBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
-        /*const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &enrichmentBlockClassicalBasisDataStorage,*/
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockClassicalBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
@@ -725,7 +726,7 @@ namespace dftefe
         memorySpace,
         dim>(classicalBlockGLLBasisDataStorage,
              enrichmentBlockEnrichmentBasisDataStorage,
-             /*enrichmentBlockClassicalBasisDataStorage,  */
+             enrichmentBlockClassicalBasisDataStorage,  
              cfeBDH,
              efeBDH,
              NiNjInAllCells);

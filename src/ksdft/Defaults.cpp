@@ -35,8 +35,8 @@ namespace dftefe
       linearAlgebra::PreconditionerType::JACOBI;
     const size_type PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS = 50;
     const size_type PoissonProblemDefaults::MAX_ITER               = 2e7;
-    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-10;
-    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-12;
+    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-12;
+    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-14;
     const double    PoissonProblemDefaults::DIVERGENCE_TOL         = 1e10;
 
     /**

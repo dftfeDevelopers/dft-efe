@@ -754,7 +754,7 @@ int main(int argc, char** argv)
                           <double, Host, dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
-                          (cfeBasisDataStorageAdaptiveOrbital,
+                          (cfeBasisDataStorageGLLEigen,
                           cfeBasisDataStorageAdaptiveOrbital,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
@@ -933,21 +933,22 @@ int main(int argc, char** argv)
   //   utils::mpi::MPIBarrier(comm);
   //   start = std::chrono::high_resolution_clock::now();
 
-  // // Create OperatorContext for Basisoverlap
+  // Create OperatorContext for Basisoverlap
 
-  // std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
-  //                                               double,
-  //                                               Host,
-  //                                               dim>> MContext =
-  // std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
-  //                                                     double,
-  //                                                     Host,
-  //                                                     dim>>(
-  //                                                     *basisManagerWaveFn,
-  //                                                     *cfeBasisDataStorageAdaptiveOrbital,
-  //                                                     *efeBasisDataAdaptiveOrbital,
-  //                                                     /**cfeBasisDataStorageGLLEigen,*/
-  //                                                     50); 
+  std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
+                                                double,
+                                                Host,
+                                                dim>> MContext =
+  std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+                                                      double,
+                                                      Host,
+                                                      dim>>(
+                                                      *basisManagerWaveFn,
+                                                      *cfeBasisDataStorageAdaptiveOrbital,
+                                                      *efeBasisDataAdaptiveOrbital,
+                                                      *cfeBasisDataStorageAdaptiveOrbital,
+                                                      50,
+                                                      true); 
 
   //   // add device synchronize for gpu
   //     utils::mpi::MPIBarrier(comm);
@@ -994,6 +995,7 @@ int main(int argc, char** argv)
                                                         *basisManagerWaveFn,
                                                         *cfeBasisDataStorageGLLEigen,
                                                         *efeBasisDataAdaptiveOrbital,
+                                                        *cfeBasisDataStorageGLLEigen,
                                                         linAlgOpContext);  
 
     // add device synchronize for gpu
@@ -1016,8 +1018,10 @@ int main(int argc, char** argv)
                                                    Host,
                                                    dim>>
                                                    (*basisManagerWaveFn,
-                                                    *cfeBasisDataStorageGLLEigen,
+                                                    *MContext,
+                                                    /**cfeBasisDataStorageGLLEigen,
                                                     *efeBasisDataAdaptiveOrbital,
+                                                    *cfeBasisDataStorageGLLEigen,*/
                                                     linAlgOpContext);    
 
     // add device synchronize for gpu
@@ -1114,7 +1118,8 @@ int main(int argc, char** argv)
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContextForInv,
+                                          *MContext,
+                                          /**MContextForInv,*/
                                           *MInvContext);
 
     // add device synchronize for gpu
@@ -1176,7 +1181,8 @@ int main(int argc, char** argv)
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContextForInv,
+                                          *MContext,
+                                          /**MContextForInv,*/
                                           *MInvContext);
 
     // add device synchronize for gpu

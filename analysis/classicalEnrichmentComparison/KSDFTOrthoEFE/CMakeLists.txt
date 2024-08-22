@@ -17,6 +17,6 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/ksdft ${MAIN_PROJECT_DIR}/test/ksdft/li
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-add_executable(TestKohnShamDft ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/KSDFTOrthoEFE/TestKohnShamDft.cpp)
-target_link_libraries(TestKohnShamDft PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-ksdft dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+add_executable(TestKohnShamDft_ideal ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/KSDFTOrthoEFE/TestKohnShamDft.cpp)
+target_link_libraries(TestKohnShamDft_ideal PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-ksdft dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

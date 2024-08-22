@@ -70,8 +70,8 @@ namespace dftefe
           &classicalBlockGLLBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
-        /*const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &enrichmentBlockClassicalBasisDataStorage,*/
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockClassicalBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 

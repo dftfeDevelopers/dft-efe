@@ -393,18 +393,18 @@ int main(int argc, char** argv)
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
-  // // Create OperatorContext for Basisoverlap
-  // std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
-  //                                               double,
-  //                                               Host,
-  //                                               dim>> MContext =
-  // std::make_shared<basis::CFEOverlapOperatorContext<double,
-  //                                                     double,
-  //                                                     Host,
-  //                                                     dim>>(
-  //                                                     *basisManagerWaveFn,
-  //                                                     *feBasisData,
-  //                                                     50);
+  // Create OperatorContext for Basisoverlap
+  std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
+                                                double,
+                                                Host,
+                                                dim>> MContext =
+  std::make_shared<basis::CFEOverlapOperatorContext<double,
+                                                      double,
+                                                      Host,
+                                                      dim>>(
+                                                      *basisManagerWaveFn,
+                                                      *feBasisDataElec,
+                                                      50);
 
   // Set up the quadrature rule
 
@@ -562,7 +562,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContextForInv,
+                                          *MContext,
                                           *MInvContext);
 
     dftefeSolve->solve();                                            
@@ -611,7 +611,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           50,
                                           50,
                                           *MContextForInv,
-                                          *MContextForInv,
+                                          *MContext,
                                           *MInvContext);
 
     dftefeSolve->solve();                                           

@@ -103,8 +103,21 @@ namespace dftefe
           &enrichmentBlockEnrichmentBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockClassicalBasisDataStorage,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellTimesNumVecs,
+        const bool calculateWings = true);
 
+      /**
+       * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
+       * This can happen when the classical dofs have a different quadrature
+       * than that of the enrichment dofs. For example one can have Adaptive
+       * quadrature for the enrichment functions and GLL for the classical dofs.
+       * @tparam feBasisManager FEBasisManager object for getting the processor local to cell mapping of the distributed vector
+       * @tparam cfeBasisDataStorage Classical FEBasisDataStorage object for getting the basisvalues of the classical dofs
+       * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
+       * @tparam constraintsX Constraints for X
+       * @tparam constraintsY Constraints for Y
+       * @tparam maxCellTimesNumVecs cell times number of vectors
+       */
       OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
@@ -113,18 +126,57 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             enrichmentBlockEnrichmentBasisDataStorage,
-        const size_type maxCellTimesNumVecs);
+          &             enrichmentBlockBasisDataStorage,
+        const size_type maxCellTimesNumVecs,
+        const bool calculateWings = true);
 
+      /**
+       * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
+       * This can happen when the classical dofs have a different quadrature
+       * than that of the enrichment dofs. For example one can have Adaptive
+       * quadrature for the enrichment functions and GLL for the classical dofs.
+       * @tparam feBasisManager FEBasisManager object for getting the processor local to cell mapping of the distributed vector
+       * @tparam cfeBasisDataStorage Classical FEBasisDataStorage object for getting the basisvalues of the classical dofs
+       * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
+       * @tparam constraintsX Constraints for X
+       * @tparam constraintsY Constraints for Y
+       * @tparam maxCellTimesNumVecs cell times number of vectors
+       */
       OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
                              dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &classicalBlockBasisDataStorage,
+          &classicalBlockGLLBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
+
+      /**
+       * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
+       * This can happen when the classical dofs have a different quadrature
+       * than that of the enrichment dofs. For example one can have Adaptive
+       * quadrature for the enrichment functions and GLL for the classical dofs.
+       * @tparam feBasisManager FEBasisManager object for getting the processor local to cell mapping of the distributed vector
+       * @tparam cfeBasisDataStorage Classical FEBasisDataStorage object for getting the basisvalues of the classical dofs
+       * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
+       * @tparam constraintsX Constraints for X
+       * @tparam constraintsY Constraints for Y
+       * @tparam maxCellTimesNumVecs cell times number of vectors
+       */
+      OrthoEFEOverlapOperatorContext(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockGLLBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockClassicalBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
