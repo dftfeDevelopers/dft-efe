@@ -236,6 +236,9 @@ namespace dftefe
       void
       solve();
 
+      double
+      getGroundStateEnergy();
+
     private:
       const size_type       d_numWantedEigenvalues;
       std::vector<RealType> d_occupation;
@@ -305,6 +308,9 @@ namespace dftefe
         const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                         memorySpace>>
         d_feBDEXCHamiltonian;
+
+      RealType d_groundStateEnergy;
+      bool     d_isSolved;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

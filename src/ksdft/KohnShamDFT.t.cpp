@@ -241,6 +241,8 @@ namespace dftefe
                        1.0)
       , d_numElectrons(numElectrons)
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
+      , d_isSolved(false)
+      , d_groundStateEnergy(0)
     {
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
@@ -464,6 +466,8 @@ namespace dftefe
                        0.0,
                        1.0)
       , d_numElectrons(numElectrons)
+      , d_isSolved(false)
+      , d_groundStateEnergy(0)
     {
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
@@ -600,6 +604,7 @@ namespace dftefe
                 memorySpace,
                 dim>::solve()
     {
+      d_isSolved = true;
       d_hamitonianElec->evalEnergy();
       RealType elecEnergy = d_hamitonianElec->getEnergy();
       d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
@@ -884,6 +889,8 @@ namespace dftefe
               RealType totalEnergy = kinEnergy + elecEnergy + xcEnergy;
 
               d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
+
+              d_groundStateEnergy = totalEnergy;
             }
 
           if (scfIter > 0)
@@ -922,7 +929,30 @@ namespace dftefe
           RealType totalEnergy = kinEnergy + elecEnergy + xcEnergy;
 
           d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
+
+          d_groundStateEnergy = totalEnergy;
         }
     }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    double
+    KohnShamDFT<ValueTypeElectrostaticsCoeff,
+                ValueTypeElectrostaticsBasis,
+                ValueTypeWaveFunctionCoeff,
+                ValueTypeWaveFunctionBasis,
+                memorySpace,
+                dim>::getGroundStateEnergy()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call ksdft getGroundStateEnergy() before solving the KS problem.");
+      return d_groundStateEnergy;
+    }
+
   } // end of namespace ksdft
 } // end of namespace dftefe

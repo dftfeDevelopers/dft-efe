@@ -104,7 +104,7 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockClassicalBasisDataStorage,
         const size_type maxCellTimesNumVecs,
-        const bool calculateWings = true);
+        const bool      calculateWings = true);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
@@ -128,7 +128,7 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockBasisDataStorage,
         const size_type maxCellTimesNumVecs,
-        const bool calculateWings = true);
+        const bool      calculateWings = true);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.

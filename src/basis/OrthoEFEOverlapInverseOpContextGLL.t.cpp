@@ -224,7 +224,7 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockEnrichmentBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &enrichmentBlockClassicalBasisDataStorage, 
+          &enrichmentBlockClassicalBasisDataStorage,
         std::shared_ptr<
           const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>> cfeBDH,
         std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
@@ -285,7 +285,7 @@ namespace dftefe
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
 
-        
+
         const std::unordered_map<global_size_type,
                                  utils::OptimizedIndexSet<size_type>>
           *enrichmentIdToClassicalLocalIdMap =
@@ -305,7 +305,7 @@ namespace dftefe
                                                            memorySpace,
                                                            dim>>(
               eci->getCFEBasisManager());
-        
+
 
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -327,14 +327,16 @@ namespace dftefe
                 .getQuadratureRuleContainer()
                 ->getCellJxW(cellIndex);
 
-            
+
             size_type nQuadPointInCellEnrichmentBlockClassical =
-              enrichmentBlockClassicalBasisDataStorage.getQuadratureRuleContainer()
+              enrichmentBlockClassicalBasisDataStorage
+                .getQuadratureRuleContainer()
                 ->nCellQuadraturePoints(cellIndex);
             std::vector<double> cellJxWValuesEnrichmentBlockClassical =
-              enrichmentBlockClassicalBasisDataStorage.getQuadratureRuleContainer()
+              enrichmentBlockClassicalBasisDataStorage
+                .getQuadratureRuleContainer()
                 ->getCellJxW(cellIndex);
-            
+
 
             const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
               basisDataInAllCellsClassicalBlock.data(); /*GLL Quad rule*/
@@ -344,7 +346,7 @@ namespace dftefe
                 basisDataInAllCellsEnrichmentBlockEnrichment.data() +
                 cumulativeEnrichmentBlockEnrichmentDofQuadPointsOffset;
 
-            
+
             std::vector<utils::Point> quadRealPointsVec =
               enrichmentBlockEnrichmentBasisDataStorage
                 .getQuadratureRuleContainer()
@@ -364,7 +366,8 @@ namespace dftefe
 
             classicalComponentInQuadValuesEE.resize(
               nQuadPointInCellEnrichmentBlockEnrichment *
-            numEnrichmentIdsInCell, (ValueTypeOperator)0);
+                numEnrichmentIdsInCell,
+              (ValueTypeOperator)0);
 
             if (numEnrichmentIdsInCell > 0)
               {
@@ -411,7 +414,7 @@ namespace dftefe
                   }
 
                 utils::MemoryStorage<ValueTypeOperator,
-                                             utils::MemorySpace::HOST>
+                                     utils::MemorySpace::HOST>
                   basisValInCellEC =
                     enrichmentBlockClassicalBasisDataStorage.getBasisDataInCell(
                       cellIndex);
@@ -439,10 +442,9 @@ namespace dftefe
                   *eci->getLinAlgOpContext());
 
                 utils::MemoryStorage<ValueTypeOperator,
-                                             utils::MemorySpace::HOST>
-                  basisValInCellEE =
-                    enrichmentBlockEnrichmentBasisDataStorage.getBasisDataInCell(
-                      cellIndex);
+                                     utils::MemorySpace::HOST>
+                  basisValInCellEE = enrichmentBlockEnrichmentBasisDataStorage
+                                       .getBasisDataInCell(cellIndex);
 
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector
@@ -466,7 +468,7 @@ namespace dftefe
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
               }
-            
+
 
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
@@ -500,21 +502,19 @@ namespace dftefe
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
-                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
-                                nQuadPointInCellEnrichmentBlockEnrichment *
-                                  iNode +
+                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
+                        + nQuadPointInCellEnrichmentBlockEnrichment * iNode +
                                 qPoint) *
-                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
-                                nQuadPointInCellEnrichmentBlockEnrichment *
-                                  jNode +
+                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
+                        + nQuadPointInCellEnrichmentBlockEnrichment * jNode +
                                 qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                           **/
-                        
-                        ValueTypeOperator NpiNpj = (ValueTypeOperator)0,
-                                          ciNciNpj = (ValueTypeOperator)0,
-                                          NpicjNcj = (ValueTypeOperator)0,
+
+                        ValueTypeOperator NpiNpj     = (ValueTypeOperator)0,
+                                          ciNciNpj   = (ValueTypeOperator)0,
+                                          NpicjNcj   = (ValueTypeOperator)0,
                                           ciNcicjNcj = (ValueTypeOperator)0;
                         // Ni_pristine*Ni_pristine at quadpoints
                         for (unsigned int qPoint = 0;
@@ -582,7 +582,6 @@ namespace dftefe
                           }
                         *basisOverlapTmpIter +=
                           NpiNpj - NpicjNcj - ciNciNpj + ciNcicjNcj;
-                        
                       }
                     basisOverlapTmpIter++;
                   }
@@ -726,7 +725,7 @@ namespace dftefe
         memorySpace,
         dim>(classicalBlockGLLBasisDataStorage,
              enrichmentBlockEnrichmentBasisDataStorage,
-             enrichmentBlockClassicalBasisDataStorage,  
+             enrichmentBlockClassicalBasisDataStorage,
              cfeBDH,
              efeBDH,
              NiNjInAllCells);

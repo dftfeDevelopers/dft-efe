@@ -80,6 +80,12 @@ namespace dftefe
       static const double ILL_COND_TOL;
 
       //
+      // Tolerance of ill conditioning for the
+      // orthogonalization step in CHFSi
+      //
+      static const unsigned int CHEBY_ORDER_LOOKUP[][2];
+
+      //
       // Max krylov subspace
       //
       static const size_type LANCZOS_MAX_KRYLOV_SUBSPACE;

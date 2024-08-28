@@ -65,5 +65,27 @@ namespace dftefe
      */
     const double LibxcDefaults::DENSITY_ZERO_TOL = 1e-10;
 
+    /**
+     * @brief Setting all the ChebyshevPolynomialDegreeDefaults
+     */
+    const unsigned int LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP[][2] = {
+      {500, 24}, // <= 500 ~> chebyshevOrder = 24
+      {750, 30},
+      {1000, 39},
+      {1500, 50},
+      {2000, 53},
+      {3000, 57},
+      {4000, 62},
+      {5000, 69},
+      {9000, 77},
+      {14000, 104},
+      {20000, 119},
+      {30000, 162},
+      {50000, 300},
+      {80000, 450},
+      {100000, 550},
+      {200000, 700},
+      {500000, 1000}};
+
   } // end of namespace ksdft
 } // end of namespace dftefe

@@ -173,11 +173,13 @@ namespace dftefe
                 (eigenValuesLanczos[1] + residual - eigenValuesLanczos[0]) *
                   ((double)(d_numWantedEigenvalues * 200.0) / globalSize) +
                 eigenValuesLanczos[0];
-              if(d_wantedSpectrumUpperBound >= eigenValuesLanczos[1] + residual)
-              {
-                d_wantedSpectrumUpperBound = 
-                  (eigenValuesLanczos[1] + residual + eigenValuesLanczos[0]) * 0.5;
-              }
+              if (d_wantedSpectrumUpperBound >=
+                  eigenValuesLanczos[1] + residual)
+                {
+                  d_wantedSpectrumUpperBound =
+                    (eigenValuesLanczos[1] + residual + eigenValuesLanczos[0]) *
+                    0.5;
+                }
             }
 
           d_rootCout << "wantedSpectrumLowerBound: "

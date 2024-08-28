@@ -108,32 +108,35 @@ namespace dftefe
         return 1.0 / sqrt(M_PI);
     }
 
-/*
+    /*
+        double
+        Clm(const int l, const int m)
+        {
+          // assert(m >= 0);
+          assert(std::abs(m) <= l);
+          return sqrt(((2.0 * l + 1) * boost::math::factorial<double>(l -
+       abs(m))) / (2.0 * boost::math::factorial<double>(l + abs(m))));
+        }
+    */
+
+    // Implement this instead of above function to remove underflow/overflow
+    // issues in factorial
+    double
+    Blm(const int l, const int m)
+    {
+      if (m == 0)
+        return sqrt((2.0 * l + 1) / 2.0);
+      else
+        return Blm(l, m - 1) / sqrt((l - m + 1.0) * (l + m));
+    }
+
     double
     Clm(const int l, const int m)
     {
       // assert(m >= 0);
       assert(std::abs(m) <= l);
-      return sqrt(((2.0 * l + 1) * boost::math::factorial<double>(l - abs(m))) /
-                  (2.0 * boost::math::factorial<double>(l + abs(m))));
-    }
-*/
-
-    // Implement this instead of above function to remove underflow/overflow issues in factorial
-    double Blm(const int l, const int m)
-    {
-      if (m==0)
-        return sqrt((2.0*l+1)/2.0);
-      else
-        return Blm(l, m-1)/sqrt((l-m+1.0)*(l+m));
-    }
-
-    double Clm(const int l, const int m)
-    {
-      // assert(m >= 0);
-      assert(std::abs(m) <= l);
       return Blm(l, abs(m));
-    } 
+    }
 
     double
     Qm(const int m, const double phi)

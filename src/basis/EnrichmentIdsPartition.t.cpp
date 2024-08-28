@@ -304,8 +304,12 @@ namespace dftefe
                             std::string s = ss.str();
                             std::string msg =
                               "The enrichment functions for " + fieldName +
-                              " " + s +
-                              " may spill to a"
+                              " " + s + " for the atom " + *(iter) +
+                              " at the coordinates [" +
+                              std::to_string((*it)[0]) + " , " +
+                              std::to_string((*it)[1]) + " , " +
+                              std::to_string((*it)[2]) +
+                              "] may spill to a"
                               " non-periodic face of the triangulation domain which is not allowed."
                               " Increase the "
                               " domain boundary or reduce to the ball radius of the enrichment "
