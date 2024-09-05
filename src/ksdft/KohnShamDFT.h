@@ -84,7 +84,6 @@ namespace dftefe
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,
         const double    scfDensityResidualNormTolerance,
-        const size_type chebyshevPolynomialDegree,
         const size_type maxChebyshevFilterPass,
         const size_type maxSCFIter,
         const bool      evaluateEnergyEverySCF,
@@ -130,9 +129,6 @@ namespace dftefe
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
-        /* Batch size related info */
-        const size_type cellBlockSize,
-        const size_type waveFunctionBatchSize,
         /* basis overlap related info */
         const OpContext &MContextForInv =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
@@ -161,7 +157,6 @@ namespace dftefe
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,
         const double    scfDensityResidualNormTolerance,
-        const size_type chebyshevPolynomialDegree,
         const size_type maxChebyshevFilterPass,
         const size_type maxSCFIter,
         const bool      evaluateEnergyEverySCF,
@@ -214,9 +209,6 @@ namespace dftefe
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
-        /* Batch size related info */
-        const size_type cellBlockSize,
-        const size_type waveFunctionBatchSize,
         /* basis overlap related info */
         const OpContext &MContextForInv =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
@@ -242,7 +234,6 @@ namespace dftefe
     private:
       const size_type       d_numWantedEigenvalues;
       std::vector<RealType> d_occupation;
-      const size_type       d_waveFunctionBatchSize;
       const double          d_SCFTol;
       utils::MemoryStorage<RealType, utils::MemorySpace::HOST> d_jxwDataHost;
       std::shared_ptr<

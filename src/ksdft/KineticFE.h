@@ -92,10 +92,10 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
         d_feBasisDataStorage;
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
+      std::shared_ptr<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData,
+                                               memorySpace,
+                                               dim>>
                       d_feBasisOp;
       RealType        d_energy;
       const size_type d_cellBlockSize;

@@ -45,7 +45,7 @@ namespace dftefe
       //
       // The number of batched gemms done
       //
-      static const size_type MAX_CELL_TIMES_NUMVECS;
+      static const size_type CELL_BATCH_SIZE;
 
       //
       // Maximum iteration for CG

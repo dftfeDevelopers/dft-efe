@@ -90,7 +90,6 @@ namespace dftefe
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,
-        const size_type chebyshevPolynomialDegree,
         const size_type maxChebyshevFilterPass,
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,

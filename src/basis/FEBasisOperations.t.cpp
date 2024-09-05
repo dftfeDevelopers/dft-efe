@@ -894,6 +894,19 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
+    FEBasisOperations<ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      memorySpace,
+                      dim>::reinit(const size_type maxCellTimesFieldBlock)
+    {
+      d_maxCellTimesFieldBlock = maxCellTimesFieldBlock;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
     FEBasisOperations<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
@@ -2069,6 +2082,8 @@ namespace dftefe
         "quadValuesContainer f in computeFEMatrices"
         " can be either a scalar field or a vector field in real space with dim components.");
 
+      const size_type cellBlockSize =
+        d_maxCellTimesFieldBlock / f.getNumberComponents();
       FEBasisOperationsInternal::BasisWeakFormKernelWithField<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
@@ -2079,7 +2094,7 @@ namespace dftefe
              L2,
              f,
              d_feBasisDataStorage,
-             d_maxCellTimesFieldBlock,
+             cellBlockSize,
              cellWiseFEData,
              linAlgOpContext);
     }

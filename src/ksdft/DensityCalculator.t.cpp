@@ -331,13 +331,16 @@ namespace dftefe
           d_waveFuncBatchSize,
           ValueTypeBasisCoeff());
       //-------------------------------------------------
+      // Reinit FEBasisOp with different maxcelltimesnumvecs
+      // for the case waveFnInBatch<d_waveFuncBatchSize
 
       d_feBasisOp =
-        std::make_shared<const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>>(
-          feBasisDataStorage, d_cellBlockSize);
+        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                  ValueTypeBasisData,
+                                                  memorySpace,
+                                                  dim>>(feBasisDataStorage,
+                                                        d_cellBlockSize *
+                                                          d_waveFuncBatchSize);
     }
 
     template <typename ValueTypeBasisData,
@@ -389,6 +392,7 @@ namespace dftefe
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
+              d_feBasisOp->reinit(d_cellBlockSize * d_waveFuncBatchSize);
               d_feBasisOp->interpolate(*d_psiBatch,
                                        *d_feBMPsi,
                                        *d_psiBatchQuad);
@@ -422,6 +426,7 @@ namespace dftefe
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
+              d_feBasisOp->reinit(d_cellBlockSize * d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);
@@ -477,6 +482,7 @@ namespace dftefe
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
+              d_feBasisOp->reinit(d_cellBlockSize * d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);

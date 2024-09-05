@@ -30,6 +30,10 @@
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/CGLinearSolver.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/LinearSolverFunction.h>
+#include <linearAlgebra/PreconditionerNone.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/CFEOverlapOperatorContext.h>
@@ -37,7 +41,6 @@
 #include <basis/FECellWiseDataOperations.h>
 #include <vector>
 #include <memory>
-#include <basis/EnrichmentClassicalInterfaceSpherical.h>
 
 namespace dftefe
 {

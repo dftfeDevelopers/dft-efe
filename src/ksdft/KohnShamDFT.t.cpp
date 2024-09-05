@@ -167,7 +167,6 @@ namespace dftefe
         const double                     fracOccupancyTolerance,
         const double                     eigenSolveResidualTolerance,
         const double                     scfDensityResidualNormTolerance,
-        const size_type                  chebyshevPolynomialDegree,
         const size_type                  maxChebyshevFilterPass,
         const size_type                  maxSCFIter,
         const bool                       evaluateEnergyEverySCF,
@@ -205,8 +204,6 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
-        const size_type  cellBlockSize,
-        const size_type  waveFunctionBatchSize,
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext)
@@ -226,7 +223,6 @@ namespace dftefe
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
-      , d_waveFunctionBatchSize(waveFunctionBatchSize)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
@@ -281,12 +277,13 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
-                                                   ValueTypeWaveFunctionCoeff,
-                                                   memorySpace,
-                                                   dim>>(feBDKineticHamiltonian,
-                                                         linAlgOpContext,
-                                                         cellBlockSize);
+      d_hamitonianKin =
+        std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
+                                   ValueTypeWaveFunctionCoeff,
+                                   memorySpace,
+                                   dim>>(feBDKineticHamiltonian,
+                                         linAlgOpContext,
+                                         KSDFTDefaults::CELL_BATCH_SIZE);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -304,15 +301,16 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          cellBlockSize);
+          PoissonProblemDefaults::CELL_BATCH_SIZE);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
-                                               dim>>(d_densityInQuadValues,
-                                                     feBDEXCHamiltonian,
-                                                     linAlgOpContext,
-                                                     cellBlockSize);
+                                               dim>>(
+          d_densityInQuadValues,
+          feBDEXCHamiltonian,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE);
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
       // form the kohn sham operator
@@ -325,7 +323,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           *linAlgOpContext,
-          cellBlockSize);
+          numWantedEigenvalues * KSDFTDefaults::CELL_BATCH_SIZE);
 
       // call the eigensolver
 
@@ -344,11 +342,10 @@ namespace dftefe
         fermiEnergyTolerance,
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
-        chebyshevPolynomialDegree,
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
-        waveFunctionBatchSize,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -356,11 +353,12 @@ namespace dftefe
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
                                            ValueTypeWaveFunctionCoeff,
                                            memorySpace,
-                                           dim>>(feBDEXCHamiltonian,
-                                                 *feBMWaveFn,
-                                                 linAlgOpContext,
-                                                 cellBlockSize,
-                                                 waveFunctionBatchSize);
+                                           dim>>(
+          feBDEXCHamiltonian,
+          *feBMWaveFn,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -386,7 +384,6 @@ namespace dftefe
         const double                     fracOccupancyTolerance,
         const double                     eigenSolveResidualTolerance,
         const double                     scfDensityResidualNormTolerance,
-        const size_type                  chebyshevPolynomialDegree,
         const size_type                  maxChebyshevFilterPass,
         const size_type                  maxSCFIter,
         const bool                       evaluateEnergyEverySCF,
@@ -431,8 +428,6 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
-        const size_type  cellBlockSize,
-        const size_type  waveFunctionBatchSize,
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext)
@@ -452,7 +447,6 @@ namespace dftefe
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
-      , d_waveFunctionBatchSize(waveFunctionBatchSize)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
@@ -506,12 +500,13 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
-                                                   ValueTypeWaveFunctionCoeff,
-                                                   memorySpace,
-                                                   dim>>(feBDKineticHamiltonian,
-                                                         linAlgOpContext,
-                                                         cellBlockSize);
+      d_hamitonianKin =
+        std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
+                                   ValueTypeWaveFunctionCoeff,
+                                   memorySpace,
+                                   dim>>(feBDKineticHamiltonian,
+                                         linAlgOpContext,
+                                         KSDFTDefaults::CELL_BATCH_SIZE);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -531,15 +526,16 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          cellBlockSize);
+          PoissonProblemDefaults::CELL_BATCH_SIZE);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
-                                               dim>>(d_densityInQuadValues,
-                                                     feBDEXCHamiltonian,
-                                                     linAlgOpContext,
-                                                     cellBlockSize);
+                                               dim>>(
+          d_densityInQuadValues,
+          feBDEXCHamiltonian,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE);
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
       // form the kohn sham operator
@@ -552,7 +548,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           *linAlgOpContext,
-          cellBlockSize);
+          numWantedEigenvalues * KSDFTDefaults::CELL_BATCH_SIZE);
 
       // call the eigensolver
 
@@ -571,11 +567,10 @@ namespace dftefe
         fermiEnergyTolerance,
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
-        chebyshevPolynomialDegree,
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
-        waveFunctionBatchSize,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -583,11 +578,12 @@ namespace dftefe
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
                                            ValueTypeWaveFunctionCoeff,
                                            memorySpace,
-                                           dim>>(feBDEXCHamiltonian,
-                                                 *feBMWaveFn,
-                                                 linAlgOpContext,
-                                                 cellBlockSize,
-                                                 waveFunctionBatchSize);
+                                           dim>>(
+          feBDEXCHamiltonian,
+          *feBMWaveFn,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -864,7 +860,7 @@ namespace dftefe
               d_hamitonianKin->evalEnergy(d_occupation,
                                           *d_feBMWaveFn,
                                           *d_kohnShamWaveFunctions,
-                                          d_waveFunctionBatchSize);
+                                          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -904,7 +900,7 @@ namespace dftefe
           d_hamitonianKin->evalEnergy(d_occupation,
                                       *d_feBMWaveFn,
                                       *d_kohnShamWaveFunctions,
-                                      d_waveFunctionBatchSize);
+                                      KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 

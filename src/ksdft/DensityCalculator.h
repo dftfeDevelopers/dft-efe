@@ -90,10 +90,10 @@ namespace dftefe
     private:
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         d_quadRuleContainer;
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
+      std::shared_ptr<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData,
+                                               memorySpace,
+                                               dim>>
                                         d_feBasisOp;
       const basis::FEBasisManager<ValueTypeBasisCoeff,
                                   ValueTypeBasisData,

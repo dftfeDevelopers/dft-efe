@@ -81,6 +81,9 @@ namespace dftefe
                         basisDataStorage,
         const size_type maxCellTimesFieldBlock);
 
+      void
+      reinit(const size_type maxCellTimesFieldBlock);
+
       ~FEBasisOperations() = default;
 
       void

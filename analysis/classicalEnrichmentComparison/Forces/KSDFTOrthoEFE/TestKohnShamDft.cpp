@@ -382,7 +382,6 @@ int main(int argc, char** argv)
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
   double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
-  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
@@ -401,9 +400,10 @@ int main(int argc, char** argv)
   double integralThreshold = readParameter<double>(parameterInputFileName, "integralThreshold", rootCout);
 
   double gridSizeFD = readParameter<double>(parameterInputFileName, "gridSizeFD", rootCout);
-  unsigned int numDimPerturbed = readParameter<unsigned int>(parameterInputFileName, "numDimPerturbed", rootCout);
-  unsigned int numAtomPerturbed = readParameter<unsigned int>(parameterInputFileName, "numAtomPerturbed", rootCout);
-
+  unsigned int dimIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "dimIdPerturbed", rootCout);
+  unsigned int atomIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "atomIdPerturbed", rootCout);
+  size_type numDimPerturbed = 1;
+  size_type numAtomPerturbed = 1;
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
 
   // Set up Triangulation
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
         {
           for (unsigned int iDim = 0 ; iDim < dim ; iDim ++)
           {
-            if(atomId == perturbAtomId && iDim == perturbDim)
+            if(atomId == atomIdPerturbed && iDim == dimIdPerturbed)
               coordinatesVec[atomId][iDim] = atomCoordinatesVec[atomId][iDim] + gridPt*gridSizeFD;
             else
               coordinatesVec[atomId][iDim] = atomCoordinatesVec[atomId][iDim];
@@ -949,7 +949,7 @@ int main(int argc, char** argv)
                                                       *cfeBasisDataStorageAdaptiveOrbital,
                                                       *efeBasisDataAdaptiveOrbital,
                                                       *cfeBasisDataStorageAdaptiveOrbital,
-                                                      50,
+                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
                                                       true); 
 
   //   // add device synchronize for gpu
@@ -984,7 +984,7 @@ int main(int argc, char** argv)
   //                                                       *cfeBasisDataStorageGaussEigen,
   //                                                       *efeBasisDataAdaptiveOrbital,
   //                                                       /**cfeBasisDataStorageGLLEigen,*/
-  //                                                       50);  
+  //                                                       numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);  
 
     std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
@@ -1020,10 +1020,10 @@ int main(int argc, char** argv)
                                                    Host,
                                                    dim>>
                                                    (*basisManagerWaveFn,
-                                                    *MContext,
-                                                    /**cfeBasisDataStorageGLLEigen,
+                                                    /**MContext,*/
+                                                    *cfeBasisDataStorageGLLEigen,
                                                     *efeBasisDataAdaptiveOrbital,
-                                                    *cfeBasisDataStorageGLLEigen,*/
+                                                    *cfeBasisDataStorageGLLEigen,
                                                     linAlgOpContext);    
 
     // add device synchronize for gpu
@@ -1133,7 +1133,6 @@ int main(int argc, char** argv)
                                             fracOccupancyTolerance,
                                             eigenSolveResidualTolerance,
                                             scfDensityResidualNormTolerance,
-                                            chebyshevPolynomialDegree,
                                             maxChebyshevFilterPass,
                                             maxSCFIter,
                                             evaluateEnergyEverySCF,
@@ -1152,8 +1151,6 @@ int main(int argc, char** argv)
                                             feBDEXCHamiltonian,                                                                                
                                             *externalPotentialFunction,
                                             linAlgOpContext,
-                                            50,
-                                            50,
                                             *MContextForInv,
                                             *MContext,
                                             /**MContextForInv,*/
@@ -1199,7 +1196,6 @@ int main(int argc, char** argv)
                                             fracOccupancyTolerance,
                                             eigenSolveResidualTolerance,
                                             scfDensityResidualNormTolerance,
-                                            chebyshevPolynomialDegree,
                                             maxChebyshevFilterPass,
                                             maxSCFIter,
                                             evaluateEnergyEverySCF,
@@ -1216,8 +1212,6 @@ int main(int argc, char** argv)
                                             feBDEXCHamiltonian,                                                                                
                                             *externalPotentialFunction,
                                             linAlgOpContext,
-                                            50,
-                                            50,
                                             *MContextForInv,
                                             *MContext,
                                             /**MContextForInv,*/
@@ -1248,8 +1242,8 @@ int main(int argc, char** argv)
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
     {
       unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId)*4;
-      rootCout << "The energies calculated by perturbation to atom "<< perturbAtomId <<
-      " along Dim " << perturbDim <<" are: "<< energyInPerturbIds[index] << ", "<<energyInPerturbIds[index+1]
+      rootCout << "The energies calculated by perturbation to atom "<< atomIdPerturbed <<
+      " along Dim " << dimIdPerturbed <<" are: "<< energyInPerturbIds[index] << ", "<<energyInPerturbIds[index+1]
       <<", "<<energyInPerturbIds[index+2]<<", "<<energyInPerturbIds[index+3]<<"\n";
       force[count] = (-energyInPerturbIds[index] + 8*energyInPerturbIds[index+1] - 
         8*energyInPerturbIds[index+2] + energyInPerturbIds[index+3])/(12*gridSizeFD);
@@ -1262,8 +1256,8 @@ int main(int argc, char** argv)
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
     {
       unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId);
-      rootCout << "The force calculated by perturbation to atom "<< perturbAtomId <<
-      " along Dim " << perturbDim <<" is: "<< force[numAtomPerturbed*perturbDim + perturbAtomId]<<"\n";
+      rootCout << "The force calculated by perturbation to atom "<< atomIdPerturbed <<
+      " along Dim " << dimIdPerturbed <<" is: "<< force[numAtomPerturbed*perturbDim + perturbAtomId]<<"\n";
     }
   }
 

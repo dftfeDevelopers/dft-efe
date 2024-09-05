@@ -263,6 +263,7 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                             d_linAlgOpContext;
       std::vector<RealType> d_nuclearChargeQuad;
+      size_type             d_cellTimesNumVecPoisson;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

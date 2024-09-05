@@ -59,11 +59,11 @@ namespace dftefe
     {
       d_feBasisDataStorage = feBasisDataStorage;
       d_feBasisOp =
-        std::make_shared<const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>>(
-          feBasisDataStorage, d_cellBlockSize);
+        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                  ValueTypeBasisData,
+                                                  memorySpace,
+                                                  dim>>(feBasisDataStorage,
+                                                        d_cellBlockSize);
     }
 
     template <typename ValueTypeBasisData,
@@ -102,6 +102,7 @@ namespace dftefe
                                                   memorySpace> &waveFunc,
                  const size_type waveFuncBatchSize)
     {
+      d_feBasisOp->reinit(d_cellBlockSize * waveFuncBatchSize);
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
 

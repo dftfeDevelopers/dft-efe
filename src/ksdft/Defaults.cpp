@@ -33,11 +33,11 @@ namespace dftefe
      */
     const linearAlgebra::PreconditionerType PoissonProblemDefaults::PC_TYPE =
       linearAlgebra::PreconditionerType::JACOBI;
-    const size_type PoissonProblemDefaults::MAX_CELL_TIMES_NUMVECS = 50;
-    const size_type PoissonProblemDefaults::MAX_ITER               = 2e7;
-    const double    PoissonProblemDefaults::ABSOLUTE_TOL           = 1e-12;
-    const double    PoissonProblemDefaults::RELATIVE_TOL           = 1e-14;
-    const double    PoissonProblemDefaults::DIVERGENCE_TOL         = 1e10;
+    const size_type PoissonProblemDefaults::CELL_BATCH_SIZE = 50;
+    const size_type PoissonProblemDefaults::MAX_ITER        = 2e7;
+    const double    PoissonProblemDefaults::ABSOLUTE_TOL    = 1e-12;
+    const double    PoissonProblemDefaults::RELATIVE_TOL    = 1e-14;
+    const double    PoissonProblemDefaults::DIVERGENCE_TOL  = 1e10;
 
     /**
      * @brief Setting all the LinearEigenSolverDefaults
@@ -46,6 +46,28 @@ namespace dftefe
     const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
     const double LinearEigenSolverDefaults::LANCZOS_BETA_TOL = 1e-14;
     const size_type LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE = 40;
+    /**
+     * @brief Setting all the ChebyshevPolynomialDegreeDefaults
+     */
+    const std::map<size_type, size_type>
+      LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP{
+        {500, 24}, // <= 500 ~> chebyshevOrder = 24
+        {750, 30},
+        {1000, 39},
+        {1500, 50},
+        {2000, 53},
+        {3000, 57},
+        {4000, 62},
+        {5000, 69},
+        {9000, 77},
+        {14000, 104},
+        {20000, 119},
+        {30000, 162},
+        {50000, 300},
+        {80000, 450},
+        {100000, 550},
+        {200000, 700},
+        {500000, 1000}};
 
     /**
      * @brief Setting all the NewtonRaphsonSolverDefaults
@@ -66,26 +88,10 @@ namespace dftefe
     const double LibxcDefaults::DENSITY_ZERO_TOL = 1e-10;
 
     /**
-     * @brief Setting all the ChebyshevPolynomialDegreeDefaults
+     * @brief Setting all the KSDFTDefaults
      */
-    const unsigned int LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP[][2] = {
-      {500, 24}, // <= 500 ~> chebyshevOrder = 24
-      {750, 30},
-      {1000, 39},
-      {1500, 50},
-      {2000, 53},
-      {3000, 57},
-      {4000, 62},
-      {5000, 69},
-      {9000, 77},
-      {14000, 104},
-      {20000, 119},
-      {30000, 162},
-      {50000, 300},
-      {80000, 450},
-      {100000, 550},
-      {200000, 700},
-      {500000, 1000}};
+    const size_type KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE = 400;
+    const size_type KSDFTDefaults::CELL_BATCH_SIZE       = 50;
 
   } // end of namespace ksdft
 } // end of namespace dftefe

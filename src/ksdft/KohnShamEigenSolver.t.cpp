@@ -31,6 +31,21 @@ namespace dftefe
 {
   namespace ksdft
   {
+    namespace
+    {
+      size_type
+      getChebyPolynomialDegree(size_type unWantedSpectrumUpperBound)
+      {
+        auto lower = LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP.lower_bound(
+          unWantedSpectrumUpperBound);
+        size_type val =
+          lower != LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP.end() ?
+            lower->second :
+            1250;
+        return val;
+      }
+    } // namespace
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -41,7 +56,6 @@ namespace dftefe
         const double    fermiEnergyTolerance,
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,
-        const size_type chebyshevPolynomialDegree,
         const size_type maxChebyshevFilterPass,
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
@@ -51,7 +65,6 @@ namespace dftefe
         const OpContext &MInvLanczos)
       : d_numWantedEigenvalues(waveFunctionSubspaceGuess.getNumberComponents())
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
-      , d_chebyshevPolynomialDegree(chebyshevPolynomialDegree)
       , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
       , d_waveFunctionBlockSize(waveFunctionBlockSize)
       , d_fermiEnergyTolerance(fermiEnergyTolerance)
@@ -188,6 +201,13 @@ namespace dftefe
                      << d_wantedSpectrumUpperBound << "\n";
           d_rootCout << "unWantedSpectrumUpperBound: "
                      << eigenValuesLanczos[1] + residual << "\n";
+
+          // Calculating polynomial degree after each scf?
+          d_chebyshevPolynomialDegree =
+            getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
+
+          d_rootCout << "Chebyshev Polynomial Degree : "
+                     << d_chebyshevPolynomialDegree << "\n";
 
           linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
                                                       ValueTypeOperand,

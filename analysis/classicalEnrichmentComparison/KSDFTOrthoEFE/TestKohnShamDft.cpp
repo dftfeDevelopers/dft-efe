@@ -382,7 +382,6 @@ int main(int argc, char** argv)
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
   double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
-  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
@@ -947,7 +946,7 @@ int main(int argc, char** argv)
                                                       *cfeBasisDataStorageAdaptiveOrbital,
                                                       *efeBasisDataAdaptiveOrbital,
                                                       *cfeBasisDataStorageAdaptiveOrbital,
-                                                      50,
+                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
                                                       true); 
 
   //   // add device synchronize for gpu
@@ -982,7 +981,7 @@ int main(int argc, char** argv)
   //                                                       *cfeBasisDataStorageGaussEigen,
   //                                                       *efeBasisDataAdaptiveOrbital,
   //                                                       /**cfeBasisDataStorageGLLEigen,*/
-  //                                                       50);  
+  //                                                       numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,);  
 
     std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
@@ -1096,7 +1095,6 @@ int main(int argc, char** argv)
                                           fracOccupancyTolerance,
                                           eigenSolveResidualTolerance,
                                           scfDensityResidualNormTolerance,
-                                          chebyshevPolynomialDegree,
                                           maxChebyshevFilterPass,
                                           maxSCFIter,
                                           evaluateEnergyEverySCF,
@@ -1115,8 +1113,6 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          50,
-                                          50,
                                           *MContextForInv,
                                           *MContext,
                                           /**MContextForInv,*/
@@ -1161,7 +1157,6 @@ int main(int argc, char** argv)
                                           fracOccupancyTolerance,
                                           eigenSolveResidualTolerance,
                                           scfDensityResidualNormTolerance,
-                                          chebyshevPolynomialDegree,
                                           maxChebyshevFilterPass,
                                           maxSCFIter,
                                           evaluateEnergyEverySCF,
@@ -1178,8 +1173,6 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          50,
-                                          50,
                                           *MContextForInv,
                                           *MContext,
                                           /**MContextForInv,*/

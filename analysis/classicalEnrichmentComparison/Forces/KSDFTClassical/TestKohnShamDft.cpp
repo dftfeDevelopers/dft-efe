@@ -130,6 +130,112 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     }
   };
 
+  class BTimesVNuclearFunction : public utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_b;
+
+  public:
+    BTimesVNuclearFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      {
+        d_b = std::make_shared
+                <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
+      }
+
+    double
+    operator()(const utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear"))
+          {
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) *
+                                    ((*d_b)(point)));
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = (*this)(points[i]);
+      }
+      return ret;
+    }
+  };
+
+  class VExternalTimesOrbitalSqFunction : public utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_vext;
+
+  public:
+    VExternalTimesOrbitalSqFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      {
+        d_vext = std::make_shared
+                <utils::PointChargePotentialFunction>(atomCoordinates, atomCharges);
+      }
+
+    double
+    operator()(const utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital"))
+          {
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * enrichmentObjId->getValue(point, origin) *
+                                    (*d_vext)(point));
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (unsigned int i = 0 ; i < points.size() ; i++)
+      {
+        ret[i] = (*this)(points[i]);
+      }
+      return ret;
+    }
+  };
 // operand - V_H
 // memoryspace - HOST
 int main(int argc, char** argv)
@@ -213,7 +319,6 @@ int main(int argc, char** argv)
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
   double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
-  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
@@ -224,10 +329,18 @@ int main(int argc, char** argv)
   bool evaluateEnergyEverySCF = readParameter<bool>(parameterInputFileName, "evaluateEnergyEverySCF", rootCout);
   const size_type dim = 3;
 
-  double gridSizeFD = readParameter<double>(parameterInputFileName, "gridSizeFD", rootCout);
-  unsigned int numDimPerturbed = readParameter<unsigned int>(parameterInputFileName, "numDimPerturbed", rootCout);
-  unsigned int numAtomPerturbed = readParameter<unsigned int>(parameterInputFileName, "numAtomPerturbed", rootCout);
+  double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
+  double smallestCellVolume = readParameter<double>(parameterInputFileName, "smallestCellVolume", rootCout);
+  unsigned int maxRecursion = readParameter<unsigned int>(parameterInputFileName, "maxRecursion", rootCout);
+  double adaptiveQuadAbsTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadAbsTolerance", rootCout);
+  double adaptiveQuadRelTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadRelTolerance", rootCout);
+  double integralThreshold = readParameter<double>(parameterInputFileName, "integralThreshold", rootCout);
 
+  double gridSizeFD = readParameter<double>(parameterInputFileName, "gridSizeFD", rootCout);
+  unsigned int dimIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "dimIdPerturbed", rootCout);
+  unsigned int atomIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "atomIdPerturbed", rootCout);
+  size_type numDimPerturbed = 1;
+  size_type numAtomPerturbed = 1;
 
   unsigned int num1DGaussSizeVCorrecPlusPhi = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeVCorrecPlusPhi", rootCout);
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
@@ -300,7 +413,7 @@ int main(int argc, char** argv)
         {
           for (unsigned int iDim = 0 ; iDim < dim ; iDim ++)
           {
-            if(atomId == perturbAtomId && iDim == perturbDim)
+            if(atomId == atomIdPerturbed && iDim == dimIdPerturbed)
               coordinatesVec[atomId][iDim] = atomCoordinatesVec[atomId][iDim] + gridPt*gridSizeFD;
             else
               coordinatesVec[atomId][iDim] = atomCoordinatesVec[atomId][iDim];
@@ -369,12 +482,39 @@ int main(int argc, char** argv)
       atomSymbolToFilename[i] = sourceDir + i + ".xml";
   }
 
-  std::vector<std::string> fieldNames{"density"};
+  std::vector<std::string> fieldNames{"density", "orbital", "vnuclear"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
   std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
       std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
                                                       fieldNames,
                                                       metadataNames);
+
+  // Compute Adaptive QuadratureRuleContainer for electrostaics
+
+    // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
+    std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
+    unsigned int numfun = 0;
+    numfun = 2;
+    functionsVec.resize(numfun); // Enrichment Functions
+    std::vector<double> absoluteTolerances(numfun), relativeTolerances(numfun), integralThresholds(numfun);
+      functionsVec[0] = std::make_shared<VExternalTimesOrbitalSqFunction>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomChargesVec,
+        atomCoordinatesVec);
+      std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
+      functionsVec[1] = std::make_shared<BTimesVNuclearFunction>(
+      atomSphericalDataContainer,
+      atomSymbolVec,
+      atomChargesVec,
+      smearedChargeRadiusVec,
+      atomCoordinatesVec);
+    for ( unsigned int i=0 ;i < numfun ; i++ )
+    {
+      absoluteTolerances[i] = adaptiveQuadAbsTolerance;
+      relativeTolerances[i] = adaptiveQuadRelTolerance;
+      integralThresholds[i] = integralThreshold;
+    }
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
@@ -439,6 +579,38 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   
   quadrature::QuadratureRuleAttributes quadAttrVCorrecPlusPhi(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSizeVCorrecPlusPhi);
 
+    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleElec =
+      std::make_shared<quadrature::QuadratureRuleGauss>(dim, num1DGaussSizeVCorrecPlusPhi);
+
+    quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
+
+    std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
+
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveElec =
+      std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrAdaptive, 
+      baseQuadRuleElec, 
+      triangulationBase, 
+      *cellMapping, 
+      *parentToChildCellsManager,
+      functionsVec,
+      absoluteTolerances,
+      relativeTolerances,
+      integralThresholds,
+      smallestCellVolume,
+      maxRecursion); 
+
+    unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
+    int mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuad,
+      1,
+      utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPISum,
+      comm);
+
+  rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
+
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
@@ -448,8 +620,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = 
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-      (basisDofHandlerWaveFn, quadAttrVCorrecPlusPhi, basisAttrMap);
-  feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrVCorrecPlusPhi, basisAttrMap);
+      (basisDofHandlerWaveFn, quadAttrAdaptive, basisAttrMap);
+  feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
 
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho =  
                 feBDElectrostaticsHamiltonian->getQuadratureRuleContainer();
@@ -468,12 +640,12 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
-                                                      50);
+                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs = 
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrVCorrecPlusPhi, basisAttrMap);
-  feBDTotalChargeRhs->evaluateBasisData(quadAttrVCorrecPlusPhi, basisAttrMap);
+      (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
+  feBDTotalChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
 
   std::vector<double> energyInPerturbIds(atomCoordinatesVecInGrid.size(),0);
   for(unsigned int perturbId = 0 ; perturbId < atomCoordinatesVecInGrid.size(); perturbId++ )
@@ -514,9 +686,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
     if(isNumericalNuclearSolve)
     {
-      unsigned int num1DGaussSizeSmearNucl = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeSmearNucl", rootCout);
-      quadrature::QuadratureRuleAttributes quadAttrSmearNucl(quadrature::QuadratureFamily::GAUSS,true,num1DGaussSizeSmearNucl);
-
       basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
       basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
       basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
@@ -525,14 +694,13 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
       // Set up the FE Basis Data Storage
-      std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs =
-        std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-          (basisDofHandlerTotalPot, quadAttrSmearNucl, basisAttrMap);
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs = feBDTotalChargeRhs;
+    //   std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
+    //     (basisDofHandlerTotalPot, quadAttrSmearNucl, basisAttrMap);
+    // feBDNuclearChargeRhs->evaluateBasisData(quadAttrSmearNucl, basisAttrMap);
 
-      // evaluate basis data
-      feBDNuclearChargeRhs->evaluateBasisData(quadAttrSmearNucl, basisAttrMap);
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBasisDataElec;
 
-      std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeStiffnessMatrix = feBasisDataElec;
       std::shared_ptr<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -555,7 +723,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                             fracOccupancyTolerance,
                                             eigenSolveResidualTolerance,
                                             scfDensityResidualNormTolerance,
-                                            chebyshevPolynomialDegree,
                                             maxChebyshevFilterPass,
                                             maxSCFIter,
                                             evaluateEnergyEverySCF,
@@ -574,8 +741,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                             feBDEXCHamiltonian,                                                                                
                                             *externalPotentialFunction,
                                             linAlgOpContext,
-                                            50,
-                                            50,
                                             *MContextForInv,
                                             *MContext,
                                             *MInvContext);
@@ -608,7 +773,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                             fracOccupancyTolerance,
                                             eigenSolveResidualTolerance,
                                             scfDensityResidualNormTolerance,
-                                            chebyshevPolynomialDegree,
                                             maxChebyshevFilterPass,
                                             maxSCFIter,
                                             evaluateEnergyEverySCF,
@@ -625,8 +789,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                             feBDEXCHamiltonian,                                                                                
                                             *externalPotentialFunction,
                                             linAlgOpContext,
-                                            50,
-                                            50,
                                             *MContextForInv,
                                             *MContext,
                                             *MInvContext);
@@ -644,8 +806,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
     {
       unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId)*4;
-      rootCout << "The energies calculated by perturbation to atom "<< perturbAtomId <<
-      " along Dim " << perturbDim <<" are: "<< energyInPerturbIds[index] << ", "<<energyInPerturbIds[index+1]
+      rootCout << "The energies calculated by perturbation to atom "<< atomIdPerturbed <<
+      " along Dim " << dimIdPerturbed <<" are: "<< energyInPerturbIds[index] << ", "<<energyInPerturbIds[index+1]
       <<", "<<energyInPerturbIds[index+2]<<", "<<energyInPerturbIds[index+3]<<"\n";
       force[count] = (-energyInPerturbIds[index] + 8*energyInPerturbIds[index+1] - 
         8*energyInPerturbIds[index+2] + energyInPerturbIds[index+3])/(12*gridSizeFD);
@@ -658,8 +820,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
     {
       unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId);
-      rootCout << "The force calculated by perturbation to atom "<< perturbAtomId <<
-      " along Dim " << perturbDim <<" is: "<< force[numAtomPerturbed*perturbDim + perturbAtomId]<<"\n";
+      rootCout << "The force calculated by perturbation to atom "<< atomIdPerturbed <<
+      " along Dim " << dimIdPerturbed <<" is: "<< force[numAtomPerturbed*perturbDim + perturbAtomId]<<"\n";
     }
   }
 

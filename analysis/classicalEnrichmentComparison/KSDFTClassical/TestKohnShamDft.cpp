@@ -337,7 +337,6 @@ int main(int argc, char** argv)
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
   double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
-  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
@@ -644,7 +643,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
-                                                      50);
+                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
@@ -710,7 +709,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           fracOccupancyTolerance,
                                           eigenSolveResidualTolerance,
                                           scfDensityResidualNormTolerance,
-                                          chebyshevPolynomialDegree,
                                           maxChebyshevFilterPass,
                                           maxSCFIter,
                                           evaluateEnergyEverySCF,
@@ -729,9 +727,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          50,
-                                          50,
                                           *MContextForInv,
+                                          /**MContextForInv,*/
                                           *MContext,
                                           *MInvContext);
 
@@ -761,7 +758,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           fracOccupancyTolerance,
                                           eigenSolveResidualTolerance,
                                           scfDensityResidualNormTolerance,
-                                          chebyshevPolynomialDegree,
                                           maxChebyshevFilterPass,
                                           maxSCFIter,
                                           evaluateEnergyEverySCF,
@@ -778,9 +774,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          50,
-                                          50,
                                           *MContextForInv,
+                                          /**MContextForInv,*/
                                           *MContext,
                                           *MInvContext);
 

@@ -23,10 +23,10 @@ set(DFT-EFE-BASIS-SOURCES
 	CFEOverlapOperatorContext.cpp
 	PristineEFEOverlapOperatorContext.cpp
 	OrthoEFEOverlapOperatorContext.cpp
-	EnrichmentClassicalInterfaceSpherical.cpp
 	L2ProjectionLinearSolverFunction.cpp
 	Defaults.cpp
 	CFEOverlapInverseOpContextGLL.cpp
+	EnrichmentClassicalInterfaceSpherical.cpp
 	OrthoEFEOverlapInverseOpContextGLL.cpp
 	EFEBasisDataStorageDealii.cpp
 	EFEBasisDofHandlerDealii.cpp

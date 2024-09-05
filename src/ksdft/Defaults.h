@@ -46,7 +46,7 @@ namespace dftefe
       //
       // The number of batched gemms done
       //
-      static const size_type MAX_CELL_TIMES_NUMVECS;
+      static const size_type CELL_BATCH_SIZE;
 
       //
       // Maximum iteration for CG
@@ -83,7 +83,7 @@ namespace dftefe
       // Tolerance of ill conditioning for the
       // orthogonalization step in CHFSi
       //
-      static const unsigned int CHEBY_ORDER_LOOKUP[][2];
+      static const std::map<size_type, size_type> CHEBY_ORDER_LOOKUP;
 
       //
       // Max krylov subspace
@@ -139,6 +139,16 @@ namespace dftefe
       //
       static const double DENSITY_ZERO_TOL;
     }; // end of class Constants
+
+    class KSDFTDefaults
+    {
+    public:
+      //
+      // The number of batched gemms done
+      //
+      static const size_type MAX_WAVEFN_BATCH_SIZE;
+      static const size_type CELL_BATCH_SIZE;
+    };
 
   } // end of namespace ksdft
 } // end of namespace dftefe

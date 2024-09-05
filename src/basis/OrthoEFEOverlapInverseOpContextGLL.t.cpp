@@ -831,7 +831,7 @@ namespace dftefe
       // do inversion of enrichment block using slate lapackpp
       // utils::MemoryStorage<size_type, memorySpace>
       // ipiv(d_nglobalEnrichmentIds);
-
+      /**
       int rank;
       utils::mpi::MPICommRank(
         d_feBasisManager->getMPIPatternP2P()->mpiCommunicator(), &rank);
@@ -869,7 +869,7 @@ namespace dftefe
             }
           rootCout << "]" << std::endl;
         }
-
+      **/
       /* //do inversion of enrichment block using intel mkl
       EFEBlockInverse::inverse(basisOverlapEnrichmentBlockSTL.data(),
                                 d_nglobalEnrichmentIds);*/

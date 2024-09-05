@@ -270,7 +270,8 @@ namespace dftefe
                                                         ValueTypeBasisData,
                                                         memorySpace,
                                                         dim>>(
-          feBasisDataStorage, d_cellBlockSize);
+          feBasisDataStorage,
+          d_cellBlockSize * d_xcPotentialQuad->getNumberComponents());
 
       std::shared_ptr<const basis::BasisDofHandler> basisDofHandlerData =
         feBasisDataStorage->getBasisDofHandler();
