@@ -928,9 +928,9 @@ int main(int argc, char** argv)
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
-  //   // add device synchronize for gpu
-  //   utils::mpi::MPIBarrier(comm);
-  //   start = std::chrono::high_resolution_clock::now();
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
 
   // Create OperatorContext for Basisoverlap
 
@@ -949,13 +949,13 @@ int main(int argc, char** argv)
                                                       numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
                                                       true); 
 
-  //   // add device synchronize for gpu
-  //     utils::mpi::MPIBarrier(comm);
-  //     stop = std::chrono::high_resolution_clock::now();
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
 
-  //     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-  // rootCout << "Time for creation of MContext is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
+  rootCout << "Time for creation of MContext is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
 
     // add device synchronize for gpu
     utils::mpi::MPIBarrier(comm);

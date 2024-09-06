@@ -713,14 +713,14 @@ namespace dftefe
                              qPoint++)
                           {
                             NpiNpj +=
-                              eefeBDH->getEnrichmentValue(
-                                cellIndex,
-                                iNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
-                              eefeBDH->getEnrichmentValue(
-                                cellIndex,
-                                jNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (iNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
+                              *(enrichmentValuesVec.data() +
+                                (jNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         // Ni_pristine* interpolated ci's in
@@ -733,10 +733,10 @@ namespace dftefe
                               classicalComponentInQuadValuesEE
                                 [numEnrichmentIdsInCell * qPoint +
                                  (iNode - dofsPerCellCFE)] *
-                              eefeBDH->getEnrichmentValue(
-                                cellIndex,
-                                jNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (jNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         // Ni_pristine* interpolated ci's in
@@ -746,10 +746,10 @@ namespace dftefe
                              qPoint++)
                           {
                             NpicjNcj +=
-                              eefeBDH->getEnrichmentValue(
-                                cellIndex,
-                                iNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (iNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               classicalComponentInQuadValuesEE
                                 [numEnrichmentIdsInCell * qPoint +
                                  (jNode - dofsPerCellCFE)] *

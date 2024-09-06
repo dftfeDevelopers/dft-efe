@@ -369,6 +369,11 @@ namespace dftefe
                 numEnrichmentIdsInCell,
               (ValueTypeOperator)0);
 
+            std::vector<ValueTypeOperator> enrichmentValuesVec(
+              numEnrichmentIdsInCell *
+                nQuadPointInCellEnrichmentBlockEnrichment,
+              0);
+
             if (numEnrichmentIdsInCell > 0)
               {
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
@@ -467,6 +472,21 @@ namespace dftefe
                   classicalComponentInQuadValuesEE.data(),
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
+
+                for (size_type i = 0; i < numEnrichmentIdsInCell; i++)
+                  {
+                    for (unsigned int qPoint = 0;
+                         qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                         qPoint++)
+                      {
+                        *(enrichmentValuesVec.data() +
+                          nQuadPointInCellEnrichmentBlockEnrichment * i +
+                          qPoint) =
+                          efeBDH->getEnrichmentValue(cellIndex,
+                                                     i,
+                                                     quadRealPointsVec[qPoint]);
+                      }
+                  }
               }
 
 
@@ -522,14 +542,14 @@ namespace dftefe
                              qPoint++)
                           {
                             NpiNpj +=
-                              efeBDH->getEnrichmentValue(
-                                cellIndex,
-                                iNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
-                              efeBDH->getEnrichmentValue(
-                                cellIndex,
-                                jNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (iNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
+                              *(enrichmentValuesVec.data() +
+                                (jNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         // Ni_pristine* interpolated ci's in
@@ -542,10 +562,10 @@ namespace dftefe
                               classicalComponentInQuadValuesEE
                                 [numEnrichmentIdsInCell * qPoint +
                                  (iNode - dofsPerCellCFE)] *
-                              efeBDH->getEnrichmentValue(
-                                cellIndex,
-                                jNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (jNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                         // Ni_pristine* interpolated ci's in
@@ -555,10 +575,10 @@ namespace dftefe
                              qPoint++)
                           {
                             NpicjNcj +=
-                              efeBDH->getEnrichmentValue(
-                                cellIndex,
-                                iNode - dofsPerCellCFE,
-                                quadRealPointsVec[qPoint]) *
+                              *(enrichmentValuesVec.data() +
+                                (iNode - dofsPerCellCFE) *
+                                  nQuadPointInCellEnrichmentBlockEnrichment +
+                                qPoint) *
                               classicalComponentInQuadValuesEE
                                 [numEnrichmentIdsInCell * qPoint +
                                  (jNode - dofsPerCellCFE)] *
@@ -851,12 +871,14 @@ namespace dftefe
             }
           rootCout << "]" << std::endl;
         }
+      **/
 
       linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
         d_nglobalEnrichmentIds,
         basisOverlapEnrichmentBlockSTL.data(),
         *(d_diagonalInv.getLinAlgOpContext()));
 
+      /**
       rootCout << "Enrichment Block Inverse Matrix: " << std::endl;
       for (size_type i = 0; i < d_nglobalEnrichmentIds; i++)
         {

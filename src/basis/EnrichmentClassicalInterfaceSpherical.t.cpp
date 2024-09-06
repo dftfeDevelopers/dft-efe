@@ -395,7 +395,7 @@ namespace dftefe
 
       rootCout
         << "Completed creating Orthogonalized EnrichmentClassicalInterfaceSpherical for "
-        << d_enrichmentIdsPartition->nTotalEnrichmentIds() << fieldName
+        << d_enrichmentIdsPartition->nTotalEnrichmentIds() << " " << fieldName
         << " enrichments." << std::endl;
     }
 
@@ -504,7 +504,7 @@ namespace dftefe
 
       rootCout
         << "Completed creating Pristine EnrichmentClassicalInterfaceSpherical for "
-        << d_enrichmentIdsPartition->nTotalEnrichmentIds() << fieldName
+        << d_enrichmentIdsPartition->nTotalEnrichmentIds() << " " << fieldName
         << " enrichments." << std::endl;
     }
 
