@@ -123,12 +123,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     std::vector<double>
     operator()(const std::vector<utils::Point> &points) const
     {
+      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
+          for(auto &enrichmentObjId : vec)
+          for (unsigned int i = 0 ; i < points.size() ; i++)            
+          {
+            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/ylm00));
+          }
+        }
       return ret;
     }
   };
@@ -181,10 +188,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
+          for (unsigned int i = 0 ; i < points.size() ; i++)
+          {
+            for(auto &enrichmentObjId : vec)
+            {
+              ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) *
+                                      ((*d_b)(points[i]) + (*d_rho)(points[i])));
+            }
+          }  
+        }
       return ret;
     }
   };
@@ -235,10 +251,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear");
+          for (unsigned int i = 0 ; i < points.size() ; i++)
+          {
+            for(auto &enrichmentObjId : vec)
+            {
+              ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) *
+                                    ((*d_b)(points[i])));
+            }
+          }  
+        }
       return ret;
     }
   };
@@ -288,10 +313,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital");
+          for (unsigned int i = 0 ; i < points.size() ; i++)
+          {
+            for(auto &enrichmentObjId : vec)
+            {
+              double val = enrichmentObjId->getValue(points[i], origin);              
+              ret[i] = ret[i] + std::abs(val * val * (*d_vext)(points[i]));
+            }
+          }
+        }
       return ret;
     }
   };
@@ -1114,8 +1148,8 @@ int main(int argc, char** argv)
                                           *externalPotentialFunction,
                                           linAlgOpContext,
                                           *MContextForInv,
-                                          *MContext,
-                                          /**MContextForInv,*/
+                                          /**MContext,*/
+                                          *MContextForInv,
                                           *MInvContext);
 
     // add device synchronize for gpu
@@ -1174,8 +1208,8 @@ int main(int argc, char** argv)
                                           *externalPotentialFunction,
                                           linAlgOpContext,
                                           *MContextForInv,
-                                          *MContext,
-                                          /**MContextForInv,*/
+                                          /**MContext,*/
+                                          *MContextForInv,
                                           *MInvContext);
 
     // add device synchronize for gpu

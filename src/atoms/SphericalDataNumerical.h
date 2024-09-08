@@ -49,6 +49,7 @@ namespace dftefe
         const double              smoothness,
         const double polarAngleTolerance = SphericalDataDefaults::POL_ANG_TOL,
         const double cutoffTolerance     = SphericalDataDefaults::CUTOFF_TOL,
+        const double radiusTolerance     = SphericalDataDefaults::RADIUS_TOL,
         const size_type dim              = SphericalDataDefaults::DEFAULT_DIM);
 
       ~SphericalDataNumerical() = default;
@@ -88,6 +89,7 @@ namespace dftefe
       std::vector<double>                  d_hessian;
       double                               d_polarAngleTolerance;
       double                               d_cutoffTolerance;
+      double                               d_radiusTolerance;
       size_type                            d_dim;
     };
 

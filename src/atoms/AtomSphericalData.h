@@ -91,11 +91,12 @@ namespace dftefe
       std::string              d_fileName;
       std::vector<std::string> d_fieldNames;
       std::vector<std::string> d_metadataNames;
-      std::map<std::string, std::vector<std::shared_ptr<SphericalData>>>
+      std::unordered_map<std::string,
+                         std::vector<std::shared_ptr<SphericalData>>>
         d_sphericalData;
-      std::map<std::string, std::map<std::vector<int>, size_type>>
-                                         d_qNumbersToIdMap;
-      std::map<std::string, std::string> d_metadata;
+      std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
+                                                   d_qNumbersToIdMap;
+      std::unordered_map<std::string, std::string> d_metadata;
     };
   } // end of namespace atoms
 } // end of namespace dftefe

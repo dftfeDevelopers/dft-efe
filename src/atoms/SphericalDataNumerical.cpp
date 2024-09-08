@@ -75,6 +75,7 @@ namespace dftefe
                                  std::shared_ptr<const utils::Spline> spline,
                                  const double         polarAngleTolerance,
                                  const double         cutoffTolerance,
+                                 const double         radiusTolerance,
                                  std::vector<double> &gradient)
       {
         size_type dim = point.size();
@@ -88,7 +89,8 @@ namespace dftefe
           }
         convertCartesianToSpherical(
           atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-        utils::throwException(r != 0, "Value undefined at nucleus");
+        utils::throwException(std::abs(r) >= radiusTolerance,
+                              "Value undefined at nucleus");
         double radialValue           = (*spline)(r);
         double radialDerivativeValue = spline->deriv(1, r);
         double cutoffValue           = smoothCutoffValue(r, cutoff, smoothness);
@@ -145,6 +147,7 @@ namespace dftefe
                                 std::shared_ptr<const utils::Spline> spline,
                                 const double         polarAngleTolerance,
                                 const double         cutoffTolerance,
+                                const double         radiusTolerance,
                                 std::vector<double> &gradient)
       {
         utils::throwException(
@@ -193,6 +196,7 @@ namespace dftefe
                                const std::vector<int> &             qNumbers,
                                std::shared_ptr<const utils::Spline> spline,
                                const double         polarAngleTolerance,
+                               const double         radiusTolerance,
                                std::vector<double> &gradient)
       {
         size_type           dim = point.size();
@@ -205,7 +209,8 @@ namespace dftefe
           }
         convertCartesianToSpherical(
           atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-        utils::throwException(r != 0, "Value undefined at nucleus");
+        utils::throwException(std::abs(r) >= radiusTolerance,
+                              "Value undefined at nucleus");
         std::vector<double> coeffVec(0);
         coeffVec = spline->coefficients(r);
         int l = qNumbers[1], m = qNumbers[2];
@@ -227,6 +232,7 @@ namespace dftefe
                               const std::vector<int> &             qNumbers,
                               std::shared_ptr<const utils::Spline> spline,
                               const double         polarAngleTolerance,
+                              const double         radiusTolerance,
                               std::vector<double> &hessian)
       {
         size_type           dim = point.size();
@@ -239,7 +245,8 @@ namespace dftefe
           }
         convertCartesianToSpherical(
           atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-        utils::throwException(r != 0, "Value undefined at nucleus");
+        utils::throwException(std::abs(r) >= radiusTolerance,
+                              "Value undefined at nucleus");
         std::vector<double> coeffVec(0);
         coeffVec = spline->coefficients(r);
         int l = qNumbers[1], m = qNumbers[2];
@@ -262,6 +269,7 @@ namespace dftefe
       const double              smoothness,
       const double              polarAngleTolerance,
       const double              cutoffTolerance,
+      const double              radiusTolerance,
       const size_type           dim)
       : d_qNumbers(qNumbers)
       , d_radialPoints(radialPoints)
@@ -270,6 +278,7 @@ namespace dftefe
       , d_smoothness(smoothness)
       , d_polarAngleTolerance(polarAngleTolerance)
       , d_cutoffTolerance(cutoffTolerance)
+      , d_radiusTolerance(radiusTolerance)
       , d_dim(dim)
     {
       utils::throwException<utils::InvalidArgument>(d_dim == 3,
@@ -320,6 +329,7 @@ namespace dftefe
                                                         d_spline,
                                                         d_polarAngleTolerance,
                                                         d_cutoffTolerance,
+                                                        d_radiusTolerance,
                                                         d_gradient);
 
       DFTEFE_AssertWithMsg(d_gradient.size() == d_dim,
@@ -343,6 +353,7 @@ namespace dftefe
                                                      d_qNumbers,
                                                      d_spline,
                                                      d_polarAngleTolerance,
+                                                     d_radiusTolerance,
                                                      d_hessian);
       DFTEFE_AssertWithMsg(d_hessian.size() == d_dim * d_dim,
                            "Hessian vector should be of length dim*dim");

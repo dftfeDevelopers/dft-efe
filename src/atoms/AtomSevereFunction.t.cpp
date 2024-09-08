@@ -55,14 +55,13 @@ namespace dftefe
           for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
                atomId++)
             {
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
+                d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (auto &enrichmentObjId :
-                   d_atomSphericalDataContainer->getSphericalData(
-                     d_atomSymbolVec[atomId], d_fieldName))
+              for (auto &enrichmentObjId : vec)
                 {
-                  retValue =
-                    retValue + enrichmentObjId->getValue(point, origin) *
-                                 enrichmentObjId->getValue(point, origin);
+                  double val = enrichmentObjId->getValue(point, origin);
+                  retValue   = retValue + val * val;
                 }
             }
         }
@@ -71,18 +70,16 @@ namespace dftefe
           for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
                atomId++)
             {
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
+                d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (auto &enrichmentObjId :
-                   d_atomSphericalDataContainer->getSphericalData(
-                     d_atomSymbolVec[atomId], d_fieldName))
+              for (auto &enrichmentObjId : vec)
                 {
+                  std::vector<double> val =
+                    enrichmentObjId->getGradientValue(point, origin);
                   for (size_type iDim = 0; iDim < dim; iDim++)
                     {
-                      retValue =
-                        retValue +
-                        enrichmentObjId->getGradientValue(point, origin)[iDim] *
-                          enrichmentObjId->getGradientValue(point,
-                                                            origin)[iDim];
+                      retValue = retValue + val[iDim] * val[iDim];
                     }
                 }
             }
@@ -90,6 +87,7 @@ namespace dftefe
       return retValue;
     }
 
+    // check for r!=0 gradient.
     template <unsigned int dim>
     std::vector<double>
     AtomSevereFunction<dim>::operator()(
@@ -97,43 +95,44 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> retValue(N, 0.0);
-      for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+      if (d_derivativeType == 0)
         {
-          if (d_derivativeType == 0)
+          for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
+               atomId++)
             {
-              for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
-                   atomId++)
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
+                d_atomSymbolVec[atomId], d_fieldName);
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
+              for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
                 {
-                  utils::Point origin(d_atomCoordinatesVec[atomId]);
-                  for (auto &enrichmentObjId :
-                       d_atomSphericalDataContainer->getSphericalData(
-                         d_atomSymbolVec[atomId], d_fieldName))
+                  for (auto &enrichmentObjId : vec)
                     {
-                      retValue[iPoint] =
-                        retValue[iPoint] +
-                        enrichmentObjId->getValue(points[iPoint], origin) *
-                          enrichmentObjId->getValue(points[iPoint], origin);
+                      double val =
+                        enrichmentObjId->getValue(points[iPoint], origin);
+                      retValue[iPoint] = retValue[iPoint] + val * val;
                     }
                 }
             }
-          if (d_derivativeType == 1)
+        }
+      if (d_derivativeType == 1)
+        {
+          for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
+               atomId++)
             {
-              for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
-                   atomId++)
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
+                d_atomSymbolVec[atomId], d_fieldName);
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
+              for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
                 {
-                  utils::Point origin(d_atomCoordinatesVec[atomId]);
-                  for (auto &enrichmentObjId :
-                       d_atomSphericalDataContainer->getSphericalData(
-                         d_atomSymbolVec[atomId], d_fieldName))
+                  for (auto &enrichmentObjId : vec)
                     {
+                      std::vector<double> val =
+                        enrichmentObjId->getGradientValue(points[iPoint],
+                                                          origin);
                       for (size_type iDim = 0; iDim < dim; iDim++)
                         {
                           retValue[iPoint] =
-                            retValue[iPoint] +
-                            enrichmentObjId->getGradientValue(points[iPoint],
-                                                              origin)[iDim] *
-                              enrichmentObjId->getGradientValue(points[iPoint],
-                                                                origin)[iDim];
+                            retValue[iPoint] + val[iDim] * val[iDim];
                         }
                     }
                 }

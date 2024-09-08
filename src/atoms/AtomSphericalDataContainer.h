@@ -111,7 +111,7 @@ namespace dftefe
       std::map<std::string, std::string> d_atomSymbolToFilename;
       std::vector<std::string>           d_fieldNames;
       std::vector<std::string>           d_metadataNames;
-      std::map<std::string, AtomSphericalData>
+      std::unordered_map<std::string, AtomSphericalData>
         d_mapAtomSymbolToAtomSphericalData;
 
     }; // end of class AtomSphericalDataContainer

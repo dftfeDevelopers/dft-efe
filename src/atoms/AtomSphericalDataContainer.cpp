@@ -58,7 +58,7 @@ namespace dftefe
       const std::string fieldName) const
     {
       auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
-      utils::throwException<utils::InvalidArgument>(
+      DFTEFE_AssertWithMsg(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getSphericalData");
       return (it->second).getSphericalData(fieldName);
@@ -71,7 +71,7 @@ namespace dftefe
       const std::vector<int> &qNumbers) const
     {
       auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
-      utils::throwException<utils::InvalidArgument>(
+      DFTEFE_AssertWithMsg(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getSphericalData");
       return (it->second).getSphericalData(fieldName, qNumbers);
@@ -93,7 +93,7 @@ namespace dftefe
                                             const std::string fieldName) const
     {
       auto it = d_mapAtomSymbolToAtomSphericalData.find(atomSymbol);
-      utils::throwException<utils::InvalidArgument>(
+      DFTEFE_AssertWithMsg(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getQNumbers");
       std::vector<std::shared_ptr<SphericalData>> sphericalDataVec =

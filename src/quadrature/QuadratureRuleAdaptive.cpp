@@ -162,7 +162,8 @@ namespace dftefe
         const std::vector<double> &           parentCellJxW,
         std::vector<utils::Point> &           adaptiveQuadPoints,
         std::vector<double> &                 adaptiveQuadWeights,
-        std::vector<double> &                 integrals)
+        std::vector<double> &                 integrals,
+        std::map<std::string, double> &       timer)
 
       {
         const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
@@ -200,9 +201,15 @@ namespace dftefe
 
             std::vector<double> childCellsVolume(numberChildren, 0.0);
 
+            auto start = std::chrono::high_resolution_clock::now();
             std::vector<std::shared_ptr<const basis::TriangulationCellBase>>
               childCells =
                 parentToChildCellsManager.createChildCells(parentCell);
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration =
+              std::chrono::duration_cast<std::chrono::microseconds>(stop -
+                                                                    start);
+            timer["Child Cell Creation"] += duration.count();
 
             utils::throwException(
               numberChildren == childCells.size(),
@@ -214,6 +221,7 @@ namespace dftefe
                 const basis::TriangulationCellBase &childCell =
                   *(childCells[iChild]);
 
+                start = std::chrono::high_resolution_clock::now();
                 std::vector<utils::Point> realQuadPoints(numberBaseQuadPoints,
                                                          utils::Point(dim,
                                                                       0.0));
@@ -230,7 +238,13 @@ namespace dftefe
                 childCellsVolume[iChild] = std::accumulate(childCellJxW.begin(),
                                                            childCellJxW.end(),
                                                            0.0);
+                stop = std::chrono::high_resolution_clock::now();
+                duration =
+                  std::chrono::duration_cast<std::chrono::microseconds>(stop -
+                                                                        start);
+                timer["Cell Mapping"] += duration.count();
 
+                start = std::chrono::high_resolution_clock::now();
                 for (unsigned int iFunction = 0; iFunction < numberFunctions;
                      ++iFunction)
                   {
@@ -244,6 +258,11 @@ namespace dftefe
                                          childCellJxW.begin(),
                                          0.0);
                   }
+                stop = std::chrono::high_resolution_clock::now();
+                duration =
+                  std::chrono::duration_cast<std::chrono::microseconds>(stop -
+                                                                        start);
+                timer["Function Eval"] += duration.count();
               }
 
             bool convergenceFlag =
@@ -290,7 +309,8 @@ namespace dftefe
                                        childCellsJxW[iChild],
                                        adaptiveQuadPoints,
                                        adaptiveQuadWeights,
-                                       integrals);
+                                       integrals,
+                                       timer);
                   }
               }
 
@@ -308,12 +328,13 @@ namespace dftefe
       const basis::CellMappingBase &        cellMapping,
       basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
       std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
-                                 functions,
-      const std::vector<double> &absoluteTolerances,
-      const std::vector<double> &relativeTolerances,
-      const std::vector<double> &integralThresholds,
-      const double               smallestCellVolume /*= 1e-12*/,
-      const unsigned int         maxRecursion /*= 100*/)
+                                     functions,
+      const std::vector<double> &    absoluteTolerances,
+      const std::vector<double> &    relativeTolerances,
+      const std::vector<double> &    integralThresholds,
+      std::map<std::string, double> &timer,
+      const double                   smallestCellVolume /*= 1e-12*/,
+      const unsigned int             maxRecursion /*= 100*/)
     {
       d_dim                = baseQuadratureRule.getDim();
       d_isTensorStructured = false;
@@ -332,6 +353,7 @@ namespace dftefe
       const std::vector<double> &baseQuadratureRuleWeights =
         baseQuadratureRule.getWeights();
 
+      auto                start = std::chrono::high_resolution_clock::now();
       std::vector<double> cellJxW(numberBaseQuadPoints, 0.0);
       cellMapping.getJxW(cell,
                          baseQuadratureRuleParametricPoints,
@@ -343,10 +365,15 @@ namespace dftefe
       cellMapping.getRealPoints(baseQuadratureRuleParametricPoints,
                                 cell,
                                 realQuadPoints);
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      timer["Cell Mapping"] += duration.count();
 
       const double cellVolume =
         std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
 
+      start = std::chrono::high_resolution_clock::now();
       std::vector<double> classicalIntegralValues(numberFunctions, 0.0);
       for (unsigned int iFunction = 0; iFunction < numberFunctions; ++iFunction)
         {
@@ -356,6 +383,10 @@ namespace dftefe
           classicalIntegralValues[iFunction] = std::inner_product(
             functionValues.begin(), functionValues.end(), cellJxW.begin(), 0.0);
         }
+      stop = std::chrono::high_resolution_clock::now();
+      duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      timer["Function Eval"] += duration.count();
 
       int                 recursionLevel = 0;
       std::vector<double> adaptiveIntegralValues(numberFunctions, 0.0);
@@ -376,7 +407,8 @@ namespace dftefe
                          cellJxW,
                          d_points,
                          d_weights,
-                         adaptiveIntegralValues);
+                         adaptiveIntegralValues,
+                         timer);
 
       d_numPoints = d_weights.size();
     }

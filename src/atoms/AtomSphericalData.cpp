@@ -623,9 +623,9 @@ namespace dftefe
     AtomSphericalData::getSphericalData(const std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
-      utils::throwException(it != d_sphericalData.end(),
-                            "FieldName " + fieldName +
-                              " not while parsing the XML file:" + d_fileName);
+      DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
+                           "FieldName " + fieldName +
+                             " not while parsing the XML file:" + d_fileName);
       return it->second;
     }
 
@@ -635,13 +635,13 @@ namespace dftefe
                                         const std::vector<int> &qNumbers) const
     {
       auto it = d_sphericalData.find(fieldName);
-      utils::throwException(it != d_sphericalData.end(),
-                            "Unable to find the field " + fieldName +
-                              " while parsing the XML file " + d_fileName);
+      DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
+                           "Unable to find the field " + fieldName +
+                             " while parsing the XML file " + d_fileName);
       auto iter = d_qNumbersToIdMap.find(fieldName);
-      utils::throwException(iter != d_qNumbersToIdMap.end(),
-                            "Unable to find the field " + fieldName +
-                              " while parsing the XML file " + d_fileName);
+      DFTEFE_AssertWithMsg(iter != d_qNumbersToIdMap.end(),
+                           "Unable to find the field " + fieldName +
+                             " while parsing the XML file " + d_fileName);
       auto iterQNumberToId = (iter->second).find(qNumbers);
       if (iterQNumberToId != (iter->second).end())
         return *((it->second).begin() + iterQNumberToId->second);
@@ -651,10 +651,10 @@ namespace dftefe
           for (size_type i = 0; i < qNumbers.size(); i++)
             s += std::to_string(qNumbers[i]) + " ";
 
-          utils::throwException(false,
-                                "Unable to find the qNumbers " + s + " for " +
-                                  " the field " + fieldName +
-                                  " while parsing the XML file " + d_fileName);
+          DFTEFE_AssertWithMsg(false,
+                               "Unable to find the qNumbers " + s + " for " +
+                                 " the field " + fieldName +
+                                 " while parsing the XML file " + d_fileName);
           return *((it->second).begin() + iterQNumberToId->second);
         }
     }
