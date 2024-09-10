@@ -27,6 +27,7 @@
 #define dftefeAtomSphericalDataContainer_h
 
 #include <utils/TypeConfig.h>
+#include <unordered_map>
 #include <map>
 #include <string>
 #include <atoms/AtomSphericalData.h>
