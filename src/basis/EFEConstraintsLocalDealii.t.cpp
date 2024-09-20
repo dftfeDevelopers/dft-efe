@@ -15,13 +15,15 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      EFEConstraintsLocalDealii()
+      EFEConstraintsLocalDealii(dealii::IndexSet &locally_relevant_dofs)
       : d_isCleared(false)
       , d_isClosed(false)
     {
       d_locallyOwnedRanges.resize(0);
       d_ghostIndices.resize(0);
       d_globalToLocalMap.clear();
+      d_dealiiAffineConstraintMatrix.clear();
+      d_dealiiAffineConstraintMatrix.reinit(locally_relevant_dofs);
     }
 
     // constructor taking the closed dealiiAffineConstraintMatrix and
@@ -497,7 +499,8 @@ namespace dftefe
                                            d_columnConstraintsIdsLocal,
                                            d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues,
-                                           d_constraintsInhomogenities);
+                                           d_constraintsInhomogenities,
+                                           *vectorData.getLinAlgOpContext());
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -517,7 +520,8 @@ namespace dftefe
                                            d_rowConstraintsSizes,
                                            d_columnConstraintsIdsLocal,
                                            d_constraintRowSizesAccumulated,
-                                           d_columnConstraintsValues);
+                                           d_columnConstraintsValues,
+                                           *vectorData.getLinAlgOpContext());
     }
 
     template <typename ValueTypeBasisCoeff,

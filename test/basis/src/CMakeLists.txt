@@ -49,6 +49,10 @@ if(ENABLE_MPI)
 
 	add_compile_definitions(DFTEFE_WITH_MPI)
 
+	add_executable(TestDealiiAffineConstMemAfterCopy TestDealiiAffineConstMemAfterCopy.cpp )
+	target_link_libraries(TestDealiiAffineConstMemAfterCopy PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestDealiiAffineConstMemAfterCopy PROPERTIES OUTPUT_NAME "TestDealiiAffineConstMemAfterCopy" SUFFIX ".x")
+
 	add_executable(TestComputeFEMatrices TestComputeFEMatrices.cpp )
 	target_link_libraries(TestComputeFEMatrices PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestComputeFEMatrices PROPERTIES OUTPUT_NAME "TestComputeFEMatrices" SUFFIX ".x")

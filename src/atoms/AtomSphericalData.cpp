@@ -619,7 +619,7 @@ namespace dftefe
       return d_metadataNames;
     }
 
-    const std::vector<std::shared_ptr<SphericalData>>
+    const std::vector<std::shared_ptr<SphericalData>> &
     AtomSphericalData::getSphericalData(const std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);

@@ -84,9 +84,6 @@ namespace dftefe
       double                               d_cutoff;
       double                               d_smoothness;
       std::shared_ptr<const utils::Spline> d_spline;
-      double                               d_value;
-      std::vector<double>                  d_gradient;
-      std::vector<double>                  d_hessian;
       double                               d_polarAngleTolerance;
       double                               d_cutoffTolerance;
       double                               d_radiusTolerance;

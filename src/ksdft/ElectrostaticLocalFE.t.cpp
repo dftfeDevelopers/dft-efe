@@ -617,6 +617,19 @@ namespace dftefe
                       totalExternalPotentialAtRhoQuad,
                       *d_nuclearCorrectionPotAtRhoQuad,
                       *d_linAlgOpContext);
+
+      d_linearSolverFunction = std::make_shared<
+        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                      ValueTypeBasisCoeff,
+                                                      memorySpace,
+                                                      dim>>(
+        d_feBMTotalCharge,
+        d_feBDTotalChargeStiffnessMatrix,
+        d_feBDTotalChargeRhs,
+        *d_totalChargeDensity,
+        ksdft::PoissonProblemDefaults::PC_TYPE,
+        d_linAlgOpContext,
+        d_cellTimesNumVecPoisson);
     }
 
     template <typename ValueTypeBasisData,
@@ -801,6 +814,19 @@ namespace dftefe
                                                                        b);
             }
         }
+
+      d_linearSolverFunction = std::make_shared<
+        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                      ValueTypeBasisCoeff,
+                                                      memorySpace,
+                                                      dim>>(
+        d_feBMTotalCharge,
+        d_feBDTotalChargeStiffnessMatrix,
+        d_feBDTotalChargeRhs,
+        *d_totalChargeDensity,
+        ksdft::PoissonProblemDefaults::PC_TYPE,
+        d_linAlgOpContext,
+        d_cellTimesNumVecPoisson);
     }
 
     template <typename ValueTypeBasisData,
@@ -848,22 +874,9 @@ namespace dftefe
                         *d_totalChargeDensity,
                         *d_linAlgOpContext);
 
-      // why create object here - compute diagonal A every scf iter
-      std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
-                                                          ValueTypeBasisCoeff,
-                                                          memorySpace>>
-        linearSolverFunction = std::make_shared<
-          electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
-                                                        ValueTypeBasisCoeff,
-                                                        memorySpace,
-                                                        dim>>(
-          d_feBMTotalCharge,
-          d_feBDTotalChargeStiffnessMatrix,
-          d_feBDTotalChargeRhs,
-          *d_totalChargeDensity,
-          ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext,
-          d_cellTimesNumVecPoisson);
+      d_linearSolverFunction->reinit(d_feBMTotalCharge,
+                                     d_feBDTotalChargeRhs,
+                                     *d_totalChargeDensity);
 
       linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -880,9 +893,9 @@ namespace dftefe
             ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
             profiler);
 
-      CGSolve->solve(*linearSolverFunction);
+      CGSolve->solve(*d_linearSolverFunction);
 
-      linearSolverFunction->getSolution(*d_totalChargePotential);
+      d_linearSolverFunction->getSolution(*d_totalChargePotential);
 
       /* Change this to feBasisOperations for electrostaic basis with same
        * quadrulecontainer as hamiltonian*/
@@ -1022,22 +1035,27 @@ namespace dftefe
                             nuclearChargeDensity,
                             *d_linAlgOpContext);
 
-          std::shared_ptr<
-            linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
-                                                ValueTypeBasisCoeff,
-                                                memorySpace>>
-            linearSolverFunction = std::make_shared<
-              electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
-                                                            ValueTypeBasisCoeff,
-                                                            memorySpace,
-                                                            dim>>(
-              d_feBMNuclearCharge[iAtom],
-              feBDNuclearChargeStiffnessMatrix,
-              feBDNuclearChargeRhs,
-              nuclearChargeDensity,
-              ksdft::PoissonProblemDefaults::PC_TYPE,
-              d_linAlgOpContext,
-              d_cellTimesNumVecPoisson);
+          if (iAtom == 0)
+            {
+              d_linearSolverFunctionNuclear =
+                std::make_shared<electrostatics::PoissonLinearSolverFunctionFE<
+                  ValueTypeBasisData,
+                  ValueTypeBasisCoeff,
+                  memorySpace,
+                  dim>>(d_feBMNuclearCharge[iAtom],
+                        feBDNuclearChargeStiffnessMatrix,
+                        feBDNuclearChargeRhs,
+                        nuclearChargeDensity,
+                        ksdft::PoissonProblemDefaults::PC_TYPE,
+                        d_linAlgOpContext,
+                        d_cellTimesNumVecPoisson);
+            }
+          else
+            {
+              d_linearSolverFunctionNuclear->reinit(d_feBMNuclearCharge[iAtom],
+                                                    feBDNuclearChargeRhs,
+                                                    nuclearChargeDensity);
+            }
 
           linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -1054,14 +1072,15 @@ namespace dftefe
               ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
               profiler);
 
-          CGSolve->solve(*linearSolverFunction);
+          CGSolve->solve(*d_linearSolverFunctionNuclear);
 
           d_nuclearChargesPotential[iAtom] =
             new linearAlgebra::MultiVector<ValueType, memorySpace>(
               d_feBMNuclearCharge[iAtom]->getMPIPatternP2P(),
               d_linAlgOpContext,
               d_numComponents);
-          linearSolverFunction->getSolution(*d_nuclearChargesPotential[iAtom]);
+          d_linearSolverFunctionNuclear->getSolution(
+            *d_nuclearChargesPotential[iAtom]);
         }
     }
 

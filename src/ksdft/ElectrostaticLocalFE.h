@@ -264,6 +264,18 @@ namespace dftefe
                             d_linAlgOpContext;
       std::vector<RealType> d_nuclearChargeQuad;
       size_type             d_cellTimesNumVecPoisson;
+      std::shared_ptr<
+        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                      ValueTypeBasisCoeff,
+                                                      memorySpace,
+                                                      dim>>
+        d_linearSolverFunction;
+      std::shared_ptr<
+        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                      ValueTypeBasisCoeff,
+                                                      memorySpace,
+                                                      dim>>
+        d_linearSolverFunctionNuclear;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

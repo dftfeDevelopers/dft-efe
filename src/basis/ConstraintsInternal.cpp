@@ -49,7 +49,8 @@ namespace dftefe
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
         const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-          &constraintsInhomogenities)
+          &                                          constraintsInhomogenities,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       std::vector<ValueTypeBasisCoeff> newValuesBlock(blockSize, 0.0);
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
@@ -79,13 +80,24 @@ namespace dftefe
                 *(columnConstraintsValues.begin() + columnIndexStart + j);
 
               // TODO check if this performance efficient
-              for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
-                {
-                  newValuesBlock[iBlock] +=
-                    (*(vectorData.begin() + startingLocalDofIndexColumn +
-                       iBlock)) *
-                    alpha;
-                }
+              // for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
+              //   {
+              //     newValuesBlock[iBlock] +=
+              //       (*(vectorData.begin() + startingLocalDofIndexColumn +
+              //          iBlock)) *
+              //       alpha;
+              //   }
+
+              size_type inc = 1;
+              linearAlgebra::blasLapack::
+                axpy<ValueTypeBasisCoeff, ValueTypeBasisCoeff, memorySpace>(
+                  blockSize,
+                  alpha,
+                  vectorData.begin() + startingLocalDofIndexColumn,
+                  inc,
+                  &newValuesBlock[0],
+                  inc,
+                  linAlgOpContext);
             }
 
           std::copy(&newValuesBlock[0],
@@ -110,7 +122,8 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
-          &columnConstraintsValues)
+          &                                          columnConstraintsValues,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
@@ -127,13 +140,24 @@ namespace dftefe
 
               ValueTypeBasisCoeff alpha =
                 (*(columnConstraintsValues.begin() + columnIndexStart + j));
-              for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
-                {
-                  *(vectorData.begin() + startingLocalDofIndexColumn +
-                    iBlock) += (*(vectorData.begin() +
-                                  startingLocalDofIndexRow + iBlock)) *
-                               alpha;
-                }
+              // for (size_type iBlock = 0; iBlock < blockSize; iBlock++)
+              //   {
+              //     *(vectorData.begin() + startingLocalDofIndexColumn +
+              //       iBlock) += (*(vectorData.begin() +
+              //                     startingLocalDofIndexRow + iBlock)) *
+              //                  alpha;
+              //   }
+
+              size_type inc = 1;
+              linearAlgebra::blasLapack::
+                axpy<ValueTypeBasisCoeff, ValueTypeBasisCoeff, memorySpace>(
+                  blockSize,
+                  alpha,
+                  vectorData.begin() + startingLocalDofIndexRow,
+                  inc,
+                  vectorData.begin() + startingLocalDofIndexColumn,
+                  inc,
+                  linAlgOpContext);
             }
 
           //

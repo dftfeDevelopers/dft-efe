@@ -57,7 +57,8 @@ namespace dftefe
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
         const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-          &constraintsInhomogenities);
+          &                                          constraintsInhomogenities,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
       constraintsDistributeChildToParent(
@@ -72,7 +73,8 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
-          &columnConstraintsValues);
+          &                                          columnConstraintsValues,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
       constraintsSetConstrainedNodesToZero(
@@ -122,7 +124,9 @@ namespace dftefe
           &columnConstraintsValues,
         const utils::MemoryStorage<ValueTypeBasisCoeff,
                                    dftefe::utils::MemorySpace::DEVICE>
-          &constraintsInhomogenities);
+          &constraintsInhomogenities,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
 
       static void
       constraintsDistributeChildToParent(
@@ -143,7 +147,9 @@ namespace dftefe
                                    dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
-          &columnConstraintsValues);
+          &columnConstraintsValues,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
 
       static void
       constraintsSetConstrainedNodesToZero(

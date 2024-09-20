@@ -70,7 +70,7 @@ namespace dftefe
            const size_type                           incy,
            LinAlgOpContext<memorySpace> &            context)
       {
-        utils::throwException(
+        DFTEFE_AssertWithMsg(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
           "blas::axpy() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         blas::axpy(n, alpha, x, incx, y, incy);

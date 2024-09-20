@@ -1,8 +1,9 @@
-#include <boost/math/special_functions/legendre.hpp>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/math/special_functions/factorials.hpp>
 #include <cmath>
+#include <utils/Exceptions.h>
 #include <vector>
+// #include <boost/math/special_functions/legendre.hpp>
+// #include <boost/math/special_functions/spherical_harmonic.hpp>
+// #include <boost/math/special_functions/factorials.hpp>
 
 namespace dftefe
 {
@@ -164,6 +165,62 @@ namespace dftefe
     }
 
     double
+    Rlm(const int l, const int m)
+    {
+      if (m == 0)
+        return 1.0;
+      else
+        return Rlm(l, m - 1) / ((l - m + 1.0) * (l + m));
+    }
+
+    double
+    Plm(const int l, const int m, const double x)
+    {
+      // throw exception if x is not in [-1,1]
+      DFTEFE_Assert(abs(x) <= 1.0);
+      if (m < 0)
+        {
+          int    modM   = abs(m);
+          double factor = pow((-1.0), m) * Rlm(l, modM);
+          return factor * Plm(l, modM, x);
+        }
+      if (m > l)
+        return 0.0;
+      double cxM     = 1.0;
+      double cxMplus = 0.0;
+      double somx2   = sqrt(1.0 - x * x);
+      double fact    = 1.0;
+      for (double i = 0; i < m; i++)
+        {
+          cxM  = -cxM * fact * somx2;
+          fact = fact + 2.0;
+        }
+      double cx = cxM;
+      if (m != l)
+        {
+          double cxMPlus1 = x * (2 * m + 1) * cxM;
+          cx              = cxMPlus1;
+
+          double cxPrev     = cxMPlus1;
+          double cxPrevPrev = cxM;
+          for (double i = m + 2; i < l + 1; i++)
+            {
+              cx = ((2 * i - 1) * x * cxPrev + (-i - m + 1) * cxPrevPrev) /
+                   (i - m);
+              cxPrevPrev = cxPrev;
+              cxPrev     = cx;
+            }
+        }
+      //
+      // NOTE: Multiplies by {-1}^m to remove the
+      // implicit Condon-Shortley factor in the associated legendre
+      // polynomial implementation of boost
+      // This is done to be consistent with the QChem's implementation
+      return pow((-1.0), m) * cx;
+    }
+
+    /**
+    double
     Plm(const int l, const int m, const double x)
     {
       if (std::abs(m) > l)
@@ -176,6 +233,7 @@ namespace dftefe
         // This is done to be consistent with the QChem's implementation
         return pow(-1.0, m) * boost::math::legendre_p(l, m, x);
     }
+    **/
 
     double
     dPlmDTheta(const int l, const int m, const double theta)
@@ -191,9 +249,9 @@ namespace dftefe
       else if (m < 0)
         {
           const int    modM   = std::abs(m);
-          const double factor = pow(-1, m) *
-                                boost::math::factorial<double>(l - modM) /
-                                boost::math::factorial<double>(l + modM);
+          const double factor = pow(-1, m) * Rlm(l, modM);
+          // boost::math::factorial<double>(l - modM) /
+          // boost::math::factorial<double>(l + modM);
           return factor * dPlmDTheta(l, modM, theta);
         }
 
@@ -228,9 +286,7 @@ namespace dftefe
       else if (m < 0)
         {
           const int    modM   = std::abs(m);
-          const double factor = pow(-1, m) *
-                                boost::math::factorial<double>(l - modM) /
-                                boost::math::factorial<double>(l + modM);
+          const double factor = pow(-1, m) * Rlm(l, modM);
           return factor * d2PlmDTheta2(l, modM, theta);
         }
 

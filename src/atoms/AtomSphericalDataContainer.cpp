@@ -52,7 +52,7 @@ namespace dftefe
         }
     }
 
-    const std::vector<std::shared_ptr<SphericalData>>
+    const std::vector<std::shared_ptr<SphericalData>> &
     AtomSphericalDataContainer::getSphericalData(
       std::string       atomSymbol,
       const std::string fieldName) const

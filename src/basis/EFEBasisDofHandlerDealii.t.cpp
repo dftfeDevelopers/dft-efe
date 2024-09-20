@@ -458,6 +458,7 @@ namespace dftefe
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
+      d_boundaryIds.resize(0);
       std::vector<bool> dofs_touched(this->nGlobalNodes(), false);
       auto cellIter = this->beginLocalCells(), endIter = this->endLocalCells();
       for (; cellIter != endIter; ++cellIter)
@@ -792,6 +793,7 @@ namespace dftefe
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
+      d_boundaryIds.resize(0);
       std::vector<bool> dofs_touched(this->nGlobalNodes(), false);
       auto cellIter = this->beginLocalCells(), endIter = this->endLocalCells();
       for (; cellIter != endIter; ++cellIter)
@@ -1692,9 +1694,15 @@ namespace dftefe
                              memorySpace,
                              dim>::createConstraintsStart() const
     {
+      dealii::IndexSet locally_relevant_dofs;
+      locally_relevant_dofs.clear();
+      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
+                                                      locally_relevant_dofs);
+
       std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         constraintsLocal = std::make_shared<
-          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
+          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
+          locally_relevant_dofs);
 
       constraintsLocal->copyFrom(*d_constraintsLocal);
 

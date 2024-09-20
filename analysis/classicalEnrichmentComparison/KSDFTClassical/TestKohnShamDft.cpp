@@ -105,6 +105,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
       std::vector<std::string>  d_atomSymbolVec;
       std::vector<utils::Point> d_atomCoordinatesVec;
       std::vector<double> d_atomChargesVec;
+      double d_ylm00;
 
   public:
     RhoFunction(
@@ -117,12 +118,12 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
       , d_atomChargesVec(atomCharges)
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0))
       {}
 
     double
     operator()(const utils::Point &point) const
     {
-      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       double   retValue = 0;
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
         {
@@ -130,7 +131,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
           {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/ylm00));
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
           }
         }
       return retValue;
@@ -138,7 +139,6 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
     std::vector<double>
     operator()(const std::vector<utils::Point> &points) const
     {
-      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       std::vector<double> ret(0);
       ret.resize(points.size());
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
@@ -148,7 +148,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
           for(auto &enrichmentObjId : vec)
           for (unsigned int i = 0 ; i < points.size() ; i++)            
           {
-            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/ylm00));
+            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
           }
         }
       return ret;
@@ -252,8 +252,8 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital"))
           {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * enrichmentObjId->getValue(point, origin) *
-                                    (*d_vext)(point));
+            double val = enrichmentObjId->getValue(point, origin);  
+            retValue = retValue + std::abs(val * val * (*d_vext)(point));
           }
         }
       return retValue;
@@ -460,7 +460,7 @@ int main(int argc, char** argv)
 
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
-  // initialize the basis Manager
+  // initialize the basis DofHandler
 
   std::shared_ptr<const basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot =  
    std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
@@ -625,6 +625,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       maxRecursion); 
 
     unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
+    unsigned int nQuadMax = nQuad;
     int mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuad,
@@ -633,6 +634,14 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       utils::mpi::MPISum,
       comm);
 
+    int mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuadMax,
+      1,
+      utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPIMax,
+      comm);
+    rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
   rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -669,6 +678,13 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
                                                       numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);
+
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>

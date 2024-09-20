@@ -214,9 +214,10 @@ namespace dftefe
         triangulation->beginLocal();
 
       std::map<std::string, double> timer;
-      timer["Function Eval"]       = 0;
-      timer["Child Cell Creation"] = 0;
-      timer["Cell Mapping"]        = 0;
+      timer["Function Eval"]        = 0;
+      timer["Child Cell Creation "] = 0;
+      timer["Cell Mapping real"]    = 0;
+      timer["Cell Mapping jxw"]     = 0;
       for (; cellIter != triangulation->endLocal(); ++cellIter)
         {
           QuadratureRuleAdaptive adaptiveQuadratureRule(
@@ -242,10 +243,22 @@ namespace dftefe
           iCell++;
         }
 
-      // std::cout << "Function Eval: " << timer["Function Eval"]/1e6 << "\n" <<
-      // std::flush; std::cout << "Child Cell Creation: " << timer["Child Cell
-      // Creation"]/1e6 << "\n" << std::flush; std::cout << "Cell Mapping: " <<
-      // timer["Cell Mapping"]/1e6 << "\n" << std::flush;
+      /**
+      std::cout << "Function Eval in recursiveIntegrate function: "
+                << timer["Function Eval"] / 1e6 << "\n"
+                << std::flush;
+      std::cout << "Child Cell Creation in recursiveIntegrate function: "
+                << timer["Child Cell Creation"] / 1e6 << "\n"
+                << std::flush;
+      std::cout << "Cell Mapping to get jxw in recursiveIntegrate function: "
+                << timer["Cell Mapping jxw"] / 1e6 << "\n"
+                << std::flush;
+      std::cout
+                << "Cell Mapping to get real pts in recursiveIntegrate function:
+      "
+                << timer["Cell Mapping real"] / 1e6 << "\n"
+                << std::flush;
+      **/
 
       d_realPoints.resize(d_numQuadPoints, dftefe::utils::Point(d_dim, 0.0));
       d_JxW.resize(d_numQuadPoints, 0.0);

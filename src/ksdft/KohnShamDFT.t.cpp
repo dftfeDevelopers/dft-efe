@@ -857,10 +857,11 @@ namespace dftefe
           if (d_evaluateEnergyEverySCF)
             {
               d_hamitonianElec->reinitField(d_densityOutQuadValues);
-              d_hamitonianKin->evalEnergy(d_occupation,
-                                          *d_feBMWaveFn,
-                                          *d_kohnShamWaveFunctions,
-                                          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+              d_hamitonianKin->evalEnergy(
+                d_occupation,
+                *d_feBMWaveFn,
+                *d_kohnShamWaveFunctions,
+                KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -897,10 +898,11 @@ namespace dftefe
       if (!d_evaluateEnergyEverySCF)
         {
           d_hamitonianElec->reinitField(d_densityOutQuadValues);
-          d_hamitonianKin->evalEnergy(d_occupation,
-                                      *d_feBMWaveFn,
-                                      *d_kohnShamWaveFunctions,
-                                      KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+          d_hamitonianKin->evalEnergy(
+            d_occupation,
+            *d_feBMWaveFn,
+            *d_kohnShamWaveFunctions,
+            KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 

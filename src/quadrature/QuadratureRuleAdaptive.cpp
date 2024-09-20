@@ -228,21 +228,28 @@ namespace dftefe
                 cellMapping.getRealPoints(baseQuadratureRuleParametricPoints,
                                           childCell,
                                           realQuadPoints);
+                stop = std::chrono::high_resolution_clock::now();
+                duration =
+                  std::chrono::duration_cast<std::chrono::microseconds>(stop -
+                                                                        start);
+                timer["Cell Mapping real"] += duration.count();
 
                 std::vector<double> &childCellJxW = childCellsJxW[iChild];
+                start = std::chrono::high_resolution_clock::now();
                 cellMapping.getJxW(childCell,
                                    baseQuadratureRuleParametricPoints,
                                    baseQuadratureRuleWeights,
                                    childCellJxW);
 
-                childCellsVolume[iChild] = std::accumulate(childCellJxW.begin(),
-                                                           childCellJxW.end(),
-                                                           0.0);
                 stop = std::chrono::high_resolution_clock::now();
                 duration =
                   std::chrono::duration_cast<std::chrono::microseconds>(stop -
                                                                         start);
-                timer["Cell Mapping"] += duration.count();
+                timer["Cell Mapping jxw"] += duration.count();
+
+                childCellsVolume[iChild] = std::accumulate(childCellJxW.begin(),
+                                                           childCellJxW.end(),
+                                                           0.0);
 
                 start = std::chrono::high_resolution_clock::now();
                 for (unsigned int iFunction = 0; iFunction < numberFunctions;
@@ -353,7 +360,6 @@ namespace dftefe
       const std::vector<double> &baseQuadratureRuleWeights =
         baseQuadratureRule.getWeights();
 
-      auto                start = std::chrono::high_resolution_clock::now();
       std::vector<double> cellJxW(numberBaseQuadPoints, 0.0);
       cellMapping.getJxW(cell,
                          baseQuadratureRuleParametricPoints,
@@ -365,15 +371,10 @@ namespace dftefe
       cellMapping.getRealPoints(baseQuadratureRuleParametricPoints,
                                 cell,
                                 realQuadPoints);
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      timer["Cell Mapping"] += duration.count();
 
       const double cellVolume =
         std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
 
-      start = std::chrono::high_resolution_clock::now();
       std::vector<double> classicalIntegralValues(numberFunctions, 0.0);
       for (unsigned int iFunction = 0; iFunction < numberFunctions; ++iFunction)
         {
@@ -383,10 +384,6 @@ namespace dftefe
           classicalIntegralValues[iFunction] = std::inner_product(
             functionValues.begin(), functionValues.end(), cellJxW.begin(), 0.0);
         }
-      stop = std::chrono::high_resolution_clock::now();
-      duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      timer["Function Eval"] += duration.count();
 
       int                 recursionLevel = 0;
       std::vector<double> adaptiveIntegralValues(numberFunctions, 0.0);

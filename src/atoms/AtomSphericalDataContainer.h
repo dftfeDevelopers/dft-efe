@@ -80,7 +80,7 @@ namespace dftefe
        *  (e.g., n,l,m quantum numbers) for which the SphericalData is required
        * @return SphericalData object for the given atom and quantum numbers
        */
-      const std::vector<std::shared_ptr<SphericalData>>
+      const std::vector<std::shared_ptr<SphericalData>> &
       getSphericalData(std::string       atomSymbol,
                        const std::string fieldName) const;
 

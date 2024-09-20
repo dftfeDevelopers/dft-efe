@@ -17,7 +17,7 @@
 #    License at the top level of DFT-EFE distribution.  If not, see
 #    <https://www.gnu.org/licenses/>.
 
-# @author Avirup Sircar
+# @author Vishal Subramanian 
 
 import reframe as rfm
 import reframe.utility.sanity as sn
@@ -37,10 +37,10 @@ bincpy = rfm.utility.import_module_from_file(DFTEFE_PATH+"/test/BinaryCopier.py"
 cmflags = rfm.utility.import_module_from_file(DFTEFE_PATH+"/CMakeFlagsParser.py")
 
 @rfm.simple_test
-class BuildOnlyTestPoissonProblemClassical(rfm.CompileOnlyRegressionTest):
-    descr = 'Compile only test for TestPoissonProblemClassical'
+class BuildOnlyTestDealiiAffineConstMemAfterCopy(rfm.CompileOnlyRegressionTest):
+    descr = 'Compile only test for TestDealiiAffineConstMemAfterCopy'
     build_system = 'CMake'
-    make_opts = ['TestPoissonProblemClassical']
+    make_opts = ['TestDealiiAffineConstMemAfterCopy']
     sourcesdir = './src'
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
@@ -71,7 +71,7 @@ class BuildOnlyTestPoissonProblemClassical(rfm.CompileOnlyRegressionTest):
         if len(matchesOut) == 0 and len(matchesErr) == 0:
             hasError = False
         
-        hasTestPassed = not hasError
+        hasTestPassed = not hasWarning and not hasError
         msg = ""
         if hasError:
             msg = msgError
@@ -88,17 +88,17 @@ class BuildOnlyTestPoissonProblemClassical(rfm.CompileOnlyRegressionTest):
 
 
 @rfm.simple_test
-class BuildAndRunTestPoissonProblemClassical(rfm.RegressionTest):
-    target_name = 'TestPoissonProblemClassical'
-    descr = '''A build and run test for atom ids partition'''
+class BuildAndRunTestDealiiAffineConstMemAfterCopy(rfm.RegressionTest):
+    target_name = 'TestDealiiAffineConstMemAfterCopy'
+    descr = '''A build and run test to verify the accuracy of interpolation to quad points'''
     build_system = 'CMake'
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
     # ReFrame has no way of knowing that while building from CMake
-    executable = "./"+target_name+".x"
+    executable = "./"+target_name
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'Parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -134,11 +134,11 @@ class BuildAndRunTestPoissonProblemClassical(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestPoissonProblemClassical.'''
+        BuildAndRunTestDealiiAffineConstMemAfterCopy.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestPoissonProblemClassical.'''
+        BuildAndRunTestDealiiAffineConstMemAfterCopy.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestPoissonProblemClassical.'''
+        BuildAndRunTestDealiiAffineConstMemAfterCopy.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:
@@ -173,15 +173,15 @@ class BuildAndRunTestPoissonProblemClassical(rfm.RegressionTest):
 
 
 @rfm.simple_test
-class RunOnlyTestPoissonProblemClassical(rfm.RunOnlyRegressionTest):
-    target_name = 'TestPoissonProblemClassical'
-    descr = '''A run only test for atom ids partition'''
+class RunOnlyTestDealiiAffineConstMemAfterCopy(rfm.RunOnlyRegressionTest):
+    target_name = 'TestDealiiAffineConstMemAfterCopy'
+    descr = '''A run only test to verify the accuracy of interpolation'''
     build_system = 'CMake'
     make_opts = [target_name]
-    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
+    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name
     tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'Parallel'}
+                'serialOrParallel': 'serial'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -211,11 +211,11 @@ class RunOnlyTestPoissonProblemClassical(rfm.RunOnlyRegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        RunOnlyTestPoissonProblemClassical.'''
+        RunOnlyTestDealiiAffineConstMemAfterCopy.'''
         msgThrownException = '''Found exceptions in
-        RunOnlyTestPoissonProblemClassical'''
+        RunOnlyTestDealiiAffineConstMemAfterCopy'''
         msgAssertFail = '''Found assert fail(s) in
-        RunOnlyTestPoissonProblemClassical'''
+        RunOnlyTestDealiiAffineConstMemAfterCopy'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

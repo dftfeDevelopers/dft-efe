@@ -297,6 +297,7 @@ namespace dftefe
     SphericalDataNumerical::getValue(const utils::Point &point,
                                      const utils::Point &origin)
     {
+      double value;
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
@@ -308,15 +309,16 @@ namespace dftefe
                                                 d_qNumbers,
                                                 d_spline,
                                                 d_polarAngleTolerance,
-                                                d_value);
+                                                value);
 
-      return d_value;
+      return value;
     }
 
     std::vector<double>
     SphericalDataNumerical::getGradientValue(const utils::Point &point,
                                              const utils::Point &origin)
     {
+      std::vector<double> gradient;
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
@@ -330,17 +332,18 @@ namespace dftefe
                                                         d_polarAngleTolerance,
                                                         d_cutoffTolerance,
                                                         d_radiusTolerance,
-                                                        d_gradient);
+                                                        gradient);
 
-      DFTEFE_AssertWithMsg(d_gradient.size() == d_dim,
+      DFTEFE_AssertWithMsg(gradient.size() == d_dim,
                            "Gradient vector should be of length dim");
-      return d_gradient;
+      return gradient;
     }
 
     std::vector<double>
     SphericalDataNumerical::getHessianValue(const utils::Point &point,
                                             const utils::Point &origin)
     {
+      std::vector<double> hessian;
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getHessianValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
@@ -354,10 +357,10 @@ namespace dftefe
                                                      d_spline,
                                                      d_polarAngleTolerance,
                                                      d_radiusTolerance,
-                                                     d_hessian);
-      DFTEFE_AssertWithMsg(d_hessian.size() == d_dim * d_dim,
+                                                     hessian);
+      DFTEFE_AssertWithMsg(hessian.size() == d_dim * d_dim,
                            "Hessian vector should be of length dim*dim");
-      return d_hessian;
+      return hessian;
     }
 
     std::vector<int>

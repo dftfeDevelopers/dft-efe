@@ -71,7 +71,7 @@ namespace dftefe
       std::vector<std::string>
       getMetadataNames() const;
 
-      const std::vector<std::shared_ptr<SphericalData>>
+      const std::vector<std::shared_ptr<SphericalData>> &
       getSphericalData(const std::string fieldName) const;
 
       const std::shared_ptr<SphericalData>

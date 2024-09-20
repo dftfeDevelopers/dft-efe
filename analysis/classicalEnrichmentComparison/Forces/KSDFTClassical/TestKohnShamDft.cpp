@@ -120,12 +120,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     std::vector<double>
     operator()(const std::vector<utils::Point> &points) const
     {
+      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
+          for(auto &enrichmentObjId : vec)
+          for (unsigned int i = 0 ; i < points.size() ; i++)            
+          {
+            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/ylm00));
+          }
+        }
       return ret;
     }
   };
@@ -176,10 +183,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear");
+          for (unsigned int i = 0 ; i < points.size() ; i++)
+          {
+            for(auto &enrichmentObjId : vec)
+            {
+              ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) *
+                                    ((*d_b)(points[i])));
+            }
+          }  
+        }
       return ret;
     }
   };
@@ -229,10 +245,19 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     {
       std::vector<double> ret(0);
       ret.resize(points.size());
-      for (unsigned int i = 0 ; i < points.size() ; i++)
-      {
-        ret[i] = (*this)(points[i]);
-      }
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital");
+          for (unsigned int i = 0 ; i < points.size() ; i++)
+          {
+            for(auto &enrichmentObjId : vec)
+            {
+              double val = enrichmentObjId->getValue(points[i], origin);              
+              ret[i] = ret[i] + std::abs(val * val * (*d_vext)(points[i]));
+            }
+          }
+        }
       return ret;
     }
   };
@@ -402,6 +427,7 @@ int main(int argc, char** argv)
   std::vector<std::vector<dftefe::utils::Point>> 
     atomCoordinatesVecInGrid(0, std::vector<dftefe::utils::Point>(0,dftefe::utils::Point(dim, 0.0)));
 
+  atomCoordinatesVecInGrid.push_back(atomCoordinatesVec);
   for(unsigned int perturbDim = 0 ; perturbDim < numDimPerturbed ; perturbDim ++)
   {
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
@@ -805,7 +831,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   {
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
     {
-      unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId)*4;
+      unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId)*4 + 1;
       rootCout << "The energies calculated by perturbation to atom "<< atomIdPerturbed <<
       " along Dim " << dimIdPerturbed <<" are: "<< energyInPerturbIds[index] << ", "<<energyInPerturbIds[index+1]
       <<", "<<energyInPerturbIds[index+2]<<", "<<energyInPerturbIds[index+3]<<"\n";
@@ -819,7 +845,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   {
     for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
     {
-      unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId);
+      unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId) + 1;
       rootCout << "The force calculated by perturbation to atom "<< atomIdPerturbed <<
       " along Dim " << dimIdPerturbed <<" is: "<< force[numAtomPerturbed*perturbDim + perturbAtomId]<<"\n";
     }

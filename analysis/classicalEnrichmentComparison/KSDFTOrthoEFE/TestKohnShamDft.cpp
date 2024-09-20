@@ -90,6 +90,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       std::vector<std::string>  d_atomSymbolVec;
       std::vector<utils::Point> d_atomCoordinatesVec;
       std::vector<double> d_atomChargesVec;
+      double d_ylm00;
 
   public:
     RhoFunction(
@@ -102,12 +103,12 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
       , d_atomChargesVec(atomCharges)
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0))
       {}
 
     double
     operator()(const utils::Point &point) const
     {
-      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       double   retValue = 0;
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
         {
@@ -115,7 +116,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : 
             d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
           {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/ylm00));
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
           }
         }
       return retValue;
@@ -123,7 +124,6 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
     std::vector<double>
     operator()(const std::vector<utils::Point> &points) const
     {
-      double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0);
       std::vector<double> ret(0);
       ret.resize(points.size());
       for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
@@ -133,7 +133,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
           for(auto &enrichmentObjId : vec)
           for (unsigned int i = 0 ; i < points.size() ; i++)            
           {
-            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/ylm00));
+            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
           }
         }
       return ret;
@@ -660,6 +660,7 @@ int main(int argc, char** argv)
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
     unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
+    unsigned int nQuadMax = nQuad;
     int mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuad,
@@ -668,7 +669,15 @@ int main(int argc, char** argv)
       utils::mpi::MPISum,
       comm);
 
-  rootCout << "Number of quadrature points in electrostatics adaptive quadrature: "<< nQuad<<"\n";
+    int mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuadMax,
+      1,
+      utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPIMax,
+      comm);
+    rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
+  rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
 
   rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
 

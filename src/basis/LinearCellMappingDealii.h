@@ -6,6 +6,7 @@
 #include <vector>
 #include <utils/Point.h>
 #include <deal.II/fe/mapping.h>
+#include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/mapping_q1.h>
 namespace dftefe
 {
@@ -48,6 +49,7 @@ namespace dftefe
 
     private:
       dealii::MappingQ1<dim> d_mappingDealii;
+      dealii::FE_Q<dim>      d_fe;
 
 
     }; // end of class LinearCellMappingDealii

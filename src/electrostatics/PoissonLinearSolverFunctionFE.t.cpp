@@ -145,13 +145,17 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs)
       : d_feBasisManagerField(feBasisManagerField)
+      , d_feBasisDataStorageStiffnessMatrix(feBasisDataStorageStiffnessMatrix)
+      , d_feBasisDataStorageRhs(feBasisDataStorageRhs)
       , d_numComponents(inpRhs.getNumberComponents())
       , d_pcType(pcType)
+      , d_fieldInHomoDBCVec(feBasisManagerField->getMPIPatternP2P(),
+                            linAlgOpContext,
+                            d_numComponents,
+                            ValueTypeOperand())
+      , d_linAlgOpContext(linAlgOpContext)
+      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
     {
-      using ValueType =
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand>;
-
       utils::throwException(
         ((feBasisDataStorageRhs->getBasisDofHandler()).get() ==
          (feBasisDataStorageStiffnessMatrix->getBasisDofHandler()).get()) &&
@@ -163,23 +167,11 @@ namespace dftefe
         const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>
         basisDofHandler = std::dynamic_pointer_cast<
           const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
-          feBasisDataStorageRhs->getBasisDofHandler());
+          feBasisDataStorageStiffnessMatrix->getBasisDofHandler());
       utils::throwException(
         basisDofHandler != nullptr,
         "Could not cast BasisDofHandler to FEBasisDofHandler "
         "in PoissonLinearSolverFunctionFE");
-
-      // set up MPIPatternP2P for the constraints
-      auto mpiPatternP2PField = feBasisManagerField->getMPIPatternP2P();
-
-      // set up vh with inhomogeneous BC
-
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-        fieldInHomoDBCVec(mpiPatternP2PField,
-                          linAlgOpContext,
-                          d_numComponents,
-                          ValueTypeOperand());
-      d_fieldInHomoDBCVec = fieldInHomoDBCVec;
 
       // Set up BasisManager
       std::shared_ptr<const utils::ScalarSpatialFunctionReal> zeroFunction =
@@ -222,19 +214,16 @@ namespace dftefe
         linAlgOpContext,
         maxCellTimesNumVecs); // solving the AX = b
 
-      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace>>
-        AxContextNHDB =
-          std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
-                                                    ValueTypeOperand,
-                                                    memorySpace,
-                                                    dim>>(
-            *d_feBasisManagerField,
-            *d_feBasisManagerHomo,
-            feBasisDataStorageStiffnessMatrix,
-            linAlgOpContext,
-            maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
+      d_AxContextNHDB =
+        std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
+                                                  ValueTypeOperand,
+                                                  memorySpace,
+                                                  dim>>(
+          *d_feBasisManagerField,
+          *d_feBasisManagerHomo,
+          feBasisDataStorageStiffnessMatrix,
+          linAlgOpContext,
+          maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
         mpiPatternP2PHomo, linAlgOpContext);
@@ -270,6 +259,79 @@ namespace dftefe
       else
         utils::throwException(false, "Unknown PreConditionerType");
 
+      reinit(d_feBasisManagerField, d_feBasisDataStorageRhs, inpRhs);
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonLinearSolverFunctionFE<ValueTypeOperator,
+                                  ValueTypeOperand,
+                                  memorySpace,
+                                  dim>::
+      reinit(
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>> feBasisManagerField,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          feBasisDataStorageRhs,
+        const quadrature::QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &inpRhs)
+    {
+      if (d_feBasisDataStorageRhs != feBasisDataStorageRhs)
+        {
+          utils::throwException(
+            ((feBasisDataStorageRhs->getBasisDofHandler()).get() ==
+             (d_feBasisDataStorageRhs->getBasisDofHandler()).get()),
+            "The BasisDofHandler of the feBasisDataStorageRhs in reinit does not match with that in constructor in PoissonLinearSolverFunctionFE.");
+
+          d_feBasisDataStorageRhs = feBasisDataStorageRhs;
+        }
+
+      utils::throwException(
+        (inpRhs.getQuadratureRuleContainer()
+             ->getQuadratureRuleAttributes()
+             .isCartesianTensorStructured() ?
+           inpRhs.getQuadratureRuleContainer()->getQuadratureRuleAttributes() ==
+             d_feBasisDataStorageRhs->getQuadratureRuleContainer()
+               ->getQuadratureRuleAttributes() :
+           inpRhs.getQuadratureRuleContainer() ==
+             d_feBasisDataStorageRhs->getQuadratureRuleContainer()) &&
+          d_numComponents == inpRhs.getNumberComponents(),
+        "Either the input field and feBasisDataStorageRhs quadrature rule"
+        " are not same same,  for PoissonLinearSolverFunctionFE reinit or input"
+        "field has different components than that when constructed.");
+
+      if (d_feBasisManagerField != feBasisManagerField)
+        {
+          utils::throwException(
+            (&(d_feBasisManagerField->getBasisDofHandler()) ==
+             &(feBasisManagerField->getBasisDofHandler())),
+            "The BasisDofHandler of the feBasisManagerField in reinit does not match with that in constructor in PoissonLinearSolverFunctionFE.");
+
+          d_feBasisManagerField = feBasisManagerField;
+          d_fieldInHomoDBCVec.updateGhostValues();
+          d_feBasisManagerField->getConstraints().distributeParentToChild(
+            d_fieldInHomoDBCVec, d_numComponents);
+
+          d_AxContextNHDB =
+            std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace,
+                                                      dim>>(
+              *d_feBasisManagerField,
+              *d_feBasisManagerHomo,
+              d_feBasisDataStorageStiffnessMatrix,
+              d_linAlgOpContext,
+              d_maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
+        }
+
       // Compute RHS
 
       std::vector<ValueType> ones(0);
@@ -283,7 +345,7 @@ namespace dftefe
       // Set up basis Operations for RHS
       basis::
         FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          feBasisOperations(feBasisDataStorageRhs, maxCellTimesNumVecs);
+          feBasisOperations(d_feBasisDataStorageRhs, d_maxCellTimesNumVecs);
 
       feBasisOperations.integrateWithBasisValues(inpRhs,
                                                  *d_feBasisManagerHomo,
@@ -291,7 +353,7 @@ namespace dftefe
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
-      AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB);
+      d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB);
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
 

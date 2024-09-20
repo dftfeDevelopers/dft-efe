@@ -18,7 +18,6 @@ smearingTemperature = 500.
 fermiEnergyTolerance = 1e-8
 fracOccupancyTolerance = 1e-3
 eigenSolveResidualTolerance = 1e-3
-chebyshevPolynomialDegree = 20
 maxChebyshevFilterPass = 40
 numWantedEigenvalues = 20
 scfDensityResidualNormTolerance = 1e-5
