@@ -26,6 +26,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/Exceptions.h>
 #include <string>
+#include <chrono>
 
 namespace dftefe
 {
@@ -69,8 +70,8 @@ namespace dftefe
       const double gamma  = (2.0 / sigma1);
       double       sigma2;
 
-      MultiVector<ValueType, memorySpace> filteredSubspaceNew(
-        eigenSubspaceGuess, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> filteredSubspaceNew(
+      //   eigenSubspaceGuess, (ValueType)0);
       MultiVector<ValueType, memorySpace> scratch1(eigenSubspaceGuess,
                                                    (ValueType)0);
       MultiVector<ValueType, memorySpace> scratch2(eigenSubspaceGuess,
@@ -110,21 +111,26 @@ namespace dftefe
             *eigenSubspaceGuess.getLinAlgOpContext());
 
           // filteredSubspaceNew = temp - \sigma*\sigma2*eigenSubspaceGuess
+          // Note: works if axpby is capable of z being same as either of x or y
           blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
             locallyOwnedMultivecSize,
             (ValueType)1.0,
             scratch1.data(),
             -sigma * sigma2,
             eigenSubspaceGuess.data(),
-            filteredSubspaceNew.data(),
+            eigenSubspaceGuess /*filteredSubspaceNew*/.data(),
             *eigenSubspaceGuess.getLinAlgOpContext());
 
-          eigenSubspaceGuess = filteredSubspace;
+          // eigenSubspaceGuess = filteredSubspace;
 
-          filteredSubspace = filteredSubspaceNew;
+          // filteredSubspace = filteredSubspaceNew;
+
+          swap(eigenSubspaceGuess, filteredSubspace);
 
           sigma = sigma2;
         }
+
+      eigenSubspaceGuess = filteredSubspace;
     }
 
   } // end of namespace linearAlgebra

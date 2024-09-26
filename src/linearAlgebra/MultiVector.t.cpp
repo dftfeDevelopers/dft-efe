@@ -730,6 +730,16 @@ namespace dftefe
     // Helper functions
     //
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    swap(MultiVector<ValueType, memorySpace> &X,
+         MultiVector<ValueType, memorySpace> &Y)
+    {
+      MultiVector<ValueType, memorySpace> tmp(std::move(X));
+      X = std::move(Y);
+      Y = std::move(tmp);
+    }
+
     template <typename ValueType1,
               typename ValueType2,
               utils::MemorySpace memorySpace>

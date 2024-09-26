@@ -512,6 +512,14 @@ namespace dftefe
     //
 
     /**
+     * @brief Swaps the data of u with this multivector
+     */
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    swap(MultiVector<ValueType, memorySpace> &X,
+         MultiVector<ValueType, memorySpace> &Y);
+
+    /**
      * @brief Perform \f$ w = au + bv \f$
      * @param[in] a scalar
      * @param[in] u first MultiVector on the right

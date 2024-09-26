@@ -669,7 +669,7 @@ int main(int argc, char** argv)
       utils::mpi::MPISum,
       comm);
 
-    int mpierr = utils::mpi::MPIAllreduce<Host>(
+    mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuadMax,
       1,

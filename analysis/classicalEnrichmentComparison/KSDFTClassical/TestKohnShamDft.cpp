@@ -634,7 +634,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       utils::mpi::MPISum,
       comm);
 
-    int mpierr = utils::mpi::MPIAllreduce<Host>(
+    mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuadMax,
       1,
