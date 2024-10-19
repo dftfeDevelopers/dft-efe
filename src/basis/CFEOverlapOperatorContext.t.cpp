@@ -90,7 +90,8 @@ namespace dftefe
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily();
         if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
-             quadFamily == quadrature::QuadratureFamily::GLL) &&
+             quadFamily == quadrature::QuadratureFamily::GLL ||
+             quadFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
             !feBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCell = true;
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();

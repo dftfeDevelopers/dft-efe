@@ -212,7 +212,8 @@ namespace dftefe
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily();
         if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
-             quadFamily == quadrature::QuadratureFamily::GLL) &&
+             quadFamily == quadrature::QuadratureFamily::GLL ||
+             quadFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
             !cfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellCFE = true;
 

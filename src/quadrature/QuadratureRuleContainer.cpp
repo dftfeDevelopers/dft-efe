@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
+#include <utils/ConditionalOStream.h>
 
 namespace dftefe
 {
@@ -98,13 +99,14 @@ namespace dftefe
       const QuadratureFamily quadFamily =
         d_quadratureRuleAttributes.getQuadratureFamily();
       if (!(quadFamily == QuadratureFamily::GAUSS ||
-            quadFamily == QuadratureFamily::GLL))
+            quadFamily == QuadratureFamily::GLL ||
+            quadFamily == QuadratureFamily::GAUSS_SUBDIVIDED))
         utils::throwException<utils::LogicError>(
           false,
           "The constructor "
           "for QuadratureRuleContainer with a single input "
           " QuadratureRule is only valid for QuadratureRuleAttributes "
-          "built with QuadratureFamily GAUSS or GLL.");
+          "built with QuadratureFamily GAUSS or GLL or GAUSS SUBDIVIDED.");
 
       d_numCells = triangulation->nLocallyOwnedCells();
       d_quadratureRuleVec =
@@ -577,10 +579,13 @@ namespace dftefe
                                                             order,
                                                             copies);
 
-      // std::cout << "Chosen pairs are: "<< order << "," << copies << " Num
-      // Quad Pts: " <<
-      // optimumQuadPointsInAllProcs[largestNQuadPointInAllProcsIndex] <<
-      // std::endl;
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
+      rootCout
+        << "Chosen pairs for Gauss Subdivided with optimized algorithm Quadrature are: "
+        << order << "," << copies << " Num Quad Pts: "
+        << optimumQuadPointsInAllProcs[largestNQuadPointInAllProcsIndex]
+        << std::endl;
 
       d_quadratureRuleVec =
         std::vector<std::shared_ptr<const QuadratureRule>>(d_numCells,

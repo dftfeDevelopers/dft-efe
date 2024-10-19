@@ -89,6 +89,7 @@ namespace dftefe
         std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>>
           cfeBasisDataStorage = nullptr)
       {
+        bool numCellsZero = efeBDH->nLocallyOwnedCells() == 0 ? true : false;
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
@@ -105,23 +106,27 @@ namespace dftefe
         else if (quadratureFamily ==
                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
           {
-            // get the parametric points and jxw in each cell according to
-            // the attribute.
-            unsigned int                     cellIndex = 0;
-            const std::vector<utils::Point> &cellParametricQuadPoints =
-              quadratureRuleContainer->getCellParametricPoints(cellIndex);
-            std::vector<dealii::Point<dim, double>> dealiiParametricQuadPoints(
-              0);
+            if (!numCellsZero)
+              {
+                // get the parametric points and jxw in each cell according to
+                // the attribute.
+                unsigned int                     cellIndex = 0;
+                const std::vector<utils::Point> &cellParametricQuadPoints =
+                  quadratureRuleContainer->getCellParametricPoints(cellIndex);
+                std::vector<dealii::Point<dim, double>>
+                  dealiiParametricQuadPoints(0);
 
-            // get the quad weights in each cell
-            const std::vector<double> &quadWeights =
-              quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
-            convertToDealiiPoint<dim>(cellParametricQuadPoints,
-                                      dealiiParametricQuadPoints);
+                // get the quad weights in each cell
+                const std::vector<double> &quadWeights =
+                  quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
+                convertToDealiiPoint<dim>(cellParametricQuadPoints,
+                                          dealiiParametricQuadPoints);
 
-            // Ask dealii to create quad rule in each cell
-            dealiiQuadratureRule =
-              dealii::Quadrature<dim>(dealiiParametricQuadPoints, quadWeights);
+                // Ask dealii to create quad rule in each cell
+                dealiiQuadratureRule =
+                  dealii::Quadrature<dim>(dealiiParametricQuadPoints,
+                                          quadWeights);
+              }
           }
 
         else
@@ -163,7 +168,8 @@ namespace dftefe
         // NOTE: cellId 0 passed as we assume only H refined in this function
         size_type       dofsPerCell = efeBDH->nCellDofs(cellId);
         const size_type nQuadPointInCell =
-          quadratureRuleContainer->nCellQuadraturePoints(cellId);
+          numCellsZero ? 0 :
+                         quadratureRuleContainer->nCellQuadraturePoints(cellId);
         // utils::mathFunctions::sizeTypePow(num1DQuadPoints, dim);
 
         nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointInCell);
@@ -786,6 +792,7 @@ namespace dftefe
           cfeBasisDataStorage = nullptr)
 
       {
+        bool numCellsZero = efeBDH->nLocallyOwnedCells() == 0 ? true : false;
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
@@ -802,23 +809,27 @@ namespace dftefe
         else if (quadratureFamily ==
                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
           {
-            // get the parametric points and jxw in each cell according to
-            // the attribute.
-            unsigned int                     cellIndex = 0;
-            const std::vector<utils::Point> &cellParametricQuadPoints =
-              quadratureRuleContainer->getCellParametricPoints(cellIndex);
-            std::vector<dealii::Point<dim, double>> dealiiParametricQuadPoints(
-              0);
+            if (!numCellsZero)
+              {
+                // get the parametric points and jxw in each cell according to
+                // the attribute.
+                unsigned int                     cellIndex = 0;
+                const std::vector<utils::Point> &cellParametricQuadPoints =
+                  quadratureRuleContainer->getCellParametricPoints(cellIndex);
+                std::vector<dealii::Point<dim, double>>
+                  dealiiParametricQuadPoints(0);
 
-            // get the quad weights in each cell
-            const std::vector<double> &quadWeights =
-              quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
-            convertToDealiiPoint<dim>(cellParametricQuadPoints,
-                                      dealiiParametricQuadPoints);
+                // get the quad weights in each cell
+                const std::vector<double> &quadWeights =
+                  quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
+                convertToDealiiPoint<dim>(cellParametricQuadPoints,
+                                          dealiiParametricQuadPoints);
 
-            // Ask dealii to create quad rule in each cell
-            dealiiQuadratureRule =
-              dealii::Quadrature<dim>(dealiiParametricQuadPoints, quadWeights);
+                // Ask dealii to create quad rule in each cell
+                dealiiQuadratureRule =
+                  dealii::Quadrature<dim>(dealiiParametricQuadPoints,
+                                          quadWeights);
+              }
           }
 
         else
@@ -849,7 +860,8 @@ namespace dftefe
                                              dealiiUpdateFlags);
 
         const size_type nQuadPointInCell =
-          quadratureRuleContainer->nCellQuadraturePoints(cellId);
+          numCellsZero ? 0 :
+                         quadratureRuleContainer->nCellQuadraturePoints(cellId);
 
         const size_type numLocallyOwnedCells = efeBDH->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function

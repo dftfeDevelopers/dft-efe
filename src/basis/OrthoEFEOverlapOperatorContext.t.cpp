@@ -103,7 +103,8 @@ namespace dftefe
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily();
         if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
-             quadFamily == quadrature::QuadratureFamily::GLL) &&
+             quadFamily == quadrature::QuadratureFamily::GLL ||
+             quadFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
             !cfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellCFE = true;
 
@@ -327,13 +328,17 @@ namespace dftefe
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily();
         if ((quadFamilyClassicalBlock == quadrature::QuadratureFamily::GAUSS ||
-             quadFamilyClassicalBlock == quadrature::QuadratureFamily::GLL) &&
+             quadFamilyClassicalBlock == quadrature::QuadratureFamily::GLL ||
+             quadFamilyClassicalBlock ==
+               quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
             !ccfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellClassicalBlock = true;
         if ((quadFamilyEnrichmentBlockClassical ==
                quadrature::QuadratureFamily::GAUSS ||
              quadFamilyEnrichmentBlockClassical ==
-               quadrature::QuadratureFamily::GLL) &&
+               quadrature::QuadratureFamily::GLL ||
+             quadFamilyEnrichmentBlockClassical ==
+               quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
             !ecfeBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCellEnrichmentBlockClassical = true;
 
