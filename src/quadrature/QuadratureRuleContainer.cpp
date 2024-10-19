@@ -325,6 +325,13 @@ namespace dftefe
       , d_triangulation(triangulation)
       , d_cellMapping(cellMapping)
     {
+      std::map<std::string, double> timer;
+      timer["Initialization"]              = 0;
+      timer["Gauss Iter initialization 1"] = 0;
+      timer["Cell Mapping"]                = 0;
+      timer["Function Eval"]               = 0;
+      timer["All Reduce"]                  = 0;
+      timer["Gauss Iter initialization 2"] = 0;
       const QuadratureFamily quadFamily =
         d_quadratureRuleAttributes.getQuadratureFamily();
       if (!(quadFamily == QuadratureFamily::GAUSS_SUBDIVIDED))
@@ -343,6 +350,7 @@ namespace dftefe
         "The triangulation or FEcellMapping passed to the reference Quadrature"
         " does not match the input triangulation or FEcellMapping.");
 
+      auto                   start = std::chrono::high_resolution_clock::now();
       const size_type        numCells = triangulation->nLocallyOwnedCells();
       std::vector<size_type> cellIdsWithMaxRefQuadPoints(0);
       if (quadratureRuleContainerReference.getQuadratureRuleAttributes()
@@ -384,6 +392,10 @@ namespace dftefe
           for (unsigned int iCell = 0; iCell < numCells; ++iCell)
             cellIdsWithMaxRefQuadPoints[iCell] = iCell;
         }
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      timer["Initialization"] += duration.count();
 
       std::vector<size_type> orderVec(0);
       std::vector<size_type> iterVec(0);
@@ -393,13 +405,19 @@ namespace dftefe
         {
           for (size_type j = 1; j <= copies1DMax; j++)
             {
+              start = std::chrono::high_resolution_clock::now();
               QuadratureRuleGaussIterated iteratedGaussQuadratureRule(d_dim,
                                                                       i,
                                                                       j);
               bool                        allFunctionsConvergeInAllCells = true;
+              stop     = std::chrono::high_resolution_clock::now();
+              duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                stop - start);
+              timer["Gauss Iter initialization 1"] += duration.count();
 
               for (auto cellId : cellIdsWithMaxRefQuadPoints)
                 {
+                  start = std::chrono::high_resolution_clock::now();
                   std::shared_ptr<basis::TriangulationCellBase> cell =
                     *(triangulation->beginLocal() + cellId);
 
@@ -443,7 +461,12 @@ namespace dftefe
                                      quadratureRuleContainerReference
                                        .getCellQuadratureWeights(cellId),
                                      cellJxWReference);
-
+                  stop = std::chrono::high_resolution_clock::now();
+                  duration =
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                      stop - start);
+                  timer["Cell Mapping"] += duration.count();
+                  start = std::chrono::high_resolution_clock::now();
                   for (size_type iFunction = 0; iFunction < functions.size();
                        ++iFunction)
                     {
@@ -482,6 +505,11 @@ namespace dftefe
                       allFunctionsConvergeInAllCells = false;
                       break;
                     }
+                  stop = std::chrono::high_resolution_clock::now();
+                  duration =
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                      stop - start);
+                  timer["Function Eval"] += duration.count();
                 }
 
               if (allFunctionsConvergeInAllCells)
@@ -500,6 +528,7 @@ namespace dftefe
         "input reference quadrature grid. Try"
         " again using a higher order1DMax or higher copies1DMax or relaxing the tolerances.");
 
+      start = std::chrono::high_resolution_clock::now();
       size_type smallestNQuadPointInProcIndex =
         std::distance(std::begin(quadPointsVec),
                       std::min_element(std::begin(quadPointsVec),
@@ -572,7 +601,12 @@ namespace dftefe
         optimumOrderInAllProcs[largestNQuadPointInAllProcsIndex];
       size_type copies =
         optimumIterInAllProcs[largestNQuadPointInAllProcsIndex];
+      stop = std::chrono::high_resolution_clock::now();
+      duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      timer["All Reduce"] += duration.count();
 
+      start      = std::chrono::high_resolution_clock::now();
       d_numCells = numCells;
       std::shared_ptr<const QuadratureRule> quadratureRule =
         std::make_shared<const QuadratureRuleGaussIterated>(d_dim,
@@ -598,6 +632,15 @@ namespace dftefe
                  d_realPoints,
                  d_JxW,
                  d_numQuadPoints);
+      stop = std::chrono::high_resolution_clock::now();
+      duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      timer["Gauss Iter initialization 2"] += duration.count();
+      // for(auto i : timer)
+      //   for( int j = 0 ; j < nProcs ; j++)
+      //     if(rank == j)
+      //       std::cout << i.first << "\t" << i.second/1e6 << std::flush <<
+      //       "\n";
     }
 
 
