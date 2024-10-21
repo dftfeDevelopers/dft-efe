@@ -9,6 +9,7 @@
 #include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
+#include <quadrature/QuadratureRuleGaussIterated.h>
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FECellWiseDataOperations.h>
@@ -550,6 +551,9 @@ int main(int argc, char** argv)
   double adaptiveQuadRelTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadRelTolerance", rootCout);
   double integralThreshold = readParameter<double>(parameterInputFileName, "integralThreshold", rootCout);
 
+  unsigned int num1DGaussSubdividedSize = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSize", rootCout);
+  unsigned int gaussSubdividedCopies = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopies", rootCout);
+  
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
 
   // Set up Triangulation
@@ -753,74 +757,102 @@ int main(int argc, char** argv)
 
     quadrature::QuadratureRuleAttributes quadAttrGllElec(quadrature::QuadratureFamily::GLL,true,feOrderElec + 1);
 
-    // Set up base quadrature rule for adaptive quadrature 
+    // // Set up base quadrature rule for adaptive quadrature 
 
-    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleElec =
-      std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
+    // std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleElec =
+    //   std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
 
-    std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
+    // std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveElec =
-      std::make_shared<quadrature::QuadratureRuleContainer>
-      (quadAttrAdaptive, 
-      baseQuadRuleElec, 
-      triangulationBase, 
-      *cellMapping, 
-      *parentToChildCellsManager,
-      functionsVec,
-      absoluteTolerances,
-      relativeTolerances,
-      integralThresholds,
-      smallestCellVolume,
-      maxRecursion);
+  //   // add device synchronize for gpu
+  //   utils::mpi::MPIBarrier(comm);
+     auto start = std::chrono::high_resolution_clock::now();
+  //   std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveElec =
+  //     std::make_shared<quadrature::QuadratureRuleContainer>
+  //     (quadAttrAdaptive, 
+  //     baseQuadRuleElec, 
+  //     triangulationBase, 
+  //     *cellMapping, 
+  //     *parentToChildCellsManager,
+  //     functionsVec,
+  //     absoluteTolerances,
+  //     relativeTolerances,
+  //     integralThresholds,
+  //     smallestCellVolume,
+  //     maxRecursion);
 
-    unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
-    unsigned int nQuadMax = nQuad;
-    int mpierr = utils::mpi::MPIAllreduce<Host>(
-      utils::mpi::MPIInPlace,
-      &nQuad,
-      1,
-      utils::mpi::Types<size_type>::getMPIDatatype(),
-      utils::mpi::MPISum,
-      comm);
+  //   unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
+  //   unsigned int nQuadMax = nQuad;
+  //   int mpierr = utils::mpi::MPIAllreduce<Host>(
+  //     utils::mpi::MPIInPlace,
+  //     &nQuad,
+  //     1,
+  //     utils::mpi::Types<size_type>::getMPIDatatype(),
+  //     utils::mpi::MPISum,
+  //     comm);
 
-    mpierr = utils::mpi::MPIAllreduce<Host>(
-      utils::mpi::MPIInPlace,
-      &nQuadMax,
-      1,
-      utils::mpi::Types<size_type>::getMPIDatatype(),
-      utils::mpi::MPIMax,
-      comm);
-    rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
-  rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
+  //   mpierr = utils::mpi::MPIAllreduce<Host>(
+  //     utils::mpi::MPIInPlace,
+  //     &nQuadMax,
+  //     1,
+  //     utils::mpi::Types<size_type>::getMPIDatatype(),
+  //     utils::mpi::MPIMax,
+  //     comm);
+  //   rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
+  // rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
+
+  //   // add device synchronize for gpu
+  //     utils::mpi::MPIBarrier(comm);
+      auto stop = std::chrono::high_resolution_clock::now();
+
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  // rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
+
+  //   quadrature::QuadratureRuleAttributes quadAttrGaussSubdivided(quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,true);
+
+  //   for ( unsigned int i=0 ;i < numfun ; i++ )
+  //   {
+  //     absoluteTolerances[i] = adaptiveQuadAbsTolerance * 1e1;
+  //     relativeTolerances[i] = adaptiveQuadRelTolerance * 1e1;
+  //   }
+
+  //  start = std::chrono::high_resolution_clock::now();
+  //   std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerGaussSubdividedElec =
+  //     std::make_shared<quadrature::QuadratureRuleContainer>
+  //     (quadAttrGaussSubdivided, 
+  //      feOrderElec+1,
+  //      (feOrderElec+1)*2,
+  //      3,
+  //     triangulationBase, 
+  //     *cellMapping,
+  //     functionsVec,
+  //     absoluteTolerances,
+  //     relativeTolerances,
+  //     *quadRuleContainerAdaptiveElec,
+  //     comm);
+
+    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSize, gaussSubdividedCopies);
 
     quadrature::QuadratureRuleAttributes quadAttrGaussSubdivided(quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,true);
 
     std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerGaussSubdividedElec =
       std::make_shared<quadrature::QuadratureRuleContainer>
       (quadAttrGaussSubdivided, 
-       feOrderElec+1,
-       (feOrderElec+1)*2,
-       3,
+      gaussSubdivQuadRuleElec, 
       triangulationBase, 
-      *cellMapping,
-      functionsVec,
-      absoluteTolerances,
-      relativeTolerances,
-      *quadRuleContainerAdaptiveElec,
-      comm);
+      *cellMapping); 
+
     // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      auto stop = std::chrono::high_resolution_clock::now();
+    utils::mpi::MPIBarrier(comm);
+    stop = std::chrono::high_resolution_clock::now();
 
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-    nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
-    nQuadMax = nQuad;
-    mpierr = utils::mpi::MPIAllreduce<Host>(
+    unsigned int nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
+    unsigned int nQuadMax = nQuad;
+    auto mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuad,
       1,
