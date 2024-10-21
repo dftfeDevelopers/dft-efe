@@ -34,6 +34,7 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/FEBasisOperations.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <memory>
 
@@ -82,9 +83,14 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManagerY,
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-          &             feBasisDataStorage,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          feBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
         const size_type maxCellTimesNumVecs);
+
+      ~LaplaceOperatorContextFE() = default;
 
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
@@ -102,10 +108,10 @@ namespace dftefe
           *d_feBasisManagerX;
       const basis::
         FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          *d_feBasisManagerY;
-      const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-        *             d_feBasisDataStorage;
+          *           d_feBasisManagerY;
       const size_type d_maxCellTimesNumVecs;
+      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        d_gradNiGradNjInAllCells;
     }; // end of class LaplaceOperatorContextFE
   }    // end of namespace electrostatics
 } // end of namespace dftefe

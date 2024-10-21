@@ -47,6 +47,12 @@ namespace dftefe
       static const double CUTOFF_TOL;
 
       //
+      // Tolerance to see if an atom is close to quadrature point for
+      // cases where derivative at  theatom is not defined
+      //
+      static const double RADIUS_TOL;
+
+      //
       // The spherical data are defined for a 3 dimensional case only for now.
       //
       static const size_type DEFAULT_DIM;

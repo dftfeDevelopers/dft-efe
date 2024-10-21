@@ -120,7 +120,6 @@ namespace dftefe
           ValueTypeBasisData,
           memorySpace,
           dim>>                    EnrichmentClassicalInterface,
-        const size_type            feOrder,
         const utils::mpi::MPIComm &mpiComm)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
@@ -133,7 +132,7 @@ namespace dftefe
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
-      reinit(EnrichmentClassicalInterface, feOrder, mpiComm);
+      reinit(EnrichmentClassicalInterface, mpiComm);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -145,11 +144,11 @@ namespace dftefe
                              memorySpace,
                              dim>::
       EFEBasisDofHandlerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisData,
-          memorySpace,
-          dim>>         EnrichmentClassicalInterface,
-        const size_type feOrder)
+        std::shared_ptr<
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>
+          EnrichmentClassicalInterface)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
       , d_overlappingEnrichmentIdsInCells(0)
@@ -161,7 +160,7 @@ namespace dftefe
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
       // making the classical and enriched dofs in the dealii mesh here
-      reinit(EnrichmentClassicalInterface, feOrder);
+      reinit(EnrichmentClassicalInterface);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -177,7 +176,6 @@ namespace dftefe
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
-             const size_type            feOrder,
              const utils::mpi::MPIComm &mpiComm)
     {
       d_isDistributed = true;
@@ -189,8 +187,9 @@ namespace dftefe
       d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
       d_atomCoordinatesVec =
         enrichmentClassicalInterface->getAtomCoordinatesVec();
-      d_fieldName = enrichmentClassicalInterface->getFieldName();
-      dealii::FE_Q<dim>                       feElem(feOrder);
+      d_fieldName               = enrichmentClassicalInterface->getFieldName();
+      size_type         feOrder = enrichmentClassicalInterface->getFEOrder();
+      dealii::FE_Q<dim> feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
         dynamic_cast<const TriangulationDealiiParallel<dim> *>(
           enrichmentClassicalInterface->getTriangulation().get());
@@ -289,6 +288,41 @@ namespace dftefe
           d_locallyOwnedRanges[rangeId].second =
             d_globalRanges[0].second +
             d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
+        }
+
+      //
+      // Sometimes dealii can have no locallyowned dofs in a processor and
+      // the classical dofid can give garbage value. It will return the maximum
+      // value of unsigend int as the dof id as dftefe has unsigned int as
+      // classical ids. To get through this, one has to accumulate the previous
+      // processors nlocallyOwnedDofs and set the start and end as the same
+      // in classical locallyowned dofs. getAllOwnedClassicalRanges() finds
+      // the accumulated locallyowned dof across procs.
+      //
+      std::vector<std::pair<global_size_type, global_size_type>>
+        allOwnedClassicalRanges(0);
+      getAllOwnedClassicalRanges(d_locallyOwnedRanges[0],
+                                 allOwnedClassicalRanges,
+                                 mpiComm);
+
+      int         myProcRank = 0;
+      int         err        = utils::mpi::MPICommRank(mpiComm, &myProcRank);
+      std::string errMsg     = "Error occured while using MPI_Comm_rank. "
+                           "Error code: " +
+                           std::to_string(err);
+      utils::throwException(err == utils::mpi::MPISuccess, errMsg);
+
+      if (startId == endId)
+        {
+          if (myProcRank != 0)
+            d_locallyOwnedRanges[0 /*0 for classical*/].first =
+              allOwnedClassicalRanges[myProcRank - 1].second;
+          else
+            d_locallyOwnedRanges[0].first = 0;
+          d_locallyOwnedRanges[0].second = d_locallyOwnedRanges[0].first;
+
+          std::cout << "Warning : No locally owned cells in processor "
+                    << myProcRank << std::endl;
         }
 
       // shift the ghost enriched ids by the total classical dofs
@@ -424,6 +458,7 @@ namespace dftefe
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
+      d_boundaryIds.resize(0);
       std::vector<bool> dofs_touched(this->nGlobalNodes(), false);
       auto cellIter = this->beginLocalCells(), endIter = this->endLocalCells();
       for (; cellIter != endIter; ++cellIter)
@@ -468,8 +503,7 @@ namespace dftefe
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
                ValueTypeBasisData,
                memorySpace,
-               dim>>         enrichmentClassicalInterface,
-             const size_type feOrder)
+               dim>> enrichmentClassicalInterface)
     {
       d_isDistributed = false;
       // Create Classical FE dof_handler
@@ -480,8 +514,9 @@ namespace dftefe
       d_atomSymbolVec = enrichmentClassicalInterface->getAtomSymbolVec();
       d_atomCoordinatesVec =
         enrichmentClassicalInterface->getAtomCoordinatesVec();
-      d_fieldName = enrichmentClassicalInterface->getFieldName();
-      dealii::FE_Q<dim>                       feElem(feOrder);
+      d_fieldName               = enrichmentClassicalInterface->getFieldName();
+      size_type         feOrder = enrichmentClassicalInterface->getFEOrder();
+      dealii::FE_Q<dim> feElem(feOrder);
       const TriangulationDealiiParallel<dim> *dealiiParallelTria =
         dynamic_cast<const TriangulationDealiiParallel<dim> *>(
           enrichmentClassicalInterface->getTriangulation().get());
@@ -583,6 +618,41 @@ namespace dftefe
           d_locallyOwnedRanges[rangeId].second =
             d_globalRanges[0].second +
             d_enrichmentIdsPartition->locallyOwnedEnrichmentIds().second;
+        }
+
+      //
+      // Sometimes dealii can have no locallyowned dofs in a processor and
+      // the classical dofid can give garbage value. It will return the maximum
+      // value of unsigend int as the dof id as dftefe has unsigned int as
+      // classical ids. To get through this, one has to accumulate the previous
+      // processors nlocallyOwnedDofs and set the start and end as the same
+      // in classical locallyowned dofs. getAllOwnedClassicalRanges() finds
+      // the accumulated locallyowned dof across procs.
+      //
+      std::vector<std::pair<global_size_type, global_size_type>>
+        allOwnedClassicalRanges(0);
+      getAllOwnedClassicalRanges(d_locallyOwnedRanges[0],
+                                 allOwnedClassicalRanges,
+                                 utils::mpi::MPICommSelf);
+
+      int myProcRank = 0;
+      int err = utils::mpi::MPICommRank(utils::mpi::MPICommSelf, &myProcRank);
+      std::string errMsg = "Error occured while using MPI_Comm_rank. "
+                           "Error code: " +
+                           std::to_string(err);
+      utils::throwException(err == utils::mpi::MPISuccess, errMsg);
+
+      if (startId == endId)
+        {
+          if (myProcRank != 0)
+            d_locallyOwnedRanges[0 /*0 for classical*/].first =
+              allOwnedClassicalRanges[myProcRank - 1].second;
+          else
+            d_locallyOwnedRanges[0].first = 0;
+          d_locallyOwnedRanges[0].second = d_locallyOwnedRanges[0].first;
+
+          std::cout << "Warning : No locally owned cells in processor "
+                    << myProcRank << std::endl;
         }
 
       // shift the ghost enriched ids by the total classical dofs
@@ -723,6 +793,7 @@ namespace dftefe
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
       std::vector<global_size_type> iFaceGlobalDofIndices(dofs_per_face);
 
+      d_boundaryIds.resize(0);
       std::vector<bool> dofs_touched(this->nGlobalNodes(), false);
       auto cellIter = this->beginLocalCells(), endIter = this->endLocalCells();
       for (; cellIter != endIter; ++cellIter)
@@ -937,6 +1008,58 @@ namespace dftefe
                              dim>::getLocallyOwnedRanges() const
     {
       return d_locallyOwnedRanges;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                             ValueTypeBasisData,
+                             memorySpace,
+                             dim>::
+      getAllOwnedClassicalRanges(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRanges,
+        std::vector<std::pair<global_size_type, global_size_type>>
+          &                        allOwnedRanges,
+        const utils::mpi::MPIComm &mpiComm) const
+    {
+      int         nprocs = 1;
+      int         err    = utils::mpi::MPICommSize(mpiComm, &nprocs);
+      std::string errMsg = "Error occured while using MPI_Comm_size. "
+                           "Error code: " +
+                           std::to_string(err);
+      utils::throwException(err == utils::mpi::MPISuccess, errMsg);
+
+      std::vector<int> recvCounts(nprocs, 2);
+      std::vector<int> displs(nprocs, 0);
+      for (unsigned int i = 0; i < nprocs; ++i)
+        displs[i] = 2 * i;
+
+      allOwnedRanges.resize(nprocs);
+
+      std::vector<global_size_type> ownedRanges = {locallyOwnedRanges.first,
+                                                   locallyOwnedRanges.second};
+
+      std::vector<global_size_type> ownedRangesAcrossProcs(2 * nprocs);
+
+      utils::mpi::MPIAllgatherv<utils::MemorySpace::HOST>(
+        &ownedRanges[0],
+        2,
+        utils::mpi::MPIUnsignedLong,
+        &ownedRangesAcrossProcs[0],
+        &recvCounts[0],
+        &displs[0],
+        utils::mpi::MPIUnsignedLong,
+        mpiComm);
+
+      for (size_type iProc = 0; iProc < nprocs; ++iProc)
+        {
+          allOwnedRanges[iProc] =
+            std::make_pair(ownedRangesAcrossProcs[2 * iProc],
+                           ownedRangesAcrossProcs[2 * iProc + 1]);
+        }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1571,9 +1694,15 @@ namespace dftefe
                              memorySpace,
                              dim>::createConstraintsStart() const
     {
+      dealii::IndexSet locally_relevant_dofs;
+      locally_relevant_dofs.clear();
+      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
+                                                      locally_relevant_dofs);
+
       std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         constraintsLocal = std::make_shared<
-          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>();
+          EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
+          locally_relevant_dofs);
 
       constraintsLocal->copyFrom(*d_constraintsLocal);
 

@@ -24,16 +24,13 @@
  */
 #include <basis/Defaults.h>
 #include <utils/PointImpl.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
 #include <basis/L2ProjectionLinearSolverFunction.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/ScalarSpatialFunction.h>
-#include <linearAlgebra/CGLinearSolver.h>
 #include <algorithm>
 #include <set>
 #include <string>
-//#include <basis/FEOverlapInverseOperatorContext.h>
 
 namespace dftefe
 {
@@ -72,6 +69,11 @@ namespace dftefe
     {
       d_isOrthogonalized = true;
 
+      int rank;
+      utils::mpi::MPICommRank(comm, &rank);
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
+
       if (dim != 3)
         utils::throwException(
           false, "Dimension should be 3 for Spherical Enrichment Dofs.");
@@ -90,6 +92,9 @@ namespace dftefe
         "in EnrichmentClassicalInterfaceSpherical");
 
       d_triangulation = d_cfeBasisDofHandler->getTriangulation();
+
+      // no p refinement assumed
+      d_feOrder = d_cfeBasisDofHandler->getFEOrder(0);
 
       // Partition the enriched dofs based on the BCs and Orthogonalized EFE
 
@@ -147,7 +152,9 @@ namespace dftefe
           fieldName,
           minbound,
           maxbound,
-          d_triangulation->maxCellDiameter(),
+          d_triangulation->maxElementLength(),
+          d_triangulation->getDomainVectors(),
+          d_triangulation->getPeriodicFlags(),
           cellVerticesVector,
           comm);
 
@@ -180,22 +187,6 @@ namespace dftefe
                                                        memorySpace,
                                                        dim>>(
           d_cfeBasisDofHandler, zeroFunction);
-
-      // Create OperatorContext for CFEBasisoverlap
-      std::shared_ptr<
-        const dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
-                                                       ValueTypeBasisData,
-                                                       memorySpace,
-                                                       dim>>
-        cfeBasisOverlapOperator = std::make_shared<
-          dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
-                                                   ValueTypeBasisData,
-                                                   memorySpace,
-                                                   dim>>(
-          *d_cfeBasisManager,
-          *d_cfeBasisManager,
-          *cfeBasisDataStorageOverlapMatrix,
-          L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
 
       global_size_type nTotalEnrichmentIds =
         d_enrichmentIdsPartition->nTotalEnrichmentIds();
@@ -268,6 +259,23 @@ namespace dftefe
           cellIndex = cellIndex + 1;
         }
 
+      size_type cellTimesNumVec =
+        nTotalEnrichmentIds * L2ProjectionDefaults::CELL_BATCH_SIZE;
+      // Create OperatorContext for CFEBasisoverlap
+      std::shared_ptr<
+        const dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim>>
+        cfeBasisOverlapOperator = std::make_shared<
+          dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
+                                                   ValueTypeBasisData,
+                                                   memorySpace,
+                                                   dim>>(
+          *d_cfeBasisManager,
+          *cfeBasisDataStorageOverlapMatrix,
+          cellTimesNumVec);
+
       std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
                                                           ValueTypeBasisData,
                                                           memorySpace>>
@@ -282,7 +290,7 @@ namespace dftefe
             quadValuesEnrichmentFunction,
             L2ProjectionDefaults::PC_TYPE,
             linAlgOpContext,
-            L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
+            cellTimesNumVec);
 
       linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -302,40 +310,49 @@ namespace dftefe
       CGSolve->solve(*linearSolverFunction);
       linearSolverFunction->getSolution(*basisInterfaceCoeff);
 
-      // // Can also do via the M^(-1) route withot solving CG.
+      /**
+      // Can also do via the M^(-1) route withot solving CG.
 
-      // linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> d(
-      //       d_cfeBasisManager->getMPIPatternP2P(),
-      //       linAlgOpContext,
-      //       nTotalEnrichmentIds);
-      // d.setValue(0.0);
+      linearAlgebra::MultiVector<ValueTypeBasisData, memorySpace> d(
+            d_cfeBasisManager->getMPIPatternP2P(),
+            linAlgOpContext,
+            nTotalEnrichmentIds);
+      d.setValue(0.0);
 
-      // FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace,
-      // dim> cfeBasisOperations(cfeBasisDataStorageRhs,
-      // L2ProjectionDefaults::MAX_CELL_TIMES_NUMVECS);
-
-      // // Integrate this with different quarature rule. (i.e. adaptive for the
+      FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace,
+      dim> cfeBasisOperations(cfeBasisDataStorageRhs,
+      cellTimesNumVec);
+      rootCout << "Begin creating integrateWithBasisValues\n";
+      // Integrate this with different quarature rule. (i.e. adaptive for the
       // enrichment functions) , inp will be in adaptive grid
-      // cfeBasisOperations.integrateWithBasisValues(quadValuesEnrichmentFunction,
-      //                                            *d_cfeBasisManager,
-      //                                            d);
+      cfeBasisOperations.integrateWithBasisValues(quadValuesEnrichmentFunction,
+                                                 *d_cfeBasisManager,
+                                                 d);
+      rootCout << "End creating integrateWithBasisValues\n";
+      utils::throwException(
+        cfeBasisDataStorageOverlapMatrix->getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes()
+            .getQuadratureFamily() == quadrature::QuadratureFamily::GLL,
+        "The quadrature rule for integration of Classical FE dofs has to be GLL
+      if Mc = d" "is not solved via a poisson solve. Contact developers if extra
+      options are needed.");
 
-      // std::shared_ptr<dftefe::linearAlgebra::OperatorContext<ValueTypeBasisData,
-      //                                              ValueTypeBasisData,
-      //                                              memorySpace>> MInvContext
-      //                                              =
-      // std::make_shared<dftefe::basis::FEOverlapInverseOperatorContext<ValueTypeBasisData,
-      //                                              ValueTypeBasisData,
-      //                                              memorySpace,
-      //                                              dim>>
-      //                                              (*d_cfeBasisManager,
-      //                                               *cfeBasisOverlapOperator,
-      //                                               linAlgOpContext);
+      std::shared_ptr<dftefe::linearAlgebra::OperatorContext<ValueTypeBasisData,
+                                                   ValueTypeBasisData,
+                                                   memorySpace>> MInvContext
+                                                   =
+      std::make_shared<dftefe::basis::CFEOverlapInverseOpContextGLL<ValueTypeBasisData,
+                                                   ValueTypeBasisData,
+                                                   memorySpace,
+                                                   dim>>
+                                                   (*d_cfeBasisManager,
+                                                    *cfeBasisDataStorageOverlapMatrix,
+                                                    linAlgOpContext);
 
-      // MInvContext->apply(d,*basisInterfaceCoeff);
-
-      // populate a unordered_map<id, <vec1, vec2>>  i.e. map from enrichedId ->
-      // pair(localId, coeff)
+      MInvContext->apply(d,*basisInterfaceCoeff);
+      **/
+      // populate an unordered_map<id, <vec1, vec2>>  i.e. map from enrichedId
+      // -> pair(localId, coeff)
 
       std::vector<ValueTypeBasisData> basisInterfaceCoeffSTL(
         nTotalEnrichmentIds * d_cfeBasisManager->nLocal(),
@@ -375,6 +392,11 @@ namespace dftefe
           d_enrichmentIdToClassicalLocalIdMap[i->first] =
             utils::OptimizedIndexSet<size_type>(i->second);
         }
+
+      rootCout
+        << "Completed creating Orthogonalized EnrichmentClassicalInterfaceSpherical for "
+        << d_enrichmentIdsPartition->nTotalEnrichmentIds() << " " << fieldName
+        << " enrichments." << std::endl;
     }
 
     template <typename ValueTypeBasisData,
@@ -385,6 +407,7 @@ namespace dftefe
                                           dim>::
       EnrichmentClassicalInterfaceSpherical(
         std::shared_ptr<const TriangulationBase> triangulation,
+        size_type                                feOrder,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainer,
         const double                     atomPartitionTolerance,
@@ -401,8 +424,14 @@ namespace dftefe
       , d_triangulation(triangulation)
       , d_overlappingEnrichmentIdsInCells(0)
       , d_linAlgOpContext(nullptr)
+      , d_feOrder(feOrder)
     {
       d_isOrthogonalized = false;
+
+      int rank;
+      utils::mpi::MPICommRank(comm, &rank);
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
 
       if (dim != 3)
         utils::throwException(
@@ -465,11 +494,18 @@ namespace dftefe
           minbound,
           maxbound,
           0,
+          triangulation->getDomainVectors(),
+          d_triangulation->getPeriodicFlags(),
           cellVerticesVector,
           comm);
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
+
+      rootCout
+        << "Completed creating Pristine EnrichmentClassicalInterfaceSpherical for "
+        << d_enrichmentIdsPartition->nTotalEnrichmentIds() << " " << fieldName
+        << " enrichments." << std::endl;
     }
 
     template <typename ValueTypeBasisData,
@@ -644,6 +680,17 @@ namespace dftefe
                                           dim>::getTriangulation() const
     {
       return d_triangulation;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    size_type
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::getFEOrder() const
+    {
+      return d_feOrder;
     }
 
     template <typename ValueTypeBasisData,

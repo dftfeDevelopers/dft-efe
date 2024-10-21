@@ -31,6 +31,92 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
+    namespace OrthonormalizationFunctionsInternal
+    {
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace>
+      double
+      doesOrthogonalizationPreserveSubspace(
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        MultiVector<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+          memorySpace> &orthogonalizedX,
+        const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+          &B)
+      {
+        using ValueType =
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+        LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
+        const size_type              vecSize         = X.locallyOwnedSize();
+        const size_type              numVec          = X.getNumberComponents();
+
+        linearAlgebra::MultiVector<ValueType, memorySpace> X0X0HBX(X, 0.0),
+          residual(X, 0.0);
+        utils::MemoryStorage<ValueType, memorySpace> X0HBX(numVec * numVec);
+
+        B.apply(X, residual);
+        linearAlgebra::blasLapack::
+          gemm<ValueTypeOperand, ValueType, memorySpace>(
+            linearAlgebra::blasLapack::Layout::ColMajor,
+            linearAlgebra::blasLapack::Op::NoTrans,
+            linearAlgebra::blasLapack::Op::ConjTrans,
+            numVec,
+            numVec,
+            vecSize,
+            1,
+            residual.data(),
+            numVec,
+            orthogonalizedX.data(),
+            numVec,
+            0,
+            X0HBX.data(),
+            numVec,
+            linAlgOpContext);
+
+        // MPI_AllReduce to get the S from all procs
+        // mpi_inplace
+        int err = utils::mpi::MPIAllreduce<memorySpace>(
+          utils::mpi::MPIInPlace,
+          X0HBX.data(),
+          X0HBX.size(),
+          utils::mpi::Types<ValueType>::getMPIDatatype(),
+          utils::mpi::MPISum,
+          utils::mpi::MPICommWorld);
+
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::throwException(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+        linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
+          linearAlgebra::blasLapack::Layout::ColMajor,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          numVec,
+          vecSize,
+          numVec,
+          1,
+          X0HBX.data(),
+          numVec,
+          orthogonalizedX.data(),
+          numVec,
+          0,
+          X0X0HBX.data(),
+          numVec,
+          linAlgOpContext);
+
+        X0X0HBX.updateGhostValues();
+
+        ValueType ones = (ValueType)1.0, nOnes = (ValueType)-1.0;
+        add(ones, X, nOnes, X0X0HBX, residual);
+
+        std::vector<double> norm = residual.lInfNorms();
+        double              max  = *std::max_element(norm.begin(), norm.end());
+        return max;
+      }
+    } // namespace OrthonormalizationFunctionsInternal
+
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -211,6 +297,13 @@ namespace dftefe
       OrthonormalizationErrorCode err;
       OrthonormalizationError     retunValue;
       LapackError                 lapackReturn;
+
+      /*
+      //--------------------------DEBUG ONLY------------------------------
+      linearAlgebra::MultiVector<ValueType, memorySpace> copyX(X, 0.0);
+      copyX = X;
+      //--------------------------DEBUG ONLY------------------------------
+      */
 
       const utils::mpi::MPIComm comm = X.getMPIPatternP2P()->mpiCommunicator();
       LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
@@ -432,18 +525,136 @@ namespace dftefe
               iPass++;
             }
 
+          /**
+          //--------------------------DEBUG ONLY------------------------------
+          double norm = OrthonormalizationFunctionsInternal::
+            doesOrthogonalizationPreserveSubspace<ValueTypeOperator,
+                                                  ValueTypeOperand,
+                                                  memorySpace>(copyX,
+                                                               orthogonalizedX,
+                                                               B);
+          //--------------------------DEBUG ONLY------------------------------
+          **/
+
           if (!(err == OrthonormalizationErrorCode::LAPACK_ERROR))
             {
               if (iPass > maxPass)
-                err = OrthonormalizationErrorCode::MAX_PASS_EXCEEDED;
+                {
+                  err        = OrthonormalizationErrorCode::MAX_PASS_EXCEEDED;
+                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                }
               else
-                err = OrthonormalizationErrorCode::SUCCESS;
-              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                {
+                  err        = OrthonormalizationErrorCode::SUCCESS;
+                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                  retunValue.msg += "Maximum number of Lowdin passes are " +
+                                    std::to_string(iPass) + ".";
+                  /*
+                  //--------------------------DEBUG
+                  ONLY------------------------------ std::stringstream ss; ss <<
+                  norm; retunValue.msg += " Max LInf norm |(I-QQ^HM)U|: " +
+                  ss.str();
+                  //--------------------------DEBUG
+                  ONLY------------------------------
+                  */
+                }
             }
         }
 
       return retunValue;
     }
 
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    OrthonormalizationError
+    OrthonormalizationFunctions<ValueTypeOperator,
+                                ValueTypeOperand,
+                                memorySpace>::
+      ModifiedGramSchmidt(MultiVector<ValueTypeOperand, memorySpace> &X,
+                          MultiVector<ValueType, memorySpace> &orthogonalizedX,
+                          const OpContext &                    B)
+    {
+      // Naive Modified Gram Schmidt implementation
+      // https://arnold.hosted.uark.edu/NLA/Pages/CGSMGS.pdf
+
+      OrthonormalizationErrorCode err;
+      OrthonormalizationError     retunValue;
+
+      LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
+      const size_type              vecSize         = X.locallyOwnedSize();
+      const size_type              numVec          = X.getNumberComponents();
+
+      orthogonalizedX.setValue((ValueType)0.0);
+      utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+      ValueType alpha, nAlpha, one = (ValueType)1.0;
+
+      Vector<ValueType, memorySpace> temp(X.getMPIPatternP2P(),
+                                          X.getLinAlgOpContext(),
+                                          (ValueType)0),
+        w(temp, (ValueType)0), q(temp, (ValueType)0);
+
+      if (X.globalSize() < X.getNumberComponents())
+        {
+          err = OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR;
+          OrthonormalizationError retunValue =
+            OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+        }
+      else
+        {
+          for (size_type iVec = 0; iVec < numVec; iVec++)
+            {
+              for (size_type iSize = 0; iSize < vecSize; iSize++)
+                memoryTransfer.copy(1,
+                                    w.data() + iSize,
+                                    X.data() + iSize * numVec + iVec);
+              for (size_type jVec = 0; jVec < iVec; jVec++)
+                {
+                  for (size_type iSize = 0; iSize < vecSize; iSize++)
+                    memoryTransfer.copy(1,
+                                        q.data() + iSize,
+                                        orthogonalizedX.data() +
+                                          iSize * numVec + jVec);
+                  B.apply(w, temp);
+                  dot<ValueType, ValueType, memorySpace>(
+                    q,
+                    temp,
+                    alpha,
+                    blasLapack::ScalarOp::Conj,
+                    blasLapack::ScalarOp::Identity);
+                  nAlpha = (ValueType)(-1.0) * (ValueType)alpha;
+                  blasLapack::axpby(vecSize,
+                                    one,
+                                    w.data(),
+                                    nAlpha,
+                                    q.data(),
+                                    w.data(),
+                                    linAlgOpContext);
+                }
+              B.apply(w, temp);
+              dot<ValueType, ValueType, memorySpace>(
+                w,
+                temp,
+                alpha,
+                blasLapack::ScalarOp::Conj,
+                blasLapack::ScalarOp::Identity);
+              alpha = std::sqrt(alpha);
+              blasLapack::ascale<ValueType, ValueType, memorySpace>(
+                vecSize,
+                (ValueType)(1.0 / alpha),
+                w.data(),
+                q.data(),
+                linAlgOpContext);
+              for (size_type iSize = 0; iSize < vecSize; iSize++)
+                memoryTransfer.copy(1,
+                                    orthogonalizedX.data() + iSize * numVec +
+                                      iVec,
+                                    q.data() + iSize);
+            }
+          err        = OrthonormalizationErrorCode::SUCCESS;
+          retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+        }
+      return retunValue;
+    }
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

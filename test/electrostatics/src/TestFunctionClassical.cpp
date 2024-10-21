@@ -180,7 +180,7 @@ int main()
 
   dftefe::basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[dftefe::basis::BasisStorageAttributes::StoreGradNiGradNj] = true;

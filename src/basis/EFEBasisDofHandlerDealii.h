@@ -65,15 +65,14 @@ namespace dftefe
           ValueTypeBasisData,
           memorySpace,
           dim>>                    enrichmentClassicalInterface,
-        const size_type            feOrder,
         const utils::mpi::MPIComm &mpiComm);
 
       EFEBasisDofHandlerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisData,
-          memorySpace,
-          dim>>         enrichmentClassicalInterface,
-        const size_type feOrder);
+        std::shared_ptr<
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>
+          enrichmentClassicalInterface);
 
       double
       getBasisFunctionValue(const size_type     basisId,
@@ -90,15 +89,13 @@ namespace dftefe
                ValueTypeBasisData,
                memorySpace,
                dim>>                    enrichmentClassicalInterface,
-             const size_type            feOrder,
              const utils::mpi::MPIComm &mpiComm);
 
       void
       reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
                ValueTypeBasisData,
                memorySpace,
-               dim>>         enrichmentClassicalInterface,
-             const size_type feOrder);
+               dim>> enrichmentClassicalInterface);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -296,6 +293,12 @@ namespace dftefe
       std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         d_constraintsLocal;
 
+      void
+      getAllOwnedClassicalRanges(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRanges,
+        std::vector<std::pair<global_size_type, global_size_type>>
+          &                        allOwnedRanges,
+        const utils::mpi::MPIComm &mpiComm) const;
 
     }; // end of EFEBasisDofHandlerDealii
   }    // end of namespace basis

@@ -90,6 +90,8 @@ namespace dftefe
       boost::math::differentiation::promote<X, Y, Z>
       legendre(const X &x, const Y &y, const Z &z, const int l, const int m)
       {
+        std::cout
+          << "\nBoostAutoDiff.h is not updated and may have bugs (eg. legendre polynomials for m < 0 is wrong). Check this class before using it.";
         auto r  = sqrt(x * x + y * y + z * z);
         auto z1 = z / r;
         boost::math::differentiation::promote<X, Y, Z> cxM     = 1.0;

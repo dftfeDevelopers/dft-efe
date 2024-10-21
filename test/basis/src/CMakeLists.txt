@@ -49,6 +49,14 @@ if(ENABLE_MPI)
 
 	add_compile_definitions(DFTEFE_WITH_MPI)
 
+	add_executable(TestDealiiAffineConstMemAfterCopy TestDealiiAffineConstMemAfterCopy.cpp )
+	target_link_libraries(TestDealiiAffineConstMemAfterCopy PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestDealiiAffineConstMemAfterCopy PROPERTIES OUTPUT_NAME "TestDealiiAffineConstMemAfterCopy" SUFFIX ".x")
+
+	add_executable(TestComputeFEMatrices TestComputeFEMatrices.cpp )
+	target_link_libraries(TestComputeFEMatrices PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestComputeFEMatrices PROPERTIES OUTPUT_NAME "TestComputeFEMatrices" SUFFIX ".x")
+
 	add_executable(TestAtomIdsPartitionParallel TestAtomIdsPartitionParallel.cpp )
 	target_link_libraries(TestAtomIdsPartitionParallel PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestAtomIdsPartitionParallel PROPERTIES OUTPUT_NAME "TestAtomIdsPartitionParallel" SUFFIX ".x")
@@ -76,5 +84,9 @@ if(ENABLE_MPI)
 	add_executable(TestOrthoEnrichmentBasisManager TestOrthoEnrichmentBasisManager.cpp )
 	target_link_libraries(TestOrthoEnrichmentBasisManager PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestOrthoEnrichmentBasisManager PROPERTIES OUTPUT_NAME "TestOrthoEnrichmentBasisManager" SUFFIX ".x")
+
+	add_executable(TestGenerateMesh TestGenerateMesh.cpp )
+	target_link_libraries(TestGenerateMesh PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestGenerateMesh PROPERTIES OUTPUT_NAME "TestGenerateMesh" SUFFIX ".x")
 
 endif()

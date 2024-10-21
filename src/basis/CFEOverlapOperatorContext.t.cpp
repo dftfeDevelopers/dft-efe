@@ -23,6 +23,7 @@
  * @author Avirup Sircar
  */
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/Vector.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FECellWiseDataOperations.h>
@@ -89,7 +90,8 @@ namespace dftefe
             ->getQuadratureRuleAttributes()
             .getQuadratureFamily();
         if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
-             quadFamily == quadrature::QuadratureFamily::GLL) &&
+             quadFamily == quadrature::QuadratureFamily::GLL ||
+             quadFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
             !feBDH->isVariableDofsPerCell())
           isConstantDofsAndQuadPointsInCell = true;
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
@@ -377,36 +379,102 @@ namespace dftefe
         const FEBasisManager<ValueTypeOperand,
                              ValueTypeOperator,
                              memorySpace,
-                             dim> &feBasisManagerX,
-        const FEBasisManager<ValueTypeOperand,
-                             ValueTypeOperator,
-                             memorySpace,
-                             dim> &feBasisManagerY,
+                             dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
         const size_type maxCellTimesNumVecs)
-      : d_feBasisManagerX(&feBasisManagerX)
-      , d_feBasisManagerY(&feBasisManagerY)
+      : d_feBasisManager(&feBasisManager)
       , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
       , d_cellStartIdsBasisOverlap(0)
-      , d_feBasisDataStorage(&feBasisDataStorage)
+      , d_isMassLumping(false)
     {
-      utils::throwException(
-        &(feBasisManagerX.getBasisDofHandler()) ==
-          &(feBasisManagerY.getBasisDofHandler()),
-        "feBasisManager of X and Y vectors are not from same basisDofhandler");
-
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlap;
       CFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
         dim>(feBasisDataStorage,
-             basisOverlap,
+             d_basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell);
-      d_basisOverlap = basisOverlap;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    CFEOverlapOperatorContext<ValueTypeOperator,
+                              ValueTypeOperand,
+                              memorySpace,
+                              dim>::
+      CFEOverlapOperatorContext(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &feBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext)
+      : d_feBasisManager(&feBasisManager)
+      , d_cellStartIdsBasisOverlap(0)
+      , d_maxCellTimesNumVecs(0)
+      , d_isMassLumping(true)
+    {
+      utils::throwException(
+        feBasisDataStorage.getQuadratureRuleContainer()
+            ->getQuadratureRuleAttributes()
+            .getQuadratureFamily() == quadrature::QuadratureFamily::GLL,
+        "The quadrature rule for integration of Classical FE dofs has to be GLL."
+        "Contact developers if extra options are needed.");
+
+      CFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(feBasisDataStorage,
+             d_basisOverlap,
+             d_cellStartIdsBasisOverlap,
+             d_dofsInCell);
+
+      d_diagonal =
+        std::make_shared<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
+          d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
+
+      const size_type numLocallyOwnedCells =
+        d_feBasisManager->nLocallyOwnedCells();
+      std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+        numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+
+      auto itCellLocalIdsBegin =
+        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+
+      std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
+                                                         0);
+
+      std::copy(numCellDofs.begin(),
+                numCellDofs.begin() + numLocallyOwnedCells,
+                locallyOwnedCellsNumDoFsSTL.begin());
+
+      utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
+        numLocallyOwnedCells);
+      locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
+
+      FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
+        addCellWiseBasisDataToDiagonalData(d_basisOverlap->data(),
+                                           itCellLocalIdsBegin,
+                                           locallyOwnedCellsNumDoFs,
+                                           d_diagonal->data());
+
+      d_feBasisManager->getConstraints().distributeChildToParent(*d_diagonal,
+                                                                 1);
+
+      d_diagonal->accumulateAddLocallyOwned();
+
+      d_diagonal->updateGhostValues();
+
+      d_feBasisManager->getConstraints().setConstrainedNodesToZero(*d_diagonal,
+                                                                   1);
     }
 
     template <typename ValueTypeOperator,
@@ -424,66 +492,93 @@ namespace dftefe
                                                            ValueTypeOperand>,
                     memorySpace> &Y) const
     {
-      const size_type numLocallyOwnedCells =
-        d_feBasisManagerX->nLocallyOwnedCells();
-      std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
-      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        numCellDofs[iCell] = d_feBasisManagerX->nLocallyOwnedCellDofs(iCell);
+      if (d_isMassLumping)
+        {
+          const basis::ConstraintsLocal<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                   ValueTypeOperand>,
+            memorySpace> &constraints = d_feBasisManager->getConstraints();
 
-      auto itCellLocalIdsBeginX =
-        d_feBasisManagerX->locallyOwnedCellLocalDofIdsBegin();
+          const size_type numVecs = X.getNumberComponents();
 
-      auto itCellLocalIdsBeginY =
-        d_feBasisManagerY->locallyOwnedCellLocalDofIdsBegin();
+          X.updateGhostValues();
+          // update the child nodes based on the parent nodes
+          constraints.distributeParentToChild(X, numVecs);
 
-      const size_type numVecs = X.getNumberComponents();
+          Y.setValue(0.0);
 
-      // get handle to constraints
-      const basis::ConstraintsLocal<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand>,
-        memorySpace> &constraintsX = d_feBasisManagerX->getConstraints();
+          linearAlgebra::blasLapack::khatriRaoProduct(
+            linearAlgebra::blasLapack::Layout::ColMajor,
+            1,
+            X.getNumberComponents(),
+            d_diagonal->localSize(),
+            d_diagonal->data(),
+            X.data(),
+            Y.data(),
+            *(d_diagonal->getLinAlgOpContext()));
 
-      const basis::ConstraintsLocal<
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand>,
-        memorySpace> &constraintsY = d_feBasisManagerY->getConstraints();
+          // function to do a static condensation to send the constraint nodes
+          // to its parent nodes
+          constraints.distributeChildToParent(Y, numVecs);
 
-      X.updateGhostValues();
-      // update the child nodes based on the parent nodes
-      constraintsX.distributeParentToChild(X, numVecs);
+          Y.updateGhostValues();
+        }
+      else
+        {
+          // get handle to constraints
+          const basis::ConstraintsLocal<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                   ValueTypeOperand>,
+            memorySpace> &constraints = d_feBasisManager->getConstraints();
 
-      // access cell-wise discrete Overlap operator
-      const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        &basisOverlapInAllCells = *d_basisOverlap;
+          const size_type numVecs = X.getNumberComponents();
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
-      Y.setValue(0.0);
+          X.updateGhostValues();
+          // update the child nodes based on the parent nodes
+          constraints.distributeParentToChild(X, numVecs);
 
-      //
-      // perform Ax on the local part of A and x
-      // (A = discrete Overlap operator)
-      //
-      CFEOverlapOperatorContextInternal::computeAxCellWiseLocal(
-        basisOverlapInAllCells,
-        X.begin(),
-        Y.begin(),
-        numVecs,
-        numLocallyOwnedCells,
-        numCellDofs,
-        itCellLocalIdsBeginX,
-        itCellLocalIdsBeginY,
-        cellBlockSize,
-        *(X.getLinAlgOpContext()));
+          Y.setValue(0.0);
 
-      // function to do a static condensation to send the constraint nodes to
-      // its parent nodes
-      constraintsY.distributeChildToParent(Y, numVecs);
+          const size_type numLocallyOwnedCells =
+            d_feBasisManager->nLocallyOwnedCells();
+          std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+          for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+            numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
 
-      // Function to add the values to the local node from its corresponding
-      // ghost nodes from other processors.
-      Y.accumulateAddLocallyOwned();
-      Y.updateGhostValues();
+          auto itCellLocalIdsBegin =
+            d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+
+          // access cell-wise discrete Overlap operator
+          const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+            &basisOverlapInAllCells = *d_basisOverlap;
+
+          const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+
+          //
+          // perform Ax on the local part of A and x
+          // (A = discrete Overlap operator)
+          //
+          CFEOverlapOperatorContextInternal::computeAxCellWiseLocal(
+            basisOverlapInAllCells,
+            X.begin(),
+            Y.begin(),
+            numVecs,
+            numLocallyOwnedCells,
+            numCellDofs,
+            itCellLocalIdsBegin,
+            itCellLocalIdsBegin,
+            cellBlockSize,
+            *(X.getLinAlgOpContext()));
+
+          // function to do a static condensation to send the constraint nodes
+          // to its parent nodes
+          constraints.distributeChildToParent(Y, numVecs);
+
+          // Function to add the values to the local node from its corresponding
+          // ghost nodes from other processors.
+          Y.accumulateAddLocallyOwned();
+          Y.updateGhostValues();
+        }
     }
 
 
@@ -546,19 +641,6 @@ namespace dftefe
         basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId] +
           basisId1 * d_dofsInCell[cellId] + basisId2);
       return returnValue;
-    }
-
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
-    const FEBasisDataStorage<ValueTypeOperator, memorySpace> &
-    CFEOverlapOperatorContext<ValueTypeOperator,
-                              ValueTypeOperand,
-                              memorySpace,
-                              dim>::getFEBasisDataStorage() const
-    {
-      return *d_feBasisDataStorage;
     }
 
   } // namespace basis

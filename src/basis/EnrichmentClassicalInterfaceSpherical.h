@@ -133,6 +133,7 @@ namespace dftefe
        */
       EnrichmentClassicalInterfaceSpherical(
         std::shared_ptr<const TriangulationBase> triangulation,
+        size_type                                feOrder,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainer,
         const double                     atomPartitionTolerance,
@@ -193,6 +194,9 @@ namespace dftefe
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const;
 
+      // no p refinement assumed
+      size_type
+      getFEOrder() const;
 
       /**
        * @brief The localid is determined by the storage pattern of the components of
@@ -240,6 +244,8 @@ namespace dftefe
 
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
+
+      size_type d_feOrder;
 
     }; // end of class
   }    // end of namespace basis

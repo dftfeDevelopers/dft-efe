@@ -23,13 +23,17 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeCFEOverlapInverseOperatorContext_h
-#define dftefeCFEOverlapInverseOperatorContext_h
+#ifndef dftefeCFEOverlapInverseOpContextGLL_h
+#define dftefeCFEOverlapInverseOpContextGLL_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/CGLinearSolver.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
+#include <linearAlgebra/LinearSolverFunction.h>
+#include <linearAlgebra/PreconditionerNone.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/CFEOverlapOperatorContext.h>
@@ -46,7 +50,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class CFEOverlapInverseOperatorContext
+    class CFEOverlapInverseOpContextGLL
       : public linearAlgebra::
           OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
@@ -56,16 +60,27 @@ namespace dftefe
                                                ValueTypeOperand>;
 
     public:
-      CFEOverlapInverseOperatorContext(
+      CFEOverlapInverseOpContextGLL(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            &                                        feBasisManager,
-        const basis::CFEOverlapOperatorContext<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace,
-                                               dim> &cfeOverlapOperatorContext,
+            &feBasisManager,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalGLLBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
+
+      // --------------DEBUG ONLY (direct inversion using CG solve)---------
+      CFEOverlapInverseOpContextGLL(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &                                 feBasisManager,
+        const CFEOverlapOperatorContext<ValueTypeOperator,
+                                        ValueTypeOperand,
+                                        memorySpace,
+                                        dim> &MContext,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+             linAlgOpContext,
+        bool isCGSolved = true);
 
       void
       apply(
@@ -80,8 +95,20 @@ namespace dftefe
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
       const std::string                                     d_constraints;
 
+      bool d_isCGSolved;
+      std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeOperator,
+                                                          ValueTypeOperand,
+                                                          memorySpace>>
+        d_overlapInvPoisson;
+      std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>>
+        d_CGSolve;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
+
     }; // end of class BasisOverlapOperatorContext
   }    // namespace basis
 } // end of namespace dftefe
-#include <basis/CFEOverlapInverseOperatorContext.t.cpp>
-#endif // dftefeCFEOverlapInverseOperatorContext_h
+#include <basis/CFEOverlapInverseOpContextGLL.t.cpp>
+#endif // dftefeCFEOverlapInverseOpContextGLL_h

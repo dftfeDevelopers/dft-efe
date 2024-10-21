@@ -26,6 +26,8 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <utils/DataTypeOverloads.h>
+#include <linearAlgebra/Defaults.h>
+#include <utils/ConditionalOStream.h>
 
 namespace dftefe
 {
@@ -38,14 +40,21 @@ namespace dftefe
                                  ValueTypeOperand,
                                  memorySpace>::
       ChebyshevFilteredEigenSolver(
-        const double wantedSpectrumLowerBound,
-        const double wantedSpectrumUpperBound,
-        const double unWantedSpectrumUpperBound,
-        const double polynomialDegree,
-        const double illConditionTolerance,
-        const MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const size_type                                   eigenVectorBlockSize)
+        const double                                wantedSpectrumLowerBound,
+        const double                                wantedSpectrumUpperBound,
+        const double                                unWantedSpectrumUpperBound,
+        const double                                polynomialDegree,
+        const double                                illConditionTolerance,
+        MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const size_type                             eigenVectorBlockSize)
     {
+      d_filteredSubspaceOrtho =
+        std::make_shared<MultiVector<ValueType, memorySpace>>(
+          eigenSubspaceGuess, (ValueType)0);
+      d_filteredSubspace =
+        std::make_shared<MultiVector<ValueType, memorySpace>>(
+          eigenSubspaceGuess, (ValueType)0);
+
       reinit(wantedSpectrumLowerBound,
              wantedSpectrumUpperBound,
              unWantedSpectrumUpperBound,
@@ -59,19 +68,18 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     void
-    ChebyshevFilteredEigenSolver<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace>::reinit(const double wantedSpectrumLowerBound,
-                           const double wantedSpectrumUpperBound,
-                           const double unWantedSpectrumUpperBound,
-                           const double polynomialDegree,
-                           const double illConditionTolerance,
-                           const MultiVector<ValueTypeOperand, memorySpace>
-                             &             eigenSubspaceGuess,
-                           const size_type eigenVectorBlockSize)
+    ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                 ValueTypeOperand,
+                                 memorySpace>::
+      reinit(const double wantedSpectrumLowerBound,
+             const double wantedSpectrumUpperBound,
+             const double unWantedSpectrumUpperBound,
+             const double polynomialDegree,
+             const double illConditionTolerance,
+             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+             const size_type                             eigenVectorBlockSize)
     {
-      d_eigenSubspaceGuess         = eigenSubspaceGuess;
+      d_eigenSubspaceGuess         = &eigenSubspaceGuess;
       d_polynomialDegree           = polynomialDegree;
       d_wantedSpectrumLowerBound   = wantedSpectrumLowerBound;
       d_wantedSpectrumUpperBound   = wantedSpectrumUpperBound;
@@ -79,72 +87,126 @@ namespace dftefe
 
       d_rr = std::make_shared<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>();
+
+      /*create new filtered subspace vec after calling isCompatible*/
+
+      if (!d_filteredSubspace->isCompatible(eigenSubspaceGuess))
+        {
+          d_filteredSubspaceOrtho =
+            std::make_shared<MultiVector<ValueType, memorySpace>>(
+              eigenSubspaceGuess, (ValueType)0);
+          d_filteredSubspace =
+            std::make_shared<MultiVector<ValueType, memorySpace>>(
+              eigenSubspaceGuess, (ValueType)0);
+        }
     }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     EigenSolverError
-    ChebyshevFilteredEigenSolver<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace>::solve(const OpContext &                    A,
-                          std::vector<RealType> &              eigenValues,
-                          MultiVector<ValueType, memorySpace> &eigenVectors,
-                          bool             computeEigenVectors,
-                          const OpContext &B,
-                          const OpContext &BInv)
+    ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                 ValueTypeOperand,
+                                 memorySpace>::
+      solve(const OpContext &                    A,
+            std::vector<RealType> &              eigenValues,
+            MultiVector<ValueType, memorySpace> &eigenVectors, /*in/out*/
+            bool                                 computeEigenVectors,
+            const OpContext &                    B,
+            const OpContext &                    BInv)
     {
       EigenSolverError        retunValue;
       EigenSolverErrorCode    err;
       OrthonormalizationError orthoerr;
       EigenSolverError        rrerr;
 
-      MultiVector<ValueType, memorySpace> filteredSubspace(d_eigenSubspaceGuess,
-                                                           (ValueType)0);
+      // MultiVector<ValueType, memorySpace> filteredSubspace(
+      //   *d_eigenSubspaceGuess, (ValueType)0);
 
       // [CF] Chebyshev filtering of \psi
+
+      int rank;
+      utils::mpi::MPICommRank(
+        d_eigenSubspaceGuess->getMPIPatternP2P()->mpiCommunicator(), &rank);
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
+
+      rootCout << "d_eigenSubspaceGuess l2norms CHFSI: ";
+      for (auto &i : d_eigenSubspaceGuess->l2Norms())
+        rootCout << i << "\t";
+      rootCout << "\n";
 
       ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
         A,
         BInv,
-        d_eigenSubspaceGuess,
+        *d_eigenSubspaceGuess, /*scratch1*/
         d_polynomialDegree,
         d_wantedSpectrumLowerBound,
         d_wantedSpectrumUpperBound,
         d_unWantedSpectrumUpperBound,
-        filteredSubspace);
+        *d_filteredSubspace); /*scratch2*/
 
+      rootCout << "d_filteredSubspace l2norms CHFSI: ";
+      for (auto &i : d_filteredSubspace->l2Norms())
+        rootCout << i << "\t";
+      rootCout << "\n";
 
-      MultiVector<ValueType, memorySpace> filteredSubspaceOrtho(
-        filteredSubspace, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> filteredSubspaceOrtho(
+      //   *d_filteredSubspace, (ValueType)0);
 
       // B orthogonalization required of X -> X_O
 
       // orthoerr = OrthonormalizationFunctions<
       //   ValueTypeOperator,
       //   ValueTypeOperand,
-      //   memorySpace>::CholeskyGramSchmidt(filteredSubspace,
-      //                                     filteredSubspaceOrtho,
+      //   memorySpace>::CholeskyGramSchmidt(*d_filteredSubspace,
+      //                                     *d_filteredSubspaceOrtho,
+      //                                     B);
+      /*scratch2->eigenvector*/
+
+      orthoerr = linearAlgebra::
+        OrthonormalizationFunctions<ValueType, ValueType, memorySpace>::
+          MultipassLowdin(*d_filteredSubspace, /*in/out, eigenvector*/
+                          linearAlgebra::MultiPassLowdinDefaults::MAX_PASS,
+                          linearAlgebra::MultiPassLowdinDefaults::SHIFT_TOL,
+                          linearAlgebra::MultiPassLowdinDefaults::IDENTITY_TOL,
+                          *d_filteredSubspaceOrtho, // go away
+                          B);
+
+      // orthoerr = linearAlgebra::OrthonormalizationFunctions<
+      //   ValueType,
+      //   ValueType,
+      //   memorySpace>::ModifiedGramSchmidt(*d_filteredSubspace,
+      //                                     *d_filteredSubspaceOrtho,
       //                                     B);
 
-      orthoerr = linearAlgebra::OrthonormalizationFunctions<
-        ValueType,
-        ValueType,
-        memorySpace>::MultipassLowdin(filteredSubspace,
-                                      10,
-                                      1e-12,
-                                      1e-12,
-                                      filteredSubspaceOrtho,
-                                      B);
+      rootCout << "d_filteredSubspaceOrtho l2norms CHFSI: ";
+      for (auto &i : d_filteredSubspaceOrtho->l2Norms())
+        rootCout << i << "\t";
+      rootCout << "\n";
 
-      // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspace
+      // [RR] Perform the Rayleigh–Ritz procedure for *d_filteredSubspace
 
       rrerr = d_rr->solve(A,
-                          filteredSubspaceOrtho,
+                          *d_filteredSubspaceOrtho, // go away
                           eigenValues,
-                          eigenVectors,
+                          eigenVectors, /*in/out*/
                           computeEigenVectors);
+
+      rootCout << "eigenVectors l2norms CHFSI: ";
+      for (auto &i : eigenVectors.l2Norms())
+        rootCout << i << "\t";
+      rootCout << "\n";
+
+      /* Using GHEP with B = Identity in orthogonalization
+       * does not work. Prob due to no distribute C2P
+       * in IdenstiyOperator. */
+      // rrerr = d_rr->solve(A,
+      //                     B,
+      //                     *d_filteredSubspaceOrtho,//go away
+      //                     eigenValues,
+      //                     eigenVectors,/*in/out*/
+      //                     computeEigenVectors);
 
       if (!orthoerr.isSuccess)
         {
@@ -152,7 +214,7 @@ namespace dftefe
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
           retunValue.msg += orthoerr.msg;
         }
-      if (!rrerr.isSuccess)
+      else if (!rrerr.isSuccess)
         {
           err        = EigenSolverErrorCode::CHFSI_RAYLEIGH_RITZ_ERROR;
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
@@ -162,9 +224,36 @@ namespace dftefe
         {
           err        = EigenSolverErrorCode::SUCCESS;
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+          retunValue.msg += orthoerr.msg;
         }
 
       return retunValue;
     }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                memorySpace> &
+    ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                 ValueTypeOperand,
+                                 memorySpace>::getFilteredSubspace()
+    {
+      return *d_filteredSubspace;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                memorySpace> &
+    ChebyshevFilteredEigenSolver<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace>::getOrthogonalizedFilteredSubspace()
+    {
+      return *d_filteredSubspaceOrtho;
+    }
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

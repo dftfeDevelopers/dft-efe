@@ -84,6 +84,8 @@ namespace dftefe
         const std::vector<double> &                  minbound,
         const std::vector<double> &                  maxbound,
         double                                       additionalCutoff,
+        const std::vector<utils::Point> &            globalDomainBoundVec,
+        const std::vector<bool> &                    isPeriodicFlags,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
         const utils::mpi::MPIComm &                   comm);
 

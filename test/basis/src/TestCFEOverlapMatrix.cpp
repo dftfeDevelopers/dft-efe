@@ -28,7 +28,7 @@
 #include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <iostream>
-#include <basis/CFEOverlapInverseOperatorContext.h>
+#include <basis/CFEOverlapInverseOpContextGLL.h>
 
 int main()
 {
@@ -82,6 +82,7 @@ int main()
   double ymax = 5.0;
   double zmax = 5.0;
   unsigned int numComponents = 1;
+  bool isAdaptiveGrid = false;
 
   domainVectors[0][0] = xmax;
   domainVectors[1][1] = ymax;
@@ -93,6 +94,49 @@ int main()
                                                  domainVectors,
                                                  isPeriodicFlags);
   triangulationBase->finalizeTriangulationConstruction();
+
+  if(isAdaptiveGrid)
+  {
+    int flag = 1;
+    int mpiReducedFlag = 1;
+    bool refineFlag = true;
+    while(mpiReducedFlag)
+    {
+      flag = 1;
+      auto triaCellIter = triangulationBase->beginLocal();
+      for( ; triaCellIter != triangulationBase->endLocal(); triaCellIter++)
+      {
+        refineFlag = false;
+        dftefe::utils::Point centerPoint(dim, 0.0); 
+        (*triaCellIter)->center(centerPoint);
+        double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);  
+        dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
+        dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
+        dist = std::sqrt(dist); 
+        if((dist < 1.0) || centerPoint[0] < 1.0)
+          refineFlag = true;
+        if ( refineFlag )
+        {
+          (*triaCellIter)->setRefineFlag();
+          flag = 0;
+        }
+      }
+      triangulationBase->executeCoarseningAndRefinement();
+      triangulationBase->finalizeTriangulationConstruction();
+      // Mpi_allreduce that all the flags are 1 (mpi_max)
+      int err = dftefe::utils::mpi::MPIAllreduce<dftefe::utils::MemorySpace::HOST>(
+        &flag,
+        &mpiReducedFlag,
+        1,
+        dftefe::utils::mpi::MPIInt,
+        dftefe::utils::mpi::MPIMin,
+        comm);
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        dftefe::utils::mpi::MPIErrIsSuccessAndMsg(err);
+      dftefe::utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+    }
+  }
 
   // initialize the basis 
 
@@ -195,23 +239,23 @@ int main()
                                                         50);
 
 
-      MContext->apply(*X,*Y);
   //feBasisOp.interpolate( *dens, constraintHomwHan, *basisManager, quadValuesContainer);
 
   std::shared_ptr<dftefe::linearAlgebra::OperatorContext<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST>> MInvContext =
-    std::make_shared<dftefe::basis::CFEOverlapInverseOperatorContext<double,
+    std::make_shared<dftefe::basis::CFEOverlapInverseOpContextGLL<double,
                                                    double,
                                                    dftefe::utils::MemorySpace::HOST,
                                                    dim>>
                                                    (*basisManager,
-                                                    *MContext,
+                                                    *feBasisData,
                                                     linAlgOpContext);
 
-    MInvContext->apply(*Y,*Z);
+    MInvContext->apply(*X,*Y);
+    MContext->apply(*Y,*Z);
 
-    std::cout << "\n" <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
+    std::cout <<X->l2Norms()[0] << "," << Y->l2Norms()[0] <<"," << Z->l2Norms()[0] << "\n";
 
   std::shared_ptr<dftefe::linearAlgebra::MultiVector<double, dftefe::utils::MemorySpace::HOST>>
    error = std::make_shared<
@@ -223,6 +267,8 @@ int main()
   std::vector<double> nOnes(0);
   nOnes.resize(numComponents, (double)-1.0);
 
+      basisManager->getConstraints().setConstrainedNodesToZero(*X,
+                                                              1);   
   dftefe::linearAlgebra::add(ones, *X, nOnes, *Z, *error);
 
     std::cout<<"No of dofs: "<< basisDofHandler->nGlobalNodes() <<", error norm: "<<error->l2Norms()[0]<<", relative error: "<<(error->l2Norms()[0]/Z->l2Norms()[0])<<"\n";

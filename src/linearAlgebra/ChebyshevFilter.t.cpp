@@ -26,6 +26,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/Exceptions.h>
 #include <string>
+#include <chrono>
 
 namespace dftefe
 {
@@ -66,11 +67,11 @@ namespace dftefe
       double sigma = e / (wantedSpectrumLowerBound - c);
 
       const double sigma1 = sigma;
-      const double gamma  = (2 / sigma1);
+      const double gamma  = (2.0 / sigma1);
       double       sigma2;
 
-      MultiVector<ValueType, memorySpace> filteredSubspaceNew(
-        eigenSubspaceGuess, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> filteredSubspaceNew(
+      //   eigenSubspaceGuess, (ValueType)0);
       MultiVector<ValueType, memorySpace> scratch1(eigenSubspaceGuess,
                                                    (ValueType)0);
       MultiVector<ValueType, memorySpace> scratch2(eigenSubspaceGuess,
@@ -93,7 +94,7 @@ namespace dftefe
 
       for (size_type i = 2; i <= polynomialDegree; i++)
         {
-          sigma2 = 1 / (gamma - sigma);
+          sigma2 = 1.0 / (gamma - sigma);
 
           // Compute B^-1A filteredSubspace
           A.apply(filteredSubspace, scratch1);
@@ -102,29 +103,34 @@ namespace dftefe
           // temp = (2\sigma2/e)(B^-1A filteredSubspace - c filteredSubspace)
           blasLapack::axpby<ValueType, ValueType, memorySpace>(
             locallyOwnedMultivecSize,
-            2 * sigma2 / e,
+            2.0 * sigma2 / e,
             scratch2.data(),
-            -2 * sigma2 / e * c,
+            -2.0 * sigma2 / e * c,
             filteredSubspace.data(),
             scratch1.data(),
             *eigenSubspaceGuess.getLinAlgOpContext());
 
           // filteredSubspaceNew = temp - \sigma*\sigma2*eigenSubspaceGuess
+          // Note: works if axpby is capable of z being same as either of x or y
           blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
             locallyOwnedMultivecSize,
-            (ValueType)1,
+            (ValueType)1.0,
             scratch1.data(),
             -sigma * sigma2,
             eigenSubspaceGuess.data(),
-            filteredSubspaceNew.data(),
+            eigenSubspaceGuess /*filteredSubspaceNew*/.data(),
             *eigenSubspaceGuess.getLinAlgOpContext());
 
-          eigenSubspaceGuess = filteredSubspace;
+          // eigenSubspaceGuess = filteredSubspace;
 
-          filteredSubspace = filteredSubspaceNew;
+          // filteredSubspace = filteredSubspaceNew;
+
+          swap(eigenSubspaceGuess, filteredSubspace);
 
           sigma = sigma2;
         }
+
+      eigenSubspaceGuess = filteredSubspace;
     }
 
   } // end of namespace linearAlgebra

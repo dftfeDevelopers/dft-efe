@@ -472,7 +472,7 @@ namespace dftefe
       d_diagonal    = alphaVec;
       d_subDiagonal = betaVec;
 
-      if (krylovSubspaceSize > d_maxKrylovSubspaceSize)
+      if (krylovSubspaceSize >= d_maxKrylovSubspaceSize)
         {
           isSuccess  = true;
           err        = EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT;

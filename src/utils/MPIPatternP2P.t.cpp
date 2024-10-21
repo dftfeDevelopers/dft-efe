@@ -1125,16 +1125,18 @@ namespace dftefe
         for (unsigned int iGhostProc = 0; iGhostProc < d_numGhostProcs;
              ++iGhostProc)
           {
-            const size_type numGhostIndicesInProc =
-              d_numGhostIndicesInGhostProcs[iGhostProc];
+            // const size_type numGhostIndicesInProc =
+            //   d_numGhostIndicesInGhostProcs[iGhostProc];
             const int ghostProcId = d_ghostProcIds[iGhostProc];
-            err = MPIIsend<MemorySpace::HOST>(&numGhostIndicesInProc,
-                                              1,
-                                              MPIUnsigned,
-                                              ghostProcId,
-                                              tag,
-                                              d_mpiComm,
-                                              &sendRequests[iGhostProc]);
+            err                   = MPIIsend<MemorySpace::HOST>(
+              &d_numGhostIndicesInGhostProcs[iGhostProc]
+              /*&numGhostIndicesInProc*/,
+              1,
+              MPIUnsigned,
+              ghostProcId,
+              tag,
+              d_mpiComm,
+              &sendRequests[iGhostProc]);
             std::string errMsg = "Error occured while using MPI_Isend. "
                                  "Error code: " +
                                  std::to_string(err);

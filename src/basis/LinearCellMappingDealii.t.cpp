@@ -3,7 +3,6 @@
 #include "DealiiConversions.h"
 #include <deal.II/base/geometry_info.h>
 #include <deal.II/base/quadrature.h>
-#include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe.h>
 #include <deal.II/fe/fe_values.h>
 
@@ -14,6 +13,7 @@ namespace dftefe
     template <unsigned int dim>
     LinearCellMappingDealii<dim>::LinearCellMappingDealii()
       : d_mappingDealii()
+      , d_fe(1)
     {}
 
 
@@ -32,14 +32,16 @@ namespace dftefe
     {
       TriangulationCellDealii<dim> triaCellDealii =
         dynamic_cast<const TriangulationCellDealii<dim> &>(triaCellBase);
-      dealii::FE_Q<dim>                       fe(1);
+      // dealii::FE_Q<dim>                       fe(1);
       std::vector<dealii::Point<dim, double>> quadPointsDealii;
       quadPointsDealii.resize(paramPoints.size());
       convertToDealiiPoint<dim>(paramPoints, quadPointsDealii);
       dealii::Quadrature<dim> quadRuleDealii(quadPointsDealii, weights);
-      dealii::FEValues<dim>   fe_values(
-        fe, quadRuleDealii, dealii::update_values | dealii::update_JxW_values);
-      auto cellItr = triaCellDealii.getCellIterator();
+      dealii::FEValues<dim>   fe_values(d_fe,
+                                      quadRuleDealii,
+                                      dealii::update_values |
+                                        dealii::update_JxW_values);
+      auto                    cellItr = triaCellDealii.getCellIterator();
       fe_values.reinit(cellItr);
 
       for (unsigned int iQuad = 0; iQuad < quadRuleDealii.size(); iQuad++)

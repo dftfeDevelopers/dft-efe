@@ -86,6 +86,9 @@ namespace dftefe
                         const size_type  componentId,
                         const ValueType *values);
 
+      void
+      setValue(const ValueType value);
+
       template <utils::MemorySpace memorySpaceDst>
       void
       getCellValues(const size_type cellId, ValueType *values) const;
@@ -169,17 +172,21 @@ namespace dftefe
      * @param[in] v QuadratureValuesContainer
      * @param[out] w Resulting QuadratureValuesContainer
      */
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    template <typename ValueType1,
+              typename ValueType2,
+              dftefe::utils::MemorySpace memorySpace>
     void
-    add(ValueType                                                a,
-        const QuadratureValuesContainer<ValueType, memorySpace> &u,
-        ValueType                                                b,
-        const QuadratureValuesContainer<ValueType, memorySpace> &v,
-        QuadratureValuesContainer<ValueType, memorySpace> &      w,
-        const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+    add(linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2> a,
+        const QuadratureValuesContainer<ValueType1, memorySpace> &     u,
+        linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2> b,
+        const QuadratureValuesContainer<ValueType2, memorySpace> &     v,
+        QuadratureValuesContainer<
+          linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
+          memorySpace> &                             w,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
     /**
-     * @brief Perform \f$ w = a*u + b*v \f$
+     * @brief Perform \f$ v = a*u + b*v \f$
      * @param[in] a scalar
      * @param[in] u QuadratureValuesContainer
      * @param[in] b scalar
@@ -191,38 +198,37 @@ namespace dftefe
     add(ValueType                                                a,
         const QuadratureValuesContainer<ValueType, memorySpace> &u,
         ValueType                                                b,
-        const QuadratureValuesContainer<ValueType, memorySpace> &v,
-        const linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        QuadratureValuesContainer<ValueType, memorySpace> &      v,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
-    // FIXME: Uncomment the following once ascale is implemented in
-    // linearAlgebra::blaslapack
+    /**
+     * @brief Perform \f$ w = a*u\f$
+     * @param[in] a scalar
+     * @param[in] u QuadratureValuesContainer
+     * @param[out] w Resulting QuadratureValuesContainer
+     */
+    template <typename ValueType1,
+              typename ValueType2,
+              dftefe::utils::MemorySpace memorySpace>
+    void
+    scale(ValueType1                                                alpha,
+          const QuadratureValuesContainer<ValueType2, memorySpace> &u,
+          QuadratureValuesContainer<
+            linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
+            memorySpace> &                             w,
+          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
-    //    /**
-    //     * @brief Perform \f$ w = a*u\f$
-    //     * @param[in] a scalar
-    //     * @param[in] u QuadratureValuesContainer
-    //     * @param[out] w Resulting QuadratureValuesContainer
-    //     */
-    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    void
-    //    scale(ValueType                                                a,
-    //          const QuadratureValuesContainer<ValueType, memorySpace> &u,
-    //          QuadratureValuesContainer<ValueType, memorySpace> &      w,
-    //          const linearAlgebra::LinAlgOpContext<memorySpace>
-    //          &linAlgOpContext);
-    //
-    //    /**
-    //     * @brief Perform \f$ w = a*u\f$
-    //     * @param[in] a scalar
-    //     * @param[in] u QuadratureValuesContainer
-    //     * @return Resulting QuadratureValuesContainer w
-    //     */
-    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    void
-    //    scale(ValueType                                          a,
-    //          QuadratureValuesContainer<ValueType, memorySpace> &u,
-    //          const linearAlgebra::LinAlgOpContext<memorySpace> &
-    //          linAlgOpContext);
+    /**
+     * @brief Perform \f$ u = a*u\f$
+     * @param[in] a scalar
+     * @param[in] u QuadratureValuesContainer
+     * @return Resulting QuadratureValuesContainer u
+     */
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    scale(ValueType                                          alpha,
+          QuadratureValuesContainer<ValueType, memorySpace> &u,
+          linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext);
 
   } // end of namespace quadrature
 } // end of namespace dftefe

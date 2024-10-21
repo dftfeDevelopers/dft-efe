@@ -178,7 +178,8 @@ namespace dftefe
           &columnConstraintsValues,
         const utils::MemoryStorage<ValueTypeBasisCoeff,
                                    dftefe::utils::MemorySpace::DEVICE>
-          &constraintsInhomogenities)
+          &                                          constraintsInhomogenities,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
 
@@ -222,7 +223,8 @@ namespace dftefe
                                    dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
-          &columnConstraintsValues)
+          &                                          columnConstraintsValues,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
 
@@ -265,7 +267,8 @@ namespace dftefe
                                    dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
-          &columnConstraintsValues)
+          &                                          columnConstraintsValues,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
 
@@ -333,7 +336,8 @@ namespace dftefe
                                    dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
-          &columnConstraintsValues)
+          &                                          columnConstraintsValues,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
 

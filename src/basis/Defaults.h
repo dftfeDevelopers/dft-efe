@@ -45,7 +45,7 @@ namespace dftefe
       //
       // The number of batched gemms done
       //
-      static const size_type MAX_CELL_TIMES_NUMVECS;
+      static const size_type CELL_BATCH_SIZE;
 
       //
       // Maximum iteration for CG
@@ -66,6 +66,17 @@ namespace dftefe
       // Maximum residual tolerance for divergence
       //
       static const double DIVERGENCE_TOL;
+
+    }; // end of class L2ProjectionDefaults
+
+    class GenerateMeshDefaults
+    {
+    public:
+      //
+      // The maximum refinement steps used for adaptive mesh generation
+      // algorithm.
+      //
+      static const size_type MAX_REFINEMENT_STEPS;
 
     }; // end of class L2ProjectionDefaults
 

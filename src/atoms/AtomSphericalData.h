@@ -30,6 +30,7 @@
 #include <atoms/SphericalData.h>
 #include <atoms/SphericalDataNumerical.h>
 #include <memory>
+#include <unordered_map>
 #include <map>
 #include <vector>
 #include <string>
@@ -70,7 +71,7 @@ namespace dftefe
       std::vector<std::string>
       getMetadataNames() const;
 
-      const std::vector<std::shared_ptr<SphericalData>>
+      const std::vector<std::shared_ptr<SphericalData>> &
       getSphericalData(const std::string fieldName) const;
 
       const std::shared_ptr<SphericalData>
@@ -91,11 +92,12 @@ namespace dftefe
       std::string              d_fileName;
       std::vector<std::string> d_fieldNames;
       std::vector<std::string> d_metadataNames;
-      std::map<std::string, std::vector<std::shared_ptr<SphericalData>>>
+      std::unordered_map<std::string,
+                         std::vector<std::shared_ptr<SphericalData>>>
         d_sphericalData;
-      std::map<std::string, std::map<std::vector<int>, size_type>>
-                                         d_qNumbersToIdMap;
-      std::map<std::string, std::string> d_metadata;
+      std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
+                                                   d_qNumbersToIdMap;
+      std::unordered_map<std::string, std::string> d_metadata;
     };
   } // end of namespace atoms
 } // end of namespace dftefe

@@ -47,7 +47,7 @@ namespace dftefe
      */
     const size_type
       QuadratureRuleGaussSubdividedDefaults::NUM_CELLS_FOR_ADAPTIVE_REFERENCE =
-        5;
+        1;
 
   } // end of namespace quadrature
 } // end of namespace dftefe

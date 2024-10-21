@@ -15,13 +15,15 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      EFEConstraintsLocalDealii()
+      EFEConstraintsLocalDealii(dealii::IndexSet &locally_relevant_dofs)
       : d_isCleared(false)
       , d_isClosed(false)
     {
       d_locallyOwnedRanges.resize(0);
       d_ghostIndices.resize(0);
       d_globalToLocalMap.clear();
+      d_dealiiAffineConstraintMatrix.clear();
+      d_dealiiAffineConstraintMatrix.reinit(locally_relevant_dofs);
     }
 
     // constructor taking the closed dealiiAffineConstraintMatrix and
@@ -287,16 +289,16 @@ namespace dftefe
     {
       bool printWarning = false;
 
-      std::vector<global_size_type> rowConstraintsIdsGlobalTmp;
-      std::vector<size_type>        rowConstraintsIdsLocalTmp;
-      std::vector<size_type>        columnConstraintsIdsLocalTmp;
-      std::vector<size_type>        constraintRowSizesAccumulatedTmp;
-      std::vector<global_size_type> columnConstraintsIdsGlobalTmp;
+      std::vector<global_size_type> rowConstraintsIdsGlobalTmp(0);
+      std::vector<size_type>        rowConstraintsIdsLocalTmp(0);
+      std::vector<size_type>        columnConstraintsIdsLocalTmp(0);
+      std::vector<size_type>        constraintRowSizesAccumulatedTmp(0);
+      std::vector<global_size_type> columnConstraintsIdsGlobalTmp(0);
 
-      std::vector<double>              columnConstraintsValuesTmp;
-      std::vector<ValueTypeBasisCoeff> constraintsInhomogenitiesTmp;
+      std::vector<double>              columnConstraintsValuesTmp(0);
+      std::vector<ValueTypeBasisCoeff> constraintsInhomogenitiesTmp(0);
 
-      std::vector<size_type> rowConstraintsSizesTmp;
+      std::vector<size_type> rowConstraintsSizesTmp(0);
 
       std::vector<std::pair<global_size_type, global_size_type>>
         locallyOwnedRanges = d_locallyOwnedRanges;
@@ -497,7 +499,8 @@ namespace dftefe
                                            d_columnConstraintsIdsLocal,
                                            d_constraintRowSizesAccumulated,
                                            d_columnConstraintsValues,
-                                           d_constraintsInhomogenities);
+                                           d_constraintsInhomogenities,
+                                           *vectorData.getLinAlgOpContext());
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -517,7 +520,8 @@ namespace dftefe
                                            d_rowConstraintsSizes,
                                            d_columnConstraintsIdsLocal,
                                            d_constraintRowSizesAccumulated,
-                                           d_columnConstraintsValues);
+                                           d_columnConstraintsValues,
+                                           *vectorData.getLinAlgOpContext());
     }
 
     template <typename ValueTypeBasisCoeff,

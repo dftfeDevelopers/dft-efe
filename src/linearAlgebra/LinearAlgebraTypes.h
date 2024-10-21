@@ -65,6 +65,8 @@ namespace dftefe
       FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM,
       FAILED_STANDARD_EIGENPROBLEM,
       FAILED_GENERALIZED_EIGENPROBLEM,
+      FAILED_LINEAR_SYSTEM_SOLVE,
+      OTHER_ERROR
     };
 
     enum class LinearSolverErrorCode
@@ -84,6 +86,10 @@ namespace dftefe
       LANCZOS_SUBSPACE_INSUFFICIENT,
       CHFSI_ORTHONORMALIZATION_ERROR,
       CHFSI_RAYLEIGH_RITZ_ERROR,
+      KS_MAX_PASS_ERROR,
+      KS_CHFSI_ERROR,
+      KS_LANCZOS_ERROR,
+      KS_NEWTON_RAPHSON_ERROR,
       OTHER_ERROR
     };
 
@@ -93,6 +99,14 @@ namespace dftefe
       LAPACK_ERROR,
       NON_ORTHONORMALIZABLE_MULTIVECTOR,
       MAX_PASS_EXCEEDED
+    };
+
+    enum class NewtonRaphsonErrorCode
+    {
+      SUCCESS,
+      FORCE_TOLERANCE_ERR,
+      FAILED_TO_CONVERGE,
+      OTHER_ERROR
     };
 
     struct LapackError
@@ -121,6 +135,13 @@ namespace dftefe
       bool                        isSuccess;
       OrthonormalizationErrorCode err;
       std::string                 msg;
+    };
+
+    struct NewtonRaphsonError
+    {
+      bool                   isSuccess;
+      NewtonRaphsonErrorCode err;
+      std::string            msg;
     };
 
     /**
@@ -171,6 +192,17 @@ namespace dftefe
       static const std::map<OrthonormalizationErrorCode, std::string>
         d_errToMsgMap;
     }; // end of class OrthonormalizationErrorMsg
+
+
+    class NewtonRaphsonErrorMsg
+    {
+    public:
+      static NewtonRaphsonError
+      isSuccessAndMsg(const NewtonRaphsonErrorCode &errorCode);
+
+    private:
+      static const std::map<NewtonRaphsonErrorCode, std::string> d_errToMsgMap;
+    }; // end of class NewtonRaphsonErrorMsg
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

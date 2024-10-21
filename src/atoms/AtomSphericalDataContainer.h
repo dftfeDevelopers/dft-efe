@@ -27,6 +27,7 @@
 #define dftefeAtomSphericalDataContainer_h
 
 #include <utils/TypeConfig.h>
+#include <unordered_map>
 #include <map>
 #include <string>
 #include <atoms/AtomSphericalData.h>
@@ -79,7 +80,7 @@ namespace dftefe
        *  (e.g., n,l,m quantum numbers) for which the SphericalData is required
        * @return SphericalData object for the given atom and quantum numbers
        */
-      const std::vector<std::shared_ptr<SphericalData>>
+      const std::vector<std::shared_ptr<SphericalData>> &
       getSphericalData(std::string       atomSymbol,
                        const std::string fieldName) const;
 
@@ -111,7 +112,7 @@ namespace dftefe
       std::map<std::string, std::string> d_atomSymbolToFilename;
       std::vector<std::string>           d_fieldNames;
       std::vector<std::string>           d_metadataNames;
-      std::map<std::string, AtomSphericalData>
+      std::unordered_map<std::string, AtomSphericalData>
         d_mapAtomSymbolToAtomSphericalData;
 
     }; // end of class AtomSphericalDataContainer

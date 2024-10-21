@@ -225,6 +225,15 @@ namespace dftefe
         d_mpiPatternP2P;
       std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         d_constraintsLocal;
+      std::vector<std::pair<global_size_type, global_size_type>>
+        d_locallyOwnedRanges;
+
+      void
+      getAllOwnedClassicalRanges(
+        const std::pair<global_size_type, global_size_type> &locallyOwnedRanges,
+        std::vector<std::pair<global_size_type, global_size_type>>
+          &                        allOwnedRanges,
+        const utils::mpi::MPIComm &mpiComm) const;
 
     }; // end of CFEBasisDofHandlerDealii
   }    // end of namespace basis

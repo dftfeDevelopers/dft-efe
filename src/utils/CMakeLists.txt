@@ -37,7 +37,10 @@ set(DFT-EFE-UTILS-SOURCES
   MPICommunicatorP2PKernels.cu
   MPIErrorCodeHandler.cpp
   Spline.cpp
-  ScalarZeroFunctionReal.cpp)
+  ScalarZeroFunctionReal.cpp
+  SmearChargeDensityFunction.cpp
+  SmearChargePotentialFunction.cpp
+  PointChargePotentialFunction.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

@@ -301,6 +301,29 @@ namespace dftefe
           }
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace::DEVICE>
+      void
+      scaleStridedVarBatched(const size_type                      numMats,
+                             const ScalarOp *                     scalarOpA,
+                             const ScalarOp *                     scalarOpB,
+                             const size_type *                    stridea,
+                             const size_type *                    strideb,
+                             const size_type *                    stridec,
+                             const size_type *                    m,
+                             const size_type *                    n,
+                             const size_type *                    k,
+                             const ValueType1 *                   dA,
+                             const ValueType2 *                   dB,
+                             scalar_type<ValueType1, ValueType2> *dC,
+                             LinAlgOpContext<memorySpace> &       context)
+      {
+        utils::throwException(
+          false,
+          "scaleStridedVarBatched() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+      }
+
       template <typename ValueType1, typename ValueType2>
       void
       KernelsTwoValueTypes<ValueType1,
@@ -338,6 +361,24 @@ namespace dftefe
               dftefe::utils::makeDataTypeDeviceCompatible(B),
               dftefe::utils::makeDataTypeDeviceCompatible(Z));
           }
+      }
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      KernelsTwoValueTypes<ValueType1,
+                           ValueType2,
+                           dftefe::utils::MemorySpace::DEVICE>::
+        transposedKhatriRaoProduct(const Layout                         layout,
+                                   const size_type                      sizeI,
+                                   const size_type                      sizeJ,
+                                   const size_type                      sizeK,
+                                   const ValueType1 *                   A,
+                                   const ValueType2 *                   B,
+                                   scalar_type<ValueType1, ValueType2> *Z)
+      {
+        utils::throwException(
+          false,
+          "transposedKhatriRaoProduct() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       }
 
 

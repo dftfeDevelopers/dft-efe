@@ -114,6 +114,23 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    double
+    TriangulationCellDealii<dim>::minimumVertexDistance() const
+    {
+      return d_cellItr->minimum_vertex_distance();
+    }
+
+    template <unsigned int dim>
+    double
+    TriangulationCellDealii<dim>::distanceToUnitCell(
+      dftefe::utils::Point &parametricPoint) const
+    {
+      dealii::Point<dim, double> dealiiPoint;
+      convertToDealiiPoint<dim>(parametricPoint, dealiiPoint);
+      return dealii::GeometryInfo<dim>::distance_to_unit_cell(dealiiPoint);
+    }
+
+    template <unsigned int dim>
     void
     TriangulationCellDealii<dim>::getParametricPoint(
       const dftefe::utils::Point &realPoint,

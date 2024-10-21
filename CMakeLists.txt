@@ -27,7 +27,8 @@ add_subdirectory(src/basis ${CMAKE_CURRENT_BINARY_DIR}/buildBasis)
 add_subdirectory(src/quadrature ${CMAKE_CURRENT_BINARY_DIR}/buildQuadrature)
 add_subdirectory(src/atoms ${CMAKE_CURRENT_BINARY_DIR}/buildAtoms)
 add_subdirectory(src/electrostatics ${CMAKE_CURRENT_BINARY_DIR}/buildElectrostatics)
-target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature dft-efe-atoms dft-efe-electrostatics)
+add_subdirectory(src/ksdft ${CMAKE_CURRENT_BINARY_DIR}/buildKsdft)
+target_link_libraries(dft-efe PUBLIC dft-efe-utils dft-efe-linalg dft-efe-basis dft-efe-quadrature dft-efe-atoms dft-efe-electrostatics dft-efe-ksdft)
 include_directories(src)
 
 # Build documentation

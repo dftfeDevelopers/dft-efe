@@ -89,6 +89,7 @@ namespace dftefe
         std::shared_ptr<BasisDataStorage<ValueTypeBasisData, memorySpace>>
           cfeBasisDataStorage = nullptr)
       {
+        bool numCellsZero = efeBDH->nLocallyOwnedCells() == 0 ? true : false;
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
@@ -105,23 +106,27 @@ namespace dftefe
         else if (quadratureFamily ==
                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
           {
-            // get the parametric points and jxw in each cell according to
-            // the attribute.
-            unsigned int                     cellIndex = 0;
-            const std::vector<utils::Point> &cellParametricQuadPoints =
-              quadratureRuleContainer->getCellParametricPoints(cellIndex);
-            std::vector<dealii::Point<dim, double>> dealiiParametricQuadPoints(
-              0);
+            if (!numCellsZero)
+              {
+                // get the parametric points and jxw in each cell according to
+                // the attribute.
+                unsigned int                     cellIndex = 0;
+                const std::vector<utils::Point> &cellParametricQuadPoints =
+                  quadratureRuleContainer->getCellParametricPoints(cellIndex);
+                std::vector<dealii::Point<dim, double>>
+                  dealiiParametricQuadPoints(0);
 
-            // get the quad weights in each cell
-            const std::vector<double> &quadWeights =
-              quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
-            convertToDealiiPoint<dim>(cellParametricQuadPoints,
-                                      dealiiParametricQuadPoints);
+                // get the quad weights in each cell
+                const std::vector<double> &quadWeights =
+                  quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
+                convertToDealiiPoint<dim>(cellParametricQuadPoints,
+                                          dealiiParametricQuadPoints);
 
-            // Ask dealii to create quad rule in each cell
-            dealiiQuadratureRule =
-              dealii::Quadrature<dim>(dealiiParametricQuadPoints, quadWeights);
+                // Ask dealii to create quad rule in each cell
+                dealiiQuadratureRule =
+                  dealii::Quadrature<dim>(dealiiParametricQuadPoints,
+                                          quadWeights);
+              }
           }
 
         else
@@ -163,7 +168,8 @@ namespace dftefe
         // NOTE: cellId 0 passed as we assume only H refined in this function
         size_type       dofsPerCell = efeBDH->nCellDofs(cellId);
         const size_type nQuadPointInCell =
-          quadratureRuleContainer->nCellQuadraturePoints(cellId);
+          numCellsZero ? 0 :
+                         quadratureRuleContainer->nCellQuadraturePoints(cellId);
         // utils::mathFunctions::sizeTypePow(num1DQuadPoints, dim);
 
         nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointInCell);
@@ -237,11 +243,15 @@ namespace dftefe
           }
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
 
         auto basisQuadStorageTmpIter = basisQuadStorageTmp.begin();
         auto basisGradientQuadStorageTmpIter =
@@ -331,7 +341,7 @@ namespace dftefe
                                                 (ValueTypeBasisData)0));
 
 
-            if (efeBDH->isOrthogonalized())
+            if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
@@ -349,30 +359,29 @@ namespace dftefe
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }
@@ -783,6 +792,7 @@ namespace dftefe
           cfeBasisDataStorage = nullptr)
 
       {
+        bool numCellsZero = efeBDH->nLocallyOwnedCells() == 0 ? true : false;
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
@@ -799,23 +809,27 @@ namespace dftefe
         else if (quadratureFamily ==
                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
           {
-            // get the parametric points and jxw in each cell according to
-            // the attribute.
-            unsigned int                     cellIndex = 0;
-            const std::vector<utils::Point> &cellParametricQuadPoints =
-              quadratureRuleContainer->getCellParametricPoints(cellIndex);
-            std::vector<dealii::Point<dim, double>> dealiiParametricQuadPoints(
-              0);
+            if (!numCellsZero)
+              {
+                // get the parametric points and jxw in each cell according to
+                // the attribute.
+                unsigned int                     cellIndex = 0;
+                const std::vector<utils::Point> &cellParametricQuadPoints =
+                  quadratureRuleContainer->getCellParametricPoints(cellIndex);
+                std::vector<dealii::Point<dim, double>>
+                  dealiiParametricQuadPoints(0);
 
-            // get the quad weights in each cell
-            const std::vector<double> &quadWeights =
-              quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
-            convertToDealiiPoint<dim>(cellParametricQuadPoints,
-                                      dealiiParametricQuadPoints);
+                // get the quad weights in each cell
+                const std::vector<double> &quadWeights =
+                  quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
+                convertToDealiiPoint<dim>(cellParametricQuadPoints,
+                                          dealiiParametricQuadPoints);
 
-            // Ask dealii to create quad rule in each cell
-            dealiiQuadratureRule =
-              dealii::Quadrature<dim>(dealiiParametricQuadPoints, quadWeights);
+                // Ask dealii to create quad rule in each cell
+                dealiiQuadratureRule =
+                  dealii::Quadrature<dim>(dealiiParametricQuadPoints,
+                                          quadWeights);
+              }
           }
 
         else
@@ -846,7 +860,8 @@ namespace dftefe
                                              dealiiUpdateFlags);
 
         const size_type nQuadPointInCell =
-          quadratureRuleContainer->nCellQuadraturePoints(cellId);
+          numCellsZero ? 0 :
+                         quadratureRuleContainer->nCellQuadraturePoints(cellId);
 
         const size_type numLocallyOwnedCells = efeBDH->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
@@ -871,11 +886,15 @@ namespace dftefe
           basisStiffnessSize);
         basisGradNiGradNjTmp.resize(basisStiffnessSize, ValueTypeBasisData(0));
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
         auto basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         cellIndex                     = 0;
 
@@ -939,7 +958,7 @@ namespace dftefe
                                                 numEnrichmentIdsInCell,
                                               (ValueTypeBasisData)0));
 
-            if (efeBDH->isOrthogonalized())
+            if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
                 cfeBasisManager->getCellDofsLocalIds(cellIndex,
                                                      vecClassicalLocalNodeId);
@@ -957,30 +976,29 @@ namespace dftefe
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }
@@ -1324,11 +1342,15 @@ namespace dftefe
 
         // Init cell iters and storage iters
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
 
         cellIndex = 0;
 
@@ -1374,6 +1396,9 @@ namespace dftefe
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
+            // int rank;
+            // dftefe::utils::mpi::MPICommRank(efeBDH->getEnrichmentClassicalInterface()->getCFEBasisManager()->getMPIPatternP2P()->mpiCommunicator(),
+            // &rank); std::cout << "\n" <<rank << ", ";
             dofsPerCell = efeBDH->nCellDofs(cellIndex);
             // Get classical dof numbers
             size_type classicalDofsPerCell = utils::mathFunctions::sizeTypePow(
@@ -1458,31 +1483,59 @@ namespace dftefe
                       efeBDH->getEnrichmentClassicalInterface()
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
-                    // get the vectors of non-zero localIds and coeffs
+                    // // get the vectors of non-zero localIds and coeffs
 
+                    // auto iter =
+                    //   enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
+                    // DFTEFE_Assert(iter !=
+                    //               enrichmentIdToInterfaceCoeffMap->end());
+                    // const std::vector<ValueTypeBasisData>
+                    // &coeffsInLocalIdsMap =
+                    //   iter->second;
+
+                    // for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    //   {
+                    //     size_type pos   = 0;
+                    //     bool      found = false;
+                    //     auto      it =
+                    //       enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    //     DFTEFE_Assert(it !=
+                    //                   enrichmentIdToClassicalLocalIdMap->end());
+                    //     it->second.getPosition(vecClassicalLocalNodeId[i],
+                    //                            pos,
+                    //                            found);
+                    //     if (found)
+                    //       {
+                    //         coeffsInCell[numEnrichmentIdsInCell * i +
+                    //                      cellEnrichId] =
+                    //           coeffsInLocalIdsMap[pos];
+                    //       }
+                    //   }
+
+                    // get the vectors of non-zero localIds and coeffs
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }
@@ -1939,11 +1992,15 @@ namespace dftefe
         basisGradNiGradNjTmp.resize(basisStiffnessSize, ValueTypeBasisData(0));
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-        std::shared_ptr<FECellDealii<dim>> feCellDealii =
-          std::dynamic_pointer_cast<FECellDealii<dim>>(*locallyOwnedCellIter);
-        utils::throwException(
-          feCellDealii != nullptr,
-          "Dynamic casting of FECellBase to FECellDealii not successful");
+        std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
+        if (numLocallyOwnedCells != 0)
+          {
+            feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
+              *locallyOwnedCellIter);
+            utils::throwException(
+              feCellDealii != nullptr,
+              "Dynamic casting of FECellBase to FECellDealii not successful");
+          }
 
         auto basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         cellIndex                     = 0;
@@ -2049,30 +2106,29 @@ namespace dftefe
                         ->getEnrichmentId(cellIndex, cellEnrichId);
 
                     // get the vectors of non-zero localIds and coeffs
-
                     auto iter =
                       enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    DFTEFE_Assert(iter !=
-                                  enrichmentIdToInterfaceCoeffMap->end());
-                    const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                      iter->second;
-
-                    for (size_type i = 0; i < classicalDofsPerCell; i++)
+                    auto it =
+                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                        it != enrichmentIdToClassicalLocalIdMap->end())
                       {
-                        size_type pos   = 0;
-                        bool      found = false;
-                        auto      it =
-                          enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                        DFTEFE_Assert(it !=
-                                      enrichmentIdToClassicalLocalIdMap->end());
-                        it->second.getPosition(vecClassicalLocalNodeId[i],
-                                               pos,
-                                               found);
-                        if (found)
+                        const std::vector<ValueTypeBasisData>
+                          &coeffsInLocalIdsMap = iter->second;
+
+                        for (size_type i = 0; i < classicalDofsPerCell; i++)
                           {
-                            coeffsInCell[numEnrichmentIdsInCell * i +
-                                         cellEnrichId] =
-                              coeffsInLocalIdsMap[pos];
+                            size_type pos   = 0;
+                            bool      found = false;
+                            it->second.getPosition(vecClassicalLocalNodeId[i],
+                                                   pos,
+                                                   found);
+                            if (found)
+                              {
+                                coeffsInCell[numEnrichmentIdsInCell * i +
+                                             cellEnrichId] =
+                                  coeffsInLocalIdsMap[pos];
+                              }
                           }
                       }
                   }

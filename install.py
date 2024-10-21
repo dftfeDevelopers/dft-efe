@@ -2,10 +2,10 @@ import CMakeFlagsParser as cmflags
 import os
 import sys
 import textwrap
-opts_dict={'build_dir' : './build'}
+opts_dict={'build_dir' : './build', 'n' : ''}
 
 def getUsageMsg():
-    msg = '''The correct usage is python install.py '''\
+    msg = '''The correct usage is python install.py [--n=<numprocs>]\n'''\
           '''[--build_dir=/path/to/build/directory]\n'''\
           '''[--src_dir=/path/to/source/directory]\n'''\
           '''The optional [--build_dir=/path/to/build/directory] specifies '''\
@@ -49,11 +49,11 @@ def updateOptsDictFromCommandLine(strings):
 
 if __name__ == "__main__":
     numArgs = len(sys.argv)
-    if numArgs > 3:
+    if numArgs > 4:
         raise Exception('''Invalid options passed.\n\n''' +
                         getUsageMsg())
 
-    if numArgs == 2 and (sys.argv[1] == '--help' or sys.argv[1] == '-h'):
+    if numArgs == 3 and (sys.argv[1] == '--help' or sys.argv[1] == '-h'):
         print(getUsageMsg())
 
     else:
@@ -65,6 +65,7 @@ if __name__ == "__main__":
         
         updateOptsDictFromCommandLine(sys.argv[1:])
         config_flags = cmflags.getConfig()
+        nprocs = opts_dict['n']
         src_dir = opts_dict['src_dir']
         build_dir = opts_dict['build_dir']
         if not os.path.isdir(build_dir):
@@ -81,4 +82,4 @@ if __name__ == "__main__":
 
         print()
         os.system(y)
-        os.system('make -j')
+        os.system('make -j '+nprocs)

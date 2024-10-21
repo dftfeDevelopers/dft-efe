@@ -26,6 +26,7 @@
 #include <utils/MPIWrapper.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <cmath>
+#include <utils/RandNumGen.h>
 
 namespace dftefe
 {
@@ -119,6 +120,44 @@ namespace dftefe
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
                                                                 numVectors);
+    }
+
+    //
+    // Constructor for \distributed random MultiVector using an existing
+    // MPIPatternP2P object
+    //
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    MultiVector<ValueType, memorySpace>::MultiVector(
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                    mpiPatternP2P,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      const size_type                               numVectors,
+      const ValueType                               min,
+      const ValueType                               max)
+      : d_mpiPatternP2P(mpiPatternP2P)
+    {
+      d_vectorAttributes =
+        VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
+      d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
+      d_locallyOwnedSize = d_mpiPatternP2P->localOwnedSize();
+      d_ghostSize        = d_mpiPatternP2P->localGhostSize();
+      d_localSize        = d_locallyOwnedSize + d_ghostSize;
+      d_numVectors       = numVectors;
+      d_storage =
+        std::make_unique<typename MultiVector<ValueType, memorySpace>::Storage>(
+          d_localSize * d_numVectors);
+      d_linAlgOpContext    = linAlgOpContext;
+      d_mpiCommunicatorP2P = std::make_unique<
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
+                                                                numVectors);
+
+      utils::RandNumGen<ValueType> rand(min, max);
+      std::vector<ValueType>       randVec(d_locallyOwnedSize * d_numVectors);
+      for (auto &i : randVec)
+        i = rand.generate();
+
+      d_storage->template copyFrom<utils::MemorySpace::HOST>(
+        randVec.data(), d_locallyOwnedSize * d_numVectors, 0, 0);
     }
 
     /**
@@ -690,6 +729,16 @@ namespace dftefe
     //
     // Helper functions
     //
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    swap(MultiVector<ValueType, memorySpace> &X,
+         MultiVector<ValueType, memorySpace> &Y)
+    {
+      MultiVector<ValueType, memorySpace> tmp(std::move(X));
+      X = std::move(Y);
+      Y = std::move(tmp);
+    }
 
     template <typename ValueType1,
               typename ValueType2,

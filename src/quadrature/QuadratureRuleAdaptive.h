@@ -10,6 +10,8 @@
 #include <vector>
 #include <memory>
 #include <quadrature/Defaults.h>
+#include <map>
+#include <chrono>
 
 namespace dftefe
 {
@@ -24,11 +26,12 @@ namespace dftefe
         const basis::CellMappingBase &        cellMapping,
         basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
         std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
-                                   functions,
-        const std::vector<double> &absoluteTolerances,
-        const std::vector<double> &relativeTolerances,
-        const std::vector<double> &integralThresholds,
-        const double               smallestCellVolume =
+                                       functions,
+        const std::vector<double> &    absoluteTolerances,
+        const std::vector<double> &    relativeTolerances,
+        const std::vector<double> &    integralThresholds,
+        std::map<std::string, double> &timer,
+        const double                   smallestCellVolume =
           QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
         const unsigned int maxRecursion =
           QuadratureRuleAdaptiveDefaults::MAX_RECURSION);

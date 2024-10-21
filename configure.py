@@ -43,6 +43,12 @@ cmake_dict = {'SLATE_DIR':['', 'Path to SLATE installation',
               'LIBXML_PATH': ['', 'Path to libxml2 include director',
                                   '''--LIBXML_PATH=
                                    "/path/to/libxml2/include"
+                                  '''],
+              'LIBXC_DIR':['', 'Path to LIBXC installation',
+                                    '--LIBXC_DIR=/path/to/LIBXC/installation'],
+              'LIBXC_LIBRARY': ['', 'Path to libxc libraries',
+                                  '''--LIBXC_LIBRARY=
+                                   "-L/path/to/libxc/library"
                                   ''']}
 
 def sanityCheck(string):

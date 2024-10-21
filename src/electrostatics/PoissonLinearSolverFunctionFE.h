@@ -107,6 +107,20 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellTimesNumVecs);
 
+      void
+      reinit(
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>> feBasisManagerField,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          feBasisDataStorageRhs,
+        const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+          &inpRhs);
+
+      ~PoissonLinearSolverFunctionFE() = default;
+
       const linearAlgebra::
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
         getAxContext() const override;
@@ -149,6 +163,10 @@ namespace dftefe
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,
                                                            memorySpace>>
+        d_AxContextNHDB;
+      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace>>
                                                          d_PCContext;
       linearAlgebra::PreconditionerType                  d_pcType;
       linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
@@ -156,6 +174,15 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         d_fieldInHomoDBCVec;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                      d_linAlgOpContext;
+      const size_type d_maxCellTimesNumVecs;
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+        d_feBasisDataStorageStiffnessMatrix;
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+        d_feBasisDataStorageRhs;
 
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace electrostatics

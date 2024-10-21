@@ -70,7 +70,7 @@ namespace dftefe
            const size_type                           incy,
            LinAlgOpContext<memorySpace> &            context)
       {
-        utils::throwException(
+        DFTEFE_AssertWithMsg(
           memorySpace != dftefe::utils::MemorySpace::DEVICE,
           "blas::axpy() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         blas::axpy(n, alpha, x, incx, y, incy);
@@ -155,6 +155,39 @@ namespace dftefe
           hadamardProduct(n, x, y, opx, opy, z);
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      scaleStridedVarBatched(const size_type                      numMats,
+                             const ScalarOp *                     scalarOpA,
+                             const ScalarOp *                     scalarOpB,
+                             const size_type *                    stridea,
+                             const size_type *                    strideb,
+                             const size_type *                    stridec,
+                             const size_type *                    m,
+                             const size_type *                    n,
+                             const size_type *                    k,
+                             const ValueType1 *                   dA,
+                             const ValueType2 *                   dB,
+                             scalar_type<ValueType1, ValueType2> *dC,
+                             LinAlgOpContext<memorySpace> &       context)
+      {
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          scaleStridedVarBatched(numMats,
+                                 scalarOpA,
+                                 scalarOpB,
+                                 stridea,
+                                 strideb,
+                                 stridec,
+                                 m,
+                                 n,
+                                 k,
+                                 dA,
+                                 dB,
+                                 dC,
+                                 context);
+      }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -639,6 +672,35 @@ namespace dftefe
         return returnVal;
       }
 
+      template <typename ValueType,
+                typename dftefe::utils::MemorySpace memorySpace>
+      LapackError
+      gesv(size_type                     n,
+           size_type                     nrhs,
+           ValueType *                   A,
+           size_type                     lda,
+           LapackInt *                   ipiv,
+           ValueType *                   B,
+           size_type                     ldb,
+           LinAlgOpContext<memorySpace> &context)
+      {
+        LapackError      returnVal;
+        global_size_type error;
+
+        error = lapack::gesv(n, nrhs, A, lda, ipiv, B, ldb);
+
+        if (error != 0)
+          {
+            returnVal = LapackErrorMsg::isSuccessAndMsg(
+              LapackErrorCode::FAILED_LINEAR_SYSTEM_SOLVE);
+            returnVal.msg += std::to_string(error) + " .";
+          }
+        else
+          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
+
+        return returnVal;
+      }
+
       // ------------ lapack calls with device template specialization-------
       template <typename ValueType>
       LapackError
@@ -895,6 +957,30 @@ namespace dftefe
           }
         else
           returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
+
+        return returnVal;
+      }
+
+      template <typename ValueType>
+      LapackError
+      gesv(size_type                                            n,
+           size_type                                            nrhs,
+           ValueType *                                          A,
+           size_type                                            lda,
+           LapackInt *                                          ipiv,
+           ValueType *                                          B,
+           size_type                                            ldb,
+           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
+      {
+        LapackError      returnVal;
+        global_size_type error;
+
+        utils::throwException(
+          false,
+          "blasLapack::gesv() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+
+        returnVal =
+          LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::OTHER_ERROR);
 
         return returnVal;
       }

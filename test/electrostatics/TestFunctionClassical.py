@@ -95,10 +95,10 @@ class BuildAndRunTestFunctionClassical(rfm.RegressionTest):
     make_opts = [target_name]
     # NOTE: Need to specify the name of the executable, as
     # ReFrame has no way of knowing that while building from CMake
-    executable = "./"+target_name
+    executable = "./"+target_name+".x"
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'serial'}
+                'serialOrParallel': 'Parallel'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']
@@ -178,10 +178,10 @@ class RunOnlyTestFunctionClassical(rfm.RunOnlyRegressionTest):
     descr = '''A run only test for atom ids partition'''
     build_system = 'CMake'
     make_opts = [target_name]
-    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name
+    executable = os.path.dirname(os.path.abspath(__file__))+"/executable/"+target_name+".x"
     tagsDict = {'compileOrRun': 'run', 'unitOrAggregate':
         'unit','slowOrFast': 'fast', 'arch': 'cpu',
-                'serialOrParallel': 'serial'}
+                'serialOrParallel': 'Parallel'}
     tags = {x.lower() for x in tagsDict.values()}
     valid_systems = ss.getValidSystems(tagsDict['arch']) 
     valid_prog_environs = ['*']

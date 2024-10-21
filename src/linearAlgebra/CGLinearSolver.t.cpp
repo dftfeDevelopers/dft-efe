@@ -119,6 +119,7 @@ namespace dftefe
       MultiVector<ValueType, memorySpace> z(b, 0.0);
       MultiVector<ValueType, memorySpace> p(b, 0.0);
 
+      utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
       //
       // CG loop
@@ -244,9 +245,16 @@ namespace dftefe
                   err             = LinearSolverErrorCode::SUCCESS;
                   convergeFlag[i] = true;
                   // copy x to xConverged of the ith comp vector
-                  for (size_type j = 0; j < x.locallyOwnedSize(); j++)
-                    *(xConverged.data() + j * numComponents + i) =
-                      *(x.data() + j * numComponents + i);
+                  // for (size_type j = 0; j < x.locallyOwnedSize(); j++)
+                  //   *(xConverged.data() + j * numComponents + i) =
+                  //     *(x.data() + j * numComponents + i);
+
+                  for (size_type iSize = 0; iSize < x.locallyOwnedSize();
+                       iSize++)
+                    memoryTransfer.copy(1,
+                                        xConverged.data() +
+                                          numComponents * iSize + i,
+                                        x.data() + iSize * numComponents + i);
                 }
 
               if (rNorm[i] > d_divergenceTol && divergeFlag == false)
@@ -297,7 +305,9 @@ namespace dftefe
         msg = retunValue.msg;
 
       // register end of CG
-      d_profiler.registerEnd(msg);
+      // --------- TODO : fix the profiler class------------
+      if (rank == 0)
+        d_profiler.registerEnd(msg);
 
       return retunValue;
     }

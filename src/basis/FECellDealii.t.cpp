@@ -138,6 +138,23 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    double
+    FECellDealii<dim>::minimumVertexDistance() const
+    {
+      return d_dealiiFECellIter->minimum_vertex_distance();
+    }
+
+    template <unsigned int dim>
+    double
+    FECellDealii<dim>::distanceToUnitCell(
+      dftefe::utils::Point &parametricPoint) const
+    {
+      dealii::Point<dim, double> dealiiPoint;
+      convertToDealiiPoint<dim>(parametricPoint, dealiiPoint);
+      return dealii::GeometryInfo<dim>::distance_to_unit_cell(dealiiPoint);
+    }
+
+    template <unsigned int dim>
     void
     FECellDealii<dim>::setCoarsenFlag()
     {
