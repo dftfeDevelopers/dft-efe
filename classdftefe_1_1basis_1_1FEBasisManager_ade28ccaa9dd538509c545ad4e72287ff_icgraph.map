@@ -1,0 +1,8 @@
+<map id="dftefe::basis::FEBasisManager::nLocallyOwnedCells" name="dftefe::basis::FEBasisManager::nLocallyOwnedCells">
+<area shape="rect" id="node1" title=" " alt="" coords="312,170,509,210"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="21,5,249,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#afacd3f53936471456f3334151fbe6afa" title=" " alt="" coords="13,84,256,139"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1electrostatics_1_1LaplaceOperatorContextFE.html#a195f1b65bb8b55abe33686c84a340972" title="Constructor." alt="" coords="43,163,227,217"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a41d13bfdd3ee7fcdddfaa539df5284dc" title=" " alt="" coords="5,241,264,296"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#ad80c74a34f5a250edd330ef63c3054b7" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="23,320,246,375"/>
+</map>

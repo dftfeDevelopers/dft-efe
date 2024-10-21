@@ -1,0 +1,12 @@
+<map id="dftefe::ksdft::ElectrostaticLocalFE::ElectrostaticLocalFE" name="dftefe::ksdft::ElectrostaticLocalFE::ElectrostaticLocalFE">
+<area shape="rect" id="node1" title=" " alt="" coords="5,70,201,110"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a04a43ae24c8d69afab31972a3a6509da" title=" " alt="" coords="249,26,417,66"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a92dfa92add7a9babe5d8466d378de5f3" title=" " alt="" coords="249,102,417,142"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1quadrature.html#a4055047cd59f3629fccc4f6f96771664" title="Perform ." alt="" coords="499,13,622,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="704,5,891,60"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1quadrature.html#a7fc259e3f52195575c91bb2164fa8bda" title="Perform ." alt="" coords="486,77,635,103"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1linearAlgebra.html#a766e66f0b452363ea0cee6a1f9f1a3a9" title="A class that implements the Conjugate&#45;Gradient (CG) based Krylov subspace algorithm to solve a linear..." alt="" coords="493,127,629,167"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a8b0f42ca3568903392f2068c6f1d3b19" title=" " alt="" coords="465,192,656,247"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="471,271,650,296"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ad2504793324141b6cc7802b8c0967d35" title=" " alt="" coords="704,84,891,139"/>
+</map>

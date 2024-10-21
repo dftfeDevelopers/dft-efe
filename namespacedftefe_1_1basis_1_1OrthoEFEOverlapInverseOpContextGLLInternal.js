@@ -1,0 +1,5 @@
+var namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal =
+[
+    [ "OverlapMatrixInverseLinearSolverFunctionFE", "classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal_1_1OverlapMatrixInverseLinearSolverFunctionFE.html", "classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal_1_1OverlapMatrixInverseLinearSolverFunctionFE" ],
+    [ "computeBasisOverlapMatrix", "namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal.html#ac61fe3a34ebd21124de483bfce8f90f7", null ]
+];

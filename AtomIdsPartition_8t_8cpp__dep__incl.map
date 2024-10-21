@@ -1,0 +1,31 @@
+<map id="src/basis/AtomIdsPartition.t.cpp" name="src/basis/AtomIdsPartition.t.cpp">
+<area shape="rect" id="node1" title=" " alt="" coords="287,5,493,31"/>
+<area shape="rect" id="node2" href="$AtomIdsPartition_8h.html" title=" " alt="" coords="297,79,483,104"/>
+<area shape="rect" id="node3" href="$AtomSevereFunction_8h.html" title=" " alt="" coords="63,306,279,331"/>
+<area shape="rect" id="node5" href="$AtomIdsPartition_8cpp.html" title=" " alt="" coords="102,152,302,177"/>
+<area shape="rect" id="node6" href="$EFEBasisDataStorageDealii_8t_8cpp.html" title=" " alt="" coords="303,299,511,339"/>
+<area shape="rect" id="node9" href="$EFEBasisDofHandlerDealii_8h.html" title=" " alt="" coords="71,475,272,515"/>
+<area shape="rect" id="node11" href="$EnrichmentClassicalInterfaceSpherical_8h.html" title=" " alt="" coords="845,299,1042,339"/>
+<area shape="rect" id="node27" href="$EnrichmentIdsPartition_8h.html" title=" " alt="" coords="439,225,659,251"/>
+<area shape="rect" id="node29" href="$EnrichmentIdsPartition_8t_8cpp.html" title=" " alt="" coords="428,152,669,177"/>
+<area shape="rect" id="node4" href="$AtomSevereFunction_8cpp.html" title=" " alt="" coords="64,394,295,419"/>
+<area shape="rect" id="node7" href="$EFEBasisDataStorageDealii_8h.html" title=" " alt="" coords="231,563,439,603"/>
+<area shape="rect" id="node8" href="$EFEBasisDataStorageDealii_8cpp.html" title=" " alt="" coords="137,651,345,691"/>
+<area shape="rect" id="node10" href="$EFEBasisDofHandlerDealii_8cpp.html" title=" " alt="" coords="5,563,207,603"/>
+<area shape="rect" id="node12" href="$EFEBasisDofHandler_8h.html" title=" " alt="" coords="443,394,654,419"/>
+<area shape="rect" id="node24" href="$EnrichmentClassicalInterfaceSpherical_8cpp.html" title=" " alt="" coords="678,387,875,427"/>
+<area shape="rect" id="node25" href="$OrthoEFEOverlapOperatorContext_8t_8cpp.html" title=" " alt="" coords="900,387,1080,427"/>
+<area shape="rect" id="node26" href="$PristineEFEOverlapOperatorContext_8t_8cpp.html" title=" " alt="" coords="1105,387,1297,427"/>
+<area shape="rect" id="node13" href="$OrthoEFEOverlapInverseOpContextGLL_8h.html" title=" " alt="" coords="692,563,872,603"/>
+<area shape="rect" id="node15" href="$OrthoEFEOverlapOperatorContext_8h.html" title=" " alt="" coords="835,475,1015,515"/>
+<area shape="rect" id="node17" href="$PristineEFEOverlapOperatorContext_8h.html" title=" " alt="" coords="1101,475,1293,515"/>
+<area shape="rect" id="node19" href="$KohnShamOperatorContextFE_8t_8cpp.html" title=" " alt="" coords="457,475,648,515"/>
+<area shape="rect" id="node14" href="$OrthoEFEOverlapInverseOpContextGLL_8cpp.html" title=" " alt="" coords="785,651,965,691"/>
+<area shape="rect" id="node16" href="$OrthoEFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="896,563,1076,603"/>
+<area shape="rect" id="node18" href="$PristineEFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="1101,563,1293,603"/>
+<area shape="rect" id="node20" href="$KohnShamOperatorContextFE_8h.html" title=" " alt="" coords="464,563,655,603"/>
+<area shape="rect" id="node21" href="$KohnShamDFT_8h.html" title=" " alt="" coords="585,658,761,683"/>
+<area shape="rect" id="node23" href="$KohnShamOperatorContextFE_8cpp.html" title=" " alt="" coords="369,651,560,691"/>
+<area shape="rect" id="node22" href="$KohnShamDFT_8cpp.html" title=" " alt="" coords="577,739,768,764"/>
+<area shape="rect" id="node28" href="$EnrichmentIdsPartition_8cpp.html" title=" " alt="" coords="586,306,821,331"/>
+</map>

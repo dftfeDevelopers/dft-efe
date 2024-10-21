@@ -1,0 +1,9 @@
+<map id="dftefe::electrostatics::LaplaceOperatorContextFE::LaplaceOperatorContextFE" name="dftefe::electrostatics::LaplaceOperatorContextFE::LaplaceOperatorContextFE">
+<area shape="rect" id="node1" title="Constructor." alt="" coords="5,62,189,117"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FEBasisManager.html#ade28ccaa9dd538509c545ad4e72287ff" title=" " alt="" coords="237,5,435,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="245,69,427,109"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="247,134,425,159"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryManager.html#a5b70ed03cd2d2b274182f8c7c2b4738b" title=" " alt="" coords="495,5,681,45"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryManager.html#aca93dde952680d547c2e2534382a29da" title=" " alt="" coords="495,69,681,109"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1MemoryManager.html#a8bcc70cc31721152c6e120e8010fe288" title=" " alt="" coords="483,134,693,159"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="dftefe::linearAlgebra::blasLapack::hadamardProduct" name="dftefe::linearAlgebra::blasLapack::hadamardProduct">
+<area shape="rect" id="node1" title="Template for performing &#160;alpha &#160;z_i = x_i * y_i$." alt="" coords="1063,37,1265,77"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#ac0684514a96c9ff0a8007c8cc0b7c665" title="Template for performing hadamard product of two columns of batches of matrix A and B having num col A..." alt="" coords="812,30,1015,85"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#ac389fe663b48524a0a49c45306430550" title=" " alt="" coords="571,30,764,85"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1FEBasisOperationsInternal.html#a99236ec69c6017edb9f0915599d7e584" title=" " alt="" coords="288,5,499,45"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1FEBasisOperationsInternal.html#a852995748568ce77570057dda08476b9" title=" " alt="" coords="264,69,523,109"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#aa0e170b2bc6afa9c781121ef379ae0d8" title=" " alt="" coords="5,5,216,45"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a73fce936022cbc5afb423befe26f20d6" title=" " alt="" coords="5,69,216,109"/>
+</map>
