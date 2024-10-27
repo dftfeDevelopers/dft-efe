@@ -298,6 +298,41 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        khatriRaoProductStridedVarBatched(
+          const Layout                         layout,
+          const size_type                      numMats,
+          const size_type *                    stridea,
+          const size_type *                    strideb,
+          const size_type *                    stridec,
+          const size_type *                    m,
+          const size_type *                    n,
+          const size_type *                    k,
+          const ValueType1 *                   dA,
+          const ValueType2 *                   dB,
+          scalar_type<ValueType1, ValueType2> *dC,
+          LinAlgOpContext<memorySpace> &       context)
+      {
+        size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+          {
+            khatriRaoProduct(layout,
+                             *(m + ibatch),
+                             *(n + ibatch),
+                             *(k + ibatch),
+                             (dA + cumulativeA),
+                             (dB + cumulativeB),
+                             (dC + cumulativeC));
+            cumulativeA += *(stridea + ibatch);
+            cumulativeB += *(strideb + ibatch);
+            cumulativeC += *(stridec + ibatch);
+          }
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
         transposedKhatriRaoProduct(const Layout                         layout,
                                    const size_type                      sizeI,
                                    const size_type                      sizeJ,

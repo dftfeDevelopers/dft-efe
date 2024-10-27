@@ -96,7 +96,7 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock);
 
       ElectrostaticLocalFE(
         std::vector<utils::Point> atomCoordinates,
@@ -126,7 +126,7 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock);
 
 
       ~ElectrostaticLocalFE();
@@ -204,6 +204,7 @@ namespace dftefe
           feBDNuclearChargeRhs);
 
       bool                                    d_isNumerical;
+      const size_type                         d_maxCellBlock;
       const size_type                         d_numComponents;
       std::vector<utils::Point>               d_atomCoordinates;
       const size_type                         d_numAtoms;

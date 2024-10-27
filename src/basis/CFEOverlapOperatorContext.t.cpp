@@ -382,9 +382,11 @@ namespace dftefe
                              dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManager(&feBasisManager)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(false)
     {
@@ -417,7 +419,8 @@ namespace dftefe
           linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
       , d_cellStartIdsBasisOverlap(0)
-      , d_maxCellTimesNumVecs(0)
+      , d_maxCellBlock(0)
+      , d_maxFieldBlock(0)
       , d_isMassLumping(true)
     {
       utils::throwException(
@@ -552,7 +555,8 @@ namespace dftefe
           const utils::MemoryStorage<ValueTypeOperator, memorySpace>
             &basisOverlapInAllCells = *d_basisOverlap;
 
-          const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+          const size_type cellBlockSize =
+            (d_maxCellBlock * d_maxFieldBlock) / numVecs;
 
           //
           // perform Ax on the local part of A and x

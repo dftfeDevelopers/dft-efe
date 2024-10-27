@@ -143,7 +143,8 @@ namespace dftefe
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerField(feBasisManagerField)
       , d_feBasisDataStorageStiffnessMatrix(feBasisDataStorageStiffnessMatrix)
       , d_feBasisDataStorageRhs(feBasisDataStorageRhs)
@@ -154,7 +155,8 @@ namespace dftefe
                             d_numComponents,
                             ValueTypeOperand())
       , d_linAlgOpContext(linAlgOpContext)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
     {
       utils::throwException(
         ((feBasisDataStorageRhs->getBasisDofHandler()).get() ==
@@ -212,7 +214,8 @@ namespace dftefe
         *d_feBasisManagerHomo,
         feBasisDataStorageStiffnessMatrix,
         linAlgOpContext,
-        maxCellTimesNumVecs); // solving the AX = b
+        d_maxCellBlock,
+        d_maxFieldBlock); // solving the AX = b
 
       d_AxContextNHDB =
         std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
@@ -223,7 +226,8 @@ namespace dftefe
           *d_feBasisManagerHomo,
           feBasisDataStorageStiffnessMatrix,
           linAlgOpContext,
-          maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
+          d_maxCellBlock,
+          d_maxFieldBlock); // handling the inhomogeneous DBC in RHS
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
         mpiPatternP2PHomo, linAlgOpContext);
@@ -236,7 +240,7 @@ namespace dftefe
               d_feBasisManagerHomo,
               feBasisDataStorageStiffnessMatrix,
               linAlgOpContext,
-              maxCellTimesNumVecs);
+              d_maxCellBlock);
 
 
           d_feBasisManagerHomo->getConstraints().setConstrainedNodes(diagonal,
@@ -329,7 +333,8 @@ namespace dftefe
               *d_feBasisManagerHomo,
               d_feBasisDataStorageStiffnessMatrix,
               d_linAlgOpContext,
-              d_maxCellTimesNumVecs); // handling the inhomogeneous DBC in RHS
+              d_maxCellBlock,
+              d_maxFieldBlock); // handling the inhomogeneous DBC in RHS
         }
 
       // Compute RHS
@@ -345,7 +350,9 @@ namespace dftefe
       // Set up basis Operations for RHS
       basis::
         FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          feBasisOperations(d_feBasisDataStorageRhs, d_maxCellTimesNumVecs);
+          feBasisOperations(d_feBasisDataStorageRhs,
+                            d_maxCellBlock,
+                            d_maxFieldBlock);
 
       feBasisOperations.integrateWithBasisValues(inpRhs,
                                                  *d_feBasisManagerHomo,

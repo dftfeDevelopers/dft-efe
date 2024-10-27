@@ -217,7 +217,7 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -227,7 +227,7 @@ namespace dftefe
       , d_nuclearChargesPotential(d_numAtoms, nullptr)
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
       , d_externalPotentialFunction(externalPotentialFunction)
-      , d_cellTimesNumVecPoisson(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
     {
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
@@ -276,7 +276,7 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -286,7 +286,7 @@ namespace dftefe
       , d_nuclearChargesPotential(d_numAtoms, nullptr)
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
       , d_externalPotentialFunction(externalPotentialFunction)
-      , d_cellTimesNumVecPoisson(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
     {
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
@@ -407,15 +407,17 @@ namespace dftefe
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
                                                   memorySpace,
-                                                  dim>>(
-          d_feBDTotalChargeRhs, d_cellTimesNumVecPoisson);
+                                                  dim>>(d_feBDTotalChargeRhs,
+                                                        d_maxCellBlock,
+                                                        d_numComponents);
 
       d_feBasisOpHamiltonian =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeWaveFnBasisData,
                                                   memorySpace,
-                                                  dim>>(
-          feBDHamiltonian, d_cellTimesNumVecPoisson);
+                                                  dim>>(feBDHamiltonian,
+                                                        d_maxCellBlock,
+                                                        d_numComponents);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBDTotalChargeRhs->getQuadratureRuleContainer();
@@ -629,7 +631,8 @@ namespace dftefe
         *d_totalChargeDensity,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
-        d_cellTimesNumVecPoisson);
+        d_maxCellBlock,
+        d_numComponents);
     }
 
     template <typename ValueTypeBasisData,
@@ -669,15 +672,17 @@ namespace dftefe
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
                                                   memorySpace,
-                                                  dim>>(
-          d_feBDTotalChargeRhs, d_cellTimesNumVecPoisson);
+                                                  dim>>(d_feBDTotalChargeRhs,
+                                                        d_maxCellBlock,
+                                                        d_numComponents);
 
       d_feBasisOpHamiltonian =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeWaveFnBasisData,
                                                   memorySpace,
-                                                  dim>>(
-          feBDHamiltonian, d_cellTimesNumVecPoisson);
+                                                  dim>>(feBDHamiltonian,
+                                                        d_maxCellBlock,
+                                                        d_numComponents);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBDTotalChargeRhs->getQuadratureRuleContainer();
@@ -826,7 +831,8 @@ namespace dftefe
         *d_totalChargeDensity,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
-        d_cellTimesNumVecPoisson);
+        d_maxCellBlock,
+        d_numComponents);
     }
 
     template <typename ValueTypeBasisData,
@@ -1048,7 +1054,8 @@ namespace dftefe
                         nuclearChargeDensity,
                         ksdft::PoissonProblemDefaults::PC_TYPE,
                         d_linAlgOpContext,
-                        d_cellTimesNumVecPoisson);
+                        d_maxCellBlock,
+                        d_numComponents);
             }
           else
             {
@@ -1186,7 +1193,9 @@ namespace dftefe
                                        ValueTypeBasisData,
                                        memorySpace,
                                        dim>
-                feBasisOp(d_feBDNuclearChargeRhs, d_cellTimesNumVecPoisson);
+                feBasisOp(d_feBDNuclearChargeRhs,
+                          d_maxCellBlock,
+                          d_numComponents);
 
               feBasisOp.interpolate(*d_nuclearChargesPotential[iAtom],
                                     *d_feBMNuclearCharge[iAtom],

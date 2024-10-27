@@ -152,19 +152,18 @@ namespace dftefe
         const size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
         const size_type dofsPerCell = feBDH->nCellDofs(cellId);
-        const size_type numQuadPointsPerCell =
+        const size_type nQuadPointsPerCell =
           numCellsZero ? 0 :
                          quadratureRuleContainer->nCellQuadraturePoints(cellId);
-        // const size_type numQuadPointsPerCell =
+        // const size_type nQuadPointsPerCell =
         //   utils::mathFunctions::sizeTypePow(num1DQuadPoints, dim);
         const size_type nDimxDofsPerCellxNumQuad =
-          dim * dofsPerCell * numQuadPointsPerCell;
+          dim * dofsPerCell * nQuadPointsPerCell;
         const size_type nDimSqxDofsPerCellxNumQuad =
-          dim * dim * dofsPerCell * numQuadPointsPerCell;
-        const size_type DofsPerCellxNumQuad =
-          dofsPerCell * numQuadPointsPerCell;
+          dim * dim * dofsPerCell * nQuadPointsPerCell;
+        const size_type DofsPerCellxNumQuad = dofsPerCell * nQuadPointsPerCell;
 
-        nQuadPointsInCell.resize(numLocallyOwnedCells, numQuadPointsPerCell);
+        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointsPerCell);
         std::vector<ValueTypeBasisData> basisQuadStorageTmp(0);
         std::vector<ValueTypeBasisData> basisGradientQuadStorageTmp(0);
         std::vector<ValueTypeBasisData> basisHessianQuadStorageTmp(0);
@@ -177,8 +176,8 @@ namespace dftefe
             basisQuadStorage =
               std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
                                                          memorySpace>::Storage>(
-                dofsPerCell * numQuadPointsPerCell);
-            basisQuadStorageTmp.resize(dofsPerCell * numQuadPointsPerCell,
+                dofsPerCell * nQuadPointsPerCell);
+            basisQuadStorageTmp.resize(dofsPerCell * nQuadPointsPerCell,
                                        ValueTypeBasisData(0));
             cellStartIdsBasisQuadStorage.resize(numLocallyOwnedCells, 0);
           }
@@ -236,11 +235,6 @@ namespace dftefe
               "Dynamic casting of FECellBase to FECellDealii not successful");
           }
 
-        auto basisQuadStorageTmpIter = basisQuadStorageTmp.begin();
-        auto basisGradientQuadStorageTmpIter =
-          basisGradientQuadStorageTmp.begin();
-        auto basisHessianQuadStorageTmpIter =
-          basisHessianQuadStorageTmp.begin();
         auto      basisOverlapTmpIter = basisOverlapTmp.begin();
         size_type cellIndex           = 0;
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
@@ -263,12 +257,13 @@ namespace dftefe
               {
                 for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < numQuadPointsPerCell;
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
                          qPoint++)
                       {
-                        *basisQuadStorageTmpIter =
-                          dealiiFEValues.shape_value(iNode, qPoint);
-                        basisQuadStorageTmpIter++;
+                        auto it = basisQuadStorageTmp.begin() +
+                                  cellIndex * DofsPerCellxNumQuad +
+                                  iNode * nQuadPointsPerCell + qPoint;
+                        *it = dealiiFEValues.shape_value(iNode, qPoint);
                       }
                   }
               }
@@ -283,7 +278,7 @@ namespace dftefe
                       {
                         *basisOverlapTmpIter = 0.0;
                         for (unsigned int qPoint = 0;
-                             qPoint < numQuadPointsPerCell;
+                             qPoint < nQuadPointsPerCell;
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
@@ -304,7 +299,7 @@ namespace dftefe
                   cellIndex * nDimxDofsPerCellxNumQuad;
                 for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < numQuadPointsPerCell;
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
                          qPoint++)
                       {
                         auto shapeGrad =
@@ -314,7 +309,7 @@ namespace dftefe
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cellIndex * nDimxDofsPerCellxNumQuad +
                                       iDim * DofsPerCellxNumQuad +
-                                      iNode * numQuadPointsPerCell + qPoint;
+                                      iNode * nQuadPointsPerCell + qPoint;
                             *it = shapeGrad[iDim];
                           }
                       }
@@ -329,7 +324,7 @@ namespace dftefe
                   cellIndex * nDimSqxDofsPerCellxNumQuad;
                 for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < numQuadPointsPerCell;
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
                          qPoint++)
                       {
                         auto shapeHessian =
@@ -343,7 +338,7 @@ namespace dftefe
                                   cellIndex * nDimSqxDofsPerCellxNumQuad +
                                   iDim * nDimxDofsPerCellxNumQuad +
                                   jDim * DofsPerCellxNumQuad +
-                                  iNode * numQuadPointsPerCell + qPoint;
+                                  iNode * nQuadPointsPerCell + qPoint;
                                 *it = shapeHessian[iDim][jDim];
                               }
                           }
@@ -502,11 +497,11 @@ namespace dftefe
         auto      basisGradNiGradNjTmpIter = basisGradNiGradNjTmp.begin();
         size_type cellIndex                = 0;
 
-        const size_type numQuadPointsPerCell =
+        const size_type nQuadPointsPerCell =
           numCellsZero ?
             0 :
             quadratureRuleContainer->nCellQuadraturePoints(cellIndex);
-        // const size_type numQuadPointsPerCell =
+        // const size_type nQuadPointsPerCell =
         //   utils::mathFunctions::sizeTypePow(num1DQuadPoints, dim);
 
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
@@ -528,7 +523,7 @@ namespace dftefe
                 for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisGradNiGradNjTmpIter = 0.0;
-                    for (unsigned int qPoint = 0; qPoint < numQuadPointsPerCell;
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
                          qPoint++)
                       {
                         *basisGradNiGradNjTmpIter +=
@@ -694,11 +689,6 @@ namespace dftefe
               "Dynamic casting of FECellBase to FECellDealii not successful");
           }
 
-        auto basisQuadStorageTmpIter = basisQuadStorageTmp.begin();
-        auto basisGradientQuadStorageTmpIter =
-          basisGradientQuadStorageTmp.begin();
-        auto basisHessianQuadStorageTmpIter =
-          basisHessianQuadStorageTmp.begin();
         auto      basisOverlapTmpIter = basisOverlapTmp.begin();
         size_type cellIndex           = 0;
 
@@ -743,9 +733,10 @@ namespace dftefe
                     for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
-                        *basisQuadStorageTmpIter =
-                          dealiiFEValues.shape_value(iNode, qPoint);
-                        basisQuadStorageTmpIter++;
+                        auto it = basisQuadStorageTmp.begin() +
+                                  cumulativeQuadPoints * dofsPerCell +
+                                  iNode * nQuadPointInCell + qPoint;
+                        *it = dealiiFEValues.shape_value(iNode, qPoint);
                       }
                   }
               }
@@ -2012,6 +2003,47 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
+    void
+    CFEBasisDataStorageDealii<
+      ValueTypeBasisCoeff,
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getBasisDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                    Storage &basisData) const
+    {
+      utils::throwException(
+        d_evaluateBasisData == true,
+        "Cannot call function before calling evaluateBasisData()");
+
+      utils::throwException(
+        d_basisStorageAttributesBoolMap
+          .find(BasisStorageAttributes::StoreValues)
+          ->second,
+        "Basis values are not evaluated for the given QuadratureRuleAttributes");
+
+      std::shared_ptr<
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+                                    basisQuadStorage = d_basisQuadStorage;
+      const std::vector<size_type> &cellStartIds =
+        d_cellStartIdsBasisQuadStorage;
+      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      size_type                     sizeToCopy        = 0;
+      for (size_type cellId = cellRange.first; cellId < cellRange.second;
+           cellId++)
+        sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
+      for (size_type cellId = cellRange.first; cellId < cellRange.second;
+           cellId++)
+        utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
+          basisData.data() + cellStartIds[cellId] -
+            cellStartIds[cellRange.first],
+          basisQuadStorage->data() + cellStartIds[cellId]);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
     CFEBasisDataStorageDealii<ValueTypeBasisCoeff,
                               ValueTypeBasisData,
@@ -2043,6 +2075,47 @@ namespace dftefe
         returnValue.data(),
         basisGradientQuadStorage->data() + cellStartIds[cellId]);
       return returnValue;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    CFEBasisDataStorageDealii<ValueTypeBasisCoeff,
+                              ValueTypeBasisData,
+                              memorySpace,
+                              dim>::
+      getBasisGradientDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                      Storage &basisGradientData) const
+    {
+      utils::throwException(
+        d_evaluateBasisData,
+        "Cannot call function before calling evaluateBasisData()");
+
+      utils::throwException(
+        d_basisStorageAttributesBoolMap
+          .find(BasisStorageAttributes::StoreGradient)
+          ->second,
+        "Basis gradient values are not evaluated for the given QuadratureRuleAttributes");
+
+      std::shared_ptr<
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+        basisGradientQuadStorage = d_basisGradientQuadStorage;
+      const std::vector<size_type> &cellStartIds =
+        d_cellStartIdsBasisGradientQuadStorage;
+      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      size_type                     sizeToCopy        = 0;
+      for (size_type cellId = cellRange.first; cellId < cellRange.second;
+           cellId++)
+        sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
+      for (size_type cellId = cellRange.first; cellId < cellRange.second;
+           cellId++)
+        utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
+          basisGradientData.data() + cellStartIds[cellId] -
+            cellStartIds[cellRange.first],
+          basisGradientQuadStorage->data() + cellStartIds[cellId]);
     }
 
     template <typename ValueTypeBasisCoeff,

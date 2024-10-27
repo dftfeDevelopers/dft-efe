@@ -101,7 +101,8 @@ namespace dftefe
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
 
       const linearAlgebra::
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
@@ -147,7 +148,8 @@ namespace dftefe
       linearAlgebra::PreconditionerType                        d_pcType;
       const linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-        d_mpiPatternP2P;
+                      d_mpiPatternP2P;
+      const size_type d_maxCellBlock, d_maxFieldBlock;
     }; // end of class L2ProjectionLinearSolverFunction
   }    // namespace basis
 } // end of namespace dftefe

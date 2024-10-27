@@ -40,8 +40,8 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize)
-      : d_cellBlockSize(cellBlockSize)
+        const size_type maxCellBlock)
+      : d_maxCellBlock(maxCellBlock)
       , d_linAlgOpContext(linAlgOpContext)
     {
       reinit(feBasisDataStorage);
@@ -63,7 +63,7 @@ namespace dftefe
                                                   ValueTypeBasisData,
                                                   memorySpace,
                                                   dim>>(feBasisDataStorage,
-                                                        d_cellBlockSize);
+                                                        d_maxCellBlock);
     }
 
     template <typename ValueTypeBasisData,
@@ -102,7 +102,7 @@ namespace dftefe
                                                   memorySpace> &waveFunc,
                  const size_type waveFuncBatchSize)
     {
-      d_feBasisOp->reinit(d_cellBlockSize * waveFuncBatchSize);
+      d_feBasisOp->reinit(d_maxCellBlock, waveFuncBatchSize);
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
 

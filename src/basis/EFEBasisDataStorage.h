@@ -174,6 +174,15 @@ namespace dftefe
       virtual std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const = 0;
 
+      // functions to get data for  basis functions on all quad points in range
+      // of cells
+      virtual void
+      getBasisDataInCellRange(std::pair<size_type, size_type> cellRange,
+                              Storage &basisData) const = 0;
+      virtual void
+      getBasisGradientDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                      Storage &basisGradientData) const = 0;
+
     }; // end of EFEBasisDataStorage
   }    // end of namespace basis
 } // end of namespace dftefe

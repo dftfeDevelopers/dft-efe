@@ -105,7 +105,8 @@ namespace dftefe
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
 
       void
       reinit(
@@ -176,7 +177,8 @@ namespace dftefe
         d_fieldInHomoDBCVec;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                       d_linAlgOpContext;
-      const size_type d_maxCellTimesNumVecs;
+      const size_type d_maxCellBlock;
+      const size_type d_maxFieldBlock;
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
         d_feBasisDataStorageStiffnessMatrix;

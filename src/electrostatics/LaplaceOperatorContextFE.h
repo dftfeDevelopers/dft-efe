@@ -88,7 +88,8 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
 
       ~LaplaceOperatorContextFE() = default;
 
@@ -108,10 +109,10 @@ namespace dftefe
           *d_feBasisManagerX;
       const basis::
         FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          *           d_feBasisManagerY;
-      const size_type d_maxCellTimesNumVecs;
+          *d_feBasisManagerY;
       utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        d_gradNiGradNjInAllCells;
+                d_gradNiGradNjInAllCells;
+      size_type d_maxFieldBlock, d_maxCellBlock;
     }; // end of class LaplaceOperatorContextFE
   }    // end of namespace electrostatics
 } // end of namespace dftefe

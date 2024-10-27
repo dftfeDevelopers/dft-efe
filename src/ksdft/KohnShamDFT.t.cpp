@@ -323,7 +323,8 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           *linAlgOpContext,
-          numWantedEigenvalues * KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          numWantedEigenvalues);
 
       // call the eigensolver
 
@@ -548,7 +549,8 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           *linAlgOpContext,
-          numWantedEigenvalues * KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          numWantedEigenvalues);
 
       // call the eigensolver
 
@@ -731,7 +733,7 @@ namespace dftefe
                                                                 ValueTypeWaveFunctionBasis,
                                                                 memorySpace,
                                                                 dim>>(
-                  d_feBDEXCHamiltonian, 50);
+                  d_feBDEXCHamiltonian, 50, 1);
 
               quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           waveFuncQuad( quadRuleContainer,

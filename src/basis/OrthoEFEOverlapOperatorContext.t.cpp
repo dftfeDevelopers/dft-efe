@@ -1045,10 +1045,12 @@ namespace dftefe
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockBasisDataStorage,
-        const size_type maxCellTimesNumVecs,
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock,
         const bool      calculateWings)
       : d_feBasisManager(&feBasisManager)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(false)
     {
@@ -1083,10 +1085,12 @@ namespace dftefe
           &enrichmentBlockEnrichmentBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockClassicalBasisDataStorage,
-        const size_type maxCellTimesNumVecs,
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock,
         const bool      calculateWings)
       : d_feBasisManager(&feBasisManager)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(false)
     {
@@ -1123,7 +1127,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
-      , d_maxCellTimesNumVecs(0)
+      , d_maxCellBlock(0)
+      , d_maxFieldBlock(0)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(true)
     {
@@ -1311,7 +1316,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
-      , d_maxCellTimesNumVecs(0)
+      , d_maxCellBlock(0)
+      , d_maxFieldBlock(0)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(true)
     {
@@ -1608,7 +1614,8 @@ namespace dftefe
           const utils::MemoryStorage<ValueTypeOperator, memorySpace>
             &basisOverlapInAllCells = *d_basisOverlap;
 
-          const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+          const size_type cellBlockSize =
+            (d_maxCellBlock * d_maxFieldBlock) / numVecs;
           Y.setValue(0.0);
 
           //

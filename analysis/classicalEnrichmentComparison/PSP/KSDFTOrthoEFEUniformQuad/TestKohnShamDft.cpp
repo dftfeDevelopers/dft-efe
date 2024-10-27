@@ -1177,7 +1177,8 @@ int main(int argc, char** argv)
                                                       *cfeBasisDataStorageAdaptiveOrbital,
                                                       *efeBasisDataAdaptiveOrbital,
                                                       *cfeBasisDataStorageAdaptiveOrbital,
-                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      numWantedEigenvalues,
                                                       true); 
 
     // add device synchronize for gpu

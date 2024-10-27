@@ -280,10 +280,12 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxFieldBlock(maxFieldBlock)
+      , d_maxCellBlock(maxCellBlock)
     {
       utils::throwException(
         &(feBasisManagerX.getBasisDofHandler()) ==
@@ -296,11 +298,10 @@ namespace dftefe
         "feBasisManager of X and Y vectors and feBasisDataStorage are not from the same basisDofHandler");
 
       // TODO: ------------------Change later------------------------
-      const size_type cellBlockSize = d_maxCellTimesNumVecs;
 
       basis::
         FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          feBasisOp(feBasisDataStorage, cellBlockSize);
+          feBasisOp(feBasisDataStorage, maxCellBlock);
 
       const size_type numLocallyOwnedCells =
         d_feBasisManagerX->nLocallyOwnedCells();
@@ -372,7 +373,8 @@ namespace dftefe
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+      const size_type cellBlockSize =
+        (d_maxCellBlock * d_maxFieldBlock) / numVecs;
       Y.setValue(0.0);
 
       //

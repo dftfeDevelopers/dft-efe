@@ -568,10 +568,12 @@ namespace dftefe
                              dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
     {
       utils::throwException(
@@ -613,10 +615,12 @@ namespace dftefe
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             efeBasisDataStorage,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
     {
       utils::throwException(
@@ -686,7 +690,8 @@ namespace dftefe
       const utils::MemoryStorage<ValueTypeOperator, memorySpace>
         &basisOverlapInAllCells = *d_basisOverlap;
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+      const size_type cellBlockSize =
+        (d_maxCellBlock * d_maxFieldBlock) / numVecs;
       Y.setValue(0.0);
 
       //

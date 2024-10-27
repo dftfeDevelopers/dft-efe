@@ -259,8 +259,6 @@ namespace dftefe
           cellIndex = cellIndex + 1;
         }
 
-      size_type cellTimesNumVec =
-        nTotalEnrichmentIds * L2ProjectionDefaults::CELL_BATCH_SIZE;
       // Create OperatorContext for CFEBasisoverlap
       std::shared_ptr<
         const dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
@@ -274,7 +272,8 @@ namespace dftefe
                                                    dim>>(
           *d_cfeBasisManager,
           *cfeBasisDataStorageOverlapMatrix,
-          cellTimesNumVec);
+          L2ProjectionDefaults::CELL_BATCH_SIZE,
+          nTotalEnrichmentIds);
 
       std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
                                                           ValueTypeBasisData,
@@ -290,7 +289,8 @@ namespace dftefe
             quadValuesEnrichmentFunction,
             L2ProjectionDefaults::PC_TYPE,
             linAlgOpContext,
-            cellTimesNumVec);
+            L2ProjectionDefaults::CELL_BATCH_SIZE,
+            nTotalEnrichmentIds);
 
       linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -321,8 +321,8 @@ namespace dftefe
 
       FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace,
       dim> cfeBasisOperations(cfeBasisDataStorageRhs,
-      cellTimesNumVec);
-      rootCout << "Begin creating integrateWithBasisValues\n";
+      L2ProjectionDefaults::CELL_BATCH_SIZE, nTotalEnrichmentIds; rootCout <<
+      "Begin creating integrateWithBasisValues\n";
       // Integrate this with different quarature rule. (i.e. adaptive for the
       // enrichment functions) , inp will be in adaptive grid
       cfeBasisOperations.integrateWithBasisValues(quadValuesEnrichmentFunction,

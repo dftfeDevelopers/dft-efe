@@ -65,7 +65,7 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize);
+        const size_type maxCellBlock);
 
       ~KineticFE() = default;
 
@@ -98,7 +98,7 @@ namespace dftefe
                                                dim>>
                       d_feBasisOp;
       RealType        d_energy;
-      const size_type d_cellBlockSize;
+      const size_type d_maxCellBlock;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 

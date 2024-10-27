@@ -62,8 +62,7 @@ namespace dftefe
                                           memorySpace,
                                           dim> &MContext,
           std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                          linAlgOpContext,
-          const size_type maxCellTimesNumVecs)
+            linAlgOpContext)
           : d_feBasisManager(&feBasisManager)
           , d_linAlgOpContext(linAlgOpContext)
           , d_AxContext(&MContext)
@@ -419,7 +418,7 @@ namespace dftefe
                                                          ValueTypeOperand,
                                                          memorySpace,
                                                          dim>>(
-            *d_feBasisManager, MContext, linAlgOpContext, 50);
+            *d_feBasisManager, MContext, linAlgOpContext);
 
           linearAlgebra::LinearAlgebraProfiler profiler;
 
