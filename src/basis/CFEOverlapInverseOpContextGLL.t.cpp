@@ -254,9 +254,11 @@ namespace dftefe
                       {
                         *basisOverlapTmpIter +=
                           *(cumulativeClassicalBlockDofQuadPoints +
-                            nQuadPointInCellClassicalBlock * iNode + qPoint) *
+                            dofsPerCell * qPoint + iNode
+                            /*nQuadPointInCellClassicalBlock * iNode + qPoint*/) *
                           *(cumulativeClassicalBlockDofQuadPoints +
-                            nQuadPointInCellClassicalBlock * jNode + qPoint) *
+                            dofsPerCell * qPoint + jNode
+                            /*nQuadPointInCellClassicalBlock * jNode + qPoint*/) *
                           cellJxWValuesClassicalBlock[qPoint];
                       }
                     basisOverlapTmpIter++;

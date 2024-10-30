@@ -36,6 +36,21 @@ namespace dftefe
                scalar_type<ValueType1, ValueType2> *z);
 
         /**
+         * @brief Template for performing \f$ z = \alpha x$
+         * @param[in] size size of the array
+         * @param[in] \f$ alpha \f$ scalar
+         * @param[in] x array
+         * @param[out] z array
+         */
+        static void
+        ascale(size_type                            size,
+               ValueType1                           alpha,
+               const ValueType2 *                   x,
+               const ScalarOp &                     opalpha,
+               const ScalarOp &                     opx,
+               scalar_type<ValueType1, ValueType2> *z);
+
+        /**
          * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
          * @param[in] size size of the array
          * @param[in] x array
@@ -109,6 +124,7 @@ namespace dftefe
          */
         static void
         scaleStridedVarBatched(const size_type                      numMats,
+                               const Layout                         layout,
                                const ScalarOp *                     scalarOpA,
                                const ScalarOp *                     scalarOpB,
                                const size_type *                    stridea,

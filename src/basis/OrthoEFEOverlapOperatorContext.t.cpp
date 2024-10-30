@@ -174,9 +174,11 @@ namespace dftefe
                           {
                             *basisOverlapTmpIter +=
                               *(cumulativeCFEDofQuadPoints +
-                                nQuadPointInCellCFE * iNode + qPoint) *
+                                dofsPerCellCFE * qPoint + iNode
+                                /*nQuadPointInCellCFE * iNode + qPoint*/) *
                               *(cumulativeCFEDofQuadPoints +
-                                nQuadPointInCellCFE * jNode + qPoint) *
+                                dofsPerCellCFE * qPoint + jNode
+                                /*nQuadPointInCellCFE * jNode + qPoint*/) *
                               cellJxWValuesCFE[qPoint];
                           }
                       }
@@ -193,9 +195,11 @@ namespace dftefe
                           {
                             *basisOverlapTmpIter +=
                               *(cumulativeEFEDofQuadPoints +
-                                nQuadPointInCellEFE * iNode + qPoint) *
+                                dofsPerCell * qPoint + iNode
+                                /*nQuadPointInCellEFE * iNode + qPoint*/) *
                               *(cumulativeEFEDofQuadPoints +
-                                nQuadPointInCellEFE * jNode + qPoint) *
+                                dofsPerCell * qPoint + jNode
+                                /*nQuadPointInCellEFE * jNode + qPoint*/) *
                               cellJxWValuesEFE[qPoint];
                           }
                       }
@@ -527,7 +531,7 @@ namespace dftefe
                                                 utils::MemorySpace::HOST>(
                   linearAlgebra::blasLapack::Layout::ColMajor,
                   linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::Trans,
+                  linearAlgebra::blasLapack::Op::NoTrans,
                   numEnrichmentIdsInCell,
                   nQuadPointInCellEnrichmentBlockClassical,
                   dofsPerCellCFE,
@@ -535,7 +539,7 @@ namespace dftefe
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
                   basisValInCellEC.data(),
-                  nQuadPointInCellEnrichmentBlockClassical,
+                  dofsPerCellCFE,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEC.data(),
                   numEnrichmentIdsInCell,
@@ -555,7 +559,7 @@ namespace dftefe
                                                 utils::MemorySpace::HOST>(
                   linearAlgebra::blasLapack::Layout::ColMajor,
                   linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::Trans,
+                  linearAlgebra::blasLapack::Op::NoTrans,
                   numEnrichmentIdsInCell,
                   nQuadPointInCellEnrichmentBlockEnrichment,
                   dofsPerCellCFE,
@@ -563,7 +567,7 @@ namespace dftefe
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
                   basisValInCellEE.data(),
-                  nQuadPointInCellEnrichmentBlockEnrichment,
+                  dofsPerCell,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEE.data(),
                   numEnrichmentIdsInCell,
@@ -599,11 +603,13 @@ namespace dftefe
                           {
                             *basisOverlapTmpIter +=
                               *(cumulativeClassicalBlockDofQuadPoints +
-                                nQuadPointInCellClassicalBlock * iNode +
-                                qPoint) *
+                                dofsPerCellCFE * qPoint + iNode
+                                /*nQuadPointInCellClassicalBlock * iNode +
+                                qPoint*/) *
                               *(cumulativeClassicalBlockDofQuadPoints +
-                                nQuadPointInCellClassicalBlock * jNode +
-                                qPoint) *
+                                dofsPerCellCFE * qPoint + jNode
+                                /*nQuadPointInCellClassicalBlock * jNode +
+                                qPoint*/) *
                               cellJxWValuesClassicalBlock[qPoint];
                           }
                       }
@@ -623,9 +629,10 @@ namespace dftefe
                                   nQuadPointInCellEnrichmentBlockEnrichment +
                                 qPoint) *
                               *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
-                                nQuadPointInCellEnrichmentBlockEnrichment *
+                                dofsPerCell * qPoint + jNode
+                                /*nQuadPointInCellEnrichmentBlockEnrichment *
                                   jNode +
-                                qPoint) *
+                                qPoint*/) *
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
 
@@ -640,9 +647,9 @@ namespace dftefe
                                 [numEnrichmentIdsInCell * qPoint +
                                  (iNode - dofsPerCellCFE)] *
                               *(cumulativeEnrichmentBlockClassicalDofQuadPoints +
-                                nQuadPointInCellEnrichmentBlockClassical *
-                                  jNode +
-                                qPoint) *
+                                dofsPerCellCFE * qPoint + jNode
+                                /*nQuadPointInCellEnrichmentBlockClassical *
+                                  jNode + qPoint*/) *
                               cellJxWValuesEnrichmentBlockClassical[qPoint];
                           }
                         *basisOverlapTmpIter += NpiNcj - ciNciNcj;
@@ -660,9 +667,10 @@ namespace dftefe
                           {
                             NciNpj +=
                               *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
-                                nQuadPointInCellEnrichmentBlockEnrichment *
+                                dofsPerCell * qPoint + iNode
+                                /*nQuadPointInCellEnrichmentBlockEnrichment *
                                   iNode +
-                                qPoint) *
+                                qPoint*/) *
                               *(enrichmentValuesVec.data() +
                                 (jNode - dofsPerCellCFE) *
                                   nQuadPointInCellEnrichmentBlockEnrichment +
@@ -678,9 +686,9 @@ namespace dftefe
                           {
                             NcicjNcj +=
                               *(cumulativeEnrichmentBlockClassicalDofQuadPoints +
-                                nQuadPointInCellEnrichmentBlockClassical *
-                                  iNode +
-                                qPoint) *
+                                dofsPerCellCFE * qPoint + iNode
+                                /*nQuadPointInCellEnrichmentBlockClassical *
+                                  iNode + qPoint*/) *
                               classicalComponentInQuadValuesEC
                                 [numEnrichmentIdsInCell * qPoint +
                                  (jNode - dofsPerCellCFE)] *

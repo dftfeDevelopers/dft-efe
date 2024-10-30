@@ -60,20 +60,15 @@ namespace dftefe
             size_type quadId = 0;
             for (size_type iCell = 0; iCell < residualValues.nCells(); iCell++)
               {
-                for (size_type iComp = 0;
-                     iComp < residualValues.getNumberComponents();
-                     iComp++)
+                std::vector<RealType> a(
+                  residualValues.nCellQuadraturePoints(iCell) *
+                  residualValues.getNumberComponents());
+                residualValues.template getCellValues<utils::MemorySpace::HOST>(
+                  iCell, a.data());
+                for (auto j : a)
                   {
-                    std::vector<RealType> a(
-                      residualValues.nCellQuadraturePoints(iCell));
-                    residualValues
-                      .template getCellQuadValues<utils::MemorySpace::HOST>(
-                        iCell, iComp, a.data());
-                    for (auto j : a)
-                      {
-                        normValue += *(JxW.data() + quadId) * j * j;
-                        quadId = quadId + 1;
-                      }
+                    normValue += *(JxW.data() + quadId) * j * j;
+                    quadId = quadId + 1;
                   }
               }
             utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -105,20 +100,14 @@ namespace dftefe
             int quadId = 0;
             for (size_type iCell = 0; iCell < inValues.nCells(); iCell++)
               {
-                for (size_type iComp = 0;
-                     iComp < inValues.getNumberComponents();
-                     iComp++)
+                std::vector<RealType> a(inValues.nCellQuadraturePoints(iCell) *
+                                        inValues.getNumberComponents());
+                inValues.template getCellValues<utils::MemorySpace::HOST>(
+                  iCell, a.data());
+                for (auto j : a)
                   {
-                    std::vector<RealType> a(
-                      inValues.nCellQuadraturePoints(iCell));
-                    inValues
-                      .template getCellQuadValues<utils::MemorySpace::HOST>(
-                        iCell, iComp, a.data());
-                    for (auto j : a)
-                      {
-                        totalDensityInQuad += j * *(JxW.data() + quadId);
-                        quadId += 1;
-                      }
+                    totalDensityInQuad += j * *(JxW.data() + quadId);
+                    quadId += 1;
                   }
               }
             utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -461,6 +450,7 @@ namespace dftefe
                        0.0,
                        1.0)
       , d_numElectrons(numElectrons)
+      , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
     {
@@ -721,22 +711,23 @@ namespace dftefe
           /*
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
             quadRuleContainer =
-              d_feBDEXCHamiltonian->getQuadratureRuleContainer();
+          d_feBDEXCHamiltonian->getQuadratureRuleContainer();
 
               std::shared_ptr<const
-          basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
-                                                                ValueTypeWaveFunctionBasis,
-                                                                memorySpace,
-                                                                dim>> feBasisOp
-          = std::make_shared<const
-          basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
-                                                                ValueTypeWaveFunctionBasis,
-                                                                memorySpace,
-                                                                dim>>(
-                  d_feBDEXCHamiltonian, 50, 1);
+            basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
+                                                                  ValueTypeWaveFunctionBasis,
+                                                                  memorySpace,
+                                                                  dim>>
+          feBasisOp = std::make_shared<const
+            basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
+                                                                  ValueTypeWaveFunctionBasis,
+                                                                  memorySpace,
+                                                                  dim>>(
+                    d_feBDEXCHamiltonian, 50,
+          d_kohnShamWaveFunctions->getNumberComponents());
 
-              quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-          waveFuncQuad( quadRuleContainer,
+            quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+              waveFuncQuad( quadRuleContainer,
           d_kohnShamWaveFunctions->getNumberComponents());
 
               feBasisOp->interpolate(*d_kohnShamWaveFunctions,
@@ -747,18 +738,15 @@ namespace dftefe
               for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
               {
                 std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
-                for(dftefe::size_type iComp = 0 ; iComp <
-          waveFuncQuad.getNumberComponents() ; iComp ++)
-                {
-                  std::vector<double>
-          a(quadRuleContainer->nCellQuadraturePoints(i), 0);
-                  waveFuncQuad.template
-          getCellQuadValues<utils::MemorySpace::HOST>(i, iComp, a.data()); for
-          (int j = 0 ; j < a.size() ; j++)
+                for(int j = 0 ; j < jxwCell.size() ; j++)
                   {
-                    denSum += jxwCell[j] * std::abs(a[j]) * std::abs(a[j]);
+                    std::vector<double>
+          a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
+                    waveFuncQuad.template
+          getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
+          = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
+          std::abs(a[k]);
                   }
-                }
               }
 
               utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -779,18 +767,15 @@ namespace dftefe
               for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
               {
                 std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
-                for(dftefe::size_type iComp = 0 ; iComp <
-          waveFuncQuad.getNumberComponents() ; iComp ++)
-                {
-                  std::vector<double>
-          a(quadRuleContainer->nCellQuadraturePoints(i), 0);
-                  waveFuncQuad.template
-          getCellQuadValues<utils::MemorySpace::HOST>(i, iComp, a.data()); for
-          (int j = 0 ; j < a.size() ; j++)
+                for(int j = 0 ; j < jxwCell.size() ; j++)
                   {
-                    denSum += jxwCell[j] * std::abs(a[j]) * std::abs(a[j]);
+                    std::vector<double>
+          a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
+                    waveFuncQuad.template
+          getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
+          = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
+          std::abs(a[k]);
                   }
-                }
               }
 
               utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -812,18 +797,15 @@ namespace dftefe
               for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
               {
                 std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
-                for(dftefe::size_type iComp = 0 ; iComp <
-          waveFuncQuad.getNumberComponents() ; iComp ++)
-                {
-                  std::vector<double>
-          a(quadRuleContainer->nCellQuadraturePoints(i), 0);
-                  waveFuncQuad.template
-          getCellQuadValues<utils::MemorySpace::HOST>(i, iComp, a.data()); for
-          (int j = 0 ; j < a.size() ; j++)
+                for(int j = 0 ; j < jxwCell.size() ; j++)
                   {
-                    denSum += jxwCell[j] * std::abs(a[j]) * std::abs(a[j]);
+                    std::vector<double>
+          a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
+                    waveFuncQuad.template
+          getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
+          = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
+          std::abs(a[k]);
                   }
-                }
               }
 
               utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(

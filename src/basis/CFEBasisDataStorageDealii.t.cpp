@@ -262,7 +262,8 @@ namespace dftefe
                       {
                         auto it = basisQuadStorageTmp.begin() +
                                   cellIndex * DofsPerCellxNumQuad +
-                                  iNode * nQuadPointsPerCell + qPoint;
+                                  qPoint * dofsPerCell + iNode;
+                        // iNode * nQuadPointsPerCell + qPoint;
                         *it = dealiiFEValues.shape_value(iNode, qPoint);
                       }
                   }
@@ -308,8 +309,10 @@ namespace dftefe
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cellIndex * nDimxDofsPerCellxNumQuad +
-                                      iDim * DofsPerCellxNumQuad +
-                                      iNode * nQuadPointsPerCell + qPoint;
+                                      qPoint * dim * dofsPerCell +
+                                      iDim * dofsPerCell + iNode;
+                            // iDim * DofsPerCellxNumQuad +
+                            // iNode * nQuadPointsPerCell + qPoint;
                             *it = shapeGrad[iDim];
                           }
                       }
@@ -336,9 +339,12 @@ namespace dftefe
                                 auto it =
                                   basisHessianQuadStorageTmp.begin() +
                                   cellIndex * nDimSqxDofsPerCellxNumQuad +
-                                  iDim * nDimxDofsPerCellxNumQuad +
-                                  jDim * DofsPerCellxNumQuad +
-                                  iNode * nQuadPointsPerCell + qPoint;
+                                  qPoint * dim * dim * dofsPerCell +
+                                  iDim * dim * dofsPerCell +
+                                  jDim * dofsPerCell + iNode;
+                                // iDim * nDimxDofsPerCellxNumQuad +
+                                // jDim * DofsPerCellxNumQuad +
+                                // iNode * nQuadPointsPerCell + qPoint;
                                 *it = shapeHessian[iDim][jDim];
                               }
                           }
@@ -735,7 +741,8 @@ namespace dftefe
                       {
                         auto it = basisQuadStorageTmp.begin() +
                                   cumulativeQuadPoints * dofsPerCell +
-                                  iNode * nQuadPointInCell + qPoint;
+                                  qPoint * dofsPerCell + iNode;
+                        // iNode * nQuadPointInCell + qPoint;
                         *it = dealiiFEValues.shape_value(iNode, qPoint);
                       }
                   }
@@ -780,8 +787,10 @@ namespace dftefe
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cumulativeQuadPoints * dim * dofsPerCell +
-                                      iDim * dofsPerCell * nQuadPointInCell +
-                                      iNode * nQuadPointInCell + qPoint;
+                                      qPoint * dim * dofsPerCell +
+                                      iDim * dofsPerCell + iNode;
+                            // iDim * dofsPerCell * nQuadPointInCell +
+                            // iNode * nQuadPointInCell + qPoint;
                             *it = shapeGrad[iDim];
                           }
                       }
@@ -805,13 +814,15 @@ namespace dftefe
                           {
                             for (unsigned int jDim = 0; jDim < dim; jDim++)
                               {
-                                auto it =
-                                  basisHessianQuadStorageTmp.begin() +
-                                  cumulativeQuadPoints * dim * dim *
-                                    dofsPerCell +
-                                  iDim * dim * dofsPerCell * nQuadPointInCell +
-                                  jDim * dofsPerCell * nQuadPointInCell +
-                                  iNode * nQuadPointInCell + qPoint;
+                                auto it = basisHessianQuadStorageTmp.begin() +
+                                          cumulativeQuadPoints * dim * dim *
+                                            dofsPerCell +
+                                          qPoint * dim * dim * dofsPerCell +
+                                          iDim * dim * dofsPerCell +
+                                          jDim * dofsPerCell + iNode;
+                                // iDim * dim * dofsPerCell * nQuadPointInCell +
+                                // jDim * dofsPerCell * nQuadPointInCell +
+                                // iNode * nQuadPointInCell + qPoint;
                                 *it = shapeHessian[iDim][jDim];
                               }
                           }
@@ -2030,11 +2041,11 @@ namespace dftefe
       size_type                     sizeToCopy        = 0;
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
-        sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
+        sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId];
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
         utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-          nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
+          nQuadPointsInCell[cellId] * d_dofsInCell[cellId],
           basisData.data() + cellStartIds[cellId] -
             cellStartIds[cellRange.first],
           basisQuadStorage->data() + cellStartIds[cellId]);
@@ -2225,7 +2236,8 @@ namespace dftefe
         1,
         returnValue.data(),
         basisQuadStorage->data() + cellStartIds[cellId] +
-          basisId * nQuadPointsInCell[cellId] + quadPointId);
+          quadPointId * d_dofsInCell[cellId] + basisId);
+      // basisId * nQuadPointsInCell[cellId] + quadPointId);
       return returnValue;
     }
 
@@ -2267,8 +2279,10 @@ namespace dftefe
             1,
             returnValue.data() + iDim,
             basisGradientQuadStorage->data() + cellStartIds[cellId] +
-              iDim * d_dofsInCell[cellId] * nQuadPointsInCell[cellId] +
-              basisId * nQuadPointsInCell[cellId] + quadPointId);
+              quadPointId * d_dofsInCell[cellId] * dim +
+              iDim * d_dofsInCell[cellId] + basisId);
+          // iDim * d_dofsInCell[cellId] * nQuadPointsInCell[cellId] +
+          // basisId * nQuadPointsInCell[cellId] + quadPointId);
         }
       return returnValue;
     }
@@ -2313,9 +2327,11 @@ namespace dftefe
                 1,
                 returnValue.data() + iDim * dim + jDim,
                 basisHessianQuadStorage->data() + cellStartIds[cellId] +
-                  (iDim * dim + jDim) * d_dofsInCell[cellId] *
-                    nQuadPointsInCell[cellId] +
-                  basisId * nQuadPointsInCell[cellId] + quadPointId);
+                  quadPointId * d_dofsInCell[cellId] * dim * dim +
+                  (iDim * dim + jDim) * d_dofsInCell[cellId] + basisId);
+              // (iDim * dim + jDim) * d_dofsInCell[cellId] *
+              //   nQuadPointsInCell[cellId] +
+              // basisId * nQuadPointsInCell[cellId] + quadPointId);
             }
         }
       return returnValue;

@@ -133,8 +133,8 @@ namespace dftefe
                   linAlgOpContext,
                   inp.getNumberComponents())
       , d_AxContext(cfeBasisDataStorageOverlapMatrix)
-      , d_maxCellBlock(d_maxCellBlock)
-      , d_maxFieldBlock(d_maxFieldBlock)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
     {
       d_mpiPatternP2P = cfeBasisManager->getMPIPatternP2P();
 

@@ -934,16 +934,13 @@ int main(int argc, char** argv)
  
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
-      for (size_type iComp = 0; iComp < 1; iComp++)
-        {
           size_type             quadId = 0;
           std::vector<double> a(
             electronChargeDensity.nCellQuadraturePoints(iCell));
           a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
           double *b = a.data();
           electronChargeDensity.template 
-            setCellQuadValues<Host>(iCell, iComp, b);
-        }
+            setCellValues<Host>(iCell, b);
     }
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>

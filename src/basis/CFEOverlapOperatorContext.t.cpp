@@ -117,10 +117,12 @@ namespace dftefe
                          qPoint++)
                       {
                         *basisOverlapTmpIter +=
-                          *(cumulativeDofQuadPoints + nQuadPointInCell * iNode +
-                            qPoint) *
-                          *(cumulativeDofQuadPoints + nQuadPointInCell * jNode +
-                            qPoint) *
+                          *(cumulativeDofQuadPoints + dofsPerCell * qPoint +
+                            iNode
+                            /*nQuadPointInCell * iNode + qPoint*/) *
+                          *(cumulativeDofQuadPoints + dofsPerCell * qPoint +
+                            jNode
+                            /*nQuadPointInCell * jNode + qPoint*/) *
                           cellJxWValues[qPoint];
                       }
                     basisOverlapTmpIter++;

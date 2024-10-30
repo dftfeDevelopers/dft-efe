@@ -431,7 +431,7 @@ namespace dftefe
                                                 utils::MemorySpace::HOST>(
                   linearAlgebra::blasLapack::Layout::ColMajor,
                   linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::Trans,
+                  linearAlgebra::blasLapack::Op::NoTrans,
                   numEnrichmentIdsInCell,
                   nQuadPointInCellEnrichmentBlockClassical,
                   dofsPerCellCFE,
@@ -439,7 +439,7 @@ namespace dftefe
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
                   basisValInCellEC.data(),
-                  nQuadPointInCellEnrichmentBlockClassical,
+                  dofsPerCellCFE,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEC.data(),
                   numEnrichmentIdsInCell,
@@ -458,7 +458,7 @@ namespace dftefe
                                                 utils::MemorySpace::HOST>(
                   linearAlgebra::blasLapack::Layout::ColMajor,
                   linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::Trans,
+                  linearAlgebra::blasLapack::Op::NoTrans,
                   numEnrichmentIdsInCell,
                   nQuadPointInCellEnrichmentBlockEnrichment,
                   dofsPerCellCFE,
@@ -466,7 +466,7 @@ namespace dftefe
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
                   basisValInCellEE.data(),
-                  nQuadPointInCellEnrichmentBlockEnrichment,
+                  dofsPerCell,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEE.data(),
                   numEnrichmentIdsInCell,
@@ -503,11 +503,13 @@ namespace dftefe
                           {
                             *basisOverlapTmpIter +=
                               *(cumulativeClassicalBlockDofQuadPoints +
-                                nQuadPointInCellClassicalBlock * iNode +
-                                qPoint) *
+                                dofsPerCellCFE * qPoint + iNode
+                                /*nQuadPointInCellClassicalBlock * iNode +
+                                qPoint*/) *
                               *(cumulativeClassicalBlockDofQuadPoints +
-                                nQuadPointInCellClassicalBlock * jNode +
-                                qPoint) *
+                                dofsPerCellCFE * qPoint + jNode
+                                /*nQuadPointInCellClassicalBlock * jNode +
+                                qPoint*/) *
                               cellJxWValuesClassicalBlock[qPoint];
                           }
                       }

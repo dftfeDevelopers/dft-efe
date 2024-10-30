@@ -31,6 +31,7 @@
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
+#include <linearAlgebra/ChebyshevFilteredEigenSolver.h>
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
 #include <utils/ConditionalOStream.h>
@@ -181,6 +182,12 @@ namespace dftefe
       double d_wantedSpectrumLowerBound;
       double d_wantedSpectrumUpperBound;
       bool   d_isBoundKnown;
+
+      std::shared_ptr<
+        linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                    ValueTypeOperand,
+                                                    memorySpace>>
+        d_chfsi;
 
       linearAlgebra::MultiVector<ValueType, memorySpace>
         *d_filteredSubspaceOrtho;

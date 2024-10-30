@@ -117,11 +117,11 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace> gradPsi(
         quadRuleContainer, waveFuncBatchSize * dim);
 
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        gradPsiModSq(quadRuleContainer, waveFuncBatchSize * dim);
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace> gradPsixjxw(
+        quadRuleContainer, waveFuncBatchSize * dim);
 
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        gradPsiModSqJxW(quadRuleContainer, waveFuncBatchSize * dim);
+      // quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      //   gradPsiModSqJxW(quadRuleContainer, waveFuncBatchSize * dim);
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
@@ -133,19 +133,22 @@ namespace dftefe
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
 
-          std::vector<RealType> occupationInBatch(numPsiInBatch, 0);
+          utils::MemoryStorage<ValueType, memorySpace> occupationInBatch(
+            numPsiInBatch, (ValueType)0),
+            integralModGradPsiSq(numPsiInBatch, (ValueType)0),
+            energyBatch(numPsiInBatch, (ValueType)0),
+            ones(numPsiInBatch, (ValueType)1);
 
-          std::copy(occupation.data() + psiStartId,
-                    occupation.data() + psiEndId,
-                    occupationInBatch.begin());
+          occupationInBatch.template copyFrom<utils::MemorySpace::HOST>(
+            occupation.data(), numPsiInBatch, psiStartId, 0);
 
           if (numPsiInBatch < waveFuncBatchSize)
             {
               gradPsi.reinit(quadRuleContainer, numPsiInBatch * dim);
 
-              gradPsiModSq.reinit(quadRuleContainer, numPsiInBatch * dim);
+              gradPsixjxw.reinit(quadRuleContainer, numPsiInBatch * dim);
 
-              gradPsiModSqJxW.reinit(quadRuleContainer, numPsiInBatch * dim);
+              // gradPsiModSqJxW.reinit(quadRuleContainer, numPsiInBatch * dim);
 
               linearAlgebra::MultiVector<ValueType, memorySpace> psiBatchSmall(
                 waveFunc.getMPIPatternP2P(),
@@ -179,15 +182,15 @@ namespace dftefe
                                                         gradPsi);
             }
 
-          linearAlgebra::blasLapack::
-            hadamardProduct<ValueType, ValueType, memorySpace>(
-              gradPsi.nEntries(),
-              gradPsi.begin(),
-              gradPsi.begin(),
-              linearAlgebra::blasLapack::ScalarOp::Conj,
-              linearAlgebra::blasLapack::ScalarOp::Identity,
-              gradPsiModSq.begin(),
-              *d_linAlgOpContext);
+          // linearAlgebra::blasLapack::
+          //   hadamardProduct<ValueType, ValueType, memorySpace>(
+          //     gradPsi.nEntries(),
+          //     gradPsi.begin(),
+          //     gradPsi.begin(),
+          //     linearAlgebra::blasLapack::ScalarOp::Conj,
+          //     linearAlgebra::blasLapack::ScalarOp::Identity,
+          //     gradPsiModSq.begin(),
+          //     *d_linAlgOpContext);
 
           auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
 
@@ -250,9 +253,12 @@ namespace dftefe
                                   stC.data(),
                                   stCTmp.data());
 
+          linearAlgebra::blasLapack::Layout layout =
+            linearAlgebra::blasLapack::Layout::ColMajor;
           linearAlgebra::blasLapack::
             scaleStridedVarBatched<ValueTypeBasisData, ValueType, memorySpace>(
               numLocallyOwnedCells,
+              layout,
               scalarOpA.data(),
               scalarOpB.data(),
               stA.data(),
@@ -262,51 +268,88 @@ namespace dftefe
               nSize.data(),
               kSize.data(),
               jxwStorage.data(),
-              gradPsiModSq.begin(),
-              gradPsiModSqJxW.begin(),
+              gradPsi.begin(),
+              gradPsixjxw.begin(),
               *d_linAlgOpContext);
 
-          std::vector<RealType> integralModGradPsiSq(numPsiInBatch),
-            energy(numPsiInBatch);
-
-          for (size_type iCell = 0; iCell < gradPsiModSqJxW.nCells(); iCell++)
+          size_type vecsize = 0;
+          for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
             {
-              for (size_type iDim = 0; iDim < dim; iDim++)
-                {
-                  for (size_type iComp = 0; iComp < numPsiInBatch; iComp++)
-                    {
-                      std::vector<ValueType> a(
-                        quadRuleContainer->nCellQuadraturePoints(iCell));
-                      gradPsiModSqJxW
-                        .template getCellQuadValues<utils::MemorySpace::HOST>(
-                          iCell, iDim * numPsiInBatch + iComp, a.data());
-                      integralModGradPsiSq[iComp] +=
-                        (RealType)(utils::realPart<ValueType>(
-                          std::accumulate(a.begin(), a.end(), (ValueType)0)));
-                    }
-                }
+              vecsize += quadRuleContainer->nCellQuadraturePoints(iCell) * dim;
             }
 
-          int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          linearAlgebra::blasLapack::
+            dotMultiVector<ValueType, ValueType, memorySpace>(
+              vecsize,
+              numPsiInBatch,
+              gradPsi.begin(),
+              gradPsixjxw.begin(),
+              linearAlgebra::blasLapack::ScalarOp::Conj,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
+              integralModGradPsiSq.data(),
+              *d_linAlgOpContext);
+
+          // std::vector<RealType> integralModGradPsiSq(numPsiInBatch),
+          //   energy(numPsiInBatch);
+
+          // for (size_type iCell = 0; iCell < gradPsiModSqJxW.nCells();
+          // iCell++)
+          //   {
+          //     for (size_type iDim = 0; iDim < dim; iDim++)
+          //       {
+          //         for (size_type iComp = 0; iComp < numPsiInBatch; iComp++)
+          //           {
+          //             std::vector<ValueType> a(
+          //               quadRuleContainer->nCellQuadraturePoints(iCell));
+          //             gradPsiModSqJxW
+          //               .template
+          //               getCellQuadValues<utils::MemorySpace::HOST>(
+          //                 iCell, iDim * numPsiInBatch + iComp, a.data());
+          //             integralModGradPsiSq[iComp] +=
+          //               (RealType)(utils::realPart<ValueType>(
+          //                 std::accumulate(a.begin(), a.end(),
+          //                 (ValueType)0)));
+          //           }
+          //       }
+          //   }
+
+          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
             utils::mpi::MPIInPlace,
             integralModGradPsiSq.data(),
             integralModGradPsiSq.size(),
-            utils::mpi::Types<RealType>::getMPIDatatype(),
+            utils::mpi::Types<ValueType>::getMPIDatatype(),
             utils::mpi::MPISum,
             waveFunc.getMPIPatternP2P()->mpiCommunicator());
 
           linearAlgebra::blasLapack::
-            hadamardProduct<RealType, RealType, utils::MemorySpace::HOST>(
+            hadamardProduct<ValueType, ValueType, memorySpace>(
               integralModGradPsiSq.size(),
               integralModGradPsiSq.data(),
               occupationInBatch.data(),
               linearAlgebra::blasLapack::ScalarOp::Identity,
               linearAlgebra::blasLapack::ScalarOp::Identity,
-              energy.data(),
+              energyBatch.data(),
               *d_linAlgOpContext);
 
-          d_energy +=
-            std::accumulate(energy.begin(), energy.end(), (RealType)0);
+          ValueType energyBatchSum = (ValueType)0;
+          linearAlgebra::blasLapack::gemm(
+            layout,
+            linearAlgebra::blasLapack::Op::NoTrans,
+            linearAlgebra::blasLapack::Op::NoTrans,
+            1,
+            1,
+            numPsiInBatch,
+            (ValueType)1.0,
+            ones.data(),
+            1,
+            energyBatch.data(),
+            numPsiInBatch,
+            (ValueType)0.0,
+            &energyBatchSum,
+            1,
+            *d_linAlgOpContext);
+
+          d_energy += (RealType)(energyBatchSum);
 
           /*No multiplication by 1/2 due to spin up and down electrons*/
         }

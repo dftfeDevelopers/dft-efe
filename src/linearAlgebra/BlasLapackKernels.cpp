@@ -101,6 +101,63 @@ namespace dftefe
           }
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
+      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(
+        const size_type                      size,
+        const ValueType1                     alpha,
+        const ValueType2 *                   x,
+        const ScalarOp &                     opalpha,
+        const ScalarOp &                     opx,
+        scalar_type<ValueType1, ValueType2> *z)
+      {
+        if (opalpha == ScalarOp::Identity && opx == ScalarOp::Identity)
+          {
+            blasLapackKernelsInternal::ScalarProduct<ValueType1,
+                                                     ValueType2,
+                                                     ScalarOp::Identity,
+                                                     ScalarOp::Identity>
+              sp;
+            for (size_type i = 0; i < size; ++i)
+              z[i] = sp.prod(alpha, x[i]);
+          }
+
+        else if (opalpha == ScalarOp::Identity && opx == ScalarOp::Conj)
+          {
+            blasLapackKernelsInternal::ScalarProduct<ValueType1,
+                                                     ValueType2,
+                                                     ScalarOp::Identity,
+                                                     ScalarOp::Conj>
+              sp;
+            for (size_type i = 0; i < size; ++i)
+              z[i] = sp.prod(alpha, x[i]);
+          }
+
+        else if (opalpha == ScalarOp::Conj && opx == ScalarOp::Identity)
+          {
+            blasLapackKernelsInternal::ScalarProduct<ValueType1,
+                                                     ValueType2,
+                                                     ScalarOp::Conj,
+                                                     ScalarOp::Identity>
+              sp;
+            for (size_type i = 0; i < size; ++i)
+              z[i] = sp.prod(alpha, x[i]);
+          }
+
+        // opalpha == ScalarOp::Conj && opx == ScalarOp::Conj
+        else
+          {
+            blasLapackKernelsInternal::ScalarProduct<ValueType1,
+                                                     ValueType2,
+                                                     ScalarOp::Conj,
+                                                     ScalarOp::Conj>
+              sp;
+            for (size_type i = 0; i < size; ++i)
+              z[i] = sp.prod(alpha, x[i]);
+          }
+      }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -223,6 +280,7 @@ namespace dftefe
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
         scaleStridedVarBatched(const size_type                      numMats,
+                               const Layout                         layout,
                                const ScalarOp *                     scalarOpA,
                                const ScalarOp *                     scalarOpB,
                                const size_type *                    stridea,
@@ -236,27 +294,55 @@ namespace dftefe
                                scalar_type<ValueType1, ValueType2> *dC,
                                LinAlgOpContext<memorySpace> &       context)
       {
-        size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
-        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+        if (layout == Layout::RowMajor)
           {
-            for (size_type icolA = 0; icolA < *(m + ibatch); ++icolA)
+            size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+            for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
               {
-                for (size_type icolB = 0; icolB < *(n + ibatch); ++icolB)
+                for (size_type icolA = 0; icolA < *(m + ibatch); ++icolA)
                   {
-                    size_type numrows = *(k + ibatch);
-                    hadamardProduct(numrows,
-                                    (dA + cumulativeA + icolA * numrows),
-                                    (dB + cumulativeB + icolB * numrows),
-                                    *(scalarOpA + ibatch),
-                                    *(scalarOpB + ibatch),
-                                    (dC + cumulativeC +
-                                     icolA * *(n + ibatch) * numrows +
-                                     icolB * numrows));
+                    for (size_type icolB = 0; icolB < *(n + ibatch); ++icolB)
+                      {
+                        size_type numrows = *(k + ibatch);
+                        hadamardProduct(numrows,
+                                        (dA + cumulativeA + icolA * numrows),
+                                        (dB + cumulativeB + icolB * numrows),
+                                        *(scalarOpA + ibatch),
+                                        *(scalarOpB + ibatch),
+                                        (dC + cumulativeC +
+                                         icolA * *(n + ibatch) * numrows +
+                                         icolB * numrows));
+                      }
                   }
+                cumulativeA += *(stridea + ibatch);
+                cumulativeB += *(strideb + ibatch);
+                cumulativeC += *(stridec + ibatch);
               }
-            cumulativeA += *(stridea + ibatch);
-            cumulativeB += *(strideb + ibatch);
-            cumulativeC += *(stridec + ibatch);
+          }
+        if (layout == Layout::ColMajor)
+          {
+            size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+            for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+              {
+                for (size_type irowB = 0; irowB < *(k + ibatch); ++irowB)
+                  {
+                    for (size_type icolA = 0; icolA < *(m + ibatch); ++icolA)
+                      {
+                        ascale(*(n + ibatch),
+                               *(dA + cumulativeA + irowB * *(m + ibatch) +
+                                 icolA),
+                               (dB + cumulativeB + irowB * *(n + ibatch)),
+                               *(scalarOpA + ibatch),
+                               *(scalarOpB + ibatch),
+                               (dC + cumulativeC +
+                                irowB * *(m + ibatch) * *(n + ibatch) +
+                                icolA * *(n + ibatch)));
+                      }
+                  }
+                cumulativeA += *(stridea + ibatch);
+                cumulativeB += *(strideb + ibatch);
+                cumulativeC += *(stridec + ibatch);
+              }
           }
       }
 
