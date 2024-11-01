@@ -284,6 +284,7 @@ namespace dftefe
         const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
+      , d_feBasisDataStorage(feBasisDataStorage)
       , d_maxFieldBlock(maxFieldBlock)
       , d_maxCellBlock(maxCellBlock)
     {
@@ -324,6 +325,37 @@ namespace dftefe
       // access cell-wise discrete Laplace operator
       // auto d_gradNiGradNjInAllCells =
       //   feBasisDataStorage->getBasisGradNiGradNjInAllCells();
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    LaplaceOperatorContextFE<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::reinit(const basis::FEBasisManager<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim> &feBasisManagerX,
+                   const basis::FEBasisManager<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim> &feBasisManagerY)
+    {
+      d_feBasisManagerX = &feBasisManagerX;
+      d_feBasisManagerY = &feBasisManagerY;
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          (d_feBasisDataStorage->getBasisDofHandler()).get(),
+        "feBasisManager of X and Y vectors and feBasisDataStorage are not from the same basisDofHandler");
     }
 
     template <typename ValueTypeOperator,

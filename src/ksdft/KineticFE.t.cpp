@@ -196,12 +196,10 @@ namespace dftefe
 
           const size_type numLocallyOwnedCells = feBMPsi.nLocallyOwnedCells();
 
-          std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-            numLocallyOwnedCells,
-            linearAlgebra::blasLapack::ScalarOp::Identity);
-          std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-            numLocallyOwnedCells,
-            linearAlgebra::blasLapack::ScalarOp::Identity);
+          linearAlgebra::blasLapack::ScalarOp scalarOpA =
+            linearAlgebra::blasLapack::ScalarOp::Identity;
+          linearAlgebra::blasLapack::ScalarOp scalarOpB =
+            linearAlgebra::blasLapack::ScalarOp::Identity;
           std::vector<size_type> mTmp(numLocallyOwnedCells, 0);
           std::vector<size_type> nTmp(numLocallyOwnedCells, 0);
           std::vector<size_type> kTmp(numLocallyOwnedCells, 0);
@@ -259,8 +257,8 @@ namespace dftefe
             scaleStridedVarBatched<ValueTypeBasisData, ValueType, memorySpace>(
               numLocallyOwnedCells,
               layout,
-              scalarOpA.data(),
-              scalarOpB.data(),
+              scalarOpA,
+              scalarOpB,
               stA.data(),
               stB.data(),
               stC.data(),

@@ -87,7 +87,9 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
         const size_type maxCellBlock,
-        const size_type maxFieldBlock);
+        const size_type maxFieldBlock,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
 
       CFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,

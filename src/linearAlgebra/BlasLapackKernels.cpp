@@ -281,8 +281,8 @@ namespace dftefe
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
         scaleStridedVarBatched(const size_type                      numMats,
                                const Layout                         layout,
-                               const ScalarOp *                     scalarOpA,
-                               const ScalarOp *                     scalarOpB,
+                               const ScalarOp &                     scalarOpA,
+                               const ScalarOp &                     scalarOpB,
                                const size_type *                    stridea,
                                const size_type *                    strideb,
                                const size_type *                    stridec,
@@ -307,8 +307,8 @@ namespace dftefe
                         hadamardProduct(numrows,
                                         (dA + cumulativeA + icolA * numrows),
                                         (dB + cumulativeB + icolB * numrows),
-                                        *(scalarOpA + ibatch),
-                                        *(scalarOpB + ibatch),
+                                        scalarOpA,
+                                        scalarOpB,
                                         (dC + cumulativeC +
                                          icolA * *(n + ibatch) * numrows +
                                          icolB * numrows));
@@ -332,8 +332,8 @@ namespace dftefe
                                *(dA + cumulativeA + irowB * *(m + ibatch) +
                                  icolA),
                                (dB + cumulativeB + irowB * *(n + ibatch)),
-                               *(scalarOpA + ibatch),
-                               *(scalarOpB + ibatch),
+                               scalarOpA,
+                               scalarOpB,
                                (dC + cumulativeC +
                                 irowB * *(m + ibatch) * *(n + ibatch) +
                                 icolA * *(n + ibatch)));

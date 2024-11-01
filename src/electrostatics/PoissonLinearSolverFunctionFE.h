@@ -161,9 +161,10 @@ namespace dftefe
                                                            ValueTypeOperand,
                                                            memorySpace>>
         d_AxContext;
-      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace>>
+      std::shared_ptr<LaplaceOperatorContextFE<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace,
+                                               dim>>
         d_AxContextNHDB;
       std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
                                                            ValueTypeOperand,

@@ -91,6 +91,15 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
 
+      void
+      reinit(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerX,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerY);
+
       ~LaplaceOperatorContextFE() = default;
 
       // void
@@ -110,6 +119,9 @@ namespace dftefe
       const basis::
         FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
           *d_feBasisManagerY;
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+        d_feBasisDataStorage;
       utils::MemoryStorage<ValueTypeOperator, memorySpace>
                 d_gradNiGradNjInAllCells;
       size_type d_maxFieldBlock, d_maxCellBlock;

@@ -181,11 +181,10 @@ namespace dftefe
                   numCumulativeQuadxDofsCellsInBlock, ValueTypeBasisData());
                 /** --- Storages --------- **/
 
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-                  numCellsInBlock,
-                  linearAlgebra::blasLapack::ScalarOp::Identity);
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-                  numCellsInBlock, linearAlgebra::blasLapack::ScalarOp::Conj);
+                linearAlgebra::blasLapack::ScalarOp scalarOpA =
+                  linearAlgebra::blasLapack::ScalarOp::Identity;
+                linearAlgebra::blasLapack::ScalarOp scalarOpB =
+                  linearAlgebra::blasLapack::ScalarOp::Conj;
                 std::vector<size_type> mTmp(numCellsInBlock, 0);
                 std::vector<size_type> nTmp(numCellsInBlock, 0);
                 std::vector<size_type> kTmp(numCellsInBlock, 0);
@@ -232,8 +231,8 @@ namespace dftefe
                   memorySpace>(
                   numCellsInBlock,
                   layout,
-                  scalarOpA.data(),
-                  scalarOpB.data(),
+                  scalarOpA,
+                  scalarOpB,
                   stA.data(),
                   stB.data(),
                   stC.data(),
@@ -268,9 +267,7 @@ namespace dftefe
                   }
                 */
 
-                std::fill(scalarOpB.begin(),
-                          scalarOpB.end(),
-                          linearAlgebra::blasLapack::ScalarOp::Identity);
+                scalarOpB = linearAlgebra::blasLapack::ScalarOp::Identity;
 
                 /* Other params from previous declarations*/
                 linearAlgebra::blasLapack::scaleStridedVarBatched<
@@ -279,8 +276,8 @@ namespace dftefe
                   memorySpace>(
                   numCellsInBlock,
                   layout,
-                  scalarOpA.data(),
-                  scalarOpB.data(),
+                  scalarOpA,
+                  scalarOpB,
                   stA.data(),
                   stB.data(),
                   stC.data(),
@@ -524,11 +521,10 @@ namespace dftefe
                   basisGradientDataInCellRange);
                 /** --- Storages --------- */
 
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-                  numCellsInBlock,
-                  linearAlgebra::blasLapack::ScalarOp::Identity);
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-                  numCellsInBlock, linearAlgebra::blasLapack::ScalarOp::Conj);
+                linearAlgebra::blasLapack::ScalarOp scalarOpA =
+                  linearAlgebra::blasLapack::ScalarOp::Identity;
+                linearAlgebra::blasLapack::ScalarOp scalarOpB =
+                  linearAlgebra::blasLapack::ScalarOp::Conj;
                 std::vector<size_type> mTmp(numCellsInBlock, 0);
                 std::vector<size_type> nTmp(numCellsInBlock, 0);
                 std::vector<size_type> kTmp(numCellsInBlock, 0);
@@ -571,8 +567,8 @@ namespace dftefe
                   memorySpace>(
                   numCellsInBlock,
                   layout,
-                  scalarOpA.data(),
-                  scalarOpB.data(),
+                  scalarOpA,
+                  scalarOpB,
                   stA.data(),
                   stB.data(),
                   stC.data(),

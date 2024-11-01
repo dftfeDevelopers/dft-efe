@@ -309,7 +309,8 @@ namespace dftefe
           *d_cfeBasisManager,
           *cfeBasisDataStorageOverlapMatrix,
           L2ProjectionDefaults::CELL_BATCH_SIZE,
-          nTotalEnrichmentIds);
+          nTotalEnrichmentIds,
+          linAlgOpContext);
 
       std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
                                                           ValueTypeBasisData,

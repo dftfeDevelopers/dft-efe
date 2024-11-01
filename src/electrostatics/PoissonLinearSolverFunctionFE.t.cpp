@@ -324,17 +324,18 @@ namespace dftefe
           d_feBasisManagerField->getConstraints().distributeParentToChild(
             d_fieldInHomoDBCVec, d_numComponents);
 
-          d_AxContextNHDB =
-            std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
-                                                      ValueTypeOperand,
-                                                      memorySpace,
-                                                      dim>>(
-              *d_feBasisManagerField,
-              *d_feBasisManagerHomo,
-              d_feBasisDataStorageStiffnessMatrix,
-              d_linAlgOpContext,
-              d_maxCellBlock,
-              d_maxFieldBlock); // handling the inhomogeneous DBC in RHS
+          d_AxContextNHDB->reinit(*d_feBasisManagerField,
+                                  *d_feBasisManagerHomo);
+          // = std::make_shared<LaplaceOperatorContextFE<ValueTypeOperator,
+          //                                             ValueTypeOperand,
+          //                                             memorySpace,
+          //                                             dim>>(
+          //     *d_feBasisManagerField,
+          //     *d_feBasisManagerHomo,
+          //     d_feBasisDataStorageStiffnessMatrix,
+          //     d_linAlgOpContext,
+          //     d_maxCellBlock,
+          //     d_maxFieldBlock); // handling the inhomogeneous DBC in RHS
         }
 
       // Compute RHS

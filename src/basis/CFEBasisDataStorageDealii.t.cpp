@@ -21,7 +21,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Bikash Kanungo, Vishal Subramanian, Avirup Sircar
  */
 
 #include <utils/Exceptions.h>
