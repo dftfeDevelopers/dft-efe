@@ -517,12 +517,12 @@ namespace dftefe
                       }
                   }
 
-                dftefe::utils::MemoryStorage<ValueTypeOperator,
-                                             utils::MemorySpace::HOST>
+                dftefe::utils::MemoryStorage<ValueTypeOperator, memorySpace>
                   basisValInCellEC =
                     enrichmentBlockClassicalBasisDataStorage.getBasisDataInCell(
                       cellIndex);
 
+                ValueTypeOperator *B = basisValInCellEC.data();
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector
 
@@ -538,7 +538,7 @@ namespace dftefe
                   (ValueTypeOperator)1.0,
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
-                  basisValInCellEC.data(),
+                  B,
                   dofsPerCellCFE,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEC.data(),
@@ -546,13 +546,13 @@ namespace dftefe
                   *eci->getLinAlgOpContext());
 
 
-                dftefe::utils::MemoryStorage<ValueTypeOperator,
-                                             utils::MemorySpace::HOST>
+                dftefe::utils::MemoryStorage<ValueTypeOperator, memorySpace>
                   basisValInCellEE = enrichmentBlockEnrichmentBasisDataStorage
                                        .getBasisDataInCell(cellIndex);
 
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector
+                B = basisValInCellEE.data();
 
                 linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                                 ValueTypeOperator,

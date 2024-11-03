@@ -417,15 +417,14 @@ namespace dftefe
                       }
                   }
 
-                utils::MemoryStorage<ValueTypeOperator,
-                                     utils::MemorySpace::HOST>
+                utils::MemoryStorage<ValueTypeOperator, memorySpace>
                   basisValInCellEC =
                     enrichmentBlockClassicalBasisDataStorage.getBasisDataInCell(
                       cellIndex);
 
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector
-
+                ValueTypeOperator *B = basisValInCellEC.data();
                 linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                                 ValueTypeOperator,
                                                 utils::MemorySpace::HOST>(
@@ -438,21 +437,20 @@ namespace dftefe
                   (ValueTypeOperator)1.0,
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
-                  basisValInCellEC.data(),
+                  B,
                   dofsPerCellCFE,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEC.data(),
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
 
-                utils::MemoryStorage<ValueTypeOperator,
-                                     utils::MemorySpace::HOST>
+                utils::MemoryStorage<ValueTypeOperator, memorySpace>
                   basisValInCellEE = enrichmentBlockEnrichmentBasisDataStorage
                                        .getBasisDataInCell(cellIndex);
 
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector
-
+                B = basisValInCellEE.data();
                 linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                                 ValueTypeOperator,
                                                 utils::MemorySpace::HOST>(
@@ -465,7 +463,7 @@ namespace dftefe
                   (ValueTypeOperator)1.0,
                   coeffsInCell.data(),
                   numEnrichmentIdsInCell,
-                  basisValInCellEE.data(),
+                  B,
                   dofsPerCell,
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEE.data(),

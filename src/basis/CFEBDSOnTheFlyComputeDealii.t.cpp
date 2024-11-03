@@ -268,11 +268,11 @@ namespace dftefe
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
-          dealiiUpdateFlagsPara |= dealii::update_gradients;
+          dealiiUpdateFlagsPara = dealii::update_gradients;
         // This is for getting the gradient in parametric cell
         dealii::FEValues<dim> dealiiFEValuesPara(feBDH->getReferenceFE(cellId),
                                                  dealiiQuadratureRule,
-                                                 dealiiUpdateFlags);
+                                                 dealiiUpdateFlagsPara);
 
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
@@ -546,8 +546,7 @@ namespace dftefe
         {
           d_dofsInCell[iCell] = d_feBDH->nCellDofs(iCell);
         }
-      d_tmpGradientBlock =
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage(0);
+      d_tmpGradientBlock = nullptr;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -655,13 +654,13 @@ namespace dftefe
           d_basisJacobianInvQuadStorage      = basisJacobianInvQuadStorage;
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
-          d_tmpGradientBlock.resize(d_dofsInCell[0] * nQuadPointsInCell[0] *
-                                    dim * d_maxCellBlock);
+          d_tmpGradientBlock = std::make_shared<Storage>(
+            d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
           size_type gradientParaCellSize =
             basisGradientParaCellQuadStorage->size();
           for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
             {
-              d_tmpGradientBlock.template copyFrom<memorySpace>(
+              d_tmpGradientBlock->template copyFrom<memorySpace>(
                 basisGradientParaCellQuadStorage->data(),
                 gradientParaCellSize,
                 0,
@@ -802,13 +801,13 @@ namespace dftefe
           d_basisJacobianInvQuadStorage      = basisJacobianInvQuadStorage;
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
-          d_tmpGradientBlock.resize(d_dofsInCell[0] * nQuadPointsInCell[0] *
-                                    dim * d_maxCellBlock);
+          d_tmpGradientBlock = std::make_shared<Storage>(
+            d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
           size_type gradientParaCellSize =
             basisGradientParaCellQuadStorage->size();
           for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
             {
-              d_tmpGradientBlock.template copyFrom<memorySpace>(
+              d_tmpGradientBlock->template copyFrom<memorySpace>(
                 basisGradientParaCellQuadStorage->data(),
                 gradientParaCellSize,
                 0,
@@ -945,7 +944,7 @@ namespace dftefe
       // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
       // dummy(
       //   0);
-      return d_tmpGradientBlock;
+      return *d_tmpGradientBlock;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1130,23 +1129,28 @@ namespace dftefe
           ->second,
         "Basis gradient values are not evaluated for the given QuadratureRuleAttributes");
 
+      std::shared_ptr<Storage> tmpGradientBlock = nullptr;
       if ((cellRange.second - cellRange.first) > d_maxCellBlock)
         {
-          d_tmpGradientBlock.resize(d_dofsInCell[0] * d_nQuadPointsIncell[0] *
-                                    dim * (cellRange.second - cellRange.first));
-          d_tmpGradientBlock.setValue(0);
+          tmpGradientBlock = std::make_shared<Storage>(
+            d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
+            (cellRange.second - cellRange.first));
           size_type gradientParaCellSize =
             d_basisGradientParaCellQuadStorage->size();
           for (size_type iCell = 0;
                iCell < (cellRange.second - cellRange.first);
                ++iCell)
             {
-              d_tmpGradientBlock.template copyFrom<memorySpace>(
+              tmpGradientBlock->template copyFrom<memorySpace>(
                 d_basisGradientParaCellQuadStorage->data(),
                 gradientParaCellSize,
                 0,
                 gradientParaCellSize * iCell);
             }
+        }
+      else
+        {
+          tmpGradientBlock = d_tmpGradientBlock;
         }
       CFEBDSOnTheFlyComputeDealiiInternal::
         computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
@@ -1155,7 +1159,7 @@ namespace dftefe
           d_nQuadPointsIncell,
           d_basisJacobianInvQuadStorage,
           d_cellStartIdsBasisJacobianInvQuadStorage,
-          d_tmpGradientBlock,
+          *tmpGradientBlock,
           d_linAlgOpContext,
           basisGradientData);
     }
@@ -1375,7 +1379,7 @@ namespace dftefe
       // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
       // dummy(
       //   0);
-      return d_tmpGradientBlock;
+      return *d_tmpGradientBlock;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1446,7 +1450,7 @@ namespace dftefe
         "More than one owner for the basis quadrature storage found in CFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
       delete (d_basisHessianQuadStorage).get();
 
-      d_tmpGradientBlock.resize(0);
+      d_tmpGradientBlock->resize(0);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1562,7 +1566,7 @@ namespace dftefe
       // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
       // dummy(
       //   0);
-      return d_tmpGradientBlock;
+      return *d_tmpGradientBlock;
     }
 
     template <typename ValueTypeBasisCoeff,

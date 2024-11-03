@@ -232,7 +232,7 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisQuadStorage;
       size_type                     d_maxCellBlock;
-      Storage                       d_tmpGradientBlock;
+      std::shared_ptr<Storage>      d_tmpGradientBlock;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
 
     }; // end of CFEBDSOnTheFlyComputeDealii
