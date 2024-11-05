@@ -37,7 +37,7 @@ namespace dftefe
 {
   namespace basis
   {
-    namespace CFEBDSOnTheFlyComputeDealiiInternal
+    namespace EFEBDSOnTheFlyComputeDealiiInternal
     {
       template <typename ValueTypeBasisData,
                 utils::MemorySpace memorySpace,
@@ -45,6 +45,7 @@ namespace dftefe
       void
       computeJacobianInvTimesGradPara(
         std::pair<size_type, size_type> cellRange,
+        const size_type                 classicalDofsInCell,
         const std::vector<size_type> &  dofsInCell,
         const std::vector<size_type> &  nQuadPointsInCell,
         const std::shared_ptr<
@@ -90,7 +91,7 @@ namespace dftefe
             for (size_type iQuad = 0; iQuad < nQuadPointsInCell[iCell]; ++iQuad)
               {
                 size_type index    = iCell * nQuadPointsInCell[iCell] + iQuad;
-                mSizesTmp[index]   = dofsInCell[iCell];
+                mSizesTmp[index]   = classicalDofsInCell;
                 nSizesTmp[index]   = dim;
                 kSizesTmp[index]   = dim;
                 ldaSizesTmp[index] = mSizesTmp[index];
@@ -98,7 +99,7 @@ namespace dftefe
                 ldcSizesTmp[index] = mSizesTmp[index];
                 strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
                 strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
-                strideCTmp[index]  = mSizesTmp[index] * nSizesTmp[index];
+                strideCTmp[index]  = dofsInCell[iCell] * nSizesTmp[index];
               }
           }
 
@@ -151,6 +152,199 @@ namespace dftefe
           linAlgOpContext);
       }
 
+      template <typename ValueTypeBasisCoeff,
+                typename ValueTypeBasisData,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      std::vector<ValueTypeBasisData>
+      getClassicalComponentCoeffsInCellOEFE(
+        const size_type                                      cellIndex,
+        std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim>> efeBDH)
+      {
+        const std::unordered_map<global_size_type,
+                                 utils::OptimizedIndexSet<size_type>>
+          *enrichmentIdToClassicalLocalIdMap = nullptr;
+        const std::unordered_map<global_size_type,
+                                 std::vector<ValueTypeBasisData>>
+          *enrichmentIdToInterfaceCoeffMap = nullptr;
+        std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>>
+          cfeBasisManager = nullptr;
+
+        cfeBasisManager =
+          std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+                                                         ValueTypeBasisData,
+                                                         memorySpace,
+                                                         dim>>(
+            efeBDH->getEnrichmentClassicalInterface()->getCFEBasisManager());
+
+        enrichmentIdToClassicalLocalIdMap =
+          &(efeBDH->getEnrichmentClassicalInterface()
+              ->getClassicalComponentLocalIdsMap());
+
+        enrichmentIdToInterfaceCoeffMap =
+          &(efeBDH->getEnrichmentClassicalInterface()
+              ->getClassicalComponentCoeffMap());
+
+        std::vector<size_type> vecClassicalLocalNodeId(0);
+
+        cfeBasisManager->getCellDofsLocalIds(cellIndex,
+                                             vecClassicalLocalNodeId);
+
+        size_type classicalDofsPerCell =
+          utils::mathFunctions::sizeTypePow((efeBDH->getFEOrder(cellIndex) + 1),
+                                            dim);
+        size_type numEnrichmentIdsInCell =
+          efeBDH->nCellDofs(cellIndex) - classicalDofsPerCell;
+
+        std::vector<ValueTypeBasisData> coeffsInCell(classicalDofsPerCell *
+                                                       numEnrichmentIdsInCell,
+                                                     0);
+
+        for (size_type cellEnrichId = 0; cellEnrichId < numEnrichmentIdsInCell;
+             cellEnrichId++)
+          {
+            // get the enrichmentIds
+            global_size_type enrichmentId =
+              efeBDH->getEnrichmentClassicalInterface()->getEnrichmentId(
+                cellIndex, cellEnrichId);
+
+            // get the vectors of non-zero localIds and coeffs
+            auto iter = enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
+            auto it   = enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
+            if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
+                it != enrichmentIdToClassicalLocalIdMap->end())
+              {
+                const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
+                  iter->second;
+
+                for (size_type i = 0; i < classicalDofsPerCell; i++)
+                  {
+                    size_type pos   = 0;
+                    bool      found = false;
+                    it->second.getPosition(vecClassicalLocalNodeId[i],
+                                           pos,
+                                           found);
+                    if (found)
+                      {
+                        coeffsInCell[numEnrichmentIdsInCell * i +
+                                     cellEnrichId] = coeffsInLocalIdsMap[pos];
+                      }
+                  }
+              }
+          }
+        return coeffsInCell;
+      }
+
+      template <typename ValueTypeBasisCoeff,
+                typename ValueTypeBasisData,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      getClassicalComponentBasisValuesInCellAtQuadOEFE(
+        const size_type                                      cellIndex,
+        const size_type                                      nQuadPointInCell,
+        std::vector<ValueTypeBasisData>                      coeffsInCell,
+        std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim>> efeBDH,
+        std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                         cfeBasisDataStorage,
+        std::vector<ValueTypeBasisData> &classicalComponentInQuadValues)
+      {
+        size_type classicalDofsPerCell =
+          utils::mathFunctions::sizeTypePow((efeBDH->getFEOrder(cellIndex) + 1),
+                                            dim);
+        size_type numEnrichmentIdsInCell =
+          efeBDH->nCellDofs(cellIndex) - classicalDofsPerCell;
+
+        dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+          basisValInCell = cfeBasisDataStorage->getBasisDataInCell(cellIndex);
+
+        ValueTypeBasisData *B = basisValInCell.data();
+        // Do a gemm (\Sigma c_i N_i^classical)
+        // and get the quad values in std::vector
+
+        linearAlgebra::blasLapack::gemm<ValueTypeBasisData,
+                                        ValueTypeBasisData,
+                                        utils::MemorySpace::HOST>(
+          linearAlgebra::blasLapack::Layout::ColMajor,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          numEnrichmentIdsInCell,
+          nQuadPointInCell,
+          classicalDofsPerCell,
+          (ValueTypeBasisData)1.0,
+          coeffsInCell.data(),
+          numEnrichmentIdsInCell,
+          B,
+          classicalDofsPerCell,
+          (ValueTypeBasisData)0.0,
+          classicalComponentInQuadValues.data(),
+          numEnrichmentIdsInCell,
+          *efeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+      }
+
+      template <typename ValueTypeBasisCoeff,
+                typename ValueTypeBasisData,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      getClassicalComponentBasisGradInCellAtQuadOEFE(
+        const size_type                                      cellIndex,
+        const size_type                                      nQuadPointInCell,
+        std::vector<ValueTypeBasisData> &                    coeffsInCell,
+        std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim>> efeBDH,
+        std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                         cfeBasisDataStorage,
+        std::vector<ValueTypeBasisData> &classicalComponentInQuadGradients)
+      {
+        size_type classicalDofsPerCell =
+          utils::mathFunctions::sizeTypePow((efeBDH->getFEOrder(cellIndex) + 1),
+                                            dim);
+        size_type numEnrichmentIdsInCell =
+          efeBDH->nCellDofs(cellIndex) - classicalDofsPerCell;
+
+        // saved as cell->quad->dim->node
+        dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+          basisGradInCell =
+            cfeBasisDataStorage->getBasisGradientDataInCell(cellIndex);
+
+        // Do a gemm (\Sigma c_i N_i^classical)
+        // and get the quad values in std::vector
+
+        ValueTypeBasisData *B = basisGradInCell.data();
+
+        linearAlgebra::blasLapack::gemm<ValueTypeBasisData,
+                                        ValueTypeBasisData,
+                                        utils::MemorySpace::HOST>(
+          linearAlgebra::blasLapack::Layout::ColMajor,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          linearAlgebra::blasLapack::Op::NoTrans,
+          numEnrichmentIdsInCell,
+          nQuadPointInCell * dim,
+          classicalDofsPerCell,
+          (ValueTypeBasisData)1.0,
+          coeffsInCell.data(),
+          numEnrichmentIdsInCell,
+          B,
+          classicalDofsPerCell,
+          (ValueTypeBasisData)0.0,
+          classicalComponentInQuadGradients
+            .data(), // saved as cell->quad->dim->enrichid
+          numEnrichmentIdsInCell,
+          *efeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+      }
+
       //
       // stores the classical FE basis data for a h-refined FE mesh
       // (i.e., uniform p in all elements) and for a uniform quadrature
@@ -164,14 +358,21 @@ namespace dftefe
       void
       storeValuesHRefinedSameQuadEveryCell(
         std::shared_ptr<
-          const CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>>
-          feBDH,
+          const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff, 
+            ValueTypeBasisData, memorySpace, dim>>
+          efeBDH,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-          &basisQuadStorage,
+          &basisParaCellClassQuadStorage,
+        std::unordered_map<size_type, std::shared_ptr<
+          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>>
+          &basisEnrichQuadStorageMap,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-          &basisGradientParaCellQuadStorage,
+          &basisGradientParaCellClassQuadStorage,
+        std::unordered_map<size_type, std::shared_ptr<
+          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>>
+          &basisGradientEnrichQuadStorageMap,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &basisJacobianInvQuadStorage,
@@ -182,13 +383,14 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                 quadratureRuleContainer,
         std::vector<size_type> &nQuadPointsInCell,
-        std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisJacobianInvQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          cfeBasisDataStorage = nullptr)
       {
         // for processors where there are no cells
-        bool numCellsZero = feBDH->nLocallyOwnedCells() == 0 ? true : false;
+        bool numCellsZero = efeBDH->nLocallyOwnedCells() == 0 ? true : false;
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
@@ -256,11 +458,14 @@ namespace dftefe
               ->second)
           dealiiUpdateFlags |= dealii::update_hessians;
 
+        size_type classicalDofsPerCell = utils::mathFunctions::sizeTypePow(
+          (efeBDH->getFEOrder(0) + 1), dim);
+
         // NOTE: cellId 0 passed as we assume h-refine finite element mesh in
         // this function
         const size_type cellId = 0;
         // get real cell feValues
-        dealii::FEValues<dim> dealiiFEValues(feBDH->getReferenceFE(cellId),
+        dealii::FEValues<dim> dealiiFEValues(efeBDH->getReferenceFE(cellId),
                                              dealiiQuadratureRule,
                                              dealiiUpdateFlags);
 
@@ -270,7 +475,7 @@ namespace dftefe
               ->second)
           dealiiUpdateFlagsPara = dealii::update_gradients;
         // This is for getting the gradient in parametric cell
-        dealii::FEValues<dim> dealiiFEValuesPara(feBDH->getReferenceFE(cellId),
+        dealii::FEValues<dim> dealiiFEValuesPara(efeBDH->getReferenceFE(cellId),
                                                  dealiiQuadratureRule,
                                                  dealiiUpdateFlagsPara);
 
@@ -283,37 +488,46 @@ namespace dftefe
             dealiiFEValuesPara.reinit(referenceCell.begin());
           }
 
-        const size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
+        const size_type numLocallyOwnedCells = efeBDH->nLocallyOwnedCells();
         // NOTE: cellId 0 passed as we assume only H refined in this function
-        const size_type dofsPerCell = feBDH->nCellDofs(cellId);
-        const size_type nQuadPointsPerCell =
+        size_type dofsPerCell = efeBDH->nCellDofs(cellId);
+        const size_type nQuadPointInCell =
           numCellsZero ? 0 :
                          quadratureRuleContainer->nCellQuadraturePoints(cellId);
 
-        const size_type nDimxDofsPerCellxNumQuad =
-          dim * dofsPerCell * nQuadPointsPerCell;
-        const size_type nDimSqxDofsPerCellxNumQuad =
-          dim * dim * dofsPerCell * nQuadPointsPerCell;
-        const size_type nDimSqxNumQuad      = dim * dim * nQuadPointsPerCell;
-        const size_type DofsPerCellxNumQuad = dofsPerCell * nQuadPointsPerCell;
+        const size_type nDimSqxNumQuad = dim * dim * nQuadPointInCell;
 
-        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointsPerCell);
-        std::vector<ValueTypeBasisData> basisQuadStorageTmp(0);
+        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointInCell);
+        std::vector<ValueTypeBasisData> basisParaCellClassQuadStorageTmp(0);
         std::vector<ValueTypeBasisData> basisJacobianInvQuadStorageTmp(0);
-        std::vector<ValueTypeBasisData> basisGradientParaCellQuadStorageTmp(0);
+        std::vector<ValueTypeBasisData> basisGradientParaCellClassQuadStorageTmp(0);
         std::vector<ValueTypeBasisData> basisHessianQuadStorageTmp(0);
+
+        std::unordered_map<size_type, std::vector<ValueTypeBasisData>> 
+          basisEnrichQuadStorageMapTmp, basisGradientEnrichQuadStorageMapTmp;
+
+        size_type cellIndex       = 0;
+        size_type basisValuesSize = 0;
+
+        auto locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
+
+        for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsPerCell = efeBDH->nCellDofs(cellIndex);
+            basisValuesSize += nQuadPointInCell * dofsPerCell;
+            cellIndex++;
+          }
 
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreValues)
               ->second)
           {
-            basisQuadStorage =
+            basisParaCellClassQuadStorage =
               std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
                                                          memorySpace>::Storage>(
-                dofsPerCell * nQuadPointsPerCell);
-            basisQuadStorageTmp.resize(dofsPerCell * nQuadPointsPerCell,
-                                       ValueTypeBasisData(0));
-            cellStartIdsBasisQuadStorage.resize(numLocallyOwnedCells, 0);
+                classicalDofsPerCell * nQuadPointInCell);
+            basisParaCellClassQuadStorageTmp.resize(classicalDofsPerCell * nQuadPointInCell, ValueTypeBasisData(0));
           }
 
         if (basisStorageAttributesBoolMap
@@ -326,12 +540,11 @@ namespace dftefe
                 numLocallyOwnedCells * nDimSqxNumQuad);
             basisJacobianInvQuadStorageTmp.resize(numLocallyOwnedCells *
                                                   nDimSqxNumQuad);
-            basisGradientParaCellQuadStorage =
+            basisGradientParaCellClassQuadStorage =
               std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
                                                          memorySpace>::Storage>(
-                nDimxDofsPerCellxNumQuad);
-            basisGradientParaCellQuadStorageTmp.resize(
-              nDimxDofsPerCellxNumQuad);
+                classicalDofsPerCell * nQuadPointInCell * dim);
+            basisGradientParaCellClassQuadStorageTmp.resize(classicalDofsPerCell * nQuadPointInCell * dim);
             cellStartIdsBasisJacobianInvQuadStorage.resize(numLocallyOwnedCells,
                                                            0);
           }
@@ -343,14 +556,13 @@ namespace dftefe
             basisHessianQuadStorage =
               std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
                                                          memorySpace>::Storage>(
-                numLocallyOwnedCells * nDimSqxDofsPerCellxNumQuad);
-            basisHessianQuadStorageTmp.resize(numLocallyOwnedCells *
-                                                nDimSqxDofsPerCellxNumQuad,
+                basisValuesSize * dim * dim);
+            basisHessianQuadStorageTmp.resize(basisValuesSize * dim * dim,
                                               ValueTypeBasisData(0));
             cellStartIdsBasisHessianQuadStorage.resize(numLocallyOwnedCells, 0);
           }
 
-        auto locallyOwnedCellIter = feBDH->beginLocallyOwnedCells();
+        locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
         // Do dynamic cast if there is a dof in the processor
         std::shared_ptr<FECellDealii<dim>> feCellDealii = nullptr;
         if (numLocallyOwnedCells != 0)
@@ -362,13 +574,88 @@ namespace dftefe
               "Dynamic casting of FECellBase to FECellDealii not successful");
           }
 
-        size_type cellIndex = 0;
-        for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
+        cellIndex                  = 0;
+        size_type cumulativeQuadPointsxnDofs = 0;
+
+        for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
+            dofsPerCell = efeBDH->nCellDofs(cellIndex);
+            // Get classical dof numbers
+
             feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
               *locallyOwnedCellIter);
             dealiiFEValues.reinit(feCellDealii->getDealiiFECellIter());
+
+            std::vector<utils::Point> quadRealPointsVec =
+              quadratureRuleContainer->getCellRealPoints(cellIndex);
+
+            std::vector<size_type> vecClassicalLocalNodeId(0);
+
+
+            size_type numEnrichmentIdsInCell =
+              dofsPerCell - classicalDofsPerCell;
+
+            std::vector<ValueTypeBasisData> classicalComponentInQuadValues(0);
+
+            std::vector<ValueTypeBasisData> classicalComponentInQuadGradients(0);
+
+            if (basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreValues)
+                  ->second)
+              classicalComponentInQuadValues.resize(nQuadPointInCell *
+                                                      numEnrichmentIdsInCell,
+                                                    (ValueTypeBasisData)0);
+
+            if (basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreGradient)
+                  ->second)
+              classicalComponentInQuadGradients.resize(
+                nQuadPointInCell * numEnrichmentIdsInCell * dim,
+                (ValueTypeBasisData)0);
+
+
+            if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
+              {
+                std::vector<ValueTypeBasisData> coeffsInCell =
+                  getClassicalComponentCoeffsInCellOEFE<ValueTypeBasisCoeff,
+                                                        ValueTypeBasisData,
+                                                        memorySpace,
+                                                        dim>(cellIndex, efeBDH);
+
+                if (basisStorageAttributesBoolMap
+                      .find(BasisStorageAttributes::StoreValues)
+                      ->second)
+                  {
+                    getClassicalComponentBasisValuesInCellAtQuadOEFE<
+                      ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      memorySpace,
+                      dim>(cellIndex,
+                           nQuadPointInCell,
+                           coeffsInCell,
+                           efeBDH,
+                           cfeBasisDataStorage,
+                           classicalComponentInQuadValues);
+                  }
+
+                if (basisStorageAttributesBoolMap
+                      .find(BasisStorageAttributes::StoreGradient)
+                      ->second)
+                  {
+                    getClassicalComponentBasisGradInCellAtQuadOEFE<
+                      ValueTypeBasisCoeff,
+                      ValueTypeBasisData,
+                      memorySpace,
+                      dim>(cellIndex,
+                           nQuadPointInCell,
+                           coeffsInCell,
+                           efeBDH,
+                           cfeBasisDataStorage,
+                           classicalComponentInQuadGradients);
+                  }
+              }
+
             //
             // NOTE: For a h-refined (i.e., uniform FE order) mesh with the same
             // quadraure rule in all elements, the classical FE basis values
@@ -378,21 +665,49 @@ namespace dftefe
             //
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreValues)
-                  ->second &&
-                locallyOwnedCellIter == feBDH->beginLocallyOwnedCells())
+                  ->second)
               {
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                if(locallyOwnedCellIter == efeBDH->beginLocallyOwnedCells())
+                {
+                  for (unsigned int iNode = 0; iNode < classicalDofsPerCell; iNode++)
+                    {
+                      for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                            qPoint++)
+                        {
+                          auto it =
+                            basisParaCellClassQuadStorageTmp.begin() +
+                            qPoint * classicalDofsPerCell +
+                            iNode;
+                          *it = dealiiFEValues.shape_value(iNode, qPoint);
+                        }
+                    }
+                }
+
+                if(numEnrichmentIdsInCell > 0)
+                {
+                  basisEnrichQuadStorageMapTmp[cellIndex].resize(nQuadPointInCell * numEnrichmentIdsInCell);
+                  for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
-                         qPoint++)
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                          qPoint++)
                       {
-                        auto it = basisQuadStorageTmp.begin() +
-                                  cellIndex * DofsPerCellxNumQuad +
-                                  qPoint * dofsPerCell + iNode;
-                        // iNode * nQuadPointsPerCell + qPoint;
-                        *it = dealiiFEValues.shape_value(iNode, qPoint);
+                        // std::cout << efeBDH->getEnrichmentValue(
+                        //     cellIndex,
+                        //     iNode,
+                        //     quadRealPointsVec[qPoint]) << " " << 
+                        //     classicalComponentInQuadValues
+                        //     [numEnrichmentIdsInCell * qPoint + iNode] << "\n";
+                        *(basisEnrichQuadStorageMapTmp[cellIndex].data()
+                          + qPoint * numEnrichmentIdsInCell + iNode) =
+                          efeBDH->getEnrichmentValue(
+                            cellIndex,
+                            iNode,
+                            quadRealPointsVec[qPoint]) -
+                          classicalComponentInQuadValues
+                            [numEnrichmentIdsInCell * qPoint + iNode];
                       }
                   }
+                }
               }
 
             if (basisStorageAttributesBoolMap
@@ -401,12 +716,11 @@ namespace dftefe
               {
                 cellStartIdsBasisJacobianInvQuadStorage[cellIndex] =
                   cellIndex * nDimSqxNumQuad;
-                if (locallyOwnedCellIter == feBDH->beginLocallyOwnedCells())
+                if (locallyOwnedCellIter == efeBDH->beginLocallyOwnedCells())
                   {
-                    for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell; iNode++)
                       {
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointsPerCell;
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeGrad =
@@ -414,17 +728,16 @@ namespace dftefe
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
-                                  basisGradientParaCellQuadStorageTmp.begin() +
-                                  cellIndex * nDimxDofsPerCellxNumQuad +
-                                  qPoint * dim * dofsPerCell +
-                                  iDim * dofsPerCell + iNode;
+                                  basisGradientParaCellClassQuadStorageTmp.begin() +
+                                  qPoint * dim * classicalDofsPerCell +
+                                  iDim * classicalDofsPerCell + iNode;
                                 *it = shapeGrad[iDim];
                               }
                           }
                       }
                   }
                 auto &mappingJacInv = dealiiFEValues.get_inverse_jacobians();
-                size_type numJacobiansPerCell = nQuadPointsPerCell;
+                size_type numJacobiansPerCell = nQuadPointInCell;
                 for (unsigned int iQuad = 0; iQuad < numJacobiansPerCell;
                      ++iQuad)
                   {
@@ -439,6 +752,34 @@ namespace dftefe
                           }
                       }
                   }
+
+                if(numEnrichmentIdsInCell > 0)
+                {
+                  basisGradientEnrichQuadStorageMapTmp[cellIndex]
+                      .resize(dim * nQuadPointInCell * numEnrichmentIdsInCell);
+                  for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell; iNode++)
+                  {
+                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                          qPoint++)
+                      {
+                        auto shapeGrad = efeBDH->getEnrichmentDerivative(
+                          cellIndex,
+                          iNode,
+                          quadRealPointsVec[qPoint]);
+                        // enriched gradient function call
+                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                          {
+                            auto it = basisGradientEnrichQuadStorageMapTmp[cellIndex].data() +
+                                      qPoint * dim * numEnrichmentIdsInCell +
+                                      iDim * numEnrichmentIdsInCell + iNode;
+                            *it = shapeGrad[iDim] -
+                                  classicalComponentInQuadGradients
+                                    [numEnrichmentIdsInCell * dim * qPoint +
+                                      iDim * numEnrichmentIdsInCell + iNode];
+                          }
+                      }
+                  }
+                }
               }
 
             if (basisStorageAttributesBoolMap
@@ -446,25 +787,60 @@ namespace dftefe
                   ->second)
               {
                 cellStartIdsBasisHessianQuadStorage[cellIndex] =
-                  cellIndex * nDimSqxDofsPerCellxNumQuad;
+                  cumulativeQuadPointsxnDofs * dim * dim;
                 for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
-                         qPoint++)
+                    if (iNode < classicalDofsPerCell)
                       {
-                        auto shapeHessian =
-                          dealiiFEValues.shape_hessian(iNode, qPoint);
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                             qPoint++)
                           {
-                            for (unsigned int jDim = 0; jDim < dim; jDim++)
+                            auto shapeHessian =
+                              dealiiFEValues.shape_hessian(iNode, qPoint);
+                            for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
-                                auto it =
-                                  basisHessianQuadStorageTmp.begin() +
-                                  cellIndex * nDimSqxDofsPerCellxNumQuad +
-                                  qPoint * dim * dim * dofsPerCell +
-                                  iDim * dim * dofsPerCell +
-                                  jDim * dofsPerCell + iNode;
-                                *it = shapeHessian[iDim][jDim];
+                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                  {
+                                    auto it =
+                                      basisHessianQuadStorageTmp.begin() +
+                                      cumulativeQuadPointsxnDofs * dim * dim +
+                                      qPoint * dim * dim * dofsPerCell +
+                                      iDim * dim * dofsPerCell +
+                                      jDim * dofsPerCell + iNode;
+                                    *it = shapeHessian[iDim][jDim];
+                                  }
+                              }
+                          }
+                      }
+                    else
+                      {
+                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                             qPoint++)
+                          {
+                            if (efeBDH->isOrthogonalized())
+                              {
+                                utils::throwException(
+                                  false,
+                                  "The hessian values are not calculated for OEFE. Contact developers for this.");
+                              }
+
+                            auto shapeHessian = efeBDH->getEnrichmentHessian(
+                              cellIndex,
+                              iNode - classicalDofsPerCell,
+                              quadRealPointsVec[qPoint]);
+                            // enriched hessian function
+                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                              {
+                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                  {
+                                    auto it =
+                                      basisHessianQuadStorageTmp.begin() +
+                                      cumulativeQuadPointsxnDofs * dim * dim +
+                                      qPoint * dim * dim * dofsPerCell +
+                                      iDim * dim * dofsPerCell +
+                                      jDim * dofsPerCell + iNode;
+                                    *it = shapeHessian[iDim * dim + jDim];
+                                  }
                               }
                           }
                       }
@@ -472,6 +848,7 @@ namespace dftefe
               }
 
             cellIndex++;
+            cumulativeQuadPointsxnDofs += nQuadPointInCell * dofsPerCell;
           }
 
         if (basisStorageAttributesBoolMap
@@ -479,9 +856,20 @@ namespace dftefe
               ->second)
           {
             utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-              basisQuadStorageTmp.size(),
-              basisQuadStorage->data(),
-              basisQuadStorageTmp.data());
+              basisParaCellClassQuadStorageTmp.size(),
+              basisParaCellClassQuadStorage->data(),
+              basisParaCellClassQuadStorageTmp.data());
+
+              for(auto &it : basisEnrichQuadStorageMapTmp)
+              {
+                basisEnrichQuadStorageMap[it.first] = 
+                  std::make_shared<typename BasisDataStorage
+                    <ValueTypeBasisData, memorySpace>::Storage>(it.second.size());
+                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+                  it.second.size(),
+                  basisEnrichQuadStorageMap[it.first]->data(),
+                  it.second.data());
+              }
           }
 
         if (basisStorageAttributesBoolMap
@@ -489,14 +877,25 @@ namespace dftefe
               ->second)
           {
             utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-              basisGradientParaCellQuadStorageTmp.size(),
-              basisGradientParaCellQuadStorage->data(),
-              basisGradientParaCellQuadStorageTmp.data());
+              basisGradientParaCellClassQuadStorageTmp.size(),
+              basisGradientParaCellClassQuadStorage->data(),
+              basisGradientParaCellClassQuadStorageTmp.data());
 
             utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
               basisJacobianInvQuadStorageTmp.size(),
               basisJacobianInvQuadStorage->data(),
               basisJacobianInvQuadStorageTmp.data());
+
+              for(auto &it : basisGradientEnrichQuadStorageMapTmp)
+              {
+                basisGradientEnrichQuadStorageMap[it.first] = 
+                  std::make_shared<typename BasisDataStorage
+                    <ValueTypeBasisData, memorySpace>::Storage>(it.second.size());
+                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+                  it.second.size(),
+                  basisGradientEnrichQuadStorageMap[it.first]->data(),
+                  it.second.data());
+              }
           }
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreHessian)
@@ -508,18 +907,18 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
       }
-    } // namespace CFEBDSOnTheFlyComputeDealiiInternal
+    } // namespace EFEBDSOnTheFlyComputeDealiiInternal
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::
-      CFEBDSOnTheFlyComputeDealii(
-        std::shared_ptr<const BasisDofHandler>      feBDH,
+      EFEBDSOnTheFlyComputeDealii(
+        std::shared_ptr<const BasisDofHandler>      efeBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
         const size_type                     maxCellBlock,
@@ -531,23 +930,26 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
     {
       d_evaluateBasisData = false;
-      d_feBDH             = std::dynamic_pointer_cast<
-        const CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
-        feBDH);
+      d_efeBDH            = std::dynamic_pointer_cast<
+        const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                                       ValueTypeBasisData,
+                                       memorySpace,
+                                       dim>>(efeBDH);
       utils::throwException(
-        d_feBDH != nullptr,
-        " Could not cast the FEBasisDofHandler to CFEBasisDofHandlerDealii in CFEBDSOnTheFlyComputeDealii");
+        d_efeBDH != nullptr,
+        " Could not cast the FEBasisDofHandler to EFEBasisDofHandlerDealii in EFEBDSOnTheFlyComputeDealii");
       //      const size_type numConstraints  = constraintsVec.size();
       // const size_type numQuadRuleType = quadratureRuleAttributesVec.size();
       std::shared_ptr<const dealii::DoFHandler<dim>> dofHandler =
-        d_feBDH->getDoFHandler();
-      const size_type numLocallyOwnedCells = d_feBDH->nLocallyOwnedCells();
+        d_efeBDH->getDoFHandler();
+      const size_type numLocallyOwnedCells = d_efeBDH->nLocallyOwnedCells();
       d_dofsInCell.resize(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         {
-          d_dofsInCell[iCell] = d_feBDH->nCellDofs(iCell);
+          d_dofsInCell[iCell] = d_efeBDH->nCellDofs(iCell);
         }
       d_tmpGradientBlock = nullptr;
+      d_classialDofsInCell = utils::mathFunctions::sizeTypePow((d_efeBDH->getFEOrder(0) + 1), dim);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -555,7 +957,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::
@@ -586,7 +988,7 @@ namespace dftefe
             std::make_shared<quadrature::QuadratureRuleContainer>(
               quadratureRuleAttributes,
               quadratureRule,
-              d_feBDH->getTriangulation(),
+              d_efeBDH->getTriangulation(),
               linearCellMappingDealii);
         }
       else if (quadFamily == quadrature::QuadratureFamily::GLL)
@@ -598,7 +1000,7 @@ namespace dftefe
             std::make_shared<quadrature::QuadratureRuleContainer>(
               quadratureRuleAttributes,
               quadratureRule,
-              d_feBDH->getTriangulation(),
+              d_efeBDH->getTriangulation(),
               linearCellMappingDealii);
         }
       else
@@ -607,10 +1009,10 @@ namespace dftefe
 
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-        basisQuadStorage;
+        basisParaCellClassQuadStorage;
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-        basisGradientParaCellQuadStorage;
+        basisGradientParaCellClassQuadStorage;
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
         basisJacobianInvQuadStorage;
@@ -618,51 +1020,147 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
         basisHessianQuadStorage;
 
+      size_type nTotalEnrichmentIds =
+        d_efeBDH->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
+
+      std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+        cfeBasisDataStorage = nullptr;
+
+      if (d_efeBDH->isOrthogonalized())
+        {
+          if (!(basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreGradient)
+                  ->second ||
+                basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreGradNiGradNj)
+                  ->second))
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues]       = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient]     = false;
+              basisAttrMap[BasisStorageAttributes::StoreHessian]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW]          = false;
+
+
+              // Set up the FE Basis Data Storage
+              // In HOST !!
+              cfeBasisDataStorage =
+                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>(
+                  d_efeBDH->getEnrichmentClassicalInterface()
+                    ->getCFEBasisDofHandler(),
+                  quadratureRuleAttributes,
+                  basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     basisAttrMap);
+            }
+          else if (!(basisStorageAttributesBoolMap
+                       .find(BasisStorageAttributes::StoreValues)
+                       ->second ||
+                     basisStorageAttributesBoolMap
+                       .find(BasisStorageAttributes::StoreOverlap)
+                       ->second))
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues]       = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradient]     = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW]          = false;
+
+
+              // Set up the FE Basis Data Storage
+              cfeBasisDataStorage =
+                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>(
+                  d_efeBDH->getEnrichmentClassicalInterface()
+                    ->getCFEBasisDofHandler(),
+                  quadratureRuleAttributes,
+                  basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     basisAttrMap);
+            }
+          else
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues]       = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient]     = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW]          = false;
+
+
+              // Set up the FE Basis Data Storage
+              cfeBasisDataStorage =
+                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>(
+                  d_efeBDH->getEnrichmentClassicalInterface()
+                    ->getCFEBasisDofHandler(),
+                  quadratureRuleAttributes,
+                  basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     basisAttrMap);
+            }
+        }
+
       std::vector<size_type> nQuadPointsInCell(0);
-      std::vector<size_type> cellStartIdsBasisQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisJacobianInvQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
-      CFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCell<
+      EFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCell<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         memorySpace,
-        dim>(d_feBDH,
-             basisQuadStorage,
-             basisGradientParaCellQuadStorage,
+        dim>(d_efeBDH,
+             basisParaCellClassQuadStorage,
+             d_basisEnrichQuadStorageMap,   
+             basisGradientParaCellClassQuadStorage,
+             d_basisGradientEnrichQuadStorageMap,
              basisJacobianInvQuadStorage,
              basisHessianQuadStorage,
              quadratureRuleAttributes,
              d_quadratureRuleContainer,
              nQuadPointsInCell,
-             cellStartIdsBasisQuadStorage,
              cellStartIdsBasisJacobianInvQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap);
+             basisStorageAttributesBoolMap,
+             cfeBasisDataStorage);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
-          d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
+          d_basisParaCellClassQuadStorage  = basisParaCellClassQuadStorage;
         }
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientParaCellQuadStorage = basisGradientParaCellQuadStorage;
+          d_basisGradientParaCellClassQuadStorage = basisGradientParaCellClassQuadStorage;
           d_basisJacobianInvQuadStorage      = basisJacobianInvQuadStorage;
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
           d_tmpGradientBlock = std::make_shared<Storage>(
-            d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
+            d_classialDofsInCell * nQuadPointsInCell[0] * dim * d_maxCellBlock);
           size_type gradientParaCellSize =
-            basisGradientParaCellQuadStorage->size();
+            basisGradientParaCellClassQuadStorage->size();
           for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
             {
               d_tmpGradientBlock->template copyFrom<memorySpace>(
-                basisGradientParaCellQuadStorage->data(),
+                basisGradientParaCellClassQuadStorage->data(),
                 gradientParaCellSize,
                 0,
                 gradientParaCellSize * iCell);
@@ -683,7 +1181,7 @@ namespace dftefe
         {
           utils::throwException<utils::InvalidArgument>(
             false,
-            "Basis Overlap not implemented in CFEBDSOnTheFlyComputeDealii");
+            "Basis Overlap not implemented in EFEBDSOnTheFlyComputeDealii");
         }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
@@ -693,7 +1191,7 @@ namespace dftefe
         {
           utils::throwException<utils::InvalidArgument>(
             false,
-            "Basis GradNiGradNj not implemented in CFEBDSOnTheFlyComputeDealii");
+            "Basis GradNiGradNj not implemented in EFEBDSOnTheFlyComputeDealii");
         }
 
       if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
@@ -722,7 +1220,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::
@@ -754,10 +1252,10 @@ namespace dftefe
 
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-        basisQuadStorage;
+        basisParaCellClassQuadStorage;
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-        basisGradientParaCellQuadStorage;
+        basisGradientParaCellClassQuadStorage;
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
         basisJacobianInvQuadStorage;
@@ -765,51 +1263,144 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
                              basisHessianQuadStorage;
       std::vector<size_type> nQuadPointsInCell(0);
-      std::vector<size_type> cellStartIdsBasisQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisJacobianInvQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
 
-      CFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCell<
+      std::shared_ptr<FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+        cfeBasisDataStorage = nullptr;
+
+      if (d_efeBDH->isOrthogonalized())
+        {
+          if (!(basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreGradient)
+                  ->second ||
+                basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreGradNiGradNj)
+                  ->second))
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues]       = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient]     = false;
+              basisAttrMap[BasisStorageAttributes::StoreHessian]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW]          = false;
+
+
+              // Set up the FE Basis Data Storage
+              // In HOST !!
+              cfeBasisDataStorage =
+                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>(
+                  d_efeBDH->getEnrichmentClassicalInterface()
+                    ->getCFEBasisDofHandler(),
+                  quadratureRuleAttributes,
+                  basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     basisAttrMap);
+            }
+          else if (!(basisStorageAttributesBoolMap
+                       .find(BasisStorageAttributes::StoreValues)
+                       ->second ||
+                     basisStorageAttributesBoolMap
+                       .find(BasisStorageAttributes::StoreOverlap)
+                       ->second))
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues]       = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradient]     = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW]          = false;
+
+
+              // Set up the FE Basis Data Storage
+              cfeBasisDataStorage =
+                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>(
+                  d_efeBDH->getEnrichmentClassicalInterface()
+                    ->getCFEBasisDofHandler(),
+                  quadratureRuleAttributes,
+                  basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     basisAttrMap);
+            }
+          else
+            {
+              BasisStorageAttributesBoolMap basisAttrMap;
+              basisAttrMap[BasisStorageAttributes::StoreValues]       = true;
+              basisAttrMap[BasisStorageAttributes::StoreGradient]     = true;
+              basisAttrMap[BasisStorageAttributes::StoreHessian]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreOverlap]      = false;
+              basisAttrMap[BasisStorageAttributes::StoreGradNiGradNj] = false;
+              basisAttrMap[BasisStorageAttributes::StoreJxW]          = false;
+
+
+              // Set up the FE Basis Data Storage
+              cfeBasisDataStorage =
+                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>(
+                  d_efeBDH->getEnrichmentClassicalInterface()
+                    ->getCFEBasisDofHandler(),
+                  quadratureRuleAttributes,
+                  basisAttrMap);
+
+              cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     basisAttrMap);
+            }
+        }
+
+      EFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCell<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
         memorySpace,
-        dim>(d_feBDH,
-             basisQuadStorage,
-             basisGradientParaCellQuadStorage,
+        dim>(d_efeBDH,
+             basisParaCellClassQuadStorage,
+             d_basisEnrichQuadStorageMap,   
+             basisGradientParaCellClassQuadStorage,
+             d_basisGradientEnrichQuadStorageMap,
              basisJacobianInvQuadStorage,
              basisHessianQuadStorage,
              quadratureRuleAttributes,
              d_quadratureRuleContainer,
              nQuadPointsInCell,
-             cellStartIdsBasisQuadStorage,
              cellStartIdsBasisJacobianInvQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap);
+             basisStorageAttributesBoolMap,
+             cfeBasisDataStorage);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
-          d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
+          d_basisParaCellClassQuadStorage             = basisParaCellClassQuadStorage;
         }
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientParaCellQuadStorage = basisGradientParaCellQuadStorage;
+          d_basisGradientParaCellClassQuadStorage = basisGradientParaCellClassQuadStorage;
           d_basisJacobianInvQuadStorage      = basisJacobianInvQuadStorage;
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
           d_tmpGradientBlock = std::make_shared<Storage>(
-            d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
+            d_classialDofsInCell * nQuadPointsInCell[0] * dim * d_maxCellBlock);
           size_type gradientParaCellSize =
-            basisGradientParaCellQuadStorage->size();
+            basisGradientParaCellClassQuadStorage->size();
           for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
             {
               d_tmpGradientBlock->template copyFrom<memorySpace>(
-                basisGradientParaCellQuadStorage->data(),
+                basisGradientParaCellClassQuadStorage->data(),
                 gradientParaCellSize,
                 0,
                 gradientParaCellSize * iCell);
@@ -833,7 +1424,7 @@ namespace dftefe
         {
           utils::throwException<utils::InvalidArgument>(
             false,
-            "Basis GradNiGradNj not implemented in CFEBDSOnTheFlyComputeDealii");
+            "Basis GradNiGradNj not implemented in EFEBDSOnTheFlyComputeDealii");
         }
 
       if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
@@ -863,7 +1454,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::
@@ -883,7 +1474,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::
@@ -912,7 +1503,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisDataInAllCells() const
@@ -926,7 +1517,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
-      return *(d_basisQuadStorage);
+      return *(d_basisParaCellClassQuadStorage);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -934,14 +1525,14 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisGradientDataInAllCells() const
     {
       utils::throwException(
         false,
-        "getBasisGradientDataInAllCells() is not implemented in CFEBDSOnTheFlyComputeDealii");
+        "getBasisGradientDataInAllCells() is not implemented in EFEBDSOnTheFlyComputeDealii");
       // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
       // dummy(
       //   0);
@@ -953,7 +1544,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisHessianDataInAllCells() const
@@ -975,7 +1566,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getJxWInAllCells() const
@@ -997,7 +1588,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisDataInCell(const size_type cellId)
@@ -1012,21 +1603,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
-      std::shared_ptr<
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-                                    basisQuadStorage = d_basisQuadStorage;
-      const std::vector<size_type> &cellStartIds =
-        d_cellStartIdsBasisQuadStorage;
-      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
-      const size_type               sizeToCopy =
-        nQuadPointsInCell[cellId] * d_dofsInCell[cellId];
-      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-        returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-        sizeToCopy,
-        returnValue.data(),
-        basisQuadStorage->data() + cellStartIds[cellId]);
-      return returnValue;
+
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1034,7 +1611,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<
+    EFEBDSOnTheFlyComputeDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
@@ -1051,19 +1628,29 @@ namespace dftefe
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
 
-      std::shared_ptr<
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-                                    basisQuadStorage = d_basisQuadStorage;
-      const std::vector<size_type> &cellStartIds =
-        d_cellStartIdsBasisQuadStorage;
-      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
-      for (size_type cellId = cellRange.first; cellId < cellRange.second;
-           cellId++)
-        utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-          nQuadPointsInCell[cellId] * d_dofsInCell[cellId],
-          basisData.data() + cellStartIds[cellId] -
-            cellStartIds[cellRange.first],
-          basisQuadStorage->data() + cellStartIds[cellId]);
+      size_type cumulativeOffset = 0;
+      for(size_type cellId = cellRange.first ; cellId < cellRange.second ; cellId ++)
+      {
+        auto iter = d_basisEnrichQuadStorageMap.find(cellId);
+        for(size_type quadId = 0 ; quadId < d_nQuadPointsIncell[cellId] ; quadId++)
+        {
+          basisData.template copyFrom<memorySpace>(d_basisParaCellClassQuadStorage->data(),
+                                                    d_classialDofsInCell,
+                                                    d_classialDofsInCell * quadId,
+                                                    cumulativeOffset + 
+                                                        d_dofsInCell[cellId] * quadId);
+          if (iter != d_basisEnrichQuadStorageMap.end())
+          {
+            basisData.template copyFrom<memorySpace>(iter->second->data(),
+                                                      d_dofsInCell[cellId] - d_classialDofsInCell,
+                                                      (d_dofsInCell[cellId] - d_classialDofsInCell) * quadId,
+                                                      cumulativeOffset + 
+                                                      d_dofsInCell[cellId] * quadId
+                                                      + d_classialDofsInCell);
+          }
+        }
+        cumulativeOffset += d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId];
+      }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1071,7 +1658,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisGradientDataInCell(const size_type
@@ -1094,14 +1681,15 @@ namespace dftefe
 
       std::pair<size_type, size_type> cellPair(cellId, cellId + 1);
 
-      CFEBDSOnTheFlyComputeDealiiInternal::
+      EFEBDSOnTheFlyComputeDealiiInternal::
         computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
           cellPair,
+          d_classialDofsInCell,
           d_dofsInCell,
           d_nQuadPointsIncell,
           d_basisJacobianInvQuadStorage,
           d_cellStartIdsBasisJacobianInvQuadStorage,
-          *d_basisGradientParaCellQuadStorage,
+          *d_basisGradientParaCellClassQuadStorage,
           d_linAlgOpContext,
           returnValue);
 
@@ -1113,7 +1701,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::
@@ -1137,13 +1725,13 @@ namespace dftefe
             d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
             (cellRange.second - cellRange.first));
           size_type gradientParaCellSize =
-            d_basisGradientParaCellQuadStorage->size();
+            d_basisGradientParaCellClassQuadStorage->size();
           for (size_type iCell = 0;
                iCell < (cellRange.second - cellRange.first);
                ++iCell)
             {
               tmpGradientBlock->template copyFrom<memorySpace>(
-                d_basisGradientParaCellQuadStorage->data(),
+                d_basisGradientParaCellClassQuadStorage->data(),
                 gradientParaCellSize,
                 0,
                 gradientParaCellSize * iCell);
@@ -1153,9 +1741,10 @@ namespace dftefe
         {
           tmpGradientBlock = d_tmpGradientBlock;
         }
-      CFEBDSOnTheFlyComputeDealiiInternal::
+      EFEBDSOnTheFlyComputeDealiiInternal::
         computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
           cellRange,
+          d_classialDofsInCell,
           d_dofsInCell,
           d_nQuadPointsIncell,
           d_basisJacobianInvQuadStorage,
@@ -1163,6 +1752,23 @@ namespace dftefe
           *tmpGradientBlock,
           d_linAlgOpContext,
           basisGradientData);
+
+      size_type cumulativeOffset = 0;
+      for(size_type cellId = cellRange.first ; cellId < cellRange.second ; cellId ++)
+      {
+        auto iter = d_basisGradientEnrichQuadStorageMap.find(cellId);
+        if (iter != d_basisGradientEnrichQuadStorageMap.end())
+        {
+          for(size_type quadId = 0 ; quadId < d_nQuadPointsIncell[cellId] ; quadId++)
+            basisGradientData.template copyFrom<memorySpace>(iter->second->data(),
+                                                            (d_dofsInCell[cellId] - d_classialDofsInCell) * dim,
+                                                            (d_dofsInCell[cellId] - d_classialDofsInCell) * dim * quadId,
+                                                            cumulativeOffset + 
+                                                            d_dofsInCell[cellId] * quadId * dim
+                                                            + d_classialDofsInCell * dim);
+        }
+        cumulativeOffset += d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId] * dim;
+      }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1170,7 +1776,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisHessianDataInCell(const size_type
@@ -1207,7 +1813,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getJxWInCell(const size_type cellId) const
@@ -1241,7 +1847,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<
+    EFEBDSOnTheFlyComputeDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
@@ -1256,24 +1862,7 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadraturePointAttributes");
-      const quadrature::QuadratureRuleAttributes quadratureRuleAttributes =
-        *(attributes.quadratureRuleAttributesPtr);
-      const size_type cellId      = attributes.cellId;
-      const size_type quadPointId = attributes.quadPointId;
-      std::shared_ptr<
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-                                    basisQuadStorage = d_basisQuadStorage;
-      const std::vector<size_type> &cellStartIds =
-        d_cellStartIdsBasisQuadStorage;
-      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
-      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-        returnValue(1);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-        1,
-        returnValue.data(),
-        basisQuadStorage->data() + cellStartIds[cellId] +
-          quadPointId * d_dofsInCell[cellId] + basisId);
-      return returnValue;
+
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1281,7 +1870,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<
+    EFEBDSOnTheFlyComputeDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
@@ -1322,7 +1911,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<
+    EFEBDSOnTheFlyComputeDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
@@ -1370,13 +1959,13 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisOverlapInAllCells() const
     {
       utils::throwException<utils::InvalidArgument>(
-        false, "Basis Overlap not implemented in CFEBDSOnTheFlyComputeDealii");
+        false, "Basis Overlap not implemented in EFEBDSOnTheFlyComputeDealii");
       // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
       // dummy(
       //   0);
@@ -1388,14 +1977,14 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisOverlapInCell(const size_type
                                                               cellId) const
     {
       utils::throwException<utils::InvalidArgument>(
-        false, "Basis Overlap not implemented in CFEBDSOnTheFlyComputeDealii");
+        false, "Basis Overlap not implemented in EFEBDSOnTheFlyComputeDealii");
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage dummy(
         0);
       return dummy;
@@ -1406,7 +1995,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisOverlap(const size_type cellId,
@@ -1415,7 +2004,7 @@ namespace dftefe
       const
     {
       utils::throwException<utils::InvalidArgument>(
-        false, "Basis Overlap not implemented in CFEBDSOnTheFlyComputeDealii");
+        false, "Basis Overlap not implemented in EFEBDSOnTheFlyComputeDealii");
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage dummy(
         0);
       return dummy;
@@ -1426,29 +2015,29 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     void
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::deleteBasisData()
     {
       utils::throwException(
-        (d_basisQuadStorage).use_count() == 1,
-        "More than one owner for the basis quadrature storage found in CFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
-      delete (d_basisQuadStorage).get();
+        (d_basisParaCellClassQuadStorage).use_count() == 1,
+        "More than one owner for the basis quadrature storage found in EFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
+      delete (d_basisParaCellClassQuadStorage).get();
 
       utils::throwException(
         (d_basisJacobianInvQuadStorage).use_count() == 1,
-        "More than one owner for the basis quadrature storage found in CFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
+        "More than one owner for the basis quadrature storage found in EFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
       delete (d_basisJacobianInvQuadStorage).get();
 
       utils::throwException(
-        (d_basisGradientParaCellQuadStorage).use_count() == 1,
-        "More than one owner for the basis quadrature storage found in CFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
-      delete (d_basisGradientParaCellQuadStorage).get();
+        (d_basisGradientParaCellClassQuadStorage).use_count() == 1,
+        "More than one owner for the basis quadrature storage found in EFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
+      delete (d_basisGradientParaCellClassQuadStorage).get();
 
       utils::throwException(
         (d_basisHessianQuadStorage).use_count() == 1,
-        "More than one owner for the basis quadrature storage found in CFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
+        "More than one owner for the basis quadrature storage found in EFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
       delete (d_basisHessianQuadStorage).get();
 
       d_tmpGradientBlock->resize(0);
@@ -1459,7 +2048,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisDataInCell(const size_type cellId,
@@ -1468,7 +2057,7 @@ namespace dftefe
     {
       utils::throwException(
         false,
-        "getBasisDataInCell() for a given basisId is not implemented in CFEBDSOnTheFlyComputeDealii");
+        "getBasisDataInCell() for a given basisId is not implemented in EFEBDSOnTheFlyComputeDealii");
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage dummy(
         0);
       return dummy;
@@ -1479,7 +2068,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<
+    EFEBDSOnTheFlyComputeDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
@@ -1488,7 +2077,7 @@ namespace dftefe
     {
       utils::throwException(
         false,
-        "getBasisGradientDataInCell() for a given basisId is not implemented in CFEBDSOnTheFlyComputeDealii");
+        "getBasisGradientDataInCell() for a given basisId is not implemented in EFEBDSOnTheFlyComputeDealii");
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage dummy(
         0);
       return dummy;
@@ -1499,7 +2088,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<
+    EFEBDSOnTheFlyComputeDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
@@ -1508,7 +2097,7 @@ namespace dftefe
     {
       utils::throwException(
         false,
-        "getBasisHessianDataInCell() for a given basisId is not implemented in CFEBDSOnTheFlyComputeDealii");
+        "getBasisHessianDataInCell() for a given basisId is not implemented in EFEBDSOnTheFlyComputeDealii");
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage dummy(
         0);
       return dummy;
@@ -1519,7 +2108,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<const quadrature::QuadratureRuleContainer>
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getQuadratureRuleContainer() const
@@ -1536,7 +2125,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisGradNiGradNjInCell(const size_type
@@ -1544,7 +2133,7 @@ namespace dftefe
     {
       utils::throwException<utils::InvalidArgument>(
         false,
-        "Basis GradNiGradNj not implemented in CFEBDSOnTheFlyComputeDealii");
+        "Basis GradNiGradNj not implemented in EFEBDSOnTheFlyComputeDealii");
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage dummy(
         0);
       return dummy;
@@ -1556,14 +2145,14 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisGradNiGradNjInAllCells() const
     {
       utils::throwException<utils::InvalidArgument>(
         false,
-        "Basis GradNiGradNj not implemented in CFEBDSOnTheFlyComputeDealii");
+        "Basis GradNiGradNj not implemented in EFEBDSOnTheFlyComputeDealii");
       // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
       // dummy(
       //   0);
@@ -1575,12 +2164,12 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<const BasisDofHandler>
-    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
                                 dim>::getBasisDofHandler() const
     {
-      return d_feBDH;
+      return d_efeBDH;
     }
   } // namespace basis
 } // namespace dftefe

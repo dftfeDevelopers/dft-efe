@@ -30,6 +30,7 @@ set(DFT-EFE-BASIS-SOURCES
 	EnrichmentClassicalInterfaceSpherical.cpp
 	OrthoEFEOverlapInverseOpContextGLL.cpp
 	EFEBasisDataStorageDealii.cpp
+	EFEBDSOnTheFlyComputeDealii.cpp
 	EFEBasisDofHandlerDealii.cpp
 	EFEConstraintsLocalDealii.cpp
 	GenerateMesh.cpp
