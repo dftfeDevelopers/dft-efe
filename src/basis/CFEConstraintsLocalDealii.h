@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Vishal Subramanian, Avirup Sircar
+ * @author Vishal Subramanian, Avirup Sircar,
  */
 
 #ifndef dftefeCFEConstraintsLocalDealii_h
