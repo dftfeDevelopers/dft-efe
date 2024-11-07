@@ -58,10 +58,9 @@ namespace dftefe
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
           &basisGradientData)
       {
-        size_type numCellsInBlock = cellRange.second - cellRange.first;
-
         size_type numMats = 0;
-        for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+        for (size_type iCell = cellRange.first; iCell < cellRange.second;
+             ++iCell)
           {
             for (size_type iQuad = 0; iQuad < nQuadPointsInCell[iCell]; ++iQuad)
               {
@@ -86,17 +85,19 @@ namespace dftefe
         std::vector<size_type> strideBTmp(numMats, 0);
         std::vector<size_type> strideCTmp(numMats, 0);
 
-        for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+        for (size_type iCell = cellRange.first; iCell < cellRange.second;
+             ++iCell)
           {
             for (size_type iQuad = 0; iQuad < nQuadPointsInCell[iCell]; ++iQuad)
               {
-                size_type index    = iCell * nQuadPointsInCell[iCell] + iQuad;
+                size_type index =
+                  (iCell - cellRange.first) * nQuadPointsInCell[iCell] + iQuad;
                 mSizesTmp[index]   = classicalDofsInCell;
                 nSizesTmp[index]   = dim;
                 kSizesTmp[index]   = dim;
                 ldaSizesTmp[index] = mSizesTmp[index];
                 ldbSizesTmp[index] = kSizesTmp[index];
-                ldcSizesTmp[index] = mSizesTmp[index];
+                ldcSizesTmp[index] = dofsInCell[iCell];
                 strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
                 strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
                 strideCTmp[index]  = dofsInCell[iCell] * nSizesTmp[index];
@@ -1528,15 +1529,9 @@ namespace dftefe
                                 dim>::getBasisDataInAllCells() const
     {
       utils::throwException(
-        d_evaluateBasisData,
-        "Cannot call function before calling evaluateBasisData()");
-
-      utils::throwException(
-        d_basisStorageAttributesBoolMap
-          .find(BasisStorageAttributes::StoreValues)
-          ->second,
-        "Basis values are not evaluated for the given QuadratureRuleAttributes");
-      return *(d_basisParaCellClassQuadStorage);
+        false,
+        "getBasisGradientDataInAllCells() is not implemented in EFEBDSOnTheFlyComputeDealii");
+      return *d_tmpGradientBlock;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1622,6 +1617,17 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
+
+      std::pair<size_type, size_type> cellPair(cellId, cellId + 1);
+
+      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      const size_type               sizeToCopy =
+        nQuadPointsInCell[cellId] * d_dofsInCell[cellId];
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        returnValue(sizeToCopy);
+      getBasisDataInCellRange(cellPair, returnValue);
+
+      return returnValue;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1702,17 +1708,7 @@ namespace dftefe
 
       std::pair<size_type, size_type> cellPair(cellId, cellId + 1);
 
-      EFEBDSOnTheFlyComputeDealiiInternal::
-        computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
-          cellPair,
-          d_classialDofsInCell,
-          d_dofsInCell,
-          d_nQuadPointsIncell,
-          d_basisJacobianInvQuadStorage,
-          d_cellStartIdsBasisJacobianInvQuadStorage,
-          *d_basisGradientParaCellClassQuadStorage,
-          d_linAlgOpContext,
-          returnValue);
+      getBasisGradientDataInCellRange(cellPair, returnValue);
 
       return returnValue;
     }
@@ -1783,12 +1779,15 @@ namespace dftefe
             {
               for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
                    quadId++)
-                basisGradientData.template copyFrom<memorySpace>(
-                  iter->second->data(),
-                  (d_dofsInCell[cellId] - d_classialDofsInCell) * dim,
-                  (d_dofsInCell[cellId] - d_classialDofsInCell) * dim * quadId,
-                  cumulativeOffset + d_dofsInCell[cellId] * quadId * dim +
-                    d_classialDofsInCell * dim);
+                for (size_type iDim = 0; iDim < dim; iDim++)
+                  basisGradientData.template copyFrom<memorySpace>(
+                    iter->second->data(),
+                    (d_dofsInCell[cellId] - d_classialDofsInCell),
+                    (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
+                        quadId +
+                      iDim,
+                    cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
+                      d_dofsInCell[cellId] * iDim + d_classialDofsInCell);
             }
           cumulativeOffset +=
             d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId] * dim;
@@ -1886,6 +1885,22 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadraturePointAttributes");
+      const quadrature::QuadratureRuleAttributes quadratureRuleAttributes =
+        *(attributes.quadratureRuleAttributesPtr);
+      const size_type cellId      = attributes.cellId;
+      const size_type quadPointId = attributes.quadPointId;
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        basisQuadStorage(getBasisDataInCell(cellId));
+      ;
+
+      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        returnValue(1);
+      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+        1,
+        returnValue.data(),
+        basisQuadStorage.data() + quadPointId * d_dofsInCell[cellId] + basisId);
+      return returnValue;
     }
 
     template <typename ValueTypeBasisCoeff,

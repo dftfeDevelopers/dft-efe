@@ -30,7 +30,9 @@
 #include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <iostream>
-#include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
+#include <chrono>
+using namespace std::chrono;
+#include <basis/EFEBDSOnTheFlyComputeDealii.h>
 using namespace dftefe;
 int main()
 {
@@ -76,7 +78,7 @@ int main()
   const unsigned int dim = 3;
   std::shared_ptr<basis::TriangulationBase> triangulationBase =
   std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<unsigned int>         subdivisions = {5, 5, 5};
+  std::vector<unsigned int>         subdivisions = {10, 10, 10};
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim,
                                                   utils::Point(dim, 0.0));
@@ -185,7 +187,7 @@ int main()
   }
   // Make orthogonalized EFE basis
 
-  unsigned int feOrder = 3;
+  unsigned int feOrder = 5;
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
@@ -214,7 +216,7 @@ int main()
 
     // Set up base quadrature rule for adaptive quadrature 
 
-    unsigned int num1DGaussSize = feOrder + 1;
+    unsigned int num1DGaussSize = feOrder + 5;
     std::shared_ptr<quadrature::QuadratureRule> baseQuadRule =
     std::make_shared<quadrature::QuadratureRuleGauss>(dim, num1DGaussSize);
 
@@ -247,7 +249,7 @@ int main()
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<basis::FEBasisDataStorage<double, utils::MemorySpace::HOST>> cfeBasisDataStorageAdaptUniformQuad =
@@ -256,17 +258,19 @@ int main()
   // evaluate basis data
   cfeBasisDataStorageAdaptUniformQuad->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
     
+    size_type numLocallyOwnedCells = cfeBasisDofHandler->nLocallyOwnedCells();
     unsigned int cellBlockSize = 10; 
 
     // Set up the CFE Basis Data Storage for Rhs
     std::shared_ptr<basis::FEBasisDataStorage<double, utils::MemorySpace::HOST>> cfeBasisDataStorageUniformQuad =
       std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double,utils::MemorySpace::HOST, dim>>
       (cfeBasisDofHandler, quadAttrGauss, basisAttrMap, cellBlockSize, *linAlgOpContext);
-  // check basis data
   cfeBasisDataStorageUniformQuad->evaluateBasisData(quadAttrGauss, basisAttrMap);
-    size_type numLocallyOwnedCells = cfeBasisDofHandler->nLocallyOwnedCells();
+
     size_type nDofs = cfeBasisDofHandler->nCellDofs(0);
     size_type nQuadPtInCell = cfeBasisDataStorageUniformQuad->getQuadratureRuleContainer()->nCellQuadraturePoints(0);
+
+      // // check basis data
     for(int i = 0 ; i < numLocallyOwnedCells ; i += cellBlockSize)
     {
       size_type cellStartId = i;
@@ -277,7 +281,7 @@ int main()
       cfeBasisDataStorageUniformQuad->getBasisDataInCellRange(std::make_pair(cellStartId, cellEndId), basisDataStorageInCellRange);
       for(int j = 0 ; j < cellEndId - cellStartId ; j++)
       {
-        auto basisDataStorageInCellAdaptUniform = cfeBasisDataStorageAdaptUniformQuad->getBasisDataInCell(j);
+        auto basisDataStorageInCellAdaptUniform = cfeBasisDataStorageAdaptUniformQuad->getBasisDataInCell(j+cellStartId);
         for(int k = 0 ; k < basisDataStorageInCellAdaptUniform.size() ; k++)
         {
           double val1 = *(basisDataStorageInCellRange.data() + k);
@@ -288,6 +292,10 @@ int main()
       }
     }
   // check basis gradient data
+
+    utils::mpi::MPIBarrier(comm);
+    auto startTotal = std::chrono::high_resolution_clock::now();
+
     for(int i = 0 ; i < numLocallyOwnedCells ; i += cellBlockSize)
     {
       size_type cellStartId = i;
@@ -298,7 +306,7 @@ int main()
       cfeBasisDataStorageUniformQuad->getBasisGradientDataInCellRange(std::make_pair(cellStartId, cellEndId), basisGradientDataStorageInCellRange);
       for(int j = 0 ; j < cellEndId - cellStartId ; j++)
       {
-        auto basisGradientDataStorageInCellAdaptUniform = cfeBasisDataStorageAdaptUniformQuad->getBasisGradientDataInCell(j);
+        auto basisGradientDataStorageInCellAdaptUniform = cfeBasisDataStorageAdaptUniformQuad->getBasisGradientDataInCell(j+cellStartId);
         for(int k = 0 ; k < basisGradientDataStorageInCellAdaptUniform.size() ; k++)
         {
           double val1 = *(basisGradientDataStorageInCellRange.data() + k);
@@ -308,6 +316,12 @@ int main()
         }
       }
     }
+    utils::mpi::MPIBarrier(comm);
+    auto stopTotal = std::chrono::high_resolution_clock::now();
+
+    auto durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
+
+    std::cout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
 
     // Create the enrichmentClassicalInterface object
       std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical<double, utils::MemorySpace::HOST, dim>>
@@ -356,49 +370,74 @@ int main()
   // check basis data
   efeBasisDataStorageUniformQuad->evaluateBasisData(quadAttrGauss, basisAttrMap);
     numLocallyOwnedCells = basisDofHandler->nLocallyOwnedCells();
-    nDofs = basisDofHandler->nCellDofs(0);
+
     nQuadPtInCell = efeBasisDataStorageUniformQuad->getQuadratureRuleContainer()->nCellQuadraturePoints(0);
     for(int i = 0 ; i < numLocallyOwnedCells ; i += cellBlockSize)
     {
       size_type cellStartId = i;
       size_type cellEndId = std::min(i+cellBlockSize, numLocallyOwnedCells);
+      nDofs = 0;
+      for(int iCell = cellStartId ; iCell < cellEndId ; iCell++)
+      {
+        nDofs += basisDofHandler->nCellDofs(iCell);
+      }
       utils::MemoryStorage<double,
           utils::MemorySpace::HOST> 
-            basisDataStorageInCellRange((cellEndId - cellStartId)*nDofs*nQuadPtInCell);
+            basisDataStorageInCellRange(nDofs*nQuadPtInCell);
       efeBasisDataStorageUniformQuad->getBasisDataInCellRange(std::make_pair(cellStartId, cellEndId), basisDataStorageInCellRange);
-      for(int j = 0 ; j < cellEndId - cellStartId ; j++)
+      size_type cumulativeOffset = 0;
+      for(int j = cellStartId ; j < cellEndId ; j++)
       {
         auto basisDataStorageInCellAdaptUniform = efeBasisDataStorageAdaptUniformQuad->getBasisDataInCell(j);
         for(int k = 0 ; k < basisDataStorageInCellAdaptUniform.size() ; k++)
         {
-          double val1 = *(basisDataStorageInCellRange.data() + k);
+          double val1 = *(basisDataStorageInCellRange.data() + cumulativeOffset + k);
           double val2 = *(basisDataStorageInCellAdaptUniform.data() + k);
           if(std::abs(val1 - val2) > 1e-12)
-            std::cout << val1 << "\t" << val2 << "\n";
+            std::cout << val1 << "\t" << val2 << "--- Basis " << rank << "\n";
         }
+        cumulativeOffset += basisDofHandler->nCellDofs(j) * nQuadPtInCell;
       }
     }
   // check basis gradient data
+
+    utils::mpi::MPIBarrier(comm);
+    startTotal = std::chrono::high_resolution_clock::now();
+
     for(int i = 0 ; i < numLocallyOwnedCells ; i += cellBlockSize)
     {
       size_type cellStartId = i;
       size_type cellEndId = std::min(i+cellBlockSize, numLocallyOwnedCells);
+      nDofs = 0;
+      for(int iCell = cellStartId ; iCell < cellEndId ; iCell++)
+      {
+        nDofs += basisDofHandler->nCellDofs(iCell);
+      }
       utils::MemoryStorage<double,
           utils::MemorySpace::HOST> 
-            basisGradientDataStorageInCellRange((cellEndId - cellStartId)*nDofs*nQuadPtInCell*dim);
-      efeBasisDataStorageUniformQuad->getBasisGradientDataInCellRange(std::make_pair(cellStartId, cellEndId), basisGradientDataStorageInCellRange);
-      for(int j = 0 ; j < cellEndId - cellStartId ; j++)
+            basisDataStorageInCellRange(nDofs*nQuadPtInCell*dim);
+      efeBasisDataStorageUniformQuad->getBasisGradientDataInCellRange(std::make_pair(cellStartId, cellEndId), basisDataStorageInCellRange);
+      size_type cumulativeOffset = 0;
+      for(int j = cellStartId ; j < cellEndId ; j++)
       {
-        auto basisGradientDataStorageInCellAdaptUniform = efeBasisDataStorageAdaptUniformQuad->getBasisGradientDataInCell(j);
-        for(int k = 0 ; k < basisGradientDataStorageInCellAdaptUniform.size() ; k++)
+        auto basisDataStorageInCellAdaptUniform = efeBasisDataStorageAdaptUniformQuad->getBasisGradientDataInCell(j);
+        for(int k = 0 ; k < basisDataStorageInCellAdaptUniform.size() ; k++)
         {
-          double val1 = *(basisGradientDataStorageInCellRange.data() + k);
-          double val2 = *(basisGradientDataStorageInCellAdaptUniform.data() + k);
+          double val1 = *(basisDataStorageInCellRange.data() + cumulativeOffset + k);
+          double val2 = *(basisDataStorageInCellAdaptUniform.data() + k);
           if(std::abs(val1 - val2) > 1e-12)
-            std::cout << val1 << "\t" << val2 << "\n";
+            std::cout << val1 << "\t" << val2 << "--- Grad " << rank << "\n";
         }
+        cumulativeOffset += basisDofHandler->nCellDofs(j) * nQuadPtInCell * dim;
       }
     }
+
+    utils::mpi::MPIBarrier(comm);
+    stopTotal = std::chrono::high_resolution_clock::now();
+
+    durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
+
+    std::cout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
 
   utils::mpi::MPIBarrier(comm);
 
