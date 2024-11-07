@@ -339,7 +339,8 @@ namespace dftefe
               .find(BasisStorageAttributes::StoreHessian)
               ->second)
           {
-            std::cout << "Store Hessian is not memory optimized in CFEOnTheFlyComputeDealii.h. Contact developers for making it optimal.";
+            std::cout
+              << "Store Hessian is not memory optimized in CFEOnTheFlyComputeDealii.h. Contact developers for making it optimal.";
             basisHessianQuadStorage =
               std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
                                                          memorySpace>::Storage>(
