@@ -17,6 +17,7 @@ set(DFT-EFE-BASIS-SOURCES
 	CFEBasisDofHandlerDealii.cpp
 	FEBasisManager.cpp
 	CFEBasisDataStorageDealii.cpp
+	CFEBDSOnTheFlyComputeDealii.cpp
 	FEBasisOperations.cpp
 	AtomIdsPartition.cpp
 	EnrichmentIdsPartition.cpp

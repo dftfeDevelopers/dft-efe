@@ -188,6 +188,16 @@ namespace dftefe
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const override;
 
+      // functions to get data for  basis functions on all quad points in range
+      // of cells
+      void
+      getBasisDataInCellRange(std::pair<size_type, size_type> cellRange,
+                              Storage &basisData) const override;
+      void
+      getBasisGradientDataInCellRange(
+        std::pair<size_type, size_type> cellRange,
+        Storage &                       basisGradientData) const override;
+
     private:
       bool d_evaluateBasisData;
       std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,

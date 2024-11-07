@@ -3413,6 +3413,38 @@ namespace dftefe
     }
 
     //------------------OTHER FNS -----------------------------
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    EFEBasisDataStorageDealii<
+      ValueTypeBasisCoeff,
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getBasisDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                    Storage &basisData) const
+    {
+      utils::throwException(false, "Not implemented getBasisDataInCellRange");
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    EFEBasisDataStorageDealii<ValueTypeBasisCoeff,
+                              ValueTypeBasisData,
+                              memorySpace,
+                              dim>::
+      getBasisGradientDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                      Storage &basisData) const
+    {
+      utils::throwException(false,
+                            "Not implemented getBasisGradientDataInCellRange");
+    }
+
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,

@@ -789,8 +789,8 @@ namespace dftefe
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cumulativeQuadPoints * dim * dofsPerCell +
-                                      iDim * dofsPerCell * nQuadPointInCell +
-                                      iNode * nQuadPointInCell + qPoint;
+                                      iNode * nQuadPointInCell * dim +
+                                      iDim * nQuadPointInCell + qPoint;
                             *it = shapeGrad[iDim];
                           }
                       }
@@ -1882,6 +1882,37 @@ namespace dftefe
     //      return ;
     //
     //    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    CFEBasisDataStorageDealii<
+      ValueTypeBasisCoeff,
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getBasisDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                    Storage &basisData) const
+    {
+      utils::throwException(false, "Not implemented getBasisDataInCellRange");
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    CFEBasisDataStorageDealii<ValueTypeBasisCoeff,
+                              ValueTypeBasisData,
+                              memorySpace,
+                              dim>::
+      getBasisGradientDataInCellRange(std::pair<size_type, size_type> cellRange,
+                                      Storage &basisData) const
+    {
+      utils::throwException(false,
+                            "Not implemented getBasisGradientDataInCellRange");
+    }
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,

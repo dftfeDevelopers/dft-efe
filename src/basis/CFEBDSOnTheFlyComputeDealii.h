@@ -20,11 +20,11 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo, Vishal Subramanian
+ * @author Avirup Sircar,
  */
 
-#ifndef dftefeCFEBasisDataStorageDealii_h
-#define dftefeCFEBasisDataStorageDealii_h
+#ifndef dftefeCFEBDSOnTheFlyComputeDealii_h
+#define dftefeCFEBDSOnTheFlyComputeDealii_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -52,7 +52,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    class CFEBasisDataStorageDealii
+    class CFEBDSOnTheFlyComputeDealii
       : public FEBasisDataStorage<ValueTypeBasisData, memorySpace>
     {
     public:
@@ -61,12 +61,14 @@ namespace dftefe
       using Storage =
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
 
-      CFEBasisDataStorageDealii(
+      CFEBDSOnTheFlyComputeDealii(
         std::shared_ptr<const BasisDofHandler>      feBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap);
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        const size_type                     maxCellBlock,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
-      ~CFEBasisDataStorageDealii() = default;
+      ~CFEBDSOnTheFlyComputeDealii() = default;
 
       std::shared_ptr<const BasisDofHandler>
       getBasisDofHandler() const override;
@@ -216,25 +218,25 @@ namespace dftefe
         const CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>>
         d_feBDH;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                                    d_quadratureRuleContainer;
-      QuadratureRuleAttributes      d_quadratureRuleAttributes;
-      BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
-      std::shared_ptr<Storage>      d_basisQuadStorage;
-      std::shared_ptr<Storage>      d_JxWStorage;
-      std::shared_ptr<Storage>      d_basisGradNiGradNj;
-      std::shared_ptr<Storage>      d_basisGradientQuadStorage;
-      std::shared_ptr<Storage>      d_basisHessianQuadStorage;
-      std::shared_ptr<Storage>      d_basisOverlap;
-      std::vector<size_type>        d_dofsInCell;
-      std::vector<size_type>        d_cellStartIdsBasisOverlap;
-      std::vector<size_type>        d_nQuadPointsIncell;
-      std::vector<size_type>        d_cellStartIdsBasisQuadStorage;
-      std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
-      std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
-      std::vector<size_type>        d_cellStartIdsGradNiGradNj;
+                                            d_quadratureRuleContainer;
+      QuadratureRuleAttributes              d_quadratureRuleAttributes;
+      BasisStorageAttributesBoolMap         d_basisStorageAttributesBoolMap;
+      std::shared_ptr<Storage>              d_basisQuadStorage;
+      std::shared_ptr<Storage>              d_JxWStorage;
+      std::vector<std::shared_ptr<Storage>> d_basisGradientParaCellQuadStorage;
+      std::vector<std::shared_ptr<Storage>> d_basisJacobianInvQuadStorage;
+      std::shared_ptr<Storage>              d_basisHessianQuadStorage;
+      std::vector<size_type>                d_dofsInCell;
+      std::vector<size_type>                d_nQuadPointsIncell;
+      std::vector<size_type>   d_cellStartIdsBasisJacobianInvQuadStorage;
+      std::vector<size_type>   d_cellStartIdsBasisHessianQuadStorage;
+      std::vector<size_type>   d_cellStartIdsBasisQuadStorage;
+      size_type                d_maxCellBlock;
+      std::shared_ptr<Storage> d_tmpGradientBlock;
+      linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
 
-    }; // end of CFEBasisDataStorageDealii
+    }; // end of CFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis
 } // end of namespace dftefe
-#include <basis/CFEBasisDataStorageDealii.t.cpp>
-#endif // dftefeCFEBasisDataStorageDealii_h
+#include <basis/CFEBDSOnTheFlyComputeDealii.t.cpp>
+#endif // dftefeCFEBDSOnTheFlyComputeDealii_h
