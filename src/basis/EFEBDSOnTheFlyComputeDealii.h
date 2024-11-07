@@ -214,8 +214,10 @@ namespace dftefe
 
     private:
       bool d_evaluateBasisData;
-      std::shared_ptr<
-        const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>>
+      std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim>>
         d_efeBDH;
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                     d_quadratureRuleContainer;
@@ -233,9 +235,11 @@ namespace dftefe
       size_type                     d_maxCellBlock;
       std::shared_ptr<Storage>      d_tmpGradientBlock;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
-      size_type                     d_classialDofsInCell;
-      std::unordered_map<size_type, std::shared_ptr<
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>>
+      size_type                                    d_classialDofsInCell;
+      std::unordered_map<
+        size_type,
+        std::shared_ptr<
+          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>>
         d_basisGradientEnrichQuadStorageMap, d_basisEnrichQuadStorageMap;
 
     }; // end of EFEBDSOnTheFlyComputeDealii
