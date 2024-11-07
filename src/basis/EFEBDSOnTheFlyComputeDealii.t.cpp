@@ -1529,15 +1529,9 @@ namespace dftefe
                                 dim>::getBasisDataInAllCells() const
     {
       utils::throwException(
-        d_evaluateBasisData,
-        "Cannot call function before calling evaluateBasisData()");
-
-      utils::throwException(
-        d_basisStorageAttributesBoolMap
-          .find(BasisStorageAttributes::StoreValues)
-          ->second,
-        "Basis values are not evaluated for the given QuadratureRuleAttributes");
-      return *(d_basisParaCellClassQuadStorage);
+        false,
+        "getBasisGradientDataInAllCells() is not implemented in EFEBDSOnTheFlyComputeDealii");
+      return *d_tmpGradientBlock;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1623,6 +1617,17 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
+
+      std::pair<size_type, size_type> cellPair(cellId, cellId + 1);
+
+      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      const size_type               sizeToCopy =
+        nQuadPointsInCell[cellId] * d_dofsInCell[cellId];
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        returnValue(sizeToCopy);
+      getBasisDataInCellRange(cellPair, returnValue);
+
+      return returnValue;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1703,17 +1708,7 @@ namespace dftefe
 
       std::pair<size_type, size_type> cellPair(cellId, cellId + 1);
 
-      EFEBDSOnTheFlyComputeDealiiInternal::
-        computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
-          cellPair,
-          d_classialDofsInCell,
-          d_dofsInCell,
-          d_nQuadPointsIncell,
-          d_basisJacobianInvQuadStorage,
-          d_cellStartIdsBasisJacobianInvQuadStorage,
-          *d_basisGradientParaCellClassQuadStorage,
-          d_linAlgOpContext,
-          returnValue);
+      getBasisGradientDataInCellRange(cellPair, returnValue);
 
       return returnValue;
     }
@@ -1890,6 +1885,22 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadraturePointAttributes");
+      const quadrature::QuadratureRuleAttributes quadratureRuleAttributes =
+        *(attributes.quadratureRuleAttributesPtr);
+      const size_type cellId      = attributes.cellId;
+      const size_type quadPointId = attributes.quadPointId;
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        basisQuadStorage(getBasisDataInCell(cellId));
+      ;
+
+      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        returnValue(1);
+      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+        1,
+        returnValue.data(),
+        basisQuadStorage.data() + quadPointId * d_dofsInCell[cellId] + basisId);
+      return returnValue;
     }
 
     template <typename ValueTypeBasisCoeff,
