@@ -30,7 +30,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
-#include <basis/FEBasisDataStorage.h>
+#include <basis/EFEBasisDataStorage.h>
 #include <basis/CFEBasisDofHandlerDealii.h>
 #include <basis/EFEBasisDofHandlerDealii.h>
 #include <basis/FEBasisDofHandler.h>
@@ -54,7 +54,7 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     class EFEBDSOnTheFlyComputeDealii
-      : public FEBasisDataStorage<ValueTypeBasisData, memorySpace>
+      : public EFEBasisDataStorage<ValueTypeBasisData, memorySpace>
     {
     public:
       using QuadraturePointAttributes = quadrature::QuadraturePointAttributes;

@@ -988,6 +988,7 @@ int main(int argc, char** argv)
                                                       *cfeBasisDataStorageAdaptiveOrbital,
                                                       ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
                                                       numWantedEigenvalues,
+                                                      linAlgOpContext,
                                                       true); 
 
     // add device synchronize for gpu

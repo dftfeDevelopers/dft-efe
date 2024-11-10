@@ -71,116 +71,60 @@ namespace dftefe
                                                   memorySpace,
                                                   dim>::RealType;
 
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> fieldxrho(
-          field);
+        RealType        value                = 0;
+        const RealType *fieldIter            = field.begin();
+        const RealType *rhoIter              = rho.begin();
+        const RealType *jxwStorageIter       = jxwStorage.data();
+        size_type       cumulativeQuadInCell = 0;
+
+        for (size_type iCell = 0; iCell < field.nCells(); iCell++)
+          {
+            size_type numQuadInCell = field.nCellQuadraturePoints(iCell);
+            for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+              {
+                const RealType jxwVal =
+                  jxwStorageIter[cumulativeQuadInCell + iQuad];
+                const RealType fieldVal =
+                  fieldIter[cumulativeQuadInCell + iQuad];
+                const RealType rhoVal = rhoIter[cumulativeQuadInCell + iQuad];
+                value += rhoVal * fieldVal * jxwVal;
+              }
+            cumulativeQuadInCell += numQuadInCell;
+          }
+
         // quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   fieldxrhoxJxW(field);
-
-        linearAlgebra::blasLapack::
-          hadamardProduct<RealType, RealType, memorySpace>(
-            field.nEntries(),
-            field.begin(),
-            rho.begin(),
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            fieldxrho.begin(),
-            *linAlgOpContext);
-
-        linearAlgebra::blasLapack::
-          hadamardProduct<RealType, RealType, memorySpace>(
-            fieldxrho.nEntries(),
-            fieldxrho.begin(),
-            jxwStorage.data(),
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            fieldxrho.begin(),
-            *linAlgOpContext);
-
-        // std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-        //   numLocallyOwnedCells,
-        //   linearAlgebra::blasLapack::ScalarOp::Identity);
-        // std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-        //   numLocallyOwnedCells,
-        //   linearAlgebra::blasLapack::ScalarOp::Identity);
-        // std::vector<size_type> mTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> nTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> kTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> stATmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> stBTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> stCTmp(numLocallyOwnedCells, 0);
-
-        // for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
-        //   {
-        //     mTmp[iCell] = 1;
-        //     nTmp[iCell] = fieldxrho.getNumberComponents();
-        //     kTmp[iCell] =
-        //       fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
-        //         iCell);
-        //     stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
-        //     stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
-        //     stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
-        //   }
-
-        // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-        //   memoryTransferHost;
-
-        // utils::MemoryStorage<size_type, memorySpace> mSize(
-        //   numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace> nSize(
-        //   numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace> kSize(
-        //   numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace>
-        // stA(numLocallyOwnedCells); utils::MemoryStorage<size_type,
-        // memorySpace> stB(numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace>
-        // stC(numLocallyOwnedCells);
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         mSize.data(),
-        //                         mTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         nSize.data(),
-        //                         nTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         kSize.data(),
-        //                         kTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         stA.data(),
-        //                         stATmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         stB.data(),
-        //                         stBTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         stC.data(),
-        //                         stCTmp.data());
+        // fieldxrho(
+        //   field);
 
         // linearAlgebra::blasLapack::
-        //   scaleStridedVarBatched<ValueTypeBasisData, RealType, memorySpace>(
-        //     numLocallyOwnedCells,
-        //     scalarOpA.data(),
-        //     scalarOpB.data(),
-        //     stA.data(),
-        //     stB.data(),
-        //     stC.data(),
-        //     mSize.data(),
-        //     nSize.data(),
-        //     kSize.data(),
-        //     jxwStorage.data(),
+        //   hadamardProduct<RealType, RealType, memorySpace>(
+        //     field.nEntries(),
+        //     field.begin(),
+        //     rho.begin(),
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
         //     fieldxrho.begin(),
-        //     fieldxrhoxJxW.begin(),
         //     *linAlgOpContext);
 
-        RealType value = 0;
+        // linearAlgebra::blasLapack::
+        //   hadamardProduct<RealType, RealType, memorySpace>(
+        //     fieldxrho.nEntries(),
+        //     fieldxrho.begin(),
+        //     jxwStorage.data(),
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     fieldxrho.begin(),
+        //     *linAlgOpContext);
 
-        for (size_type iCell = 0; iCell < fieldxrho.nCells(); iCell++)
-          {
-            std::vector<RealType> a(
-              fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
-                iCell));
-            fieldxrho.template getCellValues<utils::MemorySpace::HOST>(
-              iCell, a.data());
-            value += std::accumulate(a.begin(), a.end(), (RealType)0);
-          }
+        // for (size_type iCell = 0; iCell < fieldxrho.nCells(); iCell++)
+        //   {
+        //     std::vector<RealType> a(
+        //       fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
+        //         iCell));
+        //     fieldxrho.template getCellValues<utils::MemorySpace::HOST>(
+        //       iCell, a.data());
+        //     value += std::accumulate(a.begin(), a.end(), (RealType)0);
+        //   }
 
         int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           utils::mpi::MPIInPlace,
@@ -237,6 +181,8 @@ namespace dftefe
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
       , d_externalPotentialFunction(externalPotentialFunction)
       , d_maxCellBlock(maxCellBlock)
+      , d_numericalCancelScratch1(nullptr)
+      , d_numericalCancelScratch2(nullptr)
     {
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
@@ -296,6 +242,8 @@ namespace dftefe
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
       , d_externalPotentialFunction(externalPotentialFunction)
       , d_maxCellBlock(maxCellBlock)
+      , d_numericalCancelScratch1(nullptr)
+      , d_numericalCancelScratch2(nullptr)
     {
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
@@ -358,6 +306,16 @@ namespace dftefe
         {
           delete d_totalChargePotentialQuad;
           d_totalChargePotentialQuad = nullptr;
+        }
+      if (d_numericalCancelScratch1 != nullptr)
+        {
+          delete d_numericalCancelScratch1;
+          d_numericalCancelScratch1 = nullptr;
+        }
+      if (d_numericalCancelScratch2 != nullptr)
+        {
+          delete d_numericalCancelScratch2;
+          d_numericalCancelScratch2 = nullptr;
         }
       for (auto &i : d_nuclearChargesPotential)
         {
@@ -463,6 +421,14 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainer, d_numComponents);
 
+      d_numericalCancelScratch1 =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainer, d_numComponents);
+
+      d_numericalCancelScratch2 =
+        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+          quadRuleContainer, d_numComponents);
+
       // Init the phi_el multivector
       d_totalChargePotential =
         new linearAlgebra::MultiVector<ValueType, memorySpace>(
@@ -522,14 +488,21 @@ namespace dftefe
       nuclearPotentialSolve(feBDNuclearChargeStiffnessMatrix,
                             feBDNuclearChargeRhs);
 
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        nuclearChargePotentialQuad(quadRuleContainerHam, d_numComponents);
+      for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+        {
+          /* Change this to feBasisOperations for electrostaic basis with same
+           * quadrulecontainer as hamiltonian*/
+          d_feBasisOp->interpolate(*d_nuclearChargesPotential[iAtom],
+                                   *d_feBMNuclearCharge[iAtom],
+                                   *d_totalAuxChargePotentialQuad);
 
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        totalNuclearChargePotentialQuad(quadRuleContainerHam, d_numComponents);
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        totalExternalPotentialQuad(quadRuleContainerHam, d_numComponents);
+          quadrature::add((ValueType)1.0,
+                          *d_totalAuxChargePotentialQuad,
+                          (ValueType)1.0,
+                          *d_totalChargePotentialQuad,
+                          *d_totalChargePotentialQuad,
+                          *d_linAlgOpContext);
+        }
 
       for (size_type iCell = 0; iCell < quadRuleContainerHam->nCells(); iCell++)
         {
@@ -542,47 +515,25 @@ namespace dftefe
                   a[iComp] = (ValueType)(d_externalPotentialFunction)(j);
                 }
               RealType *b = a.data();
-              totalExternalPotentialQuad
-                .template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                      quadId,
-                                                                      b);
+              d_totalAuxChargePotentialQuad
+                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                       quadId,
+                                                                       b);
               quadId = quadId + 1;
             }
         }
 
-      for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
-        {
-          /* Change this to feBasisOperations for electrostaic basis with same
-           * quadrulecontainer as hamiltonian*/
-          d_feBasisOp->interpolate(*d_nuclearChargesPotential[iAtom],
-                                   *d_feBMNuclearCharge[iAtom],
-                                   nuclearChargePotentialQuad);
-
-          quadrature::add((ValueType)1.0,
-                          nuclearChargePotentialQuad,
-                          (ValueType)1.0,
-                          totalNuclearChargePotentialQuad,
-                          totalNuclearChargePotentialQuad,
-                          *d_linAlgOpContext);
-        }
-
       quadrature::add((ValueType)-1.0,
-                      totalNuclearChargePotentialQuad,
+                      *d_totalChargePotentialQuad,
                       (ValueType)1.0,
-                      totalExternalPotentialQuad,
+                      *d_totalAuxChargePotentialQuad,
                       *d_nuclearCorrectionPotQuad,
                       *d_linAlgOpContext);
 
+      d_totalAuxChargePotentialQuad->setValue(0);
+      d_totalChargePotentialQuad->setValue(0);
+
       // Do this for energy evaluation with b+rho quad
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        nuclearChargePotentialAtRhoQuad(quadRuleContainer, d_numComponents);
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        totalNuclearChargePotentialAtRhoQuad(quadRuleContainer,
-                                             d_numComponents);
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        totalExternalPotentialAtRhoQuad(quadRuleContainer, d_numComponents);
 
       for (size_type iCell = 0; iCell < quadRuleContainer->nCells(); iCell++)
         {
@@ -595,10 +546,10 @@ namespace dftefe
                   a[iComp] = (ValueType)(d_externalPotentialFunction)(j);
                 }
               RealType *b = a.data();
-              totalExternalPotentialAtRhoQuad
-                .template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                      quadId,
-                                                                      b);
+              d_numericalCancelScratch1
+                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                       quadId,
+                                                                       b);
               quadId = quadId + 1;
             }
         }
@@ -607,22 +558,24 @@ namespace dftefe
         {
           d_feBasisOp->interpolate(*d_nuclearChargesPotential[iAtom],
                                    *d_feBMNuclearCharge[iAtom],
-                                   nuclearChargePotentialAtRhoQuad);
+                                   *d_nuclearCorrectionPotAtRhoQuad);
 
           quadrature::add((ValueType)1.0,
-                          nuclearChargePotentialAtRhoQuad,
+                          *d_nuclearCorrectionPotAtRhoQuad,
                           (ValueType)1.0,
-                          totalNuclearChargePotentialAtRhoQuad,
-                          totalNuclearChargePotentialAtRhoQuad,
+                          *d_totalAuxChargePotAtbSmearQuad,
+                          *d_totalAuxChargePotAtbSmearQuad,
                           *d_linAlgOpContext);
         }
 
       quadrature::add((ValueType)-1.0,
-                      totalNuclearChargePotentialAtRhoQuad,
+                      *d_totalAuxChargePotAtbSmearQuad,
                       (ValueType)1.0,
-                      totalExternalPotentialAtRhoQuad,
+                      *d_numericalCancelScratch1,
                       *d_nuclearCorrectionPotAtRhoQuad,
                       *d_linAlgOpContext);
+
+      d_totalAuxChargePotAtbSmearQuad->setValue(0);
 
       d_linearSolverFunction = std::make_shared<
         electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
@@ -635,7 +588,7 @@ namespace dftefe
         *d_totalChargeDensity,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
-        d_maxCellBlock,
+        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         d_numComponents);
     }
 
@@ -884,7 +837,7 @@ namespace dftefe
         *d_totalChargeDensity,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
-        d_maxCellBlock,
+        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         d_numComponents);
     }
 
@@ -1029,8 +982,12 @@ namespace dftefe
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = feBDNuclearChargeRhs->getQuadratureRuleContainer();
 
-      quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        nuclearChargeDensity(quadRuleContainer, d_numComponents);
+      std::shared_ptr<
+        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                      ValueTypeBasisCoeff,
+                                                      memorySpace,
+                                                      dim>>
+        linearSolverFunctionNuclear = nullptr;
 
       d_nuclearChargeQuad.resize(d_numAtoms, 0);
       for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
@@ -1069,32 +1026,11 @@ namespace dftefe
                         (RealType)(*smfunc)(j)*jxw[quadId];
                     }
                   RealType *b = a.data();
-                  nuclearChargeDensity
-                    .template setCellQuadValues<utils::MemorySpace::HOST>(
+                  d_totalChargeDensity
+                    ->template setCellQuadValues<utils::MemorySpace::HOST>(
                       iCell, quadId, b);
                   quadId = quadId + 1;
                 }
-              // for (size_type iComp = 0; iComp < d_numComponents; iComp++)
-              //   {
-              //     size_type           quadId = 0;
-              //     std::vector<double> jxw =
-              //       quadRuleContainer->getCellJxW(iCell);
-              //     std::vector<RealType> a(
-              //       quadRuleContainer->nCellQuadraturePoints(iCell));
-              //     for (auto j : quadRuleContainer->getCellRealPoints(iCell))
-              //       {
-              //         a[quadId] = (RealType)(*smfunc)(j);
-              //         d_nuclearChargeQuad[iAtom] +=
-              //           (RealType)(*smfunc)(j)*jxw[quadId];
-              //         quadId = quadId + 1;
-              //       }
-              //     RealType *b = a.data();
-              //     nuclearChargeDensity
-              //       .template
-              //       setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-              //                                                             iComp,
-              //                                                             b);
-              //   }
             }
 
           utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -1109,12 +1045,12 @@ namespace dftefe
           quadrature::scale((RealType)std::abs(4 * utils::mathConstants::pi *
                                                d_atomCharges[iAtom] /
                                                d_nuclearChargeQuad[iAtom]),
-                            nuclearChargeDensity,
+                            *d_totalChargeDensity,
                             *d_linAlgOpContext);
 
           if (iAtom == 0)
             {
-              d_linearSolverFunctionNuclear =
+              linearSolverFunctionNuclear =
                 std::make_shared<electrostatics::PoissonLinearSolverFunctionFE<
                   ValueTypeBasisData,
                   ValueTypeBasisCoeff,
@@ -1122,17 +1058,17 @@ namespace dftefe
                   dim>>(d_feBMNuclearCharge[iAtom],
                         feBDNuclearChargeStiffnessMatrix,
                         feBDNuclearChargeRhs,
-                        nuclearChargeDensity,
+                        *d_totalChargeDensity,
                         ksdft::PoissonProblemDefaults::PC_TYPE,
                         d_linAlgOpContext,
-                        d_maxCellBlock,
+                        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
                         d_numComponents);
             }
           else
             {
-              d_linearSolverFunctionNuclear->reinit(d_feBMNuclearCharge[iAtom],
-                                                    feBDNuclearChargeRhs,
-                                                    nuclearChargeDensity);
+              linearSolverFunctionNuclear->reinit(d_feBMNuclearCharge[iAtom],
+                                                  feBDNuclearChargeRhs,
+                                                  *d_totalChargeDensity);
             }
 
           linearAlgebra::LinearAlgebraProfiler profiler;
@@ -1150,16 +1086,17 @@ namespace dftefe
               ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
               profiler);
 
-          CGSolve->solve(*d_linearSolverFunctionNuclear);
+          CGSolve->solve(*linearSolverFunctionNuclear);
 
           d_nuclearChargesPotential[iAtom] =
             new linearAlgebra::MultiVector<ValueType, memorySpace>(
               d_feBMNuclearCharge[iAtom]->getMPIPatternP2P(),
               d_linAlgOpContext,
               d_numComponents);
-          d_linearSolverFunctionNuclear->getSolution(
+          linearSolverFunctionNuclear->getSolution(
             *d_nuclearChargesPotential[iAtom]);
         }
+      d_totalChargeDensity->setValue(0);
     }
 
     template <typename ValueTypeBasisData,
@@ -1214,12 +1151,6 @@ namespace dftefe
             quadRuleContainer =
               d_feBDNuclearChargeRhs->getQuadratureRuleContainer();
 
-          quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-            nuclearChargePotentialQuad(quadRuleContainer, d_numComponents);
-
-          quadrature::QuadratureValuesContainer<RealType, memorySpace>
-            nuclearChargeDensity(quadRuleContainer, d_numComponents);
-
           auto jxwStorageNucl = d_feBDNuclearChargeRhs->getJxWInAllCells();
 
           const size_type numLocallyOwnedCellsNucl =
@@ -1247,34 +1178,17 @@ namespace dftefe
                           a[iComp] = (RealType)(smfunc)(j);
                         }
                       RealType *b = a.data();
-                      nuclearChargeDensity
-                        .template setCellQuadValues<utils::MemorySpace::HOST>(
+                      d_numericalCancelScratch2
+                        ->template setCellQuadValues<utils::MemorySpace::HOST>(
                           iCell, quadId, b);
                       quadId = quadId + 1;
                     }
-                  // for (size_type iComp = 0; iComp < d_numComponents; iComp++)
-                  //   {
-                  //     size_type             quadId = 0;
-                  //     std::vector<RealType> a(
-                  //       quadRuleContainer->nCellQuadraturePoints(iCell));
-                  //     for (auto j :
-                  //     quadRuleContainer->getCellRealPoints(iCell))
-                  //       {
-                  //         a[quadId] = (RealType)(smfunc)(j);
-                  //         quadId    = quadId + 1;
-                  //       }
-                  //     RealType *b = a.data();
-                  //     nuclearChargeDensity
-                  //       .template
-                  //       setCellQuadValues<utils::MemorySpace::HOST>(
-                  //         iCell, iComp, b);
-                  //   }
                 }
 
               // Scale by d_atomCharges[iAtom]/d_nuclearChargeQuad[iAtom]
               quadrature::scale((RealType)std::abs(d_atomCharges[iAtom] /
                                                    d_nuclearChargeQuad[iAtom]),
-                                nuclearChargeDensity,
+                                *d_numericalCancelScratch2,
                                 *d_linAlgOpContext);
 
               basis::FEBasisOperations<ValueTypeBasisCoeff,
@@ -1287,7 +1201,7 @@ namespace dftefe
 
               feBasisOp.interpolate(*d_nuclearChargesPotential[iAtom],
                                     *d_feBMNuclearCharge[iAtom],
-                                    nuclearChargePotentialQuad);
+                                    *d_numericalCancelScratch1);
 
               RealType selfEnergyAtom =
                 ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
@@ -1295,8 +1209,8 @@ namespace dftefe
                   ValueTypeBasisCoeff,
                   ValueTypeWaveFnBasisData,
                   memorySpace,
-                  dim>(nuclearChargePotentialQuad,
-                       nuclearChargeDensity,
+                  dim>(*d_numericalCancelScratch1,
+                       *d_numericalCancelScratch2,
                        jxwStorageNucl,
                        numLocallyOwnedCellsNucl,
                        d_linAlgOpContext,

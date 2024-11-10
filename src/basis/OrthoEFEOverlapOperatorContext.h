@@ -105,7 +105,9 @@ namespace dftefe
           &             enrichmentBlockClassicalBasisDataStorage,
         const size_type maxCellBlock,
         const size_type maxFieldBlock,
-        const bool      calculateWings = true);
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                   linAlgOpContext,
+        const bool calculateWings = true);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.

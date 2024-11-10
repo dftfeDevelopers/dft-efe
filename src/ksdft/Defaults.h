@@ -149,6 +149,7 @@ namespace dftefe
       static const size_type MAX_WAVEFN_BATCH_SIZE;
       static const size_type MAX_KINENG_WAVEFN_BATCH_SIZE;
       static const size_type CELL_BATCH_SIZE;
+      static const size_type CELL_BATCH_SIZE_GRAD_EVAL;
     };
 
   } // end of namespace ksdft

@@ -33,6 +33,7 @@
 #include <basis/FEBasisDofHandler.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <quadrature/QuadratureRuleGauss.h>
+#include <quadrature/QuadratureRuleGaussIterated.h>
 #include <quadrature/QuadratureRuleGLL.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <memory>

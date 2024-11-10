@@ -230,6 +230,10 @@ namespace dftefe
         *d_nuclearCorrectionPotAtRhoQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_totalChargePotentialQuad;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_numericalCancelScratch1;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_numericalCancelScratch2;
       std::vector<linearAlgebra::MultiVector<ValueType, memorySpace> *>
         d_nuclearChargesPotential;
       std::vector<std::shared_ptr<basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -271,12 +275,6 @@ namespace dftefe
                                                       memorySpace,
                                                       dim>>
         d_linearSolverFunction;
-      std::shared_ptr<
-        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
-                                                      ValueTypeBasisCoeff,
-                                                      memorySpace,
-                                                      dim>>
-        d_linearSolverFunctionNuclear;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

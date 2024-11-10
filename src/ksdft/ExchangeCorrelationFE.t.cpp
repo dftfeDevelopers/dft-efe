@@ -65,116 +65,60 @@ namespace dftefe
                                                         memorySpace,
                                                         dim>::RealType;
 
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> fieldxrho(
-          field);
+        RealType        value                = 0;
+        const RealType *fieldIter            = field.begin();
+        const RealType *rhoIter              = rho.begin();
+        const RealType *jxwStorageIter       = jxwStorage.data();
+        size_type       cumulativeQuadInCell = 0;
+
+        for (size_type iCell = 0; iCell < field.nCells(); iCell++)
+          {
+            size_type numQuadInCell = field.nCellQuadraturePoints(iCell);
+            for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+              {
+                const RealType jxwVal =
+                  jxwStorageIter[cumulativeQuadInCell + iQuad];
+                const RealType fieldVal =
+                  fieldIter[cumulativeQuadInCell + iQuad];
+                const RealType rhoVal = rhoIter[cumulativeQuadInCell + iQuad];
+                value += rhoVal * fieldVal * jxwVal;
+              }
+            cumulativeQuadInCell += numQuadInCell;
+          }
+
         // quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   fieldxrhoxJxW(field);
-
-        linearAlgebra::blasLapack::
-          hadamardProduct<RealType, RealType, memorySpace>(
-            field.nEntries(),
-            field.begin(),
-            rho.begin(),
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            fieldxrho.begin(),
-            *linAlgOpContext);
-
-        linearAlgebra::blasLapack::
-          hadamardProduct<RealType, RealType, memorySpace>(
-            fieldxrho.nEntries(),
-            fieldxrho.begin(),
-            jxwStorage.data(),
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            fieldxrho.begin(),
-            *linAlgOpContext);
-
-        // std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-        //   numLocallyOwnedCells,
-        //   linearAlgebra::blasLapack::ScalarOp::Identity);
-        // std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-        //   numLocallyOwnedCells,
-        //   linearAlgebra::blasLapack::ScalarOp::Identity);
-        // std::vector<size_type> mTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> nTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> kTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> stATmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> stBTmp(numLocallyOwnedCells, 0);
-        // std::vector<size_type> stCTmp(numLocallyOwnedCells, 0);
-
-        // for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
-        //   {
-        //     mTmp[iCell] = 1;
-        //     nTmp[iCell] = fieldxrho.getNumberComponents();
-        //     kTmp[iCell] =
-        //       fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
-        //         iCell);
-        //     stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
-        //     stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
-        //     stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
-        //   }
-
-        // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-        //   memoryTransferHost;
-
-        // utils::MemoryStorage<size_type, memorySpace> mSize(
-        //   numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace> nSize(
-        //   numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace> kSize(
-        //   numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace>
-        // stA(numLocallyOwnedCells); utils::MemoryStorage<size_type,
-        // memorySpace> stB(numLocallyOwnedCells);
-        // utils::MemoryStorage<size_type, memorySpace>
-        // stC(numLocallyOwnedCells);
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         mSize.data(),
-        //                         mTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         nSize.data(),
-        //                         nTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         kSize.data(),
-        //                         kTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         stA.data(),
-        //                         stATmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         stB.data(),
-        //                         stBTmp.data());
-        // memoryTransferHost.copy(numLocallyOwnedCells,
-        //                         stC.data(),
-        //                         stCTmp.data());
+        // fieldxrho(
+        //   field);
 
         // linearAlgebra::blasLapack::
-        //   scaleStridedVarBatched<ValueTypeBasisData, RealType, memorySpace>(
-        //     numLocallyOwnedCells,
-        //     scalarOpA.data(),
-        //     scalarOpB.data(),
-        //     stA.data(),
-        //     stB.data(),
-        //     stC.data(),
-        //     mSize.data(),
-        //     nSize.data(),
-        //     kSize.data(),
-        //     jxwStorage.data(),
+        //   hadamardProduct<RealType, RealType, memorySpace>(
+        //     field.nEntries(),
+        //     field.begin(),
+        //     rho.begin(),
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
         //     fieldxrho.begin(),
-        //     fieldxrhoxJxW.begin(),
         //     *linAlgOpContext);
 
-        RealType value = 0;
+        // linearAlgebra::blasLapack::
+        //   hadamardProduct<RealType, RealType, memorySpace>(
+        //     fieldxrho.nEntries(),
+        //     fieldxrho.begin(),
+        //     jxwStorage.data(),
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     fieldxrho.begin(),
+        //     *linAlgOpContext);
 
-        for (size_type iCell = 0; iCell < fieldxrho.nCells(); iCell++)
-          {
-            std::vector<RealType> a(
-              fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
-                iCell));
-            fieldxrho.template getCellValues<utils::MemorySpace::HOST>(
-              iCell, a.data());
-            value += std::accumulate(a.begin(), a.end(), (RealType)0);
-          }
+        // for (size_type iCell = 0; iCell < fieldxrho.nCells(); iCell++)
+        //   {
+        //     std::vector<RealType> a(
+        //       fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
+        //         iCell));
+        //     fieldxrho.template getCellValues<utils::MemorySpace::HOST>(
+        //       iCell, a.data());
+        //     value += std::accumulate(a.begin(), a.end(), (RealType)0);
+        //   }
 
         int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           utils::mpi::MPIInPlace,

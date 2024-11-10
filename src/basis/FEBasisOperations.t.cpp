@@ -177,8 +177,14 @@ namespace dftefe
                                           ValueTypeUnion());
                 StorageBasis JxWxNBlock(numCumulativeQuadxDofsCellsInBlock,
                                         ValueTypeBasisData());
-                StorageBasis basisDataInCellRange(
-                  numCumulativeQuadxDofsCellsInBlock, ValueTypeBasisData());
+                StorageBasis basisDataInCellRange(0);
+                if (!zeroStrideBasisVal)
+                  basisDataInCellRange.resize(
+                    numCumulativeQuadxDofsCellsInBlock, ValueTypeBasisData());
+                else
+                  basisDataInCellRange.resize(numCellsInBlockQuad[0] *
+                                                numCellsInBlockDofs[0],
+                                              ValueTypeBasisData());
                 /** --- Storages --------- **/
 
                 linearAlgebra::blasLapack::ScalarOp scalarOpA =
@@ -1090,8 +1096,13 @@ namespace dftefe
                 numCellQuad[iCell + cellStartId] *
                 numCellDofs[iCell + cellStartId];
             }
-          StorageBasis basisDataInCellRange(numCumulativeQuadxDofsCellsInBlock,
-                                            ValueTypeBasisData());
+          StorageBasis basisDataInCellRange(0);
+          if (!zeroStrideB)
+            basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
+                                        ValueTypeBasisData());
+          else
+            basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
+                                        ValueTypeBasisData());
           /** --- Storages --------- **/
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
@@ -1950,8 +1961,13 @@ namespace dftefe
                 numCellQuad[iCell + cellStartId] *
                 numCellDofs[iCell + cellStartId];
             }
-          StorageBasis basisDataInCellRange(numCumulativeQuadxDofsCellsInBlock,
-                                            ValueTypeBasisData());
+          StorageBasis basisDataInCellRange(0);
+          if (!zeroStrideB)
+            basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
+                                        ValueTypeBasisData());
+          else
+            basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
+                                        ValueTypeBasisData());
           /** --- Storages --------- **/
 
           // TransposedKhatriRao product for inp and JxW

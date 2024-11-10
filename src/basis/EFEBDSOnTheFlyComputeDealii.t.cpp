@@ -33,6 +33,7 @@
 #include <deal.II/fe/fe_values.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/ParentToChildCellsManagerDealii.h>
+#include <basis/CFEBDSOnTheFlyComputeDealii.h>
 namespace dftefe
 {
   namespace basis
@@ -1065,14 +1066,16 @@ namespace dftefe
               // Set up the FE Basis Data Storage
               // In HOST !!
               cfeBasisDataStorage =
-                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
-                                                           memorySpace,
-                                                           dim>>(
+                std::make_shared<CFEBDSOnTheFlyComputeDealii<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
                   d_efeBDH->getEnrichmentClassicalInterface()
                     ->getCFEBasisDofHandler(),
                   quadratureRuleAttributes,
-                  basisAttrMap);
+                  basisAttrMap,
+                  d_maxCellBlock,
+                  d_linAlgOpContext);
 
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
                                                      basisAttrMap);
@@ -1095,14 +1098,16 @@ namespace dftefe
 
               // Set up the FE Basis Data Storage
               cfeBasisDataStorage =
-                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
-                                                           memorySpace,
-                                                           dim>>(
+                std::make_shared<CFEBDSOnTheFlyComputeDealii<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
                   d_efeBDH->getEnrichmentClassicalInterface()
                     ->getCFEBasisDofHandler(),
                   quadratureRuleAttributes,
-                  basisAttrMap);
+                  basisAttrMap,
+                  d_maxCellBlock,
+                  d_linAlgOpContext);
 
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
                                                      basisAttrMap);
@@ -1120,14 +1125,16 @@ namespace dftefe
 
               // Set up the FE Basis Data Storage
               cfeBasisDataStorage =
-                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
-                                                           memorySpace,
-                                                           dim>>(
+                std::make_shared<CFEBDSOnTheFlyComputeDealii<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
                   d_efeBDH->getEnrichmentClassicalInterface()
                     ->getCFEBasisDofHandler(),
                   quadratureRuleAttributes,
-                  basisAttrMap);
+                  basisAttrMap,
+                  d_maxCellBlock,
+                  d_linAlgOpContext);
 
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
                                                      basisAttrMap);
@@ -1309,16 +1316,19 @@ namespace dftefe
               // Set up the FE Basis Data Storage
               // In HOST !!
               cfeBasisDataStorage =
-                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
-                                                           memorySpace,
-                                                           dim>>(
+                std::make_shared<CFEBDSOnTheFlyComputeDealii<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
                   d_efeBDH->getEnrichmentClassicalInterface()
                     ->getCFEBasisDofHandler(),
                   quadratureRuleAttributes,
-                  basisAttrMap);
+                  basisAttrMap,
+                  d_maxCellBlock,
+                  d_linAlgOpContext);
 
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     d_quadratureRuleContainer,
                                                      basisAttrMap);
             }
           else if (!(basisStorageAttributesBoolMap
@@ -1339,16 +1349,19 @@ namespace dftefe
 
               // Set up the FE Basis Data Storage
               cfeBasisDataStorage =
-                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
-                                                           memorySpace,
-                                                           dim>>(
+                std::make_shared<CFEBDSOnTheFlyComputeDealii<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
                   d_efeBDH->getEnrichmentClassicalInterface()
                     ->getCFEBasisDofHandler(),
                   quadratureRuleAttributes,
-                  basisAttrMap);
+                  basisAttrMap,
+                  d_maxCellBlock,
+                  d_linAlgOpContext);
 
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     d_quadratureRuleContainer,
                                                      basisAttrMap);
             }
           else
@@ -1364,16 +1377,19 @@ namespace dftefe
 
               // Set up the FE Basis Data Storage
               cfeBasisDataStorage =
-                std::make_shared<CFEBasisDataStorageDealii<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
-                                                           memorySpace,
-                                                           dim>>(
+                std::make_shared<CFEBDSOnTheFlyComputeDealii<ValueTypeBasisData,
+                                                             ValueTypeBasisData,
+                                                             memorySpace,
+                                                             dim>>(
                   d_efeBDH->getEnrichmentClassicalInterface()
                     ->getCFEBasisDofHandler(),
                   quadratureRuleAttributes,
-                  basisAttrMap);
+                  basisAttrMap,
+                  d_maxCellBlock,
+                  d_linAlgOpContext);
 
               cfeBasisDataStorage->evaluateBasisData(quadratureRuleAttributes,
+                                                     d_quadratureRuleContainer,
                                                      basisAttrMap);
             }
         }
@@ -1530,7 +1546,7 @@ namespace dftefe
     {
       utils::throwException(
         false,
-        "getBasisGradientDataInAllCells() is not implemented in EFEBDSOnTheFlyComputeDealii");
+        "getBasisDataInAllCells() is not implemented in EFEBDSOnTheFlyComputeDealii");
       return *d_tmpGradientBlock;
     }
 
@@ -1738,6 +1754,10 @@ namespace dftefe
       std::shared_ptr<Storage> tmpGradientBlock = nullptr;
       if ((cellRange.second - cellRange.first) > d_maxCellBlock)
         {
+          std::cout
+            << "Warning: The cellBlockSize given to "
+               "EFEBDSOnTheFlyComputeDealii.getBasisGradientDataInCellRange() "
+               "is more than scratch storage. This may cause scratch initilization overheads.";
           tmpGradientBlock = std::make_shared<Storage>(
             d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
             (cellRange.second - cellRange.first));
@@ -1891,7 +1911,6 @@ namespace dftefe
       const size_type quadPointId = attributes.quadPointId;
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         basisQuadStorage(getBasisDataInCell(cellId));
-      ;
 
       const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage

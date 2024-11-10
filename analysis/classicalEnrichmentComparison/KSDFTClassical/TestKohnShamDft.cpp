@@ -678,7 +678,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
                                                       ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
-                                                      numWantedEigenvalues);
+                                                      numWantedEigenvalues,
+                                                      linAlgOpContext);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;

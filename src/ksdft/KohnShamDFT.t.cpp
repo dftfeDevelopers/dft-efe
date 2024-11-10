@@ -266,13 +266,13 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_hamitonianKin =
-        std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
-                                   ValueTypeWaveFunctionCoeff,
-                                   memorySpace,
-                                   dim>>(feBDKineticHamiltonian,
-                                         linAlgOpContext,
-                                         KSDFTDefaults::CELL_BATCH_SIZE);
+      d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(
+        feBDKineticHamiltonian,
+        linAlgOpContext,
+        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -335,7 +335,7 @@ namespace dftefe
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
-        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
+        d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
 
@@ -491,13 +491,13 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_hamitonianKin =
-        std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
-                                   ValueTypeWaveFunctionCoeff,
-                                   memorySpace,
-                                   dim>>(feBDKineticHamiltonian,
-                                         linAlgOpContext,
-                                         KSDFTDefaults::CELL_BATCH_SIZE);
+      d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(
+        feBDKineticHamiltonian,
+        linAlgOpContext,
+        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -562,7 +562,7 @@ namespace dftefe
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
-        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
+        d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
 

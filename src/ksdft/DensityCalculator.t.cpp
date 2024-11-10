@@ -39,8 +39,6 @@ namespace dftefe
         const std::vector<RealType> &occupationInBatch,
         quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &psiBatchQuad,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &psiModSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
         quadrature::QuadratureValuesContainer<RealType, memorySpace> &rhoBatch,
@@ -202,11 +200,6 @@ namespace dftefe
           delete d_psiBatchQuad;
           d_psiBatchQuad = nullptr;
         }
-      if (d_psiModSqBatchQuad != nullptr)
-        {
-          delete d_psiModSqBatchQuad;
-          d_psiModSqBatchQuad = nullptr;
-        }
       if (d_rhoBatch != nullptr)
         {
           delete d_rhoBatch;
@@ -221,11 +214,6 @@ namespace dftefe
         {
           delete d_psiBatchSmallQuad;
           d_psiBatchSmallQuad = nullptr;
-        }
-      if (d_psiModSqBatchSmallQuad != nullptr)
-        {
-          delete d_psiModSqBatchSmallQuad;
-          d_psiModSqBatchSmallQuad = nullptr;
         }
       if (d_psiBatchSmall != nullptr)
         {
@@ -259,10 +247,6 @@ namespace dftefe
       // 4 scratch spaces ---- can be optimized ------
       d_psiBatchQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
-          d_quadRuleContainer, d_waveFuncBatchSize);
-
-      d_psiModSqBatchQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           d_quadRuleContainer, d_waveFuncBatchSize);
 
       d_rhoBatch =
@@ -346,7 +330,6 @@ namespace dftefe
                 computeRhoInBatch<ValueType, RealType, memorySpace>(
                   occupationInBatch,
                   *d_psiBatchQuad,
-                  *d_psiModSqBatchQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,
@@ -380,7 +363,6 @@ namespace dftefe
                 computeRhoInBatch<ValueType, RealType, memorySpace>(
                   occupationInBatch,
                   *d_psiBatchSmallQuad,
-                  *d_psiModSqBatchSmallQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,
@@ -402,11 +384,6 @@ namespace dftefe
               d_batchSizeSmall = numPsiInBatch;
 
               d_psiBatchSmallQuad =
-                new quadrature::QuadratureValuesContainer<ValueType,
-                                                          memorySpace>(
-                  d_quadRuleContainer, numPsiInBatch);
-
-              d_psiModSqBatchSmallQuad =
                 new quadrature::QuadratureValuesContainer<ValueType,
                                                           memorySpace>(
                   d_quadRuleContainer, numPsiInBatch);
@@ -436,7 +413,6 @@ namespace dftefe
                 computeRhoInBatch<ValueType, RealType, memorySpace>(
                   occupationInBatch,
                   *d_psiBatchSmallQuad,
-                  *d_psiModSqBatchSmallQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,

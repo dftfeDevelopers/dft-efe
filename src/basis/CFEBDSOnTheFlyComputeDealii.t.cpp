@@ -1134,6 +1134,10 @@ namespace dftefe
       std::shared_ptr<Storage> tmpGradientBlock = nullptr;
       if ((cellRange.second - cellRange.first) > d_maxCellBlock)
         {
+          std::cout
+            << "Warning: The cellBlockSize given to "
+               "CFEBDSOnTheFlyComputeDealii.getBasisGradientDataInCellRange() "
+               "is more than scratch storage. This may cause scratch initilization overheads.";
           tmpGradientBlock = std::make_shared<Storage>(
             d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
             (cellRange.second - cellRange.first));
