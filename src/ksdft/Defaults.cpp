@@ -92,8 +92,8 @@ namespace dftefe
      */
     const size_type KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE        = 400;
     const size_type KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE = 50;
-    const size_type KSDFTDefaults::CELL_BATCH_SIZE              = 30;
-    const size_type KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL    = 10;
+    const size_type KSDFTDefaults::CELL_BATCH_SIZE              = 20;
+    const size_type KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL    = 1;
 
   } // end of namespace ksdft
 } // end of namespace dftefe
