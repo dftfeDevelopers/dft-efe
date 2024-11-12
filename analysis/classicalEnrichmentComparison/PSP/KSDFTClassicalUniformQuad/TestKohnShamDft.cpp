@@ -372,7 +372,7 @@ void getVLoc(
             r += std::pow((point[i] - d_atomCoordinatesVec[atomId][i]),2);
           r = std::sqrt(r);
           retValue += (r <= d_radialLastValVec[atomId]) ? 
-            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
         }
       return retValue;
     }
@@ -590,6 +590,18 @@ int main(int argc, char** argv)
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     LocalPSPPotentialFunction(atomCoordinatesVec, atomChargesVec, pspFilePathVec);
   utils::mpi::MPIBarrier(comm);
+
+  // std::vector<utils::Point> radial_coord(1000,utils::Point(dim, 0.0));
+  // int count = 0;
+  // for(auto &i:radial_coord)
+  // {
+  //   i[0] = 0 + count*0.1;
+  //   i[1] = 0;
+  //   i[2] = 0;
+  //   count += 1;
+
+  //   std::cout << i[0] << "\t" << (*externalPotentialFunction)(i)<<"\n";
+  // }
   
   // Compute Adaptive QuadratureRuleContainer for electrostaics
 
