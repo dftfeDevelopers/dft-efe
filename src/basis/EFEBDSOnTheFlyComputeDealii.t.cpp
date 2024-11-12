@@ -1800,16 +1800,17 @@ namespace dftefe
               for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
                    quadId++)
                 {
-                for (size_type iDim = 0; iDim < dim; iDim++)
-                  {
-                    basisGradientData.template copyFrom<memorySpace>(
-                      iter->second->data(),
-                      (d_dofsInCell[cellId] - d_classialDofsInCell),
-                      (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
-                          quadId + iDim * (d_dofsInCell[cellId] - d_classialDofsInCell),
-                      cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
-                        d_dofsInCell[cellId] * iDim + d_classialDofsInCell);
-                  }
+                  for (size_type iDim = 0; iDim < dim; iDim++)
+                    {
+                      basisGradientData.template copyFrom<memorySpace>(
+                        iter->second->data(),
+                        (d_dofsInCell[cellId] - d_classialDofsInCell),
+                        (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
+                            quadId +
+                          iDim * (d_dofsInCell[cellId] - d_classialDofsInCell),
+                        cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
+                          d_dofsInCell[cellId] * iDim + d_classialDofsInCell);
+                    }
                 }
             }
           cumulativeOffset +=

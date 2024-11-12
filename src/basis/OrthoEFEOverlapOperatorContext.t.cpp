@@ -599,25 +599,26 @@ namespace dftefe
                 JxWxNCellConj.resize(
                   dofsPerCell * nQuadPointInCellEnrichmentBlockEnrichment, 0);
 
-                m = 1, n = dofsPerCell, k = nQuadPointInCellEnrichmentBlockEnrichment;
+                m = 1, n = dofsPerCell,
+                k = nQuadPointInCellEnrichmentBlockEnrichment;
 
-                linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
-                                                                  ValueTypeOperator,
-                                                                  memorySpace>(
-                  1,
-                  linearAlgebra::blasLapack::Layout::ColMajor,
-                  linearAlgebra::blasLapack::ScalarOp::Identity,
-                  linearAlgebra::blasLapack::ScalarOp::Conj,
-                  &stride,
-                  &stride,
-                  &stride,
-                  &m,
-                  &n,
-                  &k,
-                  cellJxWValuesEnrichmentBlockEnrichment.data(),
-                  cumulativeEnrichmentBlockEnrichmentDofQuadPoints,
-                  JxWxNCellConj.data(),
-                  linAlgOpContext);
+                linearAlgebra::blasLapack::scaleStridedVarBatched<
+                  ValueTypeOperator,
+                  ValueTypeOperator,
+                  memorySpace>(1,
+                               linearAlgebra::blasLapack::Layout::ColMajor,
+                               linearAlgebra::blasLapack::ScalarOp::Identity,
+                               linearAlgebra::blasLapack::ScalarOp::Conj,
+                               &stride,
+                               &stride,
+                               &stride,
+                               &m,
+                               &n,
+                               &k,
+                               cellJxWValuesEnrichmentBlockEnrichment.data(),
+                               cumulativeEnrichmentBlockEnrichmentDofQuadPoints,
+                               JxWxNCellConj.data(),
+                               linAlgOpContext);
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
@@ -637,29 +638,30 @@ namespace dftefe
                     dofsPerCell,
                     linAlgOpContext);
 
-                JxWxNCellConj.resize(
-                  dofsPerCellCFE * nQuadPointInCellEnrichmentBlockClassical, 0);
+                JxWxNCellConj.resize(dofsPerCellCFE *
+                                       nQuadPointInCellEnrichmentBlockClassical,
+                                     0);
 
                 m = 1, n = dofsPerCellCFE,
-                          k = nQuadPointInCellEnrichmentBlockClassical;
+                k = nQuadPointInCellEnrichmentBlockClassical;
 
-                linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
-                                                                  ValueTypeOperator,
-                                                                  memorySpace>(
-                  1,
-                  linearAlgebra::blasLapack::Layout::ColMajor,
-                  linearAlgebra::blasLapack::ScalarOp::Identity,
-                  linearAlgebra::blasLapack::ScalarOp::Conj,
-                  &stride,
-                  &stride,
-                  &stride,
-                  &m,
-                  &n,
-                  &k,
-                  cellJxWValuesEnrichmentBlockClassical.data(),
-                  cumulativeEnrichmentBlockClassicalDofQuadPoints,
-                  JxWxNCellConj.data(),
-                  linAlgOpContext);
+                linearAlgebra::blasLapack::scaleStridedVarBatched<
+                  ValueTypeOperator,
+                  ValueTypeOperator,
+                  memorySpace>(1,
+                               linearAlgebra::blasLapack::Layout::ColMajor,
+                               linearAlgebra::blasLapack::ScalarOp::Identity,
+                               linearAlgebra::blasLapack::ScalarOp::Conj,
+                               &stride,
+                               &stride,
+                               &stride,
+                               &m,
+                               &n,
+                               &k,
+                               cellJxWValuesEnrichmentBlockClassical.data(),
+                               cumulativeEnrichmentBlockClassicalDofQuadPoints,
+                               JxWxNCellConj.data(),
+                               linAlgOpContext);
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
@@ -714,7 +716,8 @@ namespace dftefe
                         //                   ciNciNcj = (ValueTypeOperator)0;
                         // // Ni_pristine*Ni_classical at quadpoints
                         // for (unsigned int qPoint = 0;
-                        //      qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                        //      qPoint <
+                        //      nQuadPointInCellEnrichmentBlockEnrichment;
                         //      qPoint++)
                         //   {
                         //     NpiNcj +=
@@ -722,7 +725,8 @@ namespace dftefe
                         //         (iNode - dofsPerCellCFE) *
                         //           nQuadPointInCellEnrichmentBlockEnrichment +
                         //         qPoint) *
-                        //       *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
+                        //       *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
+                        //       +
                         //         dofsPerCell * qPoint + jNode
                         //         /*nQuadPointInCellEnrichmentBlockEnrichment *
                         //           jNode +
@@ -730,17 +734,20 @@ namespace dftefe
                         //       cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                         //   }
 
-                        // // Ni_classical using Mc = d quadrature * interpolated
+                        // // Ni_classical using Mc = d quadrature *
+                        // interpolated
                         // // ci's in Ni_classicalQuadrature of Mc = d
                         // for (unsigned int qPoint = 0;
-                        //      qPoint < nQuadPointInCellEnrichmentBlockClassical;
+                        //      qPoint <
+                        //      nQuadPointInCellEnrichmentBlockClassical;
                         //      qPoint++)
                         //   {
                         //     ciNciNcj +=
                         //       classicalComponentInQuadValuesEC
                         //         [numEnrichmentIdsInCell * qPoint +
                         //          (iNode - dofsPerCellCFE)] *
-                        //       *(cumulativeEnrichmentBlockClassicalDofQuadPoints +
+                        //       *(cumulativeEnrichmentBlockClassicalDofQuadPoints
+                        //       +
                         //         dofsPerCellCFE * qPoint + jNode
                         //         /*nQuadPointInCellEnrichmentBlockClassical *
                         //           jNode + qPoint*/) *
@@ -748,9 +755,11 @@ namespace dftefe
                         //   }
                         // *basisOverlapTmpIter += NpiNcj - ciNciNcj;
 
-                        *basisOverlapTmpIter = 
-                          *(basisOverlapECBlockEnrich.data() + (iNode - dofsPerCellCFE) * dofsPerCell + jNode) -  
-                          *(basisOverlapECBlockClass.data() + (iNode - dofsPerCellCFE) * dofsPerCellCFE + jNode);
+                        *basisOverlapTmpIter =
+                          *(basisOverlapECBlockEnrich.data() +
+                            (iNode - dofsPerCellCFE) * dofsPerCell + jNode) -
+                          *(basisOverlapECBlockClass.data() +
+                            (iNode - dofsPerCellCFE) * dofsPerCellCFE + jNode);
                       }
 
                     else if (iNode < dofsPerCellCFE &&
@@ -760,11 +769,13 @@ namespace dftefe
                         //                   NcicjNcj = (ValueTypeOperator)0;
                         // // Ni_pristine*Ni_classical at quadpoints
                         // for (unsigned int qPoint = 0;
-                        //      qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
+                        //      qPoint <
+                        //      nQuadPointInCellEnrichmentBlockEnrichment;
                         //      qPoint++)
                         //   {
                         //     NciNpj +=
-                        //       *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints +
+                        //       *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
+                        //       +
                         //         dofsPerCell * qPoint + iNode
                         //         /*nQuadPointInCellEnrichmentBlockEnrichment *
                         //           iNode +
@@ -776,14 +787,17 @@ namespace dftefe
                         //       cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                         //   }
 
-                        // // Ni_classical using Mc = d quadrature * interpolated
+                        // // Ni_classical using Mc = d quadrature *
+                        // interpolated
                         // // ci's in Ni_classicalQuadrature of Mc = d
                         // for (unsigned int qPoint = 0;
-                        //      qPoint < nQuadPointInCellEnrichmentBlockClassical;
+                        //      qPoint <
+                        //      nQuadPointInCellEnrichmentBlockClassical;
                         //      qPoint++)
                         //   {
                         //     NcicjNcj +=
-                        //       *(cumulativeEnrichmentBlockClassicalDofQuadPoints +
+                        //       *(cumulativeEnrichmentBlockClassicalDofQuadPoints
+                        //       +
                         //         dofsPerCellCFE * qPoint + iNode
                         //         /*nQuadPointInCellEnrichmentBlockClassical *
                         //           iNode + qPoint*/) *
@@ -794,9 +808,11 @@ namespace dftefe
                         //   }
                         // *basisOverlapTmpIter += NciNpj - NcicjNcj;
 
-                        *basisOverlapTmpIter = 
-                          *(basisOverlapECBlockEnrich.data() + (jNode - dofsPerCellCFE) * dofsPerCell + iNode) -  
-                          *(basisOverlapECBlockClass.data() + (jNode - dofsPerCellCFE) * dofsPerCellCFE + iNode);
+                        *basisOverlapTmpIter =
+                          *(basisOverlapECBlockEnrich.data() +
+                            (jNode - dofsPerCellCFE) * dofsPerCell + iNode) -
+                          *(basisOverlapECBlockClass.data() +
+                            (jNode - dofsPerCellCFE) * dofsPerCellCFE + iNode);
                       }
 
                     else if (iNode >= dofsPerCellCFE && jNode >= dofsPerCellCFE)
