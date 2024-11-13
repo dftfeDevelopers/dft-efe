@@ -390,7 +390,7 @@ void getVLoc(
               r += std::pow((points[i][j] - d_atomCoordinatesVec[atomId][j]),2);
             r = std::sqrt(r);
             ret[i] = ret[i] +  (r <= d_radialLastValVec[atomId]) ? 
-              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
           }
         }
       return ret;
