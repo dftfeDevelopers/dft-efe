@@ -556,6 +556,19 @@ int main(int argc, char** argv)
 
   adaptiveMesh.createMesh(*triangulationBase); 
 
+  // std::fstream out;  
+  // out.open("grid.vtk", std::fstream::out);
+  // if (out.is_open()) { 
+  //   utils::mpi::MPIBarrier(comm);
+  //   triangulationBase->writeToVtkFile(out);
+  //   utils::mpi::MPIBarrier(comm);
+  //   out.close(); 
+  //   std::cout << "Data was written to grid.vtk\n";
+  // }
+  // else {
+  //   std::cout << "Error opening file\n";
+  // }
+
   std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
 
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);

@@ -27,6 +27,7 @@
 
 #include <basis/Defaults.h>
 #include <basis/GenerateMesh.h>
+#include <cmath>
 
 namespace dftefe
 {
@@ -204,7 +205,7 @@ namespace dftefe
               i =
                 std::pow(2,
                          round(log2(
-                           (std::max(4.0, largestMeshSizeAroundAtom) /*4.0*/) /
+                           (std::max(8.0, largestMeshSizeAroundAtom) /*4.0*/) /
                            largestMeshSizeAroundAtom))) *
                 largestMeshSizeAroundAtom;
             }
@@ -384,11 +385,119 @@ namespace dftefe
       return isAnyCellRefined;
     }
 
+    bool
+    GenerateMesh::refineInsideSystemNonPeriodicAlgorithm(
+      TriangulationBase &  triangulation,
+      std::vector<double> &maxAtomCoordinates,
+      std::vector<double> &minAtomCoordinates)
+    {
+      auto cell = triangulation.beginLocal();
+      auto endc = triangulation.endLocal();
+
+      double    currentMeshSize  = (*cell)->minimumVertexDistance();
+      bool      isAnyCellRefined = false;
+      size_type cellIndex        = 0;
+      for (; cell != endc; ++cell)
+        {
+          utils::Point center(d_dim, 0.0);
+          (*cell)->center(center);
+
+          bool cellRefineFlag = false;
+
+          double boundingBoxDom = 0;
+          for (int i = 0; i < d_dim; i++)
+            {
+              double axesLen = std::max(std::abs(maxAtomCoordinates[i]),
+                                        std::abs(minAtomCoordinates[i])) +
+                               std::max(15.0, d_radiusAroundAtom);
+              if (boundingBoxDom < axesLen)
+                boundingBoxDom = axesLen;
+            }
+          bool val = true;
+          for (int i = 0; i < d_dim; i++)
+            {
+              if (std::abs(center[i]) > boundingBoxDom)
+                {
+                  val = false;
+                  break;
+                }
+              // val += std::pow((center[i]/ axesLen),2);
+            }
+          if (val && currentMeshSize > 4)
+            {
+              cellRefineFlag = true;
+            }
+
+          size_type cellRefineFlagSizeType = (size_type)cellRefineFlag;
+
+          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            &cellRefineFlagSizeType,
+            1,
+            utils::mpi::Types<size_type>::getMPIDatatype(),
+            utils::mpi::MPIMax,
+            d_mpiInterpoolCommunicator);
+
+          cellRefineFlag = cellRefineFlagSizeType;
+
+          //
+          // set coarsen flags
+          if (cellRefineFlag)
+            {
+              (*cell)->setRefineFlag();
+              isAnyCellRefined = true;
+            }
+          cellIndex += 1;
+        }
+      return isAnyCellRefined;
+    }
+
     void
     GenerateMesh::createMesh(TriangulationBase &triangulation)
     {
       triangulation.initializeTriangulationConstruction();
       generateCoarseMesh(triangulation, d_isPeriodicFlags);
+
+      bool refineFlag = true;
+      // all directions non periodic, note, can be extended to some dicrecs.
+      // non-periodic
+      if (!(std::any_of(d_isPeriodicFlags.begin(),
+                        d_isPeriodicFlags.end(),
+                        [](bool v) { return v; })))
+        {
+          std::vector<double> maxAtomCoordinates(d_dim, 0);
+          std::vector<double> minAtomCoordinates(d_dim, 0);
+
+          for (int j = 0; j < d_dim; j++)
+            {
+              for (int i = 0; i < d_atomCoordinates.size(); i++)
+                {
+                  if (maxAtomCoordinates[j] < d_atomCoordinates[i][j])
+                    maxAtomCoordinates[j] = d_atomCoordinates[i][j];
+                  if (minAtomCoordinates[j] > d_atomCoordinates[i][j])
+                    minAtomCoordinates[j] = d_atomCoordinates[i][j];
+                }
+            }
+          refineFlag =
+            refineInsideSystemNonPeriodicAlgorithm(triangulation,
+                                                   maxAtomCoordinates,
+                                                   minAtomCoordinates);
+
+          // This sets the global refinement sweep flag
+          size_type refineFlagSizeType = (size_type)refineFlag;
+
+          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            &refineFlagSizeType,
+            1,
+            utils::mpi::Types<size_type>::getMPIDatatype(),
+            utils::mpi::MPIMax,
+            d_mpiDomainCommunicator);
+
+          refineFlag = refineFlagSizeType;
+        }
+      triangulation.executeCoarseningAndRefinement();
+      triangulation.finalizeTriangulationConstruction();
 
       d_triaCurrentRefinement.clear();
 
@@ -397,8 +506,8 @@ namespace dftefe
       // performed until refinementAlgorithm does not set refinement flags on
       // any cell.
       //
-      size_type numLevels  = 0;
-      bool      refineFlag = true;
+      size_type numLevels = 0;
+      refineFlag          = true;
       while (refineFlag)
         {
           refineFlag = false;
