@@ -182,11 +182,6 @@ namespace dftefe
       void
       evalEnergy();
 
-      /*
-      RealType
-      getTotalChargePotentialTimesRho() const;
-      */
-
       RealType
       getEnergy() const override;
 
@@ -274,7 +269,8 @@ namespace dftefe
                                                       ValueTypeBasisCoeff,
                                                       memorySpace,
                                                       dim>>
-        d_linearSolverFunction;
+               d_linearSolverFunction;
+      RealType d_totNuclearChargeQuad;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

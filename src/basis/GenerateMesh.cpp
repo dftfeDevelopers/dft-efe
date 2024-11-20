@@ -385,6 +385,7 @@ namespace dftefe
       return isAnyCellRefined;
     }
 
+    /* Dont use this function */
     bool
     GenerateMesh::refineInsideSystemNonPeriodicAlgorithm(
       TriangulationBase &  triangulation,
@@ -409,14 +410,14 @@ namespace dftefe
             {
               double axesLen = std::max(std::abs(maxAtomCoordinates[i]),
                                         std::abs(minAtomCoordinates[i])) +
-                               std::max(15.0, d_radiusAroundAtom);
-              if (boundingBoxDom < axesLen)
+                               15.0;
+              if (boundingBoxDom < axesLen && d_radiusAroundAtom < 15.0)
                 boundingBoxDom = axesLen;
             }
           bool val = true;
           for (int i = 0; i < d_dim; i++)
             {
-              if (std::abs(center[i]) > boundingBoxDom)
+              if (std::abs(center[i]) >= boundingBoxDom)
                 {
                   val = false;
                   break;
@@ -478,10 +479,10 @@ namespace dftefe
                     minAtomCoordinates[j] = d_atomCoordinates[i][j];
                 }
             }
-          refineFlag =
-            refineInsideSystemNonPeriodicAlgorithm(triangulation,
-                                                   maxAtomCoordinates,
-                                                   minAtomCoordinates);
+          refineFlag = false;
+          // refineInsideSystemNonPeriodicAlgorithm(triangulation,
+          //                                        maxAtomCoordinates,
+          //                                        minAtomCoordinates);
 
           // This sets the global refinement sweep flag
           size_type refineFlagSizeType = (size_type)refineFlag;

@@ -290,7 +290,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          PoissonProblemDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults::CELL_BATCH_SIZE);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -517,7 +517,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          PoissonProblemDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults::CELL_BATCH_SIZE);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,

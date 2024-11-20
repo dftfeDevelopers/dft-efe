@@ -55,7 +55,6 @@ namespace dftefe
                                          dim>::RealType,
           memorySpace> &                                             rho,
         const utils::MemoryStorage<ValueTypeBasisData, memorySpace> &jxwStorage,
-        size_type numLocallyOwnedCells,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -330,9 +329,6 @@ namespace dftefe
     {
       auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
 
-      const size_type numLocallyOwnedCells =
-        d_feBasisDofHandler->nLocallyOwnedCells();
-
       size_type lenRho = d_electronChargeDensity->getQuadratureRuleContainer()
                            ->nQuadraturePoints();
 
@@ -370,7 +366,6 @@ namespace dftefe
           dim>(*d_xcPotentialQuad,
                *d_electronChargeDensity,
                jxwStorage,
-               numLocallyOwnedCells,
                d_linAlgOpContext,
                comm);
 
