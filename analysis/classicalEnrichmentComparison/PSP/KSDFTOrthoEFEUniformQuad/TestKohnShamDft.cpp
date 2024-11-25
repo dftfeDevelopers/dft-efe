@@ -550,8 +550,11 @@ int main(int argc, char** argv)
   double adaptiveQuadRelTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadRelTolerance", rootCout);
   double integralThreshold = readParameter<double>(parameterInputFileName, "integralThreshold", rootCout);
 
-  unsigned int num1DGaussSubdividedSize = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSize", rootCout);
-  unsigned int gaussSubdividedCopies = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopies", rootCout);
+  unsigned int num1DGaussSubdividedSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
+  unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
+  
+  unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
+  unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
 
@@ -752,7 +755,7 @@ int main(int argc, char** argv)
     }
     //Set up quadAttr for Rhs and OverlapMatrix
 
-    quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
+    //quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
 
     quadrature::QuadratureRuleAttributes quadAttrGllElec(quadrature::QuadratureFamily::GLL,true,feOrderElec + 1);
 
@@ -832,7 +835,7 @@ int main(int argc, char** argv)
   //     comm);
 
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
-      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSize, gaussSubdividedCopies);
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeElec, gaussSubdividedCopiesElec);
 
     quadrature::QuadratureRuleAttributes quadAttrGaussSubdivided(quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,true);
 
@@ -885,19 +888,15 @@ int main(int argc, char** argv)
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital = quadRuleContainerGaussSubdividedElec;
-      // std::make_shared<quadrature::QuadratureRuleContainer>
-      // (quadAttrAdaptive, 
-      // baseQuadRuleEigen, 
-      // triangulationBase, 
-      // *cellMapping, 
-      // *parentToChildCellsManager,
-      // functionsVec,
-      // absoluteTolerances,
-      // relativeTolerances,
-      // integralThresholds,
-      // smallestCellVolume,
-      // maxRecursion);
+    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleEigen =
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeEigen, gaussSubdividedCopiesEigen);
+
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital =  /*quadRuleContainerGaussSubdividedElec;*/
+      std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrGaussSubdivided, 
+      gaussSubdivQuadRuleEigen, 
+      triangulationBase, 
+      *cellMapping); 
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -1006,6 +1005,25 @@ int main(int argc, char** argv)
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
       enrichClassIntfceOrbital, comm);
 
+  utils::ConditionalOStream allCout(std::cout);
+  for(int iProc = 0 ; iProc < numProcs ; iProc++)
+  {
+    if(rank == iProc)
+    {
+      allCout << rank << "\tNumber of Cells: " << 
+        basisDofHandlerTotalPot->nLocallyOwnedCells() 
+          << "\tElec Dofs: " << basisDofHandlerTotalPot->nLocalNodes() 
+            << "\tEigen Dofs: " << basisDofHandlerWaveFn->nLocalNodes() 
+              << "\tEnrichment Range elec: " << basisDofHandlerWaveFn->getLocallyOwnedRanges()[1].second - 
+                basisDofHandlerWaveFn->getLocallyOwnedRanges()[1].first
+                  << "\tEnrichment Range eigen: " << basisDofHandlerTotalPot->getLocallyOwnedRanges()[1].second - 
+                    basisDofHandlerTotalPot->getLocallyOwnedRanges()[1].first
+                      << std::flush << std::endl;
+    }
+    utils::mpi::MPIBarrier(comm);
+  }
+  utils::mpi::MPIBarrier(comm);
+
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
       stop = std::chrono::high_resolution_clock::now();
@@ -1038,7 +1056,7 @@ int main(int argc, char** argv)
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-    efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
+    efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = efeBasisDataAdaptiveTotPot;
 
@@ -1049,10 +1067,15 @@ int main(int argc, char** argv)
     basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
     basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =   
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNucChargeRhs =   
       std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-    feBDTotalChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+    feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
+
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs =   
+      std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+    feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -1061,29 +1084,6 @@ int main(int argc, char** argv)
       duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
   rootCout << "Time for electrostatics basis datastorage evaluation is(in secs) : " << duration.count()/1e6 << std::endl;
-
-  // std::ofstream fout("filename.txt");
-  // utils::ConditionalOStream allCout(fout);
-  // auto basisDataAdapElec = efeBasisDataAdaptiveTotPot->getBasisDataInAllCells();
-  // for(int iProc = 0 ; iProc < numProcs ; iProc++)
-  // {
-  //   if(rank == iProc)
-  //   {
-  //     int quadId = 0;
-  //     for (size_type iCell = 0; iCell < quadRuleContainerAdaptiveSolPot->nCells(); iCell++)
-  //       {
-  //         for(auto &i : quadRuleContainerAdaptiveSolPot->getCellRealPoints(iCell))
-  //         {
-  //           if(std::abs(i[2]) <= 1e-12)
-  //             allCout << rank << " " << i[0] << " " << i[1] << " " << *(basisDataAdapElec.data() + quadId) << std::flush << std::endl;
-  //           quadId += 1;
-  //         }
-  //       }
-  //   }
-  //   utils::mpi::MPIBarrier(comm);
-  // }
-  // utils::mpi::MPIBarrier(comm);
-  // fout.close();
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
@@ -1335,7 +1335,8 @@ int main(int argc, char** argv)
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,   
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs,  
                                           feBDNuclearChargeStiffnessMatrix,
                                           feBDNuclearChargeRhs, 
                                           feBDKineticHamiltonian,     
@@ -1397,7 +1398,8 @@ int main(int argc, char** argv)
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs,  
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
                                           feBDEXCHamiltonian,                                                                                

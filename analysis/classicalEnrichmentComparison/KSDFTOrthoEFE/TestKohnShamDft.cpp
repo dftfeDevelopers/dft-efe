@@ -695,19 +695,19 @@ int main(int argc, char** argv)
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital = quadRuleContainerAdaptiveElec;
-      // std::make_shared<quadrature::QuadratureRuleContainer>
-      // (quadAttrAdaptive, 
-      // baseQuadRuleEigen, 
-      // triangulationBase, 
-      // *cellMapping, 
-      // *parentToChildCellsManager,
-      // functionsVec,
-      // absoluteTolerances,
-      // relativeTolerances,
-      // integralThresholds,
-      // smallestCellVolume,
-      // maxRecursion);
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital /* = quadRuleContainerAdaptiveElec;*/
+      = std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrAdaptive, 
+      baseQuadRuleEigen, 
+      triangulationBase, 
+      *cellMapping, 
+      *parentToChildCellsManager,
+      functionsVec,
+      absoluteTolerances,
+      relativeTolerances,
+      integralThresholds,
+      smallestCellVolume,
+      maxRecursion);
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -859,9 +859,13 @@ int main(int argc, char** argv)
     basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
     basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNucChargeRhs =   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
-    feBDTotalChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+    feBDNucChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs =   std::make_shared<basis::EFEBasisDataStorageDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
+    feBDElecChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
@@ -1147,7 +1151,8 @@ int main(int argc, char** argv)
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,   
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs,  
                                           feBDNuclearChargeStiffnessMatrix,
                                           feBDNuclearChargeRhs, 
                                           feBDKineticHamiltonian,     
@@ -1209,7 +1214,8 @@ int main(int argc, char** argv)
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,
+                                          feBDNucChargeRhs,
+                                          feBDElecChargeRhs,
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
                                           feBDEXCHamiltonian,                                                                                

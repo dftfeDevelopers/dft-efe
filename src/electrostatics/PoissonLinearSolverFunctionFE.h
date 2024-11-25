@@ -97,6 +97,32 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageStiffnessMatrix,
+        const std::map<
+          std::string,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
+          &feBasisDataStorageRhs,
+        const std::map<
+          std::string,
+          const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
+          &                                     inpRhs,
+        const linearAlgebra::PreconditionerType pcType,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
+
+      /**
+       * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE
+       */
+      PoissonLinearSolverFunctionFE(
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>> feBasisManagerField,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          feBasisDataStorageStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
           feBasisDataStorageRhs,
@@ -107,6 +133,22 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
+
+      void
+      reinit(
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                    ValueTypeOperator,
+                                                    memorySpace,
+                                                    dim>> feBasisManagerField,
+        const std::map<
+          std::string,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
+          &feBasisDataStorageRhs,
+        const std::map<
+          std::string,
+          const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
+          &inpRhs);
 
       void
       reinit(
@@ -157,9 +199,10 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
         d_feBasisManagerHomo;
-      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace>>
+      std::shared_ptr<LaplaceOperatorContextFE<ValueTypeOperator,
+                                               ValueTypeOperand,
+                                               memorySpace,
+                                               dim>>
         d_AxContext;
       std::shared_ptr<LaplaceOperatorContextFE<ValueTypeOperator,
                                                ValueTypeOperand,
@@ -183,9 +226,6 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
         d_feBasisDataStorageStiffnessMatrix;
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-        d_feBasisDataStorageRhs;
 
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace electrostatics

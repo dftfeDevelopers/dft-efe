@@ -56,8 +56,6 @@ namespace dftefe
           feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
         // access cell-wise discrete Laplace operator
-        auto NiNjInAllCells =
-          cfeOverlapOperatorContext->getBasisOverlapInAllCells();
 
         std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
                                                            0);
@@ -70,10 +68,11 @@ namespace dftefe
         locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
         basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
-          addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
-                                             itCellLocalIdsBegin,
-                                             locallyOwnedCellsNumDoFs,
-                                             diagonal.data());
+          addCellWiseBasisDataToDiagonalData(
+            cfeOverlapOperatorContext->getBasisOverlapInAllCells().data(),
+            itCellLocalIdsBegin,
+            locallyOwnedCellsNumDoFs,
+            diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes

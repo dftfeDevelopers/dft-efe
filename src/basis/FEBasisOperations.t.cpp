@@ -1887,6 +1887,7 @@ namespace dftefe
       // size_type BStartOffset       = 0;
       size_type CStartOffset = 0;
 
+      vectorData.setValue((ValueTypeBasisCoeff)0);
       const size_type cellBlockSize = d_maxCellBlock;
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)

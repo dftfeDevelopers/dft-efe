@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Avirup Sircar
  */
 
 #ifndef dftefeLaplaceOperatorContextFE_h
@@ -91,6 +91,18 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
 
+      LaplaceOperatorContextFE(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerX,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerY,
+        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+                        gradNiGradNjInAllCells,
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
+
       void
       reinit(
         const basis::
@@ -112,6 +124,10 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
         linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
 
+      // get overlap of all the basis functions in all cells
+      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+      getBasisGradNiGradNjInAllCells() const;
+
     private:
       const basis::
         FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
@@ -122,9 +138,10 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
         d_feBasisDataStorage;
-      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
                 d_gradNiGradNjInAllCells;
       size_type d_maxFieldBlock, d_maxCellBlock;
+      bool      d_isGradNiNjPreCalculated;
     }; // end of class LaplaceOperatorContextFE
   }    // end of namespace electrostatics
 } // end of namespace dftefe

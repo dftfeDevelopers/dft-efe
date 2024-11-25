@@ -179,7 +179,10 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDTotalChargeRhs,
+                                          memorySpace>> feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDKineticHamiltonian,
@@ -286,7 +289,8 @@ namespace dftefe
           d_densityInQuadValues,
           feBMTotalCharge,
           feBDTotalChargeStiffnessMatrix,
-          feBDTotalChargeRhs,
+          feBDNuclearChargeRhs,
+          feBDElectronicChargeRhs,
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
@@ -397,14 +401,17 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDTotalChargeRhs,
+                                          memorySpace>> feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpace>>
-          feBDNuclearChargeStiffnessMatrix,
+          feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclearChargeRhs,
+                                          memorySpace>> feBDNuclChargeRhsNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDKineticHamiltonian,
@@ -511,9 +518,10 @@ namespace dftefe
           d_densityInQuadValues,
           feBMTotalCharge,
           feBDTotalChargeStiffnessMatrix,
-          feBDTotalChargeRhs,
-          feBDNuclearChargeStiffnessMatrix,
           feBDNuclearChargeRhs,
+          feBDElectronicChargeRhs,
+          feBDNuclChargeStiffnessMatrixNumSol,
+          feBDNuclChargeRhsNumSol,
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,

@@ -245,8 +245,18 @@ namespace dftefe
           "rule, storing the classical finite element basis data is only supported "
           " for a Cartesian tensor structured quadrature grid.");
 
-        dealii::UpdateFlags dealiiUpdateFlags =
-          dealii::update_values | dealii::update_JxW_values;
+        dealii::UpdateFlags dealiiUpdateFlags;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreValues)
+              ->second ||
+            basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          dealiiUpdateFlags |= dealii::update_values;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreJxW)
+              ->second)
+          dealiiUpdateFlags |= dealii::update_JxW_values;
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
@@ -644,7 +654,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
+          d_basisQuadStorage             = std::move(basisQuadStorage);
           d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
         }
 
@@ -652,28 +662,33 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientParaCellQuadStorage = basisGradientParaCellQuadStorage;
-          d_basisJacobianInvQuadStorage      = basisJacobianInvQuadStorage;
+          d_basisGradientParaCellQuadStorage =
+            std::move(basisGradientParaCellQuadStorage);
+          d_basisJacobianInvQuadStorage =
+            std::move(basisJacobianInvQuadStorage);
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
-          d_tmpGradientBlock = std::make_shared<Storage>(
-            d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
-          size_type gradientParaCellSize =
-            basisGradientParaCellQuadStorage->size();
-          for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+          if (d_maxCellBlock != 1)
             {
-              d_tmpGradientBlock->template copyFrom<memorySpace>(
-                basisGradientParaCellQuadStorage->data(),
-                gradientParaCellSize,
-                0,
-                gradientParaCellSize * iCell);
+              d_tmpGradientBlock = std::make_shared<Storage>(
+                d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
+              size_type gradientParaCellSize =
+                d_basisGradientParaCellQuadStorage->size();
+              for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+                {
+                  d_tmpGradientBlock->template copyFrom<memorySpace>(
+                    d_basisGradientParaCellQuadStorage->data(),
+                    gradientParaCellSize,
+                    0,
+                    gradientParaCellSize * iCell);
+                }
             }
         }
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreHessian)
             ->second)
         {
-          d_basisHessianQuadStorage = basisHessianQuadStorage;
+          d_basisHessianQuadStorage = std::move(basisHessianQuadStorage);
           d_cellStartIdsBasisHessianQuadStorage =
             cellStartIdsBasisHessianQuadStorage;
         }
@@ -714,7 +729,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
-          d_JxWStorage = jxwQuadStorage;
+          d_JxWStorage = std::move(jxwQuadStorage);
         }
     }
 
@@ -791,7 +806,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
+          d_basisQuadStorage             = std::move(basisQuadStorage);
           d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
         }
 
@@ -799,21 +814,26 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientParaCellQuadStorage = basisGradientParaCellQuadStorage;
-          d_basisJacobianInvQuadStorage      = basisJacobianInvQuadStorage;
+          d_basisGradientParaCellQuadStorage =
+            std::move(basisGradientParaCellQuadStorage);
+          d_basisJacobianInvQuadStorage =
+            std::move(basisJacobianInvQuadStorage);
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
-          d_tmpGradientBlock = std::make_shared<Storage>(
-            d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
-          size_type gradientParaCellSize =
-            basisGradientParaCellQuadStorage->size();
-          for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+          if (d_maxCellBlock != 1)
             {
-              d_tmpGradientBlock->template copyFrom<memorySpace>(
-                basisGradientParaCellQuadStorage->data(),
-                gradientParaCellSize,
-                0,
-                gradientParaCellSize * iCell);
+              d_tmpGradientBlock = std::make_shared<Storage>(
+                d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
+              size_type gradientParaCellSize =
+                d_basisGradientParaCellQuadStorage->size();
+              for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+                {
+                  d_tmpGradientBlock->template copyFrom<memorySpace>(
+                    d_basisGradientParaCellQuadStorage->data(),
+                    gradientParaCellSize,
+                    0,
+                    gradientParaCellSize * iCell);
+                }
             }
         }
 
@@ -821,7 +841,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreHessian)
             ->second)
         {
-          d_basisHessianQuadStorage = basisHessianQuadStorage;
+          d_basisHessianQuadStorage = std::move(basisHessianQuadStorage);
           d_cellStartIdsBasisHessianQuadStorage =
             cellStartIdsBasisHessianQuadStorage;
         }
@@ -854,7 +874,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
-          d_JxWStorage = jxwQuadStorage;
+          d_JxWStorage = std::move(jxwQuadStorage);
         }
     }
 
@@ -1156,7 +1176,9 @@ namespace dftefe
         }
       else
         {
-          tmpGradientBlock = d_tmpGradientBlock;
+          tmpGradientBlock = (d_maxCellBlock != 1) ?
+                               d_tmpGradientBlock :
+                               d_basisGradientParaCellQuadStorage;
         }
       CFEBDSOnTheFlyComputeDealiiInternal::
         computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(

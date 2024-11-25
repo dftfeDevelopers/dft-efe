@@ -184,7 +184,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueType, memorySpace> d_b;
         linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
 
-      }; // end of class PoissonLinearSolverFunctionFE
+      }; // end of class
 
       /*
       // Functions from intel MKL library

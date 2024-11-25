@@ -132,8 +132,18 @@ namespace dftefe
           "rule, storing the classical finite element basis data is only supported "
           " for a Cartesian tensor structured quadrature grid.");
 
-        dealii::UpdateFlags dealiiUpdateFlags =
-          dealii::update_values | dealii::update_JxW_values;
+        dealii::UpdateFlags dealiiUpdateFlags;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreValues)
+              ->second ||
+            basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          dealiiUpdateFlags |= dealii::update_values;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreJxW)
+              ->second)
+          dealiiUpdateFlags |= dealii::update_JxW_values;
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
@@ -602,10 +612,18 @@ namespace dftefe
               "or quadrature::QuadratureFamily::GLL_VARIABLE or quadrature::QuadratureFamily::ADAPTIVE");
           }
 
-
-        dealii::UpdateFlags dealiiUpdateFlags =
-          dealii::update_values | dealii::update_JxW_values;
-
+        dealii::UpdateFlags dealiiUpdateFlags;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreValues)
+              ->second ||
+            basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreOverlap)
+              ->second)
+          dealiiUpdateFlags |= dealii::update_values;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreJxW)
+              ->second)
+          dealiiUpdateFlags |= dealii::update_JxW_values;
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
@@ -1299,7 +1317,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
+          d_basisQuadStorage             = std::move(basisQuadStorage);
           d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
         }
 
@@ -1307,7 +1325,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientQuadStorage = basisGradientQuadStorage;
+          d_basisGradientQuadStorage = std::move(basisGradientQuadStorage);
           d_cellStartIdsBasisGradientQuadStorage =
             cellStartIdsBasisGradientQuadStorage;
         }
@@ -1315,7 +1333,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreHessian)
             ->second)
         {
-          d_basisHessianQuadStorage = basisHessianQuadStorage;
+          d_basisHessianQuadStorage = std::move(basisHessianQuadStorage);
           d_cellStartIdsBasisHessianQuadStorage =
             cellStartIdsBasisHessianQuadStorage;
         }
@@ -1324,7 +1342,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreOverlap)
             ->second)
         {
-          d_basisOverlap = basisOverlap;
+          d_basisOverlap = std::move(basisOverlap);
         }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
@@ -1345,7 +1363,7 @@ namespace dftefe
               quadratureRuleAttributes,
               d_quadratureRuleContainer);
 
-          d_basisGradNiGradNj = basisGradNiNj;
+          d_basisGradNiGradNj = std::move(basisGradNiNj);
         }
 
       if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
@@ -1365,7 +1383,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
-          d_JxWStorage = jxwQuadStorage;
+          d_JxWStorage = std::move(jxwQuadStorage);
         }
     }
 
@@ -1464,7 +1482,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
+          d_basisQuadStorage             = std::move(basisQuadStorage);
           d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
         }
 
@@ -1472,7 +1490,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientQuadStorage = basisGradientQuadStorage;
+          d_basisGradientQuadStorage = std::move(basisGradientQuadStorage);
           d_cellStartIdsBasisGradientQuadStorage =
             cellStartIdsBasisGradientQuadStorage;
         }
@@ -1481,7 +1499,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreHessian)
             ->second)
         {
-          d_basisHessianQuadStorage = basisHessianQuadStorage;
+          d_basisHessianQuadStorage = std::move(basisHessianQuadStorage);
           d_cellStartIdsBasisHessianQuadStorage =
             cellStartIdsBasisHessianQuadStorage;
         }
@@ -1490,7 +1508,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreOverlap)
             ->second)
         {
-          d_basisOverlap = basisOverlap;
+          d_basisOverlap = std::move(basisOverlap);
         }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
@@ -1524,7 +1542,7 @@ namespace dftefe
                 basisGradNiGradNj,
                 quadratureRuleAttributes,
                 quadratureRuleContainer);
-          d_basisGradNiGradNj = basisGradNiGradNj;
+          d_basisGradNiGradNj = std::move(basisGradNiGradNj);
         }
 
       if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
@@ -1544,7 +1562,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
-          d_JxWStorage = jxwQuadStorage;
+          d_JxWStorage = std::move(jxwQuadStorage);
         }
     }
 
@@ -1631,7 +1649,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
+          d_basisQuadStorage             = std::move(basisQuadStorage);
           d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
         }
 
@@ -1639,7 +1657,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientQuadStorage = basisGradientQuadStorage;
+          d_basisGradientQuadStorage = std::move(basisGradientQuadStorage);
           d_cellStartIdsBasisGradientQuadStorage =
             cellStartIdsBasisGradientQuadStorage;
         }
@@ -1648,7 +1666,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreHessian)
             ->second)
         {
-          d_basisHessianQuadStorage = basisHessianQuadStorage;
+          d_basisHessianQuadStorage = std::move(basisHessianQuadStorage);
           d_cellStartIdsBasisHessianQuadStorage =
             cellStartIdsBasisHessianQuadStorage;
         }
@@ -1657,7 +1675,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreOverlap)
             ->second)
         {
-          d_basisOverlap = basisOverlap;
+          d_basisOverlap = std::move(basisOverlap);
         }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
@@ -1678,7 +1696,7 @@ namespace dftefe
               basisGradNiGradNj,
               quadratureRuleAttributes,
               d_quadratureRuleContainer);
-          d_basisGradNiGradNj = basisGradNiGradNj;
+          d_basisGradNiGradNj = std::move(basisGradNiGradNj);
         }
 
       if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
@@ -1698,7 +1716,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
-          d_JxWStorage = jxwQuadStorage;
+          d_JxWStorage = std::move(jxwQuadStorage);
         }
     }
 
@@ -1796,7 +1814,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreValues)
             ->second)
         {
-          d_basisQuadStorage             = basisQuadStorage;
+          d_basisQuadStorage             = std::move(basisQuadStorage);
           d_cellStartIdsBasisQuadStorage = cellStartIdsBasisQuadStorage;
         }
 
@@ -1804,7 +1822,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreGradient)
             ->second)
         {
-          d_basisGradientQuadStorage = basisGradientQuadStorage;
+          d_basisGradientQuadStorage = std::move(basisGradientQuadStorage);
           d_cellStartIdsBasisGradientQuadStorage =
             cellStartIdsBasisGradientQuadStorage;
         }
@@ -1813,7 +1831,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreHessian)
             ->second)
         {
-          d_basisHessianQuadStorage = basisHessianQuadStorage;
+          d_basisHessianQuadStorage = std::move(basisHessianQuadStorage);
           d_cellStartIdsBasisHessianQuadStorage =
             cellStartIdsBasisHessianQuadStorage;
         }
@@ -1822,7 +1840,7 @@ namespace dftefe
             .find(BasisStorageAttributes::StoreOverlap)
             ->second)
         {
-          d_basisOverlap = basisOverlap;
+          d_basisOverlap = std::move(basisOverlap);
         }
       d_nQuadPointsIncell = nQuadPointsInCell;
 
@@ -1843,7 +1861,7 @@ namespace dftefe
               basisGradNiGradNj,
               quadratureRuleAttributes,
               d_quadratureRuleContainer);
-          d_basisGradNiGradNj = basisGradNiGradNj;
+          d_basisGradNiGradNj = std::move(basisGradNiGradNj);
         }
 
       if (basisStorageAttributesBoolMap.find(BasisStorageAttributes::StoreJxW)
@@ -1863,7 +1881,7 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             jxwVec.size(), jxwQuadStorage->data(), jxwVec.data());
 
-          d_JxWStorage = jxwQuadStorage;
+          d_JxWStorage = std::move(jxwQuadStorage);
         }
     }
 
