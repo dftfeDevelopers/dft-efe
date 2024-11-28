@@ -74,6 +74,9 @@ namespace dftefe
       utils::ConditionalOStream rootCout(std::cout);
       rootCout.setCondition(rank == 0);
 
+      int numProcs;
+      utils::mpi::MPICommSize(comm, &numProcs);
+
       if (dim != 3)
         utils::throwException(
           false, "Dimension should be 3 for Spherical Enrichment Dofs.");
@@ -161,6 +164,47 @@ namespace dftefe
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
+      global_size_type maxEnrich = 0;
+      global_size_type avgEnrich = 0;
+      size_type        cellIndex = 0;
+      cell                       = d_triangulation->beginLocal();
+      for (; cell != endc; cell++)
+        {
+          global_size_type numEnrichInCell =
+            d_overlappingEnrichmentIdsInCells[cellIndex].size();
+          if (maxEnrich < numEnrichInCell)
+            maxEnrich = numEnrichInCell;
+          avgEnrich += numEnrichInCell;
+          cellIndex++;
+        }
+
+      avgEnrich /= d_cfeBasisDofHandler->nLocallyOwnedCells();
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &maxEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        comm);
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &avgEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        comm);
+
+      avgEnrich /= numProcs;
+
+      rootCout << "Maximum " << fieldName
+               << " Enrichment Ids In a Cell in Processor: " << maxEnrich
+               << "\n";
+      rootCout << "Average " << fieldName
+               << " Enrichment Ids In a Cell In Processor: " << avgEnrich
+               << "\n";
+
       // For Non-Periodic BC, a sparse vector d_i with hanging with homogenous
       // BC will be formed which will be solved by Md =
       // integrateWithBasisValues( homogeneous BC). Form quadRuleContainer for
@@ -209,8 +253,8 @@ namespace dftefe
         d_cfeBasisDofHandler->nLocallyOwnedCells();
       std::vector<size_type> nQuadPointsInCell(0);
       nQuadPointsInCell.resize(numLocallyOwnedCells, 0);
-      size_type cellIndex = 0;
-      auto      locallyOwnedCellIter =
+      cellIndex = 0;
+      auto locallyOwnedCellIter =
         d_cfeBasisDofHandler->beginLocallyOwnedCells();
       for (;
            locallyOwnedCellIter != d_cfeBasisDofHandler->endLocallyOwnedCells();
@@ -470,6 +514,9 @@ namespace dftefe
       utils::ConditionalOStream rootCout(std::cout);
       rootCout.setCondition(rank == 0);
 
+      int numProcs;
+      utils::mpi::MPICommSize(comm, &numProcs);
+
       if (dim != 3)
         utils::throwException(
           false, "Dimension should be 3 for Spherical Enrichment Dofs.");
@@ -538,6 +585,45 @@ namespace dftefe
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
+
+      global_size_type maxEnrich = 0;
+      global_size_type avgEnrich = 0;
+      size_type        cellIndex = 0;
+      cell                       = d_triangulation->beginLocal();
+      for (; cell != endc; cell++)
+        {
+          global_size_type numEnrichInCell =
+            d_overlappingEnrichmentIdsInCells[cellIndex].size();
+          if (maxEnrich < numEnrichInCell)
+            maxEnrich = numEnrichInCell;
+          avgEnrich += numEnrichInCell;
+          cellIndex++;
+        }
+
+      avgEnrich /= d_cfeBasisDofHandler->nLocallyOwnedCells();
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &maxEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        comm);
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &avgEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        comm);
+
+      avgEnrich /= numProcs;
+
+      rootCout << "Maximum " << fieldName
+               << " Enrichment Ids In a Processor: " << maxEnrich << "\n";
+      rootCout << "Average " << fieldName
+               << " Enrichment Ids In a Processor: " << avgEnrich << "\n";
 
       rootCout
         << "Completed creating Pristine EnrichmentClassicalInterfaceSpherical for "
