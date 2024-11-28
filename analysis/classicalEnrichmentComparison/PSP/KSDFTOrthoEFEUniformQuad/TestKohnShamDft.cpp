@@ -447,6 +447,66 @@ void getVLoc(
     }
   };
 
+  template <typename ValueTypeBasisData,
+            utils::MemorySpace memorySpace,
+            size_type          dim>
+  size_type getNumClassicalDofsInSystemExcludingVacuum(const std::vector<utils::Point> &atomCoordinates,
+                                                      const basis::FEBasisDofHandler<ValueTypeBasisData,
+                                                                                      memorySpace,
+                                                                                      dim> &basisDofHandler,
+                                                      utils::mpi::MPIComm comm)
+  {
+    const std::vector<std::pair<global_size_type, global_size_type>> &numLocallyOwnedRanges  = basisDofHandler.getLocallyOwnedRanges();
+    size_type dofs = 0;
+    double domainSizeExcludingVacuum = 0;
+
+    std::vector<double> maxAtomCoordinates(dim, 0);
+    std::vector<double> minAtomCoordinates(dim, 0);
+
+    for (int j = 0; j < dim; j++)
+      {
+        for (int i = 0; i < atomCoordinates.size(); i++)
+          {
+            if (maxAtomCoordinates[j] < atomCoordinates[i][j])
+              maxAtomCoordinates[j] = atomCoordinates[i][j];
+            if (minAtomCoordinates[j] > atomCoordinates[i][j])
+              minAtomCoordinates[j] = atomCoordinates[i][j];
+          }
+      }
+
+    for (int i = 0; i < dim; i++)
+      {
+        double axesLen = std::max(std::abs(maxAtomCoordinates[i]),
+                                  std::abs(minAtomCoordinates[i])) + 8.0;
+        if (domainSizeExcludingVacuum < axesLen)
+          domainSizeExcludingVacuum = axesLen;
+      }
+
+    std::map<global_size_type, utils::Point> dofCoords;
+    basisDofHandler.getBasisCenters(dofCoords);
+    dftefe::utils::Point nodeLoc(dim,0.0);
+    for (dftefe::global_size_type iDof = numLocallyOwnedRanges[0].first; iDof < numLocallyOwnedRanges[0].second ; iDof++)
+      {
+        nodeLoc = dofCoords.find(iDof)->second;
+        double dist = 0;
+        for( int j = 0 ; j < dim ; j++)
+        {
+          dist += nodeLoc[j]* nodeLoc[j];
+        }
+        dist = std::sqrt(dist);
+        if(dist <= domainSizeExcludingVacuum)
+          dofs += 1;
+      }
+      int mpierr = utils::mpi::MPIAllreduce<Host>(
+        utils::mpi::MPIInPlace,
+        &dofs,
+        1,
+        utils::mpi::Types<size_type>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        comm);
+      return dofs;
+  }
+
 // operand - V_H
 // memoryspace - HOST
 int main(int argc, char** argv)
@@ -682,6 +742,15 @@ int main(int argc, char** argv)
 
   rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
   rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
+
+  rootCout << "The Number of classical dofs electrostatics excluding Vacuum: " << 
+    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
+      *cfeBasisDofHandlerElec,
+      comm) << "\n";
+  rootCout << "The Number of classical dofs eigenSolve excluding Vacuum: " << 
+    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
+      *cfeBasisDofHandlerEigen,
+      comm) << "\n";
 
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     LocalPSPPotentialFunction(atomCoordinatesVec, atomChargesVec, pspFilePathVec);

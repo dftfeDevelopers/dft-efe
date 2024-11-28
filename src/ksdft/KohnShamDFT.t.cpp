@@ -275,7 +275,8 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL);
+        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -504,7 +505,8 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL);
+        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -849,11 +851,9 @@ namespace dftefe
           if (d_evaluateEnergyEverySCF)
             {
               d_hamitonianElec->reinitField(d_densityOutQuadValues);
-              d_hamitonianKin->evalEnergy(
-                d_occupation,
-                *d_feBMWaveFn,
-                *d_kohnShamWaveFunctions,
-                KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+              d_hamitonianKin->evalEnergy(d_occupation,
+                                          *d_feBMWaveFn,
+                                          *d_kohnShamWaveFunctions);
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -890,11 +890,9 @@ namespace dftefe
       if (!d_evaluateEnergyEverySCF)
         {
           d_hamitonianElec->reinitField(d_densityOutQuadValues);
-          d_hamitonianKin->evalEnergy(
-            d_occupation,
-            *d_feBMWaveFn,
-            *d_kohnShamWaveFunctions,
-            KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+          d_hamitonianKin->evalEnergy(d_occupation,
+                                      *d_feBMWaveFn,
+                                      *d_kohnShamWaveFunctions);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 

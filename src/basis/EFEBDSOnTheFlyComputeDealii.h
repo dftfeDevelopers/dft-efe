@@ -236,11 +236,8 @@ namespace dftefe
       std::shared_ptr<Storage>      d_tmpGradientBlock;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
       size_type                                    d_classialDofsInCell;
-      std::unordered_map<
-        size_type,
-        std::shared_ptr<
-          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>>
-        d_basisGradientEnrichQuadStorageMap, d_basisEnrichQuadStorageMap;
+      std::shared_ptr<Storage> d_basisGradientEnrichQuadStorage,
+        d_basisEnrichQuadStorage;
 
     }; // end of EFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis

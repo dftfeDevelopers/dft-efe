@@ -358,19 +358,15 @@ namespace dftefe
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &basisParaCellClassQuadStorage,
-        std::unordered_map<
-          size_type,
-          std::shared_ptr<typename BasisDataStorage<ValueTypeBasisData,
-                                                    memorySpace>::Storage>>
-          &basisEnrichQuadStorageMap,
+        std::shared_ptr<
+          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+          &basisEnrichQuadStorage,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &basisGradientParaCellClassQuadStorage,
-        std::unordered_map<
-          size_type,
-          std::shared_ptr<typename BasisDataStorage<ValueTypeBasisData,
-                                                    memorySpace>::Storage>>
-          &basisGradientEnrichQuadStorageMap,
+        std::shared_ptr<
+          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+          &basisGradientEnrichQuadStorage,
         std::shared_ptr<
           typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
           &basisJacobianInvQuadStorage,
@@ -518,11 +514,12 @@ namespace dftefe
           basisGradientParaCellClassQuadStorageTmp(0), tmpGradientInCell(0);
         std::vector<ValueTypeBasisData> basisHessianQuadStorageTmp(0);
 
-        std::unordered_map<size_type, std::vector<ValueTypeBasisData>>
-          basisEnrichQuadStorageMapTmp, basisGradientEnrichQuadStorageMapTmp;
+        std::vector<ValueTypeBasisData> basisEnrichQuadStorageTmp(0),
+          basisGradientEnrichQuadStorageTmp(0);
 
-        size_type cellIndex       = 0;
-        size_type basisValuesSize = 0;
+        size_type cellIndex                = 0;
+        size_type basisValuesSize          = 0;
+        size_type enrichQuadValStorageSize = 0;
 
         auto locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
 
@@ -531,6 +528,8 @@ namespace dftefe
           {
             dofsPerCell = efeBDH->nCellDofs(cellIndex);
             basisValuesSize += nQuadPointInCell * dofsPerCell;
+            enrichQuadValStorageSize +=
+              (dofsPerCell - classicalDofsPerCell) * nQuadPointInCell;
             cellIndex++;
           }
 
@@ -545,6 +544,12 @@ namespace dftefe
             basisParaCellClassQuadStorageTmp.resize(classicalDofsPerCell *
                                                       nQuadPointInCell,
                                                     ValueTypeBasisData(0));
+            basisEnrichQuadStorage =
+              std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
+                                                         memorySpace>::Storage>(
+                enrichQuadValStorageSize);
+            basisEnrichQuadStorageTmp.resize(enrichQuadValStorageSize,
+                                             ValueTypeBasisData(0));
           }
 
         if (basisStorageAttributesBoolMap
@@ -570,6 +575,13 @@ namespace dftefe
               }
             cellStartIdsBasisJacobianInvQuadStorage.resize(numLocallyOwnedCells,
                                                            0);
+            basisGradientEnrichQuadStorage =
+              std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
+                                                         memorySpace>::Storage>(
+                enrichQuadValStorageSize * dim);
+            basisGradientEnrichQuadStorageTmp.resize(enrichQuadValStorageSize *
+                                                       dim,
+                                                     ValueTypeBasisData(0));
           }
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreHessian)
@@ -600,6 +612,7 @@ namespace dftefe
 
         cellIndex                            = 0;
         size_type cumulativeQuadPointsxnDofs = 0;
+        size_type cumulativeEnrichQuadxDof   = 0;
 
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -722,8 +735,6 @@ namespace dftefe
                                basisParaCellClassQuadStorageTmp,
                                classicalComponentInQuadValues);
                       }
-                    basisEnrichQuadStorageMapTmp[cellIndex].resize(
-                      nQuadPointInCell * numEnrichmentIdsInCell);
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
@@ -737,7 +748,8 @@ namespace dftefe
                             //     classicalComponentInQuadValues
                             //     [numEnrichmentIdsInCell * qPoint + iNode] <<
                             //     "\n";
-                            *(basisEnrichQuadStorageMapTmp[cellIndex].data() +
+                            *(basisEnrichQuadStorageTmp.data() +
+                              cumulativeEnrichQuadxDof +
                               qPoint * numEnrichmentIdsInCell + iNode) =
                               efeBDH->getEnrichmentValue(
                                 cellIndex, iNode, quadRealPointsVec[qPoint]) -
@@ -828,8 +840,6 @@ namespace dftefe
                                tmpGradientInCell,
                                classicalComponentInQuadGradients);
                       }
-                    basisGradientEnrichQuadStorageMapTmp[cellIndex].resize(
-                      dim * nQuadPointInCell * numEnrichmentIdsInCell);
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
@@ -842,9 +852,8 @@ namespace dftefe
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
-                                  basisGradientEnrichQuadStorageMapTmp
-                                    [cellIndex]
-                                      .data() +
+                                  basisGradientEnrichQuadStorageTmp.data() +
+                                  cumulativeEnrichQuadxDof * dim +
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
                                 *it = shapeGrad[iDim] -
@@ -924,6 +933,8 @@ namespace dftefe
 
             cellIndex++;
             cumulativeQuadPointsxnDofs += nQuadPointInCell * dofsPerCell;
+            cumulativeEnrichQuadxDof +=
+              numEnrichmentIdsInCell * nQuadPointInCell;
           }
 
         if (basisStorageAttributesBoolMap
@@ -935,17 +946,10 @@ namespace dftefe
               basisParaCellClassQuadStorage->data(),
               basisParaCellClassQuadStorageTmp.data());
 
-            for (auto &it : basisEnrichQuadStorageMapTmp)
-              {
-                basisEnrichQuadStorageMap[it.first] = std::make_shared<
-                  typename BasisDataStorage<ValueTypeBasisData,
-                                            memorySpace>::Storage>(
-                  it.second.size());
-                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
-                  copy(it.second.size(),
-                       basisEnrichQuadStorageMap[it.first]->data(),
-                       it.second.data());
-              }
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+              basisEnrichQuadStorageTmp.size(),
+              basisEnrichQuadStorage->data(),
+              basisEnrichQuadStorageTmp.data());
           }
 
         if (basisStorageAttributesBoolMap
@@ -962,17 +966,10 @@ namespace dftefe
               basisJacobianInvQuadStorage->data(),
               basisJacobianInvQuadStorageTmp.data());
 
-            for (auto &it : basisGradientEnrichQuadStorageMapTmp)
-              {
-                basisGradientEnrichQuadStorageMap[it.first] = std::make_shared<
-                  typename BasisDataStorage<ValueTypeBasisData,
-                                            memorySpace>::Storage>(
-                  it.second.size());
-                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
-                  copy(it.second.size(),
-                       basisGradientEnrichQuadStorageMap[it.first]->data(),
-                       it.second.data());
-              }
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+              basisGradientEnrichQuadStorageTmp.size(),
+              basisGradientEnrichQuadStorage->data(),
+              basisGradientEnrichQuadStorageTmp.data());
           }
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreHessian)
@@ -1097,6 +1094,12 @@ namespace dftefe
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
         basisHessianQuadStorage;
+      std::shared_ptr<
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+        basisGradientEnrichQuadStorage;
+      std::shared_ptr<
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+        basisEnrichQuadStorage;
 
       size_type nTotalEnrichmentIds =
         d_efeBDH->getEnrichmentIdsPartition()->nTotalEnrichmentIds();
@@ -1209,9 +1212,9 @@ namespace dftefe
         memorySpace,
         dim>(d_efeBDH,
              basisParaCellClassQuadStorage,
-             d_basisEnrichQuadStorageMap,
+             basisEnrichQuadStorage,
              basisGradientParaCellClassQuadStorage,
-             d_basisGradientEnrichQuadStorageMap,
+             basisGradientEnrichQuadStorage,
              basisJacobianInvQuadStorage,
              basisHessianQuadStorage,
              quadratureRuleAttributes,
@@ -1227,6 +1230,7 @@ namespace dftefe
         {
           d_basisParaCellClassQuadStorage =
             std::move(basisParaCellClassQuadStorage);
+          d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
         }
 
       if (basisStorageAttributesBoolMap
@@ -1255,6 +1259,8 @@ namespace dftefe
                     gradientParaCellSize * iCell);
                 }
             }
+          d_basisGradientEnrichQuadStorage =
+            std::move(basisGradientEnrichQuadStorage);
         }
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreHessian)
@@ -1351,7 +1357,14 @@ namespace dftefe
         basisJacobianInvQuadStorage;
       std::shared_ptr<
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-                             basisHessianQuadStorage;
+        basisHessianQuadStorage;
+      std::shared_ptr<
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+        basisGradientEnrichQuadStorage;
+      std::shared_ptr<
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+        basisEnrichQuadStorage;
+
       std::vector<size_type> nQuadPointsInCell(0);
       std::vector<size_type> cellStartIdsBasisJacobianInvQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
@@ -1464,9 +1477,9 @@ namespace dftefe
         memorySpace,
         dim>(d_efeBDH,
              basisParaCellClassQuadStorage,
-             d_basisEnrichQuadStorageMap,
+             basisEnrichQuadStorage,
              basisGradientParaCellClassQuadStorage,
-             d_basisGradientEnrichQuadStorageMap,
+             basisGradientEnrichQuadStorage,
              basisJacobianInvQuadStorage,
              basisHessianQuadStorage,
              quadratureRuleAttributes,
@@ -1482,6 +1495,7 @@ namespace dftefe
         {
           d_basisParaCellClassQuadStorage =
             std::move(basisParaCellClassQuadStorage);
+          d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
         }
 
       if (basisStorageAttributesBoolMap
@@ -1510,6 +1524,8 @@ namespace dftefe
                     gradientParaCellSize * iCell);
                 }
             }
+          d_basisGradientEnrichQuadStorage =
+            std::move(basisGradientEnrichQuadStorage);
         }
 
       if (basisStorageAttributesBoolMap
@@ -1737,11 +1753,17 @@ namespace dftefe
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
 
+      size_type cumulativeOffsetEnrichQuad = 0;
+      for (size_type cellId = 0; cellId < cellRange.first; cellId++)
+        {
+          cumulativeOffsetEnrichQuad +=
+            (d_dofsInCell[cellId] - d_classialDofsInCell) *
+            d_nQuadPointsIncell[cellId];
+        }
       size_type cumulativeOffset = 0;
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
         {
-          auto iter = d_basisEnrichQuadStorageMap.find(cellId);
           for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
                quadId++)
             {
@@ -1750,18 +1772,21 @@ namespace dftefe
                 d_classialDofsInCell,
                 d_classialDofsInCell * quadId,
                 cumulativeOffset + d_dofsInCell[cellId] * quadId);
-              if (iter != d_basisEnrichQuadStorageMap.end())
-                {
-                  basisData.template copyFrom<memorySpace>(
-                    iter->second->data(),
-                    d_dofsInCell[cellId] - d_classialDofsInCell,
+
+              if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
+                basisData.template copyFrom<memorySpace>(
+                  d_basisEnrichQuadStorage->data(),
+                  d_dofsInCell[cellId] - d_classialDofsInCell,
+                  cumulativeOffsetEnrichQuad +
                     (d_dofsInCell[cellId] - d_classialDofsInCell) * quadId,
-                    cumulativeOffset + d_dofsInCell[cellId] * quadId +
-                      d_classialDofsInCell);
-                }
+                  cumulativeOffset + d_dofsInCell[cellId] * quadId +
+                    d_classialDofsInCell);
             }
           cumulativeOffset +=
             d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId];
+          cumulativeOffsetEnrichQuad +=
+            (d_dofsInCell[cellId] - d_classialDofsInCell) *
+            d_nQuadPointsIncell[cellId];
         }
     }
 
@@ -1861,12 +1886,18 @@ namespace dftefe
           d_linAlgOpContext,
           basisGradientData);
 
+      size_type cumulativeOffsetEnrichQuad = 0;
+      for (size_type cellId = 0; cellId < cellRange.first; cellId++)
+        {
+          cumulativeOffsetEnrichQuad +=
+            (d_dofsInCell[cellId] - d_classialDofsInCell) *
+            d_nQuadPointsIncell[cellId] * dim;
+        }
       size_type cumulativeOffset = 0;
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
         {
-          auto iter = d_basisGradientEnrichQuadStorageMap.find(cellId);
-          if (iter != d_basisGradientEnrichQuadStorageMap.end())
+          if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
             {
               for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
                    quadId++)
@@ -1874,9 +1905,10 @@ namespace dftefe
                   for (size_type iDim = 0; iDim < dim; iDim++)
                     {
                       basisGradientData.template copyFrom<memorySpace>(
-                        iter->second->data(),
+                        d_basisGradientEnrichQuadStorage->data(),
                         (d_dofsInCell[cellId] - d_classialDofsInCell),
-                        (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
+                        cumulativeOffsetEnrichQuad +
+                          (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
                             quadId +
                           iDim * (d_dofsInCell[cellId] - d_classialDofsInCell),
                         cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
@@ -1886,6 +1918,9 @@ namespace dftefe
             }
           cumulativeOffset +=
             d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId] * dim;
+          cumulativeOffsetEnrichQuad +=
+            (d_dofsInCell[cellId] - d_classialDofsInCell) *
+            d_nQuadPointsIncell[cellId] * dim;
         }
     }
 

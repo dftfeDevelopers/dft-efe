@@ -40,11 +40,27 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock)
+        const size_type maxCellBlock,
+        const size_type waveFuncBatchSize)
       : d_maxCellBlock(maxCellBlock)
       , d_linAlgOpContext(linAlgOpContext)
+      , d_waveFuncBatchSize(waveFuncBatchSize)
     {
       reinit(feBasisDataStorage);
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      ~KineticFE()
+    {
+      if (d_gradPsi != nullptr)
+        {
+          delete d_gradPsi;
+          d_gradPsi = nullptr;
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -64,6 +80,11 @@ namespace dftefe
                                                   memorySpace,
                                                   dim>>(feBasisDataStorage,
                                                         d_maxCellBlock);
+
+      d_gradPsi =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          d_feBasisDataStorage->getQuadratureRuleContainer(),
+          d_waveFuncBatchSize * dim);
     }
 
     template <typename ValueTypeBasisData,
@@ -99,10 +120,9 @@ namespace dftefe
                                              memorySpace,
                                              dim> &             feBMPsi,
                  const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                  memorySpace> &waveFunc,
-                 const size_type waveFuncBatchSize)
+                                                  memorySpace> &waveFunc)
     {
-      d_feBasisOp->reinit(d_maxCellBlock, waveFuncBatchSize);
+      d_feBasisOp->reinit(d_maxCellBlock, d_waveFuncBatchSize);
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
 
@@ -111,19 +131,16 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace> psiBatch(
         waveFunc.getMPIPatternP2P(),
         d_linAlgOpContext,
-        waveFuncBatchSize,
+        d_waveFuncBatchSize,
         ValueType());
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace> gradPsi(
-        quadRuleContainer, waveFuncBatchSize * dim);
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
       for (size_type psiStartId = 0;
            psiStartId < waveFunc.getNumberComponents();
-           psiStartId += waveFuncBatchSize)
+           psiStartId += d_waveFuncBatchSize)
         {
-          const size_type psiEndId = std::min(psiStartId + waveFuncBatchSize,
+          const size_type psiEndId = std::min(psiStartId + d_waveFuncBatchSize,
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
 
@@ -134,9 +151,9 @@ namespace dftefe
                     occupation.begin() + psiEndId,
                     occupationInBatch.begin());
 
-          if (numPsiInBatch < waveFuncBatchSize)
+          if (numPsiInBatch < d_waveFuncBatchSize)
             {
-              gradPsi.reinit(quadRuleContainer, numPsiInBatch * dim);
+              d_gradPsi->reinit(quadRuleContainer, numPsiInBatch * dim);
 
               linearAlgebra::MultiVector<ValueType, memorySpace> psiBatchSmall(
                 waveFunc.getMPIPatternP2P(),
@@ -154,7 +171,7 @@ namespace dftefe
 
               d_feBasisOp->interpolateWithBasisGradient(psiBatchSmall,
                                                         feBMPsi,
-                                                        gradPsi);
+                                                        *d_gradPsi);
             }
           else
             {
@@ -167,16 +184,16 @@ namespace dftefe
 
               d_feBasisOp->interpolateWithBasisGradient(psiBatch,
                                                         feBMPsi,
-                                                        gradPsi);
+                                                        *d_gradPsi);
             }
 
-          ValueType *gradPsiIter = gradPsi.begin();
+          ValueType *gradPsiIter = d_gradPsi->begin();
 
           auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
           ValueTypeBasisData *jxwStorageIter    = jxwStorage.data();
           size_type cumulativeQuadGradPsiInCell = 0, cumulativeQuadInCell = 0;
 
-          for (size_type iCell = 0; iCell < gradPsi.nCells(); iCell++)
+          for (size_type iCell = 0; iCell < d_gradPsi->nCells(); iCell++)
             {
               size_type numQuadInCell =
                 quadRuleContainer->nCellQuadraturePoints(iCell);
