@@ -540,6 +540,8 @@ namespace dftefe
 
       d_feBasisManagerField->getConstraints().distributeParentToChild(
         solution, numComponents);
+
+      d_initial = solution;
     }
 
     template <typename ValueTypeOperator,

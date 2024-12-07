@@ -219,6 +219,8 @@ namespace dftefe
       const std::vector<double>               d_smearedChargeRadius;
       RealType                                d_energy;
       const utils::ScalarSpatialFunctionReal &d_externalPotentialFunction;
+
+      // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_nuclearChargesDensity;
       const quadrature::QuadratureValuesContainer<ValueType, memorySpace>

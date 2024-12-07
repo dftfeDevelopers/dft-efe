@@ -34,8 +34,8 @@ namespace dftefe
     const linearAlgebra::PreconditionerType PoissonProblemDefaults::PC_TYPE =
       linearAlgebra::PreconditionerType::JACOBI;
     const size_type PoissonProblemDefaults::MAX_ITER       = 2e7;
-    const double    PoissonProblemDefaults::ABSOLUTE_TOL   = 1e-12;
-    const double    PoissonProblemDefaults::RELATIVE_TOL   = 1e-14;
+    const double    PoissonProblemDefaults::ABSOLUTE_TOL   = 1e-10;
+    const double    PoissonProblemDefaults::RELATIVE_TOL   = 1e-12;
     const double    PoissonProblemDefaults::DIVERGENCE_TOL = 1e10;
 
     /**
@@ -50,6 +50,8 @@ namespace dftefe
      */
     const std::map<size_type, size_type>
       LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP{
+        {100, 15},
+        {300, 19},
         {500, 24}, // <= 500 ~> chebyshevOrder = 24
         {750, 30},
         {1000, 39},

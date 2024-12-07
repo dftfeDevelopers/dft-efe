@@ -616,6 +616,9 @@ int main(int argc, char** argv)
   unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
   unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   
+  unsigned int num1DGaussSubdividedSizeGrad = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
+  unsigned int gaussSubdividedCopiesGrad = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
+  
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
 
   // Set up Triangulation
@@ -967,6 +970,16 @@ int main(int argc, char** argv)
       triangulationBase, 
       *cellMapping); 
 
+    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleGrad =
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeGrad, gaussSubdividedCopiesGrad);
+
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveGrad =  
+      std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrGaussSubdivided, 
+      gaussSubdivQuadRuleGrad, 
+      triangulationBase, 
+      *cellMapping); 
+
     // add device synchronize for gpu
       utils::mpi::MPIBarrier(comm);
       stop = std::chrono::high_resolution_clock::now();
@@ -1125,7 +1138,7 @@ int main(int argc, char** argv)
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-    efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+    efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
 
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = efeBasisDataAdaptiveTotPot;
 
@@ -1155,7 +1168,7 @@ int main(int argc, char** argv)
   rootCout << "Time for electrostatics basis datastorage evaluation is(in secs) : " << duration.count()/1e6 << std::endl;
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -1165,14 +1178,27 @@ int main(int argc, char** argv)
     std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
+  efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveGrad =
+    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+
     // add device synchronize for gpu
     utils::mpi::MPIBarrier(comm);
     start = std::chrono::high_resolution_clock::now();
 
-  efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+  efeBasisDataAdaptiveGrad->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
 
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
-    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveOrbital;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveGrad;
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
 
     // add device synchronize for gpu

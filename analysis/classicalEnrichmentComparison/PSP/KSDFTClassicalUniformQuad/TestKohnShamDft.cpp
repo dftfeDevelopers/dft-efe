@@ -733,12 +733,12 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataElec =
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
     (basisDofHandlerTotalPot, quadAttrElec, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   // evaluate basis data
-  feBasisDataElec->evaluateBasisData(quadAttrElec, basisAttrMap);
+  feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrElec, basisAttrMap);
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
@@ -804,8 +804,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   (*basisManagerWaveFn,
                                                   *feBasisDataGLLEigen,
                                                   linAlgOpContext);
-
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = feBasisDataElec;
   
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
       std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSizeElec, gaussSubdividedCopiesElec);
@@ -870,7 +868,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   rootCout << "Number of quadrature points in gauss subdivided quadrature eigen: "<< nQuad<<"\n";
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -881,14 +879,36 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
 
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = 
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
+                
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+  quadrature::QuadratureRuleAttributes quadAttrEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen+1);
+
+  // Set up the FE Basis Data Storage
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDHamStiffnessMatrix =
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    (basisDofHandlerWaveFn, quadAttrEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+
+  // evaluate basis data
+  feBDHamStiffnessMatrix->evaluateBasisData(quadAttrEigen, basisAttrMap);
+
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho =  
                 feBDElectrostaticsHamiltonian->getQuadratureRuleContainer();
-
+                
   // scale the electronic charges
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainerRho, 1, 0.0);
 
-  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDElectrostaticsHamiltonian;
+  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDHamStiffnessMatrix;
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;
 
   // Create OperatorContext for Basisoverlap
@@ -917,8 +937,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
-
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = feBDElectrostaticsHamiltonian;
 
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
@@ -957,7 +975,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     // Set up the FE Basis Data Storage
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs = feBDNucChargeRhs;
 
-    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBasisDataElec;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBDTotalChargeStiffnessMatrix;
 
     std::shared_ptr<ksdft::KohnShamDFT<double,
                                         double,

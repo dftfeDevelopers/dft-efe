@@ -291,11 +291,11 @@ namespace dftefe
           delete d_correctionPotHamQuad;
           d_correctionPotHamQuad = nullptr;
         }
-      if (d_correctionPotRhoQuad != nullptr)
-        {
-          delete d_correctionPotRhoQuad;
-          d_correctionPotRhoQuad = nullptr;
-        }
+      // if (d_correctionPotRhoQuad != nullptr)
+      //   {
+      //     delete d_correctionPotRhoQuad;
+      //     d_correctionPotRhoQuad = nullptr;
+      //   }
       if (d_totalChargePotential != nullptr)
         {
           delete d_totalChargePotential;
