@@ -362,6 +362,38 @@ namespace dftefe
       }
 
 
+      template <typename T, MemorySpace memorySpace>
+      MinMaxAvg<T>
+      MPIAllreduceMinMaxAvg(const T &data, MPIComm comm)
+      {
+        MinMaxAvg<T> retVal;
+        utils::mpi::MPIAllreduce<memorySpace>(
+          &data,
+          &retVal.min,
+          1,
+          utils::mpi::Types<T>::getMPIDatatype(),
+          utils::mpi::MPIMin,
+          comm);
+        utils::mpi::MPIAllreduce<memorySpace>(
+          &data,
+          &retVal.max,
+          1,
+          utils::mpi::Types<T>::getMPIDatatype(),
+          utils::mpi::MPIMax,
+          comm);
+        utils::mpi::MPIAllreduce<memorySpace>(
+          &data,
+          &retVal.avg,
+          1,
+          utils::mpi::Types<T>::getMPIDatatype(),
+          utils::mpi::MPISum,
+          comm);
+        int numProcs;
+        utils::mpi::MPICommSize(comm, &numProcs);
+        retVal.avg /= numProcs;
+        return retVal;
+      }
+
 #else  // DFTEFE_WITH_MPI
 
       template <MemorySpace memorySpace>
@@ -565,6 +597,17 @@ namespace dftefe
           false,
           "MPIIssend is not implemented when not linking with an MPI library.");
         return MPISuccess;
+      }
+
+      template <typename T, MemorySpace memorySpace>
+      MinMaxAvg<T>
+      MPIAllreduceMinMaxAvg(const T &data, MPIComm comm)
+      {
+        MinMaxAvg<T> retVal;
+        retVal.min = data;
+        retVal.max = data;
+        retVal.avg = data;
+        return retVal;
       }
 #endif // DFTEFE_WITH_MPI
 
