@@ -1,0 +1,11 @@
+<map id="dftefe::ksdft::ElectrostaticLocalFE::ElectrostaticLocalFE" name="dftefe::ksdft::ElectrostaticLocalFE::ElectrostaticLocalFE">
+<area shape="rect" id="node1" title="Constructor." alt="" coords="5,156,201,196"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#acf1a59c9e69ec7e0f807e07cd1fb8470" title=" " alt="" coords="249,124,417,164"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a92dfa92add7a9babe5d8466d378de5f3" title=" " alt="" coords="249,188,417,228"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1utils_1_1mpi.html#a3b05e5595a7722e00fd818e897c76e1d" title=" " alt="" coords="495,5,615,45"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1quadrature.html#a4055047cd59f3629fccc4f6f96771664" title="Perform ." alt="" coords="493,184,616,224"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1ConditionalOStream.html#a53f4faa0e39e019a0f329bd39cfa8cc2" title="Function to set the condition for printing to the output stream associated with this object." alt="" coords="477,69,632,109"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="465,134,644,159"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="692,177,879,231"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1linearAlgebra.html#a766e66f0b452363ea0cee6a1f9f1a3a9" title="A class that implements the Conjugate&#45;Gradient (CG) based Krylov subspace algorithm to solve a linear..." alt="" coords="487,248,623,288"/>
+</map>

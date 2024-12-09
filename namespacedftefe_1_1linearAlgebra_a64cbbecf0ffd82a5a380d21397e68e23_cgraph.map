@@ -1,0 +1,13 @@
+<map id="dftefe::linearAlgebra::dot" name="dftefe::linearAlgebra::dot">
+<area shape="rect" id="node1" title=" " alt="" coords="5,237,165,262"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra.html#a6fd6f4d21b76d80bc40d108dbf088bbc" title=" " alt="" coords="213,237,373,262"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#ae3b2eab2619f24ff047725b6ec4a95ed" title="Return the raw pointer to the MultiVector data." alt="" coords="461,5,597,45"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="438,69,621,109"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a27b68fb9b608e979bf818d0ed94dc661" title=" " alt="" coords="437,133,622,173"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#ae6856e6ef3bcfec194d5177862e17bdb" title=" " alt="" coords="421,197,637,237"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#a0a0d3dbbd5f7dde25a5c21755f6ece52" title=" " alt="" coords="425,261,634,301"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#a75740df25b701d75e67ff517659d2cd2" title=" " alt="" coords="442,325,617,365"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#a6a1a59ba624db07323a5b7d2450415e7" title=" " alt="" coords="428,389,631,429"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#aae2139f896ef32cedd3190a6db759cc9" title=" " alt="" coords="444,453,615,493"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#aade22b29e5bdf739d9e3c96b76ed160b" title="Template for computing dot products numVec vectors in a multi Vector." alt="" coords="685,126,888,181"/>
+</map>

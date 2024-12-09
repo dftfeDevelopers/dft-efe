@@ -1,0 +1,25 @@
+<map id="dftefe::quadrature::QuadratureRuleAttributes::getQuadratureFamily" name="dftefe::quadrature::QuadratureRuleAttributes::getQuadratureFamily">
+<area shape="rect" id="node1" title=" " alt="" coords="609,602,784,657"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1FEBasisOperationsInternal.html#a852995748568ce77570057dda08476b9" title=" " alt="" coords="297,5,556,45"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#a70e27429a3b6614ff6776e20b41de231" title=" " alt="" coords="17,111,232,151"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEBDSOnTheFlyComputeDealii.html#afadb181e7d30ffc1cb39a7e595670433" title=" " alt="" coords="5,227,244,267"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a78328125bd68f060135431e907f51a4a" title=" " alt="" coords="17,957,232,997"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealii.html#a8606ebcadc4014efbe301c39fc356bfa" title=" " alt="" coords="5,1073,244,1113"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="321,331,532,371"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="321,395,532,435"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="321,459,532,499"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a6e9cfbdc335fa04022b78f843c5b05a7" title="Constructor for assigning each cell with a common quadrature rule." alt="" coords="340,523,513,578"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ade6f7fe63de196e5a49fef72dda920c5" title=" " alt="" coords="321,602,532,657"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a349309c0bd76b0e5ce3c43949950b586" title=" " alt="" coords="321,681,532,735"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#a48623cc784d619ef3054e717d4f6b051" title=" " alt="" coords="303,759,551,814"/>
+<area shape="rect" id="node15" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a158e963da3bfafca8a07399b6f912bf5" title=" " alt="" coords="303,838,551,893"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ab5880eef7d828e26b16d753a3cd2de89" title=" " alt="" coords="318,1177,535,1231"/>
+<area shape="rect" id="node18" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ae31802da4310b998888ef4321caf6c67" title=" " alt="" coords="318,1255,535,1310"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1basis_1_1CFEBDSOnTheFlyComputeDealiiInternal.html#a6b434d6e50b447dd5a33948b42de0dca" title=" " alt="" coords="292,251,561,306"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ac82bb22efa8cadc7b0567cd756656abd" title=" " alt="" coords="318,70,535,125"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#ae23ee05528294db10fcac757d11c1d1b" title=" " alt="" coords="292,1098,561,1153"/>
+<area shape="rect" id="node23" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a690ad41f1fd7e294ea3a5015bb07a77a" title=" " alt="" coords="318,917,535,971"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a73fce936022cbc5afb423befe26f20d6" title=" " alt="" coords="19,5,230,45"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#aa5ed61b23a3d6fc7455d2eba504b040b" title=" " alt="" coords="17,1184,232,1224"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="17,1263,232,1303"/>
+</map>

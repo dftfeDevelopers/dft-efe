@@ -1,0 +1,9 @@
+<map id="dftefe::ksdft::KohnShamDFTInternal::normalizeDensityQuadData" name="dftefe::ksdft::KohnShamDFTInternal::normalizeDensityQuadData">
+<area shape="rect" id="node1" title=" " alt="" coords="5,156,233,196"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="283,5,466,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ae89c95f45fe94d1a710c9ec0122588c0" title=" " alt="" coords="281,70,468,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a595c6da2b6aeb503e6f3aa53f457bbcf" title=" " alt="" coords="281,149,468,203"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a03c3af9e737371a8525d3d782034e448" title=" " alt="" coords="281,227,468,282"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1quadrature.html#a4055047cd59f3629fccc4f6f96771664" title="Perform ." alt="" coords="313,307,436,347"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="516,299,703,354"/>
+</map>

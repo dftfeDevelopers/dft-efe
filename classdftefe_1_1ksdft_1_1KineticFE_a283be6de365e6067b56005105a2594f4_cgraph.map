@@ -1,0 +1,7 @@
+<map id="dftefe::ksdft::KineticFE::getLocal" name="dftefe::ksdft::KineticFE::getLocal">
+<area shape="rect" id="node1" title=" " alt="" coords="5,77,157,117"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#af58774813fa90108d8daef1b7ea9dbf8" title=" " alt="" coords="227,13,366,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="205,77,388,117"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ab6dc2f530a90b36a9308fcdf17104362" title="Returns the dimension of the Vector." alt="" coords="205,141,388,181"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#af8d3647666ae296dc39ec28ae32f198f" title="Template for performing &#160;alpha &#160;z = \alpha x$." alt="" coords="436,5,639,60"/>
+</map>

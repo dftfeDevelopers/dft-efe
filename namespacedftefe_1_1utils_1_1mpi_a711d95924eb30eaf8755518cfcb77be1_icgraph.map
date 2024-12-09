@@ -1,0 +1,9 @@
+<map id="dftefe::utils::mpi::MPICommSize" name="dftefe::utils::mpi::MPICommSize">
+<area shape="rect" id="node1" title=" " alt="" coords="304,196,419,236"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1AtomIdsPartition.html#a32a305c44565e2831c3443d99fa93235" title="Constructor takes as coordinates of the atomids from the input file with the processor maximum and mi..." alt="" coords="33,5,228,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a2d62098984754ec665070ae8cdb31073" title="This Constructor for augmenting the orthogonalized EFE basis with classical FE basis...." alt="" coords="5,70,256,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEBasisDofHandlerDealii.html#afce8bf0e70495a0912b39bcbcce4988e" title=" " alt="" coords="15,149,247,203"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1EFEBasisDofHandlerDealii.html#accc9d8e90da807c7066e83432b618b21" title=" " alt="" coords="15,227,247,282"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1mpi_1_1MPIRequestersNBX.html#afbe778d80adc72dbd157c6ac861ca0c3" title=" " alt="" coords="55,306,207,361"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#abe1c7b1dacd4cd250dafbcc30796beb9" title="Constructor for creating a subdivided quadrature rule in each cell based user&#45;defined functions and a..." alt="" coords="44,385,217,439"/>
+</map>

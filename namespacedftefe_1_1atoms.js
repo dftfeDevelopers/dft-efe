@@ -1,0 +1,48 @@
+var namespacedftefe_1_1atoms =
+[
+    [ "AtomSphericalDataXMLLocal", "namespacedftefe_1_1atoms_1_1AtomSphericalDataXMLLocal.html", "namespacedftefe_1_1atoms_1_1AtomSphericalDataXMLLocal" ],
+    [ "AtomSphericalElectronicDataXMLLocal", "namespacedftefe_1_1atoms_1_1AtomSphericalElectronicDataXMLLocal.html", "namespacedftefe_1_1atoms_1_1AtomSphericalElectronicDataXMLLocal" ],
+    [ "BoostAutoDiffInternal", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html", [
+      [ "Clm", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#a1ff7e81e4044af622f3e032ef8adef53", null ],
+      [ "cutOff", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#ae8c08b3d8214d6e2afff7bc2cd8677fb", null ],
+      [ "Dm", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#ab57d81709b39f2f6564580e91db1c369", null ],
+      [ "f", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#a605aa4777f235fe7945711b3dbe236ee", null ],
+      [ "legendre", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#a1741bd8240d75b336862af3b399b27a4", null ],
+      [ "radVal", "namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#ac706bd044c239fc3e4d0271adb657143", null ]
+    ] ],
+    [ "SphericalDataInternal", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html", [
+      [ "getGradientValueAnalytical", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html#acbaac620e12a97f558e6caf7a058eaa5", null ],
+      [ "getGradientValueAutoDiff", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html#a11c7acb7333244577b92dff3844f35ba", null ],
+      [ "getHessianValueAnalytical", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html#a121a672caacc942c317c0fb70cece497", null ],
+      [ "getHessianValueAutoDiff", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html#ae4282b060c114282509c551221941a95", null ],
+      [ "getValueAnalytical", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html#afe08e4e56ca29785c91631ab750ee688", null ],
+      [ "getValueAutoDiff", "namespacedftefe_1_1atoms_1_1SphericalDataInternal.html#a517184b99aeb87dd3c3e29ec705092ad", null ]
+    ] ],
+    [ "AtomSevereFunction", "classdftefe_1_1atoms_1_1AtomSevereFunction.html", "classdftefe_1_1atoms_1_1AtomSevereFunction" ],
+    [ "OverlappingAtomIds", "classdftefe_1_1atoms_1_1OverlappingAtomIds.html", "classdftefe_1_1atoms_1_1OverlappingAtomIds" ],
+    [ "SphericalData", "classdftefe_1_1atoms_1_1SphericalData.html", "classdftefe_1_1atoms_1_1SphericalData" ],
+    [ "SphericalDataDefaults", "classdftefe_1_1atoms_1_1SphericalDataDefaults.html", "classdftefe_1_1atoms_1_1SphericalDataDefaults" ],
+    [ "SphericalDataNumerical", "classdftefe_1_1atoms_1_1SphericalDataNumerical.html", "classdftefe_1_1atoms_1_1SphericalDataNumerical" ],
+    [ "Blm", "namespacedftefe_1_1atoms.html#a67a8b5592cba668aec92678937c8e9f4", null ],
+    [ "Clm", "namespacedftefe_1_1atoms.html#ae8f6bc6d3cbd7c355eb88cd8a200384c", null ],
+    [ "convertCartesianToSpherical", "namespacedftefe_1_1atoms.html#a10e68e3a6733ce20059d8a62a546f333", null ],
+    [ "d2PlmDTheta2", "namespacedftefe_1_1atoms.html#a8b0379ea54a5989a5872a6a7087715ce", null ],
+    [ "Dm", "namespacedftefe_1_1atoms.html#ab0b97e34a0e648afa5dff8c410654794", null ],
+    [ "dPlmDTheta", "namespacedftefe_1_1atoms.html#aec18ca293721a0762c38d893b66c5bb0", null ],
+    [ "dQmDPhi", "namespacedftefe_1_1atoms.html#ada4a7b2f4ba377279f93998f5747fc91", null ],
+    [ "f1", "namespacedftefe_1_1atoms.html#a795e193f13426e628c31cffe2ed92a71", null ],
+    [ "f1Der", "namespacedftefe_1_1atoms.html#ae11b40f880ab22e8959c2c7db68f6a8d", null ],
+    [ "f2", "namespacedftefe_1_1atoms.html#a2a031cbae57c4941cf0f36ff9bb5ff9f", null ],
+    [ "f2Der", "namespacedftefe_1_1atoms.html#a9ea3880e7ade73452c12600df9b0a0dc", null ],
+    [ "getGradientValueBoostAutoDiff", "namespacedftefe_1_1atoms.html#acebc45117d8dbd84a7c521e98c40289c", null ],
+    [ "getHessianValueBoostAutoDiff", "namespacedftefe_1_1atoms.html#ac98ed30e2178d7c85d2b0800faeafe29", null ],
+    [ "getOverlappingAtomIdsWithinBox", "namespacedftefe_1_1atoms.html#aaef4fd356f34c5b9f110fc607a37f684", null ],
+    [ "getValueBoostAutoDiff", "namespacedftefe_1_1atoms.html#a17aaf30cd1331f8c73a48afdab6836b9", null ],
+    [ "Plm", "namespacedftefe_1_1atoms.html#aee805f8eb58aff262e85ca4d08249c1c", null ],
+    [ "Qm", "namespacedftefe_1_1atoms.html#ae8d3bc656184deb85c92e80d0d5c9237", null ],
+    [ "Rlm", "namespacedftefe_1_1atoms.html#a5f1c219308c953333a737948394c1366", null ],
+    [ "smoothCutoffDerivative", "namespacedftefe_1_1atoms.html#a63b6615b10c4eaf32731a54359568d6b", null ],
+    [ "smoothCutoffValue", "namespacedftefe_1_1atoms.html#abdfd1d23f06f751369627f67cb437ea9", null ],
+    [ "Y", "namespacedftefe_1_1atoms.html#af8efc88eeb1e55f032a207c4b8281cc9", null ],
+    [ "YDer", "namespacedftefe_1_1atoms.html#a8d08702871edc7b409408f889ab25e52", null ]
+];
