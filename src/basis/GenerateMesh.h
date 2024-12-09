@@ -106,6 +106,12 @@ namespace dftefe
         std::map<size_type, size_type> &cellIdToCellRefineFlagMapLocal,
         const basis::CellMappingBase &  cellMapping);
 
+      bool
+      refineInsideSystemNonPeriodicAlgorithm(
+        TriangulationBase &  triangulation,
+        std::vector<double> &maxAtomCoordinates,
+        std::vector<double> &minAtomCoordinates);
+
       bool                             d_adaptiveWithFineMesh;
       size_type                        d_dim;
       double                           d_radiusAtAtom;

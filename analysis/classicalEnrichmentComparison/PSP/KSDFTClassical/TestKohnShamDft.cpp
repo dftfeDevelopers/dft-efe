@@ -372,7 +372,7 @@ void getVLoc(
             r += std::pow((point[i] - d_atomCoordinatesVec[atomId][i]),2);
           r = std::sqrt(r);
           retValue += (r <= d_radialLastValVec[atomId]) ? 
-            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
         }
       return retValue;
     }
@@ -390,7 +390,7 @@ void getVLoc(
               r += std::pow((points[i][j] - d_atomCoordinatesVec[atomId][j]),2);
             r = std::sqrt(r);
             ret[i] = ret[i] +  (r <= d_radialLastValVec[atomId]) ? 
-              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
           }
         }
       return ret;
@@ -783,7 +783,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
-                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);
+                                                      ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      numWantedEigenvalues);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;

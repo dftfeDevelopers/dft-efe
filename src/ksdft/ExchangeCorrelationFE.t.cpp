@@ -32,14 +32,15 @@ namespace dftefe
   {
     namespace ExchangeCorrelationFEInternal
     {
+      /* Assumption : field and rho have numComponents = 1 */
       template <typename ValueTypeBasisData,
                 typename ValueTypeBasisCoeff,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
-      std::vector<typename ExchangeCorrelationFE<ValueTypeBasisData,
-                                                 ValueTypeBasisCoeff,
-                                                 memorySpace,
-                                                 dim>::RealType>
+      typename ExchangeCorrelationFE<ValueTypeBasisData,
+                                     ValueTypeBasisCoeff,
+                                     memorySpace,
+                                     dim>::RealType
       getIntegralFieldTimesRho(
         const quadrature::QuadratureValuesContainer<
           typename ExchangeCorrelationFE<ValueTypeBasisData,
@@ -54,7 +55,6 @@ namespace dftefe
                                          dim>::RealType,
           memorySpace> &                                             rho,
         const utils::MemoryStorage<ValueTypeBasisData, memorySpace> &jxwStorage,
-        size_type numLocallyOwnedCells,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -64,113 +64,65 @@ namespace dftefe
                                                         memorySpace,
                                                         dim>::RealType;
 
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> fieldxrho(
-          field);
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          fieldxrhoxJxW(field);
+        RealType        value                = 0;
+        const RealType *fieldIter            = field.begin();
+        const RealType *rhoIter              = rho.begin();
+        const RealType *jxwStorageIter       = jxwStorage.data();
+        size_type       cumulativeQuadInCell = 0;
 
-        linearAlgebra::blasLapack::
-          hadamardProduct<RealType, RealType, memorySpace>(
-            field.nEntries(),
-            field.begin(),
-            rho.begin(),
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            fieldxrho.begin(),
-            *linAlgOpContext);
-
-        std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-          numLocallyOwnedCells, linearAlgebra::blasLapack::ScalarOp::Identity);
-        std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-          numLocallyOwnedCells, linearAlgebra::blasLapack::ScalarOp::Identity);
-        std::vector<size_type> mTmp(numLocallyOwnedCells, 0);
-        std::vector<size_type> nTmp(numLocallyOwnedCells, 0);
-        std::vector<size_type> kTmp(numLocallyOwnedCells, 0);
-        std::vector<size_type> stATmp(numLocallyOwnedCells, 0);
-        std::vector<size_type> stBTmp(numLocallyOwnedCells, 0);
-        std::vector<size_type> stCTmp(numLocallyOwnedCells, 0);
-
-        for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+        for (size_type iCell = 0; iCell < field.nCells(); iCell++)
           {
-            mTmp[iCell] = 1;
-            nTmp[iCell] = fieldxrho.getNumberComponents();
-            kTmp[iCell] =
-              fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
-                iCell);
-            stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
-            stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
-            stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
-          }
-
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-          memoryTransferHost;
-
-        utils::MemoryStorage<size_type, memorySpace> mSize(
-          numLocallyOwnedCells);
-        utils::MemoryStorage<size_type, memorySpace> nSize(
-          numLocallyOwnedCells);
-        utils::MemoryStorage<size_type, memorySpace> kSize(
-          numLocallyOwnedCells);
-        utils::MemoryStorage<size_type, memorySpace> stA(numLocallyOwnedCells);
-        utils::MemoryStorage<size_type, memorySpace> stB(numLocallyOwnedCells);
-        utils::MemoryStorage<size_type, memorySpace> stC(numLocallyOwnedCells);
-        memoryTransferHost.copy(numLocallyOwnedCells,
-                                mSize.data(),
-                                mTmp.data());
-        memoryTransferHost.copy(numLocallyOwnedCells,
-                                nSize.data(),
-                                nTmp.data());
-        memoryTransferHost.copy(numLocallyOwnedCells,
-                                kSize.data(),
-                                kTmp.data());
-        memoryTransferHost.copy(numLocallyOwnedCells,
-                                stA.data(),
-                                stATmp.data());
-        memoryTransferHost.copy(numLocallyOwnedCells,
-                                stB.data(),
-                                stBTmp.data());
-        memoryTransferHost.copy(numLocallyOwnedCells,
-                                stC.data(),
-                                stCTmp.data());
-
-        linearAlgebra::blasLapack::
-          scaleStridedVarBatched<ValueTypeBasisData, RealType, memorySpace>(
-            numLocallyOwnedCells,
-            scalarOpA.data(),
-            scalarOpB.data(),
-            stA.data(),
-            stB.data(),
-            stC.data(),
-            mSize.data(),
-            nSize.data(),
-            kSize.data(),
-            jxwStorage.data(),
-            fieldxrho.begin(),
-            fieldxrhoxJxW.begin(),
-            *linAlgOpContext);
-
-        std::vector<RealType> value(fieldxrho.getNumberComponents());
-
-        for (size_type iCell = 0; iCell < fieldxrhoxJxW.nCells(); iCell++)
-          {
-            for (size_type iComp = 0; iComp < fieldxrho.getNumberComponents();
-                 iComp++)
+            size_type numQuadInCell = field.nCellQuadraturePoints(iCell);
+            for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
               {
-                std::vector<RealType> a(
-                  fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
-                    iCell));
-                fieldxrhoxJxW
-                  .template getCellQuadValues<utils::MemorySpace::HOST>(
-                    iCell, iComp, a.data());
-                value[iComp] +=
-                  std::accumulate(a.begin(), a.end(), (RealType)0);
+                const RealType jxwVal =
+                  jxwStorageIter[cumulativeQuadInCell + iQuad];
+                const RealType fieldVal =
+                  fieldIter[cumulativeQuadInCell + iQuad];
+                const RealType rhoVal = rhoIter[cumulativeQuadInCell + iQuad];
+                value += rhoVal * fieldVal * jxwVal;
               }
+            cumulativeQuadInCell += numQuadInCell;
           }
+
+        // quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        // fieldxrho(
+        //   field);
+
+        // linearAlgebra::blasLapack::
+        //   hadamardProduct<RealType, RealType, memorySpace>(
+        //     field.nEntries(),
+        //     field.begin(),
+        //     rho.begin(),
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     fieldxrho.begin(),
+        //     *linAlgOpContext);
+
+        // linearAlgebra::blasLapack::
+        //   hadamardProduct<RealType, RealType, memorySpace>(
+        //     fieldxrho.nEntries(),
+        //     fieldxrho.begin(),
+        //     jxwStorage.data(),
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     fieldxrho.begin(),
+        //     *linAlgOpContext);
+
+        // for (size_type iCell = 0; iCell < fieldxrho.nCells(); iCell++)
+        //   {
+        //     std::vector<RealType> a(
+        //       fieldxrho.getQuadratureRuleContainer()->nCellQuadraturePoints(
+        //         iCell));
+        //     fieldxrho.template getCellValues<utils::MemorySpace::HOST>(
+        //       iCell, a.data());
+        //     value += std::accumulate(a.begin(), a.end(), (RealType)0);
+        //   }
 
         int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           utils::mpi::MPIInPlace,
-          value.data(),
-          value.size(),
+          &value,
+          1,
           utils::mpi::Types<RealType>::getMPIDatatype(),
           utils::mpi::MPISum,
           comm);
@@ -330,18 +282,19 @@ namespace dftefe
       int count = 0;
       for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
         {
-          std::vector<RealType> a(
-            electronChargeDensity.getQuadratureRuleContainer()
-              ->nCellQuadraturePoints(iCell));
-          for (auto &i : a)
+          for (int quadId = 0;
+               quadId < electronChargeDensity.getQuadratureRuleContainer()
+                          ->nCellQuadraturePoints(iCell);
+               quadId++)
             {
-              i = *(vxRho.data() + count) + *(vcRho.data() + count);
-              count++;
+              RealType  a = *(vxRho.data() + count) + *(vcRho.data() + count);
+              RealType *b = &a;
+              d_xcPotentialQuad
+                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                       quadId,
+                                                                       b);
+              count += 1;
             }
-          d_xcPotentialQuad
-            ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                   0,
-                                                                   a.data());
         }
     }
 
@@ -376,9 +329,6 @@ namespace dftefe
     {
       auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
 
-      const size_type numLocallyOwnedCells =
-        d_feBasisDofHandler->nLocallyOwnedCells();
-
       size_type lenRho = d_electronChargeDensity->getQuadratureRuleContainer()
                            ->nQuadraturePoints();
 
@@ -392,21 +342,23 @@ namespace dftefe
       for (size_type iCell = 0; iCell < d_electronChargeDensity->nCells();
            iCell++)
         {
-          std::vector<RealType> a(
-            d_electronChargeDensity->getQuadratureRuleContainer()
-              ->nCellQuadraturePoints(iCell));
-          for (auto &i : a)
+          size_type quadId = 0;
+          for (int quadId = 0;
+               quadId < d_electronChargeDensity->getQuadratureRuleContainer()
+                          ->nCellQuadraturePoints(iCell);
+               quadId++)
             {
-              i = *(exRho.data() + count) + *(ecRho.data() + count);
-              count++;
+              RealType  a = *(exRho.data() + count) + *(ecRho.data() + count);
+              RealType *b = &a;
+              d_xcPotentialQuad
+                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                       quadId,
+                                                                       b);
+              count += 1;
             }
-          d_xcPotentialQuad
-            ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                   0,
-                                                                   a.data());
         }
 
-      std::vector<RealType> totalEnergyVec =
+      RealType totalEnergy =
         ExchangeCorrelationFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
@@ -414,11 +366,10 @@ namespace dftefe
           dim>(*d_xcPotentialQuad,
                *d_electronChargeDensity,
                jxwStorage,
-               numLocallyOwnedCells,
                d_linAlgOpContext,
                comm);
 
-      d_energy = totalEnergyVec[0];
+      d_energy = totalEnergy;
     }
 
     template <typename ValueTypeBasisData,

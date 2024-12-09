@@ -222,12 +222,11 @@ namespace dftefe
     void
     QuadratureValuesContainer<ValueType, memorySpace>::setCellQuadValues(
       const size_type  cellId,
-      const size_type  componentId,
+      const size_type  quadId,
       const ValueType *values)
     {
-      size_type size = nCellQuadraturePoints(cellId);
-      size_type offset =
-        cellStartId(cellId) + componentId * nCellQuadraturePoints(cellId);
+      size_type size   = d_numberComponents;
+      size_type offset = cellStartId(cellId) + quadId * d_numberComponents;
       d_storage.template copyFrom<memorySpaceSrc>(values, size, 0, offset);
     }
 
@@ -248,12 +247,11 @@ namespace dftefe
     void
     QuadratureValuesContainer<ValueType, memorySpace>::getCellQuadValues(
       const size_type cellId,
-      const size_type componentId,
+      const size_type quadId,
       ValueType *     values) const
     {
-      size_type size = nCellQuadraturePoints(cellId);
-      size_type offset =
-        cellStartId(cellId) + componentId * nCellQuadraturePoints(cellId);
+      size_type size   = d_numberComponents;
+      size_type offset = cellStartId(cellId) + quadId * d_numberComponents;
       d_storage.template copyTo<memorySpaceDst>(values, size, offset, 0);
     }
 

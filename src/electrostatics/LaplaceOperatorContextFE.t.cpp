@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo, Avirup Sircar
  */
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -280,10 +280,14 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_feBasisDataStorage(feBasisDataStorage)
+      , d_maxFieldBlock(maxFieldBlock)
+      , d_maxCellBlock(maxCellBlock)
+      , d_isGradNiNjPreCalculated(false)
     {
       utils::throwException(
         &(feBasisManagerX.getBasisDofHandler()) ==
@@ -296,11 +300,10 @@ namespace dftefe
         "feBasisManager of X and Y vectors and feBasisDataStorage are not from the same basisDofHandler");
 
       // TODO: ------------------Change later------------------------
-      const size_type cellBlockSize = d_maxCellTimesNumVecs;
 
       basis::
         FEBasisOperations<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          feBasisOp(feBasisDataStorage, cellBlockSize);
+          feBasisOp(feBasisDataStorage, maxCellBlock);
 
       const size_type numLocallyOwnedCells =
         d_feBasisManagerX->nLocallyOwnedCells();
@@ -312,17 +315,80 @@ namespace dftefe
           cellWiseDataSize += x * x;
         }
 
-      d_gradNiGradNjInAllCells.resize(cellWiseDataSize, (ValueTypeOperator)0);
+      d_gradNiGradNjInAllCells =
+        std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          cellWiseDataSize, (ValueTypeOperator)0);
 
       feBasisOp.computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
                                   basis::realspace::VectorMathOp::DOT,
                                   basis::realspace::LinearLocalOp::GRAD,
-                                  d_gradNiGradNjInAllCells,
+                                  *d_gradNiGradNjInAllCells,
                                   *linAlgOpContext);
+    }
 
-      // access cell-wise discrete Laplace operator
-      // auto d_gradNiGradNjInAllCells =
-      //   feBasisDataStorage->getBasisGradNiGradNjInAllCells();
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    LaplaceOperatorContextFE<ValueTypeOperator,
+                             ValueTypeOperand,
+                             memorySpace,
+                             dim>::
+      LaplaceOperatorContextFE(
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerX,
+        const basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
+            &feBasisManagerY,
+        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+                        gradNiGradNjInAllCells,
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
+      : d_feBasisManagerX(&feBasisManagerX)
+      , d_feBasisManagerY(&feBasisManagerY)
+      , d_feBasisDataStorage(nullptr)
+      , d_maxFieldBlock(maxFieldBlock)
+      , d_gradNiGradNjInAllCells(gradNiGradNjInAllCells)
+      , d_maxCellBlock(maxCellBlock)
+      , d_isGradNiNjPreCalculated(true)
+    {
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    LaplaceOperatorContextFE<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::reinit(const basis::FEBasisManager<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim> &feBasisManagerX,
+                   const basis::FEBasisManager<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim> &feBasisManagerY)
+    {
+      d_feBasisManagerX = &feBasisManagerX;
+      d_feBasisManagerY = &feBasisManagerY;
+      utils::throwException(
+        &(feBasisManagerX.getBasisDofHandler()) ==
+          &(feBasisManagerY.getBasisDofHandler()),
+        "feBasisManager of X and Y vectors are not from same basisDofhandler");
+
+      if (!d_isGradNiNjPreCalculated)
+        utils::throwException(
+          &(feBasisManagerX.getBasisDofHandler()) ==
+            (d_feBasisDataStorage->getBasisDofHandler()).get(),
+          "feBasisManager of X and Y vectors and feBasisDataStorage are not from the same basisDofHandler");
     }
 
     template <typename ValueTypeOperator,
@@ -372,7 +438,8 @@ namespace dftefe
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+      const size_type cellBlockSize =
+        (d_maxCellBlock * d_maxFieldBlock) / numVecs;
       Y.setValue(0.0);
 
       //
@@ -380,7 +447,7 @@ namespace dftefe
       // (A = discrete Laplace operator)
       //
       LaplaceOperatorContextFEInternal::computeAxCellWiseLocal(
-        d_gradNiGradNjInAllCells,
+        *d_gradNiGradNjInAllCells,
         X.begin(),
         Y.begin(),
         numVecs,
@@ -399,6 +466,19 @@ namespace dftefe
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
       Y.updateGhostValues();
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+    LaplaceOperatorContextFE<ValueTypeOperator,
+                             ValueTypeOperand,
+                             memorySpace,
+                             dim>::getBasisGradNiGradNjInAllCells() const
+    {
+      return d_gradNiGradNjInAllCells;
     }
 
   } // end of namespace electrostatics

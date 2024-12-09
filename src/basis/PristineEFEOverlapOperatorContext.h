@@ -86,7 +86,7 @@ namespace dftefe
        * @tparam feBasisDataStorage Same FEBasisDataStorage object for getting the basisvalues
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
-       * @tparam maxCellTimesNumVecs cell times number of vectors
+       * @tparam maxCellBlock cell block size, maxFieldBlock field block size
        */
       PristineEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -99,7 +99,8 @@ namespace dftefe
                              dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
@@ -111,7 +112,7 @@ namespace dftefe
        * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
-       * @tparam maxCellTimesNumVecs cell times number of vectors
+       * @tparam maxCellBlock cell block size, maxFieldBlock field block size
        */
       PristineEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -126,7 +127,8 @@ namespace dftefe
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             efeBasisDataStorage,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock);
 
       /**
        * @brief Apply AX = B where A is the discretized matrix, X is the operand and B is the result.
@@ -163,7 +165,8 @@ namespace dftefe
       std::shared_ptr<Storage>   d_basisOverlap;
       std::vector<size_type>     d_cellStartIdsBasisOverlap;
       std::vector<size_type>     d_dofsInCell;
-      const size_type            d_maxCellTimesNumVecs;
+      const size_type            d_maxCellBlock;
+      const size_type            d_maxFieldBlock;
     }; // end of class PristineEFEOverlapOperatorContext
   }    // end of namespace basis
 } // end of namespace dftefe

@@ -62,8 +62,7 @@ namespace dftefe
                                           memorySpace,
                                           dim> &MContext,
           std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                          linAlgOpContext,
-          const size_type maxCellTimesNumVecs)
+            linAlgOpContext)
           : d_feBasisManager(&feBasisManager)
           , d_linAlgOpContext(linAlgOpContext)
           , d_AxContext(&MContext)
@@ -177,7 +176,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueType, memorySpace> d_b;
         linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
 
-      }; // end of class PoissonLinearSolverFunctionFE
+      }; // end of class
 
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
@@ -189,7 +188,8 @@ namespace dftefe
           &classicalGLLBasisDataStorage,
         std::shared_ptr<
           const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>> cfeBDH,
-        utils::MemoryStorage<ValueTypeOperator, memorySpace> &NiNjInAllCells)
+        utils::MemoryStorage<ValueTypeOperator, memorySpace> &NiNjInAllCells,
+        linearAlgebra::LinAlgOpContext<memorySpace> &         linAlgOpContext)
       {
         // Set up the overlap matrix quadrature storages.
 
@@ -219,14 +219,12 @@ namespace dftefe
         NiNjInAllCells.resize(basisOverlapSize, ValueTypeOperator(0));
         basisOverlapTmp.resize(basisOverlapSize, ValueTypeOperator(0));
 
-        auto      basisOverlapTmpIter = basisOverlapTmp.begin();
-        size_type cellIndex           = 0;
+        // auto      basisOverlapTmpIter = basisOverlapTmp.begin();
+        size_type cellIndex = 0;
 
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &basisDataInAllCellsClassicalBlock =
-            classicalGLLBasisDataStorage.getBasisDataInAllCells();
-
-        size_type cumulativeEnrichmentBlockDofQuadPointsOffset = 0;
+        // const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        //   &basisDataInAllCellsClassicalBlock =
+        //     classicalGLLBasisDataStorage.getBasisDataInAllCells();
 
         locallyOwnedCellIter = cfeBDH->beginLocallyOwnedCells();
         for (; locallyOwnedCellIter != cfeBDH->endLocallyOwnedCells();
@@ -240,29 +238,80 @@ namespace dftefe
               classicalGLLBasisDataStorage.getQuadratureRuleContainer()
                 ->getCellJxW(cellIndex);
 
-            const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
-              basisDataInAllCellsClassicalBlock.data(); /*GLL Quad rule*/
+            const utils::MemoryStorage<ValueTypeOperator, memorySpace> &
+              basisDataInCell = classicalGLLBasisDataStorage.getBasisDataInCell(
+                cellIndex); /*GLL Quad rule*/
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
-              {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
-                  {
-                    *basisOverlapTmpIter = 0.0;
-                    // Ni_classical* Ni_classical of the classicalBlockBasisData
-                    for (unsigned int qPoint = 0;
-                         qPoint < nQuadPointInCellClassicalBlock;
-                         qPoint++)
-                      {
-                        *basisOverlapTmpIter +=
-                          *(cumulativeClassicalBlockDofQuadPoints +
-                            nQuadPointInCellClassicalBlock * iNode + qPoint) *
-                          *(cumulativeClassicalBlockDofQuadPoints +
-                            nQuadPointInCellClassicalBlock * jNode + qPoint) *
-                          cellJxWValuesClassicalBlock[qPoint];
-                      }
-                    basisOverlapTmpIter++;
-                  }
-              }
+            std::vector<ValueTypeOperator> JxWxNCellConj(
+              dofsPerCell * nQuadPointInCellClassicalBlock);
+
+            size_type stride = 0;
+            size_type m = 1, n = dofsPerCell,
+                      k = nQuadPointInCellClassicalBlock;
+
+            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+                                                              ValueTypeOperator,
+                                                              memorySpace>(
+              1,
+              linearAlgebra::blasLapack::Layout::ColMajor,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
+              linearAlgebra::blasLapack::ScalarOp::Conj,
+              &stride,
+              &stride,
+              &stride,
+              &m,
+              &n,
+              &k,
+              cellJxWValuesClassicalBlock.data(),
+              basisDataInCell.data(),
+              JxWxNCellConj.data(),
+              linAlgOpContext);
+
+            linearAlgebra::blasLapack::
+              gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
+                linearAlgebra::blasLapack::Layout::ColMajor,
+                linearAlgebra::blasLapack::Op::NoTrans,
+                linearAlgebra::blasLapack::Op::Trans,
+                dofsPerCell,
+                dofsPerCell,
+                nQuadPointInCellClassicalBlock,
+                (ValueTypeOperand)1.0,
+                JxWxNCellConj.data(),
+                dofsPerCell,
+                basisDataInCell.data(),
+                dofsPerCell,
+                (ValueTypeOperand)0.0,
+                basisOverlapTmp.data() + cumulativeBasisOverlapId,
+                dofsPerCell,
+                linAlgOpContext);
+
+            // const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
+            //   basisDataInAllCellsClassicalBlock.data(); /*GLL Quad rule*/
+
+            // for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            //   {
+            //     for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+            //       {
+            //         *basisOverlapTmpIter = 0.0;
+            //         // Ni_classical* Ni_classical of the
+            //         classicalBlockBasisData for (unsigned int qPoint = 0;
+            //              qPoint < nQuadPointInCellClassicalBlock;
+            //              qPoint++)
+            //           {
+            //             *basisOverlapTmpIter +=
+            //               *(cumulativeClassicalBlockDofQuadPoints +
+            //                 dofsPerCell * qPoint + iNode
+            //                 /*nQuadPointInCellClassicalBlock * iNode +
+            //                 qPoint*/) *
+            //               *(cumulativeClassicalBlockDofQuadPoints +
+            //                 dofsPerCell * qPoint + jNode
+            //                 /*nQuadPointInCellClassicalBlock * jNode +
+            //                 qPoint*/) *
+            //               cellJxWValuesClassicalBlock[qPoint];
+            //           }
+            //         basisOverlapTmpIter++;
+            //       }
+            //   }
 
             cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
             cellIndex++;
@@ -337,7 +386,10 @@ namespace dftefe
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
-        dim>(classicalGLLBasisDataStorage, cfeBDH, NiNjInAllCells);
+        dim>(classicalGLLBasisDataStorage,
+             cfeBDH,
+             NiNjInAllCells,
+             *linAlgOpContext);
 
       // auto NiNjInAllCells =
       //   classicalGLLBasisDataStorage.getBasisOverlapInAllCells();
@@ -419,7 +471,7 @@ namespace dftefe
                                                          ValueTypeOperand,
                                                          memorySpace,
                                                          dim>>(
-            *d_feBasisManager, MContext, linAlgOpContext, 50);
+            *d_feBasisManager, MContext, linAlgOpContext);
 
           linearAlgebra::LinearAlgebraProfiler profiler;
 

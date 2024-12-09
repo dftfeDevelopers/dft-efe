@@ -90,7 +90,7 @@ namespace dftefe
        * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
-       * @tparam maxCellTimesNumVecs cell times number of vectors
+       * @tparam maxCellBlock cell block size, maxFieldBlock field block size
        */
       OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -103,8 +103,11 @@ namespace dftefe
           &enrichmentBlockEnrichmentBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockClassicalBasisDataStorage,
-        const size_type maxCellTimesNumVecs,
-        const bool      calculateWings = true);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                   linAlgOpContext,
+        const bool calculateWings = true);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
@@ -116,7 +119,7 @@ namespace dftefe
        * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
-       * @tparam maxCellTimesNumVecs cell times number of vectors
+       * @tparam maxCellBlock cell block size, maxFieldBlock field block size
        */
       OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -127,7 +130,8 @@ namespace dftefe
           &classicalBlockBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             enrichmentBlockBasisDataStorage,
-        const size_type maxCellTimesNumVecs,
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock,
         const bool      calculateWings = true);
 
       /**
@@ -140,7 +144,7 @@ namespace dftefe
        * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
-       * @tparam maxCellTimesNumVecs cell times number of vectors
+       * @tparam maxCellBlock cell block size, maxFieldBlock field block size
        */
       OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -164,7 +168,7 @@ namespace dftefe
        * @tparam efeBasisDataStorage Enrichment FEBasisDataStorage object for getting the basisvalues of the enrichment dofs
        * @tparam constraintsX Constraints for X
        * @tparam constraintsY Constraints for Y
-       * @tparam maxCellTimesNumVecs cell times number of vectors
+       * @tparam maxCellBlock cell block size, maxFieldBlock field block size
        */
       OrthoEFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -211,7 +215,8 @@ namespace dftefe
       std::shared_ptr<Storage>   d_basisOverlap;
       std::vector<size_type>     d_cellStartIdsBasisOverlap;
       std::vector<size_type>     d_dofsInCell;
-      const size_type            d_maxCellTimesNumVecs;
+      const size_type            d_maxCellBlock;
+      const size_type            d_maxFieldBlock;
 
       bool d_isMassLumping;
       std::shared_ptr<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>

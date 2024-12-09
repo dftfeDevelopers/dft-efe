@@ -65,9 +65,10 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize);
+        const size_type maxCellBlock,
+        const size_type waveFuncBatchSize);
 
-      ~KineticFE() = default;
+      ~KineticFE();
 
       void
       reinit(std::shared_ptr<
@@ -83,8 +84,7 @@ namespace dftefe
                                              memorySpace,
                                              dim> &             feBMPsi,
                  const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                  memorySpace> &waveFunc,
-                 const size_type waveFuncBatchSize);
+                                                  memorySpace> &waveFunc);
       RealType
       getEnergy() const override;
 
@@ -98,9 +98,10 @@ namespace dftefe
                                                dim>>
                       d_feBasisOp;
       RealType        d_energy;
-      const size_type d_cellBlockSize;
+      const size_type d_maxCellBlock, d_waveFuncBatchSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace> *d_gradPsi;
 
     }; // end of class KineticFE
   }    // end of namespace ksdft

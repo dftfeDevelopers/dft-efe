@@ -422,7 +422,7 @@ void getVLoc(
             r += std::pow((point[i] - d_atomCoordinatesVec[atomId][i]),2);
           r = std::sqrt(r);
           retValue += (r <= d_radialLastValVec[atomId]) ? 
-            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
         }
       return retValue;
     }
@@ -440,7 +440,7 @@ void getVLoc(
               r += std::pow((points[i][j] - d_atomCoordinatesVec[atomId][j]),2);
             r = std::sqrt(r);
             ret[i] = ret[i] +  (r <= d_radialLastValVec[atomId]) ? 
-              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
           }
         }
       return ret;
@@ -1111,7 +1111,8 @@ int main(int argc, char** argv)
                                                       *cfeBasisDataStorageAdaptiveOrbital,
                                                       *efeBasisDataAdaptiveOrbital,
                                                       *cfeBasisDataStorageAdaptiveOrbital,
-                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      numWantedEigenvalues,
                                                       true); 
 
     // add device synchronize for gpu

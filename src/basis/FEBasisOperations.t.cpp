@@ -137,7 +137,6 @@ namespace dftefe
               sameQuadRuleInAllCells && (!variableDofsPerCell);
             linearAlgebra::blasLapack::Layout layout =
               linearAlgebra::blasLapack::Layout::ColMajor;
-            size_type NStartOffset     = 0;
             size_type NifNjStartOffset = 0;
 
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
@@ -156,6 +155,11 @@ namespace dftefe
                           numCellQuad.begin() + cellEndId,
                           numCellsInBlockQuad.begin());
 
+                const size_type numCumulativeQuadCellsInBlock =
+                  std::accumulate(numCellsInBlockQuad.begin(),
+                                  numCellsInBlockQuad.end(),
+                                  0);
+
                 size_type numCumulativeQuadxDofsCellsInBlock = 0;
                 size_type numCumulativeDofsxDofsCellsInBlock = 0;
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
@@ -172,14 +176,48 @@ namespace dftefe
 
                 // variableStridedBlockScale
 
-                StorageUnion fxNConjBlock(numCumulativeQuadxDofsCellsInBlock,
-                                          ValueTypeUnion());
+                /** --- Storages --------- **/
+                StorageUnion fxJxW(1 /*numComponents of f*/ *
+                                     numCumulativeQuadCellsInBlock,
+                                   ValueTypeUnion());
+                StorageUnion fxJxWxNConjBlock(
+                  numCumulativeQuadxDofsCellsInBlock, ValueTypeUnion());
+                StorageBasis basisDataInCellRange(0);
+                if (!zeroStrideBasisVal)
+                  basisDataInCellRange.resize(
+                    numCumulativeQuadxDofsCellsInBlock, ValueTypeBasisData());
+                else
+                  basisDataInCellRange.resize(numCellsInBlockQuad[0] *
+                                                numCellsInBlockDofs[0],
+                                              ValueTypeBasisData());
+                /** --- Storages --------- **/
 
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-                  numCellsInBlock,
-                  linearAlgebra::blasLapack::ScalarOp::Identity);
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-                  numCellsInBlock, linearAlgebra::blasLapack::ScalarOp::Conj);
+                /*--------- Compute fxJxW -----------------*/
+                // TransposedKhatriRao product for inp and JxW
+                size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+                for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+                  {
+                    linearAlgebra::blasLapack::khatriRaoProduct(
+                      layout,
+                      1,
+                      1,
+                      numCellsInBlockQuad[iCell],
+                      jxwStorage.data() +
+                        quadRuleContainer->getCellQuadStartId(cellStartId) +
+                        cumulativeA,
+                      f.begin(cellStartId) + cumulativeB,
+                      fxJxW.data() + cumulativeC,
+                      linAlgOpContext);
+                    cumulativeA += numCellsInBlockQuad[iCell];
+                    cumulativeB += numCellsInBlockQuad[iCell];
+                    cumulativeC += numCellsInBlockQuad[iCell];
+                  }
+
+                /*--------- Compute fxJxWxNConj -----------------*/
+                linearAlgebra::blasLapack::ScalarOp scalarOpA =
+                  linearAlgebra::blasLapack::ScalarOp::Identity;
+                linearAlgebra::blasLapack::ScalarOp scalarOpB =
+                  linearAlgebra::blasLapack::ScalarOp::Conj;
                 std::vector<size_type> mTmp(numCellsInBlock, 0);
                 std::vector<size_type> nTmp(numCellsInBlock, 0);
                 std::vector<size_type> kTmp(numCellsInBlock, 0);
@@ -189,7 +227,7 @@ namespace dftefe
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    mTmp[iCell]   = 1;
+                    mTmp[iCell]   = 1; // only for fxJxW numComponents = 1
                     nTmp[iCell]   = numCellsInBlockDofs[iCell];
                     kTmp[iCell]   = numCellsInBlockQuad[iCell];
                     stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
@@ -217,78 +255,32 @@ namespace dftefe
                 memoryTransfer.copy(numCellsInBlock, stB.data(), stBTmp.data());
                 memoryTransfer.copy(numCellsInBlock, stC.data(), stCTmp.data());
 
+                feBasisDataStorage->getBasisDataInCellRange(
+                  std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+
                 linearAlgebra::blasLapack::scaleStridedVarBatched<
                   ValueTypeBasisCoeff,
                   ValueTypeBasisData,
-                  memorySpace>(
-                  numCellsInBlock,
-                  scalarOpA.data(),
-                  scalarOpB.data(),
-                  stA.data(),
-                  stB.data(),
-                  stC.data(),
-                  mSize.data(),
-                  nSize.data(),
-                  kSize.data(),
-                  f.begin(cellStartId),
-                  (feBasisDataStorage->getBasisDataInAllCells()).begin() +
-                    NStartOffset,
-                  fxNConjBlock.data(),
-                  linAlgOpContext);
+                  memorySpace>(numCellsInBlock,
+                               layout,
+                               scalarOpA,
+                               scalarOpB,
+                               stA.data(),
+                               stB.data(),
+                               stC.data(),
+                               mSize.data(),
+                               nSize.data(),
+                               kSize.data(),
+                               fxJxW.data(),
+                               basisDataInCellRange.data(),
+                               fxJxWxNConjBlock.data(),
+                               linAlgOpContext);
 
-                /*
-                size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
-                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-                  {
-                    linearAlgebra::blasLapack::transposedKhatriRaoProduct(linearAlgebra::blasLapack::Layout::ColMajor,
-                                                                          1,
-                                                                          numCellsInBlockDofs[iCell],
-                                                                          numCellsInBlockQuad[iCell],
-                                                                          f.data()
-                + cumulativeA, (feBasisDataStorage->getBasisDataInAllCells()).
-                                                                            data()
-                + NStartOffset + cumulativeB, fxNConjBlock.data() + cumulativeC,
-                                                                          linAlgOpContext);
-                    cumulativeA += numCellsInBlockQuad[iCell];
-                    if(!zeroStrideBasisVal)
-                      cumulativeB += numCellsInBlockQuad[iCell] *
-                numCellsInBlockDofs[iCell]; cumulativeC +=
-                numCellsInBlockDofs[iCell] * numCellsInBlockQuad[iCell];
-                  }
-                */
-
-                StorageBasis JxWxNBlock(numCumulativeQuadxDofsCellsInBlock,
-                                        ValueTypeBasisData());
-
-                std::fill(scalarOpB.begin(),
-                          scalarOpB.end(),
-                          linearAlgebra::blasLapack::ScalarOp::Identity);
-
-                /* Other params from previous declarations*/
-                linearAlgebra::blasLapack::scaleStridedVarBatched<
-                  ValueTypeBasisData,
-                  ValueTypeBasisData,
-                  memorySpace>(
-                  numCellsInBlock,
-                  scalarOpA.data(),
-                  scalarOpB.data(),
-                  stA.data(),
-                  stB.data(),
-                  stC.data(),
-                  mSize.data(),
-                  nSize.data(),
-                  kSize.data(),
-                  jxwStorage.data() +
-                    quadRuleContainer->getCellQuadStartId(cellStartId),
-                  (feBasisDataStorage->getBasisDataInAllCells()).begin() +
-                    NStartOffset,
-                  JxWxNBlock.data(),
-                  linAlgOpContext);
-
+                /*--------- Do the integration -----------------*/
                 std::vector<linearAlgebra::blasLapack::Op> transA(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
-                std::vector<linearAlgebra::blasLapack::Op> transB(
                   numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+                std::vector<linearAlgebra::blasLapack::Op> transB(
+                  numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -304,12 +296,13 @@ namespace dftefe
                     mSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
                     nSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
                     kSizesTmp[iCell]   = numCellsInBlockQuad[iCell];
-                    ldaSizesTmp[iCell] = kSizesTmp[iCell];
-                    ldbSizesTmp[iCell] = kSizesTmp[iCell];
+                    ldaSizesTmp[iCell] = mSizesTmp[iCell];
+                    ldbSizesTmp[iCell] = nSizesTmp[iCell];
                     ldcSizesTmp[iCell] = mSizesTmp[iCell];
-                    strideATmp[iCell]  = mSizesTmp[iCell] * kSizesTmp[iCell];
-                    strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
-                    strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell];
+                    if (!zeroStrideBasisVal)
+                      strideATmp[iCell] = mSizesTmp[iCell] * kSizesTmp[iCell];
+                    strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
+                    strideCTmp[iCell] = mSizesTmp[iCell] * nSizesTmp[iCell];
                   }
 
                 utils::MemoryStorage<size_type, memorySpace> mSizes(
@@ -376,19 +369,15 @@ namespace dftefe
                                nSizes.data(),
                                kSizes.data(),
                                alpha,
-                               JxWxNBlock.data(),
+                               basisDataInCellRange.data(),
                                ldaSizes.data(),
-                               fxNConjBlock.data(),
+                               fxJxWxNConjBlock.data(),
                                ldbSizes.data(),
                                beta,
                                C,
                                ldcSizes.data(),
                                linAlgOpContext);
 
-                if (!zeroStrideBasisVal)
-                  {
-                    NStartOffset += numCumulativeQuadxDofsCellsInBlock;
-                  }
                 NifNjStartOffset += numCumulativeDofsxDofsCellsInBlock;
               }
           }
@@ -467,7 +456,7 @@ namespace dftefe
 
             linearAlgebra::blasLapack::Layout layout =
               linearAlgebra::blasLapack::Layout::ColMajor;
-            size_type GradNStartOffset        = 0;
+            // size_type GradNStartOffset        = 0;
             size_type gradNigradNjStartOffset = 0;
 
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
@@ -496,6 +485,7 @@ namespace dftefe
                       numCellsInBlockDofs[iCell] * numCellsInBlockDofs[iCell];
                   }
 
+                /** --- Storages --------- **/
                 StorageBasis gradNigradNjBlockVec(
                   dim * numCumulativeDofsxDofsCellsInBlock,
                   (ValueTypeBasisData)0);
@@ -504,12 +494,19 @@ namespace dftefe
                                               dim,
                                             ValueTypeBasisData());
 
+                StorageBasis basisGradientDataInCellRange(
+                  numCumulativeQuadxDofsCellsInBlock * dim,
+                  ValueTypeBasisData());
 
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-                  numCellsInBlock,
-                  linearAlgebra::blasLapack::ScalarOp::Identity);
-                std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-                  numCellsInBlock, linearAlgebra::blasLapack::ScalarOp::Conj);
+                feBasisDataStorage->getBasisGradientDataInCellRange(
+                  std::make_pair(cellStartId, cellEndId),
+                  basisGradientDataInCellRange);
+                /** --- Storages --------- */
+
+                linearAlgebra::blasLapack::ScalarOp scalarOpA =
+                  linearAlgebra::blasLapack::ScalarOp::Identity;
+                linearAlgebra::blasLapack::ScalarOp scalarOpB =
+                  linearAlgebra::blasLapack::ScalarOp::Conj;
                 std::vector<size_type> mTmp(numCellsInBlock, 0);
                 std::vector<size_type> nTmp(numCellsInBlock, 0);
                 std::vector<size_type> kTmp(numCellsInBlock, 0);
@@ -551,8 +548,9 @@ namespace dftefe
                   ValueTypeBasisData,
                   memorySpace>(
                   numCellsInBlock,
-                  scalarOpA.data(),
-                  scalarOpB.data(),
+                  layout,
+                  scalarOpA,
+                  scalarOpB,
                   stA.data(),
                   stB.data(),
                   stC.data(),
@@ -561,9 +559,10 @@ namespace dftefe
                   kSize.data(),
                   jxwStorage.data() +
                     quadRuleContainer->getCellQuadStartId(cellStartId),
-                  (feBasisDataStorage->getBasisGradientDataInAllCells())
-                      .begin() +
-                    GradNStartOffset,
+                  basisGradientDataInCellRange.data(),
+                  // (feBasisDataStorage->getBasisGradientDataInAllCells())
+                  //     .begin() +
+                  //   GradNStartOffset,
                   JxWxGradNBlock.data(),
                   linAlgOpContext);
                 /*
@@ -590,80 +589,76 @@ namespace dftefe
                       }
       */
                 std::vector<linearAlgebra::blasLapack::Op> transA(
-                  numCellsInBlock * dim, linearAlgebra::blasLapack::Op::Trans);
+                  numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
                 std::vector<linearAlgebra::blasLapack::Op> transB(
-                  numCellsInBlock * dim,
-                  linearAlgebra::blasLapack::Op::NoTrans);
-                std::vector<size_type> mSizesTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> nSizesTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> kSizesTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> ldaSizesTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> ldbSizesTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> ldcSizesTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> strideATmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> strideBTmp(numCellsInBlock * dim, 0);
-                std::vector<size_type> strideCTmp(numCellsInBlock * dim, 0);
+                  numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+                std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
+                std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
+                std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
+                std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
+                std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
+                std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
+                std::vector<size_type> strideATmp(numCellsInBlock, 0);
+                std::vector<size_type> strideBTmp(numCellsInBlock, 0);
+                std::vector<size_type> strideCTmp(numCellsInBlock, 0);
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    for (size_type iDim = 0; iDim < dim; iDim++)
-                      {
-                        size_type index    = iCell * dim + iDim;
-                        mSizesTmp[index]   = numCellsInBlockDofs[iCell];
-                        nSizesTmp[index]   = numCellsInBlockDofs[iCell];
-                        kSizesTmp[index]   = numCellsInBlockQuad[iCell];
-                        ldaSizesTmp[index] = kSizesTmp[index];
-                        ldbSizesTmp[index] = kSizesTmp[index];
-                        ldcSizesTmp[index] = mSizesTmp[index];
-                        strideATmp[index] = mSizesTmp[index] * kSizesTmp[index];
-                        strideBTmp[index] = kSizesTmp[index] * nSizesTmp[index];
-                        strideCTmp[index] = mSizesTmp[index] * nSizesTmp[index];
-                      }
+                    size_type index    = iCell;
+                    mSizesTmp[index]   = numCellsInBlockDofs[iCell];
+                    nSizesTmp[index]   = numCellsInBlockDofs[iCell];
+                    kSizesTmp[index]   = numCellsInBlockQuad[iCell] * dim;
+                    ldaSizesTmp[index] = mSizesTmp[index];
+                    ldbSizesTmp[index] = nSizesTmp[index];
+                    ldcSizesTmp[index] = mSizesTmp[index];
+                    strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
+                    strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
+                    strideCTmp[index]  = mSizesTmp[index] * nSizesTmp[index];
                   }
 
                 utils::MemoryStorage<size_type, memorySpace> mSizes(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> nSizes(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> kSizes(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> strideA(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> strideB(
-                  numCellsInBlock * dim);
+                  numCellsInBlock);
                 utils::MemoryStorage<size_type, memorySpace> strideC(
-                  numCellsInBlock * dim);
-                memoryTransfer.copy(numCellsInBlock * dim,
+                  numCellsInBlock);
+                memoryTransfer.copy(numCellsInBlock,
                                     mSizes.data(),
                                     mSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     nSizes.data(),
                                     nSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     kSizes.data(),
                                     kSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     ldaSizes.data(),
                                     ldaSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     ldbSizes.data(),
                                     ldbSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     ldcSizes.data(),
                                     ldcSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     strideA.data(),
                                     strideATmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     strideB.data(),
                                     strideBTmp.data());
-                memoryTransfer.copy(numCellsInBlock * dim,
+                memoryTransfer.copy(numCellsInBlock,
                                     strideC.data(),
                                     strideCTmp.data());
 
@@ -672,107 +667,14 @@ namespace dftefe
 
 
                 const ValueTypeBasisData *GradN =
-                  (feBasisDataStorage->getBasisGradientDataInAllCells())
-                    .begin() +
-                  GradNStartOffset;
-
-                linearAlgebra::blasLapack::gemmStridedVarBatched<
-                  ValueTypeBasisData,
-                  ValueTypeBasisData,
-                  memorySpace>(layout,
-                               numCellsInBlock * dim,
-                               transA.data(),
-                               transB.data(),
-                               strideA.data(),
-                               strideB.data(),
-                               strideC.data(),
-                               mSizes.data(),
-                               nSizes.data(),
-                               kSizes.data(),
-                               alpha,
-                               JxWxGradNBlock.data(),
-                               ldaSizes.data(),
-                               GradN,
-                               ldbSizes.data(),
-                               beta,
-                               gradNigradNjBlockVec.data(),
-                               ldcSizes.data(),
-                               linAlgOpContext);
-
-                StorageBasis u(dim, (ValueTypeBasisData)1.0);
-
-
-                transA.resize(numCellsInBlock);
-                std::fill(transA.begin(),
-                          transA.end(),
-                          linearAlgebra::blasLapack::Op::Trans);
-                transB.resize(numCellsInBlock);
-                std::fill(transB.begin(),
-                          transB.end(),
-                          linearAlgebra::blasLapack::Op::Trans);
-                mSizesTmp.resize(numCellsInBlock);
-                nSizesTmp.resize(numCellsInBlock);
-                kSizesTmp.resize(numCellsInBlock);
-                ldaSizesTmp.resize(numCellsInBlock);
-                ldbSizesTmp.resize(numCellsInBlock);
-                ldcSizesTmp.resize(numCellsInBlock);
-                strideATmp.resize(numCellsInBlock);
-                strideBTmp.resize(numCellsInBlock);
-                strideCTmp.resize(numCellsInBlock);
-
-                for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-                  {
-                    mSizesTmp[iCell] = 1;
-                    nSizesTmp[iCell] =
-                      numCellsInBlockDofs[iCell] * numCellsInBlockDofs[iCell];
-                    kSizesTmp[iCell]   = dim;
-                    ldaSizesTmp[iCell] = kSizesTmp[iCell];
-                    ldbSizesTmp[iCell] = nSizesTmp[iCell];
-                    ldcSizesTmp[iCell] = mSizesTmp[iCell];
-                    strideATmp[iCell]  = 0;
-                    strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell];
-                    strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
-                  }
-
-                mSizes.resize(numCellsInBlock);
-                nSizes.resize(numCellsInBlock);
-                kSizes.resize(numCellsInBlock);
-                ldaSizes.resize(numCellsInBlock);
-                ldbSizes.resize(numCellsInBlock);
-                ldcSizes.resize(numCellsInBlock);
-                strideA.resize(numCellsInBlock);
-                strideB.resize(numCellsInBlock);
-                strideC.resize(numCellsInBlock);
-                memoryTransfer.copy(numCellsInBlock,
-                                    mSizes.data(),
-                                    mSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    nSizes.data(),
-                                    nSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    kSizes.data(),
-                                    kSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldaSizes.data(),
-                                    ldaSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldbSizes.data(),
-                                    ldbSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldcSizes.data(),
-                                    ldcSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideA.data(),
-                                    strideATmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideB.data(),
-                                    strideBTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideC.data(),
-                                    strideCTmp.data());
+                  basisGradientDataInCellRange.data();
+                // (feBasisDataStorage->getBasisGradientDataInAllCells())
+                //   .begin() +
+                // GradNStartOffset;
 
                 ValueTypeBasisData *C =
                   cellWiseFEData.begin() + gradNigradNjStartOffset;
+
                 linearAlgebra::blasLapack::gemmStridedVarBatched<
                   ValueTypeBasisData,
                   ValueTypeBasisData,
@@ -787,14 +689,112 @@ namespace dftefe
                                nSizes.data(),
                                kSizes.data(),
                                alpha,
-                               u.data(),
+                               JxWxGradNBlock.data(),
                                ldaSizes.data(),
-                               gradNigradNjBlockVec.data(),
+                               GradN,
                                ldbSizes.data(),
                                beta,
                                C,
                                ldcSizes.data(),
                                linAlgOpContext);
+
+                // StorageBasis u(dim, (ValueTypeBasisData)1.0);
+
+
+                // transA.resize(numCellsInBlock);
+                // std::fill(transA.begin(),
+                //           transA.end(),
+                //           linearAlgebra::blasLapack::Op::Trans);
+                // transB.resize(numCellsInBlock);
+                // std::fill(transB.begin(),
+                //           transB.end(),
+                //           linearAlgebra::blasLapack::Op::Trans);
+                // mSizesTmp.resize(numCellsInBlock);
+                // nSizesTmp.resize(numCellsInBlock);
+                // kSizesTmp.resize(numCellsInBlock);
+                // ldaSizesTmp.resize(numCellsInBlock);
+                // ldbSizesTmp.resize(numCellsInBlock);
+                // ldcSizesTmp.resize(numCellsInBlock);
+                // strideATmp.resize(numCellsInBlock);
+                // strideBTmp.resize(numCellsInBlock);
+                // strideCTmp.resize(numCellsInBlock);
+
+                // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+                //   {
+                //     mSizesTmp[iCell] = 1;
+                //     nSizesTmp[iCell] =
+                //       numCellsInBlockDofs[iCell] *
+                //       numCellsInBlockDofs[iCell];
+                //     kSizesTmp[iCell]   = dim;
+                //     ldaSizesTmp[iCell] = kSizesTmp[iCell];
+                //     ldbSizesTmp[iCell] = nSizesTmp[iCell];
+                //     ldcSizesTmp[iCell] = mSizesTmp[iCell];
+                //     strideATmp[iCell]  = 0;
+                //     strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell];
+                //     strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
+                //   }
+
+                // mSizes.resize(numCellsInBlock);
+                // nSizes.resize(numCellsInBlock);
+                // kSizes.resize(numCellsInBlock);
+                // ldaSizes.resize(numCellsInBlock);
+                // ldbSizes.resize(numCellsInBlock);
+                // ldcSizes.resize(numCellsInBlock);
+                // strideA.resize(numCellsInBlock);
+                // strideB.resize(numCellsInBlock);
+                // strideC.resize(numCellsInBlock);
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     mSizes.data(),
+                //                     mSizesTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     nSizes.data(),
+                //                     nSizesTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     kSizes.data(),
+                //                     kSizesTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     ldaSizes.data(),
+                //                     ldaSizesTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     ldbSizes.data(),
+                //                     ldbSizesTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     ldcSizes.data(),
+                //                     ldcSizesTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     strideA.data(),
+                //                     strideATmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     strideB.data(),
+                //                     strideBTmp.data());
+                // memoryTransfer.copy(numCellsInBlock,
+                //                     strideC.data(),
+                //                     strideCTmp.data());
+
+                // ValueTypeBasisData *C =
+                //   cellWiseFEData.begin() + gradNigradNjStartOffset;
+                // linearAlgebra::blasLapack::gemmStridedVarBatched<
+                //   ValueTypeBasisData,
+                //   ValueTypeBasisData,
+                //   memorySpace>(layout,
+                //                numCellsInBlock,
+                //                transA.data(),
+                //                transB.data(),
+                //                strideA.data(),
+                //                strideB.data(),
+                //                strideC.data(),
+                //                mSizes.data(),
+                //                nSizes.data(),
+                //                kSizes.data(),
+                //                alpha,
+                //                u.data(),
+                //                ldaSizes.data(),
+                //                gradNigradNjBlockVec.data(),
+                //                ldbSizes.data(),
+                //                beta,
+                //                C,
+                //                ldcSizes.data(),
+                //                linAlgOpContext);
 
 
                 /*
@@ -850,7 +850,7 @@ namespace dftefe
                    }
                    */
 
-                GradNStartOffset += numCumulativeQuadxDofsCellsInBlock * dim;
+                // GradNStartOffset += numCumulativeQuadxDofsCellsInBlock * dim;
                 gradNigradNjStartOffset += numCumulativeDofsxDofsCellsInBlock;
               }
           }
@@ -878,8 +878,10 @@ namespace dftefe
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
                         basisDataStorage,
-        const size_type maxCellTimesFieldBlock)
-      : d_maxCellTimesFieldBlock(maxCellTimesFieldBlock)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
+      : d_maxCellBlock(0)
+      , d_maxFieldBlock(0)
     {
       d_feBasisDataStorage = std::dynamic_pointer_cast<
         const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>(
@@ -887,6 +889,7 @@ namespace dftefe
       utils::throwException(
         d_feBasisDataStorage != nullptr,
         "Could not cast BasisDataStorage to FEBasisDataStorage in the constructor of FEBasisOperations");
+      reinit(maxCellBlock, maxFieldBlock);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -897,9 +900,11 @@ namespace dftefe
     FEBasisOperations<ValueTypeBasisCoeff,
                       ValueTypeBasisData,
                       memorySpace,
-                      dim>::reinit(const size_type maxCellTimesFieldBlock)
+                      dim>::reinit(const size_type maxCellBlock,
+                                   const size_type maxFieldBlock)
     {
-      d_maxCellTimesFieldBlock = maxCellTimesFieldBlock;
+      d_maxCellBlock  = maxCellBlock;
+      d_maxFieldBlock = maxFieldBlock;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -982,6 +987,10 @@ namespace dftefe
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         numCellDofs[iCell] = feBasisManager.nLocallyOwnedCellDofs(iCell);
 
+      std::vector<size_type> numCellQuad(numLocallyOwnedCells, 0);
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+        numCellQuad[iCell] = quadValuesContainer.nCellQuadraturePoints(iCell);
+
       //
       // reinit the quadValuesContainer
       //
@@ -1029,13 +1038,13 @@ namespace dftefe
       // data), we use the transpose of Be matrix. That is, we perform Ce =
       // Ae*(Be)^T, with Be stored in row major format
       //
-      const bool zeroStrideA = sameQuadRuleInAllCells && (!variableDofsPerCell);
+      const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
-      size_type       cellLocalIdsOffset = 0;
-      size_type       AStartOffset       = 0;
-      size_type       CStartOffset       = 0;
-      const size_type cellBlockSize = d_maxCellTimesFieldBlock / numComponents;
+      size_type cellLocalIdsOffset = 0;
+      // size_type       AStartOffset       = 0;
+      size_type       CStartOffset  = 0;
+      const size_type cellBlockSize = d_maxCellBlock;
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)
         {
@@ -1051,8 +1060,26 @@ namespace dftefe
             std::accumulate(numCellsInBlockDofs.begin(),
                             numCellsInBlockDofs.end(),
                             0);
+
+          /** --- Storages --------- **/
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
+
+          size_type numCumulativeQuadxDofsCellsInBlock = 0;
+          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+            {
+              numCumulativeQuadxDofsCellsInBlock +=
+                numCellQuad[iCell + cellStartId] *
+                numCellDofs[iCell + cellStartId];
+            }
+          StorageBasis basisDataInCellRange(0);
+          if (!zeroStrideB)
+            basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
+                                        ValueTypeBasisData());
+          else
+            basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
+                                        ValueTypeBasisData());
+          /** --- Storages --------- **/
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
@@ -1072,7 +1099,7 @@ namespace dftefe
           std::vector<linearAlgebra::blasLapack::Op> transA(
             numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1086,17 +1113,17 @@ namespace dftefe
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
-              mSizesTmp[iCell] =
+              mSizesTmp[iCell]       = numComponents;
+              nSizesTmp[iCell] =
                 quadValuesContainer.nCellQuadraturePoints(cellId);
-              nSizesTmp[iCell]   = numComponents;
               kSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
               ldaSizesTmp[iCell] = mSizesTmp[iCell];
-              ldbSizesTmp[iCell] = nSizesTmp[iCell];
+              ldbSizesTmp[iCell] = kSizesTmp[iCell];
               ldcSizesTmp[iCell] = mSizesTmp[iCell];
-              strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell];
-              strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
-              if (!zeroStrideA)
-                strideATmp[iCell] = mSizesTmp[iCell] * kSizesTmp[iCell];
+              if (!zeroStrideB)
+                strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
+              strideCTmp[iCell] = mSizesTmp[iCell] * nSizesTmp[iCell];
+              strideATmp[iCell] = mSizesTmp[iCell] * kSizesTmp[iCell];
             }
 
           utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
@@ -1138,9 +1165,13 @@ namespace dftefe
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             *(vectorData.getLinAlgOpContext().get());
 
-          const ValueTypeBasisData *A =
-            (d_feBasisDataStorage->getBasisDataInAllCells()).data() +
-            AStartOffset;
+          d_feBasisDataStorage->getBasisDataInCellRange(
+            std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+
+          // const ValueTypeBasisData *A = basisDataInCellRange.data();
+          // const ValueTypeBasisData *A =
+          //   (d_feBasisDataStorage->getBasisDataInAllCells()).data() +
+          //   AStartOffset;
 
           ValueTypeUnion *C = quadValuesContainer.begin() + CStartOffset;
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
@@ -1157,9 +1188,9 @@ namespace dftefe
             nSizes.data(),
             kSizes.data(),
             alpha,
-            A,
-            ldaSizes.data(),
             fieldCellValues.data(),
+            ldaSizes.data(),
+            basisDataInCellRange.data(),
             ldbSizes.data(),
             beta,
             C,
@@ -1169,10 +1200,10 @@ namespace dftefe
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
-              if (!zeroStrideA)
-                {
-                  AStartOffset += mSizesTmp[iCell] * kSizesTmp[iCell];
-                }
+              // if (!zeroStrideB)
+              //   {
+              //     AStartOffset += mSizesTmp[iCell] * kSizesTmp[iCell];
+              //   }
               CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
@@ -1284,10 +1315,10 @@ namespace dftefe
 
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
-      size_type       cellLocalIdsOffset = 0;
-      size_type       AStartOffset       = 0;
-      size_type       CStartOffset       = 0;
-      const size_type cellBlockSize = d_maxCellTimesFieldBlock / numComponents;
+      size_type cellLocalIdsOffset = 0;
+      // size_type       AStartOffset       = 0;
+      size_type       CStartOffset  = 0;
+      const size_type cellBlockSize = d_maxCellBlock;
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)
         {
@@ -1303,8 +1334,22 @@ namespace dftefe
             std::accumulate(numCellsInBlockDofs.begin(),
                             numCellsInBlockDofs.end(),
                             0);
+
+          /** --- Storages --------- **/
           utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
             fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
+
+          size_type numCumulativeQuadxDofsCellsInBlock = 0;
+          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+            {
+              numCumulativeQuadxDofsCellsInBlock +=
+                numCellQuad[iCell + cellStartId] *
+                numCellDofs[iCell + cellStartId];
+            }
+
+          StorageBasis basisGradientDataInCellRange(
+            numCumulativeQuadxDofsCellsInBlock * dim, ValueTypeBasisData());
+          /** --- Storages --------- **/
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
@@ -1321,86 +1366,67 @@ namespace dftefe
                                     numCellsInBlockDofsMemSpace,
                                     fieldCellValues);
 
-          size_type numCellsInBlockDim = numCellsInBlock * dim;
           std::vector<linearAlgebra::blasLapack::Op> transA(
-            numCellsInBlockDim, linearAlgebra::blasLapack::Op::NoTrans);
+            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
           std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlockDim, linearAlgebra::blasLapack::Op::Trans);
-          std::vector<size_type> mSizesTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> nSizesTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> kSizesTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> ldaSizesTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> ldbSizesTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> ldcSizesTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> strideATmp(numCellsInBlockDim, 0);
-          std::vector<size_type> strideBTmp(numCellsInBlockDim, 0);
-          std::vector<size_type> strideCTmp(numCellsInBlockDim, 0);
+            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+          std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
+          std::vector<size_type> strideATmp(numCellsInBlock, 0);
+          std::vector<size_type> strideBTmp(numCellsInBlock, 0);
+          std::vector<size_type> strideCTmp(numCellsInBlock, 0);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
-              for (size_type iDim = 0; iDim < dim; iDim++)
-                {
-                  size_type index = iCell * dim + iDim;
-                  mSizesTmp[index] =
-                    quadValuesContainer.nCellQuadraturePoints(cellId);
-                  nSizesTmp[index]   = numComponents;
-                  kSizesTmp[index]   = numCellsInBlockDofs[iCell];
-                  ldaSizesTmp[index] = mSizesTmp[index];
-                  ldbSizesTmp[index] = nSizesTmp[index];
-                  ldcSizesTmp[index] = mSizesTmp[index];
-                  strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
-                  strideCTmp[index]  = mSizesTmp[index] * nSizesTmp[index];
-                  if (iDim == dim - 1)
-                    strideBTmp[index] = kSizesTmp[index] * nSizesTmp[index];
-                  else
-                    strideBTmp[index] = 0;
-                }
+              size_type       index  = iCell;
+              mSizesTmp[index]       = numComponents;
+              nSizesTmp[index] =
+                quadValuesContainer.nCellQuadraturePoints(cellId) * dim;
+              kSizesTmp[index]   = numCellsInBlockDofs[iCell];
+              ldaSizesTmp[index] = mSizesTmp[index];
+              ldbSizesTmp[index] = kSizesTmp[index];
+              ldcSizesTmp[index] = mSizesTmp[index];
+              strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
+              strideCTmp[index]  = mSizesTmp[index] * nSizesTmp[index];
+              strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
             }
 
-          utils::MemoryStorage<size_type, memorySpace> mSizes(
-            numCellsInBlockDim);
-          utils::MemoryStorage<size_type, memorySpace> nSizes(
-            numCellsInBlockDim);
-          utils::MemoryStorage<size_type, memorySpace> kSizes(
-            numCellsInBlockDim);
+          utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
           utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-            numCellsInBlockDim);
+            numCellsInBlock);
           utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-            numCellsInBlockDim);
+            numCellsInBlock);
           utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-            numCellsInBlockDim);
-          utils::MemoryStorage<size_type, memorySpace> strideA(
-            numCellsInBlockDim);
-          utils::MemoryStorage<size_type, memorySpace> strideB(
-            numCellsInBlockDim);
-          utils::MemoryStorage<size_type, memorySpace> strideC(
-            numCellsInBlockDim);
-          memoryTransfer.copy(numCellsInBlockDim,
-                              mSizes.data(),
-                              mSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
-                              nSizes.data(),
-                              nSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
-                              kSizes.data(),
-                              kSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
+            numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
+          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
+          memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
+          memoryTransfer.copy(numCellsInBlock,
                               ldaSizes.data(),
                               ldaSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
+          memoryTransfer.copy(numCellsInBlock,
                               ldbSizes.data(),
                               ldbSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
+          memoryTransfer.copy(numCellsInBlock,
                               ldcSizes.data(),
                               ldcSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
+          memoryTransfer.copy(numCellsInBlock,
                               strideA.data(),
                               strideATmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
+          memoryTransfer.copy(numCellsInBlock,
                               strideB.data(),
                               strideBTmp.data());
-          memoryTransfer.copy(numCellsInBlockDim,
+          memoryTransfer.copy(numCellsInBlock,
                               strideC.data(),
                               strideCTmp.data());
 
@@ -1409,16 +1435,20 @@ namespace dftefe
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             *(vectorData.getLinAlgOpContext().get());
 
-          const ValueTypeBasisData *A =
-            (d_feBasisDataStorage->getBasisGradientDataInAllCells()).data() +
-            AStartOffset;
+          d_feBasisDataStorage->getBasisGradientDataInCellRange(
+            std::make_pair(cellStartId, cellEndId),
+            basisGradientDataInCellRange);
+
+          // const ValueTypeBasisData *A = basisGradientDataInCellRange.data();
+          // (d_feBasisDataStorage->getBasisGradientDataInAllCells()).data() +
+          // AStartOffset;
 
           ValueTypeUnion *C = quadValuesContainer.begin() + CStartOffset;
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
             layout,
-            numCellsInBlockDim,
+            numCellsInBlock,
             transA.data(),
             transB.data(),
             strideA.data(),
@@ -1428,9 +1458,9 @@ namespace dftefe
             nSizes.data(),
             kSizes.data(),
             alpha,
-            A,
-            ldaSizes.data(),
             fieldCellValues.data(),
+            ldaSizes.data(),
+            basisGradientDataInCellRange.data(),
             ldbSizes.data(),
             beta,
             C,
@@ -1439,12 +1469,12 @@ namespace dftefe
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
-              for (size_type iDim = 0; iDim < dim; iDim++)
-                {
-                  size_type index = iCell * dim + iDim;
-                  AStartOffset += mSizesTmp[index] * kSizesTmp[index];
-                  CStartOffset += mSizesTmp[index] * nSizesTmp[index];
-                }
+              // for (size_type iDim = 0; iDim < dim; iDim++)
+              //   {
+              size_type index = iCell; // * dim + iDim;
+              // AStartOffset += mSizesTmp[index] * kSizesTmp[index];
+              CStartOffset += mSizesTmp[index] * nSizesTmp[index];
+              //}
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
         }
@@ -1576,7 +1606,7 @@ namespace dftefe
             BStartOffset[iDim] =
               numCellDofs[0] * quadRuleContainer->nCellQuadraturePoints(0) *
     iDim; size_type       quadValueContainerStartOffset = 0; const size_type
-    cellBlockSize = d_maxCellTimesFieldBlock / numComponents; for (size_type
+    cellBlockSize = d_maxCellBlock; for (size_type
     cellStartId = 0; cellStartId < numLocallyOwnedCells; cellStartId +=
     cellBlockSize)
             {
@@ -1854,10 +1884,11 @@ namespace dftefe
       linearAlgebra::blasLapack::Layout layout =
         linearAlgebra::blasLapack::Layout::ColMajor;
       size_type cellLocalIdsOffset = 0;
-      size_type BStartOffset       = 0;
-      size_type CStartOffset       = 0;
+      // size_type BStartOffset       = 0;
+      size_type CStartOffset = 0;
 
-      const size_type cellBlockSize = d_maxCellTimesFieldBlock / numComponents;
+      vectorData.setValue((ValueTypeBasisCoeff)0);
+      const size_type cellBlockSize = d_maxCellBlock;
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)
         {
@@ -1892,7 +1923,7 @@ namespace dftefe
                             numCellsInBlockQuad.end(),
                             0);
 
-
+          /** --- Storages --------- **/
           utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
             numComponents * numCumulativeQuadCellsInBlock, ValueTypeUnion());
 
@@ -1900,11 +1931,27 @@ namespace dftefe
             outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,
                                   ValueTypeUnion());
 
+          size_type numCumulativeQuadxDofsCellsInBlock = 0;
+          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+            {
+              numCumulativeQuadxDofsCellsInBlock +=
+                numCellQuad[iCell + cellStartId] *
+                numCellDofs[iCell + cellStartId];
+            }
+          StorageBasis basisDataInCellRange(0);
+          if (!zeroStrideB)
+            basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
+                                        ValueTypeBasisData());
+          else
+            basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
+                                        ValueTypeBasisData());
+          /** --- Storages --------- **/
+
           // TransposedKhatriRao product for inp and JxW
           size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
           for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
             {
-              linearAlgebra::blasLapack::transposedKhatriRaoProduct(
+              linearAlgebra::blasLapack::khatriRaoProduct(
                 layout,
                 1,
                 numComponents,
@@ -1935,9 +1982,9 @@ namespace dftefe
 
           // TODO check if these are right ?? Why is the B Transposed
           std::vector<linearAlgebra::blasLapack::Op> transA(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
-          std::vector<linearAlgebra::blasLapack::Op> transB(
             numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+          std::vector<linearAlgebra::blasLapack::Op> transB(
+            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1954,8 +2001,8 @@ namespace dftefe
               mSizesTmp[iCell]       = numComponents;
               nSizesTmp[iCell]       = numCellsInBlockDofs[iCell];
               kSizesTmp[iCell]       = numCellsInBlockQuad[iCell];
-              ldaSizesTmp[iCell]     = kSizesTmp[iCell];
-              ldbSizesTmp[iCell]     = kSizesTmp[iCell];
+              ldaSizesTmp[iCell]     = mSizesTmp[iCell];
+              ldbSizesTmp[iCell]     = nSizesTmp[iCell];
               ldcSizesTmp[iCell]     = mSizesTmp[iCell];
               strideATmp[iCell]      = mSizesTmp[iCell] * kSizesTmp[iCell];
               strideCTmp[iCell]      = mSizesTmp[iCell] * nSizesTmp[iCell];
@@ -2000,9 +2047,12 @@ namespace dftefe
           ValueTypeUnion alpha = 1.0;
           ValueTypeUnion beta  = 0.0;
 
-          const ValueTypeBasisData *B =
-            (d_feBasisDataStorage->getBasisDataInAllCells()).data() +
-            BStartOffset;
+          d_feBasisDataStorage->getBasisDataInCellRange(
+            std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+
+          const ValueTypeBasisData *B = basisDataInCellRange.data();
+          // (d_feBasisDataStorage->getBasisDataInAllCells()).data() +
+          // BStartOffset;
 
           ValueTypeUnion *C = outputFieldCellValues.begin();
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
@@ -2038,10 +2088,10 @@ namespace dftefe
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
-              if (!zeroStrideB)
-                {
-                  BStartOffset += kSizesTmp[iCell] * nSizesTmp[iCell];
-                }
+              // if (!zeroStrideB)
+              //   {
+              //     BStartOffset += kSizesTmp[iCell] * nSizesTmp[iCell];
+              //   }
               CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
@@ -2078,12 +2128,11 @@ namespace dftefe
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const
     {
       utils::throwException(
-        f.getNumberComponents() == 1 || f.getNumberComponents() == dim,
+        f.getNumberComponents() == 1 /*|| f.getNumberComponents() == dim*/,
         "quadValuesContainer f in computeFEMatrices"
         " can be either a scalar field or a vector field in real space with dim components.");
 
-      const size_type cellBlockSize =
-        d_maxCellTimesFieldBlock / f.getNumberComponents();
+      const size_type cellBlockSize = d_maxCellBlock;
       FEBasisOperationsInternal::BasisWeakFormKernelWithField<
         ValueTypeBasisCoeff,
         ValueTypeBasisData,
@@ -2118,14 +2167,13 @@ namespace dftefe
       FEBasisOperationsInternal::BasisWeakFormKernel<ValueTypeBasisCoeff,
                                                      ValueTypeBasisData,
                                                      memorySpace,
-                                                     dim>(
-        L1,
-        Op1,
-        L2,
-        d_feBasisDataStorage,
-        d_maxCellTimesFieldBlock,
-        cellWiseFEData,
-        linAlgOpContext);
+                                                     dim>(L1,
+                                                          Op1,
+                                                          L2,
+                                                          d_feBasisDataStorage,
+                                                          d_maxCellBlock,
+                                                          cellWiseFEData,
+                                                          linAlgOpContext);
     }
 
   } // namespace basis

@@ -40,11 +40,27 @@ namespace dftefe
           feBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize)
-      : d_cellBlockSize(cellBlockSize)
+        const size_type maxCellBlock,
+        const size_type waveFuncBatchSize)
+      : d_maxCellBlock(maxCellBlock)
       , d_linAlgOpContext(linAlgOpContext)
+      , d_waveFuncBatchSize(waveFuncBatchSize)
     {
       reinit(feBasisDataStorage);
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      ~KineticFE()
+    {
+      if (d_gradPsi != nullptr)
+        {
+          delete d_gradPsi;
+          d_gradPsi = nullptr;
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -63,7 +79,12 @@ namespace dftefe
                                                   ValueTypeBasisData,
                                                   memorySpace,
                                                   dim>>(feBasisDataStorage,
-                                                        d_cellBlockSize);
+                                                        d_maxCellBlock);
+
+      d_gradPsi =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          d_feBasisDataStorage->getQuadratureRuleContainer(),
+          d_waveFuncBatchSize * dim);
     }
 
     template <typename ValueTypeBasisData,
@@ -99,10 +120,9 @@ namespace dftefe
                                              memorySpace,
                                              dim> &             feBMPsi,
                  const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                  memorySpace> &waveFunc,
-                 const size_type waveFuncBatchSize)
+                                                  memorySpace> &waveFunc)
     {
-      d_feBasisOp->reinit(d_cellBlockSize * waveFuncBatchSize);
+      d_feBasisOp->reinit(d_maxCellBlock, d_waveFuncBatchSize);
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
 
@@ -111,41 +131,29 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace> psiBatch(
         waveFunc.getMPIPatternP2P(),
         d_linAlgOpContext,
-        waveFuncBatchSize,
+        d_waveFuncBatchSize,
         ValueType());
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace> gradPsi(
-        quadRuleContainer, waveFuncBatchSize * dim);
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        gradPsiModSq(quadRuleContainer, waveFuncBatchSize * dim);
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        gradPsiModSqJxW(quadRuleContainer, waveFuncBatchSize * dim);
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
       for (size_type psiStartId = 0;
            psiStartId < waveFunc.getNumberComponents();
-           psiStartId += waveFuncBatchSize)
+           psiStartId += d_waveFuncBatchSize)
         {
-          const size_type psiEndId = std::min(psiStartId + waveFuncBatchSize,
+          const size_type psiEndId = std::min(psiStartId + d_waveFuncBatchSize,
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
 
-          std::vector<RealType> occupationInBatch(numPsiInBatch, 0);
+          std::vector<RealType> occupationInBatch(numPsiInBatch, (ValueType)0);
+          RealType              energyBatchSum = 0;
 
-          std::copy(occupation.data() + psiStartId,
-                    occupation.data() + psiEndId,
+          std::copy(occupation.begin() + psiStartId,
+                    occupation.begin() + psiEndId,
                     occupationInBatch.begin());
 
-          if (numPsiInBatch < waveFuncBatchSize)
+          if (numPsiInBatch < d_waveFuncBatchSize)
             {
-              gradPsi.reinit(quadRuleContainer, numPsiInBatch * dim);
-
-              gradPsiModSq.reinit(quadRuleContainer, numPsiInBatch * dim);
-
-              gradPsiModSqJxW.reinit(quadRuleContainer, numPsiInBatch * dim);
+              d_gradPsi->reinit(quadRuleContainer, numPsiInBatch * dim);
 
               linearAlgebra::MultiVector<ValueType, memorySpace> psiBatchSmall(
                 waveFunc.getMPIPatternP2P(),
@@ -163,7 +171,7 @@ namespace dftefe
 
               d_feBasisOp->interpolateWithBasisGradient(psiBatchSmall,
                                                         feBMPsi,
-                                                        gradPsi);
+                                                        *d_gradPsi);
             }
           else
             {
@@ -176,137 +184,50 @@ namespace dftefe
 
               d_feBasisOp->interpolateWithBasisGradient(psiBatch,
                                                         feBMPsi,
-                                                        gradPsi);
+                                                        *d_gradPsi);
             }
 
-          linearAlgebra::blasLapack::
-            hadamardProduct<ValueType, ValueType, memorySpace>(
-              gradPsi.nEntries(),
-              gradPsi.begin(),
-              gradPsi.begin(),
-              linearAlgebra::blasLapack::ScalarOp::Conj,
-              linearAlgebra::blasLapack::ScalarOp::Identity,
-              gradPsiModSq.begin(),
-              *d_linAlgOpContext);
+          ValueType *gradPsiIter = d_gradPsi->begin();
 
           auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
+          ValueTypeBasisData *jxwStorageIter    = jxwStorage.data();
+          size_type cumulativeQuadGradPsiInCell = 0, cumulativeQuadInCell = 0;
 
-          const size_type numLocallyOwnedCells = feBMPsi.nLocallyOwnedCells();
-
-          std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpA(
-            numLocallyOwnedCells,
-            linearAlgebra::blasLapack::ScalarOp::Identity);
-          std::vector<linearAlgebra::blasLapack::ScalarOp> scalarOpB(
-            numLocallyOwnedCells,
-            linearAlgebra::blasLapack::ScalarOp::Identity);
-          std::vector<size_type> mTmp(numLocallyOwnedCells, 0);
-          std::vector<size_type> nTmp(numLocallyOwnedCells, 0);
-          std::vector<size_type> kTmp(numLocallyOwnedCells, 0);
-          std::vector<size_type> stATmp(numLocallyOwnedCells, 0);
-          std::vector<size_type> stBTmp(numLocallyOwnedCells, 0);
-          std::vector<size_type> stCTmp(numLocallyOwnedCells, 0);
-
-          for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+          for (size_type iCell = 0; iCell < d_gradPsi->nCells(); iCell++)
             {
-              mTmp[iCell]   = 1;
-              nTmp[iCell]   = numPsiInBatch * dim;
-              kTmp[iCell]   = quadRuleContainer->nCellQuadraturePoints(iCell);
-              stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
-              stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
-              stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
-            }
-
-          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-            memoryTransferHost;
-
-          utils::MemoryStorage<size_type, memorySpace> mSize(
-            numLocallyOwnedCells);
-          utils::MemoryStorage<size_type, memorySpace> nSize(
-            numLocallyOwnedCells);
-          utils::MemoryStorage<size_type, memorySpace> kSize(
-            numLocallyOwnedCells);
-          utils::MemoryStorage<size_type, memorySpace> stA(
-            numLocallyOwnedCells);
-          utils::MemoryStorage<size_type, memorySpace> stB(
-            numLocallyOwnedCells);
-          utils::MemoryStorage<size_type, memorySpace> stC(
-            numLocallyOwnedCells);
-          memoryTransferHost.copy(numLocallyOwnedCells,
-                                  mSize.data(),
-                                  mTmp.data());
-          memoryTransferHost.copy(numLocallyOwnedCells,
-                                  nSize.data(),
-                                  nTmp.data());
-          memoryTransferHost.copy(numLocallyOwnedCells,
-                                  kSize.data(),
-                                  kTmp.data());
-          memoryTransferHost.copy(numLocallyOwnedCells,
-                                  stA.data(),
-                                  stATmp.data());
-          memoryTransferHost.copy(numLocallyOwnedCells,
-                                  stB.data(),
-                                  stBTmp.data());
-          memoryTransferHost.copy(numLocallyOwnedCells,
-                                  stC.data(),
-                                  stCTmp.data());
-
-          linearAlgebra::blasLapack::
-            scaleStridedVarBatched<ValueTypeBasisData, ValueType, memorySpace>(
-              numLocallyOwnedCells,
-              scalarOpA.data(),
-              scalarOpB.data(),
-              stA.data(),
-              stB.data(),
-              stC.data(),
-              mSize.data(),
-              nSize.data(),
-              kSize.data(),
-              jxwStorage.data(),
-              gradPsiModSq.begin(),
-              gradPsiModSqJxW.begin(),
-              *d_linAlgOpContext);
-
-          std::vector<RealType> integralModGradPsiSq(numPsiInBatch),
-            energy(numPsiInBatch);
-
-          for (size_type iCell = 0; iCell < gradPsiModSqJxW.nCells(); iCell++)
-            {
-              for (size_type iDim = 0; iDim < dim; iDim++)
+              size_type numQuadInCell =
+                quadRuleContainer->nCellQuadraturePoints(iCell);
+              for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
                 {
-                  for (size_type iComp = 0; iComp < numPsiInBatch; iComp++)
+                  const ValueTypeBasisData jxwVal =
+                    jxwStorageIter[cumulativeQuadInCell + iQuad];
+                  for (size_type iDim = 0; iDim < dim; iDim++)
                     {
-                      std::vector<ValueType> a(
-                        quadRuleContainer->nCellQuadraturePoints(iCell));
-                      gradPsiModSqJxW
-                        .template getCellQuadValues<utils::MemorySpace::HOST>(
-                          iCell, iDim * numPsiInBatch + iComp, a.data());
-                      integralModGradPsiSq[iComp] +=
-                        (RealType)(utils::realPart<ValueType>(
-                          std::accumulate(a.begin(), a.end(), (ValueType)0)));
+                      for (size_type iComp = 0; iComp < numPsiInBatch; iComp++)
+                        {
+                          const ValueType gradPsiVal =
+                            gradPsiIter[cumulativeQuadGradPsiInCell +
+                                        numPsiInBatch * iQuad * dim +
+                                        iDim * numPsiInBatch + iComp];
+                          energyBatchSum += utils::absSq(gradPsiVal) *
+                                            occupationInBatch[iComp] * jxwVal;
+                        }
                     }
                 }
+              cumulativeQuadGradPsiInCell +=
+                numQuadInCell * numPsiInBatch * dim;
+              cumulativeQuadInCell += numQuadInCell;
             }
 
-          int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
             utils::mpi::MPIInPlace,
-            integralModGradPsiSq.data(),
-            integralModGradPsiSq.size(),
+            &energyBatchSum,
+            1,
             utils::mpi::Types<RealType>::getMPIDatatype(),
             utils::mpi::MPISum,
             waveFunc.getMPIPatternP2P()->mpiCommunicator());
 
-          linearAlgebra::blasLapack::
-            hadamardProduct<RealType, RealType, utils::MemorySpace::HOST>(
-              integralModGradPsiSq.size(),
-              integralModGradPsiSq.data(),
-              occupationInBatch.data(),
-              linearAlgebra::blasLapack::ScalarOp::Identity,
-              linearAlgebra::blasLapack::ScalarOp::Identity,
-              energy.data(),
-              *d_linAlgOpContext);
-
-          d_energy +=
-            std::accumulate(energy.begin(), energy.end(), (RealType)0);
+          d_energy += (RealType)(energyBatchSum);
 
           /*No multiplication by 1/2 due to spin up and down electrons*/
         }

@@ -677,7 +677,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
-                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);
+                                                      ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      numWantedEigenvalues,
+                                                      linAlgOpContext);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -686,23 +688,23 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNucChargeRhs =
     std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
-  feBDTotalChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+  feBDNucChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> 
+    feBDElecChargeRhs = feBDNucChargeRhs;
 
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
-      for (size_type iComp = 0; iComp < 1; iComp++)
-        {
           size_type             quadId = 0;
           std::vector<double> a(
             electronChargeDensity.nCellQuadraturePoints(iCell));
           a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
           double *b = a.data();
           electronChargeDensity.template 
-            setCellQuadValues<Host>(iCell, iComp, b);
-        }
+            setCellValues<Host>(iCell, b);
     }
 
   rootCout << "Entering KohnSham DFT Class....\n\n";
@@ -721,7 +723,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the FE Basis Data Storage
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs = feBDTotalChargeRhs;
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs = feBDNucChargeRhs;
     //   std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
     //     (basisDofHandlerTotalPot, quadAttrSmearNucl, basisAttrMap);
     // feBDNuclearChargeRhs->evaluateBasisData(quadAttrSmearNucl, basisAttrMap);
@@ -760,7 +762,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,   
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs, 
                                           feBDNuclearChargeStiffnessMatrix,
                                           feBDNuclearChargeRhs, 
                                           feBDKineticHamiltonian,     
@@ -809,7 +812,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs, 
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
                                           feBDEXCHamiltonian,                                                                                

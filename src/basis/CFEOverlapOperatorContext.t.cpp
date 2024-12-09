@@ -43,9 +43,10 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &feBasisDataStorage,
         std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-          &                     basisOverlap,
-        std::vector<size_type> &cellStartIdsBasisOverlap,
-        std::vector<size_type> &dofsInCellVec)
+          &                                          basisOverlap,
+        std::vector<size_type> &                     cellStartIdsBasisOverlap,
+        std::vector<size_type> &                     dofsInCellVec,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
         std::shared_ptr<
           const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
@@ -76,24 +77,24 @@ namespace dftefe
         basisOverlapTmp.resize(numLocallyOwnedCells * dofsPerCell * dofsPerCell,
                                ValueTypeOperator(0));
 
-        auto      locallyOwnedCellIter = feBDH->beginLocallyOwnedCells();
-        auto      basisOverlapTmpIter  = basisOverlapTmp.begin();
-        size_type cellIndex            = 0;
+        auto locallyOwnedCellIter = feBDH->beginLocallyOwnedCells();
+        // auto      basisOverlapTmpIter  = basisOverlapTmp.begin();
+        size_type cellIndex = 0;
 
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &basisDataInAllCells = feBasisDataStorage.getBasisDataInAllCells();
+        // const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        //   &basisDataInAllCells = feBasisDataStorage.getBasisDataInAllCells();
 
-        size_type cumulativeQuadPoints = 0, cumulativeDofQuadPointsOffset = 0;
-        bool      isConstantDofsAndQuadPointsInCell = false;
-        quadrature::QuadratureFamily quadFamily =
-          feBasisDataStorage.getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes()
-            .getQuadratureFamily();
-        if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
-             quadFamily == quadrature::QuadratureFamily::GLL ||
-             quadFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
-            !feBDH->isVariableDofsPerCell())
-          isConstantDofsAndQuadPointsInCell = true;
+        // size_type cumulativeQuadPoints = 0, cumulativeDofQuadPointsOffset =
+        // 0; bool      isConstantDofsAndQuadPointsInCell = false;
+        // quadrature::QuadratureFamily quadFamily =
+        //   feBasisDataStorage.getQuadratureRuleContainer()
+        //     ->getQuadratureRuleAttributes()
+        //     .getQuadratureFamily();
+        // if ((quadFamily == quadrature::QuadratureFamily::GAUSS ||
+        //      quadFamily == quadrature::QuadratureFamily::GLL ||
+        //      quadFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED) &&
+        //     !feBDH->isVariableDofsPerCell())
+        //   isConstantDofsAndQuadPointsInCell = true;
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
@@ -105,34 +106,83 @@ namespace dftefe
               feBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(
                 cellIndex);
 
-            const ValueTypeOperator *cumulativeDofQuadPoints =
-              basisDataInAllCells.data() + cumulativeDofQuadPointsOffset;
+            const utils::MemoryStorage<ValueTypeOperator, memorySpace>
+              &basisDataInCell =
+                feBasisDataStorage.getBasisDataInCell(cellIndex);
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
-              {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
-                  {
-                    *basisOverlapTmpIter = 0.0;
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
-                         qPoint++)
-                      {
-                        *basisOverlapTmpIter +=
-                          *(cumulativeDofQuadPoints + nQuadPointInCell * iNode +
-                            qPoint) *
-                          *(cumulativeDofQuadPoints + nQuadPointInCell * jNode +
-                            qPoint) *
-                          cellJxWValues[qPoint];
-                      }
-                    basisOverlapTmpIter++;
-                  }
-              }
+            std::vector<ValueTypeOperator> JxWxNCellConj(dofsPerCell *
+                                                         nQuadPointInCell);
+
+            size_type stride = 0;
+            size_type m = 1, n = dofsPerCell, k = nQuadPointInCell;
+
+            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+                                                              ValueTypeOperator,
+                                                              memorySpace>(
+              1,
+              linearAlgebra::blasLapack::Layout::ColMajor,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
+              linearAlgebra::blasLapack::ScalarOp::Conj,
+              &stride,
+              &stride,
+              &stride,
+              &m,
+              &n,
+              &k,
+              cellJxWValues.data(),
+              basisDataInCell.data(),
+              JxWxNCellConj.data(),
+              linAlgOpContext);
+
+            linearAlgebra::blasLapack::
+              gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
+                linearAlgebra::blasLapack::Layout::ColMajor,
+                linearAlgebra::blasLapack::Op::NoTrans,
+                linearAlgebra::blasLapack::Op::Trans,
+                dofsPerCell,
+                dofsPerCell,
+                nQuadPointInCell,
+                (ValueTypeOperand)1.0,
+                JxWxNCellConj.data(),
+                dofsPerCell,
+                basisDataInCell.data(),
+                dofsPerCell,
+                (ValueTypeOperand)0.0,
+                basisOverlapTmp.data() + cumulativeBasisOverlapId,
+                dofsPerCell,
+                linAlgOpContext);
+
+            // const ValueTypeOperator *cumulativeDofQuadPoints =
+            //   basisDataInAllCells.data() + cumulativeDofQuadPointsOffset;
+
+            // for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            //   {
+            //     for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+            //       {
+            //         *basisOverlapTmpIter = 0.0;
+            //         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+            //              qPoint++)
+            //           {
+            //             *basisOverlapTmpIter +=
+            //               *(cumulativeDofQuadPoints + dofsPerCell * qPoint +
+            //                 iNode
+            //                 /*nQuadPointInCell * iNode + qPoint*/) *
+            //               *(cumulativeDofQuadPoints + dofsPerCell * qPoint +
+            //                 jNode
+            //                 /*nQuadPointInCell * jNode + qPoint*/) *
+            //               cellJxWValues[qPoint];
+            //           }
+            //         basisOverlapTmpIter++;
+            //       }
+            //   }
 
             cellStartIdsBasisOverlap[cellIndex] = cumulativeBasisOverlapId;
             cumulativeBasisOverlapId += dofsPerCell * dofsPerCell;
             cellIndex++;
-            cumulativeQuadPoints += nQuadPointInCell;
-            if (!isConstantDofsAndQuadPointsInCell)
-              cumulativeDofQuadPointsOffset += nQuadPointInCell * dofsPerCell;
+            // cumulativeQuadPoints += nQuadPointInCell;
+            // if (!isConstantDofsAndQuadPointsInCell)
+            //   cumulativeDofQuadPointsOffset += nQuadPointInCell *
+            //   dofsPerCell;
           }
 
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -382,9 +432,13 @@ namespace dftefe
                              dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(false)
     {
@@ -395,7 +449,8 @@ namespace dftefe
         dim>(feBasisDataStorage,
              d_basisOverlap,
              d_cellStartIdsBasisOverlap,
-             d_dofsInCell);
+             d_dofsInCell,
+             *linAlgOpContext);
     }
 
     template <typename ValueTypeOperator,
@@ -417,7 +472,8 @@ namespace dftefe
           linAlgOpContext)
       : d_feBasisManager(&feBasisManager)
       , d_cellStartIdsBasisOverlap(0)
-      , d_maxCellTimesNumVecs(0)
+      , d_maxCellBlock(0)
+      , d_maxFieldBlock(0)
       , d_isMassLumping(true)
     {
       utils::throwException(
@@ -434,7 +490,8 @@ namespace dftefe
         dim>(feBasisDataStorage,
              d_basisOverlap,
              d_cellStartIdsBasisOverlap,
-             d_dofsInCell);
+             d_dofsInCell,
+             *linAlgOpContext);
 
       d_diagonal =
         std::make_shared<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
@@ -552,7 +609,8 @@ namespace dftefe
           const utils::MemoryStorage<ValueTypeOperator, memorySpace>
             &basisOverlapInAllCells = *d_basisOverlap;
 
-          const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+          const size_type cellBlockSize =
+            (d_maxCellBlock * d_maxFieldBlock) / numVecs;
 
           //
           // perform Ax on the local part of A and x

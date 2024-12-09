@@ -36,6 +36,21 @@ namespace dftefe
                scalar_type<ValueType1, ValueType2> *z);
 
         /**
+         * @brief Template for performing \f$ z = \alpha x$
+         * @param[in] size size of the array
+         * @param[in] \f$ alpha \f$ scalar
+         * @param[in] x array
+         * @param[out] z array
+         */
+        static void
+        ascale(size_type                            size,
+               ValueType1                           alpha,
+               const ValueType2 *                   x,
+               const ScalarOp &                     opalpha,
+               const ScalarOp &                     opx,
+               scalar_type<ValueType1, ValueType2> *z);
+
+        /**
          * @brief Template for performing \f$ z = 1 /x$, does not check if x[i] is zero
          * @param[in] size size of the array
          * @param[in] x array
@@ -109,8 +124,9 @@ namespace dftefe
          */
         static void
         scaleStridedVarBatched(const size_type                      numMats,
-                               const ScalarOp *                     scalarOpA,
-                               const ScalarOp *                     scalarOpB,
+                               const Layout                         layout,
+                               const ScalarOp &                     scalarOpA,
+                               const ScalarOp &                     scalarOpB,
                                const size_type *                    stridea,
                                const size_type *                    strideb,
                                const size_type *                    stridec,
@@ -154,6 +170,45 @@ namespace dftefe
                          const ValueType1 *                   A,
                          const ValueType2 *                   B,
                          scalar_type<ValueType1, ValueType2> *Z);
+
+        /**
+         * @brief Template for performing khatriRao but with variable stride
+         * In column major storage format:
+         * \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
+         * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf
+         * A}\f$ is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$,
+         * and \f$
+         * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. \f$ a_1 \cdots \a_K \f$
+         * are the columns of \f${\bf A}\f$
+         * In row major storage format:
+         * \f$ {\bf Z}^T={\bf A}^T \odot {\bf B}^T = a_1 \otimes b_1
+         * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf
+         * A}\f$ is  \f$K \times I\f$ matrix, \f${\bf B}\f$ is \f$K \times J\f$,
+         * and \f$
+         * {\bf Z} \f$ is \f$ K\times (IJ) \f$ matrix. \f$ a_1 \cdots \a_K \f$
+         * are the rows of \f${\bf A}\f$
+         * @param[in] layout Layout::ColMajor or Layout::RowMajor
+         * @param[in] size size I
+         * @param[in] size size J
+         * @param[in] size size K
+         * @param[in] X array
+         * @param[in] Y array
+         * @param[out] Z array
+         */
+        static void
+        khatriRaoProductStridedVarBatched(
+          const Layout                         layout,
+          const size_type                      numMats,
+          const size_type *                    stridea,
+          const size_type *                    strideb,
+          const size_type *                    stridec,
+          const size_type *                    m,
+          const size_type *                    n,
+          const size_type *                    k,
+          const ValueType1 *                   dA,
+          const ValueType2 *                   dB,
+          scalar_type<ValueType1, ValueType2> *dC,
+          LinAlgOpContext<memorySpace> &       context);
 
         /**
          * @brief Template for performing

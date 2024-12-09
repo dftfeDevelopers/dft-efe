@@ -218,8 +218,9 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       scaleStridedVarBatched(const size_type                      numMats,
-                             const ScalarOp *                     scalarOpA,
-                             const ScalarOp *                     scalarOpB,
+                             const Layout                         layout,
+                             const ScalarOp &                     scalarOpA,
+                             const ScalarOp &                     scalarOpB,
                              const size_type *                    stridea,
                              const size_type *                    strideb,
                              const size_type *                    stridec,

@@ -3,13 +3,12 @@
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
 #include <basis/CFEBasisDofHandlerDealii.h>
-#include <basis/CFEBasisDataStorageDealii.h>
+#include <basis/CFEBDSOnTheFlyComputeDealii.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/CFEConstraintsLocalDealii.h>
 #include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
-#include <quadrature/QuadratureRuleGaussIterated.h>
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FECellWiseDataOperations.h>
@@ -373,7 +372,7 @@ void getVLoc(
             r += std::pow((point[i] - d_atomCoordinatesVec[atomId][i]),2);
           r = std::sqrt(r);
           retValue += (r <= d_radialLastValVec[atomId]) ? 
-            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+            d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
         }
       return retValue;
     }
@@ -391,12 +390,72 @@ void getVLoc(
               r += std::pow((points[i][j] - d_atomCoordinatesVec[atomId][j]),2);
             r = std::sqrt(r);
             ret[i] = ret[i] +  (r <= d_radialLastValVec[atomId]) ? 
-              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*(d_atomChargesVec[atomId]/r);
+              d_atomTolocPSPSplineMap[atomId](r) : (-1.0)*std::abs(d_atomChargesVec[atomId]/r);
           }
         }
       return ret;
     }
   };
+
+  template <typename ValueTypeBasisData,
+            utils::MemorySpace memorySpace,
+            size_type          dim>
+  size_type getNumClassicalDofsInSystemExcludingVacuum(const std::vector<utils::Point> &atomCoordinates,
+                                                      const basis::FEBasisDofHandler<ValueTypeBasisData,
+                                                                                      memorySpace,
+                                                                                      dim> &basisDofHandler,
+                                                      utils::mpi::MPIComm comm)
+  {
+    const std::vector<std::pair<global_size_type, global_size_type>> &numLocallyOwnedRanges  = basisDofHandler.getLocallyOwnedRanges();
+    size_type dofs = 0;
+    double domainSizeExcludingVacuum = 0;
+
+    std::vector<double> maxAtomCoordinates(dim, 0);
+    std::vector<double> minAtomCoordinates(dim, 0);
+
+    for (int j = 0; j < dim; j++)
+      {
+        for (int i = 0; i < atomCoordinates.size(); i++)
+          {
+            if (maxAtomCoordinates[j] < atomCoordinates[i][j])
+              maxAtomCoordinates[j] = atomCoordinates[i][j];
+            if (minAtomCoordinates[j] > atomCoordinates[i][j])
+              minAtomCoordinates[j] = atomCoordinates[i][j];
+          }
+      }
+
+    for (int i = 0; i < dim; i++)
+      {
+        double axesLen = std::max(std::abs(maxAtomCoordinates[i]),
+                                  std::abs(minAtomCoordinates[i])) + 8.0;
+        if (domainSizeExcludingVacuum < axesLen)
+          domainSizeExcludingVacuum = axesLen;
+      }
+
+    std::map<global_size_type, utils::Point> dofCoords;
+    basisDofHandler.getBasisCenters(dofCoords);
+    dftefe::utils::Point nodeLoc(dim,0.0);
+    for (dftefe::global_size_type iDof = numLocallyOwnedRanges[0].first; iDof < numLocallyOwnedRanges[0].second ; iDof++)
+      {
+        nodeLoc = dofCoords.find(iDof)->second;
+        double dist = 0;
+        for( int j = 0 ; j < dim ; j++)
+        {
+          dist += nodeLoc[j]* nodeLoc[j];
+        }
+        dist = std::sqrt(dist);
+        if(dist <= domainSizeExcludingVacuum)
+          dofs += 1;
+      }
+      int mpierr = utils::mpi::MPIAllreduce<Host>(
+        utils::mpi::MPIInPlace,
+        &dofs,
+        1,
+        utils::mpi::Types<size_type>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        comm);
+      return dofs;
+  }
 
 // operand - V_H
 // memoryspace - HOST
@@ -416,6 +475,9 @@ int main(int argc, char** argv)
   }
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
+
+    utils::mpi::MPIBarrier(comm);
+    auto startTotal = std::chrono::high_resolution_clock::now();
 
     // Get the rank of the process
   int rank;
@@ -492,8 +554,10 @@ int main(int argc, char** argv)
   const size_type dim = 3;
 
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
-  unsigned int num1DGaussSizeVCorrecPlusPhi = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeVCorrecPlusPhi", rootCout);
-  unsigned int gaussSubdividedCopies = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopies", rootCout);
+  unsigned int num1DGaussSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeElec", rootCout);
+  unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
+  unsigned int num1DGaussSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeEigen", rootCout);
+  unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
 
   // Set up Triangulation
@@ -557,6 +621,19 @@ int main(int argc, char** argv)
 
   adaptiveMesh.createMesh(*triangulationBase); 
 
+  // std::fstream out;  
+  // out.open("grid.vtk", std::fstream::out);
+  // if (out.is_open()) { 
+  //   utils::mpi::MPIBarrier(comm);
+  //   triangulationBase->writeToVtkFile(out);
+  //   utils::mpi::MPIBarrier(comm);
+  //   out.close(); 
+  //   std::cout << "Data was written to grid.vtk\n";
+  // }
+  // else {
+  //   std::cout << "Error opening file\n";
+  // }
+
   std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
 
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
@@ -571,6 +648,15 @@ int main(int argc, char** argv)
 
   rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
   rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
+
+  rootCout << "The Number of classical dofs electrostatics excluding Vacuum: " << 
+    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
+      *basisDofHandlerTotalPot,
+      comm) << "\n";
+  rootCout << "The Number of classical dofs eigenSolve excluding Vacuum: " << 
+    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
+      *basisDofHandlerWaveFn,
+      comm) << "\n";
 
   std::map<std::string, std::string> atomSymbolToFilename;
   for (auto i:atomSymbolVec )
@@ -591,6 +677,18 @@ int main(int argc, char** argv)
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     LocalPSPPotentialFunction(atomCoordinatesVec, atomChargesVec, pspFilePathVec);
   utils::mpi::MPIBarrier(comm);
+
+  // std::vector<utils::Point> radial_coord(1000,utils::Point(dim, 0.0));
+  // int count = 0;
+  // for(auto &i:radial_coord)
+  // {
+  //   i[0] = 0 + count*0.1;
+  //   i[1] = 0;
+  //   i[2] = 0;
+  //   count += 1;
+
+  //   std::cout << i[0] << "\t" << (*externalPotentialFunction)(i)<<"\n";
+  // }
   
   // Compute Adaptive QuadratureRuleContainer for electrostaics
 
@@ -620,10 +718,14 @@ int main(int argc, char** argv)
     
   // Set up the quadrature rule
 
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    auto start = std::chrono::high_resolution_clock::now();
+
   quadrature::QuadratureRuleAttributes quadAttrElec(quadrature::QuadratureFamily::GAUSS,true,feOrderElec+1);
 
   basis::BasisStorageAttributesBoolMap basisAttrMap;
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
@@ -631,12 +733,12 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   // Set up the FE Basis Data Storage
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataElec =
-    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-    (basisDofHandlerTotalPot, quadAttrElec, basisAttrMap);
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix =
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    (basisDofHandlerTotalPot, quadAttrElec, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   // evaluate basis data
-  feBasisDataElec->evaluateBasisData(quadAttrElec, basisAttrMap);
+  feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrElec, basisAttrMap);
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
@@ -673,8 +775,8 @@ int main(int argc, char** argv)
 
   // Set up the FE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBasisDataGLLEigen =
-    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-    (basisDofHandlerWaveFn, quadAttrGLLEigen, basisAttrMap);
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    (basisDofHandlerWaveFn, quadAttrGLLEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   // evaluate basis data
   feBasisDataGLLEigen->evaluateBasisData(quadAttrGLLEigen, basisAttrMap);
@@ -702,11 +804,12 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   (*basisManagerWaveFn,
                                                   *feBasisDataGLLEigen,
                                                   linAlgOpContext);
-
-  std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = feBasisDataElec;
   
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
-      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSizeVCorrecPlusPhi, gaussSubdividedCopies);
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSizeElec, gaussSubdividedCopiesElec);
+
+    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleEigen =
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSizeEigen, gaussSubdividedCopiesEigen);
 
     quadrature::QuadratureRuleAttributes quadAttrGaussSubdivided(quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,true);
 
@@ -734,29 +837,78 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       utils::mpi::Types<size_type>::getMPIDatatype(),
       utils::mpi::MPIMax,
       comm);
-    rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
-  rootCout << "Number of quadrature points in gauss subdivided quadrature: "<< nQuad<<"\n";
+    rootCout << "Maximum Number of quadrature points in a processor elec: "<< nQuadMax<<"\n";
+  rootCout << "Number of quadrature points in gauss subdivided quadrature elec: "<< nQuad<<"\n";
+
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerGaussSubdividedEigen =
+      std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrGaussSubdivided, 
+      gaussSubdivQuadRuleEigen, 
+      triangulationBase, 
+      *cellMapping); 
+
+    nQuad = quadRuleContainerGaussSubdividedEigen->nQuadraturePoints();
+    nQuadMax = nQuad;
+    mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuad,
+      1,
+      utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPISum,
+      comm);
+
+    mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuadMax,
+      1,
+      utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPIMax,
+      comm);
+    rootCout << "Maximum Number of quadrature points in a processor eigen: "<< nQuadMax<<"\n";
+  rootCout << "Number of quadrature points in gauss subdivided quadrature eigen: "<< nQuad<<"\n";
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = 
-    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap);
-  feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = 
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
+                
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+  quadrature::QuadratureRuleAttributes quadAttrEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen+1);
+
+  // Set up the FE Basis Data Storage
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDHamStiffnessMatrix =
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    (basisDofHandlerWaveFn, quadAttrEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+
+  // evaluate basis data
+  feBDHamStiffnessMatrix->evaluateBasisData(quadAttrEigen, basisAttrMap);
 
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho =  
                 feBDElectrostaticsHamiltonian->getQuadratureRuleContainer();
-
+                
   // scale the electronic charges
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainerRho, 1, 0.0);
 
-  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDElectrostaticsHamiltonian;
+  std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDHamStiffnessMatrix;
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;
 
   // Create OperatorContext for Basisoverlap
@@ -770,7 +922,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
-                                                      numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE);
+                                                      ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      numWantedEigenvalues,
+                                                      linAlgOpContext);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -779,24 +933,29 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeRhs =
-    std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap);
-  feBDTotalChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNucChargeRhs =
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
 
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
-      for (size_type iComp = 0; iComp < 1; iComp++)
-        {
           size_type             quadId = 0;
           std::vector<double> a(
             electronChargeDensity.nCellQuadraturePoints(iCell));
           a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
           double *b = a.data();
           electronChargeDensity.template 
-            setCellQuadValues<Host>(iCell, iComp, b);
-        }
+            setCellValues<Host>(iCell, b);
     }
+
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    auto stop = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+  rootCout << "Time for all basis storage evaluations including overlap operators(in secs) : " << duration.count()/1e6 << std::endl;
 
   rootCout << "Entering KohnSham DFT Class....\n\n";
 
@@ -814,12 +973,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the FE Basis Data Storage
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs = feBDTotalChargeRhs;
-    //   std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
-    //     (basisDofHandlerTotalPot, quadAttrSmearNucl, basisAttrMap);
-    // feBDNuclearChargeRhs->evaluateBasisData(quadAttrSmearNucl, basisAttrMap);
+    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNuclearChargeRhs = feBDNucChargeRhs;
 
-    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBasisDataElec;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBDTotalChargeStiffnessMatrix;
 
     std::shared_ptr<ksdft::KohnShamDFT<double,
                                         double,
@@ -853,7 +1009,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,   
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs,  
                                           feBDNuclearChargeStiffnessMatrix,
                                           feBDNuclearChargeRhs, 
                                           feBDKineticHamiltonian,     
@@ -866,7 +1023,20 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           *MContext,
                                           *MInvContext);
 
-    dftefeSolve->solve();                                            
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
+    dftefeSolve->solve();   
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
+                                         
   }
   else
   {
@@ -902,7 +1072,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDTotalChargeRhs,
+                                          feBDNucChargeRhs, 
+                                          feBDElecChargeRhs,  
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
                                           feBDEXCHamiltonian,                                                                                
@@ -913,8 +1084,29 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           *MContext,
                                           *MInvContext);
 
-    dftefeSolve->solve();                                           
+    // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    start = std::chrono::high_resolution_clock::now();
+
+    dftefeSolve->solve();   
+
+    // add device synchronize for gpu
+      utils::mpi::MPIBarrier(comm);
+      stop = std::chrono::high_resolution_clock::now();
+
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
+
   }
+
+  // add device synchronize for gpu
+    utils::mpi::MPIBarrier(comm);
+    auto stopTotal = std::chrono::high_resolution_clock::now();
+
+    auto durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
+
+    rootCout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
 
   //gracefully end MPI
 
