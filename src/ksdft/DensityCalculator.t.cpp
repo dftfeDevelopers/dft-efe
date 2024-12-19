@@ -39,8 +39,6 @@ namespace dftefe
         const std::vector<RealType> &occupationInBatch,
         quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &psiBatchQuad,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &psiModSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
         quadrature::QuadratureValuesContainer<RealType, memorySpace> &rhoBatch,
@@ -50,169 +48,114 @@ namespace dftefe
       {
         size_type numPsiInBatch = occupationInBatch.size();
         // hadamard for psi^C psi = mod psi^2
-        linearAlgebra::blasLapack::
-          hadamardProduct<ValueType, ValueType, memorySpace>(
-            psiBatchQuad.nEntries(),
-            psiBatchQuad.begin(),
-            psiBatchQuad.begin(),
-            linearAlgebra::blasLapack::ScalarOp::Conj,
-            linearAlgebra::blasLapack::ScalarOp::Identity,
-            psiBatchQuad.begin(),
-            linAlgOpContext);
+        // linearAlgebra::blasLapack::
+        //   hadamardProduct<ValueType, ValueType, memorySpace>(
+        //     psiBatchQuad.nEntries(),
+        //     psiBatchQuad.begin(),
+        //     psiBatchQuad.begin(),
+        //     linearAlgebra::blasLapack::ScalarOp::Conj,
+        //     linearAlgebra::blasLapack::ScalarOp::Identity,
+        //     psiBatchQuad.begin(),
+        //     linAlgOpContext);
 
         /*----------- TODO : Optimize this -------------------------------*/
         // convert to psiBatchQuad to realType and multiply by 2
+        // for (size_type iCell = 0; iCell < psiBatchQuad.nCells(); iCell++)
+        //   {
+        //     std::vector<ValueType> a(
+        //       quadRuleContainer->nCellQuadraturePoints(iCell) *
+        //       numPsiInBatch);
+        //     std::vector<RealType> b(
+        //       quadRuleContainer->nCellQuadraturePoints(iCell) *
+        //       numPsiInBatch);
+        //     psiBatchQuad.template getCellValues<utils::MemorySpace::HOST>(
+        //       iCell, a.data());
+        //     for (size_type i = 0; i < b.size(); i++)
+        //       b[i] = 2.0 * utils::realPart<RealType>(a[i]);
+        //     psiModSqBatchQuad.template
+        //     setCellValues<utils::MemorySpace::HOST>(
+        //       iCell, b.data());
+        //   }
+
+        ValueType *psiBatchQuadIter = psiBatchQuad.begin();
+        RealType * rhoBatchIter     = rhoBatch.begin();
+        size_type  cumulativeQuadInCell, cumulativeQuadPsiInCell = 0;
         for (size_type iCell = 0; iCell < psiBatchQuad.nCells(); iCell++)
           {
-            for (size_type iComp = 0; iComp < numPsiInBatch; iComp++)
+            size_type numQuadInCell =
+              quadRuleContainer->nCellQuadraturePoints(iCell);
+            for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
               {
-                std::vector<ValueType> a(
-                  quadRuleContainer->nCellQuadraturePoints(iCell));
-                std::vector<RealType> b(
-                  quadRuleContainer->nCellQuadraturePoints(iCell));
-                psiBatchQuad
-                  .template getCellQuadValues<utils::MemorySpace::HOST>(
-                    iCell, iComp, a.data());
-                for (size_type i = 0; i < b.size(); i++)
-                  b[i] = 2.0 * utils::realPart<RealType>(a[i]);
-                psiModSqBatchQuad
-                  .template setCellQuadValues<utils::MemorySpace::HOST>(
-                    iCell, iComp, b.data());
+                RealType b = 0;
+                for (size_type i = 0; i < numPsiInBatch; i++)
+                  {
+                    const ValueType psi =
+                      psiBatchQuadIter[cumulativeQuadPsiInCell +
+                                       numPsiInBatch * iQuad + i];
+                    b += 2.0 * utils::absSq(psi) * occupationInBatch[i];
+                  }
+                rhoBatchIter[cumulativeQuadInCell + iQuad] = b;
               }
+            cumulativeQuadPsiInCell += numQuadInCell * numPsiInBatch;
+            cumulativeQuadInCell += numQuadInCell;
           }
 
-        // gemm for fi * mod psi^2
+        // // gemm for fi * mod psi^2
 
-        size_type AStartOffset = 0;
-        size_type CStartOffset = 0;
-        for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-             cellStartId += cellBlockSize)
-          {
-            const size_type cellEndId =
-              std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
-            const size_type numCellsInBlock = cellEndId - cellStartId;
+        // utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+        //   memoryTransfer;
 
-            std::vector<linearAlgebra::blasLapack::Op> transA(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-            std::vector<linearAlgebra::blasLapack::Op> transB(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-            std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-            std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-            std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-            std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-            std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-            std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-            std::vector<size_type> strideATmp(numCellsInBlock, 0);
-            std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-            std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+        // // Create occupancy in memspace
+        // utils::MemoryStorage<RealType, memorySpace>
+        // occupationInBatchMemspace(
+        //   occupationInBatch.size());
+        // memoryTransfer.copy(occupationInBatch.size(),
+        //                     occupationInBatchMemspace.data(),
+        //                     occupationInBatch.data());
 
-            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-              {
-                const size_type cellId = cellStartId + iCell;
-                mSizesTmp[iCell] =
-                  quadRuleContainer->nCellQuadraturePoints(cellId);
-                nSizesTmp[iCell]   = 1;
-                kSizesTmp[iCell]   = numPsiInBatch;
-                ldaSizesTmp[iCell] = mSizesTmp[iCell];
-                ldbSizesTmp[iCell] = kSizesTmp[iCell];
-                ldcSizesTmp[iCell] = mSizesTmp[iCell];
-                strideBTmp[iCell]  = 0;
-                strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
-                strideATmp[iCell]  = mSizesTmp[iCell] * kSizesTmp[iCell];
-              }
+        // size_type AStartOffset = 0;
+        // size_type CStartOffset = 0;
+        // for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
+        //      cellStartId += cellBlockSize)
+        //   {
+        //     const size_type cellEndId =
+        //       std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
+        //     const size_type numCellsInBlock = cellEndId - cellStartId;
 
-            utils::MemoryStorage<size_type, memorySpace> mSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> nSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> kSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> strideA(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> strideB(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> strideC(
-              numCellsInBlock);
+        //     RealType alpha = 1.0;
+        //     RealType beta  = 0.0;
 
-            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-              memoryTransfer;
+        //     RealType *C = rhoBatch.begin() + CStartOffset;
 
-            memoryTransfer.copy(numCellsInBlock,
-                                mSizes.data(),
-                                mSizesTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                nSizes.data(),
-                                nSizesTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                kSizes.data(),
-                                kSizesTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                ldaSizes.data(),
-                                ldaSizesTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                ldbSizes.data(),
-                                ldbSizesTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                ldcSizes.data(),
-                                ldcSizesTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                strideA.data(),
-                                strideATmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                strideB.data(),
-                                strideBTmp.data());
-            memoryTransfer.copy(numCellsInBlock,
-                                strideC.data(),
-                                strideCTmp.data());
+        //     size_type n = 0;
+        //     for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+        //       {
+        //         n +=
+        //           quadRuleContainer->nCellQuadraturePoints(cellStartId +
+        //           iCell);
+        //       }
 
-            // Create occupancy in memspace
-            utils::MemoryStorage<RealType, memorySpace>
-              occupationInBatchMemspace(occupationInBatch.size());
-            memoryTransfer.copy(occupationInBatch.size(),
-                                occupationInBatchMemspace.data(),
-                                occupationInBatch.data());
+        //     linearAlgebra::blasLapack::gemm<RealType, RealType, memorySpace>(
+        //       linearAlgebra::blasLapack::Layout::ColMajor,
+        //       linearAlgebra::blasLapack::Op::Trans,
+        //       linearAlgebra::blasLapack::Op::NoTrans,
+        //       1,
+        //       n,
+        //       numPsiInBatch,
+        //       alpha,
+        //       occupationInBatchMemspace.data(),
+        //       numPsiInBatch,
+        //       psiModSqBatchQuad.begin() + AStartOffset,
+        //       numPsiInBatch,
+        //       beta,
+        //       C,
+        //       1,
+        //       linAlgOpContext);
 
-            RealType alpha = 1.0;
-            RealType beta  = 0.0;
-
-            const RealType *A = psiModSqBatchQuad.begin() + AStartOffset;
-
-            RealType *C = rhoBatch.begin() + CStartOffset;
-
-            linearAlgebra::blasLapack::
-              gemmStridedVarBatched<RealType, RealType, memorySpace>(
-                linearAlgebra::blasLapack::Layout::ColMajor,
-                numCellsInBlock,
-                transA.data(),
-                transB.data(),
-                strideA.data(),
-                strideB.data(),
-                strideC.data(),
-                mSizes.data(),
-                nSizes.data(),
-                kSizes.data(),
-                alpha,
-                A,
-                ldaSizes.data(),
-                occupationInBatchMemspace.data(),
-                ldbSizes.data(),
-                beta,
-                C,
-                ldcSizes.data(),
-                linAlgOpContext);
-
-            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-              {
-                AStartOffset += mSizesTmp[iCell] * kSizesTmp[iCell];
-                CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
-              }
-          }
+        //   AStartOffset +=
+        //     numPsiInBatch * n;
+        //   CStartOffset += n;
+        // }
       }
     } // namespace DensityCalculatorInternal
 
@@ -257,11 +200,6 @@ namespace dftefe
           delete d_psiBatchQuad;
           d_psiBatchQuad = nullptr;
         }
-      if (d_psiModSqBatchQuad != nullptr)
-        {
-          delete d_psiModSqBatchQuad;
-          d_psiModSqBatchQuad = nullptr;
-        }
       if (d_rhoBatch != nullptr)
         {
           delete d_rhoBatch;
@@ -276,11 +214,6 @@ namespace dftefe
         {
           delete d_psiBatchSmallQuad;
           d_psiBatchSmallQuad = nullptr;
-        }
-      if (d_psiModSqBatchSmallQuad != nullptr)
-        {
-          delete d_psiModSqBatchSmallQuad;
-          d_psiModSqBatchSmallQuad = nullptr;
         }
       if (d_psiBatchSmall != nullptr)
         {
@@ -316,10 +249,6 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           d_quadRuleContainer, d_waveFuncBatchSize);
 
-      d_psiModSqBatchQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-          d_quadRuleContainer, d_waveFuncBatchSize);
-
       d_rhoBatch =
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           d_quadRuleContainer, 1);
@@ -339,8 +268,8 @@ namespace dftefe
                                                   ValueTypeBasisData,
                                                   memorySpace,
                                                   dim>>(feBasisDataStorage,
-                                                        d_cellBlockSize *
-                                                          d_waveFuncBatchSize);
+                                                        d_cellBlockSize,
+                                                        d_waveFuncBatchSize);
     }
 
     template <typename ValueTypeBasisData,
@@ -392,7 +321,7 @@ namespace dftefe
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
-              d_feBasisOp->reinit(d_cellBlockSize * d_waveFuncBatchSize);
+              d_feBasisOp->reinit(d_cellBlockSize, d_waveFuncBatchSize);
               d_feBasisOp->interpolate(*d_psiBatch,
                                        *d_feBMPsi,
                                        *d_psiBatchQuad);
@@ -401,7 +330,6 @@ namespace dftefe
                 computeRhoInBatch<ValueType, RealType, memorySpace>(
                   occupationInBatch,
                   *d_psiBatchQuad,
-                  *d_psiModSqBatchQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,
@@ -426,7 +354,7 @@ namespace dftefe
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
-              d_feBasisOp->reinit(d_cellBlockSize * d_batchSizeSmall);
+              d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);
@@ -435,7 +363,6 @@ namespace dftefe
                 computeRhoInBatch<ValueType, RealType, memorySpace>(
                   occupationInBatch,
                   *d_psiBatchSmallQuad,
-                  *d_psiModSqBatchSmallQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,
@@ -461,11 +388,6 @@ namespace dftefe
                                                           memorySpace>(
                   d_quadRuleContainer, numPsiInBatch);
 
-              d_psiModSqBatchSmallQuad =
-                new quadrature::QuadratureValuesContainer<ValueType,
-                                                          memorySpace>(
-                  d_quadRuleContainer, numPsiInBatch);
-
               d_psiBatchSmall =
                 new linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                memorySpace>(
@@ -482,7 +404,7 @@ namespace dftefe
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
-              d_feBasisOp->reinit(d_cellBlockSize * d_batchSizeSmall);
+              d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);
@@ -491,7 +413,6 @@ namespace dftefe
                 computeRhoInBatch<ValueType, RealType, memorySpace>(
                   occupationInBatch,
                   *d_psiBatchSmallQuad,
-                  *d_psiModSqBatchSmallQuad,
                   d_quadRuleContainer,
                   *d_rhoBatch,
                   d_cellBlockSize,

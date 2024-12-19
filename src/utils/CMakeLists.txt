@@ -40,7 +40,9 @@ set(DFT-EFE-UTILS-SOURCES
   ScalarZeroFunctionReal.cpp
   SmearChargeDensityFunction.cpp
   SmearChargePotentialFunction.cpp
-  PointChargePotentialFunction.cpp)
+  PointChargePotentialFunction.cpp
+  Timer.cpp
+  Profiler.cpp)
 
 add_library(dft-efe-utils SHARED ${DFT-EFE-UTILS-SOURCES})
 

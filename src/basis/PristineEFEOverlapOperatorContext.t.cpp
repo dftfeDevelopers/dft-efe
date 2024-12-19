@@ -126,10 +126,14 @@ namespace dftefe
                          qPoint++)
                       {
                         *basisOverlapTmpIter +=
-                          *(cumulativeDofQuadPoints + nQuadPointInCell * iNode +
-                            qPoint) *
-                          *(cumulativeDofQuadPoints + nQuadPointInCell * jNode +
-                            qPoint) *
+                          *(cumulativeDofQuadPoints +
+                            dofsPerCell * qPoint + iNode
+                          /*nQuadPointInCell * iNode +
+                            qPoint*/) *
+                          *(cumulativeDofQuadPoints +
+                          dofsPerCell * qPoint + jNode
+                          /*nQuadPointInCell * jNode +
+                            qPoint*/) *
                           cellJxWValues[qPoint];
                       }
                     basisOverlapTmpIter++;
@@ -283,9 +287,11 @@ namespace dftefe
                           {
                             *basisOverlapTmpIter +=
                               *(cumulativeCFEDofQuadPoints +
-                                nQuadPointInCellCFE * iNode + qPoint) *
+                                dofsPerCellCFE * qPoint + iNode
+                                /*nQuadPointInCellCFE * iNode + qPoint*/) *
                               *(cumulativeCFEDofQuadPoints +
-                                nQuadPointInCellCFE * jNode + qPoint) *
+                                dofsPerCellCFE * qPoint + jNode
+                                /*nQuadPointInCellCFE * jNode + qPoint*/) *
                               cellJxWValuesCFE[qPoint];
                           }
                       }
@@ -297,9 +303,11 @@ namespace dftefe
                           {
                             *basisOverlapTmpIter +=
                               *(cumulativeEFEDofQuadPoints +
-                                nQuadPointInCellEFE * iNode + qPoint) *
+                                dofsPerCell * qPoint + iNode
+                                /*nQuadPointInCellEFE * iNode + qPoint*/) *
                               *(cumulativeEFEDofQuadPoints +
-                                nQuadPointInCellEFE * jNode + qPoint) *
+                                dofsPerCell * qPoint + jNode
+                                /*nQuadPointInCellEFE * jNode + qPoint*/) *
                               cellJxWValuesEFE[qPoint];
                           }
                       }
@@ -568,10 +576,12 @@ namespace dftefe
                              dim> &feBasisManagerY,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
     {
       utils::throwException(
@@ -613,10 +623,12 @@ namespace dftefe
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             efeBasisDataStorage,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManagerX(&feBasisManagerX)
       , d_feBasisManagerY(&feBasisManagerY)
-      , d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
     {
       utils::throwException(
@@ -686,7 +698,8 @@ namespace dftefe
       const utils::MemoryStorage<ValueTypeOperator, memorySpace>
         &basisOverlapInAllCells = *d_basisOverlap;
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+      const size_type cellBlockSize =
+        (d_maxCellBlock * d_maxFieldBlock) / numVecs;
       Y.setValue(0.0);
 
       //

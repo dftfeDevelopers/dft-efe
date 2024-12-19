@@ -194,14 +194,7 @@ int main()
   unsigned int feOrder = 3;
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
                           <double, dftefe::utils::MemorySpace::HOST, dim>>
-                          enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          fieldName,
-                          comm);
+                          enrichClassIntfce = nullptr;
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
     std::vector<std::shared_ptr<const dftefe::utils::ScalarSpatialFunctionReal>> functionsVec(0);
@@ -211,8 +204,7 @@ int main()
     std::vector<double> integralThresholds(numfun);
     for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
     {
-        functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>(        
-            enrichClassIntfce->getEnrichmentIdsPartition(),
+        functionsVec[i] = std::make_shared<dftefe::atoms::AtomSevereFunction<dim>>( 
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
@@ -306,7 +298,7 @@ int main()
   // initialize the basis 
   std::shared_ptr<dftefe::basis::FEBasisDofHandler<double, dftefe::utils::MemorySpace::HOST,dim>> basisDofHandler =  
     std::make_shared<dftefe::basis::EFEBasisDofHandlerDealii<double, double,dftefe::utils::MemorySpace::HOST,dim>>(
-      enrichClassIntfce, feOrder, comm);
+      enrichClassIntfce, comm);
 
   std::map<dftefe::global_size_type, dftefe::utils::Point> dofCoords;
   basisDofHandler->getBasisCenters(dofCoords);
@@ -401,11 +393,11 @@ int main()
                                                         dftefe::utils::MemorySpace::HOST,
                                                         dim>>(
                                                         *basisManager,
-                                                        *basisManager,
                                                         *cfeBasisDataStorageOverlapMatrix,
                                                         *feBasisData,
                                                         *cfeBasisDataStorageOverlapMatrix,
-                                                        50);
+                                                        50,
+                                                        1);
 
   // feBasisOp.interpolate( *dens, constraintHomwHan, *basisManager, quadValuesContainer);
 
@@ -419,6 +411,7 @@ int main()
                                                    (*basisManager,
                                                     *cfeBasisDataStorageOverlapMatrix,
                                                     *feBasisData,
+                                                    *cfeBasisDataStorageOverlapMatrix,
                                                     linAlgOpContext);
     MInvContext->apply(*X,*Y);
     MContext->apply(*Y,*Z);

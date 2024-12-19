@@ -89,4 +89,8 @@ if(ENABLE_MPI)
 	target_link_libraries(TestGenerateMesh PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestGenerateMesh PROPERTIES OUTPUT_NAME "TestGenerateMesh" SUFFIX ".x")
 
+	add_executable(TestBasisDataStorageMemOpt TestBasisDataStorageMemOpt.cpp )
+	target_link_libraries(TestBasisDataStorageMemOpt PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestBasisDataStorageMemOpt PROPERTIES OUTPUT_NAME "TestBasisDataStorageMemOpt" SUFFIX ".x")
+
 endif()

@@ -639,8 +639,10 @@ namespace dftefe
             &                                        feBasisManager,
         std::vector<HamiltonianPtrVariant>           hamiltonianComponentsVec,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
-        const size_type                              maxCellTimesNumVecs)
-      : d_maxCellTimesNumVecs(maxCellTimesNumVecs)
+        const size_type                              maxCellBlock,
+        const size_type                              maxWaveFnBatch)
+      : d_maxCellBlock(maxCellBlock)
+      , d_maxWaveFnBatch(maxWaveFnBatch)
       , d_linAlgOpContext(linAlgOpContext)
     {
       reinit(feBasisManager, hamiltonianComponentsVec);
@@ -879,7 +881,8 @@ namespace dftefe
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
-      const size_type cellBlockSize = d_maxCellTimesNumVecs / numVecs;
+      const size_type cellBlockSize =
+        (d_maxCellBlock * d_maxWaveFnBatch) / numVecs;
       Y.setValue(0.0);
 
       //

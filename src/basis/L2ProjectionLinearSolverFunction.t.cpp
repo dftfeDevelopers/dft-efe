@@ -56,8 +56,6 @@ namespace dftefe
           feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
         // access cell-wise discrete Laplace operator
-        auto NiNjInAllCells =
-          cfeOverlapOperatorContext->getBasisOverlapInAllCells();
 
         std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
                                                            0);
@@ -70,10 +68,11 @@ namespace dftefe
         locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
         basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
-          addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
-                                             itCellLocalIdsBegin,
-                                             locallyOwnedCellsNumDoFs,
-                                             diagonal.data());
+          addCellWiseBasisDataToDiagonalData(
+            cfeOverlapOperatorContext->getBasisOverlapInAllCells().data(),
+            itCellLocalIdsBegin,
+            locallyOwnedCellsNumDoFs,
+            diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes
@@ -119,7 +118,8 @@ namespace dftefe
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellTimesNumVecs)
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock)
       : d_feBasisManager(cfeBasisManager)
       , d_b(cfeBasisManager->getMPIPatternP2P(),
             linAlgOpContext,
@@ -132,6 +132,8 @@ namespace dftefe
                   linAlgOpContext,
                   inp.getNumberComponents())
       , d_AxContext(cfeBasisDataStorageOverlapMatrix)
+      , d_maxCellBlock(maxCellBlock)
+      , d_maxFieldBlock(maxFieldBlock)
     {
       d_mpiPatternP2P = cfeBasisManager->getMPIPatternP2P();
 
@@ -184,7 +186,9 @@ namespace dftefe
 
       // Set up basis Operations for RHS
       FEBasisOperations<ValueTypeOperator, ValueTypeOperator, memorySpace, dim>
-        cfeBasisOperations(cfeBasisDataStorageRhs, maxCellTimesNumVecs);
+        cfeBasisOperations(cfeBasisDataStorageRhs,
+                           d_maxCellBlock,
+                           d_maxFieldBlock);
 
       // Integrate this with different quarature rule. (i.e. adaptive for the
       // enrichment functions) , inp will be in adaptive grid

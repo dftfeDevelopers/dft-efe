@@ -37,6 +37,14 @@ namespace dftefe
   {
     namespace mpi
     {
+      template <typename MPIDatatype>
+      struct MinMaxAvg
+      {
+        MPIDatatype min;
+        MPIDatatype max;
+        MPIDatatype avg;
+      };
+
       int
       MPITypeContiguous(int count, MPIDatatype oldtype, MPIDatatype *newtype);
 
@@ -273,6 +281,10 @@ namespace dftefe
 
       std::pair<bool, std::string>
       MPIErrIsSuccessAndMsg(int errCode);
+
+      template <typename T, MemorySpace memorySpace>
+      MinMaxAvg<T>
+      MPIAllreduceMinMaxAvg(const T &data, MPIComm comm);
 
     } // end of namespace mpi
   }   // end of namespace utils

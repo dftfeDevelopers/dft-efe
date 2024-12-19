@@ -90,7 +90,8 @@ namespace dftefe
             &                                        feBasisManager,
         std::vector<HamiltonianPtrVariant>           hamiltonianComponentsVec,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
-        const size_type                              maxCellTimesNumVecs);
+        const size_type                              maxCellBlock,
+        const size_type                              maxWaveFnBatch);
 
       ~KohnShamOperatorContextFE() = default;
 
@@ -111,7 +112,8 @@ namespace dftefe
         FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
           *                                       d_feBasisManager;
       Storage                                     d_hamiltonianInAllCells;
-      const size_type                             d_maxCellTimesNumVecs;
+      const size_type                             d_maxCellBlock;
+      const size_type                             d_maxWaveFnBatch;
       linearAlgebra::LinAlgOpContext<memorySpace> d_linAlgOpContext;
     }; // end of class KohnShamOperatorContextFE
   }    // end of namespace ksdft

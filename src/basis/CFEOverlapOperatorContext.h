@@ -86,7 +86,10 @@ namespace dftefe
                              dim> &feBasisManager,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &             feBasisDataStorage,
-        const size_type maxCellTimesNumVecs);
+        const size_type maxCellBlock,
+        const size_type maxFieldBlock,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext);
 
       CFEOverlapOperatorContext(
         const FEBasisManager<ValueTypeOperand,
@@ -130,9 +133,9 @@ namespace dftefe
       std::shared_ptr<Storage>   d_basisOverlap;
       std::vector<size_type>     d_cellStartIdsBasisOverlap;
       std::vector<size_type>     d_dofsInCell;
-      const size_type            d_maxCellTimesNumVecs;
-
-      bool d_isMassLumping;
+      const size_type            d_maxCellBlock;
+      const size_type            d_maxFieldBlock;
+      bool                       d_isMassLumping;
       std::shared_ptr<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>
         d_diagonal;
 

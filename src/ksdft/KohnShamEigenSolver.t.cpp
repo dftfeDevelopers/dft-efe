@@ -209,16 +209,17 @@ namespace dftefe
           d_rootCout << "Chebyshev Polynomial Degree : "
                      << d_chebyshevPolynomialDegree << "\n";
 
-          linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
-                                                      ValueTypeOperand,
-                                                      memorySpace>
-            chfsi(d_wantedSpectrumLowerBound,
-                  d_wantedSpectrumUpperBound,
-                  eigenValuesLanczos[1] + residual,
-                  d_chebyshevPolynomialDegree,
-                  ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-                  *d_waveFunctionSubspaceGuess,
-                  d_waveFunctionBlockSize);
+          d_chfsi = std::make_shared<
+            linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                        ValueTypeOperand,
+                                                        memorySpace>>(
+            d_wantedSpectrumLowerBound,
+            d_wantedSpectrumUpperBound,
+            eigenValuesLanczos[1] + residual,
+            d_chebyshevPolynomialDegree,
+            ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+            *d_waveFunctionSubspaceGuess,
+            d_waveFunctionBlockSize);
 
           linearAlgebra::MultiVector<ValueType, memorySpace> HX(
             kohnShamWaveFunctions, (ValueType)0.0),
@@ -235,12 +236,12 @@ namespace dftefe
             {
               // do chebyshev filetered eigensolve
 
-              chfsiErr = chfsi.solve(kohnShamOperator,
-                                     kohnShamEnergies,
-                                     kohnShamWaveFunctions,
-                                     computeWaveFunctions,
-                                     M,
-                                     MInv);
+              chfsiErr = d_chfsi->solve(kohnShamOperator,
+                                        kohnShamEnergies,
+                                        kohnShamWaveFunctions,
+                                        computeWaveFunctions,
+                                        M,
+                                        MInv);
 
               /*
               // Compute projected hamiltonian = Y^H M Y
@@ -291,9 +292,9 @@ namespace dftefe
             }
             */
 
-              d_filteredSubspace = &chfsi.getFilteredSubspace();
+              d_filteredSubspace = &d_chfsi->getFilteredSubspace();
               d_filteredSubspaceOrtho =
-                &chfsi.getOrthogonalizedFilteredSubspace();
+                &d_chfsi->getOrthogonalizedFilteredSubspace();
 
               d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
                          << chfsiErr.msg << std::endl;
@@ -387,13 +388,14 @@ namespace dftefe
                   d_wantedSpectrumLowerBound  = kohnShamEnergies[0];
                   d_wantedSpectrumUpperBound =
                     kohnShamEnergies[d_numWantedEigenvalues - 1];
-                  chfsi.reinit(d_wantedSpectrumLowerBound,
-                               d_wantedSpectrumUpperBound,
-                               eigenValuesLanczos[1] + residual,
-                               d_chebyshevPolynomialDegree,
-                               ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-                               *d_waveFunctionSubspaceGuess,
-                               d_waveFunctionBlockSize);
+                  d_chfsi->reinit(
+                    d_wantedSpectrumLowerBound,
+                    d_wantedSpectrumUpperBound,
+                    eigenValuesLanczos[1] + residual,
+                    d_chebyshevPolynomialDegree,
+                    ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+                    *d_waveFunctionSubspaceGuess,
+                    d_waveFunctionBlockSize);
                 }
             }
           if (!chfsiErr.isSuccess)

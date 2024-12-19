@@ -107,18 +107,12 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_psiBatchQuad;
 
-      quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        *d_psiModSqBatchQuad;
-
       quadrature::QuadratureValuesContainer<RealType, memorySpace> *d_rhoBatch;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> *d_psiBatch;
 
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_psiBatchSmallQuad;
-
-      quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        *d_psiModSqBatchSmallQuad;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
         *d_psiBatchSmall;

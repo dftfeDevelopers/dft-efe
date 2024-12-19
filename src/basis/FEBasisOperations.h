@@ -79,10 +79,12 @@ namespace dftefe
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
                         basisDataStorage,
-        const size_type maxCellTimesFieldBlock);
+        const size_type maxCellBlockSize,
+        const size_type maxFieldBlockSize = 0);
 
       void
-      reinit(const size_type maxCellTimesFieldBlock);
+      reinit(const size_type maxCellBlockSize,
+             const size_type maxFieldBlockSize = 0);
 
       ~FEBasisOperations() = default;
 
@@ -150,8 +152,20 @@ namespace dftefe
 
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                d_feBasisDataStorage;
-      size_type d_maxCellTimesFieldBlock;
+        d_feBasisDataStorage;
+      // size_type d_maxCellTimesFieldBlock;
+      size_type d_maxCellBlock;
+      size_type d_maxFieldBlock;
+
+      /**---temporary scratch spaces----- */
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        d_tmpFieldCellValues, d_tmpCellMatrixBlock, d_tmpJxWxVecN,
+        d_tmpJxWxScalN, d_tmpFieldxVecN, d_tmpFieldxScalN;
+      // TODO: initilize this
+      // (VecN is vector * N (like grad/curl), ScalN is scalar x N)
+
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        d_tmpCellGradientsBlock, d_tmpCellValuesBlock;
 
     }; // end of FEBasisOperations
   }    // end of namespace basis
