@@ -90,6 +90,13 @@ namespace dftefe
       start();
     }
 
+    void
+    Timer::restart()
+    {
+      reset();
+      start();
+    }
+
     const utils::mpi::MinMaxAvg<double> &
     Timer::getLastLapWallTimeData() const
     {

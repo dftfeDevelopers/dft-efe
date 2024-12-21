@@ -231,6 +231,7 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
     {
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
@@ -269,6 +270,7 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      d_p.registerStart("Hamiltonian Components Initilization");
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
@@ -305,8 +307,10 @@ namespace dftefe
           feBDEXCHamiltonian,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
+      d_p.registerEnd("Hamiltonian Components Initilization");
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
+      d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
         std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
@@ -319,6 +323,7 @@ namespace dftefe
           *linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
+      d_p.registerEnd("Hamiltonian Operator Creation");
 
       // call the eigensolver
 
@@ -461,6 +466,7 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
     {
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
@@ -499,6 +505,7 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      d_p.registerStart("Hamiltonian Components Initilization");
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
@@ -537,8 +544,10 @@ namespace dftefe
           feBDEXCHamiltonian,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
+      d_p.registerEnd("Hamiltonian Components Initilization");
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
+      d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
         std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
@@ -551,6 +560,8 @@ namespace dftefe
           *linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
+      d_p.registerEnd("Hamiltonian Operator Creation");
+      d_p.print();
 
       // call the eigensolver
 
@@ -623,6 +634,7 @@ namespace dftefe
       d_rootCout << "Starting SCF iterations....\n";
       while ((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter))
         {
+          d_p.reset();
           d_rootCout
             << "************************Begin Self-Consistent-Field Iteration: "
             << std::setw(2) << scfIter + 1 << " ***********************\n";
@@ -630,6 +642,7 @@ namespace dftefe
           // mix the densities with  Anderson mix if scf > 0
           // Update the history of mixing variables
 
+          d_p.registerStart("Density Mixing");
           if (scfIter > 0)
             {
               norm = KohnShamDFTInternal::computeResidualQuadData(
@@ -667,7 +680,9 @@ namespace dftefe
                 d_densityInQuadValues.begin(),
                 d_densityInQuadValues.nQuadraturePoints());
             }
+          d_p.registerEnd("Density Mixing");
 
+          d_p.registerStart("Hamiltonian Reinit");
           // reinit the components of hamiltonian
           if (scfIter > 0)
             {
@@ -695,6 +710,7 @@ namespace dftefe
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
             }
+          d_p.registerEnd("Hamiltonian Reinit");
 
           // reinit the chfsi bounds
           if (scfIter > 0)
@@ -704,6 +720,7 @@ namespace dftefe
                 d_kohnShamEnergies[d_numWantedEigenvalues - 1]);
             }
 
+          d_p.registerStart("EigenSolve");
           // Linear Eigen Solve
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
@@ -712,6 +729,7 @@ namespace dftefe
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
+          d_p.registerEnd("EigenSolve");
 
           d_occupation = d_ksEigSolve->getFractionalOccupancy();
 
@@ -829,10 +847,13 @@ namespace dftefe
               std::cout << "getFilteredSubspace sum: "<< denSum << std::endl;
           */
 
+          d_p.registerStart("Density Compute");
           // compute output rho
           d_densCalc->computeRho(d_occupation,
                                  *d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
+          d_p.registerEnd("Density Compute");
+          d_p.print();
 
           RealType totalDensityInQuad =
             KohnShamDFTInternal::normalizeDensityQuadData(

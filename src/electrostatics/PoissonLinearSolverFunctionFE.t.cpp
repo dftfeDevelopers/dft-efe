@@ -135,6 +135,8 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_maxCellBlock(maxCellBlock)
       , d_maxFieldBlock(maxFieldBlock)
+      , d_p(feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(),
+            "Poisson Solver")
     {
       utils::throwException(
         !inpRhs.empty(),
@@ -169,6 +171,7 @@ namespace dftefe
       std::shared_ptr<const utils::ScalarSpatialFunctionReal> zeroFunction =
         std::make_shared<utils::ScalarZeroFunctionReal>();
 
+      d_p.registerStart("Initilization");
       d_feBasisManagerHomo =
         std::make_shared<basis::FEBasisManager<ValueTypeOperand,
                                                ValueTypeOperator,
@@ -251,6 +254,7 @@ namespace dftefe
                                                              memorySpace>>();
       else
         utils::throwException(false, "Unknown PreConditionerType");
+      d_p.registerEnd("Initilization");
 
       if (!(feBasisDataStorageRhs.empty() || inpRhs.empty()))
         reinit(d_feBasisManagerField, feBasisDataStorageRhs, inpRhs);
@@ -364,8 +368,10 @@ namespace dftefe
           iter++;
         }
 
+      d_p.reset();
       if (d_feBasisManagerField != feBasisManagerField)
         {
+          d_p.registerStart("Initilization");
           utils::throwException(
             (&(d_feBasisManagerField->getBasisDofHandler()) ==
              &(feBasisManagerField->getBasisDofHandler())),
@@ -378,6 +384,7 @@ namespace dftefe
 
           d_AxContextNHDB->reinit(*d_feBasisManagerField,
                                   *d_feBasisManagerHomo);
+          d_p.registerStart("Initilization");
         }
 
       // Compute RHS
@@ -391,6 +398,7 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b1(d_b, 0.0),
         b(d_b, 0.0);
 
+      d_p.registerStart("Rhs Computation");
       iter = feBasisDataStorageRhs.begin();
       while (iter != feBasisDataStorageRhs.end())
         {
@@ -414,6 +422,8 @@ namespace dftefe
       d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB);
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
+      d_p.registerEnd("Rhs Computation");
+      // d_p.print();
 
       // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {

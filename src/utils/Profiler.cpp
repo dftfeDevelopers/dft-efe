@@ -26,15 +26,36 @@
 #include <utils/MPIWrapper.h>
 #include <mutex>
 #include <utils/Profiler.h>
+#include <boost/io/ios_state.hpp>
 
 namespace dftefe
 {
   namespace utils
   {
-    Profiler::Profiler(const ConditionalOStream & stream,
-                       const utils::mpi::MPIComm &mpiComm)
+    Profiler::Profiler(const std::string &profileName)
+      : d_stream(ConditionalOStream(std::cout))
+      , d_mpiComm(mpi::MPICommSelf)
+      , d_profileName(profileName)
+    {}
+
+    Profiler::Profiler(const mpi::MPIComm &mpiComm,
+                       const std::string & profileName)
+      : d_mpiComm(mpiComm)
+      , d_stream(ConditionalOStream(std::cout))
+      , d_profileName(profileName)
+    {
+      // Get the rank of the process
+      int rank;
+      mpi::MPICommRank(d_mpiComm, &rank);
+      d_stream.setCondition(rank == 0);
+    }
+
+    Profiler::Profiler(const mpi::MPIComm &      mpiComm,
+                       const ConditionalOStream &stream,
+                       const std::string &       profileName)
       : d_stream(stream)
       , d_mpiComm(mpiComm)
+      , d_profileName(profileName)
     {}
 
     Profiler::~Profiler()
@@ -49,6 +70,7 @@ namespace dftefe
     void
     Profiler::registerStart(const std::string &sectionName)
     {
+      // add device synchronize for gpu
       std::mutex                  mutex;
       std::lock_guard<std::mutex> lock(std::mutex);
 
@@ -64,7 +86,7 @@ namespace dftefe
 
       if (d_SectionsMap.find(sectionName) == d_SectionsMap.end())
         {
-          if (d_mpiComm != utils::mpi::MPICommSelf)
+          if (d_mpiComm != mpi::MPICommSelf)
             {
               // create a new timer for this section. the second argument
               // will ensure that we have an MPI barrier before starting
@@ -94,6 +116,7 @@ namespace dftefe
         !d_activeSections.empty(),
         "Cannot exit any section because none has been entered!");
 
+      // add device synchronize for gpu
       std::mutex                  mutex;
       std::lock_guard<std::mutex> lock(mutex);
 
@@ -128,6 +151,10 @@ namespace dftefe
     void
     Profiler::print() const
     {
+      // we are going to change the precision and width of output below. store
+      // the old values so the get restored when exiting this function
+      const boost::io::ios_base_all_saver restore_stream(d_stream.getOStream());
+
       // get the maximum width among all d_SectionsMap
       unsigned int maxWidth = 0;
       for (const auto &i : d_SectionsMap)
@@ -142,7 +169,16 @@ namespace dftefe
       double totalWallTime = d_totalTime.wallTime();
 
       // now generate a nice table
-      d_stream << "\n\n"
+      d_stream << "\n\n";
+      if (d_profileName != "")
+        {
+          d_stream << "+---------------------------------------------"
+                   << extraDash << "+------------"
+                   << "+------------+\n";
+          d_stream << std::string(maxWidth - 16, ' ') << d_profileName
+                   << std::string(maxWidth - 16, ' ') << "\n";
+        }
+      d_stream << ""
                << "+---------------------------------------------" << extraDash
                << "+------------"
                << "+------------+\n"
@@ -257,6 +293,17 @@ namespace dftefe
             "Cannot get Calls of a section that has not been entered.");
         }
       return it->second.nCalls;
+    }
+
+    void
+    Profiler::reset()
+    {
+      // add device synchronize for gpu
+      std::mutex                  mutex;
+      std::lock_guard<std::mutex> lock(mutex);
+      d_SectionsMap.clear();
+      d_activeSections.clear();
+      d_totalTime.restart();
     }
 
   } // namespace utils

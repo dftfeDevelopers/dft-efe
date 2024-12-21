@@ -35,6 +35,7 @@
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
 #include <utils/ConditionalOStream.h>
+#include <utils/Profiler.h>
 
 namespace dftefe
 {
@@ -192,6 +193,7 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace>
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
+      utils::Profiler                                     d_p;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

@@ -40,6 +40,7 @@
 #include <quadrature/QuadratureValuesContainer.h>
 #include <vector>
 #include <memory>
+#include <utils/Profiler.h>
 
 namespace dftefe
 {
@@ -225,7 +226,8 @@ namespace dftefe
       const size_type d_maxFieldBlock;
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-        d_feBasisDataStorageStiffnessMatrix;
+                      d_feBasisDataStorageStiffnessMatrix;
+      utils::Profiler d_p;
 
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace electrostatics

@@ -74,6 +74,8 @@ namespace dftefe
       , d_eigSolveResNorm(d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
+      , d_p(waveFunctionSubspaceGuess.getMPIPatternP2P()->mpiCommunicator(),
+            "Kohn Sham EigenSolver")
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -132,6 +134,7 @@ namespace dftefe
             const OpContext &M,
             const OpContext &MInv)
     {
+      d_p.reset();
       d_isSolved                  = true;
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -162,12 +165,15 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
 
       std::vector<RealType> eigenValuesLanczos(2);
+      d_p.registerStart("Lanczos Solve");
       lanczosErr = lanczos.solve(kohnShamOperator,
                                  eigenValuesLanczos,
                                  eigenVectorsLanczos,
                                  false,
                                  *d_MLanczos,
                                  *d_MInvLanczos);
+      d_p.registerEnd("Lanczos Solve");
+      d_p.print();
 
       std::vector<RealType> diagonal(0), subDiagonal(0);
       lanczos.getTridiagonalMatrix(diagonal, subDiagonal);

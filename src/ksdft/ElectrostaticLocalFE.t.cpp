@@ -918,9 +918,14 @@ namespace dftefe
         feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
                                     {"rho", d_feBDElectronicChargeRhs}};
 
+      utils::Profiler p(
+        d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
+        "b+rho Poisson Solve");
+      p.registerStart("Reinit");
       d_linearSolverFunction->reinit(d_feBMTotalCharge,
                                      feBasisDataStorageRhsMap,
                                      inpRhsMap);
+      p.registerEnd("Reinit");
 
       linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -937,7 +942,10 @@ namespace dftefe
             ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
             profiler);
 
+      p.registerStart("Solve");
       CGSolve->solve(*d_linearSolverFunction);
+      p.registerEnd("Solve");
+      p.print();
 
       d_linearSolverFunction->getSolution(*d_totalChargePotential);
     }
@@ -1083,6 +1091,10 @@ namespace dftefe
                             *d_scratchDensNuclearQuad,
                             *d_linAlgOpContext);
 
+          utils::Profiler p(
+            d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
+            "bNuclear Poisson Solve for Atom " + std::to_string(iAtom + 1));
+          p.registerStart("Reinit");
           if (iAtom == 0)
             {
               linearSolverFunctionNuclear =
@@ -1105,6 +1117,7 @@ namespace dftefe
                                                   feBDNuclearChargeRhs,
                                                   *d_scratchDensNuclearQuad);
             }
+          p.registerEnd("Reinit");
 
           linearAlgebra::LinearAlgebraProfiler profiler;
 
@@ -1121,7 +1134,10 @@ namespace dftefe
               ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
               profiler);
 
+          p.registerStart("Solve");
           CGSolve->solve(*linearSolverFunctionNuclear);
+          p.registerEnd("Solve");
+          p.print();
 
           d_nuclearChargesPotential[iAtom] =
             new linearAlgebra::MultiVector<ValueType, memorySpace>(

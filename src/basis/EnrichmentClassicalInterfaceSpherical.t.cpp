@@ -165,6 +165,7 @@ namespace dftefe
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
       global_size_type maxEnrich = 0;
+      global_size_type minEnrich = 0;
       global_size_type avgEnrich = 0;
       size_type        cellIndex = 0;
       cell                       = d_triangulation->beginLocal();
@@ -174,6 +175,8 @@ namespace dftefe
             d_overlappingEnrichmentIdsInCells[cellIndex].size();
           if (maxEnrich < numEnrichInCell)
             maxEnrich = numEnrichInCell;
+          if (minEnrich > numEnrichInCell)
+            minEnrich = numEnrichInCell;
           avgEnrich += numEnrichInCell;
           cellIndex++;
         }
@@ -190,6 +193,14 @@ namespace dftefe
 
       utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,
+        &minEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMin,
+        comm);
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
         &avgEnrich,
         1,
         utils::mpi::Types<global_size_type>::getMPIDatatype(),
@@ -200,6 +211,9 @@ namespace dftefe
 
       rootCout << "Maximum " << fieldName
                << " Enrichment Ids In a Cell in Processor: " << maxEnrich
+               << "\n";
+      rootCout << "Minimum " << fieldName
+               << " Enrichment Ids In a Cell in Processor: " << minEnrich
                << "\n";
       rootCout << "Average " << fieldName
                << " Enrichment Ids In a Cell In Processor: " << avgEnrich
@@ -587,6 +601,7 @@ namespace dftefe
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
       global_size_type maxEnrich = 0;
+      global_size_type minEnrich = 0;
       global_size_type avgEnrich = 0;
       size_type        cellIndex = 0;
       cell                       = d_triangulation->beginLocal();
@@ -596,6 +611,8 @@ namespace dftefe
             d_overlappingEnrichmentIdsInCells[cellIndex].size();
           if (maxEnrich < numEnrichInCell)
             maxEnrich = numEnrichInCell;
+          if (minEnrich > numEnrichInCell)
+            minEnrich = numEnrichInCell;
           avgEnrich += numEnrichInCell;
           cellIndex++;
         }
@@ -612,6 +629,14 @@ namespace dftefe
 
       utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,
+        &minEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMin,
+        comm);
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
         &avgEnrich,
         1,
         utils::mpi::Types<global_size_type>::getMPIDatatype(),
@@ -622,6 +647,9 @@ namespace dftefe
 
       rootCout << "Maximum " << fieldName
                << " Enrichment Ids In a Processor: " << maxEnrich << "\n";
+      rootCout << "Minimum " << fieldName
+               << " Enrichment Ids In a Cell in Processor: " << minEnrich
+               << "\n";
       rootCout << "Average " << fieldName
                << " Enrichment Ids In a Processor: " << avgEnrich << "\n";
 

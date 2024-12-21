@@ -36,6 +36,7 @@
 #include <linearAlgebra/RayleighRitzEigenSolver.h>
 #include <linearAlgebra/ChebyshevFilter.h>
 #include <memory>
+#include <utils/Profiler.h>
 
 namespace dftefe
 {
@@ -137,7 +138,8 @@ namespace dftefe
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
-        d_rr;
+                      d_rr;
+      utils::Profiler d_p;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

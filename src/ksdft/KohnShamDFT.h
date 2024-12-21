@@ -35,6 +35,7 @@
 #include <ksdft/DensityCalculator.h>
 #include <utils/ConditionalOStream.h>
 #include <ksdft/MixingScheme.h>
+#include <utils/Profiler.h>
 
 namespace dftefe
 {
@@ -306,8 +307,9 @@ namespace dftefe
                                         memorySpace>>
         d_feBDEXCHamiltonian;
 
-      RealType d_groundStateEnergy;
-      bool     d_isSolved;
+      RealType        d_groundStateEnergy;
+      bool            d_isSolved;
+      utils::Profiler d_p;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

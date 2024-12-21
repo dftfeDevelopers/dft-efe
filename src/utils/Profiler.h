@@ -50,8 +50,14 @@ namespace dftefe
         unsigned int nCalls;
       };
 
-      Profiler(const ConditionalOStream &stream = ConditionalOStream(std::cout),
-               const utils::mpi::MPIComm &mpiComm = utils::mpi::MPICommSelf);
+      Profiler(const std::string &profileName = "");
+
+      Profiler(const mpi::MPIComm &mpiComm,
+               const std::string & profileName = "");
+
+      Profiler(const mpi::MPIComm &      mpiComm,
+               const ConditionalOStream &stream,
+               const std::string &       profileName = "");
 
       ~Profiler();
 
@@ -67,13 +73,16 @@ namespace dftefe
       getSectionTotalWallTime(const std::string &sectionName) const;
       unsigned int
       getSectionCalls(const std::string &sectionName) const;
+      void
+      reset();
 
     private:
       std::map<std::string, Section> d_SectionsMap;
       std::list<std::string>         d_activeSections;
-      const ConditionalOStream       d_stream;
-      const utils::mpi::MPIComm      d_mpiComm;
+      ConditionalOStream             d_stream;
+      const mpi::MPIComm             d_mpiComm;
       Timer                          d_totalTime;
+      std::string                    d_profileName;
 
     }; // end of class Profiler
   }    // end of namespace utils

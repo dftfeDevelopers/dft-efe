@@ -476,9 +476,10 @@ int main(int argc, char** argv)
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
 
-    utils::mpi::MPIBarrier(comm);
-    auto startTotal = std::chrono::high_resolution_clock::now();
-
+  utils::Profiler pTot(comm, "Total Statistics");
+  utils::Profiler p(comm, "Initilization Breakdown Statistics");
+  pTot.registerStart("Initilization");
+  
     // Get the rank of the process
   int rank;
   utils::mpi::MPICommRank(comm, &rank);
@@ -718,10 +719,7 @@ int main(int argc, char** argv)
     
   // Set up the quadrature rule
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto start = std::chrono::high_resolution_clock::now();
-
+  p.registerStart("Basis Creation and Basis Data Storages Evaluation");
   quadrature::QuadratureRuleAttributes quadAttrElec(quadrature::QuadratureFamily::GAUSS,true,feOrderElec+1);
 
   basis::BasisStorageAttributesBoolMap basisAttrMap;
@@ -949,16 +947,17 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
             setCellValues<Host>(iCell, b);
     }
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto stop = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for all basis storage evaluations including overlap operators(in secs) : " << duration.count()/1e6 << std::endl;
+  p.registerEnd("Basis Creation and Basis Data Storages Evaluation");
 
   rootCout << "Entering KohnSham DFT Class....\n\n";
 
+  p.registerStart("Kohn Sham DFT Class Init");
+  std::shared_ptr<ksdft::KohnShamDFT<double,
+                                        double,
+                                        double,
+                                        double,
+                                        Host,
+                                        dim>> dftefeSolve = nullptr;
   if(isNumericalNuclearSolve)
   {
 
@@ -977,12 +976,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
     std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBDTotalChargeStiffnessMatrix;
 
-    std::shared_ptr<ksdft::KohnShamDFT<double,
-                                        double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>> dftefeSolve =
+    dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -1021,31 +1015,11 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext);
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
-
-    dftefeSolve->solve();   
-
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
-                                         
+                                          *MInvContext);                           
   }
   else
   {
-    std::shared_ptr<ksdft::KohnShamDFT<double,
-                                        double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>> dftefeSolve =
+    dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -1083,31 +1057,18 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           /**MContextForInv,*/
                                           *MContext,
                                           *MInvContext);
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
-
-    dftefeSolve->solve();   
-
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
-
   }
+  p.registerEnd("Kohn Sham DFT Class Init"); 
+  p.print();
 
-  // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto stopTotal = std::chrono::high_resolution_clock::now();
+  pTot.registerEnd("Initilization");   
+  pTot.registerStart("Kohn Sham DFT Solve");
 
-    auto durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
+  dftefeSolve->solve();
 
-    rootCout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
-
+  pTot.registerEnd("Kohn Sham DFT Solve");
+  pTot.print();
+  
   //gracefully end MPI
 
   int mpiFinalFlag = 0;

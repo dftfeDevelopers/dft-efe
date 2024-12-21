@@ -49,7 +49,7 @@ namespace dftefe
       return d_activeFlag;
     }
 
-    inline std::ostream &
+    std::ostream &
     ConditionalOStream::getOStream() const
     {
       return d_outputStream;
