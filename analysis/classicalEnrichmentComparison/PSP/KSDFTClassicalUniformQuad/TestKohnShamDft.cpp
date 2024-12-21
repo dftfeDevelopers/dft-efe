@@ -507,6 +507,7 @@ int main(int argc, char** argv)
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
   rootCout<<" Entering test kohn sham dft classical \n";
+  rootCout << "Number of processes: "<<numProcs<<"\n";
 
   char* dftefe_path = getenv("DFTEFE_PATH");
   std::string sourceDir;
