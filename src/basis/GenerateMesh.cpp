@@ -205,7 +205,7 @@ namespace dftefe
               i =
                 std::pow(2,
                          round(log2(
-                           (std::max(8.0, largestMeshSizeAroundAtom) /*4.0*/) /
+                           (std::max(4.0, largestMeshSizeAroundAtom) /*4.0*/) /
                            largestMeshSizeAroundAtom))) *
                 largestMeshSizeAroundAtom;
             }

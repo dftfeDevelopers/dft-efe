@@ -1439,43 +1439,19 @@ namespace dftefe
                                const dftefe::utils::Point &point) const
     {
       double retValue = 0;
-      if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
-        {
-          if (d_overlappingEnrichmentIdsInCells[cellId].size() >
-              cellLocalEnrichmentId)
-            {
-              size_type enrichmentId =
-                d_overlappingEnrichmentIdsInCells[cellId]
-                                                 [cellLocalEnrichmentId];
-              size_type atomId =
-                d_enrichmentIdsPartition->getAtomId(enrichmentId);
-              size_type qNumberId =
-                (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                   enrichmentId))
-                  .localIdInAtom;
-              std::string  atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              std::vector<std::vector<int>> qNumbers(0);
-              qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                                   d_fieldName);
-              auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(
-                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
-              retValue = sphericalData->getValue(point, origin);
-            }
-          else
-            {
-              utils::throwException(
-                false,
-                "The requested cell local enrichment id does not exist.");
-            }
-        }
-      else
-        {
-          utils::throwException(
-            false,
-            "The requested cell does not have any enrichment ids overlapping with it.");
-        }
+      DFTEFE_AssertWithMsg(
+        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
+          d_overlappingEnrichmentIdsInCells[cellId].size() >
+            cellLocalEnrichmentId,
+        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
+
+      basis::EnrichmentIdAttribute eIdAttr =
+        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
+      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
+      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
+        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
+      retValue = sphericalData->getValue(point, origin);
       return retValue;
     }
 
@@ -1493,43 +1469,19 @@ namespace dftefe
                                     const dftefe::utils::Point &point) const
     {
       std::vector<double> retValue(0);
-      if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
-        {
-          if (d_overlappingEnrichmentIdsInCells[cellId].size() >
-              cellLocalEnrichmentId)
-            {
-              size_type enrichmentId =
-                d_overlappingEnrichmentIdsInCells[cellId]
-                                                 [cellLocalEnrichmentId];
-              size_type atomId =
-                d_enrichmentIdsPartition->getAtomId(enrichmentId);
-              size_type qNumberId =
-                (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                   enrichmentId))
-                  .localIdInAtom;
-              std::string  atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              std::vector<std::vector<int>> qNumbers(0);
-              qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                                   d_fieldName);
-              auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(
-                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
-              retValue = sphericalData->getGradientValue(point, origin);
-            }
-          else
-            {
-              utils::throwException(
-                false,
-                "The requested cell local enrichment id does not exist.");
-            }
-        }
-      else
-        {
-          utils::throwException(
-            false,
-            "The requested cellid does not have any enrichment ids overlapping with it.");
-        }
+      DFTEFE_AssertWithMsg(
+        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
+          d_overlappingEnrichmentIdsInCells[cellId].size() >
+            cellLocalEnrichmentId,
+        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
+
+      basis::EnrichmentIdAttribute eIdAttr =
+        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
+      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
+      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
+        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
+      retValue = sphericalData->getGradientValue(point, origin);
       return retValue;
     }
 
@@ -1547,43 +1499,59 @@ namespace dftefe
                                  const dftefe::utils::Point &point) const
     {
       std::vector<double> retValue(0);
-      if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
-        {
-          if (d_overlappingEnrichmentIdsInCells[cellId].size() >
-              cellLocalEnrichmentId)
-            {
-              size_type enrichmentId =
-                d_overlappingEnrichmentIdsInCells[cellId]
-                                                 [cellLocalEnrichmentId];
-              size_type atomId =
-                d_enrichmentIdsPartition->getAtomId(enrichmentId);
-              size_type qNumberId =
-                (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                   enrichmentId))
-                  .localIdInAtom;
-              std::string  atomSymbol = d_atomSymbolVec[atomId];
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              std::vector<std::vector<int>> qNumbers(0);
-              qNumbers = d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                                   d_fieldName);
-              auto sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(
-                  atomSymbol, d_fieldName, qNumbers[qNumberId]);
-              retValue = sphericalData->getHessianValue(point, origin);
-            }
-          else
-            {
-              utils::throwException(
-                false,
-                "The requested cell local enrichment id does not exist.");
-            }
-        }
-      else
-        {
-          utils::throwException(
-            false,
-            "The requested cell does not have any enrichment ids overlapping with it.");
-        }
+      DFTEFE_AssertWithMsg(
+        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
+          d_overlappingEnrichmentIdsInCells[cellId].size() >
+            cellLocalEnrichmentId,
+        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
+
+      basis::EnrichmentIdAttribute eIdAttr =
+        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
+      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
+      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
+        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
+      retValue = sphericalData->getHessianValue(point, origin);
+
+      // if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
+      //   {
+      //     if (d_overlappingEnrichmentIdsInCells[cellId].size() >
+      //         cellLocalEnrichmentId)
+      //       {
+      //         size_type enrichmentId =
+      //           d_overlappingEnrichmentIdsInCells[cellId]
+      //                                            [cellLocalEnrichmentId];
+      //         size_type atomId =
+      //           d_enrichmentIdsPartition->getAtomId(enrichmentId);
+      //         size_type qNumberId =
+      //           (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+      //              enrichmentId))
+      //             .localIdInAtom;
+      //         std::string  atomSymbol = d_atomSymbolVec[atomId];
+      //         utils::Point origin(d_atomCoordinatesVec[atomId]);
+      //         std::vector<std::vector<int>> qNumbers(0);
+      //         qNumbers =
+      //         d_atomSphericalDataContainer->getQNumbers(atomSymbol,
+      //                                                              d_fieldName);
+      //         auto sphericalData =
+      //           d_atomSphericalDataContainer->getSphericalData(
+      //             atomSymbol, d_fieldName, qNumbers[qNumberId]);
+      //         retValue = sphericalData->getHessianValue(point, origin);
+      //       }
+      //     else
+      //       {
+      //         utils::throwException(
+      //           false,
+      //           "The requested cell local enrichment id does not exist.");
+      //       }
+      //   }
+      // else
+      //   {
+      //     utils::throwException(
+      //       false,
+      //       "The requested cell does not have any enrichment ids overlapping
+      //       with it.");
+      //   }
       return retValue;
     }
 

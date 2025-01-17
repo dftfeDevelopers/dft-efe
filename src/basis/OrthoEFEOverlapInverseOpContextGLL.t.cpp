@@ -528,6 +528,172 @@ namespace dftefe
                 n,
                 linAlgOpContext);
 
+
+            // std::vector<ValueTypeOperator> basisOverlapEEBlock1(
+            //   numEnrichmentIdsInCell * numEnrichmentIdsInCell, 0),
+            //   basisOverlapEEBlock2( numEnrichmentIdsInCell *
+            //   numEnrichmentIdsInCell, 0), basisOverlapEEBlock3(
+            //   numEnrichmentIdsInCell * numEnrichmentIdsInCell, 0),
+            //   basisOverlapEEBlock4( numEnrichmentIdsInCell *
+            //   numEnrichmentIdsInCell, 0);
+
+            // if (numEnrichmentIdsInCell > 0)
+            //   {
+            //      // Ni_pristine*Ni_pristine at quadpoints
+            //     JxWxNCellConj.resize(
+            //       numEnrichmentIdsInCell *
+            //       nQuadPointInCellEnrichmentBlockEnrichment, 0);
+
+            //     m = 1, n = numEnrichmentIdsInCell,
+            //     k = nQuadPointInCellEnrichmentBlockEnrichment;
+
+            //     linearAlgebra::blasLapack::scaleStridedVarBatched<
+            //       ValueTypeOperator,
+            //       ValueTypeOperator,
+            //       memorySpace>(1,
+            //                    linearAlgebra::blasLapack::Layout::ColMajor,
+            //                    linearAlgebra::blasLapack::ScalarOp::Identity,
+            //                    linearAlgebra::blasLapack::ScalarOp::Conj,
+            //                    &stride,
+            //                    &stride,
+            //                    &stride,
+            //                    &m,
+            //                    &n,
+            //                    &k,
+            //                    cellJxWValuesEnrichmentBlockEnrichment.data(),
+            //                    enrichmentValuesVec.data(),
+            //                    JxWxNCellConj.data(),
+            //                    linAlgOpContext);
+
+            //     linearAlgebra::blasLapack::
+            //       gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
+            //         linearAlgebra::blasLapack::Layout::ColMajor,
+            //         linearAlgebra::blasLapack::Op::NoTrans,
+            //         linearAlgebra::blasLapack::Op::NoTrans,
+            //         n,
+            //         n,
+            //         k,
+            //         (ValueTypeOperand)1.0,
+            //         JxWxNCellConj.data(),
+            //         n,
+            //         enrichmentValuesVec.data(),
+            //         k,
+            //         (ValueTypeOperand)0.0,
+            //         basisOverlapEEBlock1.data(),
+            //         n,
+            //         linAlgOpContext);
+
+            //     // interpolated ci's in Ni_classicalQuadrature of Mc = d
+            //     // * interpolated ci's in Ni_classicalQuadrature of Mc =
+            //     // d
+            //     JxWxNCellConj.resize(numEnrichmentIdsInCell *
+            //                            nQuadPointInCellEnrichmentBlockClassical,
+            //                          0);
+
+            //     m = 1, n = numEnrichmentIdsInCell,
+            //     k = nQuadPointInCellEnrichmentBlockClassical;
+
+            //     linearAlgebra::blasLapack::scaleStridedVarBatched<
+            //       ValueTypeOperator,
+            //       ValueTypeOperator,
+            //       memorySpace>(1,
+            //                    linearAlgebra::blasLapack::Layout::ColMajor,
+            //                    linearAlgebra::blasLapack::ScalarOp::Identity,
+            //                    linearAlgebra::blasLapack::ScalarOp::Conj,
+            //                    &stride,
+            //                    &stride,
+            //                    &stride,
+            //                    &m,
+            //                    &n,
+            //                    &k,
+            //                    cellJxWValuesEnrichmentBlockClassical.data(),
+            //                    classicalComponentInQuadValuesEC.data(),
+            //                    JxWxNCellConj.data(),
+            //                    linAlgOpContext);
+
+            //     linearAlgebra::blasLapack::
+            //       gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
+            //         linearAlgebra::blasLapack::Layout::ColMajor,
+            //         linearAlgebra::blasLapack::Op::NoTrans,
+            //         linearAlgebra::blasLapack::Op::NoTrans,
+            //         n,
+            //         n,
+            //         k,
+            //         (ValueTypeOperand)1.0,
+            //         JxWxNCellConj.data(),
+            //         n,
+            //         classicalComponentInQuadValuesEC.data(),
+            //         k,
+            //         (ValueTypeOperator)0.0,
+            //         basisOverlapEEBlock2.data(),
+            //         n,
+            //         linAlgOpContext);
+
+            //     // Ni_pristine* interpolated ci's in
+            //     // Ni_classicalQuadratureOfPristine at quadpoints
+
+            //     JxWxNCellConj.resize(dofsPerCellCFE *
+            //                            nQuadPointInCellEnrichmentBlockEnrichment,
+            //                          0);
+
+            //     m = 1, n = numEnrichmentIdsInCell,
+            //     k = nQuadPointInCellEnrichmentBlockEnrichment;
+
+            //     linearAlgebra::blasLapack::scaleStridedVarBatched<
+            //       ValueTypeOperator,
+            //       ValueTypeOperator,
+            //       memorySpace>(1,
+            //                    linearAlgebra::blasLapack::Layout::ColMajor,
+            //                    linearAlgebra::blasLapack::ScalarOp::Identity,
+            //                    linearAlgebra::blasLapack::ScalarOp::Conj,
+            //                    &stride,
+            //                    &stride,
+            //                    &stride,
+            //                    &m,
+            //                    &n,
+            //                    &k,
+            //                    cellJxWValuesEnrichmentBlockEnrichment.data(),
+            //                    enrichmentValuesVec.data(),
+            //                    JxWxNCellConj.data(),
+            //                    linAlgOpContext);
+
+            //     linearAlgebra::blasLapack::
+            //       gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
+            //         linearAlgebra::blasLapack::Layout::ColMajor,
+            //         linearAlgebra::blasLapack::Op::NoTrans,
+            //         linearAlgebra::blasLapack::Op::NoTrans,
+            //         n,
+            //         n,
+            //         k,
+            //         (ValueTypeOperand)1.0,
+            //         JxWxNCellConj.data(),
+            //         n,
+            //         classicalComponentInQuadValuesEC.data(),
+            //         k,
+            //         (ValueTypeOperator)0.0,
+            //         basisOverlapEEBlock3.data(),
+            //         n,
+            //         linAlgOpContext);
+
+            //     linearAlgebra::blasLapack::
+            //       gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
+            //         linearAlgebra::blasLapack::Layout::ColMajor,
+            //         linearAlgebra::blasLapack::Op::Trans,
+            //         linearAlgebra::blasLapack::Op::Trans,
+            //         n,
+            //         n,
+            //         k,
+            //         (ValueTypeOperand)1.0,
+            //         classicalComponentInQuadValuesEC.data(),
+            //         k,
+            //         JxWxNCellConj.data(),
+            //         n,
+            //         (ValueTypeOperator)0.0,
+            //         basisOverlapEEBlock4.data(),
+            //         n,
+            //         linAlgOpContext);
+            //   }
+
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
               {
                 for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
@@ -574,6 +740,7 @@ namespace dftefe
                               cellJxWValuesEnrichmentBlockEnrichment[qPoint];
                           }
                           **/
+
 
                         ValueTypeOperator NpiNpj     = (ValueTypeOperator)0,
                                           ciNciNpj   = (ValueTypeOperator)0,
@@ -645,6 +812,21 @@ namespace dftefe
                           }
                         *basisOverlapTmpIter +=
                           NpiNpj - NpicjNcj - ciNciNpj + ciNcicjNcj;
+
+
+                        // *basisOverlapTmpIter =
+                        //   *(basisOverlapEEBlock1.data() +
+                        //     (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell
+                        //     + (jNode - dofsPerCellCFE))+
+                        //   *(basisOverlapEEBlock2.data() +
+                        //     (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell
+                        //     + (jNode - dofsPerCellCFE))-
+                        //   *(basisOverlapEEBlock3.data() +
+                        //     (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell
+                        //     + (jNode - dofsPerCellCFE))-
+                        //   *(basisOverlapEEBlock4.data() +
+                        //     (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell
+                        //     + (jNode - dofsPerCellCFE));
                       }
                     basisOverlapTmpIter++;
                   }

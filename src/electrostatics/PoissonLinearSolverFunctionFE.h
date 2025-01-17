@@ -226,9 +226,15 @@ namespace dftefe
       const size_type d_maxFieldBlock;
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                      d_feBasisDataStorageStiffnessMatrix;
-      utils::Profiler d_p;
-
+                                d_feBasisDataStorageStiffnessMatrix;
+      utils::Profiler           d_p;
+      utils::ConditionalOStream d_rootCout;
+      std::map<std::string,
+               linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>>
+        d_rhsMultiVecComponent;
+      std::map<std::string,
+               quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
+        d_rhsQuadValComponent;
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace electrostatics
 } // end of namespace dftefe

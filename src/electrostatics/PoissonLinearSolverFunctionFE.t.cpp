@@ -137,7 +137,13 @@ namespace dftefe
       , d_maxFieldBlock(maxFieldBlock)
       , d_p(feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(),
             "Poisson Solver")
+      , d_rootCout(std::cout)
     {
+      int rank;
+      utils::mpi::MPICommRank(
+        feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(), &rank);
+      d_rootCout.setCondition(rank == 0);
+
       utils::throwException(
         !inpRhs.empty(),
         "The input QuadValuesContainer Map in PoissonSolver cannot be empty.");
@@ -256,6 +262,7 @@ namespace dftefe
         utils::throwException(false, "Unknown PreConditionerType");
       d_p.registerEnd("Initilization");
 
+      d_rhsQuadValComponent.clear();
       if (!(feBasisDataStorageRhs.empty() || inpRhs.empty()))
         reinit(d_feBasisManagerField, feBasisDataStorageRhs, inpRhs);
     }
@@ -402,18 +409,73 @@ namespace dftefe
       iter = feBasisDataStorageRhs.begin();
       while (iter != feBasisDataStorageRhs.end())
         {
-          // Set up basis Operations for RHS
-          basis::FEBasisOperations<ValueTypeOperand,
-                                   ValueTypeOperator,
-                                   memorySpace,
-                                   dim>
-            feBasisOperations(iter->second, d_maxCellBlock, d_maxFieldBlock);
+          ValueType max(1e6);
+          if (d_rhsQuadValComponent.find(iter->first) !=
+              d_rhsQuadValComponent.end())
+            {
+              quadrature::add<ValueType, memorySpace>(
+                (ValueType)1,
+                inpRhs.find(iter->first)->second,
+                (ValueType)(-1),
+                d_rhsQuadValComponent.find(iter->first)->second,
+                *d_linAlgOpContext);
 
-          feBasisOperations.integrateWithBasisValues(
-            inpRhs.find(iter->first)->second, *d_feBasisManagerHomo, b1);
+              max = linearAlgebra::blasLapack::amax(
+                d_rhsQuadValComponent.find(iter->first)->second.nEntries(),
+                d_rhsQuadValComponent.find(iter->first)->second.data(),
+                1,
+                *d_linAlgOpContext);
 
-          linearAlgebra::add(ones, b1, ones, b, b);
+              utils::mpi::MPIAllreduce<memorySpace>(
+                utils::mpi::MPIInPlace,
+                &max,
+                1,
+                utils::mpi::Types<ValueType>::getMPIDatatype(),
+                utils::mpi::MPIMax,
+                feBasisManagerField->getMPIPatternP2P()->mpiCommunicator());
 
+              d_rhsQuadValComponent.find(iter->first)->second =
+                inpRhs.find(iter->first)->second;
+            }
+
+          if (std::abs(max) > 1e-12)
+            {
+              // Set up basis Operations for RHS
+              basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
+                                       memorySpace,
+                                       dim>
+                feBasisOperations(iter->second,
+                                  d_maxCellBlock,
+                                  d_maxFieldBlock);
+
+              feBasisOperations.integrateWithBasisValues(
+                inpRhs.find(iter->first)->second, *d_feBasisManagerHomo, b1);
+
+              if (d_rhsQuadValComponent.find(iter->first) !=
+                  d_rhsQuadValComponent.end())
+                {
+                  d_rhsMultiVecComponent.find(iter->first)->second = b1;
+                }
+              else
+                {
+                  d_rhsQuadValComponent[iter->first] =
+                    inpRhs.find(iter->first)->second;
+                  d_rhsMultiVecComponent[iter->first] = b1;
+                }
+
+              linearAlgebra::add(ones, b1, ones, b, b);
+            }
+          else
+            {
+              d_rootCout << "Skipped " << iter->first << " RHS evaluation\n";
+              linearAlgebra::add(
+                ones,
+                d_rhsMultiVecComponent.find(iter->first)->second,
+                ones,
+                b,
+                b);
+            }
           iter++;
         }
 
@@ -423,7 +485,7 @@ namespace dftefe
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
       d_p.registerEnd("Rhs Computation");
-      // d_p.print();
+      d_p.print();
 
       // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {

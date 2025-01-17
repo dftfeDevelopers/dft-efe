@@ -139,8 +139,11 @@ namespace dftefe
       std::vector<global_size_type> d_enrichmentIdsInProcessor;
       std::pair<global_size_type, global_size_type> d_locallyOwnedEnrichmentIds;
       std::vector<global_size_type>                 d_ghostEnrichmentIds;
-      std::map<global_size_type, size_type> d_enrichmentIdToOldAtomIdMap;
-      std::map<global_size_type, size_type> d_enrichmentIdToQuantumIdMap;
+      std::unordered_map<global_size_type, size_type>
+        d_enrichmentIdToOldAtomIdMap;
+      std::unordered_map<global_size_type, size_type>
+                             d_enrichmentIdToQuantumIdMap;
+      std::vector<size_type> d_oldAtomIdsVec;
 
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace basis

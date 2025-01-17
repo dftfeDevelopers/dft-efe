@@ -359,9 +359,11 @@ namespace dftefe
       getGhostEnrichmentIds(
         std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition,
         std::vector<global_size_type> &              enrichmentIdsInProcessor,
-        std::map<global_size_type, size_type> &      enrichmentIdToOldAtomIdMap,
-        std::map<global_size_type, size_type> &      enrichmentIdToQuantumIdMap,
-        std::vector<global_size_type> &              ghostEnrichmentIds,
+        std::unordered_map<global_size_type, size_type>
+          &enrichmentIdToOldAtomIdMap,
+        std::unordered_map<global_size_type, size_type>
+          &                            enrichmentIdToQuantumIdMap,
+        std::vector<global_size_type> &ghostEnrichmentIds,
         const std::pair<global_size_type, global_size_type>
           &locallyOwnedEnrichmentIds,
         const std::vector<std::vector<global_size_type>>
@@ -389,7 +391,8 @@ namespace dftefe
         // local eids of the processor.
         for (auto i : enrichmentIdsInProcessor)
           {
-            auto j = newAtomIdToEnrichmentIdOffset.begin();
+            bool foundInVec = false;
+            auto j          = newAtomIdToEnrichmentIdOffset.begin();
             for (; j != newAtomIdToEnrichmentIdOffset.end(); j++)
               {
                 if (*(j) > i)
@@ -400,8 +403,18 @@ namespace dftefe
                         i - newAtomIdToEnrichmentIdOffset[newAtomId - 1];
                     else
                       qIdPosition = i;
+                    foundInVec = true;
                     break;
                   }
+              }
+            if (!foundInVec)
+              {
+                utils::throwException(
+                  false,
+                  "Enrichment Id " + std::to_string(i) +
+                    " in Processor not there in  "
+                    "newAtomIdToEnrichmentIdOffset vector."
+                    "This is an enrichment degrees of freedom partitioning bug in DFTEFE.");
               }
             enrichmentIdToOldAtomIdMap.insert({i, oldAtomIds[newAtomId]});
             enrichmentIdToQuantumIdMap.insert({i, qIdPosition});
@@ -514,6 +527,8 @@ namespace dftefe
         d_locallyOwnedEnrichmentIds,
         d_overlappingEnrichmentIdsInCells,
         d_newAtomIdToEnrichmentIdOffset);
+
+      d_oldAtomIdsVec = atomIdsPartition->oldAtomIds();
     }
 
     template <unsigned int dim>
@@ -550,7 +565,7 @@ namespace dftefe
       const global_size_type enrichmentId) const
     {
       auto it = d_enrichmentIdToOldAtomIdMap.find(enrichmentId);
-      utils::throwException<utils::InvalidArgument>(
+      DFTEFE_AssertWithMsg(
         it != d_enrichmentIdToOldAtomIdMap.end(),
         "Cannot find the enrichmentId in locally Owned or Ghost Enrichment Ids of the processor");
       return it->second;
@@ -562,13 +577,27 @@ namespace dftefe
       const global_size_type enrichmentId) const
     {
       auto it = d_enrichmentIdToQuantumIdMap.find(enrichmentId);
-      utils::throwException<utils::InvalidArgument>(
+      DFTEFE_AssertWithMsg(
         it != d_enrichmentIdToQuantumIdMap.end(),
         "Cannot find the enrichmentId in locally Owned or Ghost Enrichment Ids of the processor");
       EnrichmentIdAttribute retStruct;
       retStruct.atomId =
         (d_enrichmentIdToOldAtomIdMap.find(enrichmentId))->second;
       retStruct.localIdInAtom = it->second;
+
+      // EnrichmentIdAttribute retStruct;
+      // auto it = std::upper_bound(d_newAtomIdToEnrichmentIdOffset.begin(),
+      //   d_newAtomIdToEnrichmentIdOffset.end(), enrichmentId);
+      // DFTEFE_AssertWithMsg(
+      //   it != d_newAtomIdToEnrichmentIdOffset.end(),
+      //   "Cannot find the enrichmentId in locally Owned or Ghost Enrichment
+      //   Ids of the processor");
+      // size_type newAtomId = it - d_newAtomIdToEnrichmentIdOffset.begin();
+      // retStruct.atomId = d_oldAtomIdsVec[newAtomId];
+      // retStruct.localIdInAtom =  (newAtomId != 0) ?
+      //     (enrichmentId - d_newAtomIdToEnrichmentIdOffset[newAtomId - 1]) :
+      //     enrichmentId;
+
       return retStruct;
     }
 

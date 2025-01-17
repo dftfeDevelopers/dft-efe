@@ -51,9 +51,8 @@ namespace dftefe
       {
         size_type dim = point.size();
         // do the spline interpolation in the radial points
-        std::vector<double> atomCenteredPoint;
-        atomCenteredPoint.resize(dim, 0.);
-        double r, theta, phi;
+        std::vector<double> atomCenteredPoint(dim, 0.);
+        double              r, theta, phi;
         for (unsigned int i = 0; i < dim; i++)
           {
             atomCenteredPoint[i] = point[i] - origin[i];
@@ -80,9 +79,8 @@ namespace dftefe
       {
         size_type dim = point.size();
         // do the spline interpolation in the radial points
-        std::vector<double> atomCenteredPoint;
-        atomCenteredPoint.resize(dim, 0.);
-        double r, theta, phi;
+        std::vector<double> atomCenteredPoint(dim, 0.);
+        double              r, theta, phi;
         for (unsigned int i = 0; i < dim; i++)
           {
             atomCenteredPoint[i] = point[i] - origin[i];
@@ -128,7 +126,6 @@ namespace dftefe
         dValueDPhiByrsinTheta =
           (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
 
-        gradient.resize(dim, 0.);
         gradient[0] = dValueDR * (sin(theta) * cos(phi)) +
                       dValueDThetaByr * (cos(theta) * cos(phi)) -
                       sin(phi) * dValueDPhiByrsinTheta;
@@ -167,8 +164,7 @@ namespace dftefe
       {
         size_type           dim = point.size();
         double              r, theta, phi;
-        std::vector<double> atomCenteredPoint;
-        atomCenteredPoint.resize(dim, 0.);
+        std::vector<double> atomCenteredPoint(dim, 0.);
         for (unsigned int i = 0; i < dim; i++)
           {
             atomCenteredPoint[i] = point[i] - origin[i];
@@ -201,8 +197,7 @@ namespace dftefe
       {
         size_type           dim = point.size();
         double              r, theta, phi;
-        std::vector<double> atomCenteredPoint;
-        atomCenteredPoint.resize(dim, 0.);
+        std::vector<double> atomCenteredPoint(dim, 0.);
         for (unsigned int i = 0; i < dim; i++)
           {
             atomCenteredPoint[i] = point[i] - origin[i];
@@ -237,8 +232,7 @@ namespace dftefe
       {
         size_type           dim = point.size();
         double              r, theta, phi;
-        std::vector<double> atomCenteredPoint;
-        atomCenteredPoint.resize(dim, 0.);
+        std::vector<double> atomCenteredPoint(dim, 0.);
         for (unsigned int i = 0; i < dim; i++)
           {
             atomCenteredPoint[i] = point[i] - origin[i];
@@ -318,7 +312,7 @@ namespace dftefe
     SphericalDataNumerical::getGradientValue(const utils::Point &point,
                                              const utils::Point &origin)
     {
-      std::vector<double> gradient;
+      std::vector<double> gradient(d_dim, 0.);
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
@@ -343,7 +337,7 @@ namespace dftefe
     SphericalDataNumerical::getHessianValue(const utils::Point &point,
                                             const utils::Point &origin)
     {
-      std::vector<double> hessian;
+      std::vector<double> hessian(d_dim * d_dim, 0.);
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getHessianValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
