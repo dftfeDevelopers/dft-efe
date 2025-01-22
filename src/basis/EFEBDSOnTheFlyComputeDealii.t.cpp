@@ -49,15 +49,19 @@ namespace dftefe
         const size_type                 classicalDofsInCell,
         const std::vector<size_type> &  dofsInCell,
         const std::vector<size_type> &  nQuadPointsInCell,
-        const std::shared_ptr<
-          typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-          &                           basisJacobianInvQuadStorage,
+        // const std::shared_ptr<
+        //   typename BasisDataStorage<ValueTypeBasisData,
+        //   memorySpace>::Storage>
+        //   &
+        const ValueTypeBasisData *    basisJacobianInvQuadStorage,
         const std::vector<size_type> &cellStartIdsBasisJacobianInvQuadStorage,
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-          &                                          tmpGradientBlock,
+        // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        //   &
+        const ValueTypeBasisData *                   tmpGradientBlock,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
-          &basisGradientData)
+        // typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+        //   &
+        ValueTypeBasisData *basisGradientData)
       {
         size_type numMats = 0;
         for (size_type iCell = cellRange.first; iCell < cellRange.second;
@@ -127,8 +131,8 @@ namespace dftefe
         ValueTypeBasisData alpha = 1.0;
         ValueTypeBasisData beta  = 0.0;
 
-        ValueTypeBasisData *B =
-          basisJacobianInvQuadStorage->data() +
+        const ValueTypeBasisData *B =
+          basisJacobianInvQuadStorage /*->data()*/ +
           cellStartIdsBasisJacobianInvQuadStorage[cellRange.first];
         linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisData,
                                                          ValueTypeBasisData,
@@ -144,12 +148,12 @@ namespace dftefe
           nSizes.data(),
           kSizes.data(),
           alpha,
-          tmpGradientBlock.data(),
+          tmpGradientBlock /*.data()*/,
           ldaSizes.data(),
           B,
           ldbSizes.data(),
           beta,
-          basisGradientData.data(),
+          basisGradientData /*.data()*/,
           ldcSizes.data(),
           linAlgOpContext);
       }
@@ -258,7 +262,9 @@ namespace dftefe
                                                        dim>> efeBDH,
         dftefe::utils::MemoryStorage<ValueTypeBasisData,
                                      utils::MemorySpace::HOST> &basisValInCell,
-        std::vector<ValueTypeBasisData> &classicalComponentInQuadValues)
+        dftefe::utils::MemoryStorage<ValueTypeBasisData,
+                                     utils::MemorySpace::HOST>
+          &classicalComponentInQuadValues)
       {
         size_type classicalDofsPerCell =
           utils::mathFunctions::sizeTypePow((efeBDH->getFEOrder(cellIndex) + 1),
@@ -305,7 +311,9 @@ namespace dftefe
                                                        dim>> efeBDH,
         dftefe::utils::MemoryStorage<ValueTypeBasisData,
                                      utils::MemorySpace::HOST> &basisGradInCell,
-        std::vector<ValueTypeBasisData> &classicalComponentInQuadGradients)
+        dftefe::utils::MemoryStorage<ValueTypeBasisData,
+                                     utils::MemorySpace::HOST>
+          &classicalComponentInQuadGradients)
       {
         size_type classicalDofsPerCell =
           utils::mathFunctions::sizeTypePow((efeBDH->getFEOrder(cellIndex) + 1),
@@ -456,10 +464,10 @@ namespace dftefe
               ->second)
           {
             dealiiUpdateFlags |= dealii::update_inverse_jacobians;
-            if (efeBDH->isOrthogonalized())
-              {
-                dealiiUpdateFlags |= dealii::update_gradients;
-              }
+            // if (efeBDH->isOrthogonalized())
+            //   {
+            //     dealiiUpdateFlags |= dealii::update_gradients;
+            //   }
           }
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreHessian)
@@ -475,7 +483,7 @@ namespace dftefe
         // get real cell feValues
         dealii::FEValues<dim> dealiiFEValues(efeBDH->getReferenceFE(cellId),
                                              dealiiQuadratureRule,
-                                             dealiiUpdateFlags);
+                                             dealiiUpdateFlags); // takes time
 
         dealii::UpdateFlags dealiiUpdateFlagsPara;
         if (basisStorageAttributesBoolMap
@@ -483,17 +491,19 @@ namespace dftefe
               ->second)
           dealiiUpdateFlagsPara = dealii::update_gradients;
         // This is for getting the gradient in parametric cell
-        dealii::FEValues<dim> dealiiFEValuesPara(efeBDH->getReferenceFE(cellId),
-                                                 dealiiQuadratureRule,
-                                                 dealiiUpdateFlagsPara);
+        std::shared_ptr<dealii::FEValues<dim>> dealiiFEValuesPara = nullptr;
 
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
           {
+            dealiiFEValuesPara = std::make_shared<dealii::FEValues<dim>>(
+              efeBDH->getReferenceFE(cellId),
+              dealiiQuadratureRule,
+              dealiiUpdateFlagsPara); // takes time
             dealii::Triangulation<dim> referenceCell;
             dealii::GridGenerator::hyper_cube(referenceCell, 0., 1.);
-            dealiiFEValuesPara.reinit(referenceCell.begin());
+            dealiiFEValuesPara->reinit(referenceCell.begin()); // takes time
           }
 
         const size_type numLocallyOwnedCells = efeBDH->nLocallyOwnedCells();
@@ -512,10 +522,11 @@ namespace dftefe
           basisParaCellClassQuadStorageTmp(0),
           basisJacobianInvQuadStorageTmp(0),
           basisGradientParaCellClassQuadStorageTmp(0), tmpGradientInCell(0);
-        std::vector<ValueTypeBasisData> basisHessianQuadStorageTmp(0);
+        utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
+          basisHessianQuadStorageTmp(0);
 
-        std::vector<ValueTypeBasisData> basisEnrichQuadStorageTmp(0),
-          basisGradientEnrichQuadStorageTmp(0);
+        utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
+          basisEnrichQuadStorageTmp(0), basisGradientEnrichQuadStorageTmp(0);
 
         size_type cellIndex                = 0;
         size_type basisValuesSize          = 0;
@@ -633,10 +644,11 @@ namespace dftefe
             size_type numEnrichmentIdsInCell =
               dofsPerCell - classicalDofsPerCell;
 
-            std::vector<ValueTypeBasisData> classicalComponentInQuadValues(0);
+            utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
+              classicalComponentInQuadValues(0);
 
-            std::vector<ValueTypeBasisData> classicalComponentInQuadGradients(
-              0);
+            utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
+              classicalComponentInQuadGradients(0);
 
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreValues)
@@ -735,6 +747,8 @@ namespace dftefe
                                basisParaCellClassQuadStorageTmp,
                                classicalComponentInQuadValues);
                       }
+                    ValueTypeBasisData *iter =
+                      classicalComponentInQuadValues.data();
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
@@ -753,8 +767,7 @@ namespace dftefe
                               qPoint * numEnrichmentIdsInCell + iNode) =
                               efeBDH->getEnrichmentValue(
                                 cellIndex, iNode, quadRealPointsVec[qPoint]) -
-                              classicalComponentInQuadValues
-                                [numEnrichmentIdsInCell * qPoint + iNode];
+                              *(iter + numEnrichmentIdsInCell * qPoint + iNode);
                           }
                       }
                   }
@@ -775,7 +788,7 @@ namespace dftefe
                              qPoint++)
                           {
                             auto shapeGrad =
-                              dealiiFEValuesPara.shape_grad(iNode, qPoint);
+                              dealiiFEValuesPara->shape_grad(iNode, qPoint);
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
@@ -809,26 +822,43 @@ namespace dftefe
                   {
                     if (efeBDH->isOrthogonalized())
                       {
-                        for (unsigned int iNode = 0;
-                             iNode < classicalDofsPerCell;
-                             iNode++)
-                          {
-                            for (unsigned int qPoint = 0;
-                                 qPoint < nQuadPointInCell;
-                                 qPoint++)
-                              {
-                                auto shapeGrad =
-                                  dealiiFEValues.shape_grad(iNode, qPoint);
-                                for (unsigned int iDim = 0; iDim < dim; iDim++)
-                                  {
-                                    auto it =
-                                      tmpGradientInCell.begin() +
-                                      qPoint * dim * classicalDofsPerCell +
-                                      iDim * classicalDofsPerCell + iNode;
-                                    *it = shapeGrad[iDim];
-                                  }
-                              }
-                          }
+                        // for (unsigned int iNode = 0;
+                        //      iNode < classicalDofsPerCell;
+                        //      iNode++)
+                        //   {
+                        //     for (unsigned int qPoint = 0;
+                        //          qPoint < nQuadPointInCell;
+                        //          qPoint++)
+                        //       {
+                        //         auto shapeGrad =
+                        //           dealiiFEValues.shape_grad(iNode, qPoint);
+                        //         for (unsigned int iDim = 0; iDim < dim;
+                        //         iDim++)
+                        //           {
+                        //             auto it =
+                        //               tmpGradientInCell.begin() +
+                        //               qPoint * dim * classicalDofsPerCell +
+                        //               iDim * classicalDofsPerCell + iNode;
+                        //             *it = shapeGrad[iDim];
+                        //           }
+                        //       }
+                        //   }
+
+
+                        computeJacobianInvTimesGradPara<
+                          ValueTypeBasisData,
+                          utils::MemorySpace::HOST,
+                          dim>(std::make_pair(cellIndex, cellIndex + 1),
+                               classicalDofsPerCell,
+                               classDofsInCell,
+                               nQuadPointsInCell,
+                               basisJacobianInvQuadStorageTmp.data(),
+                               cellStartIdsBasisJacobianInvQuadStorage,
+                               basisGradientParaCellClassQuadStorageTmp.data(),
+                               *efeBDH->getEnrichmentClassicalInterface()
+                                  ->getLinAlgOpContext(),
+                               tmpGradientInCell.begin());
+
                         getClassicalComponentBasisGradInCellAtQuadOEFE<
                           ValueTypeBasisCoeff,
                           ValueTypeBasisData,
@@ -840,6 +870,8 @@ namespace dftefe
                                tmpGradientInCell,
                                classicalComponentInQuadGradients);
                       }
+                    ValueTypeBasisData *iter =
+                      classicalComponentInQuadGradients.data();
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
@@ -857,9 +889,9 @@ namespace dftefe
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
                                 *it = shapeGrad[iDim] -
-                                      classicalComponentInQuadGradients
-                                        [numEnrichmentIdsInCell * dim * qPoint +
-                                         iDim * numEnrichmentIdsInCell + iNode];
+                                      *(iter +
+                                        numEnrichmentIdsInCell * dim * qPoint +
+                                        iDim * numEnrichmentIdsInCell + iNode);
                               }
                           }
                       }
@@ -1880,11 +1912,11 @@ namespace dftefe
           d_classialDofsInCell,
           d_dofsInCell,
           d_nQuadPointsIncell,
-          d_basisJacobianInvQuadStorage,
+          d_basisJacobianInvQuadStorage->data(),
           d_cellStartIdsBasisJacobianInvQuadStorage,
-          *tmpGradientBlock,
+          tmpGradientBlock->data(),
           d_linAlgOpContext,
-          basisGradientData);
+          basisGradientData.data());
 
       size_type cumulativeOffsetEnrichQuad = 0;
       for (size_type cellId = 0; cellId < cellRange.first; cellId++)

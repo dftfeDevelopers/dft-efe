@@ -59,10 +59,16 @@ namespace dftefe
           }
         convertCartesianToSpherical(
           atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-        double radialValue = (*spline)(r);
-        int    n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
-        auto   Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
-        value = radialValue * Ylm * smoothCutoffValue(r, cutoff, smoothness);
+        if (r <= cutoff + cutoff / smoothness)
+          {
+            double radialValue = (*spline)(r);
+            int    n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
+            auto   Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
+            value =
+              radialValue * Ylm * smoothCutoffValue(r, cutoff, smoothness);
+          }
+        else
+          value = 0.0;
       }
 
       void
@@ -87,52 +93,56 @@ namespace dftefe
           }
         convertCartesianToSpherical(
           atomCenteredPoint, r, theta, phi, polarAngleTolerance);
-        utils::throwException(std::abs(r) >= radiusTolerance,
-                              "Value undefined at nucleus");
-        double radialValue           = (*spline)(r);
-        double radialDerivativeValue = spline->deriv(1, r);
-        double cutoffValue           = smoothCutoffValue(r, cutoff, smoothness);
-        double cutoffDerv =
-          smoothCutoffDerivative(r, cutoff, smoothness, cutoffTolerance);
-
-        int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
-
-        auto Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
-        auto dYlmDTheta =
-          Clm(l, m) * Dm(m) * dPlmDTheta(l, m, theta) * Qm(m, phi);
-
-        // Here used the Legendre differential equation for calculating
-        // P_lm/sin(theta) given in the paper
-        // https://doi.org/10.1016/S1464-1895(00)00101-0 Pt. no. 3 of
-        // verification.
-
-        double dYlmDPhiBysinTheta = 0.;
-        if (m != 0)
+        DFTEFE_AssertWithMsg(std::abs(r) >= radiusTolerance,
+                             "Value undefined at nucleus");
+        if (r <= cutoff + cutoff / smoothness + cutoffTolerance)
           {
-            dYlmDPhiBysinTheta =
-              Clm(l, m) * Dm(m) *
-              (sin(theta) * d2PlmDTheta2(l, m, theta) +
-               cos(theta) * dPlmDTheta(l, m, theta) +
-               sin(theta) * l * (l + 1) * Plm(l, m, cos(theta))) *
-              (1 / (m * m)) * dQmDPhi(m, phi);
+            double radialValue           = (*spline)(r);
+            double radialDerivativeValue = spline->deriv(1, r);
+            double cutoffValue = smoothCutoffValue(r, cutoff, smoothness);
+            double cutoffDerv =
+              smoothCutoffDerivative(r, cutoff, smoothness, cutoffTolerance);
+
+            int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
+
+            auto Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
+            auto dYlmDTheta =
+              Clm(l, m) * Dm(m) * dPlmDTheta(l, m, theta) * Qm(m, phi);
+
+            // Here used the Legendre differential equation for calculating
+            // P_lm/sin(theta) given in the paper
+            // https://doi.org/10.1016/S1464-1895(00)00101-0 Pt. no. 3 of
+            // verification.
+
+            double dYlmDPhiBysinTheta = 0.;
+            if (m != 0)
+              {
+                dYlmDPhiBysinTheta =
+                  Clm(l, m) * Dm(m) *
+                  (sin(theta) * d2PlmDTheta2(l, m, theta) +
+                   cos(theta) * dPlmDTheta(l, m, theta) +
+                   sin(theta) * l * (l + 1) * Plm(l, m, cos(theta))) *
+                  (1 / (m * m)) * dQmDPhi(m, phi);
+              }
+
+            auto dValueDR =
+              (radialDerivativeValue * cutoffValue + cutoffDerv * radialValue) *
+              Ylm;
+            double dValueDThetaByr = 0.;
+            dValueDThetaByr = (radialValue / r) * cutoffValue * dYlmDTheta;
+            double dValueDPhiByrsinTheta = 0.;
+            dValueDPhiByrsinTheta =
+              (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
+
+            gradient[0] = dValueDR * (sin(theta) * cos(phi)) +
+                          dValueDThetaByr * (cos(theta) * cos(phi)) -
+                          sin(phi) * dValueDPhiByrsinTheta;
+            gradient[1] = dValueDR * (sin(theta) * sin(phi)) +
+                          dValueDThetaByr * (cos(theta) * sin(phi)) +
+                          cos(phi) * dValueDPhiByrsinTheta;
+            gradient[2] =
+              dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
           }
-
-        auto dValueDR =
-          (radialDerivativeValue * cutoffValue + cutoffDerv * radialValue) *
-          Ylm;
-        double dValueDThetaByr = 0.;
-        dValueDThetaByr        = (radialValue / r) * cutoffValue * dYlmDTheta;
-        double dValueDPhiByrsinTheta = 0.;
-        dValueDPhiByrsinTheta =
-          (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
-
-        gradient[0] = dValueDR * (sin(theta) * cos(phi)) +
-                      dValueDThetaByr * (cos(theta) * cos(phi)) -
-                      sin(phi) * dValueDPhiByrsinTheta;
-        gradient[1] = dValueDR * (sin(theta) * sin(phi)) +
-                      dValueDThetaByr * (cos(theta) * sin(phi)) +
-                      cos(phi) * dValueDPhiByrsinTheta;
-        gradient[2] = dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
       }
 
       void

@@ -145,6 +145,10 @@ namespace dftefe
                              d_enrichmentIdToQuantumIdMap;
       std::vector<size_type> d_oldAtomIdsVec;
 
+      // std::vector<global_size_type> d_enrichmentIdsVec;
+      // std::vector<size_type> d_oldAtomIdsFromEnrichIdsVec;
+      // std::vector<size_type> d_quantumIdsFromEnrichIdsVec;
+
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace basis
 } // end of namespace dftefe

@@ -362,7 +362,10 @@ namespace dftefe
         std::unordered_map<global_size_type, size_type>
           &enrichmentIdToOldAtomIdMap,
         std::unordered_map<global_size_type, size_type>
-          &                            enrichmentIdToQuantumIdMap,
+          &enrichmentIdToQuantumIdMap,
+        // std::vector<global_size_type> &enrichmentIdsVec,
+        // std::vector<size_type> &oldAtomIdsFromEnrichIdsVec,
+        // std::vector<size_type> &quantumIdsFromEnrichIdsVec,
         std::vector<global_size_type> &ghostEnrichmentIds,
         const std::pair<global_size_type, global_size_type>
           &locallyOwnedEnrichmentIds,
@@ -385,6 +388,10 @@ namespace dftefe
         for (auto i : enrichmentIdsInProcessorTmp)
           enrichmentIdsInProcessor.push_back(i);
         enrichmentIdsInProcessorTmp.clear();
+
+        // enrichmentIdsVec.clear();
+        // oldAtomIdsFromEnrichIdsVec.clear();
+        // quantumIdsFromEnrichIdsVec.clear();
 
         // define the map from enrichment id to newatomid and quantum number id.
         // the map is local to a processor bust stores info of all ghost and
@@ -416,6 +423,9 @@ namespace dftefe
                     "newAtomIdToEnrichmentIdOffset vector."
                     "This is an enrichment degrees of freedom partitioning bug in DFTEFE.");
               }
+            // enrichmentIdsVec.push_back(i);
+            // oldAtomIdsFromEnrichIdsVec.push_back(oldAtomIds[newAtomId]);
+            // quantumIdsFromEnrichIdsVec.push_back(qIdPosition);
             enrichmentIdToOldAtomIdMap.insert({i, oldAtomIds[newAtomId]});
             enrichmentIdToQuantumIdMap.insert({i, qIdPosition});
             if (i < locallyOwnedEnrichmentIds.first ||
@@ -523,6 +533,9 @@ namespace dftefe
         d_enrichmentIdsInProcessor,
         d_enrichmentIdToOldAtomIdMap,
         d_enrichmentIdToQuantumIdMap,
+        // d_enrichmentIdsVec,
+        // d_oldAtomIdsFromEnrichIdsVec,
+        // d_quantumIdsFromEnrichIdsVec,
         d_ghostEnrichmentIds,
         d_locallyOwnedEnrichmentIds,
         d_overlappingEnrichmentIdsInCells,
@@ -569,6 +582,15 @@ namespace dftefe
         it != d_enrichmentIdToOldAtomIdMap.end(),
         "Cannot find the enrichmentId in locally Owned or Ghost Enrichment Ids of the processor");
       return it->second;
+
+      // auto it = std::find(d_enrichmentIdsVec.begin(),
+      // d_enrichmentIdsVec.end(), enrichmentId); DFTEFE_AssertWithMsg(it !=
+      // d_enrichmentIdsVec.end(),
+      //   "Cannot find the enrichmentId in locally Owned or Ghost Enrichment
+      //   Ids of the processor");
+      // int index = std::distance(d_enrichmentIdsVec.begin(), it);
+
+      // return d_oldAtomIdsFromEnrichIdsVec[index];
     }
 
     template <unsigned int dim>
@@ -584,6 +606,16 @@ namespace dftefe
       retStruct.atomId =
         (d_enrichmentIdToOldAtomIdMap.find(enrichmentId))->second;
       retStruct.localIdInAtom = it->second;
+
+      // auto it = std::find(d_enrichmentIdsVec.begin(),
+      // d_enrichmentIdsVec.end(), enrichmentId); DFTEFE_AssertWithMsg(it !=
+      // d_enrichmentIdsVec.end(),
+      //   "Cannot find the enrichmentId in locally Owned or Ghost Enrichment
+      //   Ids of the processor");
+      // int index = std::distance(d_enrichmentIdsVec.begin(), it);
+      // EnrichmentIdAttribute retStruct;
+      // retStruct.atomId = d_oldAtomIdsFromEnrichIdsVec[index];
+      // retStruct.localIdInAtom = d_quantumIdsFromEnrichIdsVec[index];
 
       // EnrichmentIdAttribute retStruct;
       // auto it = std::upper_bound(d_newAtomIdToEnrichmentIdOffset.begin(),

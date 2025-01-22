@@ -80,9 +80,10 @@ namespace dftefe
       DFTEFE_AssertWithMsg(std::find(d_activeSections.begin(),
                                      d_activeSections.end(),
                                      sectionName) == d_activeSections.end(),
-                           std::string(
-                             "Cannot enter the already active section <") +
-                             sectionName + ">.");
+                           (std::string(
+                              "Cannot enter the already active section <") +
+                            sectionName + ">.")
+                             .c_str());
 
       if (d_SectionsMap.find(sectionName) == d_SectionsMap.end())
         {
