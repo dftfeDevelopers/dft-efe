@@ -109,6 +109,8 @@ namespace dftefe
          * complex conjugate operation on a scalar. Size of C on output
          * will be (m*k) cols and n rows with strides.
          * @param[in] numMats number of batches
+         * @param[in] layout layout RowMajor (rowB->colB->colA) /
+         * ColMajor (fastest colB->colA->rowB)
          * @param[in] scalarOpA scalar op of A
          * @param[in] scalarOpB scalar op of B
          * @param[in] stridea stride of matrix A

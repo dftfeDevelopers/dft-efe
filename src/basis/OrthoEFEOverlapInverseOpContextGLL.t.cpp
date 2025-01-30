@@ -469,24 +469,26 @@ namespace dftefe
 
                 for (size_type i = 0; i < numEnrichmentIdsInCell; i++)
                   {
+                    const std::vector<double> &enrichValAtQuadPts =
+                      efeBDH->getEnrichmentValue(cellIndex,
+                                                 i,
+                                                 quadRealPointsVec);
                     for (unsigned int qPoint = 0;
                          qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
                          qPoint++)
                       {
-                        *(enrichmentValuesVec.data() +
-                          nQuadPointInCellEnrichmentBlockEnrichment * i +
-                          qPoint) =
-                          efeBDH->getEnrichmentValue(cellIndex,
-                                                     i,
-                                                     quadRealPointsVec[qPoint]);
+                        *(enrichmentValuesVec.data() + numEnrichmentIdsInCell * qPoint
+                           + i
+                          /*nQuadPointInCellEnrichmentBlockEnrichment * i +
+                          qPoint*/) = enrichValAtQuadPts[qPoint];
                       }
                   }
               }
 
             std::vector<ValueTypeOperator> basisOverlapClassicalBlock(
               dofsPerCellCFE * dofsPerCellCFE);
-            std::vector<ValueTypeOperator> JxWxNCellConj(
-              dofsPerCellCFE * nQuadPointInCellClassicalBlock);
+            std::vector<ValueTypeOperator> JxWxNCell(
+              dofsPerCellCFE * nQuadPointInCellClassicalBlock, 0);
 
             size_type stride = 0;
             size_type m = 1, n = dofsPerCellCFE,
@@ -498,7 +500,7 @@ namespace dftefe
               1,
               linearAlgebra::blasLapack::Layout::ColMajor,
               linearAlgebra::blasLapack::ScalarOp::Identity,
-              linearAlgebra::blasLapack::ScalarOp::Conj,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
               &stride,
               &stride,
               &stride,
@@ -507,19 +509,19 @@ namespace dftefe
               &k,
               cellJxWValuesClassicalBlock.data(),
               cumulativeClassicalBlockDofQuadPoints,
-              JxWxNCellConj.data(),
+              JxWxNCell.data(),
               linAlgOpContext);
 
             linearAlgebra::blasLapack::
               gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
                 linearAlgebra::blasLapack::Layout::ColMajor,
                 linearAlgebra::blasLapack::Op::NoTrans,
-                linearAlgebra::blasLapack::Op::Trans,
+                linearAlgebra::blasLapack::Op::ConjTrans,
                 n,
                 n,
                 k,
                 (ValueTypeOperand)1.0,
-                JxWxNCellConj.data(),
+                JxWxNCell.data(),
                 n,
                 cumulativeClassicalBlockDofQuadPoints,
                 n,
@@ -541,10 +543,9 @@ namespace dftefe
             if (numEnrichmentIdsInCell > 0)
               {
                 // Ni_pristine*Ni_pristine at quadpoints
-                JxWxNCellConj.resize(
-                  numEnrichmentIdsInCell *
-                    nQuadPointInCellEnrichmentBlockEnrichment,
-                  0);
+                JxWxNCell.resize(numEnrichmentIdsInCell *
+                                   nQuadPointInCellEnrichmentBlockEnrichment,
+                                 0);
 
                 m = 1, n = numEnrichmentIdsInCell,
                 k = nQuadPointInCellEnrichmentBlockEnrichment;
@@ -553,9 +554,9 @@ namespace dftefe
                   ValueTypeOperator,
                   ValueTypeOperator,
                   memorySpace>(1,
-                               linearAlgebra::blasLapack::Layout::RowMajor,
+                               linearAlgebra::blasLapack::Layout::ColMajor,
                                linearAlgebra::blasLapack::ScalarOp::Identity,
-                               linearAlgebra::blasLapack::ScalarOp::Conj,
+                               linearAlgebra::blasLapack::ScalarOp::Identity,
                                &stride,
                                &stride,
                                &stride,
@@ -564,22 +565,22 @@ namespace dftefe
                                &k,
                                cellJxWValuesEnrichmentBlockEnrichment.data(),
                                enrichmentValuesVec.data(),
-                               JxWxNCellConj.data(),
+                               JxWxNCell.data(),
                                linAlgOpContext);
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
                     linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::Trans,
                     linearAlgebra::blasLapack::Op::NoTrans,
+                    linearAlgebra::blasLapack::Op::ConjTrans,
                     n,
                     n,
                     k,
                     (ValueTypeOperand)1.0,
-                    JxWxNCellConj.data(),
-                    k,
+                    JxWxNCell.data(),
+                    n,
                     enrichmentValuesVec.data(),
-                    k,
+                    n,
                     (ValueTypeOperand)0.0,
                     basisOverlapEEBlock1.data(),
                     n,
@@ -588,9 +589,9 @@ namespace dftefe
                 // interpolated ci's in Ni_classicalQuadrature of Mc = d
                 // * interpolated ci's in Ni_classicalQuadrature of Mc =
                 // d
-                JxWxNCellConj.resize(numEnrichmentIdsInCell *
-                                       nQuadPointInCellEnrichmentBlockClassical,
-                                     0);
+                JxWxNCell.resize(numEnrichmentIdsInCell *
+                                   nQuadPointInCellEnrichmentBlockClassical,
+                                 0);
 
                 m = 1, n = numEnrichmentIdsInCell,
                 k = nQuadPointInCellEnrichmentBlockClassical;
@@ -601,7 +602,7 @@ namespace dftefe
                   memorySpace>(1,
                                linearAlgebra::blasLapack::Layout::ColMajor,
                                linearAlgebra::blasLapack::ScalarOp::Identity,
-                               linearAlgebra::blasLapack::ScalarOp::Conj,
+                               linearAlgebra::blasLapack::ScalarOp::Identity,
                                &stride,
                                &stride,
                                &stride,
@@ -610,19 +611,19 @@ namespace dftefe
                                &k,
                                cellJxWValuesEnrichmentBlockClassical.data(),
                                classicalComponentInQuadValuesEC.data(),
-                               JxWxNCellConj.data(),
+                               JxWxNCell.data(),
                                linAlgOpContext);
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
                     linearAlgebra::blasLapack::Layout::ColMajor,
                     linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::Trans,
+                    linearAlgebra::blasLapack::Op::ConjTrans,
                     n,
                     n,
                     k,
                     (ValueTypeOperand)1.0,
-                    JxWxNCellConj.data(),
+                    JxWxNCell.data(),
                     n,
                     classicalComponentInQuadValuesEC.data(),
                     n,
@@ -634,10 +635,9 @@ namespace dftefe
                 // Ni_pristine* interpolated ci's in
                 // Ni_classicalQuadratureOfPristine at quadpoints
 
-                JxWxNCellConj.resize(
-                  numEnrichmentIdsInCell *
-                    nQuadPointInCellEnrichmentBlockEnrichment,
-                  0);
+                JxWxNCell.resize(numEnrichmentIdsInCell *
+                                   nQuadPointInCellEnrichmentBlockEnrichment,
+                                 0);
 
                 m = 1, n = numEnrichmentIdsInCell,
                 k = nQuadPointInCellEnrichmentBlockEnrichment;
@@ -646,9 +646,9 @@ namespace dftefe
                   ValueTypeOperator,
                   ValueTypeOperator,
                   memorySpace>(1,
-                               linearAlgebra::blasLapack::Layout::RowMajor,
+                               linearAlgebra::blasLapack::Layout::ColMajor,
                                linearAlgebra::blasLapack::ScalarOp::Identity,
-                               linearAlgebra::blasLapack::ScalarOp::Conj,
+                               linearAlgebra::blasLapack::ScalarOp::Identity,
                                &stride,
                                &stride,
                                &stride,
@@ -657,20 +657,20 @@ namespace dftefe
                                &k,
                                cellJxWValuesEnrichmentBlockEnrichment.data(),
                                enrichmentValuesVec.data(),
-                               JxWxNCellConj.data(),
+                               JxWxNCell.data(),
                                linAlgOpContext);
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
                     linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::Trans,
-                    linearAlgebra::blasLapack::Op::Trans,
+                    linearAlgebra::blasLapack::Op::NoTrans,
+                    linearAlgebra::blasLapack::Op::ConjTrans,
                     n,
                     n,
                     k,
                     (ValueTypeOperand)1.0,
-                    JxWxNCellConj.data(),
-                    k,
+                    JxWxNCell.data(),
+                    n,
                     classicalComponentInQuadValuesEE.data(),
                     n,
                     (ValueTypeOperator)0.0,
@@ -689,7 +689,7 @@ namespace dftefe
                 //     (ValueTypeOperand)1.0,
                 //     classicalComponentInQuadValuesEC.data(),
                 //     k,
-                //     JxWxNCellConj.data(),
+                //     JxWxNCell.data(),
                 //     n,
                 //     (ValueTypeOperator)0.0,
                 //     basisOverlapEEBlock4.data(),

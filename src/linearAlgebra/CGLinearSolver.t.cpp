@@ -140,7 +140,7 @@ namespace dftefe
       for (; iter <= d_maxIter; ++iter)
         {
           // register start of the iteration
-          d_profiler.registerIterStart(iter);
+          // d_profiler.registerIterStart(iter);
           if (iter == 0)
             {
               //
@@ -283,7 +283,7 @@ namespace dftefe
             break;
 
           // register end of the iteration
-          d_profiler.registerIterEnd(msg);
+          // d_profiler.registerIterEnd(msg);
         }
 
       linearSolverFunction.setSolution(xConverged);

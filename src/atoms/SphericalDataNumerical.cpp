@@ -105,9 +105,12 @@ namespace dftefe
 
             int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
 
-            auto Ylm = Clm(l, m) * Dm(m) * Plm(l, m, cos(theta)) * Qm(m, phi);
-            auto dYlmDTheta =
-              Clm(l, m) * Dm(m) * dPlmDTheta(l, m, theta) * Qm(m, phi);
+            double constant           = Clm(l, m) * Dm(m);
+            double plm_lmcostheta     = Plm(l, m, cos(theta));
+            double dPlmDTheta_lmtheta = dPlmDTheta(l, m, theta);
+            double qm_mphi            = Qm(m, phi);
+            auto   Ylm                = constant * plm_lmcostheta * qm_mphi;
+            auto   dYlmDTheta         = constant * dPlmDTheta_lmtheta * qm_mphi;
 
             // Here used the Legendre differential equation for calculating
             // P_lm/sin(theta) given in the paper
@@ -118,10 +121,10 @@ namespace dftefe
             if (m != 0)
               {
                 dYlmDPhiBysinTheta =
-                  Clm(l, m) * Dm(m) *
+                  constant *
                   (sin(theta) * d2PlmDTheta2(l, m, theta) +
-                   cos(theta) * dPlmDTheta(l, m, theta) +
-                   sin(theta) * l * (l + 1) * Plm(l, m, cos(theta))) *
+                   cos(theta) * dPlmDTheta_lmtheta +
+                   sin(theta) * l * (l + 1) * plm_lmcostheta) *
                   (1 / (m * m)) * dQmDPhi(m, phi);
               }
 

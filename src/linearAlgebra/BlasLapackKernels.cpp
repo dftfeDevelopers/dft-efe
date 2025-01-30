@@ -279,22 +279,23 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        scaleStridedVarBatched(const size_type                      numMats,
-                               const Layout                         layout,
-                               const ScalarOp &                     scalarOpA,
-                               const ScalarOp &                     scalarOpB,
-                               const size_type *                    stridea,
-                               const size_type *                    strideb,
-                               const size_type *                    stridec,
-                               const size_type *                    m,
-                               const size_type *                    n,
-                               const size_type *                    k,
-                               const ValueType1 *                   dA,
-                               const ValueType2 *                   dB,
+        scaleStridedVarBatched(const size_type   numMats,
+                               const Layout      layout,
+                               const ScalarOp &  scalarOpA,
+                               const ScalarOp &  scalarOpB,
+                               const size_type * stridea,
+                               const size_type * strideb,
+                               const size_type * stridec,
+                               const size_type * m,
+                               const size_type * n,
+                               const size_type * k,
+                               const ValueType1 *dA, // alpha
+                               const ValueType2 *dB, // X
                                scalar_type<ValueType1, ValueType2> *dC,
                                LinAlgOpContext<memorySpace> &       context)
       {
-        if (layout == Layout::RowMajor)
+        if (layout == Layout::RowMajor) // colA = m, rowA = k = rowB, colB = n,
+                                        // fastest rowB->colB->colA
           {
             size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
             for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
@@ -319,7 +320,8 @@ namespace dftefe
                 cumulativeC += *(stridec + ibatch);
               }
           }
-        if (layout == Layout::ColMajor)
+        if (layout == Layout::ColMajor) // colA = m, rowA = k = rowB, colB = n,
+                                        // fastest colB->colA->rowB
           {
             size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
             for (size_type ibatch = 0; ibatch < numMats; ++ibatch)

@@ -752,6 +752,10 @@ namespace dftefe
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
+                        const std::vector<double> &enrichValAtQuadPts =
+                          efeBDH->getEnrichmentValue(cellIndex,
+                                                     iNode,
+                                                     quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
@@ -765,8 +769,7 @@ namespace dftefe
                             *(basisEnrichQuadStorageTmp.data() +
                               cumulativeEnrichQuadxDof +
                               qPoint * numEnrichmentIdsInCell + iNode) =
-                              efeBDH->getEnrichmentValue(
-                                cellIndex, iNode, quadRealPointsVec[qPoint]) -
+                              enrichValAtQuadPts[qPoint] -
                               *(iter + numEnrichmentIdsInCell * qPoint + iNode);
                           }
                       }
@@ -875,11 +878,13 @@ namespace dftefe
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
+                        const std::vector<double> &enrichGradAtQuadPts =
+                          efeBDH->getEnrichmentDerivative(cellIndex,
+                                                          iNode,
+                                                          quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
-                            auto shapeGrad = efeBDH->getEnrichmentDerivative(
-                              cellIndex, iNode, quadRealPointsVec[qPoint]);
                             // enriched gradient function call
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -888,7 +893,7 @@ namespace dftefe
                                   cumulativeEnrichQuadxDof * dim +
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
-                                *it = shapeGrad[iDim] -
+                                *it = enrichGradAtQuadPts[qPoint * dim + iDim] -
                                       *(iter +
                                         numEnrichmentIdsInCell * dim * qPoint +
                                         iDim * numEnrichmentIdsInCell + iNode);
@@ -930,6 +935,10 @@ namespace dftefe
                       }
                     else
                       {
+                        const std::vector<double> &enrichHessAtQuadPts =
+                          efeBDH->getEnrichmentHessian(cellIndex,
+                                                       iNode,
+                                                       quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
@@ -939,11 +948,6 @@ namespace dftefe
                                   false,
                                   "The hessian values are not calculated for OEFE. Contact developers for this.");
                               }
-
-                            auto shapeHessian = efeBDH->getEnrichmentHessian(
-                              cellIndex,
-                              iNode - classicalDofsPerCell,
-                              quadRealPointsVec[qPoint]);
                             // enriched hessian function
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -955,7 +959,9 @@ namespace dftefe
                                       qPoint * dim * dim * dofsPerCell +
                                       iDim * dim * dofsPerCell +
                                       jDim * dofsPerCell + iNode;
-                                    *it = shapeHessian[iDim * dim + jDim];
+                                    *it =
+                                      enrichHessAtQuadPts[qPoint * dim * dim +
+                                                          iDim * dim + jDim];
                                   }
                               }
                           }

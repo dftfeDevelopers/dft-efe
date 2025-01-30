@@ -77,9 +77,9 @@ namespace dftefe
         //       iCell, b.data());
         //   }
 
-        ValueType *psiBatchQuadIter = psiBatchQuad.begin();
-        RealType * rhoBatchIter     = rhoBatch.begin();
-        size_type  cumulativeQuadInCell, cumulativeQuadPsiInCell = 0;
+        ValueType *psiBatchQuadIter     = psiBatchQuad.begin();
+        RealType * rhoBatchIter         = rhoBatch.begin();
+        size_type  cumulativeQuadInCell = 0, cumulativeQuadPsiInCell = 0;
         for (size_type iCell = 0; iCell < psiBatchQuad.nCells(); iCell++)
           {
             size_type numQuadInCell =
