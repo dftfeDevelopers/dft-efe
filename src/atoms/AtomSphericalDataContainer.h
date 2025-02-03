@@ -32,6 +32,7 @@
 #include <string>
 #include <atoms/AtomSphericalData.h>
 #include <atoms/SphericalData.h>
+#include <atoms/SphericalHarmonics.h>
 namespace dftefe
 {
   namespace atoms

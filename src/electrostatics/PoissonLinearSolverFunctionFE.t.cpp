@@ -613,6 +613,8 @@ namespace dftefe
       d_feBasisManagerField->getConstraints().distributeParentToChild(
         solution, numComponents);
 
+      // this is done for a particular case for poisson solve each
+      // scf guess but have to be modified with a reinit parameter
       d_initial = solution;
     }
 

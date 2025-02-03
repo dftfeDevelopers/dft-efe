@@ -280,17 +280,19 @@ namespace dftefe
               ->second)
           dealiiUpdateFlagsPara = dealii::update_gradients;
         // This is for getting the gradient in parametric cell
-        dealii::FEValues<dim> dealiiFEValuesPara(feBDH->getReferenceFE(cellId),
-                                                 dealiiQuadratureRule,
-                                                 dealiiUpdateFlagsPara);
+        std::shared_ptr<dealii::FEValues<dim>> dealiiFEValuesPara = nullptr;
 
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
           {
+            dealiiFEValuesPara = std::make_shared<dealii::FEValues<dim>>(
+              feBDH->getReferenceFE(cellId),
+              dealiiQuadratureRule,
+              dealiiUpdateFlagsPara); // takes time
             dealii::Triangulation<dim> referenceCell;
             dealii::GridGenerator::hyper_cube(referenceCell, 0., 1.);
-            dealiiFEValuesPara.reinit(referenceCell.begin());
+            dealiiFEValuesPara->reinit(referenceCell.begin()); // takes time
           }
 
         const size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
@@ -421,7 +423,7 @@ namespace dftefe
                              qPoint++)
                           {
                             auto shapeGrad =
-                              dealiiFEValuesPara.shape_grad(iNode, qPoint);
+                              dealiiFEValuesPara->shape_grad(iNode, qPoint);
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =

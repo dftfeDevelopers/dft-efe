@@ -279,18 +279,18 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        scaleStridedVarBatched(const size_type   numMats,
-                               const Layout      layout,
-                               const ScalarOp &  scalarOpA,
-                               const ScalarOp &  scalarOpB,
-                               const size_type * stridea,
-                               const size_type * strideb,
-                               const size_type * stridec,
-                               const size_type * m,
-                               const size_type * n,
-                               const size_type * k,
-                               const ValueType1 *dA, // alpha
-                               const ValueType2 *dB, // X
+        scaleStridedVarBatched(const size_type                      numMats,
+                               const Layout                         layout,
+                               const ScalarOp &                     scalarOpA,
+                               const ScalarOp &                     scalarOpB,
+                               const size_type *                    stridea,
+                               const size_type *                    strideb,
+                               const size_type *                    stridec,
+                               const size_type *                    m,
+                               const size_type *                    n,
+                               const size_type *                    k,
+                               const ValueType1 *                   dA, // alpha
+                               const ValueType2 *                   dB, // X
                                scalar_type<ValueType1, ValueType2> *dC,
                                LinAlgOpContext<memorySpace> &       context)
       {

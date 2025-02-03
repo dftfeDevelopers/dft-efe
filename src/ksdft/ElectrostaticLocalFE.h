@@ -36,6 +36,7 @@
 #include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/CGLinearSolver.h>
+#include <utils/ConditionalOStream.h>
 
 namespace dftefe
 {
@@ -75,9 +76,9 @@ namespace dftefe
        * @brief Constructor
        */
       ElectrostaticLocalFE(
-        std::vector<utils::Point> atomCoordinates,
-        std::vector<double>       atomCharges,
-        std::vector<double>       smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -102,9 +103,9 @@ namespace dftefe
         const size_type maxCellBlock);
 
       ElectrostaticLocalFE(
-        std::vector<utils::Point> atomCoordinates,
-        std::vector<double>       atomCharges,
-        std::vector<double>       smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -134,12 +135,48 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock);
 
+      // used if delta rho approach is taken with phi total from 1D KS solve
+      ElectrostaticLocalFE(
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<double> &      smearedChargeRadius,
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &atomicElectronChargeDensity,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotNuclearQuad,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotElectronicQuad,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
+          feBMTotalCharge, // will be same as bc of totalCharge -
+                           // atomicTotalCharge
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDElectronicChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellBlock);
+
 
       ~ElectrostaticLocalFE();
 
       void
       reinitBasis(
-        std::vector<utils::Point>                         atomCoordinates,
+        const std::vector<utils::Point> &                 atomCoordinates,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -159,7 +196,7 @@ namespace dftefe
 
       void
       reinitBasis(
-        std::vector<utils::Point>                         atomCoordinates,
+        const std::vector<utils::Point> &                 atomCoordinates,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -179,6 +216,35 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclChargeRhsNumSol,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
+                                          memorySpace>> feBDHamiltonian);
+
+      // used if delta rho approach is taken with phi total from 1D KS solve
+      void
+      reinitBasis(
+        const std::vector<utils::Point> &atomCoordinates,
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &atomicElectronChargeDensity,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotNuclearQuad,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotElectronicQuad,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>> feBMTotalCharge,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian);
@@ -210,7 +276,8 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclearChargeRhs);
 
-      bool                                    d_isNumerical;
+      bool                                    d_isNumericalVSelfSolve;
+      bool                                    d_isDeltaRhoSolve;
       const size_type                         d_maxCellBlock;
       const size_type                         d_numComponents;
       std::vector<utils::Point>               d_atomCoordinates;
@@ -223,8 +290,13 @@ namespace dftefe
       // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_nuclearChargesDensity;
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_electronChargeDensity;
+      const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                  memorySpace>
+        *d_atomicTotalElecPotNuclearQuad, *d_atomicTotalElecPotElectronicQuad;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_atomicElectronChargeDensity;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotHamQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
@@ -241,7 +313,7 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_scratchPotNuclearQuad;
 
-      linearAlgebra::MultiVector<ValueType, memorySpace>
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
         *d_totalChargePotential;
       std::vector<linearAlgebra::MultiVector<ValueType, memorySpace> *>
         d_nuclearChargesPotential;
@@ -296,6 +368,8 @@ namespace dftefe
                                                       dim>>
                d_linearSolverFunction;
       RealType d_totNuclearChargeQuad;
+
+      utils::ConditionalOStream d_rootCout;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft
