@@ -137,7 +137,7 @@ namespace dftefe
               sameQuadRuleInAllCells && (!variableDofsPerCell);
             linearAlgebra::blasLapack::Layout layout =
               linearAlgebra::blasLapack::Layout::ColMajor;
-            size_type NifNjStartOffset = 0;
+            size_type NifNjStartOffset = 0, quadCellsInBlockOffSet = 0;
 
             /** --- Storages --------- **/
             size_type maxDofInCell =
@@ -145,9 +145,16 @@ namespace dftefe
             size_type maxQuadInCell =
               *std::max_element(numCellQuad.begin(), numCellQuad.end());
 
-            StorageUnion fxJxW(1 /*numComponents of f*/ * maxQuadInCell *
-                                 cellBlockSize,
+            const size_type numCumulativeQuadCells =
+              std::accumulate(numCellQuad.begin(), numCellQuad.end(), 0);
+
+            StorageUnion fxJxW(1 /*numComponents of f*/ *
+                                 numCumulativeQuadCells,
                                ValueTypeUnion());
+
+            // StorageUnion fxJxW(1 /*numComponents of f*/ * maxQuadInCell *
+            //                      cellBlockSize,
+            //                    ValueTypeUnion());
             StorageUnion fxJxWxNBlock(maxQuadInCell * cellBlockSize *
                                         maxDofInCell,
                                       ValueTypeUnion());
@@ -160,6 +167,22 @@ namespace dftefe
               basisDataInCellRange.resize(maxQuadInCell * maxDofInCell,
                                           ValueTypeBasisData());
             /** --- Storages --------- **/
+
+            if (f.getNumberComponents() == 1)
+              {
+                linearAlgebra::blasLapack::hadamardProduct(jxwStorage.size(),
+                                                           jxwStorage.data(),
+                                                           f.begin(),
+                                                           fxJxW.data(),
+                                                           linAlgOpContext);
+              }
+            else
+              {
+                utils::throwException(
+                  false,
+                  "quadValuesContainer f in BasisWeakFormKernelWithField"
+                  " can be only a scalar field in real space with 1 component.");
+              }
 
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
                  cellStartId += cellBlockSize)
@@ -182,12 +205,13 @@ namespace dftefe
                                   numCellsInBlockQuad.end(),
                                   0);
 
-                size_type numCumulativeQuadxDofsCellsInBlock = 0;
+                // size_type numCumulativeQuadxDofsCellsInBlock = 0;
                 size_type numCumulativeDofsxDofsCellsInBlock = 0;
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    numCumulativeQuadxDofsCellsInBlock +=
-                      numCellsInBlockQuad[iCell] * numCellsInBlockDofs[iCell];
+                    // numCumulativeQuadxDofsCellsInBlock +=
+                    //   numCellsInBlockQuad[iCell] *
+                    //   numCellsInBlockDofs[iCell];
                     numCumulativeDofsxDofsCellsInBlock +=
                       numCellsInBlockDofs[iCell] * numCellsInBlockDofs[iCell];
                   }
@@ -216,25 +240,25 @@ namespace dftefe
                 /** --- Storages --------- **/
 
                 /*--------- Compute fxJxW -----------------*/
-                // TransposedKhatriRao product for inp and JxW
-                size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
-                for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-                  {
-                    linearAlgebra::blasLapack::khatriRaoProduct(
-                      layout,
-                      1,
-                      1,
-                      numCellsInBlockQuad[iCell],
-                      jxwStorage.data() +
-                        quadRuleContainer->getCellQuadStartId(cellStartId) +
-                        cumulativeA,
-                      f.begin(cellStartId) + cumulativeB,
-                      fxJxW.data() + cumulativeC,
-                      linAlgOpContext);
-                    cumulativeA += numCellsInBlockQuad[iCell];
-                    cumulativeB += numCellsInBlockQuad[iCell];
-                    cumulativeC += numCellsInBlockQuad[iCell];
-                  }
+                // // TransposedKhatriRao product for inp and JxW
+                // size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+                // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+                //   {
+                //     linearAlgebra::blasLapack::khatriRaoProduct(
+                //       layout,
+                //       1,
+                //       1,
+                //       numCellsInBlockQuad[iCell],
+                //       jxwStorage.data() +
+                //         quadRuleContainer->getCellQuadStartId(cellStartId) +
+                //         cumulativeA,
+                //       f.begin(cellStartId) + cumulativeB,
+                //       fxJxW.data() + cumulativeC,
+                //       linAlgOpContext);
+                //     cumulativeA += numCellsInBlockQuad[iCell];
+                //     cumulativeB += numCellsInBlockQuad[iCell];
+                //     cumulativeC += numCellsInBlockQuad[iCell];
+                //   }
 
                 /*--------- Compute fxJxWxN -----------------*/
                 linearAlgebra::blasLapack::ScalarOp scalarOpA =
@@ -296,7 +320,7 @@ namespace dftefe
                                mSize.data(),
                                nSize.data(),
                                kSize.data(),
-                               fxJxW.data(),
+                               fxJxW.data() + quadCellsInBlockOffSet,
                                basisDataInCellRange.data(),
                                fxJxWxNBlock.data(),
                                linAlgOpContext);
@@ -404,6 +428,7 @@ namespace dftefe
                                linAlgOpContext);
 
                 NifNjStartOffset += numCumulativeDofsxDofsCellsInBlock;
+                quadCellsInBlockOffSet += numCumulativeQuadCellsInBlock;
               }
           }
         else

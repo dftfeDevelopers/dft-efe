@@ -407,6 +407,7 @@ void getVLoc(
           d_atomTolocPSPSplineMap.push_back(
               utils::Spline(radialValuesSTL,
                     potentialValuesLocSTL,
+                    false,
                     utils::Spline::spline_type::cspline,
                     false,
                     utils::Spline::bd_type::first_deriv,

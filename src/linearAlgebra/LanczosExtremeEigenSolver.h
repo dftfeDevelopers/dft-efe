@@ -83,7 +83,8 @@ namespace dftefe
         const size_type                              numUpperExtermeEigenValues,
         std::vector<double> &                        tolerance,
         double                                       lanczosBetaTolerance,
-        const Vector<ValueTypeOperand, memorySpace> &initialGuess);
+        const Vector<ValueTypeOperand, memorySpace> &initialGuess,
+        bool                                         isAdaptiveSolve = true);
 
       LanczosExtremeEigenSolver(
         const size_type      maxKrylovSubspaceSize,
@@ -93,7 +94,8 @@ namespace dftefe
         double               lanczosBetaTolerance,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        bool                                          isAdaptiveSolve = true);
 
       /**
        *@brief Default Destructor
@@ -146,6 +148,7 @@ namespace dftefe
       std::vector<RealType>                 d_diagonal;
       std::vector<RealType>                 d_subDiagonal;
       bool                                  d_isSolved;
+      const bool                            d_isAdaptiveSolve;
 
 
     }; // end of class LanczosExtremeEigenSolver

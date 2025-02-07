@@ -29,13 +29,79 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 #include <string>
 #include "Spline.h"
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
   namespace utils
   {
+    namespace SplineInternal
+    {
+      double
+      f(double x, const double alpha, const double p)
+      {
+        return (x - 1) / log(x) * log(p) + (x - 1) - (x * p - 1) * alpha;
+      }
+
+      double
+      bisection(const double alpha, const double p)
+      {
+        double a = 1 + 1e-10;
+        double b = 1e1;
+        while (b - a > 1e-10)
+          {
+            double c = (a + b) / 2;
+            if (std::abs(f(c, alpha, p)) < 1e-6)
+              {
+                return c;
+              }
+            else if (f(a, alpha, p) * f(c, alpha, p) < 0)
+              {
+                b = c;
+              }
+            else
+              {
+                a = c;
+              }
+          }
+        return (a + b) / 2;
+      }
+
+      void
+      getSubdivPowerLawGridParams(const std::vector<double> &X,
+                                  double &                   a,
+                                  double &                   r,
+                                  unsigned int &             numSubDiv)
+      {
+        unsigned int N = X.size();
+        if (N < 2)
+          utils::throwException(
+            false, "Number of points is < 2 for getSubdivPowerLawGridParams()");
+        double p = (X[N - 1] - X[N - 2]) / (X[1] - X[0]);
+        if (!(p >= 1))
+          utils::throwException(
+            false,
+            "X grid should have GP with 0<r<=1 in getSubdivPowerLawGridParams()");
+        if (std::abs(p - 1) < 1e-6)
+          {
+            r         = 1;
+            a         = X[1] - X[0];
+            numSubDiv = 1;
+            return;
+          }
+        double       q     = X[1] - X[0];
+        double       s     = X[N - 1] - X[0];
+        const double alpha = q * (N - 1) / (s);
+        r                  = bisection(alpha, p);
+        unsigned int n     = std::round(alpha * (r * p - 1) / (r - 1));
+        numSubDiv          = (N - 1) / n;
+        r                  = std::pow(p * 1.0, 1.0 / (n - 1));
+        a                  = numSubDiv * q;
+      }
+    } // namespace SplineInternal
     // spline implementation
     // -----------------------
 
@@ -48,11 +114,13 @@ namespace dftefe
       , d_left_value(0.0)
       , d_right_value(0.0)
       , d_made_monotonic(false)
+      , d_isSubdivPowerLawGrid(false)
     {
       ;
     }
     Spline::Spline(const std::vector<double> &X,
                    const std::vector<double> &Y,
+                   const bool                 isSubdivPowerLawGrid,
                    spline_type                type,
                    bool                       make_monotonic,
                    bd_type                    left,
@@ -65,11 +133,17 @@ namespace dftefe
       , d_left_value(left_value)
       , d_right_value(right_value)
       , d_made_monotonic(false) // false correct here: make_monotonic() sets it
+      , d_isSubdivPowerLawGrid(isSubdivPowerLawGrid)
     {
       this->set_points(X, Y, d_type);
       if (d_made_monotonic)
         {
           this->make_monotonic();
+        }
+      if (d_isSubdivPowerLawGrid == true)
+        {
+          SplineInternal::getSubdivPowerLawGridParams(X, d_a, d_r, d_numSubDiv);
+          std::cout << d_a << "\t" << d_r << "\t" << d_numSubDiv << "\n";
         }
     }
 
@@ -358,10 +432,37 @@ namespace dftefe
     size_t
     Spline::find_closest(double x) const
     {
-      std::vector<double>::const_iterator it;
-      it         = std::upper_bound(d_x.begin(), d_x.end(), x); // *it > x
-      size_t idx = std::max(int(it - d_x.begin()) - 1, 0);      // d_x[idx] <= x
-      return idx;
+      if (d_isSubdivPowerLawGrid == true)
+        {
+          unsigned int n =
+            std::floor(std::abs(log(x * (d_r - 1) / d_a + 1.0) / log(d_r)));
+          unsigned int subId = std::floor(
+            d_numSubDiv *
+            (x - d_a * (std::pow(d_r, 1.0 * n) - 1.0) / (d_r - 1.0)) /
+            (d_a * std::pow(d_r, 1.0 * n - 1.0)));
+          size_t idx = n * d_numSubDiv + subId - 1;
+
+          std::vector<double>::const_iterator it;
+          it          = std::upper_bound(d_x.begin(), d_x.end(), x); // *it > x
+          size_t idx1 = std::max(int(it - d_x.begin()) - 1, 0); // d_x[idx] <= x
+
+          utils::throwException(idx == idx1,
+                                "idx is incorrect found = " +
+                                  std::to_string(idx) +
+                                  " n= " + std::to_string(n) +
+                                  " subId= " + std::to_string(subId) +
+                                  " actual = " + std::to_string(idx1) +
+                                  "for x = " + std::to_string(x));
+
+          return idx;
+        }
+      else
+        {
+          std::vector<double>::const_iterator it;
+          it         = std::upper_bound(d_x.begin(), d_x.end(), x); // *it > x
+          size_t idx = std::max(int(it - d_x.begin()) - 1, 0); // d_x[idx] <= x
+          return idx;
+        }
     }
 
     double

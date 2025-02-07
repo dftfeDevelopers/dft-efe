@@ -297,7 +297,8 @@ namespace dftefe
     SphericalDataNumerical::initSpline()
     {
       d_spline = std::make_shared<const utils::Spline>(this->d_radialPoints,
-                                                       this->d_radialValues);
+                                                       this->d_radialValues,
+                                                       true);
     }
 
     double
