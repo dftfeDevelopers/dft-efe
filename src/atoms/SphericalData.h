@@ -41,6 +41,18 @@ namespace dftefe
     public:
       ~SphericalData() = default;
 
+      virtual std::vector<double>
+      getValue(const std::vector<utils::Point> &point,
+               const utils::Point &             origin) = 0;
+
+      virtual std::vector<double>
+      getGradientValue(const std::vector<utils::Point> &point,
+                       const utils::Point &             origin) = 0;
+
+      virtual std::vector<double>
+      getHessianValue(const std::vector<utils::Point> &point,
+                      const utils::Point &             origin) = 0;
+
       virtual double
       getValue(const utils::Point &point, const utils::Point &origin) = 0;
 
@@ -51,6 +63,28 @@ namespace dftefe
       virtual std::vector<double>
       getHessianValue(const utils::Point &point,
                       const utils::Point &origin) = 0;
+
+      // gives f(r)
+      virtual std::vector<double>
+      getRadialValue(const std::vector<double> &r) = 0;
+
+      // gives Y_lm(theta, phi)
+      virtual std::vector<double>
+      getAngularValue(const std::vector<double> &r,
+                      const std::vector<double> &theta,
+                      const std::vector<double> &phi) = 0;
+
+      // gives f'(r)
+      virtual std::vector<double>
+      getRadialDerivative(const std::vector<double> &r) = 0;
+
+      // gives Y'(theta, phi) = std::vector{(1/r)dY_lm/dtheta ,
+      // (1/rsin(theta))dY_lm/dphi} return value has size 2 vector for theta hat
+      // and phi hat components of Y_lm derivative
+      virtual std::vector<std::vector<double>>
+      getAngularDerivative(const std::vector<double> &r,
+                           const std::vector<double> &theta,
+                           const std::vector<double> &phi) = 0;
 
       virtual std::vector<int>
       getQNumbers() const = 0;

@@ -56,9 +56,11 @@ namespace dftefe
     class AtomSphericalData
     {
     public:
-      AtomSphericalData(const std::string               fileName,
-                        const std::vector<std::string> &fieldNames,
-                        const std::vector<std::string> &metadataNames);
+      AtomSphericalData(
+        const std::string                 fileName,
+        const std::vector<std::string> &  fieldNames,
+        const std::vector<std::string> &  metadataNames,
+        const SphericalHarmonicFunctions &sphericalHarmonicFunc);
 
       ~AtomSphericalData() = default;
 

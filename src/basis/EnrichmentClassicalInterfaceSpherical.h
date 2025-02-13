@@ -214,6 +214,21 @@ namespace dftefe
       getEnrichmentLocalId(size_type cellId,
                            size_type enrichmentCellLocalId) const;
 
+      std::vector<double>
+      getEnrichmentValue(const size_type                          cellId,
+                         const std::vector<dftefe::utils::Point> &points) const;
+
+      std::vector<double>
+      getEnrichmentDerivative(
+        const size_type                          cellId,
+        const std::vector<dftefe::utils::Point> &points) const;
+
+      std::vector<double>
+      getEnrichmentHessian(
+        const size_type                          cellId,
+        const std::vector<dftefe::utils::Point> &points) const;
+
+
     private:
       std::shared_ptr<const EnrichmentIdsPartition<dim>>
                                                    d_enrichmentIdsPartition;

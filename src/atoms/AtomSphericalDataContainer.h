@@ -30,9 +30,11 @@
 #include <unordered_map>
 #include <map>
 #include <string>
+#include <utils/Spline.h>
+#include <memory>
 #include <atoms/AtomSphericalData.h>
 #include <atoms/SphericalData.h>
-#include <atoms/SphericalHarmonics.h>
+#include <atoms/SphericalHarmonicFunctions.h>
 namespace dftefe
 {
   namespace atoms
@@ -66,7 +68,8 @@ namespace dftefe
       AtomSphericalDataContainer(
         const std::map<std::string, std::string> &atomSymbolToFilename,
         const std::vector<std::string> &          fieldNames,
-        const std::vector<std::string> &          metadataNames);
+        const std::vector<std::string> &          metadataNames,
+        const bool                                isSplineHarmonicEval = true);
 
       /**
        * @brief Destructor
@@ -115,6 +118,10 @@ namespace dftefe
       std::vector<std::string>           d_metadataNames;
       std::unordered_map<std::string, AtomSphericalData>
         d_mapAtomSymbolToAtomSphericalData;
+
+      std::shared_ptr<const SphericalHarmonicFunctions>
+                 d_SphericalHarmonicFunctions;
+      const bool d_isAssocLegendreSplineEval;
 
     }; // end of class AtomSphericalDataContainer
   }    // end of namespace atoms

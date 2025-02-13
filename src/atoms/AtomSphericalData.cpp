@@ -350,7 +350,8 @@ namespace dftefe
         const std::vector<std::string> &             qNumberStrings,
         const std::vector<std::string> &             cutOffInfoStrings,
         const std::vector<double> &                  radialPoints,
-        const XPathInfo &                            xPathInfo)
+        const XPathInfo &                            xPathInfo,
+        const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
       {
         const size_type numPoints = radialPoints.size();
         const size_type N         = radialValueStrings.size();
@@ -432,8 +433,13 @@ namespace dftefe
             double cutoff     = cutoffInfo[0];
             double smoothness = cutoffInfo[1];
 
-            sphericalDataVec[i] = std::make_shared<SphericalDataNumerical>(
-              qNumbers, radialPoints, radialValues, cutoff, smoothness);
+            sphericalDataVec[i] =
+              std::make_shared<SphericalDataNumerical>(qNumbers,
+                                                       radialPoints,
+                                                       radialValues,
+                                                       cutoff,
+                                                       smoothness,
+                                                       sphericalHarmonicFunc);
           }
 
         utils::throwException(
@@ -458,7 +464,8 @@ namespace dftefe
       getSphericalDataFromXMLNode(
         std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
         const std::vector<double> &                  radialPoints,
-        const AtomSphericalDataXMLLocal::XPathInfo & xPathInfo)
+        const AtomSphericalDataXMLLocal::XPathInfo & xPathInfo,
+        const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
       {
         std::vector<std::string> radialValuesStrings(0);
         std::vector<std::string> qNumbersStrings(0);
@@ -471,7 +478,8 @@ namespace dftefe
           qNumbersStrings,
           cutOffInfoStrings,
           radialPoints,
-          xPathInfo);
+          xPathInfo,
+          sphericalHarmonicFunc);
       }
 
       void
@@ -488,9 +496,10 @@ namespace dftefe
     } // namespace
 
     AtomSphericalData::AtomSphericalData(
-      const std::string               fileName,
-      const std::vector<std::string> &fieldNames,
-      const std::vector<std::string> &metadataNames)
+      const std::string                 fileName,
+      const std::vector<std::string> &  fieldNames,
+      const std::vector<std::string> &  metadataNames,
+      const SphericalHarmonicFunctions &sphericalHarmonicFunc)
       : d_fileName(fileName)
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
@@ -587,7 +596,8 @@ namespace dftefe
           std::map<std::vector<int>, size_type>       qNumbersToIdMap;
           getSphericalDataFromXMLNode(sphericalDataVec,
                                       radialPoints,
-                                      xPathInfo);
+                                      xPathInfo,
+                                      sphericalHarmonicFunc);
           storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
           d_sphericalData[fieldName]   = sphericalDataVec;
           d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;

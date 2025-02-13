@@ -1566,26 +1566,10 @@ namespace dftefe
                              ValueTypeBasisData,
                              memorySpace,
                              dim>::
-      getEnrichmentValue(const size_type cellId,
-                         const size_type cellLocalEnrichmentId,
+      getEnrichmentValue(const size_type                          cellId,
                          const std::vector<dftefe::utils::Point> &points) const
     {
-      std::vector<double> retValue(points.size(), 0);
-      DFTEFE_AssertWithMsg(
-        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
-          d_overlappingEnrichmentIdsInCells[cellId].size() >
-            cellLocalEnrichmentId,
-        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
-
-      basis::EnrichmentIdAttribute eIdAttr =
-        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
-      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
-        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-      for (int i = 0; i < points.size(); i++)
-        retValue[i] = sphericalData->getValue(points[i], origin);
-      return retValue;
+      return d_enrichClassIntfce->getEnrichmentValue(cellId, points);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1598,30 +1582,10 @@ namespace dftefe
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentDerivative(const size_type cellId,
-                                    const size_type cellLocalEnrichmentId,
                                     const std::vector<dftefe::utils::Point>
                                       &points) const
     {
-      std::vector<double> retValue(points.size() * dim, 0);
-      DFTEFE_AssertWithMsg(
-        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
-          d_overlappingEnrichmentIdsInCells[cellId].size() >
-            cellLocalEnrichmentId,
-        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
-
-      basis::EnrichmentIdAttribute eIdAttr =
-        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
-      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
-        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-      for (int i = 0; i < points.size(); i++)
-        {
-          const std::vector<double> &vec =
-            sphericalData->getGradientValue(points[i], origin);
-          std::copy(vec.begin(), vec.end(), retValue.begin() + vec.size() * i);
-        }
-      return retValue;
+      return d_enrichClassIntfce->getEnrichmentDerivative(cellId, points);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1634,30 +1598,10 @@ namespace dftefe
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentHessian(const size_type cellId,
-                                 const size_type cellLocalEnrichmentId,
                                  const std::vector<dftefe::utils::Point>
                                    &points) const
     {
-      std::vector<double> retValue(points.size() * dim * dim, 0);
-      DFTEFE_AssertWithMsg(
-        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
-          d_overlappingEnrichmentIdsInCells[cellId].size() >
-            cellLocalEnrichmentId,
-        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
-
-      basis::EnrichmentIdAttribute eIdAttr =
-        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
-      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
-        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-      for (int i = 0; i < points.size(); i++)
-        {
-          const std::vector<double> &vec =
-            sphericalData->getHessianValue(points[i], origin);
-          std::copy(vec.begin(), vec.end(), retValue.begin() + vec.size() * i);
-        }
-      return retValue;
+      return d_enrichClassIntfce->getEnrichmentHessian(cellId, points);
     }
 
     template <typename ValueTypeBasisCoeff,

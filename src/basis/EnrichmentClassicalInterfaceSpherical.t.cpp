@@ -281,66 +281,51 @@ namespace dftefe
             cfeBasisDataStorageRhs->getQuadratureRuleContainer()
               ->getCellRealPoints(cellIndex);
 
-          // if the cell has enrichment ids then get the values of them at
-          // the quadpoints
+          // std::vector<ValueTypeBasisData> enrichmentsAtQuadValues(
+          //   nTotalEnrichmentIds * nQuadPointInCell, (ValueTypeBasisData)0);
           // for (auto enrichmentId :
           // d_overlappingEnrichmentIdsInCells[cellIndex])
           //   {
-          //     std::vector<ValueTypeBasisData> enrichmentQuadValue(0);
-          //     enrichmentQuadValue.resize(nQuadPointInCell,
-          //                                (ValueTypeBasisData)0);
-
-          //     size_type atomId =
-          //       d_enrichmentIdsPartition->getAtomId(enrichmentId);
-          //     size_type qNumberId =
-          //       (d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-          //          enrichmentId))
-          //         .localIdInAtom;
-          //     std::string  atomSymbol = d_atomSymbolVec[atomId];
-          //     utils::Point origin(d_atomCoordinatesVec[atomId]);
-          //     std::vector<std::vector<int>> qNumbers(0);
-          //     qNumbers =
-          //     d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-          //                                                          d_fieldName);
-          //     auto sphericalData =
+          //     basis::EnrichmentIdAttribute eIdAttr =
+          //       d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+          //         enrichmentId);
+          //     utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
+          //     auto         sphericalData =
           //       d_atomSphericalDataContainer->getSphericalData(
-          //         atomSymbol, d_fieldName, qNumbers[qNumberId]);
+          //         d_atomSymbolVec[eIdAttr.atomId],
+          //         d_fieldName)[eIdAttr.localIdInAtom];
 
           //     for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
           //     qPoint++)
           //       {
-          //         enrichmentQuadValue[qPoint] =
+          //         enrichmentsAtQuadValues[qPoint * nTotalEnrichmentIds +
+          //                                 enrichmentId] =
           //           sphericalData->getValue(quadRealPointsVec[qPoint],
           //           origin);
           //       }
-
           //     quadValuesEnrichmentFunction
-          //       .template setCellQuadValues<utils::MemorySpace::HOST>(
-          //         cellIndex, enrichmentId, enrichmentQuadValue.data());
+          //       .template setCellValues<utils::MemorySpace::HOST>(
+          //         cellIndex, enrichmentsAtQuadValues.data());
           //   }
 
           std::vector<ValueTypeBasisData> enrichmentsAtQuadValues(
             nTotalEnrichmentIds * nQuadPointInCell, (ValueTypeBasisData)0);
+          std::vector<double> val =
+            getEnrichmentValue(cellIndex, quadRealPointsVec);
+          int enrichIdInCell = 0;
           for (auto enrichmentId : d_overlappingEnrichmentIdsInCells[cellIndex])
             {
-              basis::EnrichmentIdAttribute eIdAttr =
-                d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-                  enrichmentId);
-              utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
-              auto         sphericalData =
-                d_atomSphericalDataContainer->getSphericalData(
-                  d_atomSymbolVec[eIdAttr.atomId],
-                  d_fieldName)[eIdAttr.localIdInAtom];
-
               for (unsigned int qPoint = 0; qPoint < nQuadPointInCell; qPoint++)
                 {
                   enrichmentsAtQuadValues[qPoint * nTotalEnrichmentIds +
                                           enrichmentId] =
-                    sphericalData->getValue(quadRealPointsVec[qPoint], origin);
+                    *(val.data() + nQuadPointInCell * enrichIdInCell + qPoint);
                 }
               quadValuesEnrichmentFunction
                 .template setCellValues<utils::MemorySpace::HOST>(
                   cellIndex, enrichmentsAtQuadValues.data());
+
+              enrichIdInCell += 1;
             }
           cellIndex = cellIndex + 1;
         }
@@ -962,6 +947,199 @@ namespace dftefe
             }
         }
       return enrichmentLocalId;
+    }
+
+    // Enrichment functions with dealii mesh. The enrichedid is the cell local
+    // id.
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::vector<double>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::
+      getEnrichmentValue(const size_type                          cellId,
+                         const std::vector<dftefe::utils::Point> &points) const
+    {
+      std::vector<global_size_type> enrichIdVec =
+        d_overlappingEnrichmentIdsInCells[cellId];
+      unsigned int        numEnrichIdsInCell = enrichIdVec.size();
+      unsigned int        numPoints          = points.size();
+      std::vector<double> retValue(dim * numPoints * numEnrichIdsInCell, 0),
+        rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
+      std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
+      DFTEFE_AssertWithMsg(
+        !enrichIdVec.empty(),
+        "The requested cell does not have any enrichment ids.");
+      unsigned int numEnrichedIdsSkipped = 0;
+      unsigned int l                     = 0;
+
+      for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
+           iEnrich += numEnrichedIdsSkipped)
+        {
+          basis::EnrichmentIdAttribute eIdAttr =
+            d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+              enrichIdVec[iEnrich]);
+
+          size_type atomId  = eIdAttr.atomId;
+          size_type localId = eIdAttr.localIdInAtom;
+
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          std::transform(points.begin(),
+                         points.end(),
+                         x.begin(),
+                         [origin](utils::Point p) { return p - origin; });
+
+          atoms::convertCartesianToSpherical(
+            x,
+            rVec,
+            thetaVec,
+            phiVec,
+            atoms::SphericalDataDefaults::POL_ANG_TOL);
+
+          auto sphericalDataVec =
+            d_atomSphericalDataContainer->getSphericalData(
+              d_atomSymbolVec[atomId], d_fieldName);
+
+          auto quantumNoVec =
+            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+                                                      d_fieldName);
+
+          l = quantumNoVec[localId][1];
+
+          auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
+
+          for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+            {
+              auto angularValue = (sphericalDataVec[localId + mCount])
+                                    ->getAngularValue(rVec, thetaVec, phiVec);
+
+              linearAlgebra::blasLapack::hadamardProduct<
+                ValueTypeBasisData,
+                ValueTypeBasisData,
+                utils::MemorySpace::HOST>(numPoints,
+                                          radialValue.data(),
+                                          angularValue.data(),
+                                          retValue.data() +
+                                            (iEnrich + mCount) * numPoints,
+                                          *getLinAlgOpContext());
+            }
+          numEnrichedIdsSkipped = (2 * l + 1);
+        }
+      return retValue;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::vector<double>
+    EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getEnrichmentDerivative(const size_type cellId,
+                                    const std::vector<dftefe::utils::Point>
+                                      &points) const
+    {
+      std::vector<global_size_type> enrichIdVec =
+        d_overlappingEnrichmentIdsInCells[cellId];
+      unsigned int        numEnrichIdsInCell = enrichIdVec.size();
+      unsigned int        numPoints          = points.size();
+      std::vector<double> retValue(dim * numPoints * numEnrichIdsInCell, 0),
+        rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
+      std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
+      DFTEFE_AssertWithMsg(
+        !enrichIdVec.empty(),
+        "The requested cell does not have any enrichment ids.");
+      unsigned int numEnrichedIdsSkipped = 0;
+      unsigned int l                     = 0;
+
+      for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
+           iEnrich += numEnrichedIdsSkipped)
+        {
+          basis::EnrichmentIdAttribute eIdAttr =
+            d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+              enrichIdVec[iEnrich]);
+
+          size_type atomId  = eIdAttr.atomId;
+          size_type localId = eIdAttr.localIdInAtom;
+
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          std::transform(points.begin(),
+                         points.end(),
+                         x.begin(),
+                         [origin](utils::Point p) { return p - origin; });
+
+          atoms::convertCartesianToSpherical(
+            x,
+            rVec,
+            thetaVec,
+            phiVec,
+            atoms::SphericalDataDefaults::POL_ANG_TOL);
+
+          auto sphericalDataVec =
+            d_atomSphericalDataContainer->getSphericalData(
+              d_atomSymbolVec[atomId], d_fieldName);
+
+          auto quantumNoVec =
+            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+                                                      d_fieldName);
+
+          l = quantumNoVec[localId][1];
+
+          auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
+          auto radialDerivative =
+            sphericalDataVec[localId]->getRadialDerivative(rVec);
+
+          for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+            {
+              auto angularValue = (sphericalDataVec[localId + mCount])
+                                    ->getAngularValue(rVec, thetaVec, phiVec);
+              auto angularDerivative =
+                (sphericalDataVec[localId + mCount])
+                  ->getAngularDerivative(rVec, thetaVec, phiVec);
+
+              for (int i = 0; i < numPoints; i++)
+                {
+                  double dValueDR = radialDerivative[i] * angularValue[i];
+                  double dValueDThetaByr = 0.;
+                  dValueDThetaByr = radialValue[i] * angularDerivative[0][i];
+                  double dValueDPhiByrsinTheta = 0.;
+                  dValueDPhiByrsinTheta =
+                    radialValue[i] * angularDerivative[1][i];
+                  double theta = thetaVec[i], phi = phiVec[i];
+
+                  retValue[(iEnrich + mCount) * numPoints * dim + i * dim + 0] =
+                    dValueDR * (sin(theta) * cos(phi)) +
+                    dValueDThetaByr * (cos(theta) * cos(phi)) -
+                    sin(phi) * dValueDPhiByrsinTheta;
+                  retValue[(iEnrich + mCount) * numPoints * dim + i * dim + 1] =
+                    dValueDR * (sin(theta) * sin(phi)) +
+                    dValueDThetaByr * (cos(theta) * sin(phi)) +
+                    cos(phi) * dValueDPhiByrsinTheta;
+                  retValue[(iEnrich + mCount) * numPoints * dim + i * dim + 2] =
+                    dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
+                }
+            }
+          numEnrichedIdsSkipped = (2 * l + 1);
+        }
+      return retValue;
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::vector<double>
+    EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getEnrichmentHessian(const size_type cellId,
+                                 const std::vector<dftefe::utils::Point>
+                                   &points) const
+    {
+      utils::throwException(
+        false,
+        "getEnrichmentHessian() in EFEBasisDofHandlerDealii is not yet implemented.");
+      return std::vector<double>(0);
     }
 
   } // namespace basis

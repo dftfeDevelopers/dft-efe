@@ -81,11 +81,12 @@ namespace dftefe
           utils::throwException(
             false, "Number of points is < 2 for getSubdivPowerLawGridParams()");
         double p = (X[N - 1] - X[N - 2]) / (X[1] - X[0]);
-        if (!(p >= 1))
+        if (!(p >= 1.0 || std::abs(p - 1.0) < 1e-6))
           utils::throwException(
             false,
-            "X grid should have GP with 0<r<=1 in getSubdivPowerLawGridParams()");
-        if (std::abs(p - 1) < 1e-6)
+            "X grid should have GP with r>=1 in getSubdivPowerLawGridParams(), given r^(n-1) = " +
+              std::to_string(p));
+        if (std::abs(p - 1.0) < 1e-6)
           {
             r         = 1;
             a         = X[1] - X[0];
@@ -143,7 +144,7 @@ namespace dftefe
       if (d_isSubdivPowerLawGrid == true)
         {
           SplineInternal::getSubdivPowerLawGridParams(X, d_a, d_r, d_numSubDiv);
-          std::cout << d_a << "\t" << d_r << "\t" << d_numSubDiv << "\n";
+          // std::cout << d_a << "\t" << d_r << "\t" << d_numSubDiv << "\n";
         }
     }
 
@@ -434,14 +435,35 @@ namespace dftefe
     {
       if (d_isSubdivPowerLawGrid == true)
         {
-          unsigned int n =
-            std::floor(std::abs(log(x * (d_r - 1) / d_a + 1.0) / log(d_r)));
-          unsigned int subId = std::floor(
-            d_numSubDiv *
-            (x - d_a * (std::pow(d_r, 1.0 * n) - 1.0) / (d_r - 1.0)) /
-            (d_a * std::pow(d_r, 1.0 * n - 1.0)));
-          size_t idx = n * d_numSubDiv + subId - 1;
+          size_t       idx = 0;
+          unsigned int n = 0, subId = 0;
+          if (x > d_x.back())
+            {
+              idx = d_x.size() - 1;
+              return idx;
+            }
+          else if (x < d_x[0])
+            {
+              idx = 0;
+              return idx;
+            }
+          else
+            {
+              n     = std::abs(d_r - 1.0) < 1e-6 ?
+                        0 :
+                        std::floor(
+                      std::abs(log(x * (d_r - 1) / d_a + 1.0) / log(d_r)));
+              subId = std::abs(d_r - 1.0) < 1e-6 ?
+                        std::floor(x / d_a) :
+                        std::floor(d_numSubDiv *
+                                   (x - d_a * (std::pow(d_r, 1.0 * n) - 1.0) /
+                                          (d_r - 1.0)) /
+                                   (d_a * std::pow(d_r, 1.0 * n)));
+              idx   = n * d_numSubDiv + subId;
+              return idx;
+            }
 
+          /**
           std::vector<double>::const_iterator it;
           it          = std::upper_bound(d_x.begin(), d_x.end(), x); // *it > x
           size_t idx1 = std::max(int(it - d_x.begin()) - 1, 0); // d_x[idx] <= x
@@ -453,8 +475,7 @@ namespace dftefe
                                   " subId= " + std::to_string(subId) +
                                   " actual = " + std::to_string(idx1) +
                                   "for x = " + std::to_string(x));
-
-          return idx;
+          **/
         }
       else
         {

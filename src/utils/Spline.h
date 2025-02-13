@@ -120,9 +120,6 @@ namespace dftefe
       // evaluates the spline at point x
       double
       operator()(double x) const;
-      // evaluates the spline at a vector of points x
-      std::vector<double>
-      operator()(std::vector<double> x) const;
       std::vector<double>
       coefficients(double x) const;
       double

@@ -103,13 +103,14 @@ namespace dftefe
               auto vec = d_atomSphericalDataContainer->getSphericalData(
                 d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+              for (auto &enrichmentObjId : vec)
                 {
-                  for (auto &enrichmentObjId : vec)
+                  std::vector<double> val =
+                    enrichmentObjId->getValue(points, origin);
+                  for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
                     {
-                      double val =
-                        enrichmentObjId->getValue(points[iPoint], origin);
-                      retValue[iPoint] = retValue[iPoint] + val * val;
+                      retValue[iPoint] =
+                        retValue[iPoint] + val[iPoint] * val[iPoint];
                     }
                 }
             }
@@ -122,17 +123,17 @@ namespace dftefe
               auto vec = d_atomSphericalDataContainer->getSphericalData(
                 d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+              for (auto &enrichmentObjId : vec)
                 {
-                  for (auto &enrichmentObjId : vec)
+                  std::vector<double> val =
+                    enrichmentObjId->getGradientValue(points, origin);
+                  for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
                     {
-                      std::vector<double> val =
-                        enrichmentObjId->getGradientValue(points[iPoint],
-                                                          origin);
                       for (size_type iDim = 0; iDim < dim; iDim++)
                         {
                           retValue[iPoint] =
-                            retValue[iPoint] + val[iDim] * val[iDim];
+                            retValue[iPoint] +
+                            val[iPoint * dim + iDim] * val[iPoint * dim + iDim];
                         }
                     }
                 }

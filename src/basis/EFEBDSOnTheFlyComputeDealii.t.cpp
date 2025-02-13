@@ -749,13 +749,15 @@ namespace dftefe
                       }
                     ValueTypeBasisData *iter =
                       classicalComponentInQuadValues.data();
+                    const std::vector<double> &enrichValAtQuadPts =
+                      efeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
-                        const std::vector<double> &enrichValAtQuadPts =
-                          efeBDH->getEnrichmentValue(cellIndex,
-                                                     iNode,
-                                                     quadRealPointsVec);
+                        // const std::vector<double> &enrichValAtQuadPts =
+                        //   efeBDH->getEnrichmentValue(cellIndex,
+                        //                              iNode,
+                        //                              quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
@@ -769,7 +771,10 @@ namespace dftefe
                             *(basisEnrichQuadStorageTmp.data() +
                               cumulativeEnrichQuadxDof +
                               qPoint * numEnrichmentIdsInCell + iNode) =
-                              enrichValAtQuadPts[qPoint] -
+                              *(enrichValAtQuadPts.data() +
+                                nQuadPointInCell * iNode + qPoint)
+                              /*enrichValAtQuadPts[qPoint]*/
+                              -
                               *(iter + numEnrichmentIdsInCell * qPoint + iNode);
                           }
                       }
@@ -875,13 +880,16 @@ namespace dftefe
                       }
                     ValueTypeBasisData *iter =
                       classicalComponentInQuadGradients.data();
+                    const std::vector<double> &enrichGradAtQuadPts =
+                      efeBDH->getEnrichmentDerivative(cellIndex,
+                                                      quadRealPointsVec);
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
-                        const std::vector<double> &enrichGradAtQuadPts =
-                          efeBDH->getEnrichmentDerivative(cellIndex,
-                                                          iNode,
-                                                          quadRealPointsVec);
+                        // const std::vector<double> &enrichGradAtQuadPts =
+                        //   efeBDH->getEnrichmentDerivative(cellIndex,
+                        //                                   iNode,
+                        //                                   quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
@@ -893,10 +901,14 @@ namespace dftefe
                                   cumulativeEnrichQuadxDof * dim +
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
-                                *it = enrichGradAtQuadPts[qPoint * dim + iDim] -
-                                      *(iter +
-                                        numEnrichmentIdsInCell * dim * qPoint +
-                                        iDim * numEnrichmentIdsInCell + iNode);
+                                *it =
+                                  *(enrichGradAtQuadPts.data() +
+                                    nQuadPointInCell * iNode * dim +
+                                    qPoint * dim + iDim)
+                                  /*enrichGradAtQuadPts[qPoint * dim + iDim]*/
+                                  - *(iter +
+                                      numEnrichmentIdsInCell * dim * qPoint +
+                                      iDim * numEnrichmentIdsInCell + iNode);
                               }
                           }
                       }
@@ -909,6 +921,8 @@ namespace dftefe
               {
                 cellStartIdsBasisHessianQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs * dim * dim;
+                const std::vector<double> &enrichHessAtQuadPts =
+                  efeBDH->getEnrichmentHessian(cellIndex, quadRealPointsVec);
                 for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
                   {
                     if (iNode < classicalDofsPerCell)
@@ -935,10 +949,6 @@ namespace dftefe
                       }
                     else
                       {
-                        const std::vector<double> &enrichHessAtQuadPts =
-                          efeBDH->getEnrichmentHessian(cellIndex,
-                                                       iNode,
-                                                       quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
@@ -960,8 +970,9 @@ namespace dftefe
                                       iDim * dim * dofsPerCell +
                                       jDim * dofsPerCell + iNode;
                                     *it =
-                                      enrichHessAtQuadPts[qPoint * dim * dim +
-                                                          iDim * dim + jDim];
+                                      *(enrichHessAtQuadPts.data() +
+                                        nQuadPointInCell * iNode * dim +
+                                        qPoint * dim * dim + iDim * dim + jDim);
                                   }
                               }
                           }

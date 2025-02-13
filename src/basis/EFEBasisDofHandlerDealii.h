@@ -239,19 +239,16 @@ namespace dftefe
       std::vector<double>
       getEnrichmentValue(
         const size_type                          cellId,
-        const size_type                          cellLocalEnrichmentId,
         const std::vector<dftefe::utils::Point> &points) const override;
 
       std::vector<double>
       getEnrichmentDerivative(
         const size_type                          cellId,
-        const size_type                          cellLocalEnrichmentId,
         const std::vector<dftefe::utils::Point> &points) const override;
 
       std::vector<double>
       getEnrichmentHessian(
         const size_type                          cellId,
-        const size_type                          cellLocalEnrichmentId,
         const std::vector<dftefe::utils::Point> &points) const override;
 
       std::vector<global_size_type>

@@ -467,12 +467,10 @@ namespace dftefe
                   numEnrichmentIdsInCell,
                   *eci->getLinAlgOpContext());
 
+                const std::vector<double> &enrichValAtQuadPts =
+                  efeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);
                 for (size_type i = 0; i < numEnrichmentIdsInCell; i++)
                   {
-                    const std::vector<double> &enrichValAtQuadPts =
-                      efeBDH->getEnrichmentValue(cellIndex,
-                                                 i,
-                                                 quadRealPointsVec);
                     for (unsigned int qPoint = 0;
                          qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
                          qPoint++)
@@ -480,7 +478,8 @@ namespace dftefe
                         *(enrichmentValuesVec.data() + numEnrichmentIdsInCell * qPoint
                            + i
                           /*nQuadPointInCellEnrichmentBlockEnrichment * i +
-                          qPoint*/) = enrichValAtQuadPts[qPoint];
+                          qPoint*/) =
+                            *(enrichValAtQuadPts.data() + nQuadPointInCellEnrichmentBlockEnrichment * i + qPoint);
                       }
                   }
               }
