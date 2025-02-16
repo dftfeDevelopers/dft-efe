@@ -22,8 +22,6 @@
 /*
  * @author Avirup Sircar
  */
-
-#include <utils/Defaults.h>
 namespace dftefe
 {
   namespace electrostatics
@@ -117,8 +115,8 @@ namespace dftefe
                   {
                     problem.precondition_Jacobi(hvec, gvec);
                     beta = gh;
-                    AssertThrow(std::abs(beta) != 0.,
-                                dealii::ExcMessage("Division by zero\n"));
+                    DFTEFE_AssertWithMsg(std::abs(beta) != 0.,
+                                         "Division by zero\n");
                     gh   = gvec * hvec;
                     beta = gh / beta;
                     dvec.sadd(beta, -1., hvec);
@@ -132,8 +130,8 @@ namespace dftefe
 
                 problem.vmult(hvec, dvec);
                 alpha = dvec * hvec;
-                AssertThrow(std::abs(alpha) != 0.,
-                            dealii::ExcMessage("Division by zero\n"));
+                DFTEFE_AssertWithMsg(std::abs(alpha) != 0.,
+                                     "Division by zero\n");
                 alpha = gh / alpha;
 
                 for (unsigned int i = 0; i < x.locally_owned_size(); i++)
@@ -147,9 +145,8 @@ namespace dftefe
               }
             if (!conv)
               {
-                AssertThrow(false,
-                            dealii::ExcMessage(
-                              "DFT-FE Error: Solver did not converge\n"));
+                DFTEFE_AssertWithMsg(
+                  false, "DFT-EFE Error: Solver did not converge\n");
               }
 
             x.update_ghost_values();
@@ -161,10 +158,12 @@ namespace dftefe
           }
         catch (...)
           {
-            AssertThrow(
+            DFTEFE_AssertWithMsg(
               false,
-              dealii::ExcMessage(
-                "DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters. In rare cases for all-electron problems this can also occur due to a known parallel constraints issue in dealii library. Try using set CONSTRAINTS FROM SERIAL DOFHANDLER=true under the Boundary conditions subsection."));
+              "DFT-EFE Error: Poisson solver did not converge as per set tolerances."
+              "consider increasing MAXIMUM ITERATIONS in Poisson problem parameters."
+              "In rare cases for all-electron problems this can also occur due to a known parallel constraints"
+              "issue in dealii library.");
             pcout
               << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
             pcout << "Current abs. residual: " << res << std::endl;
@@ -352,6 +351,20 @@ namespace dftefe
         std::vector<const dealii::AffineConstraints<ValueTypeOperand> *>{
           d_dealiiAffineConstraintMatrix},
         dealiiQuadratureRuleVec);
+
+      d_cellIdToCellIndexMap.clear();
+      auto cellPtr =
+        d_dealiiMatrixFree->get_dof_handler(d_dofHandlerIndex).begin_active();
+      auto endcPtr =
+        d_dealiiMatrixFree->get_dof_handler(d_dofHandlerIndex).end();
+
+      unsigned int iCell = 0;
+      for (; cellPtr != endcPtr; ++cellPtr)
+        if (cellPtr->is_locally_owned())
+          {
+            d_cellIdToCellIndexMap[cellPtr->id()] = iCell;
+            ++iCell;
+          }
 
       d_x(d_dealiiMatrixFree->get_vector_partitioner(d_dofHandlerIndex));
       d_initial(d_x);
@@ -887,9 +900,8 @@ namespace dftefe
                                                           iSubCell,
                                                           d_dofHandlerIndex);
                   dealii::CellId subCellId = subCellPtr->id();
-                  unsigned int   cellIndex =
-                    d_basisOperationsPtr->cellIndex(subCellId);
-                  const double *tempVec =
+                  unsigned int   cellIndex = d_cellIdToCellIndexMap[subCellId];
+                  const double * tempVec =
                     inpRhs[iter->first].data() +
                     cellIndex * fe_eval_density.totalNumberofQuadraturePoints();
 

@@ -233,6 +233,7 @@ namespace dftefe
         d_feBasisDataStorageRhs;
 
       unsigned int d_matrixFreeQuadCompStiffnessMatrix;
+      std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics

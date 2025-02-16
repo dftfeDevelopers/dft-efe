@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author dftefe
+ * @author DFTFE, Avirup Sircar
  */
 
 #ifndef FEEvaluationWrapper_h

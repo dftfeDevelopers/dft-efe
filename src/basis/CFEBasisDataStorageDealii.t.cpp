@@ -73,14 +73,15 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        dealii::Quadrature<dim> &           dealiiQuadratureRule)
       {
         bool numCellsZero = feBDH->nLocallyOwnedCells() == 0 ? true : false;
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
           quadratureRuleAttributes.getNum1DPoints();
-        dealii::Quadrature<dim> dealiiQuadratureRule;
+        // dealii::Quadrature<dim> dealiiQuadratureRule;
         if (quadratureFamily == quadrature::QuadratureFamily::GAUSS)
           {
             dealiiQuadratureRule = dealii::QGauss<dim>(num1DQuadPoints);
@@ -1077,6 +1078,7 @@ namespace dftefe
       , d_basisStorageAttributesBoolMap(basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = false;
+      d_isUniformQuad     = false;
       d_feBDH             = std::dynamic_pointer_cast<
         const CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
         feBDH);
@@ -1238,6 +1240,7 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
+      d_isUniformQuad     = true;
       utils::throwException<utils::InvalidArgument>(
         d_quadratureRuleAttributes == quadratureRuleAttributes,
         "Incorrect quadratureRuleAttributes given.");
@@ -1311,7 +1314,8 @@ namespace dftefe
              cellStartIdsBasisQuadStorage,
              cellStartIdsBasisGradientQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap);
+             basisStorageAttributesBoolMap,
+             d_dealiiQuadratureRule);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1461,22 +1465,27 @@ namespace dftefe
                cellStartIdsBasisHessianQuadStorage,
                basisStorageAttributesBoolMap);
       else
-        CFEBasisDataStorageDealiiInternal::storeValuesHRefinedSameQuadEveryCell<
-          ValueTypeBasisCoeff,
-          ValueTypeBasisData,
-          memorySpace,
-          dim>(d_feBDH,
-               basisQuadStorage,
-               basisGradientQuadStorage,
-               basisHessianQuadStorage,
-               basisOverlap,
-               quadratureRuleAttributes,
-               d_quadratureRuleContainer,
-               nQuadPointsInCell,
-               cellStartIdsBasisQuadStorage,
-               cellStartIdsBasisGradientQuadStorage,
-               cellStartIdsBasisHessianQuadStorage,
-               basisStorageAttributesBoolMap);
+        {
+          CFEBasisDataStorageDealiiInternal::
+            storeValuesHRefinedSameQuadEveryCell<ValueTypeBasisCoeff,
+                                                 ValueTypeBasisData,
+                                                 memorySpace,
+                                                 dim>(
+              d_feBDH,
+              basisQuadStorage,
+              basisGradientQuadStorage,
+              basisHessianQuadStorage,
+              basisOverlap,
+              quadratureRuleAttributes,
+              d_quadratureRuleContainer,
+              nQuadPointsInCell,
+              cellStartIdsBasisQuadStorage,
+              cellStartIdsBasisGradientQuadStorage,
+              cellStartIdsBasisHessianQuadStorage,
+              basisStorageAttributesBoolMap,
+              d_dealiiQuadratureRule);
+          d_isUniformQuad = true;
+        }
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -2623,6 +2632,20 @@ namespace dftefe
     {
       return d_feBDH;
     }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    dealii::Quadrature<dim> &
+    CFEBasisDataStorageDealii<ValueTypeBasisCoeff,
+                              ValueTypeBasisData,
+                              memorySpace,
+                              dim>::getDealiiQuadratureRule() const
+    {
+      return d_dealiiQuadratureRule;
+    }
+
   } // namespace basis
 } // namespace dftefe
 

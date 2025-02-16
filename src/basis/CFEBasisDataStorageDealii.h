@@ -210,6 +210,10 @@ namespace dftefe
         std::pair<size_type, size_type> cellRange,
         Storage &                       basisGradientData) const override;
 
+      // dealii function
+      dealii::Quadrature<dim> &
+      getDealiiQuadratureRule() const;
+
     private:
       bool d_evaluateBasisData;
       std::shared_ptr<
@@ -232,6 +236,8 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
+      dealii::Quadrature<dim>       d_dealiiQuadratureRule;
+      bool                          d_isUniformQuad;
 
     }; // end of CFEBasisDataStorageDealii
   }    // end of namespace basis

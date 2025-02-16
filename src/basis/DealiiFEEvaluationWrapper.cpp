@@ -20,9 +20,10 @@
  ******************************************************************************/
 
 /*
- * @author dftefe
+ * @author DFTFE, Avirup Sircar
  */
 #include <basis/DealiiFEEvaluationWrapper.h>
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -351,11 +352,10 @@ namespace dftefe
     //     }
     //   else
     //     {
-    //       AssertThrow(
-    //         n_components == 3,
-    //         dealii::ExcMessage(
-    //           "DFT-FE Error: This type of submitGradient can be called only
-    //           for n_components = 3"));
+    //       DFTEFE_AssertWithMsg(
+    //         n_components == 3, "DFT-EFE Error: This type of submitGradient
+    //         can be called only
+    //           for n_components = 3");
     //     }
     // }
 
@@ -374,10 +374,9 @@ namespace dftefe
             d_dealiiFEEvaluation->submit_value(alpha[q], q);
           }
       else
-        AssertThrow(
+        DFTEFE_AssertWithMsg(
           n_components == 1,
-          dealii::ExcMessage(
-            "DFT-FE Error: Incorrect call with number of components"));
+          "DFT-EFE Error: Incorrect call with number of components");
     }
 
     template <int          FEOrder,
@@ -394,10 +393,9 @@ namespace dftefe
             tempVec[q] = d_dealiiFEEvaluation->get_value(q);
           }
       else
-        AssertThrow(
+        DFTEFE_AssertWithMsg(
           n_components == 1,
-          dealii::ExcMessage(
-            "DFT-FE Error: Incorrect call with number of components"));
+          "DFT-EFE Error: Incorrect call with number of components");
     }
 
     template <int          FEOrder,
