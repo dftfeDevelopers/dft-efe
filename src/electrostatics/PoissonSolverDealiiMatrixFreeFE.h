@@ -20,20 +20,14 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#ifndef dftefePoissonLinearSolverFunctionFE_h
-#define dftefePoissonLinearSolverFunctionFE_h
+#ifndef dftefePoissonSolverDealiiMatrixFreeFE_h
+#define dftefePoissonSolverDealiiMatrixFreeFE_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
-#include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/LinearSolverFunction.h>
-#include <linearAlgebra/OperatorContext.h>
-#include <electrostatics/LaplaceOperatorContextFE.h>
-#include <linearAlgebra/PreconditionerJacobi.h>
-#include <linearAlgebra/PreconditionerNone.h>
 #include <basis/FEBasisManager.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/FEBasisDataStorage.h>
@@ -71,9 +65,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class PoissonLinearSolverFunctionFE
-      : public linearAlgebra::
-          LinearSolverFunction<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    class PoissonSolverDealiiMatrixFreeFE
     {
     public:
       /**
@@ -82,15 +74,21 @@ namespace dftefe
        * (e.g., between double and complex<double>, complex<double>
        * is the bigger set)
        */
+
+      template <typename T>
+      using distributedCPUVec =
+        dealii::LinearAlgebra::distributed::Vector<T,
+                                                   dealii::MemorySpace::Host>;
+
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
     public:
       /**
-       * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE
+       * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixFreeFE
        */
-      PoissonLinearSolverFunctionFE(
+      PoissonSolverDealiiMatrixFreeFE(
         std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
                                                     ValueTypeOperator,
                                                     memorySpace,
@@ -109,14 +107,12 @@ namespace dftefe
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext,
-        const size_type maxCellBlock,
-        const size_type maxFieldBlock);
+          linAlgOpContext);
 
       /**
-       * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE
+       * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixFreeFE
        */
-      PoissonLinearSolverFunctionFE(
+      PoissonSolverDealiiMatrixFreeFE(
         std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
                                                     ValueTypeOperator,
                                                     memorySpace,
@@ -131,9 +127,7 @@ namespace dftefe
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext,
-        const size_type maxCellBlock,
-        const size_type maxFieldBlock);
+          linAlgOpContext);
 
       void
       reinit(
@@ -155,86 +149,89 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &inpRhs);
 
-      ~PoissonLinearSolverFunctionFE() = default;
-
-      const linearAlgebra::
-        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
-        getAxContext() const override;
-
-      const linearAlgebra::
-        OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
-        getPCContext() const override;
+      ~PoissonSolverDealiiMatrixFreeFE() = default;
 
       void
-      setSolution(
-        const linearAlgebra::MultiVector<ValueType, memorySpace> &x) override;
+      solve();
 
       void
-      getSolution(
-        linearAlgebra::MultiVector<ValueType, memorySpace> &solution) override;
-
-      const linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &
-      getRhs() const override;
-
-      const linearAlgebra::MultiVector<ValueType, memorySpace> &
-      getInitialGuess() const override;
+      getSolution(linearAlgebra::MultiVector<ValueType, memorySpace> &solution);
 
       const utils::mpi::MPIComm &
-      getMPIComm() const override;
+      getMPIComm() const;
 
     private:
+      const distributedCPUVec<ValueTypeOperand> &
+      getRhs() const;
+
+      const distributedCPUVec<ValueType> &
+      getInitialGuess() const;
+
+      void
+      setSolution(const distributedCPUVec<ValueType> &x);
+
+      void
+      computeRhs(distributedCPUVec<double> &rhs,
+                 const std::map<
+                   std::string,
+                   const quadrature::QuadratureValuesContainer<
+                     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                            ValueTypeOperand>,
+                     memorySpace> &> &inpRhs);
+
+      void
+      vmult(distributedCPUVec<double> &Ax, distributedCPUVec<double> &x);
+
+      void
+      precondition_Jacobi(distributedCPUVec<double> &      dst,
+                          const distributedCPUVec<double> &src) const;
+
+      void
+      computeDiagonalA();
+
+      void
+      AX(const dealii::MatrixFree<dim, double> &      matrixFreeData,
+         distributedCPUVec<double> &                  dst,
+         const distributedCPUVec<double> &            src,
+         const std::pair<unsigned int, unsigned int> &cell_range) const;
+
+
       size_type d_numComponents;
       std::shared_ptr<
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
-        d_feBasisManagerField;
-      std::shared_ptr<
-        const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
-        d_feBasisManagerHomo;
-      std::shared_ptr<LaplaceOperatorContextFE<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace,
-                                               dim>>
-        d_AxContext;
-      std::shared_ptr<LaplaceOperatorContextFE<ValueTypeOperator,
-                                               ValueTypeOperand,
-                                               memorySpace,
-                                               dim>>
-        d_AxContextNHDB;
-      std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace>>
-                                                         d_PCContext;
-      linearAlgebra::PreconditionerType                  d_pcType;
-      linearAlgebra::MultiVector<ValueType, memorySpace> d_x;
-      linearAlgebra::MultiVector<ValueType, memorySpace> d_b;
-      linearAlgebra::MultiVector<ValueType, memorySpace> d_initial;
-      linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-        d_fieldInHomoDBCVec;
+                                        d_feBasisManagerField;
+      linearAlgebra::PreconditionerType d_pcType;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                      d_linAlgOpContext;
-      const size_type d_maxCellBlock;
-      const size_type d_maxFieldBlock;
+        d_linAlgOpContext;
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                                 d_feBasisDataStorageStiffnessMatrix;
       utils::Profiler           d_p;
       utils::ConditionalOStream d_rootCout;
-      std::map<std::string,
-               linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>>
-        d_rhsMultiVecComponent;
-      std::map<std::string,
-               quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
-        d_rhsQuadValComponent;
+
+
+      distributedCPUVec<ValueTypeOperator> d_x, d_rhs, d_initial, d_diagonalA;
+      std::shared_ptr<dealii::MatrixFree<dim, ValueTypeOperator>>
+                                                     d_dealiiMatrixFree;
+      std::shared_ptr<const dealii::DoFHandler<dim>> d_dealiiDofHandler;
+      dealii::AffineConstraints<ValueTypeOperand>
+        *                                 d_dealiiAffineConstraintMatrix;
+      unsigned int                        d_num1DQuadPointsStiffnessMatrix;
+      std::map<std::string, unsigned int> d_num1DPointsRhs;
+      size_type                           d_feOrder;
+      unsigned int                        d_dofHandlerIndex;
+
       const std::map<
         std::string,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
         d_feBasisDataStorageRhs;
 
-    }; // end of class PoissonLinearSolverFunctionFE
+      unsigned int d_matrixFreeQuadCompStiffnessMatrix;
+
+    }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics
 } // end of namespace dftefe
-#include <electrostatics/PoissonLinearSolverFunctionFE.t.cpp>
-#endif // dftefePoissonLinearSolverFunctionFE_h
+#include <electrostatics/PoissonSolverDealiiMatrixFreeFE.t.cpp>
+#endif // dftefePoissonSolverDealiiMatrixFreeFE_h

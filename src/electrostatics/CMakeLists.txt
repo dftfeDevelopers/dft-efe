@@ -7,7 +7,8 @@ endif()
 # Add source files here
 set(DFT-EFE-ELECTROSTATICS-SOURCES
 	PoissonLinearSolverFunctionFE.cpp
-	LaplaceOperatorContextFE.cpp)
+	LaplaceOperatorContextFE.cpp
+	PoissonSolverDealiiMatrixFreeFE.cpp)
 
 add_library(dft-efe-electrostatics SHARED ${DFT-EFE-ELECTROSTATICS-SOURCES})
 

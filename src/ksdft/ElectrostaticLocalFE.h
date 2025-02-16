@@ -371,6 +371,12 @@ namespace dftefe
 
       utils::ConditionalOStream d_rootCout;
 
+      std::map<
+        std::string,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+        d_feBasisDataStorageRhsMap;
+
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

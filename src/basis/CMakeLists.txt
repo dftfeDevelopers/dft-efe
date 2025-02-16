@@ -34,6 +34,7 @@ set(DFT-EFE-BASIS-SOURCES
 	EFEBasisDofHandlerDealii.cpp
 	EFEConstraintsLocalDealii.cpp
 	GenerateMesh.cpp
+	DealiiFEEvaluationWrapper.cpp
 	)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})

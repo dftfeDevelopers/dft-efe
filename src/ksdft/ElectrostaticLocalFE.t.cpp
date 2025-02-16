@@ -692,13 +692,12 @@ namespace dftefe
       std::map<
         std::string,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace> &>
-        inpRhsMap = {{"dummy", *d_scratchDensNuclearQuad}};
+        inpRhsMap;
 
-      std::map<
-        std::string,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
-        feBasisDataStorageRhsMap;
+      d_feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
+                                    {"rho", d_feBDElectronicChargeRhs}};
+      inpRhsMap                  = {{"bSmear", *d_scratchDensNuclearQuad},
+                   {"rho", *d_scratchDensRhoQuad}};
 
       d_linearSolverFunction = std::make_shared<
         electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
@@ -707,7 +706,7 @@ namespace dftefe
                                                       dim>>(
         d_feBMTotalCharge,
         d_feBDTotalChargeStiffnessMatrix,
-        feBasisDataStorageRhsMap,
+        d_feBasisDataStorageRhsMap,
         inpRhsMap,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
@@ -938,13 +937,12 @@ namespace dftefe
       std::map<
         std::string,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace> &>
-        inpRhsMap = {{"dummy", *d_scratchDensNuclearQuad}};
+        inpRhsMap;
 
-      std::map<
-        std::string,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
-        feBasisDataStorageRhsMap;
+      d_feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
+                                    {"rho", d_feBDElectronicChargeRhs}};
+      inpRhsMap                  = {{"bSmear", *d_scratchDensNuclearQuad},
+                   {"rho", *d_scratchDensRhoQuad}};
 
       d_linearSolverFunction = std::make_shared<
         electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
@@ -953,7 +951,7 @@ namespace dftefe
                                                       dim>>(
         d_feBMTotalCharge,
         d_feBDTotalChargeStiffnessMatrix,
-        feBasisDataStorageRhsMap,
+        d_feBasisDataStorageRhsMap,
         inpRhsMap,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
@@ -1171,13 +1169,10 @@ namespace dftefe
       std::map<
         std::string,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace> &>
-        inpRhsMap = {{"dummy", *d_scratchDensNuclearQuad}};
+        inpRhsMap;
 
-      std::map<
-        std::string,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
-        feBasisDataStorageRhsMap;
+      d_feBasisDataStorageRhsMap = {{"deltarho", d_feBDElectronicChargeRhs}};
+      inpRhsMap                  = {{"deltarho", *d_scratchDensRhoQuad}};
 
       d_linearSolverFunction = std::make_shared<
         electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
@@ -1186,7 +1181,7 @@ namespace dftefe
                                                       dim>>(
         d_feBMTotalCharge,
         d_feBDTotalChargeStiffnessMatrix,
-        feBasisDataStorageRhsMap,
+        d_feBasisDataStorageRhsMap,
         inpRhsMap,
         ksdft::PoissonProblemDefaults::PC_TYPE,
         d_linAlgOpContext,
@@ -1262,20 +1257,11 @@ namespace dftefe
                                                                memorySpace> &>
             inpRhsMap = {{"deltarho", *d_scratchDensRhoQuad}};
 
-          std::map<
-            std::string,
-            std::shared_ptr<
-              const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
-            feBasisDataStorageRhsMap = {
-              {"deltarho", d_feBDElectronicChargeRhs}};
-
           utils::Profiler p(
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "Delta Rho Poisson Solve");
           p.registerStart("Reinit");
-          d_linearSolverFunction->reinit(d_feBMTotalCharge,
-                                         feBasisDataStorageRhsMap,
-                                         inpRhsMap);
+          d_linearSolverFunction->reinit(d_feBMTotalCharge, inpRhsMap);
           p.registerEnd("Reinit");
 
           linearAlgebra::LinearAlgebraProfiler profiler;
@@ -1324,20 +1310,11 @@ namespace dftefe
             inpRhsMap = {{"bSmear", *d_scratchDensNuclearQuad},
                          {"rho", *d_scratchDensRhoQuad}};
 
-          std::map<
-            std::string,
-            std::shared_ptr<
-              const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
-            feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
-                                        {"rho", d_feBDElectronicChargeRhs}};
-
           utils::Profiler p(
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "b+rho Poisson Solve");
           p.registerStart("Reinit");
-          d_linearSolverFunction->reinit(d_feBMTotalCharge,
-                                         feBasisDataStorageRhsMap,
-                                         inpRhsMap);
+          d_linearSolverFunction->reinit(d_feBMTotalCharge, inpRhsMap);
           p.registerEnd("Reinit");
 
           linearAlgebra::LinearAlgebraProfiler profiler;
@@ -1535,7 +1512,6 @@ namespace dftefe
           else
             {
               linearSolverFunctionNuclear->reinit(d_feBMNuclearCharge[iAtom],
-                                                  feBDNuclearChargeRhs,
                                                   *d_scratchDensNuclearQuad);
             }
           p.registerEnd("Reinit");

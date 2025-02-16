@@ -138,6 +138,7 @@ namespace dftefe
       , d_p(feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(),
             "Poisson Solver")
       , d_rootCout(std::cout)
+      , d_feBasisDataStorageRhs(feBasisDataStorageRhs)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -263,8 +264,7 @@ namespace dftefe
       d_p.registerEnd("Initilization");
 
       d_rhsQuadValComponent.clear();
-      if (!(feBasisDataStorageRhs.empty() || inpRhs.empty()))
-        reinit(d_feBasisManagerField, feBasisDataStorageRhs, inpRhs);
+      reinit(d_feBasisManagerField, inpRhs);
     }
 
     template <typename ValueTypeOperator,
@@ -328,29 +328,14 @@ namespace dftefe
                                                     ValueTypeOperator,
                                                     memorySpace,
                                                     dim>> feBasisManagerField,
-        const std::map<
-          std::string,
-          std::shared_ptr<
-            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
-          &                               feBasisDataStorageRhs,
         const std::map<std::string,
                        const quadrature::QuadratureValuesContainer<
                          linearAlgebra::blasLapack::
                            scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                         memorySpace> &> &inpRhs)
+                         memorySpace> &> &                inpRhs)
     {
-      auto iter = feBasisDataStorageRhs.begin();
-      while (iter != feBasisDataStorageRhs.end())
-        {
-          utils::throwException(
-            ((d_feBasisDataStorageStiffnessMatrix->getBasisDofHandler())
-               .get() == (iter->second->getBasisDofHandler()).get()),
-            "The BasisDofHandler of the feBasisDataStorageRhs in reinit does not match with that in constructor in PoissonLinearSolverFunctionFE.");
-          iter++;
-        }
-
-      iter = feBasisDataStorageRhs.begin();
-      while (iter != feBasisDataStorageRhs.end())
+      auto iter = d_feBasisDataStorageRhs.begin();
+      while (iter != d_feBasisDataStorageRhs.end())
         {
           auto iter1 = inpRhs.find(iter->first);
           if (iter1 != inpRhs.end())
@@ -391,7 +376,7 @@ namespace dftefe
 
           d_AxContextNHDB->reinit(*d_feBasisManagerField,
                                   *d_feBasisManagerHomo);
-          d_p.registerStart("Initilization");
+          d_p.registerEnd("Initilization");
         }
 
       // Compute RHS
@@ -406,8 +391,8 @@ namespace dftefe
         b(d_b, 0.0);
 
       d_p.registerStart("Rhs Computation");
-      iter = feBasisDataStorageRhs.begin();
-      while (iter != feBasisDataStorageRhs.end())
+      iter = d_feBasisDataStorageRhs.begin();
+      while (iter != d_feBasisDataStorageRhs.end())
         {
           ValueType max(1e6);
           if (d_rhsQuadValComponent.find(iter->first) !=
@@ -512,9 +497,6 @@ namespace dftefe
                                                     ValueTypeOperator,
                                                     memorySpace,
                                                     dim>> feBasisManagerField,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-          feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
@@ -527,13 +509,7 @@ namespace dftefe
                  memorySpace> &>
         inpRhsMap = {{"Field", inpRhs}};
 
-      std::map<
-        std::string,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
-        feBasisDataStorageRhsMap = {{"Field", feBasisDataStorageRhs}};
-
-      reinit(feBasisManagerField, feBasisDataStorageRhsMap, inpRhsMap);
+      reinit(feBasisManagerField, inpRhsMap);
     }
 
     template <typename ValueTypeOperator,
