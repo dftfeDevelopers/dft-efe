@@ -20,28 +20,31 @@
  ******************************************************************************/
 
 /*
- * @author DFTFE
+ * @author dftefe
  */
 
 #ifndef FEEvaluationWrapper_h
 #define FEEvaluationWrapper_h
 
-#include <dftUtils.h>
-#include <any>
 #include <boost/preprocessor.hpp>
 #include <cmath>
 #include <memory>
-#include <constraintMatrixInfo.h>
-#include <constraintMatrixInfo.h>
-#include <headers.h>
 
-namespace dftfe
+#include <deal.II/matrix_free/matrix_free.h>
+#include <deal.II/matrix_free/fe_evaluation.h>
+
+namespace dftefe
 {
-  namespace dftUtils
+  namespace basis
   {
     class FEEvaluationWrapperBase
     {
     public:
+      template <typename T>
+      using distributedCPUVec =
+        dealii::LinearAlgebra::distributed::Vector<T,
+                                                   dealii::MemorySpace::Host>;
+
       /**
        * @brief Returns the total number of quadrature points in all 3 directions
        */
@@ -285,6 +288,10 @@ namespace dftfe
         const unsigned int                   matrixFreeVectorComponent,
         const unsigned int                   matrixFreeQuadratureComponent);
 
+      const FEEvaluationWrapperBase &
+      getFEEvaluationWrapperBase() const;
+
+    private:
       unsigned int d_feDegree;
       unsigned int d_num1dQuad;
       unsigned int d_matrixFreeVectorComponent;
@@ -297,9 +304,9 @@ namespace dftfe
 
     }; // end of DealiiFEEvaluationWrapper
 
-  } // end of namespace dftUtils
+  } // end of namespace basis
 
-} // end of namespace dftfe
+} // end of namespace dftefe
 
 
 #endif // FEEvaluationWrapper_h

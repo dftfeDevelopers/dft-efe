@@ -32,6 +32,10 @@
 #include <basis/FEBasisOperations.h>
 #include <basis/FEBasisDataStorage.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <basis/DealiiFEEvaluationWrapper.h>
+#include <basis/CFEBasisDataStorageDealii.h>
+#include <basis/CFEConstraintsLocalDealii.h>
+#include <basis/CFEBDSOnTheFlyComputeDealii.h>
 #include <vector>
 #include <memory>
 #include <utils/Profiler.h>
@@ -77,8 +81,7 @@ namespace dftefe
 
       template <typename T>
       using distributedCPUVec =
-        dealii::LinearAlgebra::distributed::Vector<T,
-                                                   dealii::MemorySpace::Host>;
+        basis::FEEvaluationWrapperBase::distributedCPUVec<T>;
 
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -152,7 +155,7 @@ namespace dftefe
       ~PoissonSolverDealiiMatrixFreeFE() = default;
 
       void
-      solve();
+      solve(const double absTolerance, const unsigned int maxNumberIterations);
 
       void
       getSolution(linearAlgebra::MultiVector<ValueType, memorySpace> &solution);
@@ -216,9 +219,10 @@ namespace dftefe
                                                      d_dealiiMatrixFree;
       std::shared_ptr<const dealii::DoFHandler<dim>> d_dealiiDofHandler;
       dealii::AffineConstraints<ValueTypeOperand>
-        *                                 d_dealiiAffineConstraintMatrix;
+        *d_dealiiAffineConstraintMatrix;
+      dealii::AffineConstraints<ValueTypeOperand> *d_constraintsInfo;
       unsigned int                        d_num1DQuadPointsStiffnessMatrix;
-      std::map<std::string, unsigned int> d_num1DPointsRhs;
+      std::map<std::string, unsigned int> d_num1DQuadPointsRhs;
       size_type                           d_feOrder;
       unsigned int                        d_dofHandlerIndex;
 

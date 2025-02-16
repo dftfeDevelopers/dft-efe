@@ -20,15 +20,13 @@
  ******************************************************************************/
 
 /*
- * @author DFTFE
+ * @author dftefe
  */
-#include <DealiiFEEvaluationWrapper.h>
+#include <basis/DealiiFEEvaluationWrapper.h>
 
-
-
-namespace dftfe
+namespace dftefe
 {
-  namespace dftUtils
+  namespace basis
   {
     template <int          FEOrder,
               unsigned int num_1d_quadPoints,
@@ -107,26 +105,6 @@ namespace dftfe
             alpha * d_dealiiFEEvaluation->get_gradient(q), q);
         }
     }
-
-    // template <int          FEOrder,
-    //           unsigned int num_1d_quadPoints,
-    //           unsigned int n_components>
-    // void FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints,
-    // n_components>::
-    //   submitInterpolatedGradientsAndMultiply(
-    //     dealii::AlignedVector<
-    //       dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &alpha)
-    // {
-    //   AssertThrow(false, dftUtils::ExcNotImplementedYet());
-    //   // if (positiveFlag)
-    //   //   for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points;
-    //   ++q)
-    //   //     {
-    //   //       d_dealiiFEEvaluation->submit_gradient(
-    //   //         alpha[q] * d_dealiiFEEvaluation->get_gradient(q), q);
-    //   //     }
-    // }
-
 
     template <int          FEOrder,
               unsigned int num_1d_quadPoints,
@@ -463,14 +441,16 @@ namespace dftfe
     {
       d_dealiiFEEvaluation->distribute_local_to_global(tempvec);
     }
-#ifdef DFTFE_MINIMAL_COMPILE
-#  define RANGE_FEORDER ((1)(2)(3)(4)(5)(6)(7))
-#  define RANGE_QUADRATURE ((2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14))
-#else
-#  define RANGE_FEORDER ((1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14))
-#  define RANGE_QUADRATURE \
-    ((2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)(15)(16)(18))
-#endif
+// #ifdef DFTEFE_MINIMAL_COMPILE
+// #  define RANGE_FEORDER ((1)(2)(3)(4)(5)(6)(7))
+// #  define RANGE_QUADRATURE ((2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14))
+// #else
+#define RANGE_FEORDER \
+  ((3)(4)(5)(6)(7)) //(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)
+#define RANGE_QUADRATURE \
+  ((10)(12)(14)(16)(18)( \
+    20)) //(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)(15)(16)(18)(19)(20)
+// #endif
 #define MACRO(r, p)                                                  \
   template class FEEvaluationWrapperDerived<BOOST_PP_SEQ_ELEM(0, p), \
                                             BOOST_PP_SEQ_ELEM(1, p), \
@@ -499,14 +479,16 @@ namespace dftfe
       d_matrixFreeVectorComponent     = matrixFreeVectorComponent;
       d_matrixFreeQuadratureComponent = matrixFreeQuadratureComponent;
       d_matrix_free_data              = &matrixFreeData;
-#ifdef DFTFE_MINIMAL_COMPILE
-#  define RANGE_FEORDER ((1)(2)(3)(4)(5)(6)(7))
-#  define RANGE_QUADRATURE ((2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14))
-#else
-#  define RANGE_FEORDER ((1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14))
-#  define RANGE_QUADRATURE \
-    ((2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)(15)(16)(18))
-#endif
+// #ifdef DFTEFE_MINIMAL_COMPILE
+// #  define RANGE_FEORDER ((1)(2)(3)(4)(5)(6)(7))
+// #  define RANGE_QUADRATURE ((2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14))
+// #else
+#define RANGE_FEORDER \
+  ((3)(4)(5)(6)(7)) //(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)
+#define RANGE_QUADRATURE \
+  ((10)(12)(14)(16)(18)( \
+    20)) //(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)(15)(16)(18)(19)(20)
+// #endif
 #define MACRO(r, p)                                                   \
   if (BOOST_PP_SEQ_ELEM(0, p) == d_feDegree &&                        \
       BOOST_PP_SEQ_ELEM(1, p) == d_num1dQuad)                         \
@@ -529,8 +511,16 @@ namespace dftfe
 #undef RANGE_QUADRATURE
     }
 
+    template <unsigned int numberOfComponents>
+    const FEEvaluationWrapperBase &
+    DealiiFEEvaluationWrapper<numberOfComponents>::getFEEvaluationWrapperBase()
+      const
+    {
+      return *d_feEvaluationBase;
+    }
+
     template class DealiiFEEvaluationWrapper<1>;
     // template class DealiiFEEvaluationWrapper<3>;
 
-  } // End of namespace dftUtils
-} // End of namespace dftfe
+  } // End of namespace basis
+} // End of namespace dftefe

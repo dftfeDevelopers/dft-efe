@@ -31,30 +31,41 @@ namespace dftefe
     namespace PoissonSolverDealiiMatrixFreeFEInternal
     {
       // solve
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
       void
-      CGsolve(dealiiLinearSolverProblem &problem,
-              const double               absTolerance,
-              const unsigned int         maxNumberIterations,
-              bool                       distributeFlag)
+      CGsolve(PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                              ValueTypeOperand,
+                                              memorySpace,
+                                              dim> &problem,
+              const double                          absTolerance,
+              const unsigned int                    maxNumberIterations,
+              bool                                  distributeFlag)
       {
-        int this_process;
-        MPI_Comm_rank(mpi_communicator, &this_process);
-        MPI_Barrier(mpi_communicator);
-        double start_time = MPI_Wtime();
+        utils::mpi::MPIBarrier(problem.getMPIComm());
+        double start_time = utils::mpi::MPIWtime();
         double time;
 
         // compute RHS
-        distributedCPUVec<double> rhs;
+        basis::FEEvaluationWrapperBase::distributedCPUVec<double> rhs, gvec,
+          dvec, hvec;
         problem.getRhs(rhs);
 
-        MPI_Barrier(mpi_communicator);
-        time = MPI_Wtime();
+        MPI_Barrier(problem.getMPIComm());
+        time = utils::mpi::MPIWtime();
+
+        int rank;
+        utils::mpi::MPICommRank(problem.getMPIComm(), &rank);
+        utils::ConditionalOStream pcout(std::cout, rank == 0);
 
         pcout << "Time for compute rhs: " << time - start_time << std::endl;
 
         bool conv = false; // false : converged; true : converged
 
-        distributedCPUVec<double> x = problem.getInitialGuess();
+        basis::FEEvaluationWrapperBase::distributedCPUVec<double> x =
+          problem.getInitialGuess();
 
         double res = 0.0, initial_res = 0.0;
         int    it = 0;
@@ -164,14 +175,18 @@ namespace dftefe
               << " , current abs. residual: " << res << " , nsteps: " << it
               << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
 
-        MPI_Barrier(mpi_communicator);
-        time = MPI_Wtime() - time;
+        utils::mpi::MPIBarrier(problem.getMPIComm());
+        time = utils::mpi::MPIWtime() - time;
 
         pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
               << std::endl;
       }
 
-
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
       getDealiiQuadratureRule(
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
@@ -267,11 +282,12 @@ namespace dftefe
 
       // Check wether the dofhandler and constrints come from classical basis or
       // not
-      const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>
-        &cfeBasisDofHandlerDealii = std::dynamic_cast<
-          const basis::
-            CFEBasisDofHandlerDealii<ValueTypeOperator, memorySpace, dim> &>(
-          feBasisManagerField->getBasisDofHandler());
+      const basis::CFEBasisDofHandlerDealii<ValueTypeOperator, memorySpace, dim>
+        &cfeBasisDofHandlerDealii =
+          dynamic_cast<const basis::CFEBasisDofHandlerDealii<ValueTypeOperator,
+                                                             memorySpace,
+                                                             dim> &>(
+            feBasisManagerField->getBasisDofHandler());
       utils::throwException(
         cfeBasisDofHandlerDealii != nullptr,
         "Could not cast BasisDofHandler to CFEBasisDofHandlerDealii "
@@ -293,9 +309,9 @@ namespace dftefe
       const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
                                              memorySpace,
                                              dim> &cfeConstraintsLocalDealii =
-        std::dynamic_cast<
-          const basis::
-            CFEConstraintsLocalDealii<ValueTypeOperator, memorySpace, dim> &>(
+        dynamic_cast<const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
+                                                            memorySpace,
+                                                            dim> &>(
           feBasisManagerHomo->getConstraints());
       utils::throwException(
         cfeConstraintsLocalDealii != nullptr,
@@ -445,16 +461,16 @@ namespace dftefe
       const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
                                              memorySpace,
                                              dim> &cfeConstraintsLocalDealii =
-        std::dynamic_cast<
-          const basis::
-            CFEConstraintsLocalDealii<ValueTypeOperator, memorySpace, dim> &>(
+        dynamic_cast<const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
+                                                            memorySpace,
+                                                            dim> &>(
           d_feBasisManagerField->getConstraints());
       utils::throwException(
         cfeConstraintsLocalDealii != nullptr,
         "Could not cast ConstraintsLocal to CFEConstraintsLocalDealii "
         "in PoissonSolverDealiiMatrixFreeFE.");
 
-      *d_constraintsInfo = &cfeConstraintsLocalDealii.getAffineConstraints();
+      d_constraintsInfo = &cfeConstraintsLocalDealii.getAffineConstraints();
 
       // Compute RHS
       computeRhs(d_rhs, inpRhs);
@@ -498,7 +514,7 @@ namespace dftefe
       ValueTypeOperator,
       ValueTypeOperand,
       memorySpace,
-      dim>::setSolution(distributedCPUVec<ValueType> &x)
+      dim>::setSolution(const distributedCPUVec<ValueType> &x)
     {
       d_x = x;
     }
@@ -521,7 +537,7 @@ namespace dftefe
 
       for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
         {
-          solution.data()[j] = d_x.data()[j];
+          solution.data()[i] = d_x.data()[i];
         }
 
       solution.updateGhostValues();
@@ -538,7 +554,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const distributedCPUVec<ValueTypeOperand> &
+    const basis::FEEvaluationWrapperBase::distributedCPUVec<ValueTypeOperand> &
     PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
@@ -551,7 +567,9 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const distributedCPUVec<ValueType> &
+    const basis::FEEvaluationWrapperBase::distributedCPUVec<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>> &
     PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
@@ -572,10 +590,9 @@ namespace dftefe
                                                 const unsigned int
                                                   maxNumberIterations)
     {
-      PoissonSolverDealiiMatrixFreeFEInternal::CGsolve(*this,
-                                                       absTolerance,
-                                                       maxNumberIterations,
-                                                       true);
+      PoissonSolverDealiiMatrixFreeFEInternal::
+        CGsolve<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
+          *this, absTolerance, maxNumberIterations, true);
     }
 
     // Ax
@@ -602,12 +619,15 @@ namespace dftefe
       //    d_dofHandlerIndex,
       //    d_matrixFreeQuadCompStiffnessMatrix);
 
-      basis::DealiiFEEvaluationWrapper<1> fe_eval(
+      basis::DealiiFEEvaluationWrapper<1> fe_eval_wrap(
         d_feOrder,
         d_num1DQuadPointsStiffnessMatrix,
         *d_dealiiMatrixFree,
         d_dofHandlerIndex,
         d_matrixFreeQuadCompStiffnessMatrix);
+
+      basis::FEEvaluationWrapperBase fe_eval =
+        fe_eval_wrap.getFEEvaluationWrapperBase();
 
       for (unsigned int cell = cell_range.first; cell < cell_range.second;
            ++cell)
@@ -753,7 +773,7 @@ namespace dftefe
                                                             ValueTypeOperand>,
                      memorySpace> &> &inpRhs)
     {
-      dealii::DoFHandler<dim>::active_cell_iterator subCellPtr;
+      typename dealii::DoFHandler<dim>::active_cell_iterator subCellPtr;
       rhs.reinit(d_x);
       rhs = 0;
       //  if (d_isStoreSmearedChargeRhs)
@@ -783,19 +803,23 @@ namespace dftefe
       //    d_dofHandlerIndex,
       //    d_matrixFreeQuadCompStiffnessMatrix);
 
-      basis::DealiiFEEvaluationWrapper<1> fe_eval(
+      basis::DealiiFEEvaluationWrapper<1> fe_eval_wrap(
         d_feOrder,
         d_num1DQuadPointsStiffnessMatrix,
         *d_dealiiMatrixFree,
         d_dofHandlerIndex,
         d_matrixFreeQuadCompStiffnessMatrix);
 
+      basis::FEEvaluationWrapperBase fe_eval =
+        fe_eval_wrap.getFEEvaluationWrapperBase();
+
       const dealii::Quadrature<dim> &quadratureRuleAxTemp =
         d_dealiiMatrixFree->get_quadrature(d_matrixFreeQuadCompStiffnessMatrix);
 
       int isPerformStaticCondensation = (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
 
-      MPI_Bcast(&isPerformStaticCondensation, 1, MPI_INT, 0, mpi_communicator);
+      utils::mpi::MPIBcast(
+        &isPerformStaticCondensation, 1, utils::mpi::MPIInt, 0, getMPIComm());
 
       if (isPerformStaticCondensation == 1)
         {
@@ -831,15 +855,19 @@ namespace dftefe
           //                 d_dofHandlerIndex,
           //                 matrixFreeQuadratureComponentRhs);
 
-          basis::DealiiFEEvaluationWrapper<1> fe_eval_density(
+          basis::DealiiFEEvaluationWrapper<1> fe_eval_density_wrap(
             d_feOrder,
-            d_num1DPointsRhs[iter->first],
+            d_num1DQuadPointsRhs[iter->first],
             *d_dealiiMatrixFree,
             d_dofHandlerIndex,
             matrixFreeQuadratureComponentRhs);
 
+          basis::FEEvaluationWrapperBase fe_eval_density =
+            fe_eval_density_wrap.getFEEvaluationWrapperBase();
+
           dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
-            fe_eval_density.n_q_points, dealii::make_vectorized_array(0.0));
+            fe_eval_density.totalNumberofQuadraturePoints(),
+            dealii::make_vectorized_array(0.0));
           for (unsigned int macrocell = 0;
                macrocell < d_dealiiMatrixFree->n_cell_batches();
                ++macrocell)
@@ -863,9 +891,11 @@ namespace dftefe
                     d_basisOperationsPtr->cellIndex(subCellId);
                   const double *tempVec =
                     inpRhs[iter->first].data() +
-                    cellIndex * fe_eval_density.n_q_points;
+                    cellIndex * fe_eval_density.totalNumberofQuadraturePoints();
 
-                  for (unsigned int q = 0; q < fe_eval_density.n_q_points; ++q)
+                  for (unsigned int q = 0;
+                       q < fe_eval_density.totalNumberofQuadraturePoints();
+                       ++q)
                     rhoQuads[q][iSubCell] = tempVec[q];
                 }
 
