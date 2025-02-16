@@ -1619,7 +1619,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    dealii::Quadrature<dim> &
+    const dealii::Quadrature<dim> &
     CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,

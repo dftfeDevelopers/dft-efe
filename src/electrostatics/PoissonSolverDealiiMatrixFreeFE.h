@@ -108,9 +108,7 @@ namespace dftefe
           std::string,
           const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
           &                                     inpRhs,
-        const linearAlgebra::PreconditionerType pcType,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext);
+        const linearAlgebra::PreconditionerType pcType);
 
       /**
        * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixFreeFE
@@ -128,9 +126,7 @@ namespace dftefe
           feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &                                     inpRhs,
-        const linearAlgebra::PreconditionerType pcType,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext);
+        const linearAlgebra::PreconditionerType pcType);
 
       void
       reinit(
@@ -198,6 +194,10 @@ namespace dftefe
          const distributedCPUVec<double> &            src,
          const std::pair<unsigned int, unsigned int> &cell_range) const;
 
+      void
+      CGsolve(const double       absTolerance,
+              const unsigned int maxNumberIterations,
+              bool               distributeFlag);
 
       size_type d_numComponents;
       std::shared_ptr<
@@ -205,8 +205,6 @@ namespace dftefe
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
                                         d_feBasisManagerField;
       linearAlgebra::PreconditionerType d_pcType;
-      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-        d_linAlgOpContext;
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                                 d_feBasisDataStorageStiffnessMatrix;
@@ -218,9 +216,9 @@ namespace dftefe
       std::shared_ptr<dealii::MatrixFree<dim, ValueTypeOperator>>
                                                      d_dealiiMatrixFree;
       std::shared_ptr<const dealii::DoFHandler<dim>> d_dealiiDofHandler;
-      dealii::AffineConstraints<ValueTypeOperand>
+      const dealii::AffineConstraints<ValueTypeOperand>
         *d_dealiiAffineConstraintMatrix;
-      dealii::AffineConstraints<ValueTypeOperand> *d_constraintsInfo;
+      const dealii::AffineConstraints<ValueTypeOperand> *d_constraintsInfo;
       unsigned int                        d_num1DQuadPointsStiffnessMatrix;
       std::map<std::string, unsigned int> d_num1DQuadPointsRhs;
       size_type                           d_feOrder;

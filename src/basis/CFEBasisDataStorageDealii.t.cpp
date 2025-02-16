@@ -421,7 +421,8 @@ namespace dftefe
           &                                         basisGradNiGradNj,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadratureRuleContainer)
+                                 quadratureRuleContainer,
+        dealii::Quadrature<dim> &dealiiQuadratureRule)
 
       {
         bool numCellsZero = feBDH->nLocallyOwnedCells() == 0 ? true : false;
@@ -429,7 +430,7 @@ namespace dftefe
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
           quadratureRuleAttributes.getNum1DPoints();
-        dealii::Quadrature<dim> dealiiQuadratureRule;
+        // dealii::Quadrature<dim> dealiiQuadratureRule;
         if (quadratureFamily == quadrature::QuadratureFamily::GAUSS)
           {
             dealiiQuadratureRule = dealii::QGauss<dim>(num1DQuadPoints);
@@ -1365,7 +1366,8 @@ namespace dftefe
               d_feBDH,
               basisGradNiNj,
               quadratureRuleAttributes,
-              d_quadratureRuleContainer);
+              d_quadratureRuleContainer,
+              d_dealiiQuadratureRule);
 
           d_basisGradNiGradNj = std::move(basisGradNiNj);
         }
@@ -1550,7 +1552,8 @@ namespace dftefe
                 d_feBDH,
                 basisGradNiGradNj,
                 quadratureRuleAttributes,
-                quadratureRuleContainer);
+                quadratureRuleContainer,
+                d_dealiiQuadratureRule);
           d_basisGradNiGradNj = std::move(basisGradNiGradNj);
         }
 
@@ -2637,7 +2640,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    dealii::Quadrature<dim> &
+    const dealii::Quadrature<dim> &
     CFEBasisDataStorageDealii<ValueTypeBasisCoeff,
                               ValueTypeBasisData,
                               memorySpace,

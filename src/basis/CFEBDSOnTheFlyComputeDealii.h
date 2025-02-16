@@ -213,7 +213,7 @@ namespace dftefe
         Storage &                       basisGradientData) const override;
 
       // dealii function
-      dealii::Quadrature<dim> &
+      const dealii::Quadrature<dim> &
       getDealiiQuadratureRule() const;
 
     private:

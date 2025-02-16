@@ -510,7 +510,7 @@ namespace dftefe
     }
 
     template <unsigned int numberOfComponents>
-    const FEEvaluationWrapperBase &
+    FEEvaluationWrapperBase &
     DealiiFEEvaluationWrapper<numberOfComponents>::getFEEvaluationWrapperBase()
       const
     {

@@ -288,7 +288,7 @@ namespace dftefe
         const unsigned int                   matrixFreeVectorComponent,
         const unsigned int                   matrixFreeQuadratureComponent);
 
-      const FEEvaluationWrapperBase &
+      FEEvaluationWrapperBase &
       getFEEvaluationWrapperBase() const;
 
     private:

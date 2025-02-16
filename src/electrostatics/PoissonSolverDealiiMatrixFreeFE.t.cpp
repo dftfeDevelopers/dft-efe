@@ -28,159 +28,6 @@ namespace dftefe
   {
     namespace PoissonSolverDealiiMatrixFreeFEInternal
     {
-      // solve
-      template <typename ValueTypeOperator,
-                typename ValueTypeOperand,
-                utils::MemorySpace memorySpace,
-                size_type          dim>
-      void
-      CGsolve(PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
-                                              ValueTypeOperand,
-                                              memorySpace,
-                                              dim> &problem,
-              const double                          absTolerance,
-              const unsigned int                    maxNumberIterations,
-              bool                                  distributeFlag)
-      {
-        utils::mpi::MPIBarrier(problem.getMPIComm());
-        double start_time = utils::mpi::MPIWtime();
-        double time;
-
-        // compute RHS
-        basis::FEEvaluationWrapperBase::distributedCPUVec<double> rhs, gvec,
-          dvec, hvec;
-        problem.getRhs(rhs);
-
-        MPI_Barrier(problem.getMPIComm());
-        time = utils::mpi::MPIWtime();
-
-        int rank;
-        utils::mpi::MPICommRank(problem.getMPIComm(), &rank);
-        utils::ConditionalOStream pcout(std::cout, rank == 0);
-
-        pcout << "Time for compute rhs: " << time - start_time << std::endl;
-
-        bool conv = false; // false : converged; true : converged
-
-        basis::FEEvaluationWrapperBase::distributedCPUVec<double> x =
-          problem.getInitialGuess();
-
-        double res = 0.0, initial_res = 0.0;
-        int    it = 0;
-
-        try
-          {
-            x.update_ghost_values();
-
-            // resize the vectors, but do not set the values since they'd be
-            // overwritten soon anyway.
-            gvec.reinit(x, true);
-            dvec.reinit(x, true);
-            hvec.reinit(x, true);
-
-            gvec.zero_out_ghost_values();
-            dvec.zero_out_ghost_values();
-            hvec.zero_out_ghost_values();
-
-            double gh    = 0.0;
-            double beta  = 0.0;
-            double alpha = 0.0;
-
-            // compute residual. if vector is zero, then short-circuit the full
-            // computation
-            if (!x.all_zero())
-              {
-                problem.vmult(gvec, x);
-                gvec.add(-1., rhs);
-              }
-            else
-              {
-                // gvec.equ(-1., rhs);
-                for (unsigned int i = 0; i < gvec.locally_owned_size(); i++)
-                  gvec.local_element(i) = -rhs.local_element(i);
-              }
-
-            res         = gvec.l2_norm();
-            initial_res = res;
-            if (res < absTolerance)
-              conv = true;
-            if (conv)
-              return;
-
-            while ((!conv) && (it < maxNumberIterations))
-              {
-                it++;
-
-                if (it > 1)
-                  {
-                    problem.precondition_Jacobi(hvec, gvec);
-                    beta = gh;
-                    DFTEFE_AssertWithMsg(std::abs(beta) != 0.,
-                                         "Division by zero\n");
-                    gh   = gvec * hvec;
-                    beta = gh / beta;
-                    dvec.sadd(beta, -1., hvec);
-                  }
-                else
-                  {
-                    problem.precondition_Jacobi(hvec, gvec);
-                    dvec.equ(-1., hvec);
-                    gh = gvec * hvec;
-                  }
-
-                problem.vmult(hvec, dvec);
-                alpha = dvec * hvec;
-                DFTEFE_AssertWithMsg(std::abs(alpha) != 0.,
-                                     "Division by zero\n");
-                alpha = gh / alpha;
-
-                for (unsigned int i = 0; i < x.locally_owned_size(); i++)
-                  x.local_element(i) += alpha * dvec.local_element(i);
-                // x.add(alpha, dvec);
-
-                res = std::sqrt(std::abs(gvec.add_and_dot(alpha, hvec, gvec)));
-
-                if (res < absTolerance)
-                  conv = true;
-              }
-            if (!conv)
-              {
-                DFTEFE_AssertWithMsg(
-                  false, "DFT-EFE Error: Solver did not converge\n");
-              }
-
-            x.update_ghost_values();
-
-            if (distributeFlag)
-              problem.distributeX();
-
-            problem.setSolution(x);
-          }
-        catch (...)
-          {
-            DFTEFE_AssertWithMsg(
-              false,
-              "DFT-EFE Error: Poisson solver did not converge as per set tolerances."
-              "consider increasing MAXIMUM ITERATIONS in Poisson problem parameters."
-              "In rare cases for all-electron problems this can also occur due to a known parallel constraints"
-              "issue in dealii library.");
-            pcout
-              << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
-            pcout << "Current abs. residual: " << res << std::endl;
-          }
-
-        pcout << std::endl;
-        pcout << "initial abs. residual: " << initial_res
-              << " , current abs. residual: " << res << " , nsteps: " << it
-              << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
-
-        utils::mpi::MPIBarrier(problem.getMPIComm());
-        time = utils::mpi::MPIWtime() - time;
-
-        pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
-              << std::endl;
-      }
-
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
@@ -194,7 +41,7 @@ namespace dftefe
         unsigned int &           num1DQuadPoints)
       {
         const quadrature::QuadratureRuleAttributes quadAttr =
-          feBasisDataStorage.getQuadratureRuleContainer()
+          feBasisDataStorage->getQuadratureRuleContainer()
             ->getQuadratureRuleAttributes();
         const quadrature::QuadratureFamily quadratureFamily =
           quadAttr.getQuadratureFamily();
@@ -259,9 +106,7 @@ namespace dftefe
           std::string,
           const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
           &                                     inpRhs,
-        const linearAlgebra::PreconditionerType pcType,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext)
+        const linearAlgebra::PreconditionerType pcType)
       : d_feBasisManagerField(feBasisManagerField)
       , d_numComponents(
           !inpRhs.empty() ? inpRhs.begin()->second.getNumberComponents() : 0)
@@ -288,7 +133,7 @@ namespace dftefe
                                                              dim> &>(
             feBasisManagerField->getBasisDofHandler());
       utils::throwException(
-        cfeBasisDofHandlerDealii != nullptr,
+        &cfeBasisDofHandlerDealii != nullptr,
         "Could not cast BasisDofHandler to CFEBasisDofHandlerDealii "
         "in PoissonSolverDealiiMatrixFreeFE.");
 
@@ -296,14 +141,15 @@ namespace dftefe
       std::shared_ptr<const utils::ScalarSpatialFunctionReal> zeroFunction =
         std::make_shared<utils::ScalarZeroFunctionReal>();
 
-      basis::
-        FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-          feBasisManagerHomo =
-            std::make_shared<basis::FEBasisManager<ValueTypeOperand,
-                                                   ValueTypeOperator,
-                                                   memorySpace,
-                                                   dim>>(
-              cfeBasisDofHandlerDealii, zeroFunction);
+      std::shared_ptr<
+        basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
+        feBasisManagerHomo =
+          std::make_shared<basis::FEBasisManager<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>(cfeBasisDofHandlerDealii,
+                                                       zeroFunction);
 
       const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
                                              memorySpace,
@@ -313,7 +159,7 @@ namespace dftefe
                                                             dim> &>(
           feBasisManagerHomo->getConstraints());
       utils::throwException(
-        cfeConstraintsLocalDealii != nullptr,
+        &cfeConstraintsLocalDealii != nullptr,
         "Could not cast ConstraintsLocal to CFEConstraintsLocalDealii "
         "in PoissonSolverDealiiMatrixFreeFE.");
 
@@ -326,20 +172,26 @@ namespace dftefe
       d_dealiiAffineConstraintMatrix =
         &cfeConstraintsLocalDealii.getAffineConstraints();
 
-      PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadratureRule(
-        feBasisDataStorageStiffnessMatrix,
-        dealiiQuadratureRuleVec[0],
-        d_num1DQuadPointsStiffnessMatrix);
+      PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadratureRule<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace,
+        dim>(feBasisDataStorageStiffnessMatrix,
+             dealiiQuadratureRuleVec[0],
+             d_num1DQuadPointsStiffnessMatrix);
 
       int  count = 1;
       auto iter  = feBasisDataStorageRhs.begin();
       d_num1DQuadPointsRhs.clear();
       while (iter != feBasisDataStorageRhs.end())
         {
-          PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadratureRule(
-            iter->second,
-            dealiiQuadratureRuleVec[count],
-            d_num1DQuadPointsRhs[iter->first]);
+          PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadratureRule<
+            ValueTypeOperator,
+            ValueTypeOperand,
+            memorySpace,
+            dim>(iter->second,
+                 dealiiQuadratureRuleVec[count],
+                 d_num1DQuadPointsRhs[iter->first]);
           count += 1;
         }
 
@@ -366,8 +218,8 @@ namespace dftefe
             ++iCell;
           }
 
-      d_x(d_dealiiMatrixFree->get_vector_partitioner(d_dofHandlerIndex));
-      d_initial(d_x);
+      d_x.reinit(d_dealiiMatrixFree->get_vector_partitioner(d_dofHandlerIndex));
+      d_initial.reinit(d_x);
 
       reinit(feBasisManagerField, inpRhs);
     }
@@ -395,9 +247,7 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
           memorySpace> &                        inpRhs,
-        const linearAlgebra::PreconditionerType pcType,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext)
+        const linearAlgebra::PreconditionerType pcType)
       : PoissonSolverDealiiMatrixFreeFE(
           feBasisManagerField,
           feBasisDataStorageStiffnessMatrix,
@@ -411,8 +261,7 @@ namespace dftefe
                      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                             ValueTypeOperand>,
                      memorySpace> &>({{"Field", inpRhs}}),
-          pcType,
-          linAlgOpContext)
+          pcType)
     {}
 
     template <typename ValueTypeOperator,
@@ -479,7 +328,7 @@ namespace dftefe
                                                             dim> &>(
           d_feBasisManagerField->getConstraints());
       utils::throwException(
-        cfeConstraintsLocalDealii != nullptr,
+        &cfeConstraintsLocalDealii != nullptr,
         "Could not cast ConstraintsLocal to CFEConstraintsLocalDealii "
         "in PoissonSolverDealiiMatrixFreeFE.");
 
@@ -550,7 +399,7 @@ namespace dftefe
 
       for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
         {
-          solution.data()[i] = d_x.data()[i];
+          solution.data()[i] = *(d_x.begin() + i);
         }
 
       solution.updateGhostValues();
@@ -603,9 +452,7 @@ namespace dftefe
                                                 const unsigned int
                                                   maxNumberIterations)
     {
-      PoissonSolverDealiiMatrixFreeFEInternal::
-        CGsolve<ValueTypeOperator, ValueTypeOperand, memorySpace, dim>(
-          *this, absTolerance, maxNumberIterations, true);
+      this->CGsolve(absTolerance, maxNumberIterations, true);
     }
 
     // Ax
@@ -639,7 +486,7 @@ namespace dftefe
         d_dofHandlerIndex,
         d_matrixFreeQuadCompStiffnessMatrix);
 
-      basis::FEEvaluationWrapperBase fe_eval =
+      basis::FEEvaluationWrapperBase &fe_eval =
         fe_eval_wrap.getFEEvaluationWrapperBase();
 
       for (unsigned int cell = cell_range.first; cell < cell_range.second;
@@ -823,7 +670,7 @@ namespace dftefe
         d_dofHandlerIndex,
         d_matrixFreeQuadCompStiffnessMatrix);
 
-      basis::FEEvaluationWrapperBase fe_eval =
+      basis::FEEvaluationWrapperBase &fe_eval =
         fe_eval_wrap.getFEEvaluationWrapperBase();
 
       const dealii::Quadrature<dim> &quadratureRuleAxTemp =
@@ -831,7 +678,7 @@ namespace dftefe
 
       int isPerformStaticCondensation = (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
 
-      utils::mpi::MPIBcast(
+      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
         &isPerformStaticCondensation, 1, utils::mpi::MPIInt, 0, getMPIComm());
 
       if (isPerformStaticCondensation == 1)
@@ -875,7 +722,7 @@ namespace dftefe
             d_dofHandlerIndex,
             matrixFreeQuadratureComponentRhs);
 
-          basis::FEEvaluationWrapperBase fe_eval_density =
+          basis::FEEvaluationWrapperBase &fe_eval_density =
             fe_eval_density_wrap.getFEEvaluationWrapperBase();
 
           dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
@@ -902,7 +749,7 @@ namespace dftefe
                   dealii::CellId subCellId = subCellPtr->id();
                   unsigned int   cellIndex = d_cellIdToCellIndexMap[subCellId];
                   const double * tempVec =
-                    inpRhs[iter->first].data() +
+                    inpRhs.find(iter->first)->second.data() +
                     cellIndex * fe_eval_density.totalNumberofQuadraturePoints();
 
                   for (unsigned int q = 0;
@@ -947,6 +794,159 @@ namespace dftefe
                                     dim>::getMPIComm() const
     {
       return d_feBasisManagerField->getMPIPatternP2P()->mpiCommunicator();
+    }
+
+
+    // solve
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::CGsolve(const double absTolerance,
+                                                  const unsigned int
+                                                       maxNumberIterations,
+                                                  bool distributeFlag)
+    {
+      utils::mpi::MPIBarrier(this->getMPIComm());
+      double start_time = utils::mpi::MPIWtime();
+      double time;
+
+      // compute RHS
+      basis::FEEvaluationWrapperBase::distributedCPUVec<double> rhs, gvec, dvec,
+        hvec;
+      rhs = this->getRhs();
+
+      MPI_Barrier(this->getMPIComm());
+      time = utils::mpi::MPIWtime();
+
+      int rank;
+      utils::mpi::MPICommRank(this->getMPIComm(), &rank);
+      utils::ConditionalOStream pcout(std::cout, rank == 0);
+
+      pcout << "Time for compute rhs: " << time - start_time << std::endl;
+
+      bool conv = false; // false : converged; true : converged
+
+      basis::FEEvaluationWrapperBase::distributedCPUVec<double> x =
+        this->getInitialGuess();
+
+      double res = 0.0, initial_res = 0.0;
+      int    it = 0;
+
+      try
+        {
+          x.update_ghost_values();
+
+          // resize the vectors, but do not set the values since they'd be
+          // overwritten soon anyway.
+          gvec.reinit(x, true);
+          dvec.reinit(x, true);
+          hvec.reinit(x, true);
+
+          gvec.zero_out_ghost_values();
+          dvec.zero_out_ghost_values();
+          hvec.zero_out_ghost_values();
+
+          double gh    = 0.0;
+          double beta  = 0.0;
+          double alpha = 0.0;
+
+          // compute residual. if vector is zero, then short-circuit the full
+          // computation
+          if (!x.all_zero())
+            {
+              this->vmult(gvec, x);
+              gvec.add(-1., rhs);
+            }
+          else
+            {
+              // gvec.equ(-1., rhs);
+              for (unsigned int i = 0; i < gvec.locally_owned_size(); i++)
+                gvec.local_element(i) = -rhs.local_element(i);
+            }
+
+          res         = gvec.l2_norm();
+          initial_res = res;
+          if (res < absTolerance)
+            conv = true;
+          if (conv)
+            return;
+
+          while ((!conv) && (it < maxNumberIterations))
+            {
+              it++;
+
+              if (it > 1)
+                {
+                  this->precondition_Jacobi(hvec, gvec);
+                  beta = gh;
+                  DFTEFE_AssertWithMsg(std::abs(beta) != 0.,
+                                       "Division by zero\n");
+                  gh   = gvec * hvec;
+                  beta = gh / beta;
+                  dvec.sadd(beta, -1., hvec);
+                }
+              else
+                {
+                  this->precondition_Jacobi(hvec, gvec);
+                  dvec.equ(-1., hvec);
+                  gh = gvec * hvec;
+                }
+
+              this->vmult(hvec, dvec);
+              alpha = dvec * hvec;
+              DFTEFE_AssertWithMsg(std::abs(alpha) != 0., "Division by zero\n");
+              alpha = gh / alpha;
+
+              for (unsigned int i = 0; i < x.locally_owned_size(); i++)
+                x.local_element(i) += alpha * dvec.local_element(i);
+              // x.add(alpha, dvec);
+
+              res = std::sqrt(std::abs(gvec.add_and_dot(alpha, hvec, gvec)));
+
+              if (res < absTolerance)
+                conv = true;
+            }
+          if (!conv)
+            {
+              DFTEFE_AssertWithMsg(false,
+                                   "DFT-EFE Error: Solver did not converge\n");
+            }
+
+          x.update_ghost_values();
+
+          if (distributeFlag)
+            d_constraintsInfo->distribute(x);
+
+          this->setSolution(x);
+        }
+      catch (...)
+        {
+          DFTEFE_AssertWithMsg(
+            false,
+            "DFT-EFE Error: Poisson solver did not converge as per set tolerances."
+            "consider increasing MAXIMUM ITERATIONS in Poisson problem parameters."
+            "In rare cases for all-electron problems this can also occur due to a known parallel constraints"
+            "issue in dealii library.");
+          pcout
+            << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
+          pcout << "Current abs. residual: " << res << std::endl;
+        }
+
+      pcout << std::endl;
+      pcout << "initial abs. residual: " << initial_res
+            << " , current abs. residual: " << res << " , nsteps: " << it
+            << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
+
+      utils::mpi::MPIBarrier(this->getMPIComm());
+      time = utils::mpi::MPIWtime() - time;
+
+      pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
+            << std::endl;
     }
 
   } // end of namespace electrostatics

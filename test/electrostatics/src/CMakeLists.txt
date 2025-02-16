@@ -16,6 +16,7 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/electrostatics ${MAIN_PROJECT_DIR}/test
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
+	
 	add_executable(TestLaplaceOperator TestLaplaceOperator.cpp )
 	target_link_libraries(TestLaplaceOperator PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestLaplaceOperator PROPERTIES OUTPUT_NAME "TestLaplaceOperator" SUFFIX ".x")
@@ -47,4 +48,8 @@ if(ENABLE_MPI)
 	add_executable(TestTwoBodyInteraction TestTwoBodyInteraction.cpp )
 	target_link_libraries(TestTwoBodyInteraction PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestTwoBodyInteraction PROPERTIES OUTPUT_NAME "TestTwoBodyInteraction" SUFFIX ".x")
+
+	add_executable(TestPoissonSolverDealiiMatrixFreeFE TestPoissonSolverDealiiMatrixFreeFE.cpp )
+	target_link_libraries(TestPoissonSolverDealiiMatrixFreeFE PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestPoissonSolverDealiiMatrixFreeFE PROPERTIES OUTPUT_NAME "TestPoissonSolverDealiiMatrixFreeFE" SUFFIX ".x")
 endif()
