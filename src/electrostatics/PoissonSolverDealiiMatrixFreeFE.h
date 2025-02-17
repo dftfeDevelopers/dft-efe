@@ -230,6 +230,8 @@ namespace dftefe
       unsigned int d_matrixFreeQuadCompStiffnessMatrix;
       std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
 
+      // dealii::IndexSet d_ghostIndexSet, d_locallyOwnedIndexSet;
+
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics
 } // end of namespace dftefe

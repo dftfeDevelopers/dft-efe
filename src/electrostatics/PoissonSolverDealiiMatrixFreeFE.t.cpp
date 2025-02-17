@@ -238,7 +238,21 @@ namespace dftefe
             ++iCell;
           }
 
+      // std::vector<global_size_type> ghostIndices(0);
+      // ghostIndices.resize(feBasisManagerHomo->nGhost(), 0);
+      // for(int i = 0 ; i < ghostIndices.size() ; i++)
+      // {
+      //   ghostIndices[i] = *(feBasisManagerHomo->getGhostIndices().data()+i);
+      // }
+
+      // //const dealii::IndexSet ghostIndexSet, locallyOwnedIndexSet;
+      // d_ghostIndexSet.fill_index_vector(ghostIndices);
+      // d_locallyOwnedIndexSet.add_range(feBasisManagerHomo->getLocallyOwnedRanges()[0].first,
+      //   feBasisManagerHomo->getLocallyOwnedRanges()[0].second);
+
       d_x.reinit(d_dealiiMatrixFree->get_vector_partitioner(d_dofHandlerIndex));
+      // d_x.reinit(d_locallyOwnedIndexSet, d_ghostIndexSet,
+      // feBasisManagerField->getMPIPatternP2P()->mpiCommunicator());
       d_initial.reinit(d_x);
 
       computeDiagonalA();
@@ -441,7 +455,7 @@ namespace dftefe
 
       // this is done for a particular case for poisson solve each
       // scf guess but have to be modified with a reinit parameter
-      d_initial.reinit(d_x);
+      d_initial = d_x;
     }
 
     template <typename ValueTypeOperator,
@@ -504,7 +518,7 @@ namespace dftefe
                const std::pair<unsigned int, unsigned int> &cell_range) const
     {
       dealii::VectorizedArray<double> quarter =
-        dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
+        dealii::make_vectorized_array(1.0 /* / (4.0 * M_PI)*/);
 
       //  dealii::FEEvaluation<dim, FEOrderElectro, FEOrderElectro + 1> fe_eval(
       //    matrixFreeData,
@@ -584,10 +598,10 @@ namespace dftefe
             for (unsigned int i = 0; i < dofs_per_cell; ++i)
               for (unsigned int q_point = 0; q_point < num_quad_points;
                    ++q_point)
-                elementalDiagonalA(i) += (1.0 / (4.0 * M_PI)) *
-                                         (fe_values.shape_grad(i, q_point) *
-                                          fe_values.shape_grad(i, q_point)) *
-                                         fe_values.JxW(q_point);
+                elementalDiagonalA(i) += /*(1.0 / (4.0 * M_PI)) **/
+                  (fe_values.shape_grad(i, q_point) *
+                   fe_values.shape_grad(i, q_point)) *
+                  fe_values.JxW(q_point);
 
             d_dealiiAffineConstraintMatrix->distribute_local_to_global(
               elementalDiagonalA, local_dof_indices, d_diagonalA);
@@ -689,6 +703,7 @@ namespace dftefe
       tempvec = 0.0;
       tempvec.update_ghost_values();
       d_constraintsInfo->distribute(tempvec);
+      tempvec.update_ghost_values();
 
       //  dealii::FEEvaluation<dim, FEOrderElectro, FEOrderElectro + 1> fe_eval(
       //    *d_dealiiMatrixFree,
@@ -716,7 +731,7 @@ namespace dftefe
       if (isPerformStaticCondensation == 1)
         {
           dealii::VectorizedArray<double> quarter =
-            dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
+            dealii::make_vectorized_array(-1.0 /* / (4.0 * M_PI)*/);
           for (unsigned int macrocell = 0;
                macrocell < d_dealiiMatrixFree->n_cell_batches();
                ++macrocell)

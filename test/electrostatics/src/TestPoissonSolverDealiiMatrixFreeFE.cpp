@@ -38,13 +38,13 @@
 double rho(double x, double y, double z)
 {
   // The function should have inhomogeneous dirichlet BC
-    return 1;
+    return 1.0; //(2*((x)*(x-5)*(y)*(y-5))/6.0 + 2*((x)*(x-5)*(z)*(z-5))/6.0 + 2*((x)*(x-5)*(y)*(y-5))/6.0); 
 }
 
 double potential(double x, double y, double z)
 {
   // The function should have inhomogeneous dirichlet BC
-    return -((x)*(x) + (y)*(y) + (z)*(z))/(6.0 * (4.0 * M_PI));
+    return -((x)*(x) + (y)*(y) + (z)*(z))/(6.0); // -((x)*(x-5)*(y)*(y-5)*(z)*(z-5))/6.0; 
 }
 
  class ScalarSpatialPotentialFunctionReal : public dftefe::utils::ScalarSpatialFunctionReal
@@ -143,7 +143,7 @@ int main()
   {
     dftefe::utils::Point centerPoint(dim, 0.0); 
     (*triaCellIter)->center(centerPoint);
-    double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);  
+    double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);
     dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
     dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
     dist = std::sqrt(dist); 
@@ -270,7 +270,7 @@ int main()
         quadId = quadId + 1;
       }
       double *b = a.data();
-      quadValuesContainer.setCellQuadValues<dftefe::utils::MemorySpace::HOST> (i, iComp, b);
+      quadValuesContainer.setCellValues<dftefe::utils::MemorySpace::HOST> (i, b);
     }
   }
 
@@ -294,9 +294,12 @@ int main()
 
   std::cout<<"solution norm: "<<solution->l2Norms()[0]<<", potential analytical norm: "<<vh->l2Norms()[0]<<"\n";
 
-//  for (unsigned int i = 0 ; i < solution.locallyOwnedSize() ; i++)
+//  for (unsigned int i = 0 ; i < solution->locallyOwnedSize() ; i++)
 //   {
-//     std::cout << "solution[" <<i<<"] : "<< *(solution.data()+i) << ","<<"exact["<<i<<"] : "<<*(vh->data()+i)<<"\n";
+//     dftefe::utils::Point basisCenter(3);
+//     basisManager->getBasisCenters(i, basisCenter);
+//     if(std::abs(*(solution->data()+i) - *(vh->data()+i)) > 1e-6 )
+//       std::cout << basisCenter[0] << "," << basisCenter[1] << "," << basisCenter[2] << ": solution[" <<i<<"] : "<< *(solution->data()+i) << ","<<"exact["<<i<<"] : "<<*(vh->data()+i)<<"\n";
 //   }
 
   //gracefully end MPI

@@ -291,7 +291,8 @@ int main()
                                                     quadValuesContainer,
                                                     dftefe::linearAlgebra::PreconditionerType::JACOBI ,
                                                     linAlgOpContext,
-                                                    50);
+                                                    50,
+                                                    numComponents);
 
   dftefe::linearAlgebra::LinearAlgebraProfiler profiler;
 
