@@ -33,7 +33,7 @@ namespace dftefe
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
-      getDealiiQuadratureRule(
+      getDealiiQuadRule(
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                                  feBasisDataStorage,
@@ -124,16 +124,36 @@ namespace dftefe
         d_numComponents == 1,
         "Number Components of QuadratureValuesContainer has to be 1 for Dealii Matrix Free Poisson Solve.");
 
+      utils::throwException(
+        !inpRhs.empty(),
+        "The input QuadValuesContainer Map in PoissonSolver cannot be empty.");
+
+      auto iter = feBasisDataStorageRhs.begin();
+      while (iter != feBasisDataStorageRhs.end())
+        {
+          utils::throwException(
+            ((feBasisDataStorageStiffnessMatrix->getBasisDofHandler()).get() ==
+             (iter->second->getBasisDofHandler()).get()),
+            "The BasisDofHandler of the datastorages does not match in PoissonLinearSolverFunctionFE.");
+          iter++;
+        }
+
+      utils::throwException(
+        (feBasisDataStorageStiffnessMatrix->getBasisDofHandler().get() ==
+         &feBasisManagerField->getBasisDofHandler()),
+        "The BasisDofHandler of the dataStorages and basisManager should be same in PoissonLinearSolverFunctionFE.");
+
       // Check wether the dofhandler and constrints come from classical basis or
       // not
-      const basis::CFEBasisDofHandlerDealii<ValueTypeOperator, memorySpace, dim>
-        &cfeBasisDofHandlerDealii =
-          dynamic_cast<const basis::CFEBasisDofHandlerDealii<ValueTypeOperator,
-                                                             memorySpace,
-                                                             dim> &>(
-            feBasisManagerField->getBasisDofHandler());
+      std::shared_ptr<const basis::CFEBasisDofHandlerDealii<ValueTypeOperator,
+                                                            memorySpace,
+                                                            dim>>
+        cfeBasisDofHandlerDealii = std::dynamic_pointer_cast<
+          const basis::
+            CFEBasisDofHandlerDealii<ValueTypeOperator, memorySpace, dim>>(
+          feBasisDataStorageStiffnessMatrix->getBasisDofHandler());
       utils::throwException(
-        &cfeBasisDofHandlerDealii != nullptr,
+        cfeBasisDofHandlerDealii.get() != nullptr,
         "Could not cast BasisDofHandler to CFEBasisDofHandlerDealii "
         "in PoissonSolverDealiiMatrixFreeFE.");
 
@@ -165,34 +185,34 @@ namespace dftefe
 
       // will this work or it has to be data member ?
       std::vector<dealii::Quadrature<dim>> dealiiQuadratureRuleVec(
-        1 + inpRhs.size(), dealii::Quadrature<dim>());
+        1 + feBasisDataStorageRhs.size(), dealii::Quadrature<dim>());
 
-      d_feOrder          = cfeBasisDofHandlerDealii.getFEOrder(0);
-      d_dealiiDofHandler = cfeBasisDofHandlerDealii.getDoFHandler();
+      d_feOrder          = cfeBasisDofHandlerDealii->getFEOrder(0);
+      d_dealiiDofHandler = cfeBasisDofHandlerDealii->getDoFHandler();
       d_dealiiAffineConstraintMatrix =
         &cfeConstraintsLocalDealii.getAffineConstraints();
 
-      PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadratureRule<
+      PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadRule<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
         dim>(feBasisDataStorageStiffnessMatrix,
              dealiiQuadratureRuleVec[0],
              d_num1DQuadPointsStiffnessMatrix);
-
-      int  count = 1;
-      auto iter  = feBasisDataStorageRhs.begin();
+      unsigned int count = 1;
+      auto         iter1 = feBasisDataStorageRhs.begin();
       d_num1DQuadPointsRhs.clear();
-      while (iter != feBasisDataStorageRhs.end())
+      while (iter1 != feBasisDataStorageRhs.end())
         {
-          PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadratureRule<
+          PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadRule<
             ValueTypeOperator,
             ValueTypeOperand,
             memorySpace,
-            dim>(iter->second,
+            dim>(iter1->second,
                  dealiiQuadratureRuleVec[count],
-                 d_num1DQuadPointsRhs[iter->first]);
+                 d_num1DQuadPointsRhs[iter1->first]);
           count += 1;
+          iter1++;
         }
 
       // create dealiiMatrixFree
@@ -221,6 +241,7 @@ namespace dftefe
       d_x.reinit(d_dealiiMatrixFree->get_vector_partitioner(d_dofHandlerIndex));
       d_initial.reinit(d_x);
 
+      computeDiagonalA();
       reinit(feBasisManagerField, inpRhs);
     }
 
@@ -334,8 +355,19 @@ namespace dftefe
 
       d_constraintsInfo = &cfeConstraintsLocalDealii.getAffineConstraints();
 
+      int rank;
+      utils::mpi::MPICommRank(this->getMPIComm(), &rank);
+      utils::ConditionalOStream pcout(std::cout, rank == 0);
+
+      utils::mpi::MPIBarrier(this->getMPIComm());
+      double start_time = utils::mpi::MPIWtime();
+      double time;
       // Compute RHS
       computeRhs(d_rhs, inpRhs);
+      utils::mpi::MPIBarrier(this->getMPIComm());
+      time = utils::mpi::MPIWtime();
+
+      pcout << "Time for compute rhs: " << time - start_time << std::endl;
     }
 
     template <typename ValueTypeOperator,
@@ -409,7 +441,7 @@ namespace dftefe
 
       // this is done for a particular case for poisson solve each
       // scf guess but have to be modified with a reinit parameter
-      d_initial = d_x;
+      d_initial.reinit(d_x);
     }
 
     template <typename ValueTypeOperator,
@@ -768,6 +800,7 @@ namespace dftefe
               fe_eval_density.distributeLocalToGlobal(rhs);
             }
           matrixFreeQuadratureComponentRhs++;
+          iter++;
         }
 
       // MPI operation to sync data
@@ -811,23 +844,17 @@ namespace dftefe
                                                        maxNumberIterations,
                                                   bool distributeFlag)
     {
-      utils::mpi::MPIBarrier(this->getMPIComm());
-      double start_time = utils::mpi::MPIWtime();
-      double time;
-
-      // compute RHS
+      // get RHS
       basis::FEEvaluationWrapperBase::distributedCPUVec<double> rhs, gvec, dvec,
         hvec;
       rhs = this->getRhs();
 
       MPI_Barrier(this->getMPIComm());
-      time = utils::mpi::MPIWtime();
+      double time = utils::mpi::MPIWtime();
 
       int rank;
       utils::mpi::MPICommRank(this->getMPIComm(), &rank);
       utils::ConditionalOStream pcout(std::cout, rank == 0);
-
-      pcout << "Time for compute rhs: " << time - start_time << std::endl;
 
       bool conv = false; // false : converged; true : converged
 

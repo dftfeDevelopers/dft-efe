@@ -205,11 +205,8 @@ namespace dftefe
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
                                         d_feBasisManagerField;
       linearAlgebra::PreconditionerType d_pcType;
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-                                d_feBasisDataStorageStiffnessMatrix;
-      utils::Profiler           d_p;
-      utils::ConditionalOStream d_rootCout;
+      utils::Profiler                   d_p;
+      utils::ConditionalOStream         d_rootCout;
 
 
       distributedCPUVec<ValueTypeOperator> d_x, d_rhs, d_initial, d_diagonalA;
