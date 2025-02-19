@@ -115,13 +115,17 @@ namespace dftefe
       , d_pcType(pcType)
       , d_p(feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(),
             "Poisson Solver")
-      , d_rootCout(std::cout)
+      , pcout(std::cout)
       , d_dealiiMatrixFree(
           std::make_shared<dealii::MatrixFree<dim, ValueTypeOperator>>())
       , d_dofHandlerIndex(0)
       , d_matrixFreeQuadCompStiffnessMatrix(0)
       , d_dealiiQuadratureRuleVec(1 + inpRhs.size(), dealii::Quadrature<dim>())
     {
+      int rank;
+      utils::mpi::MPICommRank(this->getMPIComm(), &rank);
+      pcout.setCondition(rank == 0);
+
       utils::throwException(
         d_numComponents == 1,
         "Number Components of QuadratureValuesContainer has to be 1 for Dealii Matrix Free Poisson Solve.");
@@ -211,13 +215,21 @@ namespace dftefe
           iter1++;
         }
 
+      typename dealii::MatrixFree<dim>::AdditionalData additional_data;
+      additional_data.tasks_parallel_scheme =
+        dealii::MatrixFree<dim>::AdditionalData::partition_partition;
+      additional_data.mapping_update_flags = dealii::update_values |
+                                             dealii::update_gradients |
+                                             dealii::update_JxW_values;
+
       // create dealiiMatrixFree
       d_dealiiMatrixFree->reinit(
         d_mappingDealii,
         std::vector<const dealii::DoFHandler<dim> *>{d_dealiiDofHandler.get()},
         std::vector<const dealii::AffineConstraints<ValueTypeOperand> *>{
           d_dealiiAffineConstraintMatrix},
-        d_dealiiQuadratureRuleVec);
+        d_dealiiQuadratureRuleVec,
+        additional_data);
 
       d_cellIdToCellIndexMap.clear();
       auto cellPtr =
@@ -367,10 +379,6 @@ namespace dftefe
         "in PoissonSolverDealiiMatrixFreeFE.");
 
       d_constraintsInfo = &cfeConstraintsLocalDealii.getAffineConstraints();
-
-      int rank;
-      utils::mpi::MPICommRank(this->getMPIComm(), &rank);
-      utils::ConditionalOStream pcout(std::cout, rank == 0);
 
       utils::mpi::MPIBarrier(this->getMPIComm());
       double start_time = utils::mpi::MPIWtime();
@@ -573,8 +581,7 @@ namespace dftefe
         d_dealiiMatrixFree->get_quadrature(d_matrixFreeQuadCompStiffnessMatrix);
       dealii::FEValues<dim>  fe_values(dofHandler.get_fe(),
                                       quadrature,
-                                      dealii::update_values |
-                                        dealii::update_gradients |
+                                      dealii::update_gradients |
                                         dealii::update_JxW_values);
       const unsigned int     dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
       const unsigned int     num_quad_points = quadrature.size();

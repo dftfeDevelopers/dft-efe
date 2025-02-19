@@ -206,7 +206,6 @@ namespace dftefe
                                         d_feBasisManagerField;
       linearAlgebra::PreconditionerType d_pcType;
       utils::Profiler                   d_p;
-      utils::ConditionalOStream         d_rootCout;
 
 
       std::shared_ptr<
@@ -236,8 +235,9 @@ namespace dftefe
       std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
 
       std::vector<dealii::Quadrature<dim>> d_dealiiQuadratureRuleVec;
-      dealii::MappingQ1<dim>               d_mappingDealii;
+      dealii::MappingQ1<dim, dim>          d_mappingDealii;
       // dealii::IndexSet d_ghostIndexSet, d_locallyOwnedIndexSet;
+      utils::ConditionalOStream pcout;
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics

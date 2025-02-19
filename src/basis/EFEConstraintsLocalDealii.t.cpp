@@ -15,7 +15,8 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-      EFEConstraintsLocalDealii(dealii::IndexSet &locally_relevant_dofs)
+      EFEConstraintsLocalDealii(const dealii::IndexSet &locally_owned_dofs,
+                                const dealii::IndexSet &locally_relevant_dofs)
       : d_isCleared(false)
       , d_isClosed(false)
     {
@@ -23,7 +24,8 @@ namespace dftefe
       d_ghostIndices.resize(0);
       d_globalToLocalMap.clear();
       d_dealiiAffineConstraintMatrix.clear();
-      d_dealiiAffineConstraintMatrix.reinit(locally_relevant_dofs);
+      d_dealiiAffineConstraintMatrix.reinit(locally_owned_dofs,
+                                            locally_relevant_dofs);
     }
 
     // constructor taking the closed dealiiAffineConstraintMatrix and

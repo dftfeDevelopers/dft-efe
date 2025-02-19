@@ -49,7 +49,8 @@ namespace dftefe
         utils::MemoryStorage<global_size_type, memorySpace>;
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
 
-      EFEConstraintsLocalDealii(dealii::IndexSet &locally_relevant_dofs);
+      EFEConstraintsLocalDealii(const dealii::IndexSet &locally_owned_dofs,
+                                const dealii::IndexSet &locally_relevant_dofs);
 
       EFEConstraintsLocalDealii(
         dealii::AffineConstraints<ValueTypeBasisCoeff>

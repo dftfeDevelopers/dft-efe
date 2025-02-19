@@ -220,7 +220,8 @@ namespace dftefe
       locally_relevant_dofs.clear();
       dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
                                                       locally_relevant_dofs);
-      dealiiAffineConstraintMatrix.reinit(locally_relevant_dofs);
+      dealiiAffineConstraintMatrix.reinit(
+        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -498,7 +499,8 @@ namespace dftefe
       locally_relevant_dofs.clear();
       dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
                                                       locally_relevant_dofs);
-      dealiiAffineConstraintMatrix.reinit(locally_relevant_dofs);
+      dealiiAffineConstraintMatrix.reinit(
+        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -1161,7 +1163,7 @@ namespace dftefe
       std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         constraintsLocal = std::make_shared<
           CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>>(
-          locally_relevant_dofs);
+          this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
 
       constraintsLocal->copyFrom(*d_constraintsLocal);
 
