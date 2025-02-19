@@ -118,7 +118,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
       , d_atomChargesVec(atomCharges)
-      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0))
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
       {}
 
     double
@@ -173,7 +173,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
-      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0))
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
       {}
 
     double

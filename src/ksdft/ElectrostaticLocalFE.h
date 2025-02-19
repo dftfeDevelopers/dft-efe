@@ -37,6 +37,7 @@
 #include <linearAlgebra/LinearAlgebraProfiler.h>
 #include <linearAlgebra/CGLinearSolver.h>
 #include <utils/ConditionalOStream.h>
+#include <electrostatics/PoissonSolverDealiiMatrixFreeFE.h>
 
 namespace dftefe
 {
@@ -100,7 +101,8 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock);
+        const size_type maxCellBlock,
+        bool            useDealiiMatrixFreePoissonSolve = true);
 
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
@@ -133,7 +135,8 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock);
+        const size_type maxCellBlock,
+        bool            useDealiiMatrixFreePoissonSolve = true);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       ElectrostaticLocalFE(
@@ -169,7 +172,8 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock);
+        const size_type maxCellBlock,
+        const bool      useDealiiMatrixFreePoissonSolve = true);
 
 
       ~ElectrostaticLocalFE();
@@ -276,6 +280,7 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclearChargeRhs);
 
+      const bool                              d_useDealiiMatrixFreePoissonSolve;
       bool                                    d_isNumericalVSelfSolve;
       bool                                    d_isDeltaRhoSolve;
       const size_type                         d_maxCellBlock;
@@ -366,7 +371,13 @@ namespace dftefe
                                                       ValueTypeBasisCoeff,
                                                       memorySpace,
                                                       dim>>
-               d_linearSolverFunction;
+        d_linearSolverFunction;
+      std::shared_ptr<
+        electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
+                                                        ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim>>
+               d_poissonSolverDealiiMatFree;
       RealType d_totNuclearChargeQuad;
 
       utils::ConditionalOStream d_rootCout;

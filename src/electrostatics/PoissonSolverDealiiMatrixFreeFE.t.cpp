@@ -52,7 +52,9 @@ namespace dftefe
             quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,
           "The quadrature rule has to be uniform quadrature like GAUSS , GLL or GAUSS_SUBDIVIDED for Dealii Matrix Free.");
 
-        num1DQuadPoints = quadAttr.getNum1DPoints();
+        num1DQuadPoints = (unsigned int)(std::cbrt(
+          feBasisDataStorage->getQuadratureRuleContainer()
+            ->nCellQuadraturePoints(0)));
 
         if (auto cfeBDSDealii = std::dynamic_pointer_cast<
               const basis::CFEBDSOnTheFlyComputeDealii<ValueTypeOperand,
@@ -117,8 +119,8 @@ namespace dftefe
       , d_dealiiMatrixFree(
           std::make_shared<dealii::MatrixFree<dim, ValueTypeOperator>>())
       , d_dofHandlerIndex(0)
-      , d_feBasisDataStorageRhs(feBasisDataStorageRhs)
       , d_matrixFreeQuadCompStiffnessMatrix(0)
+      , d_dealiiQuadratureRuleVec(1 + inpRhs.size(), dealii::Quadrature<dim>())
     {
       utils::throwException(
         d_numComponents == 1,
@@ -131,6 +133,7 @@ namespace dftefe
       auto iter = feBasisDataStorageRhs.begin();
       while (iter != feBasisDataStorageRhs.end())
         {
+          d_feBasisDataStorageRhs[iter->first] = iter->second;
           utils::throwException(
             ((feBasisDataStorageStiffnessMatrix->getBasisDofHandler()).get() ==
              (iter->second->getBasisDofHandler()).get()),
@@ -161,15 +164,12 @@ namespace dftefe
       std::shared_ptr<const utils::ScalarSpatialFunctionReal> zeroFunction =
         std::make_shared<utils::ScalarZeroFunctionReal>();
 
-      std::shared_ptr<
-        basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
-        feBasisManagerHomo =
-          std::make_shared<basis::FEBasisManager<ValueTypeOperand,
-                                                 ValueTypeOperator,
-                                                 memorySpace,
-                                                 dim>>(cfeBasisDofHandlerDealii,
-                                                       zeroFunction);
+      d_feBasisManagerHomo =
+        std::make_shared<basis::FEBasisManager<ValueTypeOperand,
+                                               ValueTypeOperator,
+                                               memorySpace,
+                                               dim>>(cfeBasisDofHandlerDealii,
+                                                     zeroFunction);
 
       const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
                                              memorySpace,
@@ -177,15 +177,11 @@ namespace dftefe
         dynamic_cast<const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
                                                             memorySpace,
                                                             dim> &>(
-          feBasisManagerHomo->getConstraints());
+          d_feBasisManagerHomo->getConstraints());
       utils::throwException(
         &cfeConstraintsLocalDealii != nullptr,
         "Could not cast ConstraintsLocal to CFEConstraintsLocalDealii "
         "in PoissonSolverDealiiMatrixFreeFE.");
-
-      // will this work or it has to be data member ?
-      std::vector<dealii::Quadrature<dim>> dealiiQuadratureRuleVec(
-        1 + feBasisDataStorageRhs.size(), dealii::Quadrature<dim>());
 
       d_feOrder          = cfeBasisDofHandlerDealii->getFEOrder(0);
       d_dealiiDofHandler = cfeBasisDofHandlerDealii->getDoFHandler();
@@ -197,7 +193,7 @@ namespace dftefe
         ValueTypeOperand,
         memorySpace,
         dim>(feBasisDataStorageStiffnessMatrix,
-             dealiiQuadratureRuleVec[0],
+             d_dealiiQuadratureRuleVec[0],
              d_num1DQuadPointsStiffnessMatrix);
       unsigned int count = 1;
       auto         iter1 = feBasisDataStorageRhs.begin();
@@ -209,20 +205,19 @@ namespace dftefe
             ValueTypeOperand,
             memorySpace,
             dim>(iter1->second,
-                 dealiiQuadratureRuleVec[count],
+                 d_dealiiQuadratureRuleVec[count],
                  d_num1DQuadPointsRhs[iter1->first]);
           count += 1;
           iter1++;
         }
 
       // create dealiiMatrixFree
-      dealii::MappingQ1<dim> mappingDealii;
       d_dealiiMatrixFree->reinit(
-        mappingDealii,
+        d_mappingDealii,
         std::vector<const dealii::DoFHandler<dim> *>{d_dealiiDofHandler.get()},
         std::vector<const dealii::AffineConstraints<ValueTypeOperand> *>{
           d_dealiiAffineConstraintMatrix},
-        dealiiQuadratureRuleVec);
+        d_dealiiQuadratureRuleVec);
 
       d_cellIdToCellIndexMap.clear();
       auto cellPtr =
@@ -254,6 +249,10 @@ namespace dftefe
       // d_x.reinit(d_locallyOwnedIndexSet, d_ghostIndexSet,
       // feBasisManagerField->getMPIPatternP2P()->mpiCommunicator());
       d_initial.reinit(d_x);
+
+      utils::throwException(
+        d_pcType == dftefe::linearAlgebra::PreconditionerType::JACOBI,
+        "Only JACOBI preconditioner avaliable for Dealii Matrix Free Poisson Solve. Contact developers for other options.");
 
       computeDiagonalA();
       reinit(feBasisManagerField, inpRhs);
@@ -750,7 +749,7 @@ namespace dftefe
             }
         }
 
-      unsigned int matrixFreeQuadratureComponentRhs = 0;
+      unsigned int matrixFreeQuadratureComponentRhs = 1;
       auto         iter = d_feBasisDataStorageRhs.begin();
       while (iter != d_feBasisDataStorageRhs.end())
         {
@@ -916,7 +915,15 @@ namespace dftefe
           if (res < absTolerance)
             conv = true;
           if (conv)
-            return;
+            {
+              pcout << std::endl;
+              pcout << "initial abs. residual: " << initial_res
+                    << " , current abs. residual: " << res
+                    << " , nsteps: " << it
+                    << " , abs. tolerance criterion:  " << absTolerance
+                    << "\n\n";
+              return;
+            }
 
           while ((!conv) && (it < maxNumberIterations))
             {

@@ -227,7 +227,7 @@ namespace dftefe
       std::map<std::string,
                quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
         d_rhsQuadValComponent;
-      const std::map<
+      std::map<
         std::string,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>

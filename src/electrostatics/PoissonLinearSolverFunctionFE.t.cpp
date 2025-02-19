@@ -138,7 +138,6 @@ namespace dftefe
       , d_p(feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(),
             "Poisson Solver")
       , d_rootCout(std::cout)
-      , d_feBasisDataStorageRhs(feBasisDataStorageRhs)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -152,6 +151,7 @@ namespace dftefe
       auto iter = feBasisDataStorageRhs.begin();
       while (iter != feBasisDataStorageRhs.end())
         {
+          d_feBasisDataStorageRhs[iter->first] = iter->second;
           utils::throwException(
             ((d_feBasisDataStorageStiffnessMatrix->getBasisDofHandler())
                .get() == (iter->second->getBasisDofHandler()).get()),
@@ -477,10 +477,11 @@ namespace dftefe
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // for(int i = 0 ; i < d_numComponents ; i++)
-      // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i] << " d_b-norm: " <<
-      // d_b.l2Norms()[i] << " b-norm: " << b.l2Norms()[i] << "\t";
-      // std::cout << "\n";
+      for (int i = 0; i < d_numComponents; i++)
+        std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i]
+                  << " d_b-norm: " << d_b.l2Norms()[i]
+                  << " b-norm: " << b.l2Norms()[i] << "\t";
+      std::cout << "\n";
     }
 
     template <typename ValueTypeOperator,

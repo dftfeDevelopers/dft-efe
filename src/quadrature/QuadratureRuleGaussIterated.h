@@ -38,7 +38,14 @@ namespace dftefe
                                   const size_type order1D,
                                   const size_type copies);
 
+      size_type
+      numCopies() const;
+
+      size_type
+      order1D() const;
+
     private:
+      size_type d_numCopies, d_order1D;
     };
 
   } // end of namespace quadrature

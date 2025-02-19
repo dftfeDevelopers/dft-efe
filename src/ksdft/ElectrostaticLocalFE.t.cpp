@@ -173,7 +173,8 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock)
+        const size_type maxCellBlock,
+        const bool      useDealiiMatrixFreePoissonSolve)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -186,6 +187,7 @@ namespace dftefe
       , d_maxCellBlock(maxCellBlock)
       , d_isDeltaRhoSolve(false)
       , d_rootCout(std::cout)
+      , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -244,7 +246,8 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock)
+        const size_type maxCellBlock,
+        const bool      useDealiiMatrixFreePoissonSolve)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -257,6 +260,7 @@ namespace dftefe
       , d_maxCellBlock(maxCellBlock)
       , d_isDeltaRhoSolve(false)
       , d_rootCout(std::cout)
+      , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -319,7 +323,8 @@ namespace dftefe
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type maxCellBlock)
+        const size_type maxCellBlock,
+        const bool      useDealiiMatrixFreePoissonSolve)
       : d_atomCoordinates(atomCoordinates)
       , d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
@@ -333,6 +338,7 @@ namespace dftefe
       , d_maxCellBlock(maxCellBlock)
       , d_isDeltaRhoSolve(true)
       , d_rootCout(std::cout)
+      , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -699,19 +705,31 @@ namespace dftefe
       inpRhsMap                  = {{"bSmear", *d_scratchDensNuclearQuad},
                    {"rho", *d_scratchDensRhoQuad}};
 
-      d_linearSolverFunction = std::make_shared<
-        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
-                                                      ValueTypeBasisCoeff,
-                                                      memorySpace,
-                                                      dim>>(
-        d_feBMTotalCharge,
-        d_feBDTotalChargeStiffnessMatrix,
-        d_feBasisDataStorageRhsMap,
-        inpRhsMap,
-        ksdft::PoissonProblemDefaults::PC_TYPE,
-        d_linAlgOpContext,
-        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        d_numComponents);
+      if (!d_useDealiiMatrixFreePoissonSolve)
+        d_linearSolverFunction = std::make_shared<
+          electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                        ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim>>(
+          d_feBMTotalCharge,
+          d_feBDTotalChargeStiffnessMatrix,
+          d_feBasisDataStorageRhsMap,
+          inpRhsMap,
+          ksdft::PoissonProblemDefaults::PC_TYPE,
+          d_linAlgOpContext,
+          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+          d_numComponents);
+      else
+        d_poissonSolverDealiiMatFree = std::make_shared<
+          electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
+                                                          ValueTypeBasisCoeff,
+                                                          memorySpace,
+                                                          dim>>(
+          d_feBMTotalCharge,
+          d_feBDTotalChargeStiffnessMatrix,
+          d_feBasisDataStorageRhsMap,
+          inpRhsMap,
+          ksdft::PoissonProblemDefaults::PC_TYPE);
     }
 
     template <typename ValueTypeBasisData,
@@ -944,19 +962,31 @@ namespace dftefe
       inpRhsMap                  = {{"bSmear", *d_scratchDensNuclearQuad},
                    {"rho", *d_scratchDensRhoQuad}};
 
-      d_linearSolverFunction = std::make_shared<
-        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
-                                                      ValueTypeBasisCoeff,
-                                                      memorySpace,
-                                                      dim>>(
-        d_feBMTotalCharge,
-        d_feBDTotalChargeStiffnessMatrix,
-        d_feBasisDataStorageRhsMap,
-        inpRhsMap,
-        ksdft::PoissonProblemDefaults::PC_TYPE,
-        d_linAlgOpContext,
-        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        d_numComponents);
+      if (!d_useDealiiMatrixFreePoissonSolve)
+        d_linearSolverFunction = std::make_shared<
+          electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                        ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim>>(
+          d_feBMTotalCharge,
+          d_feBDTotalChargeStiffnessMatrix,
+          d_feBasisDataStorageRhsMap,
+          inpRhsMap,
+          ksdft::PoissonProblemDefaults::PC_TYPE,
+          d_linAlgOpContext,
+          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+          d_numComponents);
+      else
+        d_poissonSolverDealiiMatFree = std::make_shared<
+          electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
+                                                          ValueTypeBasisCoeff,
+                                                          memorySpace,
+                                                          dim>>(
+          d_feBMTotalCharge,
+          d_feBDTotalChargeStiffnessMatrix,
+          d_feBasisDataStorageRhsMap,
+          inpRhsMap,
+          ksdft::PoissonProblemDefaults::PC_TYPE);
     }
 
     template <typename ValueTypeBasisData,
@@ -1174,19 +1204,31 @@ namespace dftefe
       d_feBasisDataStorageRhsMap = {{"deltarho", d_feBDElectronicChargeRhs}};
       inpRhsMap                  = {{"deltarho", *d_scratchDensRhoQuad}};
 
-      d_linearSolverFunction = std::make_shared<
-        electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
-                                                      ValueTypeBasisCoeff,
-                                                      memorySpace,
-                                                      dim>>(
-        d_feBMTotalCharge,
-        d_feBDTotalChargeStiffnessMatrix,
-        d_feBasisDataStorageRhsMap,
-        inpRhsMap,
-        ksdft::PoissonProblemDefaults::PC_TYPE,
-        d_linAlgOpContext,
-        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        d_numComponents);
+      if (!d_useDealiiMatrixFreePoissonSolve)
+        d_linearSolverFunction = std::make_shared<
+          electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
+                                                        ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim>>(
+          d_feBMTotalCharge,
+          d_feBDTotalChargeStiffnessMatrix,
+          d_feBasisDataStorageRhsMap,
+          inpRhsMap,
+          ksdft::PoissonProblemDefaults::PC_TYPE,
+          d_linAlgOpContext,
+          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+          d_numComponents);
+      else
+        d_poissonSolverDealiiMatFree = std::make_shared<
+          electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
+                                                          ValueTypeBasisCoeff,
+                                                          memorySpace,
+                                                          dim>>(
+          d_feBMTotalCharge,
+          d_feBDTotalChargeStiffnessMatrix,
+          d_feBasisDataStorageRhsMap,
+          inpRhsMap,
+          ksdft::PoissonProblemDefaults::PC_TYPE);
     }
 
     template <typename ValueTypeBasisData,
@@ -1261,30 +1303,45 @@ namespace dftefe
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "Delta Rho Poisson Solve");
           p.registerStart("Reinit");
-          d_linearSolverFunction->reinit(d_feBMTotalCharge, inpRhsMap);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            d_linearSolverFunction->reinit(d_feBMTotalCharge, inpRhsMap);
+          else
+            d_poissonSolverDealiiMatFree->reinit(d_feBMTotalCharge, inpRhsMap);
           p.registerEnd("Reinit");
 
-          linearAlgebra::LinearAlgebraProfiler profiler;
-
-          std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
-                                                          ValueTypeBasisCoeff,
-                                                          memorySpace>>
-            CGSolve = std::make_shared<
-              linearAlgebra::CGLinearSolver<ValueTypeBasisData,
-                                            ValueTypeBasisCoeff,
-                                            memorySpace>>(
-              ksdft::PoissonProblemDefaults::MAX_ITER,
-              ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
-              ksdft::PoissonProblemDefaults::RELATIVE_TOL,
-              ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
-              profiler);
-
           p.registerStart("Solve");
-          CGSolve->solve(*d_linearSolverFunction);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            {
+              linearAlgebra::LinearAlgebraProfiler profiler;
+
+              std::shared_ptr<
+                linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace>>
+                CGSolve = std::make_shared<
+                  linearAlgebra::CGLinearSolver<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace>>(
+                  ksdft::PoissonProblemDefaults::MAX_ITER,
+                  ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
+                  ksdft::PoissonProblemDefaults::RELATIVE_TOL,
+                  ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
+                  profiler);
+              CGSolve->solve(*d_linearSolverFunction);
+            }
+          else
+            {
+              d_poissonSolverDealiiMatFree->solve(
+                ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
+                ksdft::PoissonProblemDefaults::MAX_ITER);
+            }
           p.registerEnd("Solve");
           p.print();
 
-          d_linearSolverFunction->getSolution(*d_totalChargePotential);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            d_linearSolverFunction->getSolution(*d_totalChargePotential);
+          else
+            d_poissonSolverDealiiMatFree->getSolution(*d_totalChargePotential);
         }
       else
         {
@@ -1314,30 +1371,45 @@ namespace dftefe
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "b+rho Poisson Solve");
           p.registerStart("Reinit");
-          d_linearSolverFunction->reinit(d_feBMTotalCharge, inpRhsMap);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            d_linearSolverFunction->reinit(d_feBMTotalCharge, inpRhsMap);
+          else
+            d_poissonSolverDealiiMatFree->reinit(d_feBMTotalCharge, inpRhsMap);
           p.registerEnd("Reinit");
 
-          linearAlgebra::LinearAlgebraProfiler profiler;
-
-          std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
-                                                          ValueTypeBasisCoeff,
-                                                          memorySpace>>
-            CGSolve = std::make_shared<
-              linearAlgebra::CGLinearSolver<ValueTypeBasisData,
-                                            ValueTypeBasisCoeff,
-                                            memorySpace>>(
-              ksdft::PoissonProblemDefaults::MAX_ITER,
-              ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
-              ksdft::PoissonProblemDefaults::RELATIVE_TOL,
-              ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
-              profiler);
-
           p.registerStart("Solve");
-          CGSolve->solve(*d_linearSolverFunction);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            {
+              linearAlgebra::LinearAlgebraProfiler profiler;
+
+              std::shared_ptr<
+                linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace>>
+                CGSolve = std::make_shared<
+                  linearAlgebra::CGLinearSolver<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace>>(
+                  ksdft::PoissonProblemDefaults::MAX_ITER,
+                  ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
+                  ksdft::PoissonProblemDefaults::RELATIVE_TOL,
+                  ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
+                  profiler);
+              CGSolve->solve(*d_linearSolverFunction);
+            }
+          else
+            {
+              d_poissonSolverDealiiMatFree->solve(
+                ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
+                ksdft::PoissonProblemDefaults::MAX_ITER);
+            }
           p.registerEnd("Solve");
           p.print();
 
-          d_linearSolverFunction->getSolution(*d_totalChargePotential);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            d_linearSolverFunction->getSolution(*d_totalChargePotential);
+          else
+            d_poissonSolverDealiiMatFree->getSolution(*d_totalChargePotential);
         }
     }
 
@@ -1428,6 +1500,13 @@ namespace dftefe
                                                       dim>>
         linearSolverFunctionNuclear = nullptr;
 
+      std::shared_ptr<
+        electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
+                                                        ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim>>
+        poissonSolverDealiiMatFree = nullptr;
+
       d_nuclearChargeQuad.clear();
       d_nuclearChargeQuad.resize(d_numAtoms, 0);
       for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
@@ -1495,44 +1574,67 @@ namespace dftefe
           p.registerStart("Reinit");
           if (iAtom == 0)
             {
-              linearSolverFunctionNuclear =
-                std::make_shared<electrostatics::PoissonLinearSolverFunctionFE<
-                  ValueTypeBasisData,
-                  ValueTypeBasisCoeff,
-                  memorySpace,
-                  dim>>(d_feBMNuclearCharge[iAtom],
-                        feBDNuclearChargeStiffnessMatrix,
-                        feBDNuclearChargeRhs,
-                        *d_scratchDensNuclearQuad,
-                        ksdft::PoissonProblemDefaults::PC_TYPE,
-                        d_linAlgOpContext,
-                        ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-                        d_numComponents);
+              if (!d_useDealiiMatrixFreePoissonSolve)
+                linearSolverFunctionNuclear = std::make_shared<
+                  electrostatics::PoissonLinearSolverFunctionFE<
+                    ValueTypeBasisData,
+                    ValueTypeBasisCoeff,
+                    memorySpace,
+                    dim>>(d_feBMNuclearCharge[iAtom],
+                          feBDNuclearChargeStiffnessMatrix,
+                          feBDNuclearChargeRhs,
+                          *d_scratchDensNuclearQuad,
+                          ksdft::PoissonProblemDefaults::PC_TYPE,
+                          d_linAlgOpContext,
+                          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+                          d_numComponents);
+              else
+                poissonSolverDealiiMatFree = std::make_shared<
+                  electrostatics::PoissonSolverDealiiMatrixFreeFE<
+                    ValueTypeBasisData,
+                    ValueTypeBasisCoeff,
+                    memorySpace,
+                    dim>>(d_feBMNuclearCharge[iAtom],
+                          feBDNuclearChargeStiffnessMatrix,
+                          feBDNuclearChargeRhs,
+                          *d_scratchDensNuclearQuad,
+                          ksdft::PoissonProblemDefaults::PC_TYPE);
             }
           else
             {
-              linearSolverFunctionNuclear->reinit(d_feBMNuclearCharge[iAtom],
-                                                  *d_scratchDensNuclearQuad);
+              if (!d_useDealiiMatrixFreePoissonSolve)
+                linearSolverFunctionNuclear->reinit(d_feBMNuclearCharge[iAtom],
+                                                    *d_scratchDensNuclearQuad);
+              else
+                poissonSolverDealiiMatFree->reinit(d_feBMNuclearCharge[iAtom],
+                                                   *d_scratchDensNuclearQuad);
             }
           p.registerEnd("Reinit");
 
-          linearAlgebra::LinearAlgebraProfiler profiler;
-
-          std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
-                                                          ValueTypeBasisCoeff,
-                                                          memorySpace>>
-            CGSolve = std::make_shared<
-              linearAlgebra::CGLinearSolver<ValueTypeBasisData,
-                                            ValueTypeBasisCoeff,
-                                            memorySpace>>(
-              ksdft::PoissonProblemDefaults::MAX_ITER,
-              ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
-              ksdft::PoissonProblemDefaults::RELATIVE_TOL,
-              ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
-              profiler);
-
           p.registerStart("Solve");
-          CGSolve->solve(*linearSolverFunctionNuclear);
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            {
+              linearAlgebra::LinearAlgebraProfiler profiler;
+
+              std::shared_ptr<
+                linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace>>
+                CGSolve = std::make_shared<
+                  linearAlgebra::CGLinearSolver<ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
+                                                memorySpace>>(
+                  ksdft::PoissonProblemDefaults::MAX_ITER,
+                  ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
+                  ksdft::PoissonProblemDefaults::RELATIVE_TOL,
+                  ksdft::PoissonProblemDefaults::DIVERGENCE_TOL,
+                  profiler);
+              CGSolve->solve(*linearSolverFunctionNuclear);
+            }
+          else
+            poissonSolverDealiiMatFree->solve(
+              ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
+              ksdft::PoissonProblemDefaults::MAX_ITER);
           p.registerEnd("Solve");
           p.print();
 
@@ -1541,8 +1643,13 @@ namespace dftefe
               d_feBMNuclearCharge[iAtom]->getMPIPatternP2P(),
               d_linAlgOpContext,
               d_numComponents);
-          linearSolverFunctionNuclear->getSolution(
-            *d_nuclearChargesPotential[iAtom]);
+
+          if (!d_useDealiiMatrixFreePoissonSolve)
+            linearSolverFunctionNuclear->getSolution(
+              *d_nuclearChargesPotential[iAtom]);
+          else
+            poissonSolverDealiiMatFree->getSolution(
+              *d_nuclearChargesPotential[iAtom]);
         }
     }
 

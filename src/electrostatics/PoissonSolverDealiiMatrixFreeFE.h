@@ -209,6 +209,11 @@ namespace dftefe
       utils::ConditionalOStream         d_rootCout;
 
 
+      std::shared_ptr<
+        basis::
+          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
+        d_feBasisManagerHomo;
+
       distributedCPUVec<ValueTypeOperator> d_x, d_rhs, d_initial, d_diagonalA;
       std::shared_ptr<dealii::MatrixFree<dim, ValueTypeOperator>>
                                                      d_dealiiMatrixFree;
@@ -221,7 +226,7 @@ namespace dftefe
       size_type                           d_feOrder;
       unsigned int                        d_dofHandlerIndex;
 
-      const std::map<
+      std::map<
         std::string,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
@@ -230,6 +235,8 @@ namespace dftefe
       unsigned int d_matrixFreeQuadCompStiffnessMatrix;
       std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
 
+      std::vector<dealii::Quadrature<dim>> d_dealiiQuadratureRuleVec;
+      dealii::MappingQ1<dim>               d_mappingDealii;
       // dealii::IndexSet d_ghostIndexSet, d_locallyOwnedIndexSet;
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE
