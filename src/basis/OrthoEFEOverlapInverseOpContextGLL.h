@@ -89,6 +89,8 @@ namespace dftefe
              linAlgOpContext,
         bool isCGSolved = true);
 
+      ~OrthoEFEOverlapInverseOpContextGLL() = default;
+
 
       void
       apply(

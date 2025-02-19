@@ -75,6 +75,7 @@ namespace dftefe
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
     public:
+      virtual ~ElectrostaticFE() = default;
       virtual void
       getLocal(Storage &cellWiseStorage) const = 0;
       virtual RealType

@@ -41,6 +41,8 @@ namespace dftefe
         std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   blasQueue,
         std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
 
+      ~LinAlgOpContext() = default;
+
       void
       setBlasQueue(
         std::shared_ptr<blasLapack::BlasQueue<memorySpace>> blasQueue);

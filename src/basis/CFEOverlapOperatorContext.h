@@ -101,6 +101,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
+      ~CFEOverlapOperatorContext() = default;
+
       // void
       // apply(const linearAlgebra::Vector<ValueTypeOperand, memorySpace> &x,
       //       linearAlgberba::Vector<ValueType, memorySpace> &y) const

@@ -56,6 +56,7 @@ namespace dftefe
 
     {
     public:
+      virtual ~EFEBasisDofHandler() = default;
       virtual double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const = 0;

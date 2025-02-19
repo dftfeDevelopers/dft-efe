@@ -74,6 +74,8 @@ namespace dftefe
                                                       dim>>
           enrichmentClassicalInterface);
 
+      ~EFEBasisDofHandlerDealii() = default;
+
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;

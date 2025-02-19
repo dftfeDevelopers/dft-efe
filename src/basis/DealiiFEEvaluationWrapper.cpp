@@ -44,6 +44,19 @@ namespace dftefe
         matrixFreeVectorComponent,
         matrixFreeQuadratureComponent);
     }
+
+    template <int          FEOrder,
+              unsigned int num_1d_quadPoints,
+              unsigned int n_components>
+    FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
+      ~FEEvaluationWrapperDerived()
+    {
+      d_dealiiFEEvaluation.reset(nullptr);
+    }
+
+    FEEvaluationWrapperBase::~FEEvaluationWrapperBase()
+    {}
+
     template <int          FEOrder,
               unsigned int num_1d_quadPoints,
               unsigned int n_components>
@@ -507,6 +520,15 @@ namespace dftefe
       }
 #undef RANGE_FEORDER
 #undef RANGE_QUADRATURE
+    }
+
+    template <unsigned int numberOfComponents>
+    DealiiFEEvaluationWrapper<numberOfComponents>::~DealiiFEEvaluationWrapper()
+    {
+      if (d_feEvaluationBase.get() != nullptr)
+        {
+          d_feEvaluationBase.reset(nullptr);
+        }
     }
 
     template <unsigned int numberOfComponents>

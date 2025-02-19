@@ -82,6 +82,8 @@ namespace dftefe
              linAlgOpContext,
         bool isCGSolved = true);
 
+      ~CFEOverlapInverseOpContextGLL() = default;
+
       void
       apply(
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,

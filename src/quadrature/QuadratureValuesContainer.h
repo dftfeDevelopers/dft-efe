@@ -61,6 +61,8 @@ namespace dftefe
         const size_type                                numberComponents,
         const ValueType                                initVal = ValueType());
 
+      ~QuadratureValuesContainer() = default;
+
       void
       reinit(
         std::shared_ptr<const QuadratureRuleContainer> quadratureRuleContainer,

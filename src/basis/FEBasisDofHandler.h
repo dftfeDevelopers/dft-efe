@@ -63,6 +63,8 @@ namespace dftefe
       typedef std::vector<std::shared_ptr<FECellBase>>::const_iterator
         const_FECellIterator;
 
+      virtual ~FEBasisDofHandler() = default;
+
       virtual double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const = 0;

@@ -130,6 +130,8 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
 
+      ~PristineEFEOverlapOperatorContext() = default;
+
       /**
        * @brief Apply AX = B where A is the discretized matrix, X is the operand and B is the result.
        */

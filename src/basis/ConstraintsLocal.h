@@ -42,7 +42,7 @@ namespace dftefe
     class ConstraintsLocal
     {
     public:
-      ~ConstraintsLocal() = default;
+      virtual ~ConstraintsLocal() = default;
 
       //
       // Copy function - note one has to call close after calling copyFrom

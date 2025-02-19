@@ -40,6 +40,7 @@ namespace dftefe
     class BasisDofHandler
     {
     public:
+      virtual ~BasisDofHandler() = default;
       virtual double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const = 0;

@@ -34,6 +34,7 @@ namespace dftefe
     class Hamiltonian
     {
     public:
+      virtual ~Hamiltonian() = default;
       virtual void
       getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace>
                  &cellWiseStorage) const = 0;

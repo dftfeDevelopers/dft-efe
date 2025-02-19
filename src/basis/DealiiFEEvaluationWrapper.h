@@ -45,6 +45,8 @@ namespace dftefe
         dealii::LinearAlgebra::distributed::Vector<T,
                                                    dealii::MemorySpace::Host>;
 
+      virtual ~FEEvaluationWrapperBase() = 0;
+
       /**
        * @brief Returns the total number of quadrature points in all 3 directions
        */
@@ -165,6 +167,7 @@ namespace dftefe
         const unsigned int                   matrixFreeVectorComponent,
         const unsigned int                   matrixFreeQuadratureComponent);
 
+      ~FEEvaluationWrapperDerived();
 
       std::unique_ptr<
         dealii::FEEvaluation<3, FEOrder, num_1d_quadPoints, n_components>>
@@ -287,6 +290,8 @@ namespace dftefe
         const dealii::MatrixFree<3, double> &matrixFreeData,
         const unsigned int                   matrixFreeVectorComponent,
         const unsigned int                   matrixFreeQuadratureComponent);
+
+      ~DealiiFEEvaluationWrapper();
 
       FEEvaluationWrapperBase &
       getFEEvaluationWrapperBase() const;

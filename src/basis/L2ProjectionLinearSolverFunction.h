@@ -104,6 +104,8 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
 
+      ~L2ProjectionLinearSolverFunction() = default;
+
       const linearAlgebra::
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace> &
         getAxContext() const override;
