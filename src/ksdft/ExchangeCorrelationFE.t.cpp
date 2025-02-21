@@ -392,5 +392,52 @@ namespace dftefe
       return d_energy;
     }
 
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const quadrature::QuadratureValuesContainer<
+      typename ExchangeCorrelationFE<ValueTypeBasisData,
+                                     ValueTypeBasisCoeff,
+                                     memorySpace,
+                                     dim>::ValueType,
+      memorySpace> &
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::getFunctionalDerivative() const
+    {
+      return *d_xcPotentialQuad;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                   ValueTypeBasisData,
+                                                   memorySpace,
+                                                   dim>>
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::getHamiltonianFEBasisOperations() const
+    {
+      return d_feBasisOp;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::getLinAlgOpContext() const
+    {
+      return d_linAlgOpContext;
+    }
+
   } // end of namespace ksdft
 } // end of namespace dftefe

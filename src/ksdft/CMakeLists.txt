@@ -11,6 +11,7 @@ set(DFT-EFE-KSDFT-SOURCES
 	KohnShamOperatorContextFE.cpp
 	KineticFE.cpp
 	ElectrostaticLocalFE.cpp
+  ElectrostaticExcFE.cpp
 	KohnShamEigenSolver.cpp
 	ExchangeCorrelationFE.cpp
 	DensityCalculator.cpp

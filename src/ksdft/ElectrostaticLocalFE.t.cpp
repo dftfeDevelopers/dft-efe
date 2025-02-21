@@ -1927,5 +1927,44 @@ namespace dftefe
       return d_energy;
     }
 
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const quadrature::QuadratureValuesContainer<
+      typename ElectrostaticFE<ValueTypeBasisData,
+                               ValueTypeBasisCoeff,
+                               ValueTypeWaveFnBasisData,
+                               memorySpace,
+                               dim>::ValueType,
+      memorySpace> &
+    ElectrostaticLocalFE<ValueTypeBasisData,
+                         ValueTypeBasisCoeff,
+                         ValueTypeWaveFnBasisData,
+                         memorySpace,
+                         dim>::getFunctionalDerivative() const
+    {
+      d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
+                                         *d_feBMTotalCharge,
+                                         *d_scratchPotHamQuad);
+
+      if (d_isDeltaRhoSolve)
+        quadrature::add((ValueType)1.0,
+                        *d_atomicTotalElecPotElectronicQuad,
+                        (ValueType)1.0,
+                        *d_scratchPotHamQuad,
+                        *d_linAlgOpContext);
+
+      quadrature::add((ValueType)1.0,
+                      *d_scratchPotHamQuad,
+                      (ValueType)1.0,
+                      *d_correctionPotHamQuad,
+                      *d_scratchPotHamQuad,
+                      *d_linAlgOpContext);
+
+      return *d_scratchPotHamQuad;
+    }
+
   } // end of namespace ksdft
 } // end of namespace dftefe

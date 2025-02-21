@@ -31,6 +31,7 @@
 #include <ksdft/KineticFE.h>
 #include <ksdft/ExchangeCorrelationFE.h>
 #include <ksdft/KohnShamOperatorContextFE.h>
+#include <ksdft/ElectrostaticExcFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <ksdft/DensityCalculator.h>
 #include <utils/ConditionalOStream.h>
@@ -391,6 +392,14 @@ namespace dftefe
       RealType        d_groundStateEnergy;
       bool            d_isSolved;
       utils::Profiler d_p;
+
+      std::shared_ptr<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                                         ValueTypeElectrostaticsBasis,
+                                         ValueTypeWaveFunctionCoeff,
+                                         ValueTypeWaveFunctionBasis,
+                                         memorySpace,
+                                         dim>>
+        d_hamiltonianElectroExc;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

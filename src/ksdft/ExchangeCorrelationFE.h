@@ -94,6 +94,18 @@ namespace dftefe
       RealType
       getEnergy() const override;
 
+      const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
+      getFunctionalDerivative() const;
+
+      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim>>
+      getHamiltonianFEBasisOperations() const;
+
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+      getLinAlgOpContext() const;
+
     private:
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpace>>

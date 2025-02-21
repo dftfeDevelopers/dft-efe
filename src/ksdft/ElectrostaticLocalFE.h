@@ -267,6 +267,9 @@ namespace dftefe
       RealType
       getEnergy() const override;
 
+      const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
+      getFunctionalDerivative() const override;
+
     private:
       /* Solves the nuclear potential problem, gets \sum \integral b_sm*V_sm ,
        * gets \sum \integral V_sm * rho, \sum V_smAtRhoQuadPts

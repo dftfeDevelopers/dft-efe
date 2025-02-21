@@ -308,8 +308,19 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
+
+      d_hamiltonianElectroExc =
+        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                                            ValueTypeElectrostaticsBasis,
+                                            ValueTypeWaveFunctionCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim>>(d_hamitonianElec,
+                                                  d_hamitonianXC);
+
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
+        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -545,8 +556,19 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
+
+      d_hamiltonianElectroExc =
+        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                                            ValueTypeElectrostaticsBasis,
+                                            ValueTypeWaveFunctionCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim>>(d_hamitonianElec,
+                                                  d_hamitonianXC);
+
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
+        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -793,8 +815,19 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
+
+      d_hamiltonianElectroExc =
+        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                                            ValueTypeElectrostaticsBasis,
+                                            ValueTypeWaveFunctionCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim>>(d_hamitonianElec,
+                                                  d_hamitonianXC);
+
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamitonianElec.get(), d_hamitonianXC.get()};
+        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -950,10 +983,12 @@ namespace dftefe
 
               d_hamitonianElec->reinitField(d_densityInQuadValues);
               d_hamitonianXC->reinitField(d_densityInQuadValues);
+
+              d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
+
               std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-                d_hamitonianKin.get(),
-                d_hamitonianElec.get(),
-                d_hamitonianXC.get()};
+                d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
             }

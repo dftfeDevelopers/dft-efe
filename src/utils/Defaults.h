@@ -28,6 +28,7 @@
 
 #include <complex>
 #include <string>
+#include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace utils
@@ -122,6 +123,16 @@ namespace dftefe
     public:
       static const std::string zero;
     };
+
+    class ConditionalOStreamDefaults
+    {
+    public:
+      //
+      // floating point precision to which one should print
+      //
+      static const size_type PRECISION;
+    };
+
   } // end of namespace utils
 } // end of namespace dftefe
 #include <utils/Defaults.t.cpp>

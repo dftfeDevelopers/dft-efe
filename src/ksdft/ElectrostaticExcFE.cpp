@@ -20,43 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
-#include <utils/ConditionalOStream.h>
 
-//
-// ACKNOWLEDGEMENT: The implementation of this class is borrowed from deal.II
-//
-namespace dftefe
-{
-  namespace utils
-  {
-    ConditionalOStream::ConditionalOStream(std::ostream &  stream,
-                                           const bool      active,
-                                           const size_type precision)
-      : d_outputStream(stream)
-      , d_activeFlag(active)
-    {
-      d_outputStream << std::setprecision(precision);
-    }
-
-    void
-    ConditionalOStream::setCondition(bool active)
-    {
-      d_activeFlag = active;
-    }
-
-    bool
-    ConditionalOStream::isActive() const
-    {
-      return d_activeFlag;
-    }
-
-    std::ostream &
-    ConditionalOStream::getOStream() const
-    {
-      return d_outputStream;
-    }
-
-  } // end of namespace utils
-} // end of namespace dftefe
+#include <ksdft/ElectrostaticExcFE.h>

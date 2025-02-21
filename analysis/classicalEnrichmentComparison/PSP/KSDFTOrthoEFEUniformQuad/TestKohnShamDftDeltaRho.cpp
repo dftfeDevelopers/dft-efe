@@ -799,11 +799,11 @@ int main(int argc, char** argv)
   p.registerStart("Electrostatics basis grad datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = false;
 
   // Set up Adaptive quadrature for EFE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix =
