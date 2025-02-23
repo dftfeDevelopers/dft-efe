@@ -421,7 +421,7 @@ namespace dftefe
                                                     *cfeBasisDataStorageOverlapMatrix,
                                                     linAlgOpContext);
 
-      MInvContext->apply(d,*basisInterfaceCoeff);
+      MInvContext->apply(d,*basisInterfaceCoeff, true, true);
       **/
       // populate an unordered_map<id, <vec1, vec2>>  i.e. map from enrichedId
       // -> pair(localId, coeff)

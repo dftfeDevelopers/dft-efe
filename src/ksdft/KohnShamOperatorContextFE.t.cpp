@@ -871,7 +871,9 @@ namespace dftefe
       ValueTypeBasisData,
       memorySpace,
       dim>::apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-                  linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
+                  linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
+                  bool updateGhostX,
+                  bool updateGhostY) const
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
@@ -896,7 +898,8 @@ namespace dftefe
       const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsY =
         d_feBasisManager->getConstraints();
 
-      X.updateGhostValues();
+      if (updateGhostX)
+        X.updateGhostValues();
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
@@ -927,7 +930,8 @@ namespace dftefe
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
-      Y.updateGhostValues();
+      if (updateGhostY)
+        Y.updateGhostValues();
     }
 
   } // end of namespace ksdft

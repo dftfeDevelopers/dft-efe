@@ -76,7 +76,9 @@ namespace dftefe
 
       void
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-            MultiVector<ValueTypeUnion, memorySpace> &  Y) const override;
+            MultiVector<ValueTypeUnion, memorySpace> &  Y,
+            bool                                        updateGhostX = false,
+            bool updateGhostY = false) const override;
     };
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

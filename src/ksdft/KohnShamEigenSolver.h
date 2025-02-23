@@ -139,6 +139,9 @@ namespace dftefe
       std::vector<RealType>
       getEigenSolveResidualNorm();
 
+      void
+      setChebyPolyScalingFactor(double scalingFactor);
+
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
             std::vector<RealType> &kohnShamEnergies,
@@ -183,6 +186,7 @@ namespace dftefe
       double d_wantedSpectrumLowerBound;
       double d_wantedSpectrumUpperBound;
       bool   d_isBoundKnown;
+      double d_chebyPolyScalingFactor;
 
       std::shared_ptr<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,

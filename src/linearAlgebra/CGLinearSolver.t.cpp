@@ -147,13 +147,13 @@ namespace dftefe
               // @note: w is meant for storing Ap (p = search direction).
               // However, for the 0-th iteration we use it to store Ax
               // to avoid allocating memory for another Vector
-              AxContext.apply(x, w);
+              AxContext.apply(x, w, true, true);
               add(ones, b, nOnes, w, r);
 
               //
               // z = preconditioned r
               //
-              pcContext.apply(r, z);
+              pcContext.apply(r, z, false, false);
 
               //
               // p = z
@@ -170,7 +170,7 @@ namespace dftefe
           else
             {
               // w = Ap
-              AxContext.apply(p, w);
+              AxContext.apply(p, w, true, true);
 
               // z^Hr (dot product of z-conjugate and r)
               std::vector<ValueType> zDotr(0);
@@ -203,7 +203,7 @@ namespace dftefe
               add(ones, r, nAlpha, w, r);
 
               // z = preconditioned r
-              pcContext.apply(r, z);
+              pcContext.apply(r, z, false, false);
 
               // updated z^Hr (dot product of new z-conjugate and r)
               std::vector<ValueType> zDotrNew(0);

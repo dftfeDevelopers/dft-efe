@@ -466,7 +466,7 @@ namespace dftefe
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
-      d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB);
+      d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB, true, true);
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
       d_p.registerEnd("Rhs Computation");

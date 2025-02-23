@@ -109,9 +109,10 @@ namespace dftefe
       //       override;
 
       void
-      apply(
-        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-        linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
+      apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+            linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
+            bool updateGhostX = false,
+            bool updateGhostY = false) const override;
 
       // get overlap of two basis functions in a cell
       Storage

@@ -24,6 +24,7 @@
  */
 
 #include <utils/DataTypeOverloads.h>
+#include <utils/PointChargePotentialFunction.h>
 
 namespace dftefe
 {
@@ -370,6 +371,12 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+
+      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
+            &externalPotentialFunction) != nullptr)
+        d_isPSPCalculation = false;
+      else
+        d_isPSPCalculation = true;
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -619,6 +626,12 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+
+      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
+            &externalPotentialFunction) != nullptr)
+        d_isPSPCalculation = false;
+      else
+        d_isPSPCalculation = true;
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -877,6 +890,12 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+
+      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
+            &externalPotentialFunction) != nullptr)
+        d_isPSPCalculation = false;
+      else
+        d_isPSPCalculation = true;
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -1001,6 +1020,9 @@ namespace dftefe
                 d_kohnShamEnergies[0],
                 d_kohnShamEnergies[d_numWantedEigenvalues - 1]);
             }
+
+          if (scfIter == 0 && d_isPSPCalculation)
+            d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
           d_p.registerStart("EigenSolve");
           // Linear Eigen Solve

@@ -275,7 +275,7 @@ namespace dftefe
       // normalize the initialGuess with B norm set q = b/norm
       // compute B-norm = (initGuess)^TB(initGuess)
 
-      B.apply(d_initialGuess, temp);
+      B.apply(d_initialGuess, temp, true, true);
 
       dot<ValueTypeOperand, ValueType, memorySpace>(
         d_initialGuess,
@@ -302,8 +302,8 @@ namespace dftefe
           // v = BInv A q_i
 
           // temp.setValue((ValueType)0.0);
-          A.apply(q, temp);
-          BInv.apply(temp, v);
+          A.apply(q, temp, true, false);
+          BInv.apply(temp, v, false, false);
 
           // get \alpha = q_i^TAq_i
 
@@ -356,7 +356,7 @@ namespace dftefe
 
           // compute \beta_i = bnorm v
           // temp.setValue((ValueType)0.0);
-          B.apply(v, temp);
+          B.apply(v, temp, true, true);
 
           dot<ValueType, ValueType, memorySpace>(
             v,

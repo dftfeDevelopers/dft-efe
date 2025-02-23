@@ -78,8 +78,8 @@ namespace dftefe
                                                    (ValueType)0);
 
       // Compute B^-1AX
-      A.apply(eigenSubspaceGuess, scratch1);
-      BInv.apply(scratch1, scratch2);
+      A.apply(eigenSubspaceGuess, scratch1, true, false);
+      BInv.apply(scratch1, scratch2, false, false);
 
       // filteredSubspace = (\sigma1/e)(B^-1A eigenSubspaceGuess - c
       // eigenSubspaceGuess)
@@ -97,8 +97,8 @@ namespace dftefe
           sigma2 = 1.0 / (gamma - sigma);
 
           // Compute B^-1A filteredSubspace
-          A.apply(filteredSubspace, scratch1);
-          BInv.apply(scratch1, scratch2);
+          A.apply(filteredSubspace, scratch1, true, false);
+          BInv.apply(scratch1, scratch2, false, false);
 
           // temp = (2\sigma2/e)(B^-1A filteredSubspace - c filteredSubspace)
           blasLapack::axpby<ValueType, ValueType, memorySpace>(

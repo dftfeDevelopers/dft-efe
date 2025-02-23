@@ -1798,10 +1798,14 @@ namespace dftefe
                   linearAlgebra::MultiVector<
                     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                            ValueTypeOperand>,
-                    memorySpace> &Y) const
+                    memorySpace> &Y,
+                  bool            updateGhostX,
+                  bool            updateGhostY) const
     {
       if (d_isMassLumping)
         {
+          updateGhostX                  = false;
+          updateGhostY                  = false;
           const size_type numComponents = X.getNumberComponents();
           const size_type nlocallyOwnedEnrichmentIds =
             d_feBasisManager->getLocallyOwnedRanges()[1].second -
@@ -1810,7 +1814,8 @@ namespace dftefe
             d_feBasisManager->getLocallyOwnedRanges()[0].second -
             d_feBasisManager->getLocallyOwnedRanges()[0].first;
 
-          X.updateGhostValues();
+          if (updateGhostX)
+            X.updateGhostValues();
           // update the child nodes based on the parent nodes
           d_feBasisManager->getConstraints().distributeParentToChild(
             X, X.getNumberComponents());
@@ -1891,7 +1896,8 @@ namespace dftefe
             Y, Y.getNumberComponents());
 
           // Function to update the ghost values of the Y
-          Y.updateGhostValues();
+          if (updateGhostY)
+            Y.updateGhostValues();
         }
       else
         {
@@ -1912,7 +1918,8 @@ namespace dftefe
                                                    ValueTypeOperand>,
             memorySpace> &constraints = d_feBasisManager->getConstraints();
 
-          X.updateGhostValues();
+          if (updateGhostX)
+            X.updateGhostValues();
           // update the child nodes based on the parent nodes
           constraints.distributeParentToChild(X, numVecs);
 
@@ -1947,7 +1954,8 @@ namespace dftefe
           // Function to add the values to the local node from its corresponding
           // ghost nodes from other processors.
           Y.accumulateAddLocallyOwned();
-          Y.updateGhostValues();
+          if (updateGhostY)
+            Y.updateGhostValues();
         }
     }
 

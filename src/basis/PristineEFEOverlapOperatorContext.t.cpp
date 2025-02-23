@@ -663,7 +663,9 @@ namespace dftefe
                   linearAlgebra::MultiVector<
                     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                            ValueTypeOperand>,
-                    memorySpace> &Y) const
+                    memorySpace> &Y,
+                  bool            updateGhostX,
+                  bool            updateGhostY) const
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManagerX->nLocallyOwnedCells();
@@ -690,7 +692,8 @@ namespace dftefe
                                                ValueTypeOperand>,
         memorySpace> &constraintsY = d_feBasisManagerY->getConstraints();
 
-      X.updateGhostValues();
+      if (updateGhostX)
+        X.updateGhostValues();
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
@@ -725,7 +728,8 @@ namespace dftefe
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
-      Y.updateGhostValues();
+      if (updateGhostY)
+        Y.updateGhostValues();
     }
 
     template <typename ValueTypeOperator,

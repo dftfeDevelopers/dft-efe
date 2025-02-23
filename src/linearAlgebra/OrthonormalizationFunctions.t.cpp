@@ -55,7 +55,7 @@ namespace dftefe
           residual(X, 0.0);
         utils::MemoryStorage<ValueType, memorySpace> X0HBX(numVec * numVec);
 
-        B.apply(X, residual);
+        B.apply(X, residual, true, false);
         linearAlgebra::blasLapack::
           gemm<ValueTypeOperand, ValueType, memorySpace>(
             linearAlgebra::blasLapack::Layout::ColMajor,
@@ -158,7 +158,7 @@ namespace dftefe
 
           MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
 
-          B.apply(X, temp);
+          B.apply(X, temp, true, false);
 
           // Input data is read is X^T (numVec is fastest index and then
           // vecSize) Operation : S^T = ((B*X)^T)*(X^T)^H
@@ -354,7 +354,7 @@ namespace dftefe
               // Input data is read is X^T
               // Operation : S^T = ((B*X)^T)*(X^T)^H
 
-              B.apply(X, temp);
+              B.apply(X, temp, true, false);
 
               blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
                 blasLapack::Layout::ColMajor,
@@ -615,7 +615,7 @@ namespace dftefe
                                         q.data() + iSize,
                                         orthogonalizedX.data() +
                                           iSize * numVec + jVec);
-                  B.apply(w, temp);
+                  B.apply(w, temp, true, false);
                   dot<ValueType, ValueType, memorySpace>(
                     q,
                     temp,
@@ -631,7 +631,7 @@ namespace dftefe
                                     w.data(),
                                     linAlgOpContext);
                 }
-              B.apply(w, temp);
+              B.apply(w, temp, true, false);
               dot<ValueType, ValueType, memorySpace>(
                 w,
                 temp,
