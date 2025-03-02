@@ -334,6 +334,15 @@ namespace dftefe
                            scalar_type<ValueTypeOperator, ValueTypeOperand>,
                          memorySpace> &> &                inpRhs)
     {
+      int rank;
+      utils::mpi::MPICommRank(
+        feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(), &rank);
+
+      // Get nProcs
+      int numProcs;
+      utils::mpi::MPICommSize(
+        feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(), &numProcs);
+
       auto iter = d_feBasisDataStorageRhs.begin();
       while (iter != d_feBasisDataStorageRhs.end())
         {
@@ -477,11 +486,19 @@ namespace dftefe
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      for (int i = 0; i < d_numComponents; i++)
-        std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i]
-                  << " d_b-norm: " << d_b.l2Norms()[i]
-                  << " b-norm: " << b.l2Norms()[i] << "\t";
-      std::cout << "\n";
+      // double a = rhsNHDB.l2Norms()[0];
+      // double bb = d_b.l2Norms()[0];
+      // double c = b.l2Norms()[0];
+      // for(int i = 0 ; i < numProcs ; i++)
+      // {
+      //   if(i == rank)
+      //   {
+      //   std::cout << "rhs-norm: " << a
+      //             << " d_b-norm: " << bb
+      //             << " b-norm: " << c << "\t" << std::flush;
+      // std::cout << "\n";
+      //   }
+      // }
     }
 
     template <typename ValueTypeOperator,

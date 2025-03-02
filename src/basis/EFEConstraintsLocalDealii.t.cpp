@@ -24,7 +24,7 @@ namespace dftefe
       d_ghostIndices.resize(0);
       d_globalToLocalMap.clear();
       d_dealiiAffineConstraintMatrix.clear();
-      d_dealiiAffineConstraintMatrix.reinit(locally_owned_dofs,
+      d_dealiiAffineConstraintMatrix.reinit(/*locally_owned_dofs,*/
                                             locally_relevant_dofs);
     }
 

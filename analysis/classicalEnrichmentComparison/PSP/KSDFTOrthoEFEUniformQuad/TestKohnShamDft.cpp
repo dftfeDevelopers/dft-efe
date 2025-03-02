@@ -1254,19 +1254,19 @@ int main(int argc, char** argv)
   //                                                       /**cfeBasisDataStorageGLLEigen,*/
   //                                                       numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,);  
 
-    // std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
-    //                                               double,
-    //                                               Host,
-    //                                               dim>> MContextForInv =
-    // std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
-    //                                                     double,
-    //                                                     Host,
-    //                                                     dim>>(
-    //                                                     *basisManagerWaveFn,
-    //                                                     *cfeBasisDataStorageGLLEigen,
-    //                                                     *efeBasisDataAdaptiveOrbital,
-    //                                                     *cfeBasisDataStorageGLLEigen,
-    //                                                     linAlgOpContext);  
+    std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
+                                                  double,
+                                                  Host,
+                                                  dim>> MContextForInv =
+    std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+                                                        double,
+                                                        Host,
+                                                        dim>>(
+                                                        *basisManagerWaveFn,
+                                                        *cfeBasisDataStorageGLLEigen,
+                                                        *efeBasisDataAdaptiveOrbital,
+                                                        *cfeBasisDataStorageGLLEigen,
+                                                        linAlgOpContext);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
     p.registerStart("Hamiltonian Basis overlap inverse eval");
@@ -1369,7 +1369,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MContext,
                                           /**MContextForInv,*/
                                           *MInvContext);
@@ -1410,7 +1410,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MContext,
                                           /**MContextForInv,*/
                                           *MInvContext);

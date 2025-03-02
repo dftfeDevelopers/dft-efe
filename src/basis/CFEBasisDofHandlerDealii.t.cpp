@@ -221,7 +221,7 @@ namespace dftefe
       dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
                                                       locally_relevant_dofs);
       dealiiAffineConstraintMatrix.reinit(
-        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
+        /*this->getDoFHandler()->locally_owned_dofs(),*/ locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -500,7 +500,7 @@ namespace dftefe
       dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
                                                       locally_relevant_dofs);
       dealiiAffineConstraintMatrix.reinit(
-        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
+        /*this->getDoFHandler()->locally_owned_dofs(),*/ locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 

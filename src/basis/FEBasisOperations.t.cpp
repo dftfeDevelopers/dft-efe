@@ -159,13 +159,9 @@ namespace dftefe
                                         maxDofInCell,
                                       ValueTypeUnion());
             StorageBasis basisDataInCellRange(0);
-            if (!zeroStrideBasisVal)
-              basisDataInCellRange.resize(maxQuadInCell * cellBlockSize *
-                                            maxDofInCell,
-                                          ValueTypeBasisData());
-            else
-              basisDataInCellRange.resize(maxQuadInCell * maxDofInCell,
-                                          ValueTypeBasisData());
+            basisDataInCellRange.resize(maxQuadInCell * cellBlockSize *
+                                          maxDofInCell,
+                                        ValueTypeBasisData());
             /** --- Storages --------- **/
 
             if (f.getNumberComponents() == 1)
@@ -1123,13 +1119,8 @@ namespace dftefe
         cellBlockSize * maxDofInCell * numComponents);
 
       StorageBasis basisDataInCellRange(0);
-      if (!zeroStrideB)
-        basisDataInCellRange.resize(maxQuadInCell * cellBlockSize *
-                                      maxDofInCell,
-                                    ValueTypeBasisData());
-      else
-        basisDataInCellRange.resize(maxQuadInCell * maxDofInCell,
-                                    ValueTypeBasisData());
+      basisDataInCellRange.resize(maxQuadInCell * cellBlockSize * maxDofInCell,
+                                  ValueTypeBasisData());
       /** --- Storages --------- **/
 
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
@@ -2007,13 +1998,8 @@ namespace dftefe
                               ValueTypeUnion());
 
       StorageBasis basisDataInCellRange(0);
-      if (!zeroStrideB)
-        basisDataInCellRange.resize(maxQuadInCell * cellBlockSize *
-                                      maxDofInCell,
-                                    ValueTypeBasisData());
-      else
-        basisDataInCellRange.resize(maxQuadInCell * maxDofInCell,
-                                    ValueTypeBasisData());
+      basisDataInCellRange.resize(maxQuadInCell * cellBlockSize * maxDofInCell,
+                                  ValueTypeBasisData());
       /** --- Storages --------- **/
 
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;

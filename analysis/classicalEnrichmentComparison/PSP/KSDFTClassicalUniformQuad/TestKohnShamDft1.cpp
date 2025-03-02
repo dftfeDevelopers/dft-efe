@@ -1382,7 +1382,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,                                                                                
                                           *externalPotentialFunction,
                                           linAlgOpContext,
-                                          *MContext,
+                                          *MContextForInv,
                                           *MContext,
                                           /**MContextForInv,*/
                                           *MInvContext);
