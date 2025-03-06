@@ -25,6 +25,7 @@
 
 #include <utils/DataTypeOverloads.h>
 #include <utils/PointChargePotentialFunction.h>
+#include <boost/math/distributions/normal.hpp>
 
 namespace dftefe
 {
@@ -132,6 +133,34 @@ namespace dftefe
 
         return totalDensityInQuad;
       }
+
+      template <typename ValueType, utils::MemorySpace memorySpace>
+      void
+      generateRandNormDistMultivec(
+        linearAlgebra::MultiVector<ValueType, memorySpace> &multiVectorGuess)
+      {
+        int rank;
+        utils::mpi::MPICommRank(
+          multiVectorGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);
+        boost::math::normal normDist;
+        std::mt19937        randomIntGenerator(rank);
+        ValueType *         temp = multiVectorGuess.data();
+        for (unsigned int i = 0;
+             i < multiVectorGuess.localSize() * multiVectorGuess.numVectors();
+             ++i)
+          {
+            double z = (-0.5 + ((double)randomIntGenerator() -
+                                (double)randomIntGenerator.min()) /
+                                 ((double)randomIntGenerator.max() -
+                                  (double)randomIntGenerator.min())) *
+                       3.0;
+            double value = boost::math::pdf(normDist, z);
+            if (randomIntGenerator() % 2 == 0)
+              value = -1.0 * value;
+
+            temp[i] = (ValueType)value;
+          }
+      }
     } // namespace KohnShamDFTInternal
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -220,9 +249,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
-                                    numWantedEigenvalues,
-                                    0.0,
-                                    1.0)
+                                    numWantedEigenvalues)
       , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -234,6 +261,8 @@ namespace dftefe
       , d_groundStateEnergy(0)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
     {
+      KohnShamDFTInternal::generateRandNormDistMultivec(
+        d_waveFunctionSubspaceGuess);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
@@ -472,9 +501,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
-                                    numWantedEigenvalues,
-                                    0.0,
-                                    1.0)
+                                    numWantedEigenvalues)
       , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -486,6 +513,8 @@ namespace dftefe
       , d_groundStateEnergy(0)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
     {
+      KohnShamDFTInternal::generateRandNormDistMultivec(
+        d_waveFunctionSubspaceGuess);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
@@ -737,9 +766,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
-                                    numWantedEigenvalues,
-                                    0.0,
-                                    1.0)
+                                    numWantedEigenvalues)
       , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -751,6 +778,8 @@ namespace dftefe
       , d_groundStateEnergy(0)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
     {
+      KohnShamDFTInternal::generateRandNormDistMultivec(
+        d_waveFunctionSubspaceGuess);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
