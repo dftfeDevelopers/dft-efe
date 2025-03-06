@@ -291,37 +291,41 @@ namespace dftefe
                         DFTEFE_Assert(b >= a);
                         DFTEFE_Assert(d >= c);
 
-                        // check that enrichment functions do not spill bounding
-                        // box for non-periodic cases.
-                        if (!isPeriodicFlags[k] &&
-                            !(c - additionalCutoff > minboundGlobalDomain[k] &&
-                              d + additionalCutoff < maxboundGlobalDomain[k]))
-                          {
-                            std::stringstream ss;
-                            std::copy(qNumberIter->begin(),
-                                      qNumberIter->end(),
-                                      std::ostream_iterator<int>(ss, " "));
-                            std::string s = ss.str();
-                            std::string msg =
-                              "The enrichment functions for " + fieldName +
-                              " " + s + " for the atom " + *(iter) +
-                              " at the coordinates [" +
-                              std::to_string((*it)[0]) + " , " +
-                              std::to_string((*it)[1]) + " , " +
-                              std::to_string((*it)[2]) +
-                              "] may spill to a"
-                              " non-periodic face of the triangulation domain which is not allowed."
-                              " Increase the "
-                              " domain boundary or reduce to the ball radius of the enrichment "
-                              " function cutoff. ";
-                            if (additionalCutoff != 0)
-                              msg +=
-                                "Recommended domain boundary increase, if wanted, can be by " +
-                                std::to_string(additionalCutoff) +
-                                " bohr on each non-periodic side of origin.";
-                            utils::throwException<utils::InvalidArgument>(false,
-                                                                          msg);
-                          }
+                        // // check that enrichment functions do not spill
+                        // bounding
+                        // // box for non-periodic cases.
+                        // if (!isPeriodicFlags[k] &&
+                        //     !(c - additionalCutoff > minboundGlobalDomain[k]
+                        //     &&
+                        //       d + additionalCutoff <
+                        //       maxboundGlobalDomain[k]))
+                        //   {
+                        //     std::stringstream ss;
+                        //     std::copy(qNumberIter->begin(),
+                        //               qNumberIter->end(),
+                        //               std::ostream_iterator<int>(ss, " "));
+                        //     std::string s = ss.str();
+                        //     std::string msg =
+                        //       "The enrichment functions for " + fieldName +
+                        //       " " + s + " for the atom " + *(iter) +
+                        //       " at the coordinates [" +
+                        //       std::to_string((*it)[0]) + " , " +
+                        //       std::to_string((*it)[1]) + " , " +
+                        //       std::to_string((*it)[2]) +
+                        //       "] may spill to a"
+                        //       " non-periodic face of the triangulation domain
+                        //       which is not allowed." " Increase the " "
+                        //       domain boundary or reduce to the ball radius of
+                        //       the enrichment " " function cutoff. ";
+                        //     if (additionalCutoff != 0)
+                        //       msg +=
+                        //         "Recommended domain boundary increase, if
+                        //         wanted, can be by " +
+                        //         std::to_string(additionalCutoff) +
+                        //         " bohr on each non-periodic side of origin.";
+                        //     utils::throwException<utils::InvalidArgument>(false,
+                        //                                                   msg);
+                        //   }
 
                         if (!((c < a && d < a) || (c > b && d > b)))
                           flag = true;
@@ -373,6 +377,10 @@ namespace dftefe
           &                                  overlappingEnrichmentIdsInCells,
         const std::vector<global_size_type> &newAtomIdToEnrichmentIdOffset)
       {
+        ghostEnrichmentIds.resize(0);
+        enrichmentIdToOldAtomIdMap.clear();
+        enrichmentIdToQuantumIdMap.clear();
+        enrichmentIdsInProcessor.resize(0);
         std::vector<size_type>     oldAtomIds = atomIdsPartition->oldAtomIds();
         std::set<global_size_type> enrichmentIdsInProcessorTmp;
         size_type                  newAtomId, qIdPosition;
@@ -452,6 +460,7 @@ namespace dftefe
       const std::vector<bool> &                     isPeriodicFlags,
       const std::vector<std::vector<utils::Point>> &cellVerticesVector,
       const utils::mpi::MPIComm &                   comm)
+      : d_atomIdsPartition(atomIdsPartition)
     {
       utils::throwException<utils::InvalidArgument>(
         !(std::any_of(isPeriodicFlags.begin(),
@@ -543,6 +552,25 @@ namespace dftefe
 
       d_oldAtomIdsVec = atomIdsPartition->oldAtomIds();
     }
+
+    // template <unsigned int dim>
+    // void
+    // EnrichmentIdsPartition<dim>::modifyNumCellsOverlapWithEnrichments(std::vector<std::vector
+    //   <global_size_type>> &overlappingEnrichmentIdsInCells)
+    // {
+    //   d_overlappingEnrichmentIdsInCells.resize(0);
+    //   d_overlappingEnrichmentIdsInCells = overlappingEnrichmentIdsInCells;
+
+    //   EnrichmentIdsPartitionInternal::getGhostEnrichmentIds<dim>(
+    //     d_atomIdsPartition,
+    //     d_enrichmentIdsInProcessor,
+    //     d_enrichmentIdToOldAtomIdMap,
+    //     d_enrichmentIdToQuantumIdMap,
+    //     d_ghostEnrichmentIds,
+    //     d_locallyOwnedEnrichmentIds,
+    //     d_overlappingEnrichmentIdsInCells,
+    //     d_newAtomIdToEnrichmentIdOffset);
+    // }
 
     template <unsigned int dim>
     std::vector<global_size_type>

@@ -64,6 +64,8 @@ namespace dftefe
       bool
       isAtBoundary() const override;
 
+      virtual bool
+      hasPeriodicNeighbor(const unsigned int i) const override;
 
       double
       diameter() const override;

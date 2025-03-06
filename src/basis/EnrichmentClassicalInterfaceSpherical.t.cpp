@@ -36,6 +36,46 @@ namespace dftefe
 {
   namespace basis
   {
+    namespace
+    {
+      void
+      checkEnrichmentsSpillToBoundary(
+        std::shared_ptr<const TriangulationBase> triangulation,
+        std::vector<std::vector<global_size_type>>
+          overlappingEnrichmentIdsInCells)
+      {
+        auto cell   = triangulation->beginLocal();
+        auto endc   = triangulation->endLocal();
+        int  cellId = 0;
+        for (; cell != endc; cell++)
+          {
+            if (overlappingEnrichmentIdsInCells[cellId].size() > 0)
+              {
+                for (int iFace = 0; iFace < 2 * (*cell)->getDim(); iFace++)
+                  {
+                    if ((*cell)->isAtBoundary(iFace))
+                      {
+                        if (!(*cell)->hasPeriodicNeighbor(iFace))
+                          {
+                            dftefe::utils::Point centerPoint(
+                              std::vector<double>(3, 0));
+                            (*cell)->center(centerPoint);
+                            utils::throwException(
+                              false,
+                              "Enrichments cannot spill to boundary cells in "
+                              "EnrichmentClassicalInterfaceSpherical for non periodic boundary. The cell with center (" +
+                                std::to_string(centerPoint[0]) + " , " +
+                                std::to_string(centerPoint[1]) + " , " +
+                                std::to_string(centerPoint[2]) +
+                                ") has enrichment ids which is not possible.");
+                          }
+                      }
+                  }
+              }
+            cellId++;
+          }
+      }
+    } // namespace
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
@@ -106,11 +146,20 @@ namespace dftefe
       auto cell = d_triangulation->beginLocal();
       auto endc = d_triangulation->endLocal();
 
+      size_type cellIndex                        = 0;
+      int       locallyOwnedCellsInTriangulation = 0;
+
       for (; cell != endc; cell++)
         {
           (*cell)->getVertices(cellVertices);
           cellVerticesVector.push_back(cellVertices);
+          locallyOwnedCellsInTriangulation++;
         }
+
+      utils::throwException(
+        d_cfeBasisDofHandler->nLocallyOwnedCells() ==
+          locallyOwnedCellsInTriangulation,
+        "locallyOwnedCellsInTriangulation does not match to that in dofhandler in EnrichmentClassicalInterface()");
 
       std::vector<double> minbound;
       std::vector<double> maxbound;
@@ -164,60 +213,8 @@ namespace dftefe
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
-      global_size_type maxEnrich = 0;
-      global_size_type minEnrich = 0;
-      global_size_type avgEnrich = 0;
-      size_type        cellIndex = 0;
-      cell                       = d_triangulation->beginLocal();
-      for (; cell != endc; cell++)
-        {
-          global_size_type numEnrichInCell =
-            d_overlappingEnrichmentIdsInCells[cellIndex].size();
-          if (maxEnrich < numEnrichInCell)
-            maxEnrich = numEnrichInCell;
-          if (minEnrich > numEnrichInCell)
-            minEnrich = numEnrichInCell;
-          avgEnrich += numEnrichInCell;
-          cellIndex++;
-        }
-
-      avgEnrich /= d_cfeBasisDofHandler->nLocallyOwnedCells();
-
-      utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        &maxEnrich,
-        1,
-        utils::mpi::Types<global_size_type>::getMPIDatatype(),
-        utils::mpi::MPIMax,
-        comm);
-
-      utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        &minEnrich,
-        1,
-        utils::mpi::Types<global_size_type>::getMPIDatatype(),
-        utils::mpi::MPIMin,
-        comm);
-
-      utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        &avgEnrich,
-        1,
-        utils::mpi::Types<global_size_type>::getMPIDatatype(),
-        utils::mpi::MPISum,
-        comm);
-
-      avgEnrich /= numProcs;
-
-      rootCout << "Maximum " << fieldName
-               << " Enrichment Ids In a Cell in Processor: " << maxEnrich
-               << "\n";
-      rootCout << "Minimum " << fieldName
-               << " Enrichment Ids In a Cell in Processor: " << minEnrich
-               << "\n";
-      rootCout << "Average " << fieldName
-               << " Enrichment Ids In a Cell In Processor: " << avgEnrich
-               << "\n";
+      checkEnrichmentsSpillToBoundary(d_triangulation,
+                                      d_overlappingEnrichmentIdsInCells);
 
       // For Non-Periodic BC, a sparse vector d_i with hanging with homogenous
       // BC will be formed which will be solved by Md =
@@ -465,6 +462,106 @@ namespace dftefe
             utils::OptimizedIndexSet<size_type>(i->second);
         }
 
+      // //// ------------optimization----------
+      // //// Another approach is to fix it in enrichmentIdsPartition using
+      // dealii::neighbour()
+      // //// get cellId of the localId and create
+      // overlappingEnrichmentIdsInCells
+      // //// change the ghostids based on those enrichment ids i.e. the
+      // partitioning std::vector<std::vector<global_size_type>>
+      // overlappingEnrichmentIdsInCells
+      //   (d_overlappingEnrichmentIdsInCells.size(),
+      //   std::vector<global_size_type>(0));
+
+      //   cellIndex = 0;
+      //   std::vector<size_type> vecLocalNodeId;
+
+      // cell = d_triangulation->beginLocal();
+      // endc = d_triangulation->endLocal();
+
+      //   for (; cell != endc; cell++)
+      //   {
+      //     d_cfeBasisManager->getCellDofsLocalIds(cellIndex, vecLocalNodeId);
+      //     for(auto &pair : enrichmentIdToClassicalLocalIdMapSet)
+      //     {
+      //       for(auto &iCellLocalId : vecLocalNodeId)
+      //         if(pair.second.find(iCellLocalId) != pair.second.end())
+      //         {
+      //           overlappingEnrichmentIdsInCells[cellIndex].push_back(pair.first);
+      //           DFTEFE_AssertWithMsg(std::find(d_overlappingEnrichmentIdsInCells[cellIndex].begin(),
+      //             d_overlappingEnrichmentIdsInCells[cellIndex].end(),
+      //             pair.first) !=
+      //               d_overlappingEnrichmentIdsInCells[cellIndex].end(),
+      //               "The enrichment ids were not there in "
+      //               " overlapping enrichmentIds in cells with larger ball
+      //               radius.");
+      //           break;
+      //         }
+      //     }
+      //     cellIndex++;
+      //   }
+      // d_enrichmentIdsPartition->modifyNumCellsOverlapWithEnrichments(overlappingEnrichmentIdsInCells);
+
+      // d_overlappingEnrichmentIdsInCells.resize(0);
+      // d_overlappingEnrichmentIdsInCells =
+      //   d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
+
+      global_size_type maxEnrich = 0;
+      global_size_type minEnrich = 0;
+      global_size_type avgEnrich = 0;
+      cell                       = d_triangulation->beginLocal();
+      endc                       = d_triangulation->endLocal();
+      cellIndex                  = 0;
+      for (; cell != endc; cell++)
+        {
+          global_size_type numEnrichInCell =
+            d_overlappingEnrichmentIdsInCells[cellIndex].size();
+          if (maxEnrich < numEnrichInCell)
+            maxEnrich = numEnrichInCell;
+          if (minEnrich > numEnrichInCell)
+            minEnrich = numEnrichInCell;
+          avgEnrich += numEnrichInCell;
+          cellIndex++;
+        }
+
+      avgEnrich /= d_cfeBasisDofHandler->nLocallyOwnedCells();
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &maxEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        comm);
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &minEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMin,
+        comm);
+
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &avgEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        comm);
+
+      avgEnrich /= numProcs;
+
+      rootCout << "Maximum " << fieldName
+               << " Enrichment Ids In a Cell in Processor: " << maxEnrich
+               << "\n";
+      rootCout << "Minimum " << fieldName
+               << " Enrichment Ids In a Cell in Processor: " << minEnrich
+               << "\n";
+      rootCout << "Average " << fieldName
+               << " Enrichment Ids In a Cell In Processor: " << avgEnrich
+               << "\n";
+
       rootCout
         << "Completed creating Orthogonalized EnrichmentClassicalInterfaceSpherical for "
         << d_enrichmentIdsPartition->nTotalEnrichmentIds() << " " << fieldName
@@ -519,11 +616,19 @@ namespace dftefe
       auto                                   cell = triangulation->beginLocal();
       auto                                   endc = triangulation->endLocal();
 
+      int locallyOwnedCellsInTriangulation = 0;
+
       for (; cell != endc; cell++)
         {
           (*cell)->getVertices(cellVertices);
           cellVerticesVector.push_back(cellVertices);
+          locallyOwnedCellsInTriangulation++;
         }
+
+      utils::throwException(
+        d_cfeBasisDofHandler->nLocallyOwnedCells() ==
+          locallyOwnedCellsInTriangulation,
+        "locallyOwnedCellsInTriangulation does not match to that in dofhandler in EnrichmentClassicalInterface()");
 
       std::vector<double> minbound;
       std::vector<double> maxbound;
@@ -634,6 +739,9 @@ namespace dftefe
         << "Completed creating Pristine EnrichmentClassicalInterfaceSpherical for "
         << d_enrichmentIdsPartition->nTotalEnrichmentIds() << " " << fieldName
         << " enrichments." << std::endl;
+
+      checkEnrichmentsSpillToBoundary(d_triangulation,
+                                      d_overlappingEnrichmentIdsInCells);
     }
 
     template <typename ValueTypeBasisData,

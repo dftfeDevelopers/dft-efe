@@ -142,8 +142,9 @@ namespace dftefe
       std::unordered_map<global_size_type, size_type>
         d_enrichmentIdToOldAtomIdMap;
       std::unordered_map<global_size_type, size_type>
-                             d_enrichmentIdToQuantumIdMap;
-      std::vector<size_type> d_oldAtomIdsVec;
+                                                   d_enrichmentIdToQuantumIdMap;
+      std::vector<size_type>                       d_oldAtomIdsVec;
+      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
 
       // std::vector<global_size_type> d_enrichmentIdsVec;
       // std::vector<size_type> d_oldAtomIdsFromEnrichIdsVec;

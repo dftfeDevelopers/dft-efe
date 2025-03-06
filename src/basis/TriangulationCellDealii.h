@@ -50,6 +50,9 @@ namespace dftefe
       bool
       isAtBoundary() const override;
 
+      bool
+      hasPeriodicNeighbor(const unsigned int i) const override;
+
       unsigned int
       getDim() const override;
 

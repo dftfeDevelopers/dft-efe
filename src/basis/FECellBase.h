@@ -43,6 +43,9 @@ namespace dftefe
       virtual bool
       isAtBoundary() const = 0;
 
+      virtual bool
+      hasPeriodicNeighbor(const unsigned int i) const = 0;
+
       virtual double
       diameter() const = 0;
 
