@@ -96,7 +96,8 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const size_type  waveFunctionBlockSize = 0,
+        bool             isResidualChebyshevFilter = true,
+        const size_type  waveFunctionBlockSize     = 0,
         const OpContext &MLanczos =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
@@ -198,6 +199,7 @@ namespace dftefe
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
       utils::Profiler                                     d_p;
+      const bool d_isResidualChebyFilter;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

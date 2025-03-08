@@ -228,7 +228,8 @@ namespace dftefe
                          linAlgOpContext,
         const OpContext &MContextForInv,
         const OpContext &MContext,
-        const OpContext &MInvContext)
+        const OpContext &MInvContext,
+        bool             isResidualChebyshevFilter)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -386,6 +387,7 @@ namespace dftefe
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
+        isResidualChebyshevFilter,
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
@@ -406,6 +408,72 @@ namespace dftefe
         d_isPSPCalculation = false;
       else
         d_isPSPCalculation = true;
+
+      if (isResidualChebyshevFilter)
+        {
+          // get bounds from lanczos
+          std::vector<double> tol{
+            ksdft::LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL,
+            ksdft::LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL};
+          linearAlgebra::LanczosExtremeEigenSolver<ValueTypeOperator,
+                                                   ValueTypeOperand,
+                                                   memorySpace>
+            lanczos(
+              ksdft::LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE,
+              1,
+              1,
+              tol,
+              ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
+              d_lanczosGuess,
+              false);
+
+          linearAlgebra::MultiVector<ValueType, memorySpace>
+            eigenVectorsLanczos;
+
+          std::vector<RealType> eigenValuesLanczos(2);
+
+          lanczos.solve(*d_hamitonianOperator,
+                        eigenValuesLanczos,
+                        eigenVectorsLanczos,
+                        false,
+                        MContextForInv,
+                        MInvContext);
+
+          std::vector<RealType> diagonal(0), subDiagonal(0);
+          lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
+          RealType residual = subDiagonal[subDiagonal.size() - 1];
+
+          RealType wantedSpectrumLowerBound = eigenValuesLanczos[0];
+          RealType wantedSpectrumUpperBound =
+            (eigenValuesLanczos[1] + residual - eigenValuesLanczos[0]) *
+              ((double)(numWantedEigenvalues * 200.0) /
+               d_waveFunctionSubspaceGuess.globalSize()) +
+            eigenValuesLanczos[0];
+          if (wantedSpectrumUpperBound >= eigenValuesLanczos[1] + residual)
+            {
+              wantedSpectrumUpperBound =
+                (eigenValuesLanczos[1] + residual + eigenValuesLanczos[0]) *
+                0.5;
+            }
+
+          linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>
+            chfsi(wantedSpectrumLowerBound,
+                  wantedSpectrumUpperBound,
+                  eigenValuesLanczos[1] + residual,
+                  1,
+                  ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+                  d_waveFunctionSubspaceGuess,
+                  false);
+
+          chfsi.solve(*d_hamitonianOperator,
+                      d_kohnShamEnergies,
+                      *d_kohnShamWaveFunctions,
+                      false,
+                      MContext,
+                      MInvContext);
+        }
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -480,7 +548,8 @@ namespace dftefe
                          linAlgOpContext,
         const OpContext &MContextForInv,
         const OpContext &MContext,
-        const OpContext &MInvContext)
+        const OpContext &MInvContext,
+        bool             isResidualChebyshevFilter)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -641,6 +710,7 @@ namespace dftefe
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
+        isResidualChebyshevFilter,
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
@@ -661,6 +731,72 @@ namespace dftefe
         d_isPSPCalculation = false;
       else
         d_isPSPCalculation = true;
+
+      if (isResidualChebyshevFilter)
+        {
+          // get bounds from lanczos
+          std::vector<double> tol{
+            ksdft::LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL,
+            ksdft::LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL};
+          linearAlgebra::LanczosExtremeEigenSolver<ValueTypeOperator,
+                                                   ValueTypeOperand,
+                                                   memorySpace>
+            lanczos(
+              ksdft::LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE,
+              1,
+              1,
+              tol,
+              ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
+              d_lanczosGuess,
+              false);
+
+          linearAlgebra::MultiVector<ValueType, memorySpace>
+            eigenVectorsLanczos;
+
+          std::vector<RealType> eigenValuesLanczos(2);
+
+          lanczos.solve(*d_hamitonianOperator,
+                        eigenValuesLanczos,
+                        eigenVectorsLanczos,
+                        false,
+                        MContextForInv,
+                        MInvContext);
+
+          std::vector<RealType> diagonal(0), subDiagonal(0);
+          lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
+          RealType residual = subDiagonal[subDiagonal.size() - 1];
+
+          RealType wantedSpectrumLowerBound = eigenValuesLanczos[0];
+          RealType wantedSpectrumUpperBound =
+            (eigenValuesLanczos[1] + residual - eigenValuesLanczos[0]) *
+              ((double)(numWantedEigenvalues * 200.0) /
+               d_waveFunctionSubspaceGuess.globalSize()) +
+            eigenValuesLanczos[0];
+          if (wantedSpectrumUpperBound >= eigenValuesLanczos[1] + residual)
+            {
+              wantedSpectrumUpperBound =
+                (eigenValuesLanczos[1] + residual + eigenValuesLanczos[0]) *
+                0.5;
+            }
+
+          linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>
+            chfsi(wantedSpectrumLowerBound,
+                  wantedSpectrumUpperBound,
+                  eigenValuesLanczos[1] + residual,
+                  1,
+                  ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+                  d_waveFunctionSubspaceGuess,
+                  false);
+
+          chfsi.solve(*d_hamitonianOperator,
+                      d_kohnShamEnergies,
+                      *d_kohnShamWaveFunctions,
+                      false,
+                      MContext,
+                      MInvContext);
+        }
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -745,7 +881,8 @@ namespace dftefe
         /* basis overlap related info */
         const OpContext &MContextForInv,
         const OpContext &MContext,
-        const OpContext &MInvContext)
+        const OpContext &MInvContext,
+        bool             isResidualChebyshevFilter)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -905,6 +1042,7 @@ namespace dftefe
         maxChebyshevFilterPass,
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
+        isResidualChebyshevFilter,
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
@@ -925,6 +1063,72 @@ namespace dftefe
         d_isPSPCalculation = false;
       else
         d_isPSPCalculation = true;
+
+      if (isResidualChebyshevFilter)
+        {
+          // get bounds from lanczos
+          std::vector<double> tol{
+            ksdft::LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL,
+            ksdft::LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL};
+          linearAlgebra::LanczosExtremeEigenSolver<ValueTypeOperator,
+                                                   ValueTypeOperand,
+                                                   memorySpace>
+            lanczos(
+              ksdft::LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE,
+              1,
+              1,
+              tol,
+              ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
+              d_lanczosGuess,
+              false);
+
+          linearAlgebra::MultiVector<ValueType, memorySpace>
+            eigenVectorsLanczos;
+
+          std::vector<RealType> eigenValuesLanczos(2);
+
+          lanczos.solve(*d_hamitonianOperator,
+                        eigenValuesLanczos,
+                        eigenVectorsLanczos,
+                        false,
+                        MContextForInv,
+                        MInvContext);
+
+          std::vector<RealType> diagonal(0), subDiagonal(0);
+          lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
+          RealType residual = subDiagonal[subDiagonal.size() - 1];
+
+          RealType wantedSpectrumLowerBound = eigenValuesLanczos[0];
+          RealType wantedSpectrumUpperBound =
+            (eigenValuesLanczos[1] + residual - eigenValuesLanczos[0]) *
+              ((double)(numWantedEigenvalues * 200.0) /
+               d_waveFunctionSubspaceGuess.globalSize()) +
+            eigenValuesLanczos[0];
+          if (wantedSpectrumUpperBound >= eigenValuesLanczos[1] + residual)
+            {
+              wantedSpectrumUpperBound =
+                (eigenValuesLanczos[1] + residual + eigenValuesLanczos[0]) *
+                0.5;
+            }
+
+          linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                      ValueTypeOperand,
+                                                      memorySpace>
+            chfsi(wantedSpectrumLowerBound,
+                  wantedSpectrumUpperBound,
+                  eigenValuesLanczos[1] + residual,
+                  1,
+                  ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+                  d_waveFunctionSubspaceGuess,
+                  false);
+
+          chfsi.solve(*d_hamitonianOperator,
+                      d_kohnShamEnergies,
+                      *d_kohnShamWaveFunctions,
+                      false,
+                      MContext,
+                      MInvContext);
+        }
     }
 
     template <typename ValueTypeElectrostaticsCoeff,

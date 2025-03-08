@@ -97,7 +97,10 @@ namespace dftefe
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
         &B,
       const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-        &                                         BInv,
+        &BInv,
+      std::vector<blasLapack::real_type<
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>>>
+        &                                         eigenvalues,
       MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
       const size_type                             polynomialDegree,
       const double                                wantedSpectrumLowerBound,
@@ -105,6 +108,7 @@ namespace dftefe
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
                   memorySpace> &                  filteredSubspace);
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #include <linearAlgebra/ChebyshevFilter.t.cpp>

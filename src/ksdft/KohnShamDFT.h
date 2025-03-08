@@ -146,7 +146,8 @@ namespace dftefe
         const OpContext &MInvContext =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
-                                                 memorySpace>());
+                                                 memorySpace>(),
+        bool isResidualChebyshevFilter = true);
 
 
       KohnShamDFT(
@@ -229,7 +230,8 @@ namespace dftefe
         const OpContext &MInvContext =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
-                                                 memorySpace>());
+                                                 memorySpace>(),
+        bool isResidualChebyshevFilter = true);
 
       KohnShamDFT(
         /* Atom related info */
@@ -310,7 +312,8 @@ namespace dftefe
         const OpContext &MInvContext =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
-                                                 memorySpace>());
+                                                 memorySpace>(),
+        bool isResidualChebyshevFilter = true);
 
       ~KohnShamDFT() = default;
 

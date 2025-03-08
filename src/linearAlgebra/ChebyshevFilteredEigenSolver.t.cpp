@@ -46,8 +46,10 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        bool                                        isResidualChebyshevFilter,
         const size_type                             eigenVectorBlockSize)
       : d_p(eigenSubspaceGuess.getMPIPatternP2P()->mpiCommunicator(), "CHFSI")
+      , d_isResidualChebyFilter(isResidualChebyshevFilter)
     {
       d_filteredSubspaceOrtho =
         std::make_shared<MultiVector<ValueType, memorySpace>>(
@@ -139,15 +141,30 @@ namespace dftefe
       rootCout << "\n";
 
       d_p.registerStart("Chebyshev Filter");
-      ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
-        A,
-        BInv,
-        *d_eigenSubspaceGuess, /*scratch1*/
-        d_polynomialDegree,
-        d_wantedSpectrumLowerBound,
-        d_wantedSpectrumUpperBound,
-        d_unWantedSpectrumUpperBound,
-        *d_filteredSubspace); /*scratch2*/
+      if (d_isResidualChebyFilter)
+        ResidualChebyshevFilterGEP<ValueTypeOperator,
+                                   ValueTypeOperand,
+                                   memorySpace>(
+          A,
+          B,
+          BInv,
+          eigenValues,
+          *d_eigenSubspaceGuess, /*scratch1*/
+          d_polynomialDegree,
+          d_wantedSpectrumLowerBound,
+          d_wantedSpectrumUpperBound,
+          d_unWantedSpectrumUpperBound,
+          *d_filteredSubspace); /*scratch2*/
+      else
+        ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+          A,
+          BInv,
+          *d_eigenSubspaceGuess, /*scratch1*/
+          d_polynomialDegree,
+          d_wantedSpectrumLowerBound,
+          d_wantedSpectrumUpperBound,
+          d_unWantedSpectrumUpperBound,
+          *d_filteredSubspace); /*scratch2*/
       d_p.registerEnd("Chebyshev Filter");
 
       rootCout << "d_filteredSubspace l2norms CHFSI: ";

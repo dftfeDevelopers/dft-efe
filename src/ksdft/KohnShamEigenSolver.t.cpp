@@ -60,6 +60,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        bool             isResidualChebyshevFilter,
         const size_type  waveFunctionBlockSize,
         const OpContext &MLanczos,
         const OpContext &MInvLanczos)
@@ -77,6 +78,7 @@ namespace dftefe
       , d_p(waveFunctionSubspaceGuess.getMPIPatternP2P()->mpiCommunicator(),
             "Kohn Sham EigenSolver")
       , d_chebyPolyScalingFactor(1.0)
+      , d_isResidualChebyFilter(isResidualChebyshevFilter)
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -240,6 +242,7 @@ namespace dftefe
             d_chebyshevPolynomialDegree,
             ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
             *d_waveFunctionSubspaceGuess,
+            d_isResidualChebyFilter,
             d_waveFunctionBlockSize);
 
           linearAlgebra::MultiVector<ValueType, memorySpace> HX(

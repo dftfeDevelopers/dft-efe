@@ -275,8 +275,8 @@ namespace dftefe
       MultiVector<ValueType, memorySpace> scratch2(X, (ValueType)0);
       MultiVector<ValueType, memorySpace> scratch3(X, (ValueType)0);
 
-      MultiVector<ValueType, memorySpace> &Residual(X, (ValueType)0);
-      MultiVector<ValueType, memorySpace> &ResidualNew(X, (ValueType)0);
+      MultiVector<ValueType, memorySpace> Residual(X, (ValueType)0);
+      MultiVector<ValueType, memorySpace> ResidualNew(X, (ValueType)0);
       //============scratch spaces================
 
       utils::MemoryStorage<RealType, memorySpace> eigenValuesFiltered(
@@ -332,9 +332,9 @@ namespace dftefe
       //========= finding lambda1  ================
 
       //===== Note: for the first filtered eigenspace X_1 = alpha1 * A * X
-      //assumed ======
+      // assumed ======
       //====== Implies: BR_1 = \alpha_1 *( AX - \lambda B X) = \alpha_1 *
-      //ResidualNew ========
+      // ResidualNew ========
       blasLapack::ascale(X.locallyOwnedSize() * X.getNumberComponents(),
                          alpha1,
                          ResidualNew.data(),
@@ -350,7 +350,7 @@ namespace dftefe
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
 
           //======Residual = alpha1 * H * ResidualNew + alpha2 * Residual - c *
-          //alpha1 * ResidualNew======
+          // alpha1 * ResidualNew======
           BInv.apply(ResidualNew, scratch1, true, true);
           A.apply(scratch1, scratch2, true, true);
 
@@ -372,7 +372,7 @@ namespace dftefe
             Residual.data(),
             linAlgOpContext);
           //======Residual = alpha1 * H * ResidualNew + alpha2 * Residual - c *
-          //alpha1 * ResidualNew======
+          // alpha1 * ResidualNew======
 
           // Residual = Residual + alpha1 * Y * eigenValuesFiltered2
           linearAlgebra::blasLapack::
@@ -397,7 +397,8 @@ namespace dftefe
                                            eigenValuesFiltered2.data(),
                                            alpha2,
                                            eigenValuesFiltered1.data(),
-                                           eigenValuesFiltered1.data());
+                                           eigenValuesFiltered1.data(),
+                                           linAlgOpContext);
 
           // eigenValuesFiltered1 = eigenValuesFiltered1 + alpha1 *
           // eigenValuesFiltered2 * eigenValuesFiltered

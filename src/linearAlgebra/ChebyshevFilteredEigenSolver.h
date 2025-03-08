@@ -87,7 +87,8 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const size_type                             eigenVectorBlockSize = 0);
+        bool            isResidualChebyshevFilter = true,
+        const size_type eigenVectorBlockSize      = 0);
 
       /**
        *@brief Destructor
@@ -140,6 +141,7 @@ namespace dftefe
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
                       d_rr;
       utils::Profiler d_p;
+      const bool      d_isResidualChebyFilter;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra
