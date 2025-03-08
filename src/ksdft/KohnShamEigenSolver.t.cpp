@@ -370,8 +370,10 @@ namespace dftefe
                 axpbyBlocked<ValueType, ValueType, memorySpace>(
                   MX.locallyOwnedSize(),
                   d_numWantedEigenvalues,
+                  1,
                   nOnes.data(),
                   HX.data(),
+                  1,
                   kohnShamEnergiesMemspace.data(),
                   MX.data(),
                   residualEigenSolver.data(),

@@ -519,6 +519,11 @@ namespace dftefe
     MemoryStorage<ValueType, memorySpaceDst>
     memoryStorageFromSTL(const std::vector<ValueType> &src);
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    swap(MemoryStorage<ValueType, memorySpace> &X,
+         MemoryStorage<ValueType, memorySpace> &Y);
+
   } // namespace utils
 } // end of namespace dftefe
 

@@ -274,8 +274,10 @@ namespace dftefe
         static void
         axpbyBlocked(const size_type                            size,
                      const size_type                            blockSize,
+                     const scalar_type<ValueType1, ValueType2>  alpha1,
                      const scalar_type<ValueType1, ValueType2> *alpha,
                      const ValueType1 *                         x,
+                     const scalar_type<ValueType1, ValueType2>  beta1,
                      const scalar_type<ValueType1, ValueType2> *beta,
                      const ValueType2 *                         y,
                      scalar_type<ValueType1, ValueType2> *      z);

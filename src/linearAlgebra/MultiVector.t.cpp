@@ -788,8 +788,10 @@ namespace dftefe
         "The coefficients are not comptible with the vector local size");
       blasLapack::axpbyBlocked(u.localSize(),
                                nv,
+                               1,
                                a.data(),
                                u.data(),
+                               1,
                                b.data(),
                                v.data(),
                                w.data(),

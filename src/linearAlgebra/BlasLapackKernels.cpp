@@ -477,8 +477,10 @@ namespace dftefe
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
         const size_type                            size,
         const size_type                            blockSize,
+        const scalar_type<ValueType1, ValueType2>  alpha1,
         const scalar_type<ValueType1, ValueType2> *alpha,
         const ValueType1 *                         x,
+        const scalar_type<ValueType1, ValueType2>  beta1,
         const scalar_type<ValueType1, ValueType2> *beta,
         const ValueType2 *                         y,
         scalar_type<ValueType1, ValueType2> *      z)
@@ -488,10 +490,12 @@ namespace dftefe
             for (size_type j = 0; j < blockSize; ++j)
               {
                 z[i * blockSize + j] =
-                  ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)alpha1) *
+                    ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
                     ((scalar_type<ValueType1, ValueType2>)
                        x[i * blockSize + j]) +
-                  ((scalar_type<ValueType1, ValueType2>)beta[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)beta1) *
+                    ((scalar_type<ValueType1, ValueType2>)beta[j]) *
                     ((scalar_type<ValueType1, ValueType2>)y[i * blockSize + j]);
               }
           }
