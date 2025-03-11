@@ -195,20 +195,19 @@ namespace dftefe
                                                       comm);
 
       // Create enrichmentIdsPartition Object.
-      d_enrichmentIdsPartition =
-        std::make_shared<const EnrichmentIdsPartition<dim>>(
-          d_atomSphericalDataContainer,
-          d_atomIdsPartition,
-          atomSymbolVec,
-          atomCoordinatesVec,
-          fieldName,
-          minbound,
-          maxbound,
-          d_triangulation->maxElementLength(),
-          d_triangulation->getDomainVectors(),
-          d_triangulation->getPeriodicFlags(),
-          cellVerticesVector,
-          comm);
+      d_enrichmentIdsPartition = std::make_shared<EnrichmentIdsPartition<dim>>(
+        d_atomSphericalDataContainer,
+        d_atomIdsPartition,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        fieldName,
+        minbound,
+        maxbound,
+        d_triangulation->maxElementLength(),
+        d_triangulation->getDomainVectors(),
+        d_triangulation->getPeriodicFlags(),
+        cellVerticesVector,
+        comm);
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -307,22 +306,28 @@ namespace dftefe
 
           std::vector<ValueTypeBasisData> enrichmentsAtQuadValues(
             nTotalEnrichmentIds * nQuadPointInCell, (ValueTypeBasisData)0);
-          std::vector<double> val =
-            getEnrichmentValue(cellIndex, quadRealPointsVec);
-          int enrichIdInCell = 0;
-          for (auto enrichmentId : d_overlappingEnrichmentIdsInCells[cellIndex])
+          if (d_overlappingEnrichmentIdsInCells[cellIndex].size() > 0)
             {
-              for (unsigned int qPoint = 0; qPoint < nQuadPointInCell; qPoint++)
+              std::vector<double> val =
+                getEnrichmentValue(cellIndex, quadRealPointsVec);
+              int enrichIdInCell = 0;
+              for (auto enrichmentId :
+                   d_overlappingEnrichmentIdsInCells[cellIndex])
                 {
-                  enrichmentsAtQuadValues[qPoint * nTotalEnrichmentIds +
-                                          enrichmentId] =
-                    *(val.data() + nQuadPointInCell * enrichIdInCell + qPoint);
-                }
-              quadValuesEnrichmentFunction
-                .template setCellValues<utils::MemorySpace::HOST>(
-                  cellIndex, enrichmentsAtQuadValues.data());
+                  for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                       qPoint++)
+                    {
+                      enrichmentsAtQuadValues[qPoint * nTotalEnrichmentIds +
+                                              enrichmentId] =
+                        *(val.data() + nQuadPointInCell * enrichIdInCell +
+                          qPoint);
+                    }
+                  quadValuesEnrichmentFunction
+                    .template setCellValues<utils::MemorySpace::HOST>(
+                      cellIndex, enrichmentsAtQuadValues.data());
 
-              enrichIdInCell += 1;
+                  enrichIdInCell += 1;
+                }
             }
           cellIndex = cellIndex + 1;
         }
@@ -444,7 +449,7 @@ namespace dftefe
           for (global_size_type j = 0; j < nTotalEnrichmentIds; j++)
             {
               if (std::abs(*(basisInterfaceCoeffSTL.data() +
-                             i * nTotalEnrichmentIds + j)) > 1e-12)
+                             i * nTotalEnrichmentIds + j)) > 1e-8)
                 {
                   enrichmentIdToClassicalLocalIdMapSet[j].insert(i);
                   d_enrichmentIdToInterfaceCoeffMap[j].push_back(
@@ -462,49 +467,55 @@ namespace dftefe
             utils::OptimizedIndexSet<size_type>(i->second);
         }
 
-      // //// ------------optimization----------
-      // //// Another approach is to fix it in enrichmentIdsPartition using
-      // dealii::neighbour()
-      // //// get cellId of the localId and create
-      // overlappingEnrichmentIdsInCells
-      // //// change the ghostids based on those enrichment ids i.e. the
-      // partitioning std::vector<std::vector<global_size_type>>
-      // overlappingEnrichmentIdsInCells
-      //   (d_overlappingEnrichmentIdsInCells.size(),
-      //   std::vector<global_size_type>(0));
+      //// ------------optimization----------
+      //// Another approach is to fix it in enrichmentIdsPartition using
+      //// dealii::neighbour()
+      //// get cellId of the localId and create
+      //// overlappingEnrichmentIdsInCells
+      //// change the ghostids based on those enrichment ids i.e. the
+      //// partitioning
 
-      //   cellIndex = 0;
-      //   std::vector<size_type> vecLocalNodeId;
+      std::vector<std::vector<global_size_type>>
+        overlappingEnrichmentIdsInCells(
+          d_overlappingEnrichmentIdsInCells.size(),
+          std::vector<global_size_type>(0));
 
-      // cell = d_triangulation->beginLocal();
-      // endc = d_triangulation->endLocal();
+      cellIndex = 0;
+      std::vector<size_type> vecLocalNodeId(0);
 
-      //   for (; cell != endc; cell++)
-      //   {
-      //     d_cfeBasisManager->getCellDofsLocalIds(cellIndex, vecLocalNodeId);
-      //     for(auto &pair : enrichmentIdToClassicalLocalIdMapSet)
-      //     {
-      //       for(auto &iCellLocalId : vecLocalNodeId)
-      //         if(pair.second.find(iCellLocalId) != pair.second.end())
-      //         {
-      //           overlappingEnrichmentIdsInCells[cellIndex].push_back(pair.first);
-      //           DFTEFE_AssertWithMsg(std::find(d_overlappingEnrichmentIdsInCells[cellIndex].begin(),
-      //             d_overlappingEnrichmentIdsInCells[cellIndex].end(),
-      //             pair.first) !=
-      //               d_overlappingEnrichmentIdsInCells[cellIndex].end(),
-      //               "The enrichment ids were not there in "
-      //               " overlapping enrichmentIds in cells with larger ball
-      //               radius.");
-      //           break;
-      //         }
-      //     }
-      //     cellIndex++;
-      //   }
-      // d_enrichmentIdsPartition->modifyNumCellsOverlapWithEnrichments(overlappingEnrichmentIdsInCells);
+      cell = d_triangulation->beginLocal();
+      endc = d_triangulation->endLocal();
 
-      // d_overlappingEnrichmentIdsInCells.resize(0);
-      // d_overlappingEnrichmentIdsInCells =
-      //   d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
+      for (; cell != endc; cell++)
+        {
+          d_cfeBasisManager->getCellDofsLocalIds(cellIndex, vecLocalNodeId);
+          for (auto &pair : enrichmentIdToClassicalLocalIdMapSet)
+            {
+              for (auto &iCellLocalId : vecLocalNodeId)
+                if (pair.second.find(iCellLocalId) != pair.second.end())
+                  {
+                    overlappingEnrichmentIdsInCells[cellIndex].push_back(
+                      pair.first);
+                    DFTEFE_AssertWithMsg(
+                      std::find(
+                        d_overlappingEnrichmentIdsInCells[cellIndex].begin(),
+                        d_overlappingEnrichmentIdsInCells[cellIndex].end(),
+                        pair.first) !=
+                        d_overlappingEnrichmentIdsInCells[cellIndex].end(),
+                      "The enrichment ids were not there in "
+                      " overlapping enrichmentIds in cells with larger ball"
+                      "radius.");
+                    break;
+                  }
+            }
+          cellIndex++;
+        }
+      d_enrichmentIdsPartition->modifyNumCellsOverlapWithEnrichments(
+        overlappingEnrichmentIdsInCells);
+
+      d_overlappingEnrichmentIdsInCells.resize(0);
+      d_overlappingEnrichmentIdsInCells =
+        d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
       global_size_type maxEnrich = 0;
       global_size_type minEnrich = 0;
@@ -664,20 +675,19 @@ namespace dftefe
                                                       comm);
 
       // Create enrichmentIdsPartition Object.
-      d_enrichmentIdsPartition =
-        std::make_shared<const EnrichmentIdsPartition<dim>>(
-          d_atomSphericalDataContainer,
-          d_atomIdsPartition,
-          atomSymbolVec,
-          atomCoordinatesVec,
-          fieldName,
-          minbound,
-          maxbound,
-          0,
-          triangulation->getDomainVectors(),
-          d_triangulation->getPeriodicFlags(),
-          cellVerticesVector,
-          comm);
+      d_enrichmentIdsPartition = std::make_shared<EnrichmentIdsPartition<dim>>(
+        d_atomSphericalDataContainer,
+        d_atomIdsPartition,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        fieldName,
+        minbound,
+        maxbound,
+        0,
+        triangulation->getDomainVectors(),
+        d_triangulation->getPeriodicFlags(),
+        cellVerticesVector,
+        comm);
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -1079,11 +1089,11 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         !enrichIdVec.empty(),
         "The requested cell does not have any enrichment ids.");
-      unsigned int numEnrichedIdsSkipped = 0;
-      unsigned int l                     = 0;
+      // unsigned int numEnrichedIdsSkipped = 0;
+      // unsigned int l                     = 0;
 
       for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
-           iEnrich += numEnrichedIdsSkipped)
+           iEnrich += 1 /*numEnrichedIdsSkipped*/)
         {
           basis::EnrichmentIdAttribute eIdAttr =
             d_enrichmentIdsPartition->getEnrichmentIdAttribute(
@@ -1109,30 +1119,29 @@ namespace dftefe
             d_atomSphericalDataContainer->getSphericalData(
               d_atomSymbolVec[atomId], d_fieldName);
 
-          auto quantumNoVec =
-            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-                                                      d_fieldName);
+          // auto quantumNoVec =
+          //   d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+          //                                             d_fieldName);
 
-          l = quantumNoVec[localId][1];
+          // l = quantumNoVec[localId][1];
 
           auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
 
-          for (int mCount = 0; mCount < 2 * l + 1; mCount++)
-            {
-              auto angularValue = (sphericalDataVec[localId + mCount])
-                                    ->getAngularValue(rVec, thetaVec, phiVec);
+          // for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+          //   {
+          auto angularValue = (sphericalDataVec[localId /*+mCount*/])
+                                ->getAngularValue(rVec, thetaVec, phiVec);
 
-              linearAlgebra::blasLapack::hadamardProduct<
-                ValueTypeBasisData,
-                ValueTypeBasisData,
-                utils::MemorySpace::HOST>(numPoints,
-                                          radialValue.data(),
-                                          angularValue.data(),
-                                          retValue.data() +
-                                            (iEnrich + mCount) * numPoints,
-                                          *getLinAlgOpContext());
-            }
-          numEnrichedIdsSkipped = (2 * l + 1);
+          linearAlgebra::blasLapack::hadamardProduct<ValueTypeBasisData,
+                                                     ValueTypeBasisData,
+                                                     utils::MemorySpace::HOST>(
+            numPoints,
+            radialValue.data(),
+            angularValue.data(),
+            retValue.data() + (iEnrich /*+mCount*/) * numPoints,
+            *getLinAlgOpContext());
+          //   }
+          // numEnrichedIdsSkipped = (2 * l + 1);
         }
       return retValue;
     }
@@ -1158,11 +1167,11 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         !enrichIdVec.empty(),
         "The requested cell does not have any enrichment ids.");
-      unsigned int numEnrichedIdsSkipped = 0;
-      unsigned int l                     = 0;
+      // unsigned int numEnrichedIdsSkipped = 0;
+      // unsigned int l                     = 0;
 
       for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
-           iEnrich += numEnrichedIdsSkipped)
+           iEnrich += 1 /*numEnrichedIdsSkipped*/)
         {
           basis::EnrichmentIdAttribute eIdAttr =
             d_enrichmentIdsPartition->getEnrichmentIdAttribute(
@@ -1188,47 +1197,46 @@ namespace dftefe
             d_atomSphericalDataContainer->getSphericalData(
               d_atomSymbolVec[atomId], d_fieldName);
 
-          auto quantumNoVec =
-            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-                                                      d_fieldName);
+          // auto quantumNoVec =
+          //   d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+          //                                             d_fieldName);
 
-          l = quantumNoVec[localId][1];
+          // l = quantumNoVec[localId][1];
 
           auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
           auto radialDerivative =
             sphericalDataVec[localId]->getRadialDerivative(rVec);
 
-          for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+          // for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+          //   {
+          auto angularValue = (sphericalDataVec[localId /*+mCount*/])
+                                ->getAngularValue(rVec, thetaVec, phiVec);
+          auto angularDerivative =
+            (sphericalDataVec[localId /*+mCount*/])
+              ->getAngularDerivative(rVec, thetaVec, phiVec);
+
+          for (int i = 0; i < numPoints; i++)
             {
-              auto angularValue = (sphericalDataVec[localId + mCount])
-                                    ->getAngularValue(rVec, thetaVec, phiVec);
-              auto angularDerivative =
-                (sphericalDataVec[localId + mCount])
-                  ->getAngularDerivative(rVec, thetaVec, phiVec);
+              double dValueDR        = radialDerivative[i] * angularValue[i];
+              double dValueDThetaByr = 0.;
+              dValueDThetaByr        = radialValue[i] * angularDerivative[0][i];
+              double dValueDPhiByrsinTheta = 0.;
+              dValueDPhiByrsinTheta = radialValue[i] * angularDerivative[1][i];
+              double theta = thetaVec[i], phi = phiVec[i];
 
-              for (int i = 0; i < numPoints; i++)
-                {
-                  double dValueDR = radialDerivative[i] * angularValue[i];
-                  double dValueDThetaByr = 0.;
-                  dValueDThetaByr = radialValue[i] * angularDerivative[0][i];
-                  double dValueDPhiByrsinTheta = 0.;
-                  dValueDPhiByrsinTheta =
-                    radialValue[i] * angularDerivative[1][i];
-                  double theta = thetaVec[i], phi = phiVec[i];
-
-                  retValue[(iEnrich + mCount) * numPoints * dim + i * dim + 0] =
-                    dValueDR * (sin(theta) * cos(phi)) +
-                    dValueDThetaByr * (cos(theta) * cos(phi)) -
-                    sin(phi) * dValueDPhiByrsinTheta;
-                  retValue[(iEnrich + mCount) * numPoints * dim + i * dim + 1] =
-                    dValueDR * (sin(theta) * sin(phi)) +
-                    dValueDThetaByr * (cos(theta) * sin(phi)) +
-                    cos(phi) * dValueDPhiByrsinTheta;
-                  retValue[(iEnrich + mCount) * numPoints * dim + i * dim + 2] =
-                    dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
-                }
+              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 0] =
+                dValueDR * (sin(theta) * cos(phi)) +
+                dValueDThetaByr * (cos(theta) * cos(phi)) -
+                sin(phi) * dValueDPhiByrsinTheta;
+              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 1] =
+                dValueDR * (sin(theta) * sin(phi)) +
+                dValueDThetaByr * (cos(theta) * sin(phi)) +
+                cos(phi) * dValueDPhiByrsinTheta;
+              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 2] =
+                dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
             }
-          numEnrichedIdsSkipped = (2 * l + 1);
+          //   }
+          // numEnrichedIdsSkipped = (2 * l + 1);
         }
       return retValue;
     }

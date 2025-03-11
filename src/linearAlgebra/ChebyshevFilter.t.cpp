@@ -292,8 +292,8 @@ namespace dftefe
 
       double alpha1 = sigma1 / e, alpha2 = -c;
 
-      B.apply(X, Y, true, true);
-      A.apply(X, scratch3, true, true);
+      B.apply(X, Y, true, false);
+      A.apply(X, scratch3, true, false);
       linearAlgebra::blasLapack::
         axpbyBlocked<ValueType, ValueType, memorySpace>(
           X.locallyOwnedSize(),
@@ -351,8 +351,8 @@ namespace dftefe
 
           //======Residual = alpha1 * H * ResidualNew + alpha2 * Residual - c *
           // alpha1 * ResidualNew======
-          BInv.apply(ResidualNew, scratch1, true, true);
-          A.apply(scratch1, scratch2, true, true);
+          BInv.apply(ResidualNew, scratch1, true, false);
+          A.apply(scratch1, scratch2, false, false);
 
           blasLapack::axpby<ValueType, ValueType, memorySpace>(
             X.locallyOwnedSize() * X.getNumberComponents(),

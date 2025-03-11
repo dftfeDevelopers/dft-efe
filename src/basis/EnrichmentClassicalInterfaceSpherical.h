@@ -230,8 +230,7 @@ namespace dftefe
 
 
     private:
-      std::shared_ptr<const EnrichmentIdsPartition<dim>>
-                                                   d_enrichmentIdsPartition;
+      std::shared_ptr<EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                                d_atomSphericalDataContainer;

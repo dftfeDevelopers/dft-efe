@@ -377,10 +377,10 @@ namespace dftefe
           &                                  overlappingEnrichmentIdsInCells,
         const std::vector<global_size_type> &newAtomIdToEnrichmentIdOffset)
       {
-        ghostEnrichmentIds.resize(0);
+        ghostEnrichmentIds.clear();
         enrichmentIdToOldAtomIdMap.clear();
         enrichmentIdToQuantumIdMap.clear();
-        enrichmentIdsInProcessor.resize(0);
+        enrichmentIdsInProcessor.clear();
         std::vector<size_type>     oldAtomIds = atomIdsPartition->oldAtomIds();
         std::set<global_size_type> enrichmentIdsInProcessorTmp;
         size_type                  newAtomId, qIdPosition;
@@ -553,24 +553,25 @@ namespace dftefe
       d_oldAtomIdsVec = atomIdsPartition->oldAtomIds();
     }
 
-    // template <unsigned int dim>
-    // void
-    // EnrichmentIdsPartition<dim>::modifyNumCellsOverlapWithEnrichments(std::vector<std::vector
-    //   <global_size_type>> &overlappingEnrichmentIdsInCells)
-    // {
-    //   d_overlappingEnrichmentIdsInCells.resize(0);
-    //   d_overlappingEnrichmentIdsInCells = overlappingEnrichmentIdsInCells;
+    template <unsigned int dim>
+    void
+    EnrichmentIdsPartition<dim>::modifyNumCellsOverlapWithEnrichments(
+      const std::vector<std::vector<global_size_type>>
+        &overlappingEnrichmentIdsInCells)
+    {
+      d_overlappingEnrichmentIdsInCells.resize(0);
+      d_overlappingEnrichmentIdsInCells = overlappingEnrichmentIdsInCells;
 
-    //   EnrichmentIdsPartitionInternal::getGhostEnrichmentIds<dim>(
-    //     d_atomIdsPartition,
-    //     d_enrichmentIdsInProcessor,
-    //     d_enrichmentIdToOldAtomIdMap,
-    //     d_enrichmentIdToQuantumIdMap,
-    //     d_ghostEnrichmentIds,
-    //     d_locallyOwnedEnrichmentIds,
-    //     d_overlappingEnrichmentIdsInCells,
-    //     d_newAtomIdToEnrichmentIdOffset);
-    // }
+      EnrichmentIdsPartitionInternal::getGhostEnrichmentIds<dim>(
+        d_atomIdsPartition,
+        d_enrichmentIdsInProcessor,
+        d_enrichmentIdToOldAtomIdMap,
+        d_enrichmentIdToQuantumIdMap,
+        d_ghostEnrichmentIds,
+        d_locallyOwnedEnrichmentIds,
+        d_overlappingEnrichmentIdsInCells,
+        d_newAtomIdToEnrichmentIdOffset);
+    }
 
     template <unsigned int dim>
     std::vector<global_size_type>

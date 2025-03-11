@@ -123,6 +123,11 @@ namespace dftefe
       global_size_type
       nTotalEnrichmentIds() const;
 
+      void
+      modifyNumCellsOverlapWithEnrichments(
+        const std::vector<std::vector<global_size_type>>
+          &overlappingEnrichmentIdsInCells);
+
       // std::map<size_type, size_type>
       // enrichmentIdToNewAtomIdMap() const;
 
