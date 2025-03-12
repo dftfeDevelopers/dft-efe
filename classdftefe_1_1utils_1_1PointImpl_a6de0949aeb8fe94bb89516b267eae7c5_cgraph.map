@@ -1,0 +1,6 @@
+<map id="dftefe::utils::PointImpl::operator=" name="dftefe::utils::PointImpl::operator=">
+<area shape="rect" id="node1" title="Operator overload for assignment q=p." alt="" coords="5,63,152,103"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1PointImpl.html#a9acad104ec6ce3573aabf549f6ba652d" title="Return iterator pointing to the begining of point data." alt="" coords="213,5,360,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1PointImpl.html#a92c18d3da38d9c547bf942c2080cb63f" title="Return iterator pointing to the end of PointImpl data." alt="" coords="200,70,373,95"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1PointImpl.html#a8899ace443be40fe29fef56cf7800073" title="Returns the dimension of the point." alt="" coords="213,120,360,160"/>
+</map>
