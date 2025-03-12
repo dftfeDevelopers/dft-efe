@@ -31,11 +31,14 @@ namespace dftefe
 {
   namespace utils
   {
-    ConditionalOStream::ConditionalOStream(std::ostream &stream,
-                                           const bool    active)
+    ConditionalOStream::ConditionalOStream(std::ostream &  stream,
+                                           const bool      active,
+                                           const size_type precision)
       : d_outputStream(stream)
       , d_activeFlag(active)
-    {}
+    {
+      d_outputStream << std::setprecision(precision);
+    }
 
     void
     ConditionalOStream::setCondition(bool active)
@@ -49,7 +52,7 @@ namespace dftefe
       return d_activeFlag;
     }
 
-    inline std::ostream &
+    std::ostream &
     ConditionalOStream::getOStream() const
     {
       return d_outputStream;

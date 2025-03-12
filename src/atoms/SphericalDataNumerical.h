@@ -32,7 +32,9 @@
 #include <atoms/SphericalData.h>
 #include <utils/Spline.h>
 #include <memory>
+#include <utils/Point.h>
 #include <atoms/Defaults.h>
+#include <atoms/SphericalHarmonicFunctions.h>
 
 namespace dftefe
 {
@@ -42,11 +44,12 @@ namespace dftefe
     {
     public:
       SphericalDataNumerical(
-        const std::vector<int>    qNumbers,
-        const std::vector<double> radialPoints,
-        const std::vector<double> radialValues,
-        const double              cutoff,
-        const double              smoothness,
+        const std::vector<int>            qNumbers,
+        const std::vector<double>         radialPoints,
+        const std::vector<double>         radialValues,
+        const double                      cutoff,
+        const double                      smoothness,
+        const SphericalHarmonicFunctions &sphericalHarmonicFunc,
         const double polarAngleTolerance = SphericalDataDefaults::POL_ANG_TOL,
         const double cutoffTolerance     = SphericalDataDefaults::CUTOFF_TOL,
         const double radiusTolerance     = SphericalDataDefaults::RADIUS_TOL,
@@ -56,6 +59,18 @@ namespace dftefe
 
       void
       initSpline();
+
+      std::vector<double>
+      getValue(const std::vector<utils::Point> &point,
+               const utils::Point &             origin) override;
+
+      std::vector<double>
+      getGradientValue(const std::vector<utils::Point> &point,
+                       const utils::Point &             origin) override;
+
+      std::vector<double>
+      getHessianValue(const std::vector<utils::Point> &point,
+                      const utils::Point &             origin) override;
 
       double
       getValue(const utils::Point &point, const utils::Point &origin) override;
@@ -67,6 +82,22 @@ namespace dftefe
       std::vector<double>
       getHessianValue(const utils::Point &point,
                       const utils::Point &origin) override;
+
+      std::vector<double>
+      getRadialValue(const std::vector<double> &r) override;
+
+      std::vector<double>
+      getAngularValue(const std::vector<double> &r,
+                      const std::vector<double> &theta,
+                      const std::vector<double> &phi) override;
+
+      std::vector<double>
+      getRadialDerivative(const std::vector<double> &r) override;
+
+      std::vector<std::vector<double>>
+      getAngularDerivative(const std::vector<double> &r,
+                           const std::vector<double> &theta,
+                           const std::vector<double> &phi) override;
 
       std::vector<int>
       getQNumbers() const override;
@@ -88,6 +119,8 @@ namespace dftefe
       double                               d_cutoffTolerance;
       double                               d_radiusTolerance;
       size_type                            d_dim;
+
+      const SphericalHarmonicFunctions &d_sphericalHarmonicFunc;
     };
 
   } // end of namespace atoms

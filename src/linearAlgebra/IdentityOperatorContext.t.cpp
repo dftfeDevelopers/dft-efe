@@ -45,9 +45,17 @@ namespace dftefe
       apply(MultiVector<ValueTypeOperand, memorySpace> &X,
             MultiVector<
               blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-              memorySpace> &Y) const
+              memorySpace> &Y,
+            bool            updateGhostX,
+            bool            updateGhostY) const
     {
+      if (updateGhostX)
+        X.updateGhostValues();
+
       Y = X;
+
+      if (updateGhostY)
+        Y.updateGhostValues();
     }
 
   } // namespace linearAlgebra

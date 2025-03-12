@@ -61,6 +61,8 @@ namespace dftefe
         const size_type                                numberComponents,
         const ValueType                                initVal = ValueType());
 
+      ~QuadratureValuesContainer() = default;
+
       void
       reinit(
         std::shared_ptr<const QuadratureRuleContainer> quadratureRuleContainer,
@@ -148,6 +150,12 @@ namespace dftefe
       const_iterator
       end(const size_type cellId) const;
 
+      ValueType *
+      data();
+
+      const ValueType *
+      data() const;
+
       // ValueType
       // dotProduct() const;
 
@@ -194,7 +202,7 @@ namespace dftefe
      * @return Resulting QuadratureValuesContainer w
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    QuadratureValuesContainer<ValueType, memorySpace>
+    void
     add(ValueType                                                a,
         const QuadratureValuesContainer<ValueType, memorySpace> &u,
         ValueType                                                b,

@@ -56,6 +56,7 @@ namespace dftefe
 
     {
     public:
+      virtual ~EFEBasisDofHandler() = default;
       virtual double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const = 0;
@@ -170,6 +171,22 @@ namespace dftefe
       getEnrichmentHessian(const size_type             cellId,
                            const size_type             cellLocalEnrichmentId,
                            const dftefe::utils::Point &point) const = 0;
+
+      // Enrichment specific functions.
+      virtual std::vector<double>
+      getEnrichmentValue(
+        const size_type                          cellId,
+        const std::vector<dftefe::utils::Point> &points) const = 0;
+
+      virtual std::vector<double>
+      getEnrichmentDerivative(
+        const size_type                          cellId,
+        const std::vector<dftefe::utils::Point> &points) const = 0;
+
+      virtual std::vector<double>
+      getEnrichmentHessian(
+        const size_type                          cellId,
+        const std::vector<dftefe::utils::Point> &points) const = 0;
 
       virtual std::vector<global_size_type>
       getGhostEnrichmentGlobalIds() const = 0;

@@ -26,6 +26,8 @@
 #define dftefeConditionalOstream_h
 
 #include <ostream>
+#include <utils/Defaults.h>
+#include <iomanip>
 
 //
 // ACKNOWLEDGEMENT: The implementation of this class is borrowed from deal.II
@@ -52,7 +54,10 @@ namespace dftefe
        * @param[in] active Boolean to define whether printing to ostream be
        * allowed or not
        */
-      ConditionalOStream(std::ostream &stream, const bool active = true);
+      ConditionalOStream(
+        std::ostream &  stream,
+        const bool      active    = true,
+        const size_type precision = ConditionalOStreamDefaults::PRECISION);
 
       /**
        * @brief Function to set the condition for printing to the output stream

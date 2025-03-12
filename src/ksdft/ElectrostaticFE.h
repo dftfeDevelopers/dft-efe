@@ -30,6 +30,7 @@
 #include <linearAlgebra/MultiVector.h>
 #include <ksdft/Hamiltonian.h>
 #include <ksdft/Energy.h>
+#include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FEBasisDataStorage.h>
 
 namespace dftefe
@@ -75,10 +76,14 @@ namespace dftefe
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
     public:
+      virtual ~ElectrostaticFE() = default;
       virtual void
       getLocal(Storage &cellWiseStorage) const = 0;
       virtual RealType
       getEnergy() const = 0;
+      virtual const quadrature::QuadratureValuesContainer<ValueType,
+                                                          memorySpace> &
+      getFunctionalDerivative() const = 0;
 
     }; // end of class ElectrostaticFE
   }    // end of namespace ksdft

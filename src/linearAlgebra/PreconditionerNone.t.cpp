@@ -46,9 +46,15 @@ namespace dftefe
     void
     PreconditionerNone<ValueTypeOperator, ValueTypeOperand, memorySpace>::apply(
       MultiVector<ValueTypeOperand, memorySpace> &X,
-      MultiVector<ValueTypeUnion, memorySpace> &  Y) const
+      MultiVector<ValueTypeUnion, memorySpace> &  Y,
+      bool                                        updateGhostX,
+      bool                                        updateGhostY) const
     {
+      if (updateGhostX)
+        X.updateGhostValues();
       Y = X;
+      if (updateGhostY)
+        Y.updateGhostValues();
     }
 
     template <typename ValueTypeOperator,

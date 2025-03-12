@@ -289,12 +289,13 @@ namespace dftefe
                                const size_type *                    m,
                                const size_type *                    n,
                                const size_type *                    k,
-                               const ValueType1 *                   dA,
-                               const ValueType2 *                   dB,
+                               const ValueType1 *                   dA, // alpha
+                               const ValueType2 *                   dB, // X
                                scalar_type<ValueType1, ValueType2> *dC,
                                LinAlgOpContext<memorySpace> &       context)
       {
-        if (layout == Layout::RowMajor)
+        if (layout == Layout::RowMajor) // colA = m, rowA = k = rowB, colB = n,
+                                        // fastest rowB->colB->colA
           {
             size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
             for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
@@ -319,7 +320,8 @@ namespace dftefe
                 cumulativeC += *(stridec + ibatch);
               }
           }
-        if (layout == Layout::ColMajor)
+        if (layout == Layout::ColMajor) // colA = m, rowA = k = rowB, colB = n,
+                                        // fastest colB->colA->rowB
           {
             size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
             for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
@@ -475,8 +477,10 @@ namespace dftefe
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
         const size_type                            size,
         const size_type                            blockSize,
+        const scalar_type<ValueType1, ValueType2>  alpha1,
         const scalar_type<ValueType1, ValueType2> *alpha,
         const ValueType1 *                         x,
+        const scalar_type<ValueType1, ValueType2>  beta1,
         const scalar_type<ValueType1, ValueType2> *beta,
         const ValueType2 *                         y,
         scalar_type<ValueType1, ValueType2> *      z)
@@ -486,10 +490,12 @@ namespace dftefe
             for (size_type j = 0; j < blockSize; ++j)
               {
                 z[i * blockSize + j] =
-                  ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)alpha1) *
+                    ((scalar_type<ValueType1, ValueType2>)alpha[j]) *
                     ((scalar_type<ValueType1, ValueType2>)
                        x[i * blockSize + j]) +
-                  ((scalar_type<ValueType1, ValueType2>)beta[j]) *
+                  ((scalar_type<ValueType1, ValueType2>)beta1) *
+                    ((scalar_type<ValueType1, ValueType2>)beta[j]) *
                     ((scalar_type<ValueType1, ValueType2>)y[i * blockSize + j]);
               }
           }

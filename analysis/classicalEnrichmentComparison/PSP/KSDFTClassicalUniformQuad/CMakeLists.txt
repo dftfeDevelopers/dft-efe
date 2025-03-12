@@ -19,4 +19,7 @@ if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
 add_executable(TestKohnShamDft ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/PSP/KSDFTClassicalUniformQuad/TestKohnShamDft.cpp)
 target_link_libraries(TestKohnShamDft PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-ksdft dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+
+add_executable(TestKohnShamDft1 ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/PSP/KSDFTClassicalUniformQuad/TestKohnShamDft1.cpp)
+target_link_libraries(TestKohnShamDft1 PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-ksdft dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 endif()

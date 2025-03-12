@@ -77,6 +77,14 @@ namespace dftefe
     }
 
     template <unsigned int dim>
+    bool
+    TriangulationCellDealii<dim>::hasPeriodicNeighbor(
+      const unsigned int i) const
+    {
+      return d_cellItr->has_periodic_neighbor(i);
+    }
+
+    template <unsigned int dim>
     unsigned int
     TriangulationCellDealii<dim>::getDim() const
     {

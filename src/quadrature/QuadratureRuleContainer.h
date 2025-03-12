@@ -129,6 +129,8 @@ namespace dftefe
           &                        quadratureRuleContainerReference,
         const utils::mpi::MPIComm &comm);
 
+      ~QuadratureRuleContainer() = default;
+
       /**
        * @brief Returns the underlying QuadratureRuleAttributes
        * @returns const reference to the QuadratureAttributes

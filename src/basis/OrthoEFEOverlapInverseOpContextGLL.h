@@ -89,11 +89,14 @@ namespace dftefe
              linAlgOpContext,
         bool isCGSolved = true);
 
+      ~OrthoEFEOverlapInverseOpContextGLL() = default;
+
 
       void
-      apply(
-        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-        linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
+      apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+            linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
+            bool updateGhostX = false,
+            bool updateGhostY = false) const override;
 
     private:
       const FEBasisManager<ValueTypeOperand,

@@ -102,6 +102,13 @@ namespace dftefe
 
     template <unsigned int dim>
     bool
+    FECellDealii<dim>::hasPeriodicNeighbor(const unsigned int i) const
+    {
+      return d_dealiiFECellIter->has_periodic_neighbor(i);
+    }
+
+    template <unsigned int dim>
+    bool
     FECellDealii<dim>::isAtBoundary() const
     {
       return d_dealiiFECellIter->at_boundary();

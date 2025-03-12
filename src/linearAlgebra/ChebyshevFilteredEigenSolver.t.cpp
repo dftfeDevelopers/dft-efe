@@ -46,7 +46,10 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        bool                                        isResidualChebyshevFilter,
         const size_type                             eigenVectorBlockSize)
+      : d_p(eigenSubspaceGuess.getMPIPatternP2P()->mpiCommunicator(), "CHFSI")
+      , d_isResidualChebyFilter(isResidualChebyshevFilter)
     {
       d_filteredSubspaceOrtho =
         std::make_shared<MultiVector<ValueType, memorySpace>>(
@@ -115,6 +118,7 @@ namespace dftefe
             const OpContext &                    B,
             const OpContext &                    BInv)
     {
+      d_p.reset();
       EigenSolverError        retunValue;
       EigenSolverErrorCode    err;
       OrthonormalizationError orthoerr;
@@ -136,15 +140,32 @@ namespace dftefe
         rootCout << i << "\t";
       rootCout << "\n";
 
-      ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
-        A,
-        BInv,
-        *d_eigenSubspaceGuess, /*scratch1*/
-        d_polynomialDegree,
-        d_wantedSpectrumLowerBound,
-        d_wantedSpectrumUpperBound,
-        d_unWantedSpectrumUpperBound,
-        *d_filteredSubspace); /*scratch2*/
+      d_p.registerStart("Chebyshev Filter");
+      if (d_isResidualChebyFilter)
+        ResidualChebyshevFilterGEP<ValueTypeOperator,
+                                   ValueTypeOperand,
+                                   memorySpace>(
+          A,
+          B,
+          BInv,
+          eigenValues,
+          *d_eigenSubspaceGuess, /*scratch1*/
+          d_polynomialDegree,
+          d_wantedSpectrumLowerBound,
+          d_wantedSpectrumUpperBound,
+          d_unWantedSpectrumUpperBound,
+          *d_filteredSubspace); /*scratch2*/
+      else
+        ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+          A,
+          BInv,
+          *d_eigenSubspaceGuess, /*scratch1*/
+          d_polynomialDegree,
+          d_wantedSpectrumLowerBound,
+          d_wantedSpectrumUpperBound,
+          d_unWantedSpectrumUpperBound,
+          *d_filteredSubspace); /*scratch2*/
+      d_p.registerEnd("Chebyshev Filter");
 
       rootCout << "d_filteredSubspace l2norms CHFSI: ";
       for (auto &i : d_filteredSubspace->l2Norms())
@@ -164,6 +185,7 @@ namespace dftefe
       //                                     B);
       /*scratch2->eigenvector*/
 
+      d_p.registerStart("OrthoNormalization");
       orthoerr = linearAlgebra::
         OrthonormalizationFunctions<ValueType, ValueType, memorySpace>::
           MultipassLowdin(*d_filteredSubspace, /*in/out, eigenvector*/
@@ -172,6 +194,7 @@ namespace dftefe
                           linearAlgebra::MultiPassLowdinDefaults::IDENTITY_TOL,
                           *d_filteredSubspaceOrtho, // go away
                           B);
+      d_p.registerEnd("OrthoNormalization");
 
       // orthoerr = linearAlgebra::OrthonormalizationFunctions<
       //   ValueType,
@@ -187,11 +210,14 @@ namespace dftefe
 
       // [RR] Perform the Rayleigh–Ritz procedure for *d_filteredSubspace
 
+      d_p.registerStart("RR Step");
       rrerr = d_rr->solve(A,
                           *d_filteredSubspaceOrtho, // go away
                           eigenValues,
                           eigenVectors, /*in/out*/
                           computeEigenVectors);
+      d_p.registerEnd("RR Step");
+      d_p.print();
 
       rootCout << "eigenVectors l2norms CHFSI: ";
       for (auto &i : eigenVectors.l2Norms())

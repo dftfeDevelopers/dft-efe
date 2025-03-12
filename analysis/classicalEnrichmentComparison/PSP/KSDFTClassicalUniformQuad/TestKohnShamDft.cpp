@@ -118,7 +118,7 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
       , d_atomChargesVec(atomCharges)
-      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0))
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
       {}
 
     double
@@ -149,6 +149,61 @@ double rho1sOrbital(const dftefe::utils::Point &point, const std::vector<dftefe:
           for (unsigned int i = 0 ; i < points.size() ; i++)            
           {
             ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
+          }
+        }
+      return ret;
+    }
+  };
+
+  class AtomicTotalElectrostaticPotentialFunction : public utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      double d_ylm00;
+
+  public:
+    AtomicTotalElectrostaticPotentialFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                        atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
+      {}
+
+    double
+    operator()(const utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
+          {
+            retValue = retValue + enrichmentObjId->getValue(point, origin) * (1/d_ylm00);
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
+          for(auto &enrichmentObjId : vec)
+          for (unsigned int i = 0 ; i < points.size() ; i++)            
+          {
+            ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
           }
         }
       return ret;
@@ -352,6 +407,7 @@ void getVLoc(
           d_atomTolocPSPSplineMap.push_back(
               utils::Spline(radialValuesSTL,
                     potentialValuesLocSTL,
+                    false,
                     utils::Spline::spline_type::cspline,
                     false,
                     utils::Spline::bd_type::first_deriv,
@@ -476,9 +532,10 @@ int main(int argc, char** argv)
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
 
-    utils::mpi::MPIBarrier(comm);
-    auto startTotal = std::chrono::high_resolution_clock::now();
-
+  utils::Profiler pTot(comm, "Total Statistics");
+  utils::Profiler p(comm, "Initilization Breakdown Statistics");
+  pTot.registerStart("Initilization");
+  
     // Get the rank of the process
   int rank;
   utils::mpi::MPICommRank(comm, &rank);
@@ -506,6 +563,7 @@ int main(int argc, char** argv)
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
   rootCout<<" Entering test kohn sham dft classical \n";
+  rootCout << "Number of processes: "<<numProcs<<"\n";
 
   char* dftefe_path = getenv("DFTEFE_PATH");
   std::string sourceDir;
@@ -559,6 +617,7 @@ int main(int argc, char** argv)
   unsigned int num1DGaussSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeEigen", rootCout);
   unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
+  bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
@@ -664,7 +723,7 @@ int main(int argc, char** argv)
       atomSymbolToFilename[i] = sourceDir + i + ".xml";
   }
 
-  std::vector<std::string> fieldNames{"density", "orbital"};
+  std::vector<std::string> fieldNames{"density", "vtotal", "orbital"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
   std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
       std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
@@ -718,10 +777,7 @@ int main(int argc, char** argv)
     
   // Set up the quadrature rule
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto start = std::chrono::high_resolution_clock::now();
-
+  p.registerStart("Basis Creation and Basis Data Storages Evaluation");
   quadrature::QuadratureRuleAttributes quadAttrElec(quadrature::QuadratureFamily::GAUSS,true,feOrderElec+1);
 
   basis::BasisStorageAttributesBoolMap basisAttrMap;
@@ -949,17 +1005,20 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
             setCellValues<Host>(iCell, b);
     }
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto stop = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for all basis storage evaluations including overlap operators(in secs) : " << duration.count()/1e6 << std::endl;
+  p.registerEnd("Basis Creation and Basis Data Storages Evaluation");
 
   rootCout << "Entering KohnSham DFT Class....\n\n";
 
-  if(isNumericalNuclearSolve)
+  p.registerStart("Kohn Sham DFT Class Init");
+  std::shared_ptr<ksdft::KohnShamDFT<double,
+                                        double,
+                                        double,
+                                        double,
+                                        Host,
+                                        dim>> dftefeSolve = nullptr;
+  std::shared_ptr<quadrature::QuadratureValuesContainer<double, Host> >
+        atomicTotalElectrostaticPotentialQuad = nullptr;
+  if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
 
     // unsigned int num1DGaussSizeSmearNucl = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeSmearNucl", rootCout);
@@ -977,12 +1036,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
     std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = feBDTotalChargeStiffnessMatrix;
 
-    std::shared_ptr<ksdft::KohnShamDFT<double,
-                                        double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>> dftefeSolve =
+    dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -1021,31 +1075,11 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext);
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
-
-    dftefeSolve->solve();   
-
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
-                                         
+                                          *MInvContext);                           
   }
-  else
+  else if (!isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
-    std::shared_ptr<ksdft::KohnShamDFT<double,
-                                        double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>> dftefeSolve =
+    dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -1083,31 +1117,85 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           /**MContextForInv,*/
                                           *MContext,
                                           *MInvContext);
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
-
-    dftefeSolve->solve();   
-
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
-
   }
+  else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
+  {
+    atomicTotalElectrostaticPotentialQuad = std::make_shared<quadrature::QuadratureValuesContainer<double, Host> >       
+                                            (quadRuleContainerRho, 1, 0.0);
 
-  // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto stopTotal = std::chrono::high_resolution_clock::now();
+    const AtomicTotalElectrostaticPotentialFunction
+      smfuncAtTotPot(atomSphericalDataContainer,
+                    atomSymbolVec,
+                    atomCoordinatesVec);
 
-    auto durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
+  for (size_type iCell = 0; iCell < atomicTotalElectrostaticPotentialQuad->nCells(); iCell++)
+    {
+          size_type             quadId = 0;
+          std::vector<double> a(
+            atomicTotalElectrostaticPotentialQuad->nCellQuadraturePoints(iCell));
+          a = (smfuncAtTotPot)(quadRuleContainerRho->getCellRealPoints(iCell));
+          double *b = a.data();
+          atomicTotalElectrostaticPotentialQuad->template 
+            setCellValues<Host>(iCell, b);
+    }
 
-    rootCout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
+    dftefeSolve =
+    std::make_shared<ksdft::KohnShamDFT<double,
+                                          double,
+                                          double,
+                                          double,
+                                          Host,
+                                          dim>>(
+                                          atomCoordinatesVec,
+                                          atomChargesVec,
+                                          smearedChargeRadiusVec,
+                                          numElectrons,
+                                          numWantedEigenvalues,
+                                          smearingTemperature,
+                                          fermiEnergyTolerance,
+                                          fracOccupancyTolerance,
+                                          eigenSolveResidualTolerance,
+                                          scfDensityResidualNormTolerance,
+                                          maxChebyshevFilterPass,
+                                          maxSCFIter,
+                                          evaluateEnergyEverySCF,
+                                          mixingHistory,
+                                          mixingParameter,
+                                          isAdaptiveAndersonMixingParameter,
+                                          electronChargeDensity,
+                                          *atomicTotalElectrostaticPotentialQuad,
+                                          *atomicTotalElectrostaticPotentialQuad,
+                                          basisManagerTotalPot,
+                                          basisManagerWaveFn,
+                                          feBDTotalChargeStiffnessMatrix,
+                                          feBDElecChargeRhs,
+                                          feBDElecChargeRhs,  
+                                          feBDKineticHamiltonian,     
+                                          feBDElectrostaticsHamiltonian, 
+                                          feBDEXCHamiltonian,                                                                                
+                                          *externalPotentialFunction,
+                                          linAlgOpContext,
+                                          *MContextForInv,
+                                          /**MContextForInv,*/
+                                          *MContext,
+                                          *MInvContext,
+                                          false);
+  }
+  else
+  {
+    utils::throwException(false, "Optin nnot there for KohnShamDFT class creation.");
+  }
+  p.registerEnd("Kohn Sham DFT Class Init"); 
+  p.print();
 
+  pTot.registerEnd("Initilization");   
+  pTot.registerStart("Kohn Sham DFT Solve");
+
+  dftefeSolve->solve();
+
+  pTot.registerEnd("Kohn Sham DFT Solve");
+  pTot.print();
+  
   //gracefully end MPI
 
   int mpiFinalFlag = 0;

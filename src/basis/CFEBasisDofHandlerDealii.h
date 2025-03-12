@@ -72,6 +72,8 @@ namespace dftefe
         std::shared_ptr<const TriangulationBase> triangulation,
         const size_type                          feOrder);
 
+      ~CFEBasisDofHandlerDealii() = default;
+
       double
       getBasisFunctionValue(const size_type     basisId,
                             const utils::Point &point) const override;

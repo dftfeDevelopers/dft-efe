@@ -35,6 +35,7 @@
 #include <linearAlgebra/HermitianIterativeEigenSolver.h>
 #include <memory>
 #include <utils/ConditionalOStream.h>
+#include <utils/Profiler.h>
 
 namespace dftefe
 {
@@ -95,7 +96,8 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const size_type  waveFunctionBlockSize = 0,
+        bool             isResidualChebyshevFilter = true,
+        const size_type  waveFunctionBlockSize     = 0,
         const OpContext &MLanczos =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
@@ -137,6 +139,9 @@ namespace dftefe
 
       std::vector<RealType>
       getEigenSolveResidualNorm();
+
+      void
+      setChebyPolyScalingFactor(double scalingFactor);
 
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
@@ -182,6 +187,7 @@ namespace dftefe
       double d_wantedSpectrumLowerBound;
       double d_wantedSpectrumUpperBound;
       bool   d_isBoundKnown;
+      double d_chebyPolyScalingFactor;
 
       std::shared_ptr<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
@@ -192,6 +198,8 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace>
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
+      utils::Profiler                                     d_p;
+      const bool d_isResidualChebyFilter;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

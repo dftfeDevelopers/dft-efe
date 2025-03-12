@@ -205,7 +205,7 @@ namespace dftefe
               i =
                 std::pow(2,
                          round(log2(
-                           (std::max(8.0, largestMeshSizeAroundAtom) /*4.0*/) /
+                           (std::max(4.0, largestMeshSizeAroundAtom) /*4.0*/) /
                            largestMeshSizeAroundAtom))) *
                 largestMeshSizeAroundAtom;
             }
@@ -608,6 +608,15 @@ namespace dftefe
 
       d_rootCout << " numParallelCells: " << numberGlobalCellsParallel
                  << std::endl;
+
+      auto numLocOwnedCellMinMaxAvg =
+        utils::mpi::MPIAllreduceMinMaxAvg<size_type, utils::MemorySpace::HOST>(
+          numLocallyOwnedCells, d_mpiDomainCommunicator);
+
+      d_rootCout << "Number Parallel Cells in Process -- Min.: "
+                 << numLocOwnedCellMinMaxAvg.min
+                 << ", Max.: " << numLocOwnedCellMinMaxAvg.max
+                 << ", Avg.: " << numLocOwnedCellMinMaxAvg.avg << std::endl;
     }
 
   } // end of namespace basis

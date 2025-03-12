@@ -154,10 +154,14 @@ namespace dftefe
       d_funcX = new xc_func_type;
       d_funcC = new xc_func_type;
       int err;
-      err             = xc_func_init(d_funcX, XC_LDA_X, XC_UNPOLARIZED);
+      err             = xc_func_init(d_funcX,
+                         1,
+                         XC_UNPOLARIZED); // LDA_X (id=1): Slater exchange
       std::string msg = "LDA Exchange Functional not found\n";
       utils::throwException(err == 0, msg);
-      err = xc_func_init(d_funcC, XC_LDA_C_PW, XC_UNPOLARIZED);
+      err = xc_func_init(d_funcC,
+                         12,
+                         XC_UNPOLARIZED); // LDA_C_PW (id=12): Perdew & Wang
       msg = "LDA Correlation Functional not found\n";
       utils::throwException(err == 0, msg);
       xc_func_set_dens_threshold(
@@ -386,6 +390,53 @@ namespace dftefe
                           dim>::getEnergy() const
     {
       return d_energy;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const quadrature::QuadratureValuesContainer<
+      typename ExchangeCorrelationFE<ValueTypeBasisData,
+                                     ValueTypeBasisCoeff,
+                                     memorySpace,
+                                     dim>::ValueType,
+      memorySpace> &
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::getFunctionalDerivative() const
+    {
+      return *d_xcPotentialQuad;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                   ValueTypeBasisData,
+                                                   memorySpace,
+                                                   dim>>
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::getHamiltonianFEBasisOperations() const
+    {
+      return d_feBasisOp;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::getLinAlgOpContext() const
+    {
+      return d_linAlgOpContext;
     }
 
   } // end of namespace ksdft

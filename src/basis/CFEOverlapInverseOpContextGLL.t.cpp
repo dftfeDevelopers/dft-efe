@@ -498,10 +498,14 @@ namespace dftefe
       ValueTypeOperand,
       memorySpace,
       dim>::apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-                  linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
+                  linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
+                  bool updateGhostX,
+                  bool updateGhostY) const
     {
       if (d_isCGSolved)
         {
+          if (updateGhostX)
+            X.updateGhostValues();
           std::shared_ptr<
             CFEOverlapInverseOpContextGLLInternal::
               OverlapMatrixInverseLinearSolverFunctionFE<ValueTypeOperator,
@@ -519,10 +523,13 @@ namespace dftefe
           overlapInvPoisson->reinit(X);
           d_CGSolve->solve(*overlapInvPoisson);
           overlapInvPoisson->getSolution(Y);
+          if (updateGhostY)
+            Y.updateGhostValues();
         }
       else
         {
-          X.updateGhostValues();
+          if (updateGhostX)
+            X.updateGhostValues();
           // update the child nodes based on the parent nodes
           d_feBasisManager->getConstraints().distributeParentToChild(
             X, X.getNumberComponents());
@@ -548,7 +555,8 @@ namespace dftefe
             Y, Y.getNumberComponents());
 
           // Function to update the ghost values of the result
-          Y.updateGhostValues();
+          if (updateGhostY)
+            Y.updateGhostValues();
         }
     }
   } // namespace basis

@@ -135,7 +135,15 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_maxCellBlock(maxCellBlock)
       , d_maxFieldBlock(maxFieldBlock)
+      , d_p(feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(),
+            "Poisson Solver")
+      , d_rootCout(std::cout)
     {
+      int rank;
+      utils::mpi::MPICommRank(
+        feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(), &rank);
+      d_rootCout.setCondition(rank == 0);
+
       utils::throwException(
         !inpRhs.empty(),
         "The input QuadValuesContainer Map in PoissonSolver cannot be empty.");
@@ -143,6 +151,7 @@ namespace dftefe
       auto iter = feBasisDataStorageRhs.begin();
       while (iter != feBasisDataStorageRhs.end())
         {
+          d_feBasisDataStorageRhs[iter->first] = iter->second;
           utils::throwException(
             ((d_feBasisDataStorageStiffnessMatrix->getBasisDofHandler())
                .get() == (iter->second->getBasisDofHandler()).get()),
@@ -169,6 +178,7 @@ namespace dftefe
       std::shared_ptr<const utils::ScalarSpatialFunctionReal> zeroFunction =
         std::make_shared<utils::ScalarZeroFunctionReal>();
 
+      d_p.registerStart("Initilization");
       d_feBasisManagerHomo =
         std::make_shared<basis::FEBasisManager<ValueTypeOperand,
                                                ValueTypeOperator,
@@ -251,9 +261,10 @@ namespace dftefe
                                                              memorySpace>>();
       else
         utils::throwException(false, "Unknown PreConditionerType");
+      d_p.registerEnd("Initilization");
 
-      if (!(feBasisDataStorageRhs.empty() || inpRhs.empty()))
-        reinit(d_feBasisManagerField, feBasisDataStorageRhs, inpRhs);
+      d_rhsQuadValComponent.clear();
+      reinit(d_feBasisManagerField, inpRhs);
     }
 
     template <typename ValueTypeOperator,
@@ -317,29 +328,23 @@ namespace dftefe
                                                     ValueTypeOperator,
                                                     memorySpace,
                                                     dim>> feBasisManagerField,
-        const std::map<
-          std::string,
-          std::shared_ptr<
-            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
-          &                               feBasisDataStorageRhs,
         const std::map<std::string,
                        const quadrature::QuadratureValuesContainer<
                          linearAlgebra::blasLapack::
                            scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                         memorySpace> &> &inpRhs)
+                         memorySpace> &> &                inpRhs)
     {
-      auto iter = feBasisDataStorageRhs.begin();
-      while (iter != feBasisDataStorageRhs.end())
-        {
-          utils::throwException(
-            ((d_feBasisDataStorageStiffnessMatrix->getBasisDofHandler())
-               .get() == (iter->second->getBasisDofHandler()).get()),
-            "The BasisDofHandler of the feBasisDataStorageRhs in reinit does not match with that in constructor in PoissonLinearSolverFunctionFE.");
-          iter++;
-        }
+      int rank;
+      utils::mpi::MPICommRank(
+        feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(), &rank);
 
-      iter = feBasisDataStorageRhs.begin();
-      while (iter != feBasisDataStorageRhs.end())
+      // Get nProcs
+      int numProcs;
+      utils::mpi::MPICommSize(
+        feBasisManagerField->getMPIPatternP2P()->mpiCommunicator(), &numProcs);
+
+      auto iter = d_feBasisDataStorageRhs.begin();
+      while (iter != d_feBasisDataStorageRhs.end())
         {
           auto iter1 = inpRhs.find(iter->first);
           if (iter1 != inpRhs.end())
@@ -364,8 +369,10 @@ namespace dftefe
           iter++;
         }
 
+      d_p.reset();
       if (d_feBasisManagerField != feBasisManagerField)
         {
+          d_p.registerStart("Initilization");
           utils::throwException(
             (&(d_feBasisManagerField->getBasisDofHandler()) ==
              &(feBasisManagerField->getBasisDofHandler())),
@@ -378,6 +385,7 @@ namespace dftefe
 
           d_AxContextNHDB->reinit(*d_feBasisManagerField,
                                   *d_feBasisManagerHomo);
+          d_p.registerEnd("Initilization");
         }
 
       // Compute RHS
@@ -391,39 +399,106 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b1(d_b, 0.0),
         b(d_b, 0.0);
 
-      iter = feBasisDataStorageRhs.begin();
-      while (iter != feBasisDataStorageRhs.end())
+      d_p.registerStart("Rhs Computation");
+      iter = d_feBasisDataStorageRhs.begin();
+      while (iter != d_feBasisDataStorageRhs.end())
         {
-          // Set up basis Operations for RHS
-          basis::FEBasisOperations<ValueTypeOperand,
-                                   ValueTypeOperator,
-                                   memorySpace,
-                                   dim>
-            feBasisOperations(iter->second, d_maxCellBlock, d_maxFieldBlock);
+          ValueType max(1e6);
+          if (d_rhsQuadValComponent.find(iter->first) !=
+              d_rhsQuadValComponent.end())
+            {
+              quadrature::add<ValueType, memorySpace>(
+                (ValueType)1,
+                inpRhs.find(iter->first)->second,
+                (ValueType)(-1),
+                d_rhsQuadValComponent.find(iter->first)->second,
+                *d_linAlgOpContext);
 
-          feBasisOperations.integrateWithBasisValues(
-            inpRhs.find(iter->first)->second, *d_feBasisManagerHomo, b1);
+              max = linearAlgebra::blasLapack::amax(
+                d_rhsQuadValComponent.find(iter->first)->second.nEntries(),
+                d_rhsQuadValComponent.find(iter->first)->second.data(),
+                1,
+                *d_linAlgOpContext);
 
-          linearAlgebra::add(ones, b1, ones, b, b);
+              utils::mpi::MPIAllreduce<memorySpace>(
+                utils::mpi::MPIInPlace,
+                &max,
+                1,
+                utils::mpi::Types<ValueType>::getMPIDatatype(),
+                utils::mpi::MPIMax,
+                feBasisManagerField->getMPIPatternP2P()->mpiCommunicator());
 
+              d_rhsQuadValComponent.find(iter->first)->second =
+                inpRhs.find(iter->first)->second;
+            }
+
+          if (std::abs(max) > 1e-12)
+            {
+              // Set up basis Operations for RHS
+              basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
+                                       memorySpace,
+                                       dim>
+                feBasisOperations(iter->second,
+                                  d_maxCellBlock,
+                                  d_maxFieldBlock);
+
+              feBasisOperations.integrateWithBasisValues(
+                inpRhs.find(iter->first)->second, *d_feBasisManagerHomo, b1);
+
+              if (d_rhsQuadValComponent.find(iter->first) !=
+                  d_rhsQuadValComponent.end())
+                {
+                  d_rhsMultiVecComponent.find(iter->first)->second = b1;
+                }
+              else
+                {
+                  d_rhsQuadValComponent[iter->first] =
+                    inpRhs.find(iter->first)->second;
+                  d_rhsMultiVecComponent[iter->first] = b1;
+                }
+
+              linearAlgebra::add(ones, b1, ones, b, b);
+            }
+          else
+            {
+              d_rootCout << "Skipped " << iter->first << " RHS evaluation\n";
+              linearAlgebra::add(
+                ones,
+                d_rhsMultiVecComponent.find(iter->first)->second,
+                ones,
+                b,
+                b);
+            }
           iter++;
         }
 
       linearAlgebra::MultiVector<ValueType, memorySpace> rhsNHDB(d_b, 0.0);
 
-      d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB);
+      d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB, true, true);
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
+      d_p.registerEnd("Rhs Computation");
+      d_p.print();
 
       // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // for(int i = 0 ; i < d_numComponents ; i++)
-      // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i] << " d_b-norm: " <<
-      // d_b.l2Norms()[i] << " b-norm: " << b.l2Norms()[i] << "\t";
+      // double a = rhsNHDB.l2Norms()[0];
+      // double bb = d_b.l2Norms()[0];
+      // double c = b.l2Norms()[0];
+      // for(int i = 0 ; i < numProcs ; i++)
+      // {
+      //   if(i == rank)
+      //   {
+      //   std::cout << "rhs-norm: " << a
+      //             << " d_b-norm: " << bb
+      //             << " b-norm: " << c << "\t" << std::flush;
       // std::cout << "\n";
+      //   }
+      // }
     }
 
     template <typename ValueTypeOperator,
@@ -440,9 +515,6 @@ namespace dftefe
                                                     ValueTypeOperator,
                                                     memorySpace,
                                                     dim>> feBasisManagerField,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-          feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
@@ -455,13 +527,7 @@ namespace dftefe
                  memorySpace> &>
         inpRhsMap = {{"Field", inpRhs}};
 
-      std::map<
-        std::string,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
-        feBasisDataStorageRhsMap = {{"Field", feBasisDataStorageRhs}};
-
-      reinit(feBasisManagerField, feBasisDataStorageRhsMap, inpRhsMap);
+      reinit(feBasisManagerField, inpRhsMap);
     }
 
     template <typename ValueTypeOperator,
@@ -541,6 +607,8 @@ namespace dftefe
       d_feBasisManagerField->getConstraints().distributeParentToChild(
         solution, numComponents);
 
+      // this is done for a particular case for poisson solve each
+      // scf guess but have to be modified with a reinit parameter
       d_initial = solution;
     }
 

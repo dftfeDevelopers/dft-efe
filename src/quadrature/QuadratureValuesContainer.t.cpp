@@ -396,6 +396,20 @@ namespace dftefe
       return (d_storage.begin() + cellStartId(cellId) + nCellEntries(cellId));
     }
 
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    ValueType *
+    QuadratureValuesContainer<ValueType, memorySpace>::data()
+    {
+      return d_storage.data();
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    const ValueType *
+    QuadratureValuesContainer<ValueType, memorySpace>::data() const
+    {
+      return d_storage.data();
+    }
+
     // template <typename ValueType, utils::MemorySpace memorySpace>
     // ValueType
     // QuadratureValuesContainer<ValueType, memorySpace>::dotProduct() const
@@ -465,7 +479,8 @@ namespace dftefe
       utils::throwException<utils::LengthError>(
         u.nEntries() == v.nEntries(),
         "Mismatch in sizes of the two input QuadratureValuesContainer passed"
-        " for addition");
+        " for addition " +
+          std::to_string(u.nEntries()) + " , " + std::to_string(v.nEntries()));
       linearAlgebra::blasLapack::axpby<ValueType, ValueType, memorySpace>(
         u.nEntries(), a, u.begin(), b, v.begin(), v.begin(), linAlgOpContext);
     }

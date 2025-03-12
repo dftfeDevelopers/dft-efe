@@ -34,6 +34,7 @@ namespace dftefe
     class Energy
     {
     public:
+      virtual ~Energy() = default;
       virtual ValueType
       getEnergy() const = 0;
 

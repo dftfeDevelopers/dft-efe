@@ -483,6 +483,25 @@ namespace dftefe
 
         size_type BStartOffset       = 0;
         size_type cellLocalIdsOffset = 0;
+
+        size_type maxDofInCell =
+          *std::max_element(numCellDofs.begin(), numCellDofs.end());
+
+        utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
+          cellBlockSize * numVecs * maxDofInCell,
+          utils::Types<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                   ValueTypeOperand>>::zero);
+
+        utils::MemoryStorage<linearAlgebra::blasLapack::
+                               scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                             memorySpace>
+          yCellValues(
+            cellBlockSize * numVecs * maxDofInCell,
+            utils::Types<
+              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                     ValueTypeOperand>>::zero);
+
         for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
              cellStartId += cellBlockSize)
           {
@@ -504,11 +523,11 @@ namespace dftefe
             cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
 
             // allocate memory for cell-wise data for x
-            utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
-              cellsInBlockNumCumulativeDoFs * numVecs,
-              utils::Types<linearAlgebra::blasLapack::scalar_type<
-                ValueTypeOperator,
-                ValueTypeOperand>>::zero);
+            // utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
+            //   cellsInBlockNumCumulativeDoFs * numVecs,
+            //   utils::Types<linearAlgebra::blasLapack::scalar_type<
+            //     ValueTypeOperator,
+            //     ValueTypeOperand>>::zero);
 
             // copy x to cell-wise data
             basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
@@ -557,14 +576,14 @@ namespace dftefe
               numVecs);
 
             // allocate memory for cell-wise data for y
-            utils::MemoryStorage<
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                     ValueTypeOperand>,
-              memorySpace>
-              yCellValues(cellsInBlockNumCumulativeDoFs * numVecs,
-                          utils::Types<linearAlgebra::blasLapack::scalar_type<
-                            ValueTypeOperator,
-                            ValueTypeOperand>>::zero);
+            // utils::MemoryStorage<
+            //   linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+            //                                          ValueTypeOperand>,
+            //   memorySpace>
+            //   yCellValues(cellsInBlockNumCumulativeDoFs * numVecs,
+            //               utils::Types<linearAlgebra::blasLapack::scalar_type<
+            //                 ValueTypeOperator,
+            //                 ValueTypeOperand>>::zero);
 
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                    ValueTypeOperand>
@@ -852,7 +871,9 @@ namespace dftefe
       ValueTypeBasisData,
       memorySpace,
       dim>::apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-                  linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const
+                  linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
+                  bool updateGhostX,
+                  bool updateGhostY) const
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
@@ -877,7 +898,8 @@ namespace dftefe
       const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsY =
         d_feBasisManager->getConstraints();
 
-      X.updateGhostValues();
+      if (updateGhostX)
+        X.updateGhostValues();
       // update the child nodes based on the parent nodes
       constraintsX.distributeParentToChild(X, numVecs);
 
@@ -908,7 +930,8 @@ namespace dftefe
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
-      Y.updateGhostValues();
+      if (updateGhostY)
+        Y.updateGhostValues();
     }
 
   } // end of namespace ksdft

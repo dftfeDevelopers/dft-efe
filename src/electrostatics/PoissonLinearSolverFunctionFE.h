@@ -40,6 +40,7 @@
 #include <quadrature/QuadratureValuesContainer.h>
 #include <vector>
 #include <memory>
+#include <utils/Profiler.h>
 
 namespace dftefe
 {
@@ -142,11 +143,6 @@ namespace dftefe
                                                     dim>> feBasisManagerField,
         const std::map<
           std::string,
-          std::shared_ptr<
-            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
-          &feBasisDataStorageRhs,
-        const std::map<
-          std::string,
           const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
           &inpRhs);
 
@@ -156,9 +152,6 @@ namespace dftefe
                                                     ValueTypeOperator,
                                                     memorySpace,
                                                     dim>> feBasisManagerField,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-          feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &inpRhs);
 
@@ -225,7 +218,20 @@ namespace dftefe
       const size_type d_maxFieldBlock;
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
-        d_feBasisDataStorageStiffnessMatrix;
+                                d_feBasisDataStorageStiffnessMatrix;
+      utils::Profiler           d_p;
+      utils::ConditionalOStream d_rootCout;
+      std::map<std::string,
+               linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>>
+        d_rhsMultiVecComponent;
+      std::map<std::string,
+               quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
+        d_rhsQuadValComponent;
+      std::map<
+        std::string,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
+        d_feBasisDataStorageRhs;
 
     }; // end of class PoissonLinearSolverFunctionFE
   }    // namespace electrostatics

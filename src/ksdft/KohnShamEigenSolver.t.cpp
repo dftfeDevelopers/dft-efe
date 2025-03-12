@@ -60,6 +60,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        bool             isResidualChebyshevFilter,
         const size_type  waveFunctionBlockSize,
         const OpContext &MLanczos,
         const OpContext &MInvLanczos)
@@ -74,6 +75,10 @@ namespace dftefe
       , d_eigSolveResNorm(d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
+      , d_p(waveFunctionSubspaceGuess.getMPIPatternP2P()->mpiCommunicator(),
+            "Kohn Sham EigenSolver")
+      , d_chebyPolyScalingFactor(1.0)
+      , d_isResidualChebyFilter(isResidualChebyshevFilter)
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -122,6 +127,16 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      setChebyPolyScalingFactor(double scalingFactor)
+    {
+      d_chebyPolyScalingFactor = scalingFactor;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     linearAlgebra::EigenSolverError
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       solve(const OpContext &      kohnShamOperator,
@@ -132,6 +147,7 @@ namespace dftefe
             const OpContext &M,
             const OpContext &MInv)
     {
+      d_p.reset();
       d_isSolved                  = true;
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -157,17 +173,21 @@ namespace dftefe
                 1,
                 tol,
                 ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
-                *d_lanczosGuess);
+                *d_lanczosGuess,
+                false);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
 
       std::vector<RealType> eigenValuesLanczos(2);
+      d_p.registerStart("Lanczos Solve");
       lanczosErr = lanczos.solve(kohnShamOperator,
                                  eigenValuesLanczos,
                                  eigenVectorsLanczos,
                                  false,
                                  *d_MLanczos,
                                  *d_MInvLanczos);
+      d_p.registerEnd("Lanczos Solve");
+      d_p.print();
 
       std::vector<RealType> diagonal(0), subDiagonal(0);
       lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
@@ -206,6 +226,9 @@ namespace dftefe
           d_chebyshevPolynomialDegree =
             getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
 
+          d_chebyshevPolynomialDegree =
+            d_chebyshevPolynomialDegree * d_chebyPolyScalingFactor;
+
           d_rootCout << "Chebyshev Polynomial Degree : "
                      << d_chebyshevPolynomialDegree << "\n";
 
@@ -219,6 +242,7 @@ namespace dftefe
             d_chebyshevPolynomialDegree,
             ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
             *d_waveFunctionSubspaceGuess,
+            d_isResidualChebyFilter,
             d_waveFunctionBlockSize);
 
           linearAlgebra::MultiVector<ValueType, memorySpace> HX(
@@ -255,7 +279,7 @@ namespace dftefe
               utils::MemoryStorage<ValueType, memorySpace> temp1(
                 numVec * numVec, utils::Types<ValueType>::zero);
 
-              M.apply(kohnShamWaveFunctions, temp);
+              M.apply(kohnShamWaveFunctions, temp, true, true);
 
               linearAlgebra::blasLapack::gemm<ValueType, ValueType,
           memorySpace>( linearAlgebra::blasLapack::Layout::ColMajor,
@@ -338,8 +362,8 @@ namespace dftefe
 
               // TODO : Implement blocked approach for wavefns
               // calculate residualEigenSolver
-              kohnShamOperator.apply(kohnShamWaveFunctions, HX);
-              M.apply(kohnShamWaveFunctions, MX);
+              kohnShamOperator.apply(kohnShamWaveFunctions, HX, true, true);
+              M.apply(kohnShamWaveFunctions, MX, true, true);
 
               memoryTransfer.copy(d_numWantedEigenvalues,
                                   kohnShamEnergiesMemspace.data(),
@@ -349,8 +373,10 @@ namespace dftefe
                 axpbyBlocked<ValueType, ValueType, memorySpace>(
                   MX.locallyOwnedSize(),
                   d_numWantedEigenvalues,
+                  1,
                   nOnes.data(),
                   HX.data(),
+                  1,
                   kohnShamEnergiesMemspace.data(),
                   MX.data(),
                   residualEigenSolver.data(),
@@ -442,6 +468,8 @@ namespace dftefe
             linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
           returnValue.msg += lanczosErr.msg;
         }
+
+      d_chebyPolyScalingFactor = 1.0;
 
       return returnValue;
     }

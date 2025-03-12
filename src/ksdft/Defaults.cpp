@@ -44,31 +44,18 @@ namespace dftefe
     const double LinearEigenSolverDefaults::ILL_COND_TOL = 1e-14;
     const double LinearEigenSolverDefaults::LANCZOS_EXTREME_EIGENVAL_TOL = 1e-6;
     const double LinearEigenSolverDefaults::LANCZOS_BETA_TOL = 1e-14;
-    const size_type LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE = 40;
+    const size_type LinearEigenSolverDefaults::LANCZOS_MAX_KRYLOV_SUBSPACE = 20;
     /**
      * @brief Setting all the ChebyshevPolynomialDegreeDefaults
      */
     const std::map<size_type, size_type>
       LinearEigenSolverDefaults::CHEBY_ORDER_LOOKUP{
-        {100, 15},
-        {300, 19},
-        {500, 24}, // <= 500 ~> chebyshevOrder = 24
-        {750, 30},
-        {1000, 39},
-        {1500, 50},
-        {2000, 53},
-        {3000, 57},
-        {4000, 62},
-        {5000, 69},
-        {9000, 77},
-        {14000, 104},
-        {20000, 119},
-        {30000, 162},
-        {50000, 300},
-        {80000, 450},
-        {100000, 550},
-        {200000, 700},
-        {500000, 1000}};
+        {10, 6},      {50, 9},       {100, 12},     {200, 16},
+        {300, 19},    {500, 24}, // <= 500 ~> chebyshevOrder = 24
+        {750, 30},    {1000, 39},    {1500, 50},    {2000, 53},
+        {3000, 57},   {4000, 62},    {5000, 69},    {9000, 77},
+        {14000, 104}, {20000, 119},  {30000, 162},  {50000, 300},
+        {80000, 450}, {100000, 550}, {200000, 700}, {500000, 1000}};
 
     /**
      * @brief Setting all the NewtonRaphsonSolverDefaults

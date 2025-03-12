@@ -414,5 +414,15 @@ namespace dftefe
       return returnValue;
     }
 
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    swap(MemoryStorage<ValueType, memorySpace> &X,
+         MemoryStorage<ValueType, memorySpace> &Y)
+    {
+      MemoryStorage<ValueType, memorySpace> tmp(std::move(X));
+      X = std::move(Y);
+      Y = std::move(tmp);
+    }
+
   } // namespace utils
 } // namespace dftefe

@@ -56,6 +56,8 @@ namespace dftefe
         const size_type   precision = PrintControlDefaults::PRECISION,
         const std::string delimiter = PrintControlDefaults::DELIMITER);
 
+      ~LinearAlgebraProfiler() = default;
+
       void
       registerStart(const utils::mpi::MPIComm &mpiComm);
       void

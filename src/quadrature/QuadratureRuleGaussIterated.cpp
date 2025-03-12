@@ -10,6 +10,8 @@ namespace dftefe
       const size_type dim,
       const size_type order1D,
       const size_type copies)
+      : d_numCopies(copies)
+      , d_order1D(order1D)
     {
       d_dim = dim;
 
@@ -90,6 +92,17 @@ namespace dftefe
         }
     }
 
+    size_type
+    QuadratureRuleGaussIterated::numCopies() const
+    {
+      return d_numCopies;
+    }
+
+    size_type
+    QuadratureRuleGaussIterated::order1D() const
+    {
+      return d_order1D;
+    }
 
   } // end of namespace quadrature
 } // end of namespace dftefe

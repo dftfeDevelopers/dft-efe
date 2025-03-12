@@ -212,6 +212,10 @@ namespace dftefe
         std::pair<size_type, size_type> cellRange,
         Storage &                       basisGradientData) const override;
 
+      // dealii function
+      const dealii::Quadrature<dim> &
+      getDealiiQuadratureRule() const;
+
     private:
       bool d_evaluateBasisData;
       std::shared_ptr<
@@ -234,6 +238,7 @@ namespace dftefe
       size_type                     d_maxCellBlock;
       std::shared_ptr<Storage>      d_tmpGradientBlock;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
+      dealii::Quadrature<dim>                      d_dealiiQuadratureRule;
 
     }; // end of CFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis

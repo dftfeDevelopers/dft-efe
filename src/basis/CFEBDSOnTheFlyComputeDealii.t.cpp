@@ -185,7 +185,8 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisJacobianInvQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        dealii::Quadrature<dim> &           dealiiQuadratureRule)
       {
         // for processors where there are no cells
         bool numCellsZero = feBDH->nLocallyOwnedCells() == 0 ? true : false;
@@ -193,7 +194,7 @@ namespace dftefe
           quadratureRuleAttributes.getQuadratureFamily();
         const size_type num1DQuadPoints =
           quadratureRuleAttributes.getNum1DPoints();
-        dealii::Quadrature<dim> dealiiQuadratureRule;
+        // dealii::Quadrature<dim> dealiiQuadratureRule;
         if (quadratureFamily == quadrature::QuadratureFamily::GAUSS)
           {
             dealiiQuadratureRule = dealii::QGauss<dim>(num1DQuadPoints);
@@ -205,27 +206,34 @@ namespace dftefe
         else if (quadratureFamily ==
                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED)
           {
-            if (!numCellsZero)
-              {
-                // get the parametric points and jxw in each cell according to
-                // the attribute.
-                unsigned int                     cellIndex = 0;
-                const std::vector<utils::Point> &cellParametricQuadPoints =
-                  quadratureRuleContainer->getCellParametricPoints(cellIndex);
-                std::vector<dealii::Point<dim, double>>
-                  dealiiParametricQuadPoints(0);
+            const quadrature::QuadratureRuleGaussIterated &quadRule =
+              dynamic_cast<const quadrature::QuadratureRuleGaussIterated &>(
+                quadratureRuleContainer->getQuadratureRule(0));
+            // if (!numCellsZero)
+            //   {
+            //     // get the parametric points and jxw in each cell according
+            //     to
+            //     // the attribute.
+            //     unsigned int                     cellIndex = 0;
+            //     const std::vector<utils::Point> &cellParametricQuadPoints =
+            //       quadratureRuleContainer->getCellParametricPoints(cellIndex);
+            //     std::vector<dealii::Point<dim, double>>
+            //       dealiiParametricQuadPoints(0);
 
-                // get the quad weights in each cell
-                const std::vector<double> &quadWeights =
-                  quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
-                convertToDealiiPoint<dim>(cellParametricQuadPoints,
-                                          dealiiParametricQuadPoints);
+            //     // get the quad weights in each cell
+            //     const std::vector<double> &quadWeights =
+            //       quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
+            //     convertToDealiiPoint<dim>(cellParametricQuadPoints,
+            //                               dealiiParametricQuadPoints);
 
-                // Ask dealii to create quad rule in each cell
-                dealiiQuadratureRule =
-                  dealii::Quadrature<dim>(dealiiParametricQuadPoints,
-                                          quadWeights);
-              }
+            //     // Ask dealii to create quad rule in each cell
+            //     dealiiQuadratureRule =
+            //       dealii::Quadrature<dim>(dealiiParametricQuadPoints,
+            //                               quadWeights);
+            //   }
+            dealiiQuadratureRule =
+              dealii::QIterated<dim>(dealii::QGauss<1>(quadRule.order1D()),
+                                     quadRule.numCopies());
           }
 
         else
@@ -280,17 +288,19 @@ namespace dftefe
               ->second)
           dealiiUpdateFlagsPara = dealii::update_gradients;
         // This is for getting the gradient in parametric cell
-        dealii::FEValues<dim> dealiiFEValuesPara(feBDH->getReferenceFE(cellId),
-                                                 dealiiQuadratureRule,
-                                                 dealiiUpdateFlagsPara);
+        std::shared_ptr<dealii::FEValues<dim>> dealiiFEValuesPara = nullptr;
 
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreGradient)
               ->second)
           {
+            dealiiFEValuesPara = std::make_shared<dealii::FEValues<dim>>(
+              feBDH->getReferenceFE(cellId),
+              dealiiQuadratureRule,
+              dealiiUpdateFlagsPara); // takes time
             dealii::Triangulation<dim> referenceCell;
             dealii::GridGenerator::hyper_cube(referenceCell, 0., 1.);
-            dealiiFEValuesPara.reinit(referenceCell.begin());
+            dealiiFEValuesPara->reinit(referenceCell.begin()); // takes time
           }
 
         const size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
@@ -421,7 +431,7 @@ namespace dftefe
                              qPoint++)
                           {
                             auto shapeGrad =
-                              dealiiFEValuesPara.shape_grad(iNode, qPoint);
+                              dealiiFEValuesPara->shape_grad(iNode, qPoint);
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
@@ -648,7 +658,8 @@ namespace dftefe
              cellStartIdsBasisQuadStorage,
              cellStartIdsBasisJacobianInvQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap);
+             basisStorageAttributesBoolMap,
+             d_dealiiQuadratureRule);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -800,7 +811,8 @@ namespace dftefe
              cellStartIdsBasisQuadStorage,
              cellStartIdsBasisJacobianInvQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap);
+             basisStorageAttributesBoolMap,
+             d_dealiiQuadratureRule);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1609,5 +1621,19 @@ namespace dftefe
     {
       return d_feBDH;
     }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    const dealii::Quadrature<dim> &
+    CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+                                ValueTypeBasisData,
+                                memorySpace,
+                                dim>::getDealiiQuadratureRule() const
+    {
+      return d_dealiiQuadratureRule;
+    }
+
   } // namespace basis
 } // namespace dftefe

@@ -85,6 +85,18 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           d_feBasisDataStorage->getQuadratureRuleContainer(),
           d_waveFuncBatchSize * dim);
+
+      d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
+                                     basis::realspace::VectorMathOp::DOT,
+                                     basis::realspace::LinearLocalOp::GRAD,
+                                     d_cellWiseStorageKineticEnergy,
+                                     *d_linAlgOpContext);
+
+      linearAlgebra::blasLapack::ascale(d_cellWiseStorageKineticEnergy.size(),
+                                        (ValueTypeBasisData)0.5,
+                                        d_cellWiseStorageKineticEnergy.data(),
+                                        d_cellWiseStorageKineticEnergy.data(),
+                                        *d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -95,17 +107,7 @@ namespace dftefe
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getLocal(Storage &cellWiseStorage) const
     {
-      d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
-                                     basis::realspace::VectorMathOp::DOT,
-                                     basis::realspace::LinearLocalOp::GRAD,
-                                     cellWiseStorage,
-                                     *d_linAlgOpContext);
-
-      linearAlgebra::blasLapack::ascale(cellWiseStorage.size(),
-                                        (ValueTypeBasisData)0.5,
-                                        cellWiseStorage.data(),
-                                        cellWiseStorage.data(),
-                                        *d_linAlgOpContext);
+      cellWiseStorage = d_cellWiseStorageKineticEnergy;
     }
 
     template <typename ValueTypeBasisData,

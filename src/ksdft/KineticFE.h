@@ -102,6 +102,7 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace> *d_gradPsi;
+      Storage d_cellWiseStorageKineticEnergy;
 
     }; // end of class KineticFE
   }    // end of namespace ksdft

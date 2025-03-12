@@ -38,17 +38,24 @@ namespace dftefe
     AtomSphericalDataContainer::AtomSphericalDataContainer(
       const std::map<std::string, std::string> &atomSymbolToFilename,
       const std::vector<std::string> &          fieldNames,
-      const std::vector<std::string> &          metadataNames)
+      const std::vector<std::string> &          metadataNames,
+      const bool                                isAssocLegendreSplineEval)
       : d_atomSymbolToFilename(atomSymbolToFilename)
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
+      , d_isAssocLegendreSplineEval(isAssocLegendreSplineEval)
     {
+      d_SphericalHarmonicFunctions =
+        std::make_shared<const SphericalHarmonicFunctions>(false);
       auto iter = d_atomSymbolToFilename.begin();
       for (; iter != d_atomSymbolToFilename.end(); iter++)
         {
           d_mapAtomSymbolToAtomSphericalData.insert(
             {iter->first,
-             AtomSphericalData(iter->second, d_fieldNames, d_metadataNames)});
+             AtomSphericalData(iter->second,
+                               d_fieldNames,
+                               d_metadataNames,
+                               *d_SphericalHarmonicFunctions)});
         }
     }
 

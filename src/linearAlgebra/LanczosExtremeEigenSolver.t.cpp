@@ -93,7 +93,9 @@ namespace dftefe
         const size_type                              numUpperExtermeEigenValues,
         std::vector<double> &                        tolerance,
         double                                       lanczosBetaTolerance,
-        const Vector<ValueTypeOperand, memorySpace> &initialGuess)
+        const Vector<ValueTypeOperand, memorySpace> &initialGuess,
+        bool                                         isAdaptiveSolve)
+      : d_isAdaptiveSolve(isAdaptiveSolve)
     {
       reinit(maxKrylovSubspaceSize,
              numLowerExtermeEigenValues,
@@ -117,7 +119,9 @@ namespace dftefe
         double               lanczosBetaTolerance,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        bool                                          isAdaptiveSolve)
+      : d_isAdaptiveSolve(isAdaptiveSolve)
     {
       reinit(maxKrylovSubspaceSize,
              numLowerExtermeEigenValues,
@@ -237,10 +241,11 @@ namespace dftefe
 
       eigenValues.clear();
       std::vector<RealType> eigenValuesPrev(0);
-      eigenValuesPrev.resize(numWantedEigenValues, (RealType)0);
+      if (d_isAdaptiveSolve)
+        eigenValuesPrev.resize(numWantedEigenValues, (RealType)0);
       std::vector<bool> isToleranceReached(numWantedEigenValues, false);
-      bool              isSuccess = false;
-      size_type         krylovSubspaceSize;
+      bool              isSuccess          = false;
+      size_type         krylovSubspaceSize = 0;
 
       std::vector<RealType> alphaVec, betaVec;
       alphaVec.reserve(d_maxKrylovSubspaceSize);
@@ -270,7 +275,7 @@ namespace dftefe
       // normalize the initialGuess with B norm set q = b/norm
       // compute B-norm = (initGuess)^TB(initGuess)
 
-      B.apply(d_initialGuess, temp);
+      B.apply(d_initialGuess, temp, true, true);
 
       dot<ValueTypeOperand, ValueType, memorySpace>(
         d_initialGuess,
@@ -296,9 +301,9 @@ namespace dftefe
 
           // v = BInv A q_i
 
-          temp.setValue((ValueType)0.0);
-          A.apply(q, temp);
-          BInv.apply(temp, v);
+          // temp.setValue((ValueType)0.0);
+          A.apply(q, temp, true, false);
+          BInv.apply(temp, v, false, false);
 
           // get \alpha = q_i^TAq_i
 
@@ -330,12 +335,28 @@ namespace dftefe
 
           // get v = v - \alpha_i * q_i - \beta_i-1 * q_i-1
 
-          add(ones, v, nAlpha, q, v);
-          add(ones, v, nBeta, qPrev, v);
+          // add(ones, v, nAlpha, q, v);
+          // add(ones, v, nBeta, qPrev, v);
+
+          linearAlgebra::blasLapack::axpy(v.localSize(),
+                                          nAlpha,
+                                          q.data(),
+                                          1,
+                                          v.data(),
+                                          1,
+                                          *d_initialGuess.getLinAlgOpContext());
+
+          linearAlgebra::blasLapack::axpy(v.localSize(),
+                                          nBeta,
+                                          qPrev.data(),
+                                          1,
+                                          v.data(),
+                                          1,
+                                          *d_initialGuess.getLinAlgOpContext());
 
           // compute \beta_i = bnorm v
-          temp.setValue((ValueType)0.0);
-          B.apply(v, temp);
+          // temp.setValue((ValueType)0.0);
+          B.apply(v, temp, true, true);
 
           dot<ValueType, ValueType, memorySpace>(
             v,
@@ -346,7 +367,8 @@ namespace dftefe
 
           beta[0] = std::sqrt(beta[0]);
 
-          if (utils::realPart<ValueType>(beta[0]) < d_lanczosBetaTolerance)
+          if (utils::realPart<ValueType>(beta[0]) < d_lanczosBetaTolerance &&
+              d_isAdaptiveSolve)
             {
               if (krylovSubspaceSize >= numWantedEigenValues)
                 isSuccess = true;
@@ -371,108 +393,126 @@ namespace dftefe
             {
               krylovSubspaceSize = iter;
 
-              utils::MemoryStorage<RealType, memorySpace> eigenValuesIter(
-                alphaVec.size());
-              eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
-                alphaVec.data());
-              utils::MemoryStorage<RealType, memorySpace> betaVecTemp(
-                betaVec.size() - 1);
-              betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
-                betaVec.data(), betaVec.size() - 1, 0, 0);
-
-              if (computeEigenVectors)
+              if (d_isAdaptiveSolve || iter == d_maxKrylovSubspaceSize)
                 {
-                  eigenVectorsKrylovSubspace.resize(
-                    krylovSubspaceSize * krylovSubspaceSize,
-                    utils::Types<ValueType>::zero);
-                  LapackError lapackReturn =
-                    blasLapack::steqr<ValueType, memorySpace>(
-                      blasLapack::Job::Vec,
-                      krylovSubspaceSize,
-                      eigenValuesIter.data(),
-                      betaVecTemp.data(),
-                      eigenVectorsKrylovSubspace.data(),
-                      krylovSubspaceSize,
-                      *d_initialGuess.getLinAlgOpContext());
+                  utils::MemoryStorage<RealType, memorySpace> eigenValuesIter(
+                    alphaVec.size());
+                  eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
+                    alphaVec.data());
+                  utils::MemoryStorage<RealType, memorySpace> betaVecTemp(
+                    betaVec.size() - 1);
+                  betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
+                    betaVec.data(), betaVec.size() - 1, 0, 0);
 
-                  if (lapackReturn.err ==
-                      LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
+                  if (computeEigenVectors)
                     {
-                      err        = EigenSolverErrorCode::LAPACK_ERROR;
+                      eigenVectorsKrylovSubspace.resize(
+                        krylovSubspaceSize * krylovSubspaceSize,
+                        utils::Types<ValueType>::zero);
+                      LapackError lapackReturn =
+                        blasLapack::steqr<ValueType, memorySpace>(
+                          blasLapack::Job::Vec,
+                          krylovSubspaceSize,
+                          eigenValuesIter.data(),
+                          betaVecTemp.data(),
+                          eigenVectorsKrylovSubspace.data(),
+                          krylovSubspaceSize,
+                          *d_initialGuess.getLinAlgOpContext());
+
+                      if (lapackReturn.err ==
+                          LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
+                        {
+                          err = EigenSolverErrorCode::LAPACK_ERROR;
+                          retunValue =
+                            EigenSolverErrorMsg::isSuccessAndMsg(err);
+                          retunValue.msg += lapackReturn.msg;
+                          break;
+                        }
+                    }
+                  else
+                    {
+                      LapackError lapackReturn =
+                        blasLapack::steqr<ValueType, memorySpace>(
+                          blasLapack::Job::NoVec,
+                          krylovSubspaceSize,
+                          eigenValuesIter.data(),
+                          betaVecTemp.data(),
+                          eigenVectorsKrylovSubspace.data(),
+                          krylovSubspaceSize,
+                          *d_initialGuess.getLinAlgOpContext());
+
+                      if (lapackReturn.err ==
+                          LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
+                        {
+                          err = EigenSolverErrorCode::LAPACK_ERROR;
+                          retunValue =
+                            EigenSolverErrorMsg::isSuccessAndMsg(err);
+                          retunValue.msg += lapackReturn.msg;
+                          break;
+                        }
+                    }
+
+                  eigenValues.clear();
+
+                  // To store the sliced vector
+                  eigenValues.resize(numWantedEigenValues);
+
+                  // std::cout << "iter: "<<iter << "\n";
+                  // std::cout << "eigenValuesIter: ";
+                  // for(auto i : eigenValuesIter)
+                  // {
+                  //   std::cout << i << ",";
+                  // }
+                  // std::cout << "\n";
+
+                  eigenValuesIter.template copyTo<utils::MemorySpace::HOST>(
+                    eigenValues.data(), d_numLowerExtermeEigenValues, 0, 0);
+
+                  eigenValuesIter.template copyTo<utils::MemorySpace::HOST>(
+                    eigenValues.data(),
+                    d_numUpperExtermeEigenValues,
+                    eigenValuesIter.size() - d_numUpperExtermeEigenValues,
+                    d_numLowerExtermeEigenValues);
+
+                  if (d_isAdaptiveSolve)
+                    {
+                      for (size_type eigId = 0; eigId < numWantedEigenValues;
+                           eigId++)
+                        {
+                          isToleranceReached[eigId] =
+                            (std::abs(eigenValuesPrev[eigId] -
+                                      eigenValues[eigId]) <=
+                             d_tolerance[eigId]) ?
+                              true :
+                              false;
+                        }
+                      if (std::all_of(isToleranceReached.begin(),
+                                      isToleranceReached.end(),
+                                      [](bool v) { return v; }))
+                        {
+                          err = EigenSolverErrorCode::SUCCESS;
+                          retunValue =
+                            EigenSolverErrorMsg::isSuccessAndMsg(err);
+                          isSuccess = true;
+                          break;
+                        }
+                      eigenValuesPrev = eigenValues;
+                    }
+                  else
+                    {
+                      err        = EigenSolverErrorCode::SUCCESS;
                       retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                      retunValue.msg += lapackReturn.msg;
+                      isSuccess  = true;
                       break;
                     }
                 }
-              else
-                {
-                  LapackError lapackReturn =
-                    blasLapack::steqr<ValueType, memorySpace>(
-                      blasLapack::Job::NoVec,
-                      krylovSubspaceSize,
-                      eigenValuesIter.data(),
-                      betaVecTemp.data(),
-                      eigenVectorsKrylovSubspace.data(),
-                      krylovSubspaceSize,
-                      *d_initialGuess.getLinAlgOpContext());
-
-                  if (lapackReturn.err ==
-                      LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
-                    {
-                      err        = EigenSolverErrorCode::LAPACK_ERROR;
-                      retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                      retunValue.msg += lapackReturn.msg;
-                      break;
-                    }
-                }
-
-              eigenValues.clear();
-
-              // To store the sliced vector
-              eigenValues.resize(numWantedEigenValues);
-
-              // std::cout << "iter: "<<iter << "\n";
-              // std::cout << "eigenValuesIter: ";
-              // for(auto i : eigenValuesIter)
-              // {
-              //   std::cout << i << ",";
-              // }
-              // std::cout << "\n";
-
-              eigenValuesIter.template copyTo<utils::MemorySpace::HOST>(
-                eigenValues.data(), d_numLowerExtermeEigenValues, 0, 0);
-
-              eigenValuesIter.template copyTo<utils::MemorySpace::HOST>(
-                eigenValues.data(),
-                d_numUpperExtermeEigenValues,
-                eigenValuesIter.size() - d_numUpperExtermeEigenValues,
-                d_numLowerExtermeEigenValues);
-
-              for (size_type eigId = 0; eigId < numWantedEigenValues; eigId++)
-                {
-                  isToleranceReached[eigId] =
-                    (std::abs(eigenValuesPrev[eigId] - eigenValues[eigId]) <=
-                     d_tolerance[eigId]) ?
-                      true :
-                      false;
-                }
-              if (std::all_of(isToleranceReached.begin(),
-                              isToleranceReached.end(),
-                              [](bool v) { return v; }))
-                {
-                  err        = EigenSolverErrorCode::SUCCESS;
-                  retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-                  isSuccess  = true;
-                  break;
-                }
-              eigenValuesPrev = eigenValues;
             }
         }
 
       d_diagonal    = alphaVec;
       d_subDiagonal = betaVec;
 
-      if (krylovSubspaceSize >= d_maxKrylovSubspaceSize)
+      if (krylovSubspaceSize >= d_maxKrylovSubspaceSize && d_isAdaptiveSolve)
         {
           isSuccess  = true;
           err        = EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT;

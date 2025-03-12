@@ -248,15 +248,17 @@ namespace dftefe
       void
       axpbyBlocked(const size_type                            n,
                    const size_type                            blockSize,
+                   const scalar_type<ValueType1, ValueType2>  alpha1,
                    const scalar_type<ValueType1, ValueType2> *alpha,
                    const ValueType1 *                         x,
+                   const scalar_type<ValueType1, ValueType2>  beta1,
                    const scalar_type<ValueType1, ValueType2> *beta,
                    const ValueType2 *                         y,
                    scalar_type<ValueType1, ValueType2> *      z,
                    LinAlgOpContext<memorySpace> &             context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
-          n, blockSize, alpha, x, beta, y, z);
+          n, blockSize, alpha1, alpha, x, beta1, beta, y, z);
       }
 
 

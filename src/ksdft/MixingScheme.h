@@ -67,6 +67,8 @@ namespace dftefe
     public:
       MixingScheme(const utils::mpi::MPIComm &mpiComm);
 
+      ~MixingScheme() = default;
+
       size_type
       lengthOfHistory();
 

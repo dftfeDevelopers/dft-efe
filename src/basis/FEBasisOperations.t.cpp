@@ -137,7 +137,48 @@ namespace dftefe
               sameQuadRuleInAllCells && (!variableDofsPerCell);
             linearAlgebra::blasLapack::Layout layout =
               linearAlgebra::blasLapack::Layout::ColMajor;
-            size_type NifNjStartOffset = 0;
+            size_type NifNjStartOffset = 0, quadCellsInBlockOffSet = 0;
+
+            /** --- Storages --------- **/
+            size_type maxDofInCell =
+              *std::max_element(numCellDofs.begin(), numCellDofs.end());
+            size_type maxQuadInCell =
+              *std::max_element(numCellQuad.begin(), numCellQuad.end());
+
+            const size_type numCumulativeQuadCells =
+              std::accumulate(numCellQuad.begin(), numCellQuad.end(), 0);
+
+            StorageUnion fxJxW(1 /*numComponents of f*/ *
+                                 numCumulativeQuadCells,
+                               ValueTypeUnion());
+
+            // StorageUnion fxJxW(1 /*numComponents of f*/ * maxQuadInCell *
+            //                      cellBlockSize,
+            //                    ValueTypeUnion());
+            StorageUnion fxJxWxNBlock(maxQuadInCell * cellBlockSize *
+                                        maxDofInCell,
+                                      ValueTypeUnion());
+            StorageBasis basisDataInCellRange(0);
+            basisDataInCellRange.resize(maxQuadInCell * cellBlockSize *
+                                          maxDofInCell,
+                                        ValueTypeBasisData());
+            /** --- Storages --------- **/
+
+            if (f.getNumberComponents() == 1)
+              {
+                linearAlgebra::blasLapack::hadamardProduct(jxwStorage.size(),
+                                                           jxwStorage.data(),
+                                                           f.begin(),
+                                                           fxJxW.data(),
+                                                           linAlgOpContext);
+              }
+            else
+              {
+                utils::throwException(
+                  false,
+                  "quadValuesContainer f in BasisWeakFormKernelWithField"
+                  " can be only a scalar field in real space with 1 component.");
+              }
 
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
                  cellStartId += cellBlockSize)
@@ -160,12 +201,13 @@ namespace dftefe
                                   numCellsInBlockQuad.end(),
                                   0);
 
-                size_type numCumulativeQuadxDofsCellsInBlock = 0;
+                // size_type numCumulativeQuadxDofsCellsInBlock = 0;
                 size_type numCumulativeDofsxDofsCellsInBlock = 0;
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    numCumulativeQuadxDofsCellsInBlock +=
-                      numCellsInBlockQuad[iCell] * numCellsInBlockDofs[iCell];
+                    // numCumulativeQuadxDofsCellsInBlock +=
+                    //   numCellsInBlockQuad[iCell] *
+                    //   numCellsInBlockDofs[iCell];
                     numCumulativeDofsxDofsCellsInBlock +=
                       numCellsInBlockDofs[iCell] * numCellsInBlockDofs[iCell];
                   }
@@ -177,47 +219,48 @@ namespace dftefe
                 // variableStridedBlockScale
 
                 /** --- Storages --------- **/
-                StorageUnion fxJxW(1 /*numComponents of f*/ *
-                                     numCumulativeQuadCellsInBlock,
-                                   ValueTypeUnion());
-                StorageUnion fxJxWxNConjBlock(
-                  numCumulativeQuadxDofsCellsInBlock, ValueTypeUnion());
-                StorageBasis basisDataInCellRange(0);
-                if (!zeroStrideBasisVal)
-                  basisDataInCellRange.resize(
-                    numCumulativeQuadxDofsCellsInBlock, ValueTypeBasisData());
-                else
-                  basisDataInCellRange.resize(numCellsInBlockQuad[0] *
-                                                numCellsInBlockDofs[0],
-                                              ValueTypeBasisData());
+                // StorageUnion fxJxW(1 /*numComponents of f*/ *
+                //                      numCumulativeQuadCellsInBlock,
+                //                    ValueTypeUnion());
+                // StorageUnion fxJxWxNBlock(
+                //   numCumulativeQuadxDofsCellsInBlock, ValueTypeUnion());
+                // StorageBasis basisDataInCellRange(0);
+                // if (!zeroStrideBasisVal)
+                //   basisDataInCellRange.resize(
+                //     numCumulativeQuadxDofsCellsInBlock,
+                //     ValueTypeBasisData());
+                // else
+                //   basisDataInCellRange.resize(numCellsInBlockQuad[0] *
+                //                                 numCellsInBlockDofs[0],
+                //                               ValueTypeBasisData());
                 /** --- Storages --------- **/
 
                 /*--------- Compute fxJxW -----------------*/
-                // TransposedKhatriRao product for inp and JxW
-                size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
-                for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-                  {
-                    linearAlgebra::blasLapack::khatriRaoProduct(
-                      layout,
-                      1,
-                      1,
-                      numCellsInBlockQuad[iCell],
-                      jxwStorage.data() +
-                        quadRuleContainer->getCellQuadStartId(cellStartId) +
-                        cumulativeA,
-                      f.begin(cellStartId) + cumulativeB,
-                      fxJxW.data() + cumulativeC,
-                      linAlgOpContext);
-                    cumulativeA += numCellsInBlockQuad[iCell];
-                    cumulativeB += numCellsInBlockQuad[iCell];
-                    cumulativeC += numCellsInBlockQuad[iCell];
-                  }
+                // // TransposedKhatriRao product for inp and JxW
+                // size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+                // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+                //   {
+                //     linearAlgebra::blasLapack::khatriRaoProduct(
+                //       layout,
+                //       1,
+                //       1,
+                //       numCellsInBlockQuad[iCell],
+                //       jxwStorage.data() +
+                //         quadRuleContainer->getCellQuadStartId(cellStartId) +
+                //         cumulativeA,
+                //       f.begin(cellStartId) + cumulativeB,
+                //       fxJxW.data() + cumulativeC,
+                //       linAlgOpContext);
+                //     cumulativeA += numCellsInBlockQuad[iCell];
+                //     cumulativeB += numCellsInBlockQuad[iCell];
+                //     cumulativeC += numCellsInBlockQuad[iCell];
+                //   }
 
-                /*--------- Compute fxJxWxNConj -----------------*/
+                /*--------- Compute fxJxWxN -----------------*/
                 linearAlgebra::blasLapack::ScalarOp scalarOpA =
                   linearAlgebra::blasLapack::ScalarOp::Identity;
                 linearAlgebra::blasLapack::ScalarOp scalarOpB =
-                  linearAlgebra::blasLapack::ScalarOp::Conj;
+                  linearAlgebra::blasLapack::ScalarOp::Identity;
                 std::vector<size_type> mTmp(numCellsInBlock, 0);
                 std::vector<size_type> nTmp(numCellsInBlock, 0);
                 std::vector<size_type> kTmp(numCellsInBlock, 0);
@@ -255,8 +298,10 @@ namespace dftefe
                 memoryTransfer.copy(numCellsInBlock, stB.data(), stBTmp.data());
                 memoryTransfer.copy(numCellsInBlock, stC.data(), stCTmp.data());
 
-                feBasisDataStorage->getBasisDataInCellRange(
-                  std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+                if (!zeroStrideBasisVal || cellStartId == 0)
+                  feBasisDataStorage->getBasisDataInCellRange(
+                    std::make_pair(cellStartId, cellEndId),
+                    basisDataInCellRange);
 
                 linearAlgebra::blasLapack::scaleStridedVarBatched<
                   ValueTypeBasisCoeff,
@@ -271,16 +316,16 @@ namespace dftefe
                                mSize.data(),
                                nSize.data(),
                                kSize.data(),
-                               fxJxW.data(),
+                               fxJxW.data() + quadCellsInBlockOffSet,
                                basisDataInCellRange.data(),
-                               fxJxWxNConjBlock.data(),
+                               fxJxWxNBlock.data(),
                                linAlgOpContext);
 
                 /*--------- Do the integration -----------------*/
                 std::vector<linearAlgebra::blasLapack::Op> transA(
                   numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
                 std::vector<linearAlgebra::blasLapack::Op> transB(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+                  numCellsInBlock, linearAlgebra::blasLapack::Op::ConjTrans);
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -369,9 +414,9 @@ namespace dftefe
                                nSizes.data(),
                                kSizes.data(),
                                alpha,
-                               basisDataInCellRange.data(),
+                               fxJxWxNBlock.data(),
                                ldaSizes.data(),
-                               fxJxWxNConjBlock.data(),
+                               basisDataInCellRange.data(),
                                ldbSizes.data(),
                                beta,
                                C,
@@ -379,6 +424,7 @@ namespace dftefe
                                linAlgOpContext);
 
                 NifNjStartOffset += numCumulativeDofsxDofsCellsInBlock;
+                quadCellsInBlockOffSet += numCumulativeQuadCellsInBlock;
               }
           }
         else
@@ -459,6 +505,22 @@ namespace dftefe
             // size_type GradNStartOffset        = 0;
             size_type gradNigradNjStartOffset = 0;
 
+            /** --- Storages --------- **/
+            size_type maxDofInCell =
+              *std::max_element(numCellDofs.begin(), numCellDofs.end());
+            size_type maxQuadInCell =
+              *std::max_element(numCellQuad.begin(), numCellQuad.end());
+
+            StorageBasis JxWxGradNBlock(maxQuadInCell * cellBlockSize *
+                                          maxDofInCell * dim,
+                                        ValueTypeBasisData());
+
+            StorageBasis basisGradientDataInCellRange(maxQuadInCell *
+                                                        cellBlockSize *
+                                                        maxDofInCell * dim,
+                                                      ValueTypeBasisData());
+            /** --- Storages --------- */
+
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
                  cellStartId += cellBlockSize)
               {
@@ -486,27 +548,28 @@ namespace dftefe
                   }
 
                 /** --- Storages --------- **/
-                StorageBasis gradNigradNjBlockVec(
-                  dim * numCumulativeDofsxDofsCellsInBlock,
-                  (ValueTypeBasisData)0);
+                // // StorageBasis gradNigradNjBlockVec(
+                // //  dim * numCumulativeDofsxDofsCellsInBlock,
+                // //  (ValueTypeBasisData)0);
 
-                StorageBasis JxWxGradNBlock(numCumulativeQuadxDofsCellsInBlock *
-                                              dim,
-                                            ValueTypeBasisData());
+                // StorageBasis
+                // JxWxGradNBlock(numCumulativeQuadxDofsCellsInBlock *
+                //                               dim,
+                //                             ValueTypeBasisData());
 
-                StorageBasis basisGradientDataInCellRange(
-                  numCumulativeQuadxDofsCellsInBlock * dim,
-                  ValueTypeBasisData());
+                // StorageBasis basisGradientDataInCellRange(
+                //   numCumulativeQuadxDofsCellsInBlock * dim,
+                //   ValueTypeBasisData());
+                /** --- Storages --------- */
 
                 feBasisDataStorage->getBasisGradientDataInCellRange(
                   std::make_pair(cellStartId, cellEndId),
                   basisGradientDataInCellRange);
-                /** --- Storages --------- */
 
                 linearAlgebra::blasLapack::ScalarOp scalarOpA =
                   linearAlgebra::blasLapack::ScalarOp::Identity;
                 linearAlgebra::blasLapack::ScalarOp scalarOpB =
-                  linearAlgebra::blasLapack::ScalarOp::Conj;
+                  linearAlgebra::blasLapack::ScalarOp::Identity;
                 std::vector<size_type> mTmp(numCellsInBlock, 0);
                 std::vector<size_type> nTmp(numCellsInBlock, 0);
                 std::vector<size_type> kTmp(numCellsInBlock, 0);
@@ -591,7 +654,7 @@ namespace dftefe
                 std::vector<linearAlgebra::blasLapack::Op> transA(
                   numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
                 std::vector<linearAlgebra::blasLapack::Op> transB(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+                  numCellsInBlock, linearAlgebra::blasLapack::Op::ConjTrans);
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -689,9 +752,9 @@ namespace dftefe
                                nSizes.data(),
                                kSizes.data(),
                                alpha,
-                               JxWxGradNBlock.data(),
-                               ldaSizes.data(),
                                GradN,
+                               ldaSizes.data(),
+                               JxWxGradNBlock.data(),
                                ldbSizes.data(),
                                beta,
                                C,
@@ -1045,6 +1108,21 @@ namespace dftefe
       // size_type       AStartOffset       = 0;
       size_type       CStartOffset  = 0;
       const size_type cellBlockSize = d_maxCellBlock;
+
+      /** --- Storages --------- **/
+      size_type maxDofInCell =
+        *std::max_element(numCellDofs.begin(), numCellDofs.end());
+      size_type maxQuadInCell =
+        *std::max_element(numCellQuad.begin(), numCellQuad.end());
+
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> fieldCellValues(
+        cellBlockSize * maxDofInCell * numComponents);
+
+      StorageBasis basisDataInCellRange(0);
+      basisDataInCellRange.resize(maxQuadInCell * cellBlockSize * maxDofInCell,
+                                  ValueTypeBasisData());
+      /** --- Storages --------- **/
+
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)
         {
@@ -1062,23 +1140,23 @@ namespace dftefe
                             0);
 
           /** --- Storages --------- **/
-          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-            fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
+          // utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          //   fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
 
-          size_type numCumulativeQuadxDofsCellsInBlock = 0;
-          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-            {
-              numCumulativeQuadxDofsCellsInBlock +=
-                numCellQuad[iCell + cellStartId] *
-                numCellDofs[iCell + cellStartId];
-            }
-          StorageBasis basisDataInCellRange(0);
-          if (!zeroStrideB)
-            basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
-                                        ValueTypeBasisData());
-          else
-            basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
-                                        ValueTypeBasisData());
+          // size_type numCumulativeQuadxDofsCellsInBlock = 0;
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     numCumulativeQuadxDofsCellsInBlock +=
+          //       numCellQuad[iCell + cellStartId] *
+          //       numCellDofs[iCell + cellStartId];
+          //   }
+          // StorageBasis basisDataInCellRange(0);
+          // if (!zeroStrideB)
+          //   basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
+          //                               ValueTypeBasisData());
+          // else
+          //   basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
+          //                               ValueTypeBasisData());
           /** --- Storages --------- **/
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
@@ -1165,8 +1243,9 @@ namespace dftefe
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext =
             *(vectorData.getLinAlgOpContext().get());
 
-          d_feBasisDataStorage->getBasisDataInCellRange(
-            std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+          if (!zeroStrideB || cellStartId == 0)
+            d_feBasisDataStorage->getBasisDataInCellRange(
+              std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
 
           // const ValueTypeBasisData *A = basisDataInCellRange.data();
           // const ValueTypeBasisData *A =
@@ -1319,6 +1398,21 @@ namespace dftefe
       // size_type       AStartOffset       = 0;
       size_type       CStartOffset  = 0;
       const size_type cellBlockSize = d_maxCellBlock;
+
+      /** --- Storages --------- **/
+      size_type maxDofInCell =
+        *std::max_element(numCellDofs.begin(), numCellDofs.end());
+      size_type maxQuadInCell =
+        *std::max_element(numCellQuad.begin(), numCellQuad.end());
+
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> fieldCellValues(
+        cellBlockSize * maxDofInCell * numComponents);
+
+      StorageBasis basisGradientDataInCellRange(maxQuadInCell * cellBlockSize *
+                                                  maxDofInCell * dim,
+                                                ValueTypeBasisData());
+      /** --- Storages --------- **/
+
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)
         {
@@ -1336,19 +1430,19 @@ namespace dftefe
                             0);
 
           /** --- Storages --------- **/
-          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-            fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
+          // utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          //   fieldCellValues(numCumulativeDofsCellsInBlock * numComponents);
 
-          size_type numCumulativeQuadxDofsCellsInBlock = 0;
-          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-            {
-              numCumulativeQuadxDofsCellsInBlock +=
-                numCellQuad[iCell + cellStartId] *
-                numCellDofs[iCell + cellStartId];
-            }
+          // size_type numCumulativeQuadxDofsCellsInBlock = 0;
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     numCumulativeQuadxDofsCellsInBlock +=
+          //       numCellQuad[iCell + cellStartId] *
+          //       numCellDofs[iCell + cellStartId];
+          //   }
 
-          StorageBasis basisGradientDataInCellRange(
-            numCumulativeQuadxDofsCellsInBlock * dim, ValueTypeBasisData());
+          // StorageBasis basisGradientDataInCellRange(
+          //   numCumulativeQuadxDofsCellsInBlock * dim, ValueTypeBasisData());
           /** --- Storages --------- **/
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
@@ -1889,6 +1983,25 @@ namespace dftefe
 
       vectorData.setValue((ValueTypeBasisCoeff)0);
       const size_type cellBlockSize = d_maxCellBlock;
+
+      /** --- Storages --------- **/
+      size_type maxDofInCell =
+        *std::max_element(numCellDofs.begin(), numCellDofs.end());
+      size_type maxQuadInCell =
+        *std::max_element(numCellQuad.begin(), numCellQuad.end());
+
+      utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
+        numComponents * maxQuadInCell * cellBlockSize, ValueTypeUnion());
+
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        outputFieldCellValues(cellBlockSize * maxDofInCell * numComponents,
+                              ValueTypeUnion());
+
+      StorageBasis basisDataInCellRange(0);
+      basisDataInCellRange.resize(maxQuadInCell * cellBlockSize * maxDofInCell,
+                                  ValueTypeBasisData());
+      /** --- Storages --------- **/
+
       for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
            cellStartId += cellBlockSize)
         {
@@ -1924,27 +2037,28 @@ namespace dftefe
                             0);
 
           /** --- Storages --------- **/
-          utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
-            numComponents * numCumulativeQuadCellsInBlock, ValueTypeUnion());
+          // utils::MemoryStorage<ValueTypeUnion, memorySpace> inpJxW(
+          //   numComponents * numCumulativeQuadCellsInBlock, ValueTypeUnion());
 
-          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-            outputFieldCellValues(numCumulativeDofsCellsInBlock * numComponents,
-                                  ValueTypeUnion());
+          // utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          //   outputFieldCellValues(numCumulativeDofsCellsInBlock *
+          //   numComponents,
+          //                         ValueTypeUnion());
 
-          size_type numCumulativeQuadxDofsCellsInBlock = 0;
-          for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
-            {
-              numCumulativeQuadxDofsCellsInBlock +=
-                numCellQuad[iCell + cellStartId] *
-                numCellDofs[iCell + cellStartId];
-            }
-          StorageBasis basisDataInCellRange(0);
-          if (!zeroStrideB)
-            basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
-                                        ValueTypeBasisData());
-          else
-            basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
-                                        ValueTypeBasisData());
+          // size_type numCumulativeQuadxDofsCellsInBlock = 0;
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     numCumulativeQuadxDofsCellsInBlock +=
+          //       numCellQuad[iCell + cellStartId] *
+          //       numCellDofs[iCell + cellStartId];
+          //   }
+          // StorageBasis basisDataInCellRange(0);
+          // if (!zeroStrideB)
+          //   basisDataInCellRange.resize(numCumulativeQuadxDofsCellsInBlock,
+          //                               ValueTypeBasisData());
+          // else
+          //   basisDataInCellRange.resize(numCellQuad[0] * numCellDofs[0],
+          //                               ValueTypeBasisData());
           /** --- Storages --------- **/
 
           // TransposedKhatriRao product for inp and JxW
@@ -2047,8 +2161,9 @@ namespace dftefe
           ValueTypeUnion alpha = 1.0;
           ValueTypeUnion beta  = 0.0;
 
-          d_feBasisDataStorage->getBasisDataInCellRange(
-            std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+          if (!zeroStrideB || cellStartId == 0)
+            d_feBasisDataStorage->getBasisDataInCellRange(
+              std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
 
           const ValueTypeBasisData *B = basisDataInCellRange.data();
           // (d_feBasisDataStorage->getBasisDataInAllCells()).data() +
@@ -2130,7 +2245,7 @@ namespace dftefe
       utils::throwException(
         f.getNumberComponents() == 1 /*|| f.getNumberComponents() == dim*/,
         "quadValuesContainer f in computeFEMatrices"
-        " can be either a scalar field or a vector field in real space with dim components.");
+        " can be only a scalar field in real space with 1 component.");
 
       const size_type cellBlockSize = d_maxCellBlock;
       FEBasisOperationsInternal::BasisWeakFormKernelWithField<

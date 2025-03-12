@@ -71,6 +71,9 @@ namespace dftefe
       bd_type             d_left, d_right;
       double              d_left_value, d_right_value;
       bool                d_made_monotonic;
+      bool                d_isSubdivPowerLawGrid;
+      double              d_a, d_r;
+      unsigned int        d_numSubDiv;
       void
       set_coeffs_from_b(); // calculate c_i, d_i from b_i
       size_t
@@ -83,12 +86,13 @@ namespace dftefe
 
       Spline(const std::vector<double> &X,
              const std::vector<double> &Y,
-             spline_type                type           = cspline,
-             bool                       make_monotonic = false,
-             bd_type                    left           = second_deriv,
-             double                     left_value     = 0.0,
-             bd_type                    right          = second_deriv,
-             double                     right_value    = 0.0);
+             const bool                 isSubdivPowerLawGrid = false,
+             spline_type                type                 = cspline,
+             bool                       make_monotonic       = false,
+             bd_type                    left                 = second_deriv,
+             double                     left_value           = 0.0,
+             bd_type                    right                = second_deriv,
+             double                     right_value          = 0.0);
 
       // modify boundary conditions: if called it must be before set_points()
       void

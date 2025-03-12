@@ -64,7 +64,7 @@ namespace dftefe
 
       // Compute projected hamiltonian = X_O^H A X_O
 
-      A.apply(X, temp);
+      A.apply(X, temp, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -202,7 +202,7 @@ namespace dftefe
 
       // Compute overlap matrix S = X^H B X
 
-      B.apply(X, temp);
+      B.apply(X, temp, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -242,7 +242,7 @@ namespace dftefe
       // No orthogonalization required
       // Compute projected hamiltonian = X^H A X
 
-      A.apply(X, temp);
+      A.apply(X, temp, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,

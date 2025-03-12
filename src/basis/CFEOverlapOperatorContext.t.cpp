@@ -547,10 +547,14 @@ namespace dftefe
                   linearAlgebra::MultiVector<
                     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                            ValueTypeOperand>,
-                    memorySpace> &Y) const
+                    memorySpace> &Y,
+                  bool            updateGhostX,
+                  bool            updateGhostY) const
     {
       if (d_isMassLumping)
         {
+          updateGhostX = false;
+          updateGhostY = false;
           const basis::ConstraintsLocal<
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                    ValueTypeOperand>,
@@ -558,7 +562,8 @@ namespace dftefe
 
           const size_type numVecs = X.getNumberComponents();
 
-          X.updateGhostValues();
+          if (updateGhostX)
+            X.updateGhostValues();
           // update the child nodes based on the parent nodes
           constraints.distributeParentToChild(X, numVecs);
 
@@ -578,7 +583,8 @@ namespace dftefe
           // to its parent nodes
           constraints.distributeChildToParent(Y, numVecs);
 
-          Y.updateGhostValues();
+          if (updateGhostY)
+            Y.updateGhostValues();
         }
       else
         {
@@ -590,7 +596,8 @@ namespace dftefe
 
           const size_type numVecs = X.getNumberComponents();
 
-          X.updateGhostValues();
+          if (updateGhostX)
+            X.updateGhostValues();
           // update the child nodes based on the parent nodes
           constraints.distributeParentToChild(X, numVecs);
 
@@ -635,7 +642,8 @@ namespace dftefe
           // Function to add the values to the local node from its corresponding
           // ghost nodes from other processors.
           Y.accumulateAddLocallyOwned();
-          Y.updateGhostValues();
+          if (updateGhostY)
+            Y.updateGhostValues();
         }
     }
 

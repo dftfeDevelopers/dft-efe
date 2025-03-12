@@ -103,7 +103,7 @@ T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStr
       , d_atomSymbolVec(atomSymbol)
       , d_atomCoordinatesVec(atomCoordinates)
       , d_atomChargesVec(atomCharges)
-      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Plm(0, 0, 1) * atoms::Qm(0, 0))
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
       {}
 
     double
@@ -402,6 +402,7 @@ void getVLoc(
           d_atomTolocPSPSplineMap.push_back(
               utils::Spline(radialValuesSTL,
                     potentialValuesLocSTL,
+                    false,
                     utils::Spline::spline_type::cspline,
                     false,
                     utils::Spline::bd_type::first_deriv,
@@ -526,8 +527,9 @@ int main(int argc, char** argv)
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
 
-    utils::mpi::MPIBarrier(comm);
-    auto startTotal = std::chrono::high_resolution_clock::now();
+  utils::Profiler pTot(comm, "Total Statistics");
+  utils::Profiler p(comm, "Initilization Breakdown Statistics");
+  pTot.registerStart("Initilization");
 
     // Get the rank of the process
   int rank;
@@ -556,6 +558,7 @@ int main(int argc, char** argv)
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
   rootCout<<" Entering test kohn sham dft ortho enrichment \n";
+  rootCout << "Number of processes: "<<numProcs<<"\n";
 
   char* dftefe_path = getenv("DFTEFE_PATH");
   std::string sourceDir;
@@ -838,9 +841,6 @@ int main(int argc, char** argv)
 
     // std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
 
-  //   // add device synchronize for gpu
-  //   utils::mpi::MPIBarrier(comm);
-     auto start = std::chrono::high_resolution_clock::now();
   //   std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveElec =
   //     std::make_shared<quadrature::QuadratureRuleContainer>
   //     (quadAttrAdaptive, 
@@ -875,12 +875,6 @@ int main(int argc, char** argv)
   //   rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
   // rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
 
-  //   // add device synchronize for gpu
-  //     utils::mpi::MPIBarrier(comm);
-      auto stop = std::chrono::high_resolution_clock::now();
-
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
   // rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
 
   //   quadrature::QuadratureRuleAttributes quadAttrGaussSubdivided(quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,true);
@@ -891,7 +885,7 @@ int main(int argc, char** argv)
   //     relativeTolerances[i] = adaptiveQuadRelTolerance * 1e1;
   //   }
 
-  //  start = std::chrono::high_resolution_clock::now();
+  p.registerStart("Quadrature Rule Creation");
   //   std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerGaussSubdividedElec =
   //     std::make_shared<quadrature::QuadratureRuleContainer>
   //     (quadAttrGaussSubdivided, 
@@ -918,12 +912,6 @@ int main(int argc, char** argv)
       triangulationBase, 
       *cellMapping); 
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    stop = std::chrono::high_resolution_clock::now();
-
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
     unsigned int nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
     unsigned int nQuadMax = nQuad;
     auto mpierr = utils::mpi::MPIAllreduce<Host>(
@@ -942,9 +930,7 @@ int main(int argc, char** argv)
       utils::mpi::MPIMax,
       comm);
     rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
-  rootCout << "Number of quadrature points in gauss subdivided quadrature: "<< nQuad<<"\n";
-
-  rootCout << "Time for gauss subdivided quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
+    rootCout << "Number of quadrature points in gauss subdivided quadrature: "<< nQuad<<"\n";
 
     //Set up quadAttr for Rhs and OverlapMatrix
     
@@ -955,10 +941,6 @@ int main(int argc, char** argv)
     std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1);
       // feOrderEigen > feOrderElec ? std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1) : 
       //   std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
 
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleEigen =
       std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeEigen, gaussSubdividedCopiesEigen);
@@ -980,11 +962,7 @@ int main(int argc, char** argv)
       triangulationBase, 
       *cellMapping); 
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    p.registerEnd("Quadrature Rule Creation");
 
     nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
     mpierr = utils::mpi::MPIAllreduce<Host>(
@@ -997,11 +975,7 @@ int main(int argc, char** argv)
 
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
 
-  rootCout << "Time for adaptive quadrature creation is(in secs) : " << duration.count()/1e6 << std::endl;
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+  p.registerStart("Ortho EFE basis manager creation");
         
   basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -1087,6 +1061,7 @@ int main(int argc, char** argv)
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
       enrichClassIntfceOrbital, comm);
 
+  /*
   utils::ConditionalOStream allCout(std::cout);
   for(int iProc = 0 ; iProc < numProcs ; iProc++)
   {
@@ -1095,24 +1070,15 @@ int main(int argc, char** argv)
       allCout << rank << "\tNumber of Cells: " << 
         basisDofHandlerTotalPot->nLocallyOwnedCells() 
           << "\tElec Dofs: " << basisDofHandlerTotalPot->nLocalNodes() 
-            << "\tEigen Dofs: " << basisDofHandlerWaveFn->nLocalNodes() 
-              << "\tEnrichment Range elec: " << basisDofHandlerWaveFn->getLocallyOwnedRanges()[1].second - 
-                basisDofHandlerWaveFn->getLocallyOwnedRanges()[1].first
-                  << "\tEnrichment Range eigen: " << basisDofHandlerTotalPot->getLocallyOwnedRanges()[1].second - 
-                    basisDofHandlerTotalPot->getLocallyOwnedRanges()[1].first
-                      << std::flush << std::endl;
+            << "\tEigen Dofs: " << basisDofHandlerWaveFn->nLocalNodes()
+              << std::flush << std::endl;
     }
     utils::mpi::MPIBarrier(comm);
   }
   utils::mpi::MPIBarrier(comm);
+  */
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for Ortho EFE basis manager creation is(in secs) : " << duration.count()/1e6 << std::endl;
+  p.registerEnd("Ortho EFE basis manager creation");
 
   std::map<global_size_type, utils::Point> dofCoords;
   basisDofHandlerTotalPot->getBasisCenters(dofCoords);
@@ -1134,11 +1100,12 @@ int main(int argc, char** argv)
   std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
   (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+    p.registerStart("Electrostatics basis grad datastorage eval");
 
     efeBasisDataAdaptiveTotPot->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
+
+    p.registerEnd("Electrostatics basis grad datastorage eval");
+    p.registerStart("Electrostatics basis bsmear datastorage eval");
 
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = efeBasisDataAdaptiveTotPot;
 
@@ -1154,21 +1121,20 @@ int main(int argc, char** argv)
       (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
     feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
 
+    p.registerEnd("Electrostatics basis bsmear datastorage eval");
+    p.registerStart("Electrostatics basis rho datastorage eval");
+
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs =   
       std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
     feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
+    p.registerEnd("Electrostatics basis rho datastorage eval");
 
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for electrostatics basis datastorage evaluation is(in secs) : " << duration.count()/1e6 << std::endl;
+    p.registerStart("Orbital basis datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -1180,34 +1146,28 @@ int main(int argc, char** argv)
 
   efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+  // basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
+  // basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
+  // basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  // basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  // basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  // basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveGrad =
-    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  // std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveGrad =
+  //   std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+  //     (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+    p.registerEnd("Orbital basis datastorage eval");
+    p.registerStart("Grad basis datastorage eval");
 
-  efeBasisDataAdaptiveGrad->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
+  // efeBasisDataAdaptiveGrad->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
 
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
-    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveGrad;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveOrbital;
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for orbital basis datastorage evaluation is(in secs) : " << duration.count()/1e6 << std::endl;
+    p.registerEnd("Grad basis datastorage eval");
+    p.print();
 
   std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho = 
                 efeBasisDataAdaptiveOrbital->getQuadratureRuleContainer();
@@ -1251,9 +1211,7 @@ int main(int argc, char** argv)
       <basis::FEBasisManager<double, double, Host,dim>>
         (basisDofHandlerTotalPot, zeroFunction);
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+    p.registerStart("Hamiltonian Basis overlap eval");
 
   // Create OperatorContext for Basisoverlap
 
@@ -1273,18 +1231,6 @@ int main(int argc, char** argv)
                                                       numWantedEigenvalues,
                                                       linAlgOpContext,
                                                       true); 
-
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for creation of MContext is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
 
   //   quadrature::QuadratureRuleAttributes quadAttrGaussEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen + 1);
 
@@ -1322,17 +1268,8 @@ int main(int argc, char** argv)
                                                         *cfeBasisDataStorageGLLEigen,
                                                         linAlgOpContext);  
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);                                                                                                            
-
-  rootCout << "Time for creation of MContextForInv is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+    p.registerEnd("Hamiltonian Basis overlap eval");
+    p.registerStart("Hamiltonian Basis overlap inverse eval");
 
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
@@ -1348,16 +1285,14 @@ int main(int argc, char** argv)
                                                     *cfeBasisDataStorageGLLEigen,
                                                     linAlgOpContext);    
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-  rootCout << "Time for creation of MInv is(in secs) : " << duration.count()/1e6 << std::endl;                                                                                                  
-
-  rootCout << "Entering KohnSham DFT Class....\n\n";
-
+  p.registerEnd("Hamiltonian Basis overlap inverse eval");
+  p.registerStart("Kohn Sham DFT Class Init");
+  std::shared_ptr<ksdft::KohnShamDFT<double,
+                                        double,
+                                        double,
+                                        double,
+                                        Host,
+                                        dim>> dftefeSolve = nullptr;
   if(isNumericalNuclearSolve)
   {
 
@@ -1398,12 +1333,7 @@ int main(int argc, char** argv)
   std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeStiffnessMatrix = efeBasisDataAdaptiveNucl;
   std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDNuclearChargeRhs = efeBasisDataAdaptiveNucl;
 
-    std::shared_ptr<ksdft::KohnShamDFT<double,
-                                        double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>> dftefeSolve =
+    dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -1443,30 +1373,10 @@ int main(int argc, char** argv)
                                           *MContext,
                                           /**MContextForInv,*/
                                           *MInvContext);
-
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
-
-    dftefeSolve->solve();                 
-
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
-                             
   }
   else
   {
-    std::shared_ptr<ksdft::KohnShamDFT<double,
-                                        double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>> dftefeSolve =
+    dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
                                           double,
                                           double,
@@ -1504,30 +1414,17 @@ int main(int argc, char** argv)
                                           *MContext,
                                           /**MContextForInv,*/
                                           *MInvContext);
+  }      
+  p.registerEnd("Kohn Sham DFT Class Init"); 
+  p.print();
 
-    // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    start = std::chrono::high_resolution_clock::now();
+  pTot.registerEnd("Initilization");   
+  pTot.registerStart("Kohn Sham DFT Solve");
 
-    dftefeSolve->solve();                
+  dftefeSolve->solve(); 
 
-    // add device synchronize for gpu
-      utils::mpi::MPIBarrier(comm);
-      stop = std::chrono::high_resolution_clock::now();
-
-      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    rootCout << "Time for scf iterations is(in secs) : " << duration.count()/1e6 << std::endl;    
-
-  }                          
-
-  // add device synchronize for gpu
-    utils::mpi::MPIBarrier(comm);
-    auto stopTotal = std::chrono::high_resolution_clock::now();
-
-    auto durationTotal = std::chrono::duration_cast<std::chrono::microseconds>(stopTotal - startTotal);
-
-    rootCout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
+  pTot.registerEnd("Kohn Sham DFT Solve");
+  pTot.print();
 
   //gracefully end MPI
 

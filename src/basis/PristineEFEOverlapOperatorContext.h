@@ -130,13 +130,16 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
 
+      ~PristineEFEOverlapOperatorContext() = default;
+
       /**
        * @brief Apply AX = B where A is the discretized matrix, X is the operand and B is the result.
        */
       void
-      apply(
-        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
-        linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const override;
+      apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+            linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
+            bool updateGhostX = false,
+            bool updateGhostY = false) const override;
 
       // get overlap of two basis functions in a cell
       Storage
