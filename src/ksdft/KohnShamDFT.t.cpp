@@ -160,6 +160,42 @@ namespace dftefe
 
             temp[i] = (ValueType)value;
           }
+
+        // const basis::BasisDofHandler &basisDofHandler =
+        // feBMWaveFn->getBasisDofHandler();
+
+        // const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+        // ValueTypeWaveFunctionBasis, memorySpace, dim>
+        //   &feDofHandlerWF = dynamic_cast<
+        //     const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+        //     ValueTypeWaveFunctionBasis, memorySpace, dim> &>(
+        //     basisDofHandler);
+
+        // global_size_type numGlobalEnrichmentIds = 0;
+        // if(&feDofHandlerWF != nullptr)
+        // {
+        //   global_size_type globalEnrichmentStartId =
+        //   feDofHandlerWF.getGlobalRanges()[1].first; numGlobalEnrichmentIds =
+        //   feDofHandlerWF.getGlobalRanges()[1].second -
+        //   globalEnrichmentStartId;
+
+        //   for(global_size_type enrichId = 0 ; enrichId <
+        //   numGlobalEnrichmentIds ; enrichId ++)
+        //   {
+        //     for(size_type i = 0 ; i < multiVectorGuess.localSize() ; i++)
+        //     {
+        //       for(size_type j = 0 ; j < multiVectorGuess.numVectors() ; j++)
+        //       {
+        //         if(feBMWaveFn->localToGlobalIndex(i) == enrichId +
+        //         globalEnrichmentStartId && j == enrichId)
+        //         {
+        //           *(multiVectorGuess.data() + i *
+        //           multiVectorGuess.numVectors() + j) = (ValueType)1.0;
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
       }
     } // namespace KohnShamDFTInternal
 
