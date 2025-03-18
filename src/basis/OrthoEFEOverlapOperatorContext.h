@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeEFEOverlapOperatorContext_h
-#define dftefeEFEOverlapOperatorContext_h
+#ifndef dftefeOEFEOverlapOperatorContext_h
+#define dftefeOEFEOverlapOperatorContext_h
 
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
@@ -236,4 +236,4 @@ namespace dftefe
   }    // end of namespace basis
 } // end of namespace dftefe
 #include <basis/OrthoEFEOverlapOperatorContext.t.cpp>
-#endif // dftefeEFEOverlapOperatorContext_h
+#endif // dftefeOEFEOverlapOperatorContext_h

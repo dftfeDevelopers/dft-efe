@@ -143,6 +143,9 @@ namespace dftefe
       void
       setChebyPolyScalingFactor(double scalingFactor);
 
+      void
+      setChebyshevPolynomialDegree(size_type chebyPolyDeg);
+
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
             std::vector<RealType> &kohnShamEnergies,
@@ -188,6 +191,7 @@ namespace dftefe
       double d_wantedSpectrumUpperBound;
       bool   d_isBoundKnown;
       double d_chebyPolyScalingFactor;
+      bool   d_setChebyPolDegExternally;
 
       std::shared_ptr<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,

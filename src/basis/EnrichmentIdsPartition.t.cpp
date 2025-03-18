@@ -461,6 +461,9 @@ namespace dftefe
       const std::vector<std::vector<utils::Point>> &cellVerticesVector,
       const utils::mpi::MPIComm &                   comm)
       : d_atomIdsPartition(atomIdsPartition)
+      , d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_fieldName(fieldName)
+      , d_atomSymbol(atomSymbol)
     {
       utils::throwException<utils::InvalidArgument>(
         !(std::any_of(isPeriodicFlags.begin(),
@@ -684,6 +687,21 @@ namespace dftefe
     EnrichmentIdsPartition<dim>::nTotalEnrichmentIds() const
     {
       return d_newAtomIdToEnrichmentIdOffset.back();
+    }
+
+    template <unsigned int dim>
+    std::shared_ptr<const AtomIdsPartition<dim>>
+    EnrichmentIdsPartition<dim>::getAtomIdsPartition() const
+    {
+      return d_atomIdsPartition;
+    }
+
+    template <unsigned int dim>
+    size_type
+    EnrichmentIdsPartition<dim>::nEnrichmentIds(const size_type atomId) const
+    {
+      return d_atomSphericalDataContainer->nSphericalData(d_atomSymbol[atomId],
+                                                          d_fieldName);
     }
 
     // template <unsigned int dim>

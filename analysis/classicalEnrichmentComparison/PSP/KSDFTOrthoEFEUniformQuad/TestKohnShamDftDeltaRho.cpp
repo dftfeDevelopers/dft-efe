@@ -29,6 +29,7 @@
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
+#include <basis/OEFEAtomBlockOverlapInvOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
@@ -909,7 +910,7 @@ int main(int argc, char** argv)
                                                 double,
                                                 Host,
                                                 dim>> MContext =
-  std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+  std::make_shared<const basis::OrthoEFEOverlapOperatorContext<double,
                                                       double,
                                                       Host,
                                                       dim>>(
@@ -948,7 +949,7 @@ int main(int argc, char** argv)
                                                   double,
                                                   Host,
                                                   dim>> MContextForInv =
-    std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+    std::make_shared<const basis::OrthoEFEOverlapOperatorContext<double,
                                                         double,
                                                         Host,
                                                         dim>>(
@@ -961,10 +962,10 @@ int main(int argc, char** argv)
     p.registerEnd("Hamiltonian Basis overlap eval");
     p.registerStart("Hamiltonian Basis overlap inverse eval");
 
-  std::shared_ptr<linearAlgebra::OperatorContext<double,
+  std::shared_ptr<const linearAlgebra::OperatorContext<double,
                                                    double,
                                                    Host>> MInvContext =
-    std::make_shared<basis::OrthoEFEOverlapInverseOpContextGLL<double,
+    std::make_shared<const basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<double,
                                                    double,
                                                    Host,
                                                    dim>>

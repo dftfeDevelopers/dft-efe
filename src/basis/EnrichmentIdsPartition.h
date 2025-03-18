@@ -115,6 +115,9 @@ namespace dftefe
       getEnrichmentIdAttribute(const global_size_type enrichmentId) const;
 
       size_type
+      nEnrichmentIds(const size_type atomId) const;
+
+      size_type
       nLocallyOwnedEnrichmentIds() const;
 
       size_type
@@ -122,6 +125,9 @@ namespace dftefe
 
       global_size_type
       nTotalEnrichmentIds() const;
+
+      std::shared_ptr<const AtomIdsPartition<dim>>
+      getAtomIdsPartition() const;
 
       void
       modifyNumCellsOverlapWithEnrichments(
@@ -150,6 +156,10 @@ namespace dftefe
                                                    d_enrichmentIdToQuantumIdMap;
       std::vector<size_type>                       d_oldAtomIdsVec;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                               d_atomSphericalDataContainer;
+      std::string              d_fieldName;
+      std::vector<std::string> d_atomSymbol;
 
       // std::vector<global_size_type> d_enrichmentIdsVec;
       // std::vector<size_type> d_oldAtomIdsFromEnrichIdsVec;
