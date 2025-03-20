@@ -79,6 +79,7 @@ namespace dftefe
             "Kohn Sham EigenSolver")
       , d_chebyPolyScalingFactor(1.0)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
+      , d_setChebyPolDegExternally(false)
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -132,6 +133,27 @@ namespace dftefe
       setChebyPolyScalingFactor(double scalingFactor)
     {
       d_chebyPolyScalingFactor = scalingFactor;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      setChebyshevPolynomialDegree(size_type chebyPolyDeg)
+    {
+      d_setChebyPolDegExternally  = true;
+      d_chebyshevPolynomialDegree = chebyPolyDeg;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      setResidualChebyshevFilterFlag(bool flag)
+    {
+      d_isResidualChebyFilter = flag;
     }
 
     template <typename ValueTypeOperator,
@@ -222,12 +244,15 @@ namespace dftefe
           d_rootCout << "unWantedSpectrumUpperBound: "
                      << eigenValuesLanczos[1] + residual << "\n";
 
-          // Calculating polynomial degree after each scf?
-          d_chebyshevPolynomialDegree =
-            getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
+          if (!d_setChebyPolDegExternally)
+            {
+              // Calculating polynomial degree after each scf?
+              d_chebyshevPolynomialDegree =
+                getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
 
-          d_chebyshevPolynomialDegree =
-            d_chebyshevPolynomialDegree * d_chebyPolyScalingFactor;
+              d_chebyshevPolynomialDegree =
+                d_chebyshevPolynomialDegree * d_chebyPolyScalingFactor;
+            }
 
           d_rootCout << "Chebyshev Polynomial Degree : "
                      << d_chebyshevPolynomialDegree << "\n";

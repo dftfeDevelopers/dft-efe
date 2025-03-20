@@ -103,6 +103,9 @@ namespace dftefe
       std::vector<size_type>
       locallyOwnedAtomIds() const;
 
+      size_type
+      nTotalAtomIds() const;
+
     private:
       std::vector<size_type> d_nAtomIdsInProcessor;
       std::vector<size_type> d_nAtomIdsInProcessorCumulative;

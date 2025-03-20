@@ -439,5 +439,13 @@ namespace dftefe
     {
       return d_atomIdsInProcessor;
     }
+
+    template <unsigned int dim>
+    size_type
+    AtomIdsPartition<dim>::nTotalAtomIds() const
+    {
+      return d_oldAtomIds.size();
+    }
+
   } // end of namespace basis
 } // end of namespace dftefe

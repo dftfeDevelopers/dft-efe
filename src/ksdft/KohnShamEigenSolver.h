@@ -143,6 +143,12 @@ namespace dftefe
       void
       setChebyPolyScalingFactor(double scalingFactor);
 
+      void
+      setChebyshevPolynomialDegree(size_type chebyPolyDeg);
+
+      void
+      setResidualChebyshevFilterFlag(bool flag);
+
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
             std::vector<RealType> &kohnShamEnergies,
@@ -188,6 +194,7 @@ namespace dftefe
       double d_wantedSpectrumUpperBound;
       bool   d_isBoundKnown;
       double d_chebyPolyScalingFactor;
+      bool   d_setChebyPolDegExternally;
 
       std::shared_ptr<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
@@ -199,7 +206,7 @@ namespace dftefe
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
       utils::Profiler                                     d_p;
-      const bool d_isResidualChebyFilter;
+      bool d_isResidualChebyFilter;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

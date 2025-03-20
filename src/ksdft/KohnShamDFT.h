@@ -403,7 +403,9 @@ namespace dftefe
                                          ValueTypeWaveFunctionBasis,
                                          memorySpace,
                                          dim>>
-        d_hamiltonianElectroExc;
+           d_hamiltonianElectroExc;
+      bool d_isResidualChebyshevFilter;
+      bool d_isOEFEBasis;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

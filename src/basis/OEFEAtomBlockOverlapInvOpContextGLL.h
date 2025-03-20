@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeOEFEOverlapInverseOperatorContext_h
-#define dftefeOEFEOverlapInverseOperatorContext_h
+#ifndef dftefeOEFEAtomBlockOverlapInvOpContextGLL_h
+#define dftefeOEFEAtomBlockOverlapInvOpContextGLL_h
 
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
@@ -52,7 +52,7 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    class OrthoEFEOverlapInverseOpContextGLL
+    class OEFEAtomBlockOverlapInvOpContextGLL
       : public linearAlgebra::
           OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
     {
@@ -62,7 +62,7 @@ namespace dftefe
                                                ValueTypeOperand>;
 
     public:
-      OrthoEFEOverlapInverseOpContextGLL(
+      OEFEAtomBlockOverlapInvOpContextGLL(
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManager,
@@ -75,22 +75,7 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext);
 
-
-      // --------------DEBUG ONLY (direct inversion)---------
-      OrthoEFEOverlapInverseOpContextGLL(
-        const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            &                                      feBasisManager,
-        const OrthoEFEOverlapOperatorContext<ValueTypeOperator,
-                                             ValueTypeOperand,
-                                             memorySpace,
-                                             dim> &MContext,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-             linAlgOpContext,
-        bool isCGSolved = true);
-
-      ~OrthoEFEOverlapInverseOpContextGLL() = default;
-
+      ~OEFEAtomBlockOverlapInvOpContextGLL() = default;
 
       void
       apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -108,26 +93,21 @@ namespace dftefe
                                memorySpace,
                                dim> *d_efebasisDofHandler;
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-                d_basisOverlapEnrichmentBlock;
       size_type d_nglobalEnrichmentIds;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-        d_linAlgOpContext;
-
-
+                       d_linAlgOpContext;
       global_size_type d_nglobalIds;
-      bool             d_isCGSolved;
-      std::shared_ptr<linearAlgebra::LinearSolverFunction<ValueTypeOperator,
-                                                          ValueTypeOperand,
-                                                          memorySpace>>
-        d_overlapInvPoisson;
-      std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeOperator,
-                                                      ValueTypeOperand,
-                                                      memorySpace>>
-        d_CGSolve;
+
+      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        d_atomBlockEnrichmentOverlapInv;
+      /*utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        d_residualEnrichOverlapInvEigenVec,
+        d_residualEnrichOverlapInvEigenVal;*/
+
+      size_type d_rank;
 
     }; // end of class BasisOverlapOperatorContext
   }    // namespace basis
 } // end of namespace dftefe
-#include <basis/OrthoEFEOverlapInverseOpContextGLL.t.cpp>
-#endif // dftefeOEFEOverlapInverseOperatorContext_h
+#include <basis/OEFEAtomBlockOverlapInvOpContextGLL.t.cpp>
+#endif // dftefeOEFEAtomBlockOverlapInvOpContextGLL_h
