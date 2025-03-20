@@ -1,0 +1,7 @@
+<map id="dftefe::linearAlgebra::blasLapack::KernelsTwoValueTypes::scaleStridedVarBatched" name="dftefe::linearAlgebra::blasLapack::KernelsTwoValueTypes::scaleStridedVarBatched">
+<area shape="rect" id="node1" title="Template for performing hadamard product of two columns of batches of matrix A and B having num col A..." alt="" coords="5,45,208,100"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#af58774813fa90108d8daef1b7ea9dbf8" title=" " alt="" coords="288,17,427,57"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a2dbdf6ba043739168fe1b8dc13ca9f91" title="Template for performing &#160;alpha &#160;z_i = x_i * y_i$." alt="" coords="256,85,459,125"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#af8d3647666ae296dc39ec28ae32f198f" title="Template for performing &#160;alpha &#160;z = \alpha x$." alt="" coords="507,5,709,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a5997fb179977b61e130ab5b6492527e1" title="Template for performing &#160;z_i = x_i * y_i$." alt="" coords="507,84,709,139"/>
+</map>

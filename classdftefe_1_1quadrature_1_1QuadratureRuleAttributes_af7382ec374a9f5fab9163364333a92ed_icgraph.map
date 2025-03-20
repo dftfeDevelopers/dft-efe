@@ -1,0 +1,27 @@
+<map id="dftefe::quadrature::QuadratureRuleAttributes::getQuadratureFamily" name="dftefe::quadrature::QuadratureRuleAttributes::getQuadratureFamily">
+<area shape="rect" id="node1" title=" " alt="" coords="609,642,784,697"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1FEBasisOperationsInternal.html#a852995748568ce77570057dda08476b9" title=" " alt="" coords="297,5,556,45"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#a70e27429a3b6614ff6776e20b41de231" title=" " alt="" coords="17,179,232,219"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEBDSOnTheFlyComputeDealii.html#afadb181e7d30ffc1cb39a7e595670433" title=" " alt="" coords="5,320,244,360"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a78328125bd68f060135431e907f51a4a" title=" " alt="" coords="17,1023,232,1063"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealii.html#a8606ebcadc4014efbe301c39fc356bfa" title=" " alt="" coords="5,1167,244,1207"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1electrostatics_1_1PoissonSolverDealiiMatrixFreeFEInternal.html#a2eeb1b2377bb62b7ff8c2d50469de246" title=" " alt="" coords="324,70,529,125"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="321,409,532,449"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="321,473,532,513"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="321,537,532,577"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a6e9cfbdc335fa04022b78f843c5b05a7" title="Constructor for assigning each cell with a common quadrature rule." alt="" coords="340,602,513,657"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ade6f7fe63de196e5a49fef72dda920c5" title=" " alt="" coords="321,681,532,735"/>
+<area shape="rect" id="node15" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a349309c0bd76b0e5ce3c43949950b586" title=" " alt="" coords="321,759,532,814"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#af47d3b88b2b7c45ea473ada8db6fb6bd" title=" " alt="" coords="303,838,551,893"/>
+<area shape="rect" id="node17" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a158e963da3bfafca8a07399b6f912bf5" title=" " alt="" coords="303,917,551,971"/>
+<area shape="rect" id="node18" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ab5880eef7d828e26b16d753a3cd2de89" title=" " alt="" coords="318,1257,535,1311"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ae31802da4310b998888ef4321caf6c67" title=" " alt="" coords="318,1335,535,1390"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1basis_1_1CFEBDSOnTheFlyComputeDealiiInternal.html#aadb37d5a6176cde52669ab7a1bdbe7b6" title=" " alt="" coords="292,279,561,334"/>
+<area shape="rect" id="node23" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#a8b07c31e5d92dc0bf52eccbe2bfcd570" title=" " alt="" coords="318,201,535,255"/>
+<area shape="rect" id="node24" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#ae23ee05528294db10fcac757d11c1d1b" title=" " alt="" coords="292,1126,561,1181"/>
+<area shape="rect" id="node25" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a690ad41f1fd7e294ea3a5015bb07a77a" title=" " alt="" coords="318,1047,535,1102"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a73fce936022cbc5afb423befe26f20d6" title=" " alt="" coords="19,5,230,45"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1electrostatics_1_1PoissonSolverDealiiMatrixFreeFE.html#a5c1368cbc3016f9446c48062374f3c8c" title="This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixF..." alt="" coords="6,70,243,125"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#aa5ed61b23a3d6fc7455d2eba504b040b" title=" " alt="" coords="17,1264,232,1304"/>
+<area shape="rect" id="node21" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="17,1343,232,1383"/>
+</map>
