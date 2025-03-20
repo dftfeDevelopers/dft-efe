@@ -149,6 +149,16 @@ namespace dftefe
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      setResidualChebyshevFilterFlag(bool flag)
+    {
+      d_isResidualChebyFilter = flag;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     linearAlgebra::EigenSolverError
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       solve(const OpContext &      kohnShamOperator,

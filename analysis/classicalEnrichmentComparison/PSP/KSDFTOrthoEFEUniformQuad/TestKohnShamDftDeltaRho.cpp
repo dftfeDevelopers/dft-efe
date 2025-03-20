@@ -1062,7 +1062,8 @@ int main(int argc, char** argv)
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext);
+                                          *MInvContext,
+                                          false);
 
   p.registerEnd("Kohn Sham DFT Class Init"); 
   p.print();

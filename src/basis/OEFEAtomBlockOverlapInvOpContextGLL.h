@@ -93,16 +93,16 @@ namespace dftefe
                                memorySpace,
                                dim> *d_efebasisDofHandler;
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-                d_basisOverlapInvEnrichmentBlockExact;
       size_type d_nglobalEnrichmentIds;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                        d_linAlgOpContext;
       global_size_type d_nglobalIds;
 
       utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        d_atomBlockEnrichmentOverlapInv, d_residualEnrichOverlapInvEigenVec,
-        d_residualEnrichOverlapInvEigenVal;
+        d_atomBlockEnrichmentOverlapInv;
+      /*utils::MemoryStorage<ValueTypeOperator, memorySpace>
+        d_residualEnrichOverlapInvEigenVec,
+        d_residualEnrichOverlapInvEigenVal;*/
 
       size_type d_rank;
 

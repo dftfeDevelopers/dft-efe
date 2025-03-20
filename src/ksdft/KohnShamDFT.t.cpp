@@ -297,7 +297,23 @@ namespace dftefe
       , d_isSolved(false)
       , d_groundStateEnergy(0)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
+      , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
     {
+      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                      ValueTypeWaveFunctionBasis,
+                                      memorySpace,
+                                      dim> &feDofHandlerWF =
+        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim> &>(
+          feBMWaveFn->getBasisDofHandler());
+
+      if (&feDofHandlerWF != nullptr)
+        d_isOEFEBasis = true;
+      else
+        d_isOEFEBasis = false;
+
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
@@ -577,7 +593,23 @@ namespace dftefe
       , d_isSolved(false)
       , d_groundStateEnergy(0)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
+      , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
     {
+      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                      ValueTypeWaveFunctionBasis,
+                                      memorySpace,
+                                      dim> &feDofHandlerWF =
+        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim> &>(
+          feBMWaveFn->getBasisDofHandler());
+
+      if (&feDofHandlerWF != nullptr)
+        d_isOEFEBasis = true;
+      else
+        d_isOEFEBasis = false;
+
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
@@ -870,7 +902,23 @@ namespace dftefe
       , d_isSolved(false)
       , d_groundStateEnergy(0)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
+      , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
     {
+      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                      ValueTypeWaveFunctionBasis,
+                                      memorySpace,
+                                      dim> &feDofHandlerWF =
+        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim> &>(
+          feBMWaveFn->getBasisDofHandler());
+
+      if (&feDofHandlerWF != nullptr)
+        d_isOEFEBasis = true;
+      else
+        d_isOEFEBasis = false;
+
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
@@ -1074,13 +1122,15 @@ namespace dftefe
         d_mixingParameter,
         d_isAdaptiveAndersonMixingParameter);
 
+      bool isExtraSCFIter = false;
       //
       // Begin SCF iteration
       //
       unsigned int scfIter = 0;
       double       norm    = 1.0;
       d_rootCout << "Starting SCF iterations....\n";
-      while ((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter))
+      while (((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter)) ||
+             isExtraSCFIter)
         {
           d_p.reset();
           d_rootCout
@@ -1190,8 +1240,9 @@ namespace dftefe
             d_ksEigSolve->getEigenSolveResidualNorm();
 
           /*
-          std::shared_ptr<const quadrature::QuadratureRuleContainer>
-            quadRuleContainer =
+          ============== DEBUG : Integral \psi and \psi_orthonormalized =
+          Numelectrons========= std::shared_ptr<const
+          quadrature::QuadratureRuleContainer> quadRuleContainer =
           d_feBDEXCHamiltonian->getQuadratureRuleContainer();
 
               std::shared_ptr<const
@@ -1298,6 +1349,8 @@ namespace dftefe
                 d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
 
               std::cout << "getFilteredSubspace sum: "<< denSum << std::endl;
+           ============== DEBUG : Integral \psi and \psi_orthonormalized =
+          Numelectrons=========
           */
 
           d_p.registerStart("Density Compute");
@@ -1358,6 +1411,16 @@ namespace dftefe
 
           if (scfIter > 0)
             d_rootCout << "Density Residual Norm : " << norm << "\n";
+
+          if (isExtraSCFIter && norm < d_SCFTol)
+            break;
+
+          if (norm < d_SCFTol && !d_isResidualChebyshevFilter && d_isOEFEBasis)
+            {
+              isExtraSCFIter = true;
+              d_ksEigSolve->setResidualChebyshevFilterFlag(true);
+            }
+
           scfIter += 1;
         }
 

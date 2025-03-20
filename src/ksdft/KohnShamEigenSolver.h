@@ -146,6 +146,9 @@ namespace dftefe
       void
       setChebyshevPolynomialDegree(size_type chebyPolyDeg);
 
+      void
+      setResidualChebyshevFilterFlag(bool flag);
+
       linearAlgebra::EigenSolverError
       solve(const OpContext &      kohnShamOperator,
             std::vector<RealType> &kohnShamEnergies,
@@ -203,7 +206,7 @@ namespace dftefe
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
       utils::Profiler                                     d_p;
-      const bool d_isResidualChebyFilter;
+      bool d_isResidualChebyFilter;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft
