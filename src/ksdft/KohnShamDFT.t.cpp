@@ -299,17 +299,10 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
     {
-      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                      ValueTypeWaveFunctionBasis,
-                                      memorySpace,
-                                      dim> &feDofHandlerWF =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                                     ValueTypeWaveFunctionBasis,
-                                                     memorySpace,
-                                                     dim> &>(
-          feBMWaveFn->getBasisDofHandler());
-
-      if (&feDofHandlerWF != nullptr)
+      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+        ValueTypeWaveFunctionBasis,
+        memorySpace,
+        dim> *>(&feBMWaveFn->getBasisDofHandler()) != nullptr)
         d_isOEFEBasis = true;
       else
         d_isOEFEBasis = false;
@@ -595,17 +588,10 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
     {
-      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                      ValueTypeWaveFunctionBasis,
-                                      memorySpace,
-                                      dim> &feDofHandlerWF =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                                     ValueTypeWaveFunctionBasis,
-                                                     memorySpace,
-                                                     dim> &>(
-          feBMWaveFn->getBasisDofHandler());
-
-      if (&feDofHandlerWF != nullptr)
+      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+        ValueTypeWaveFunctionBasis,
+        memorySpace,
+        dim> *>(&feBMWaveFn->getBasisDofHandler()) != nullptr)
         d_isOEFEBasis = true;
       else
         d_isOEFEBasis = false;
@@ -904,17 +890,10 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
     {
-      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                      ValueTypeWaveFunctionBasis,
-                                      memorySpace,
-                                      dim> &feDofHandlerWF =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                                     ValueTypeWaveFunctionBasis,
-                                                     memorySpace,
-                                                     dim> &>(
-          feBMWaveFn->getBasisDofHandler());
-
-      if (&feDofHandlerWF != nullptr)
+      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                    ValueTypeWaveFunctionBasis,
+                    memorySpace,
+                    dim> *>(&feBMWaveFn->getBasisDofHandler()) != nullptr)
         d_isOEFEBasis = true;
       else
         d_isOEFEBasis = false;
