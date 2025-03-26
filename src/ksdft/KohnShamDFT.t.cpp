@@ -306,6 +306,10 @@ namespace dftefe
                                             memorySpace,
                                             dim> *>(
             &feBMWaveFn->getBasisDofHandler()) != nullptr)
+      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+        ValueTypeWaveFunctionBasis,
+        memorySpace,
+        dim> *>(&feBMWaveFn->getBasisDofHandler()) != nullptr)
         d_isOEFEBasis = true;
       else
         d_isOEFEBasis = false;
