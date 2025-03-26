@@ -1355,6 +1355,7 @@ namespace dftefe
       , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(false)
+      , d_isEnrichAtomBlockDiagonalApprox(false)
     {
       OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
@@ -1397,6 +1398,7 @@ namespace dftefe
       , d_maxFieldBlock(maxFieldBlock)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(false)
+      , d_isEnrichAtomBlockDiagonalApprox(false)
     {
       OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
@@ -1430,12 +1432,14 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext)
+          linAlgOpContext,
+        const bool isEnrichAtomBlockDiagonalApprox)
       : d_feBasisManager(&feBasisManager)
       , d_maxCellBlock(0)
       , d_maxFieldBlock(0)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(true)
+      , d_isEnrichAtomBlockDiagonalApprox(isEnrichAtomBlockDiagonalApprox)
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
@@ -1459,7 +1463,7 @@ namespace dftefe
 
       utils::throwException(
         efebasisDofHandler.isOrthogonalized(),
-        "The Enrichment functions have to be orthogonalized for this class to do the application of overlap inverse.");
+        "The Enrichment functions have to be orthogonalized for this class to do the application of overlap.");
 
       utils::throwException(
         classicalBlockGLLBasisDataStorage.getQuadratureRuleContainer()
@@ -1546,6 +1550,205 @@ namespace dftefe
                                                                    1);
 
       // Now form the enrichment block matrix.
+      if(d_isEnrichAtomBlockDiagonalApprox)
+      {
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          basisOverlapEnrichmentBlockExact(d_nglobalEnrichmentIds * 
+            d_nglobalEnrichmentIds);
+
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          basisOverlapEnrichmentBlock(d_nglobalEnrichmentIds *
+                                          d_nglobalEnrichmentIds,
+                                        0), 
+          basisOverlapEnrichmentAtomBlock(d_nglobalEnrichmentIds *
+                                          d_nglobalEnrichmentIds,
+                                        0);
+
+        size_type cellId                     = 0;
+        size_type cumulativeBasisDataInCells = 0;
+        for (auto enrichmentVecInCell :
+            efebasisDofHandler.getEnrichmentIdsPartition()
+              ->overlappingEnrichmentIdsInCells())
+        {
+          size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+          for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+            {
+              for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                {
+                  *(basisOverlapEnrichmentBlockExact.data() +
+                    enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                    enrichmentVecInCell[k]) +=
+                    *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                      (numCellClassicalDofs + nCellEnrichmentDofs) *
+                        (numCellClassicalDofs + j) +
+                      numCellClassicalDofs + k);
+
+                  basis::EnrichmentIdAttribute eIdAttrj =
+                    efeBDH->getEnrichmentIdsPartition()
+                      ->getEnrichmentIdAttribute(enrichmentVecInCell[j]);
+
+                  basis::EnrichmentIdAttribute eIdAttrk =
+                    efeBDH->getEnrichmentIdsPartition()
+                      ->getEnrichmentIdAttribute(enrichmentVecInCell[k]);
+
+                  if (eIdAttrj.atomId == eIdAttrk.atomId)
+                    {
+                      *(basisOverlapEnrichmentBlock.data() +
+                        enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                        enrichmentVecInCell[k]) +=
+                        *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                          (numCellClassicalDofs + nCellEnrichmentDofs) *
+                            (numCellClassicalDofs + j) +
+                          numCellClassicalDofs + k);
+                    }
+                }
+            }
+          cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+            (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+          cellId += 1;
+        }
+
+      int err = utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        basisOverlapEnrichmentBlockExact.data(),
+        basisOverlapEnrichmentBlockExact.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      err = utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        basisOverlapEnrichmentBlock.data(),
+        basisOverlapEnrichmentBlock.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+
+      basisOverlapEnrichmentAtomBlock = basisOverlapEnrichmentBlock;
+      utils::MemoryStorage<double, memorySpace> eigenValuesMemSpace(
+        d_nglobalEnrichmentIds);
+
+      linearAlgebra::blasLapack::heevd<ValueType, memorySpace>(
+        linearAlgebra::blasLapack::Job::NoVec,
+        linearAlgebra::blasLapack::Uplo::Lower,
+        d_nglobalEnrichmentIds,
+        basisOverlapEnrichmentAtomBlock.data(),
+        d_nglobalEnrichmentIds,
+        eigenValuesMemSpace.data(),
+        *d_diagonal->getLinAlgOpContext());
+
+      auto minAbsValueOfEigenVecAtomBlock = *(eigenValuesMemSpace.data());
+
+      global_size_type globalEnrichmentStartId =
+        efeBDH->getGlobalRanges()[1].first;
+
+      std::pair<global_size_type, global_size_type> locOwnEidPair{
+        efeBDH->getLocallyOwnedRanges()[1].first - globalEnrichmentStartId,
+        efeBDH->getLocallyOwnedRanges()[1].second - globalEnrichmentStartId};
+
+      global_size_type nlocallyOwnedEnrichmentIds =
+        locOwnEidPair.second - locOwnEidPair.first;
+
+      d_atomBlockEnrichmentOverlap.resize(nlocallyOwnedEnrichmentIds *
+                                             nlocallyOwnedEnrichmentIds);
+
+      for (global_size_type i = 0; i < nlocallyOwnedEnrichmentIds; i++)
+        {
+          for (global_size_type j = 0; j < nlocallyOwnedEnrichmentIds; j++)
+            {
+              *(d_atomBlockEnrichmentOverlap.data() +
+                i * nlocallyOwnedEnrichmentIds + j) =
+                *(basisOverlapEnrichmentBlock.data() +
+                  (i + locOwnEidPair.first) * d_nglobalEnrichmentIds +
+                  (j + locOwnEidPair.first));
+            }
+        }
+
+      int rank;
+      utils::mpi::MPICommRank(
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator(), &rank);
+
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
+
+      ValueTypeOperator normMexact = 0;
+      for (int i = 0; i < basisOverlapEnrichmentBlock.size(); i++)
+        {
+          *(basisOverlapEnrichmentBlock.data() + i) =
+            *(basisOverlapEnrichmentBlockExact.data() + i) -
+            *(basisOverlapEnrichmentBlock.data() + i);
+
+          normMexact += *(basisOverlapEnrichmentBlockExact.data()
+          + i) * *(basisOverlapEnrichmentBlockExact.data() + i);
+        }
+      normMexact = std::sqrt(normMexact);
+
+      linearAlgebra::blasLapack::heevd<ValueType, memorySpace>(
+        linearAlgebra::blasLapack::Job::Vec,
+        linearAlgebra::blasLapack::Uplo::Lower,
+        d_nglobalEnrichmentIds,
+        basisOverlapEnrichmentBlock.data(),
+        d_nglobalEnrichmentIds,
+        eigenValuesMemSpace.data(),
+        *d_diagonal->getLinAlgOpContext());
+
+      ValueType tolerance = 1e-10;
+
+      ValueType eigValShift = std::min(*eigenValuesMemSpace.data(), 0.) - tolerance; 
+      utils::throwException(minAbsValueOfEigenVecAtomBlock + eigValShift > 0, 
+        "The min eigenvalue of AtomBlockDiagonal is less than shift with the residual. values: " + 
+          std::to_string(minAbsValueOfEigenVecAtomBlock) + " " + std::to_string(eigValShift));
+
+      for(int i = 0; i < eigenValuesMemSpace.size() ;i++)
+        *(eigenValuesMemSpace.data() + i) -= eigValShift;
+
+      size_type  i = d_nglobalEnrichmentIds-1;
+      while(i > 0)
+      {
+        ValueTypeOperand sumEigVal = 0;
+        for(size_type j = i ; j < d_nglobalEnrichmentIds ; j++)
+        {
+          sumEigVal += *(eigenValuesMemSpace.data() + j) *
+            *(eigenValuesMemSpace.data() + j);
+        }
+        if(std::sqrt(sumEigVal)/normMexact < 1e-6)
+          break;
+        i--;
+        d_rank++;
+      }
+
+      rootCout << "Rank of Residual M Enrichment block matrix: " <<
+      d_rank << "\n";
+
+      d_residualEnrichOverlapEigenVec.resize(nlocallyOwnedEnrichmentIds *
+                                                  d_rank,
+                                                0);
+      d_residualEnrichOverlapEigenVal.resize(d_rank, 0);
+
+      for (int i = 0; i < d_rank; i++)
+        {
+          basisOverlapEnrichmentBlock.template copyTo<memorySpace>(
+            d_residualEnrichOverlapEigenVec.begin(),
+            nlocallyOwnedEnrichmentIds,
+            d_nglobalEnrichmentIds * (i + d_nglobalEnrichmentIds - d_rank) +
+              locOwnEidPair.first, // srcoffset
+            nlocallyOwnedEnrichmentIds *
+              i); // dstoffset ; col - d_rank, row , N_locowned
+
+          *(d_residualEnrichOverlapEigenVal.data() + i) =
+            *(eigenValuesMemSpace.data() + (i + d_nglobalEnrichmentIds - d_rank)) - eigValShift;
+        }
+      }
+      else
+      {
       d_basisOverlapEnrichmentBlock =
         std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
           d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
@@ -1597,6 +1800,7 @@ namespace dftefe
         ->template copyFrom<utils::MemorySpace::HOST>(
           basisOverlapEnrichmentBlockSTL.data());
     }
+    }
 
 
     template <typename ValueTypeOperator,
@@ -1619,12 +1823,14 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockClassicalBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext)
+          linAlgOpContext,
+        const bool isEnrichAtomBlockDiagonalApprox)
       : d_feBasisManager(&feBasisManager)
       , d_maxCellBlock(0)
       , d_maxFieldBlock(0)
       , d_cellStartIdsBasisOverlap(0)
       , d_isMassLumping(true)
+      , d_isEnrichAtomBlockDiagonalApprox(isEnrichAtomBlockDiagonalApprox)
     {
       const size_type numLocallyOwnedCells =
         d_feBasisManager->nLocallyOwnedCells();
@@ -1733,6 +1939,239 @@ namespace dftefe
                                                                    1);
 
       // Now form the enrichment block matrix.
+
+      int rank;
+      utils::mpi::MPICommRank(
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator(), &rank);
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
+
+      if(d_isEnrichAtomBlockDiagonalApprox)
+      {
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          basisOverlapEnrichmentBlockExact(d_nglobalEnrichmentIds * 
+            d_nglobalEnrichmentIds);
+
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          basisOverlapEnrichmentBlock(d_nglobalEnrichmentIds *
+                                          d_nglobalEnrichmentIds,
+                                        0), 
+          basisOverlapEnrichmentAtomBlock(d_nglobalEnrichmentIds *
+                                          d_nglobalEnrichmentIds,
+                                        0);
+
+        size_type cellId                     = 0;
+        size_type cumulativeBasisDataInCells = 0;
+        for (auto enrichmentVecInCell :
+            efebasisDofHandler.getEnrichmentIdsPartition()
+              ->overlappingEnrichmentIdsInCells())
+        {
+          size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+          for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+            {
+              for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                {
+                  *(basisOverlapEnrichmentBlockExact.data() +
+                    enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                    enrichmentVecInCell[k]) +=
+                    *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                    (numCellClassicalDofs + nCellEnrichmentDofs) *
+                      (numCellClassicalDofs + j) +
+                    numCellClassicalDofs + k);
+
+                  basis::EnrichmentIdAttribute eIdAttrj =
+                    efeBDH->getEnrichmentIdsPartition()
+                      ->getEnrichmentIdAttribute(enrichmentVecInCell[j]);
+
+                  basis::EnrichmentIdAttribute eIdAttrk =
+                    efeBDH->getEnrichmentIdsPartition()
+                      ->getEnrichmentIdAttribute(enrichmentVecInCell[k]);
+
+                  if (eIdAttrj.atomId == eIdAttrk.atomId)
+                    {
+                      *(basisOverlapEnrichmentBlock.data() +
+                        enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                        enrichmentVecInCell[k]) +=
+                        *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                          (numCellClassicalDofs + nCellEnrichmentDofs) *
+                            (numCellClassicalDofs + j) +
+                          numCellClassicalDofs + k);
+                    }
+                }
+            }
+          cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+            (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+          cellId += 1;
+        }
+
+      int err = utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        basisOverlapEnrichmentBlockExact.data(),
+        basisOverlapEnrichmentBlockExact.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+
+      // rootCout << "Enrichment Block Matrix: " << std::endl;
+      // for (size_type i = 0; i < d_nglobalEnrichmentIds; i++)
+      //   {
+      //     rootCout << "[";
+      //     for (size_type j = 0; j < d_nglobalEnrichmentIds; j++)
+      //       {
+      //         rootCout << *(basisOverlapEnrichmentBlockExact.data() +
+      //                       i * d_nglobalEnrichmentIds + j)
+      //                  << "\t";
+      //       }
+      //     rootCout << "]" << std::endl;
+      //   }
+      //   rootCout << "\n\n\n\n\n";
+
+      err = utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        basisOverlapEnrichmentBlock.data(),
+        basisOverlapEnrichmentBlock.size(),
+        utils::mpi::MPIDouble,
+        utils::mpi::MPISum,
+        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+
+      // rootCout << "Enrichment Atom Block Diagonal Matrix: " << std::endl;
+      // for (size_type i = 0; i < d_nglobalEnrichmentIds; i++)
+      //   {
+      //     rootCout << "[";
+      //     for (size_type j = 0; j < d_nglobalEnrichmentIds; j++)
+      //       {
+      //         rootCout << *(basisOverlapEnrichmentBlock.data() +
+      //                       i * d_nglobalEnrichmentIds + j)
+      //                  << "\t";
+      //       }
+      //     rootCout << "]" << std::endl;
+      //   }
+      //   rootCout << std::endl;
+
+      basisOverlapEnrichmentAtomBlock = basisOverlapEnrichmentBlockExact;
+      utils::MemoryStorage<double, memorySpace> eigenValuesMemSpace(
+        d_nglobalEnrichmentIds);
+
+      linearAlgebra::blasLapack::heevd<ValueType, memorySpace>(
+        linearAlgebra::blasLapack::Job::NoVec,
+        linearAlgebra::blasLapack::Uplo::Lower,
+        d_nglobalEnrichmentIds,
+        basisOverlapEnrichmentAtomBlock.data(),
+        d_nglobalEnrichmentIds,
+        eigenValuesMemSpace.data(),
+        *d_diagonal->getLinAlgOpContext());
+
+      rootCout << "EigenValues of Atom Block Overlap: ";
+      for(int i = 0; i < eigenValuesMemSpace.size() ;i++)
+        rootCout << *(eigenValuesMemSpace.data() + i) << "\t";
+      rootCout << std::endl;
+
+      auto minAbsValueOfEigenVecAtomBlock = *(eigenValuesMemSpace.data());
+
+      global_size_type globalEnrichmentStartId =
+        efeBDH->getGlobalRanges()[1].first;
+
+      std::pair<global_size_type, global_size_type> locOwnEidPair{
+        efeBDH->getLocallyOwnedRanges()[1].first - globalEnrichmentStartId,
+        efeBDH->getLocallyOwnedRanges()[1].second - globalEnrichmentStartId};
+
+      global_size_type nlocallyOwnedEnrichmentIds =
+        locOwnEidPair.second - locOwnEidPair.first;
+
+      d_atomBlockEnrichmentOverlap.resize(nlocallyOwnedEnrichmentIds *
+                                             nlocallyOwnedEnrichmentIds);
+
+      for (global_size_type i = 0; i < nlocallyOwnedEnrichmentIds; i++)
+        {
+          for (global_size_type j = 0; j < nlocallyOwnedEnrichmentIds; j++)
+            {
+              *(d_atomBlockEnrichmentOverlap.data() +
+                i * nlocallyOwnedEnrichmentIds + j) =
+                *(basisOverlapEnrichmentBlock.data() +
+                  (i + locOwnEidPair.first) * d_nglobalEnrichmentIds +
+                  (j + locOwnEidPair.first));
+            }
+        }
+
+      ValueTypeOperator normMexact = 0;
+      for (int i = 0; i < basisOverlapEnrichmentBlock.size(); i++)
+        {
+          *(basisOverlapEnrichmentBlock.data() + i) =
+            *(basisOverlapEnrichmentBlockExact.data() + i) -
+            *(basisOverlapEnrichmentBlock.data() + i);
+
+          normMexact += *(basisOverlapEnrichmentBlockExact.data()
+          + i) * *(basisOverlapEnrichmentBlockExact.data() + i);
+        }
+      normMexact = std::sqrt(normMexact);
+
+      linearAlgebra::blasLapack::heevd<ValueType, memorySpace>(
+        linearAlgebra::blasLapack::Job::Vec,
+        linearAlgebra::blasLapack::Uplo::Lower,
+        d_nglobalEnrichmentIds,
+        basisOverlapEnrichmentBlock.data(),
+        d_nglobalEnrichmentIds,
+        eigenValuesMemSpace.data(),
+        *d_diagonal->getLinAlgOpContext());
+
+      ValueType tolerance = 1e-10;
+
+      ValueType eigValShift = std::min(*eigenValuesMemSpace.data(), 0.) - tolerance; 
+      utils::throwException(minAbsValueOfEigenVecAtomBlock + eigValShift > 0, 
+        "The min eigenvalue of AtomBlockDiagonal is less than shift with the residual. values: " + 
+          std::to_string(minAbsValueOfEigenVecAtomBlock) + " " + std::to_string(eigValShift));
+
+      for(int i = 0; i < eigenValuesMemSpace.size() ;i++)
+        *(eigenValuesMemSpace.data() + i) -= eigValShift;
+
+      size_type  i = d_nglobalEnrichmentIds-1;
+      while(i > 0)
+      {
+        ValueTypeOperand sumEigVal = 0;
+        for(size_type j = i ; j < d_nglobalEnrichmentIds ; j++)
+        {
+          sumEigVal += *(eigenValuesMemSpace.data() + j) *
+            *(eigenValuesMemSpace.data() + j);
+        }
+        if(std::sqrt(sumEigVal)/normMexact < 1e-6)
+          break;
+        i--;
+        d_rank++;
+      }
+
+      rootCout << "Rank of Residual M Enrichment block matrix: " <<
+      d_rank << "\n";
+
+      d_residualEnrichOverlapEigenVec.resize(nlocallyOwnedEnrichmentIds *
+                                                  d_rank,
+                                                0);
+      d_residualEnrichOverlapEigenVal.resize(d_rank, 0);
+
+      for (int i = 0; i < d_rank; i++)
+        {
+          basisOverlapEnrichmentBlock.template copyTo<memorySpace>(
+            d_residualEnrichOverlapEigenVec.begin(),
+            nlocallyOwnedEnrichmentIds,
+            d_nglobalEnrichmentIds * (i + d_nglobalEnrichmentIds - d_rank) +
+              locOwnEidPair.first, // srcoffset
+            nlocallyOwnedEnrichmentIds *
+              i); // dstoffset ; col - d_rank, row , N_locowned
+
+          *(d_residualEnrichOverlapEigenVal.data() + i) =
+            *(eigenValuesMemSpace.data() + (i + d_nglobalEnrichmentIds - d_rank)) - eigValShift;
+        }
+      }
+      else
+      {
       d_basisOverlapEnrichmentBlock =
         std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
           d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
@@ -1783,6 +2222,7 @@ namespace dftefe
       d_basisOverlapEnrichmentBlock
         ->template copyFrom<utils::MemorySpace::HOST>(
           basisOverlapEnrichmentBlockSTL.data());
+      }
     }
 
     template <typename ValueTypeOperator,
@@ -1832,6 +2272,8 @@ namespace dftefe
             Y.begin(),
             *(d_diagonal->getLinAlgOpContext()));
 
+          if(!d_isEnrichAtomBlockDiagonalApprox)
+          {
           utils::MemoryStorage<ValueTypeOperand, memorySpace>
             XenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents),
             XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
@@ -1887,6 +2329,113 @@ namespace dftefe
              (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
               numComponents,
             nlocallyOwnedClassicalIds * numComponents);
+          }
+          else
+          {
+            utils::MemoryStorage<ValueTypeOperand, memorySpace> XenrichedLocalVec(
+              nlocallyOwnedEnrichmentIds * numComponents),
+              YenrichedLocalVec(nlocallyOwnedEnrichmentIds * numComponents),
+              dotProds(d_rank * numComponents);
+      
+            XenrichedLocalVec.template copyFrom<memorySpace>(
+              X.begin(),
+              nlocallyOwnedEnrichmentIds * numComponents,
+              nlocallyOwnedClassicalIds * numComponents,
+              0);
+      
+      
+            ValueType alpha = 1.0;
+            ValueType beta  = 0.0;
+      
+            if (nlocallyOwnedEnrichmentIds > 0)
+              linearAlgebra::blasLapack::
+                gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+                  linearAlgebra::blasLapack::Layout::ColMajor,
+                  linearAlgebra::blasLapack::Op::NoTrans,
+                  linearAlgebra::blasLapack::Op::NoTrans,
+                  numComponents,
+                  nlocallyOwnedEnrichmentIds,
+                  nlocallyOwnedEnrichmentIds,
+                  alpha,
+                  XenrichedLocalVec.data(),
+                  numComponents,
+                  d_atomBlockEnrichmentOverlap.data(),
+                  nlocallyOwnedEnrichmentIds,
+                  beta,
+                  YenrichedLocalVec.begin(),
+                  numComponents,
+                  *(X.getLinAlgOpContext()));
+        
+            if (nlocallyOwnedEnrichmentIds > 0)
+              linearAlgebra::blasLapack::
+                gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+                  linearAlgebra::blasLapack::Layout::ColMajor,
+                  linearAlgebra::blasLapack::Op::NoTrans,
+                  linearAlgebra::blasLapack::Op::NoTrans,
+                  numComponents,
+                  d_rank,
+                  nlocallyOwnedEnrichmentIds,
+                  alpha,
+                  XenrichedLocalVec.data(),
+                  numComponents,
+                  d_residualEnrichOverlapEigenVec.data(),
+                  nlocallyOwnedEnrichmentIds,
+                  beta,
+                  dotProds.begin(),
+                  numComponents,
+                  *(X.getLinAlgOpContext()));
+
+            utils::mpi::MPIDatatype mpiDatatype =
+              utils::mpi::Types<ValueType>::getMPIDatatype();
+            utils::mpi::MPIAllreduce<memorySpace>(
+              utils::mpi::MPIInPlace,
+              dotProds.data(),
+              dotProds.size(),
+              utils::mpi::MPIDouble,
+              utils::mpi::MPISum,
+              (X.getMPIPatternP2P())->mpiCommunicator());
+
+            size_type m = 1, n = numComponents, k = d_rank;
+            size_type stride = 0;
+
+            linearAlgebra::blasLapack::
+              scaleStridedVarBatched<ValueType, ValueType, memorySpace>(
+                1,
+                linearAlgebra::blasLapack::Layout::ColMajor,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                &stride,
+                &stride,
+                &stride,
+                &m,
+                &n,
+                &k,
+                d_residualEnrichOverlapEigenVal.data(),
+                dotProds.data(),
+                dotProds.data(),
+                *(X.getLinAlgOpContext()));
+
+            beta = 1.0;
+
+            if (nlocallyOwnedEnrichmentIds > 0)
+              linearAlgebra::blasLapack::
+                gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+                  linearAlgebra::blasLapack::Layout::ColMajor,
+                  linearAlgebra::blasLapack::Op::NoTrans,
+                  linearAlgebra::blasLapack::Op::Trans,
+                  numComponents,
+                  nlocallyOwnedEnrichmentIds,
+                  d_rank,
+                  alpha,
+                  dotProds.data(),
+                  numComponents,
+                  d_residualEnrichOverlapEigenVec.data(),
+                  nlocallyOwnedEnrichmentIds,
+                  beta,
+                  YenrichedLocalVec.begin(),
+                  numComponents,
+                  *(X.getLinAlgOpContext()));
+          }
 
           Y.updateGhostValues();
 
