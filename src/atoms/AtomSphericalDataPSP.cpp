@@ -20,10 +20,10 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#include <atoms/AtomSphericalData.h>
+#include <atoms/AtomSphericalDataPSP.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
 #include <libxml/parser.h>
@@ -46,50 +46,6 @@ namespace dftefe
         std::string ns;
         std::string nsHRef;
       };
-
-      // bool
-      // splitStringToInts(const std::string s,
-      //                   std::vector<int> &vals,
-      //                   size_type         reserveSize = 0)
-      // {
-      //   std::istringstream ss(s);
-      //   std::string        word;
-      //   size_type          wordCount = 0;
-      //   vals.resize(0);
-      //   vals.reserve(reserveSize);
-      //   bool convSuccess = false;
-      //   int  x;
-      //   while (ss >> word)
-      //     {
-      //       convSuccess = utils::stringOps::strToInt(word, x);
-      //       if (!convSuccess)
-      //         break;
-      //       vals.push_back(x);
-      //     }
-      //   return convSuccess;
-      // }
-
-      // bool
-      // splitStringToDoubles(const std::string    s,
-      //                      std::vector<double> &vals,
-      //                      size_type            reserveSize = 0)
-      // {
-      //   std::istringstream ss(s);
-      //   std::string        word;
-      //   size_type          wordCount = 0;
-      //   vals.resize(0);
-      //   vals.reserve(reserveSize);
-      //   bool   convSuccess = false;
-      //   double x;
-      //   while (ss >> word)
-      //     {
-      //       convSuccess = utils::stringOps::strToDouble(word, x);
-      //       if (!convSuccess)
-      //         break;
-      //       vals.push_back(x);
-      //     }
-      //   return convSuccess;
-      // }
 
       xmlDocPtr
       getDoc(const std::string fileName)
@@ -288,61 +244,6 @@ namespace dftefe
         xmlXPathFreeObject(ptrToXmlXPathObject);
       }
 
-      //      void
-      //	processSphericalDataFromXMLNodeData(std::map<std::vector<int>,
-      // std::vector<double>> & d_qNumbersToRadialField, 	    const
-      // std::vector<std::string> & nodeStrings, 	    const
-      // std::vector<std::vector<std::pair<std::string, std::string>>> &
-      // attrStrings, 	    const XPathInfo & xPathInfo, 	    const size_type
-      // numPoints)
-      //	{
-      //
-      //	  const size_type N  = nodeStrings.size();
-      //	  std::set<std::vector<int>> qNumbersSet;
-      //	  bool convSuccess = false;
-      //	  for(size_type i = 0; i < N; ++i)
-      //	  {
-      //	    std::vector<double> vals(0);
-      //	    convSuccess = utils::stringOps::splitStringToDoubles(nodeStrings[0], vals,
-      // numPoints);
-      //      	    utils::throwException(convSuccess,
-      //	  	"Error while converting values in " + xPathInfo.xpath + " element
-      // in " + xPathInfo.fileName + " to double");
-      //	    utils::throwException(vals.size() == numPoints,
-      //	     "Mismatch in number of points specified and number of points "
-      //	     "provided in " + xPathInfo.xpath + " element in " +
-      //	    xPathInfo.fileName);
-      //	    const std::vector<std::pair<std::string, std::string>> attrString
-      //= attrStrings[i]; 	    utils::throwException(attrString.size() == 3,
-      //	    "Expected three attributes (i.e., n, l, m quantum numbers) in " +
-      // xPathInfo.xpath + " element in " + xPathInfo.fileName);
-      //	    utils::throwException(attrString[0].first=="n",
-      //		"The first attribute for " + xPathInfo.xpath + " element in " +
-      // xPathInfo.fileName + " must be \"n\"");
-      //	    utils::throwException(attrString[1].first=="l",
-      //		"The second attribute for " + xPathInfo.xpath + " element in " +
-      // xPathInfo.fileName + " must be \"l\"");
-      //	    utils::throwException(attrString[2].first=="m",
-      //		"The third attribute for " + xPathInfo.xpath + " element in " +
-      // xPathInfo.fileName + " must be \"m\""); 	    std::vector<int>
-      // qNumbers(3); 	    for(size_type j = 0; j < 3; ++j)
-      //	    {
-      //	      convSuccess = utils::stringOps::strToInt(attrString[j].second,
-      // qNumbers[j]); 	      utils::throwException(convSuccess,
-      //                "Error while converting the " + std::to_string(j) +
-      //		"-th quantum number in " + xPathInfo.xpath +
-      //		" element in " + xPathInfo.fileName + " to integer");
-      //	    }
-      //	    d_qNumbersToRadialField[qNumbers] = vals;
-      //	    qNumbersSet.insert(qNumbers);
-      //	  }
-      //
-      //	  utils::throwException(qNumbersSet.size() == N,
-      //	    "Found repeated quantum numbers while processing the attributes of
-      //" + 	    xPathInfo.xpath + " element in " + xPathInfo.fileName);
-      //
-      //	}
-
       void
       processSphericalDataFromXMLNodeData(
         std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
@@ -495,9 +396,9 @@ namespace dftefe
       }
     } // namespace
 
-    AtomSphericalData::AtomSphericalData(
+    AtomSphericalDataPSP::AtomSphericalDataPSP(
       const std::string                 fileName,
-      const std::vector<std::string> &  fieldNames,
+      const std::vector<std::string> &  fieldNames, // local, beta, pspwfc, nlcc,
       const std::vector<std::string> &  metadataNames,
       const SphericalHarmonicFunctions &sphericalHarmonicFunc)
       : d_fileName(fileName)
@@ -539,9 +440,6 @@ namespace dftefe
         0);
 
       bool convSuccess = false;
-
-      // ---------------------This class constructor is only designed for
-      // SphericalDataNumerical for now------------------------
 
       int                 numRadialPoints;
       std::vector<double> radialPoints;
@@ -612,25 +510,25 @@ namespace dftefe
     }
 
     std::string
-    AtomSphericalData::getFileName() const
+    AtomSphericalDataPSP::getFileName() const
     {
       return d_fileName;
     }
 
     std::vector<std::string>
-    AtomSphericalData::getFieldNames() const
+    AtomSphericalDataPSP::getFieldNames() const
     {
       return d_fieldNames;
     }
 
     std::vector<std::string>
-    AtomSphericalData::getMetadataNames() const
+    AtomSphericalDataPSP::getMetadataNames() const
     {
       return d_metadataNames;
     }
 
     const std::vector<std::shared_ptr<SphericalData>> &
-    AtomSphericalData::getSphericalData(const std::string fieldName) const
+    AtomSphericalDataPSP::getSphericalData(const std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
@@ -642,7 +540,7 @@ namespace dftefe
 
 
     const std::shared_ptr<SphericalData>
-    AtomSphericalData::getSphericalData(const std::string       fieldName,
+    AtomSphericalDataPSP::getSphericalData(const std::string       fieldName,
                                         const std::vector<int> &qNumbers) const
     {
       auto it = d_sphericalData.find(fieldName);
@@ -674,7 +572,7 @@ namespace dftefe
     }
 
     std::string
-    AtomSphericalData::getMetadata(const std::string metadataName) const
+    AtomSphericalDataPSP::getMetadata(const std::string metadataName) const
     {
       auto it = d_metadata.find(metadataName);
       utils::throwException(it != d_metadata.end(),
@@ -686,27 +584,27 @@ namespace dftefe
 
 
     size_type
-    AtomSphericalData::getQNumberID(const std::string       fieldName,
+    AtomSphericalDataPSP::getQNumberID(const std::string       fieldName,
                                     const std::vector<int> &qNumbers) const
     {
       auto it = d_qNumbersToIdMap.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
         it != d_qNumbersToIdMap.end(),
-        "Cannot find the atom symbol provided to AtomSphericalData::getQNumberID");
+        "Cannot find the atom symbol provided to AtomSphericalDataPSP::getQNumberID");
       auto it1 = (it->second).find(qNumbers);
       utils::throwException<utils::InvalidArgument>(
         it1 != (it->second).end(),
-        "Cannot find the qnumbers provided to AtomSphericalData::getQNumberID");
+        "Cannot find the qnumbers provided to AtomSphericalDataPSP::getQNumberID");
       return (it1)->second;
     }
 
     size_type
-    AtomSphericalData::nSphericalData(std::string fieldName) const
+    AtomSphericalDataPSP::nSphericalData(std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
         it != d_sphericalData.end(),
-        "Cannot find the atom symbol provided to AtomSphericalData::nSphericalData");
+        "Cannot find the atom symbol provided to AtomSphericalDataPSP::nSphericalData");
       return (it->second).size();
     }
 
