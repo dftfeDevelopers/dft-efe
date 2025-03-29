@@ -20,41 +20,23 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Avirup Sircar
  */
 
-#ifndef dftefeStringOperations_h
-#define dftefeStringOperations_h
-
-namespace dftefe
-{
-  namespace utils
-  {
-    namespace stringOps
-    {
-      bool
-      strToInt(const std::string s, int &i);
-
-      bool
-      strToDouble(const std::string s, double &x);
-
-      void
-      trim(std::string &s);
-
-      std::string
-      trimCopy(const std::string &s);
-
-      bool
-      splitStringToInts(const std::string s,
-                        std::vector<int> &vals,
-                        size_type         reserveSize = 0);
-
-      bool
-      splitStringToDoubles(const std::string    s,
-                           std::vector<double> &vals,
-                           size_type            reserveSize = 0);
-
-    } // end of namespace stringOps
-  }   // end of namespace utils
-} // end of namespace dftefe
-#endif // dftefeStringOperations_h
+ #include<utils/Exceptions.h>
+ #include<atoms/AtomSphericalDataPSP.h>
+ #include<string>
+ #include<iostream>
+ int main()
+ {
+   std::string atomFileName = "Cu.upf";
+   std::vector<std::string> fieldNames{ "PP_LOCAL", "PP_NONLOCAL", "PP_PSWFC", "PP_NLCC", "PP_RHOATOM"};
+   std::vector<std::string> metadataNames{ "PP_HEADER" };
+   std::vector<int> qNumbers{1, 0, 0};
+   dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
+   auto sphericalDataObj = atomTest.getSphericalData("vnuclear", qNumbers);
+   std::vector<double> pointvec{0, 0, 2.};
+   std::vector<double> originvec{0. ,0. ,0.};
+   std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
+ }
+ 

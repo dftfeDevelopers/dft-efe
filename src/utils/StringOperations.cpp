@@ -71,6 +71,50 @@ namespace dftefe
       {
         return boost::algorithm::trim_copy(s);
       }
+
+      bool
+      splitStringToInts(const std::string s,
+                        std::vector<int> &vals,
+                        size_type         reserveSize = 0)
+      {
+        std::istringstream ss(s);
+        std::string        word;
+        size_type          wordCount = 0;
+        vals.resize(0);
+        vals.reserve(reserveSize);
+        bool convSuccess = false;
+        int  x;
+        while (ss >> word)
+          {
+            convSuccess = utils::stringOps::strToInt(word, x);
+            if (!convSuccess)
+              break;
+            vals.push_back(x);
+          }
+        return convSuccess;
+      }
+
+      bool
+      splitStringToDoubles(const std::string    s,
+                           std::vector<double> &vals,
+                           size_type            reserveSize = 0)
+      {
+        std::istringstream ss(s);
+        std::string        word;
+        size_type          wordCount = 0;
+        vals.resize(0);
+        vals.reserve(reserveSize);
+        bool   convSuccess = false;
+        double x;
+        while (ss >> word)
+          {
+            convSuccess = utils::stringOps::strToDouble(word, x);
+            if (!convSuccess)
+              break;
+            vals.push_back(x);
+          }
+        return convSuccess;
+      }
     } // end of namespace stringOps
   }   // end of namespace utils
 } // end of namespace dftefe
