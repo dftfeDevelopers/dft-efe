@@ -40,29 +40,35 @@
         void
         computeCXCellWiseLocal(
           const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-            &                     hamiltonianInAllCells,
+            &                     cellWiseC,
           const ValueTypeOperand *x,
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                   ValueTypeOperand> *y,
-          const size_type                                           numVecs,
+          bool                                         isCConjTransX,                                  
+          const size_type                              numVecs,
           const size_type                              numLocallyOwnedCells,
           const std::vector<size_type> &               numCellDofs,
+          const std::vector<size_type> &               numCellProjectors,
           const size_type *                            cellLocalIdsStartPtrX,
           const size_type *                            cellLocalIdsStartPtrY,
           const size_type                              cellBlockSize,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
+          if(memorySpace == utils::MemorySpace::HOST) 
+            cellBlockSize = 1;
+          
           linearAlgebra::blasLapack::Layout layout =
             linearAlgebra::blasLapack::Layout::ColMajor;
 
-          size_type BStartOffset       = 0;
+          size_type cellWiseCStartOffset = 0;
           size_type cellLocalIdsOffset = 0;
 
-          size_type maxDofInCell =
-            *std::max_element(numCellDofs.begin(), numCellDofs.end());
+          std::vector<size_type> &numCellContractingIds = isCConjTransX ? numCellProjectors : numCellDofs;
+
+          size_type maxContractingIdsInCell = *std::max_element(numCellContractingIds.begin(), numCellContractingIds.end());
 
           utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
-            cellBlockSize * numVecs * maxDofInCell,
+            cellBlockSize * numVecs * maxContractingIdsInCell,
             utils::Types<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                       ValueTypeOperand>>::zero);
@@ -71,129 +77,92 @@
                                   scalar_type<ValueTypeOperator, ValueTypeOperand>,
                                 memorySpace>
             yCellValues(
-              cellBlockSize * numVecs * maxDofInCell,
+              cellBlockSize * numVecs * maxContractingIdsInCell,
               utils::Types<
                 linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                         ValueTypeOperand>>::zero);
 
-          for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-                cellStartId += cellBlockSize)
+          // can be make agnostic if the gemmStridedVarBatched handles zero rows and columns
+          if(memorySpace == utils::MemorySpace::HOST) 
+          {
+            for (size_type iCell = 0; iCell < numLocallyOwnedCells;
+                iCell += 1)
             {
-              const size_type cellEndId =
-                std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
-              const size_type        numCellsInBlock = cellEndId - cellStartId;
-              std::vector<size_type> cellsInBlockNumDoFsSTL(numCellsInBlock, 0);
-              std::copy(numCellDofs.begin() + cellStartId,
-                        numCellDofs.begin() + cellEndId,
-                        cellsInBlockNumDoFsSTL.begin());
+              if(numCellProjectors[iCell] > 0)
+              {
+                std::vector<size_type> cellsNumContractIds(1, numCellContractingIds[iCell]);
 
-              const size_type cellsInBlockNumCumulativeDoFs =
-                std::accumulate(cellsInBlockNumDoFsSTL.begin(),
-                                cellsInBlockNumDoFsSTL.end(),
-                                0);
+                // copy x to cell-wise data
+                basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
+                  copyFieldToCellWiseData(x,
+                                          numVecs,
+                                          cellLocalIdsStartPtrX +
+                                            cellLocalIdsOffset,
+                                          cellsNumContractIds,
+                                          xCellValues);
 
-              utils::MemoryStorage<size_type, memorySpace> cellsInBlockNumDoFs(
-                numCellsInBlock);
-              cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
+                std::vector<linearAlgebra::blasLapack::Op> transA = isCConjTransX ? 
+                  linearAlgebra::blasLapack::Op::Trans : 
+                  linearAlgebra::blasLapack::Op::NoTrans;
+                std::vector<linearAlgebra::blasLapack::Op> transB = linearAlgebra::blasLapack::Op::NoTrans;
+      
+                size_type m   = isCConjTransX ? numVecs : numCellProjectors[iCell];
+                size_type n   = isCConjTransX ? numCellDofs[iCell] : numVecs; 
+                size_type k   = isCConjTransX ? numCellProjectors[iCell] : numCellDofs[iCell];
+                size_type ldaSize = m;
+                size_type ldbSize = isCConjTransX ? n : k;
+                size_type ldcSize = m;
 
-              // copy x to cell-wise data
-              basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
-                copyFieldToCellWiseData(x,
-                                        numVecs,
-                                        cellLocalIdsStartPtrX +
-                                          cellLocalIdsOffset,
-                                        cellsInBlockNumDoFs,
-                                        xCellValues);
+                const ValueTypeOperator *A = isCConjTransX ? xCellValues.data()
+                  : cellWiseC.data() + cellWiseCStartOffset;
 
-              std::vector<linearAlgebra::blasLapack::Op> transA(
-                numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-              std::vector<linearAlgebra::blasLapack::Op> transB(
-                numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+                const ValueTypeOperator *B = isCConjTransX ?
+                  cellWiseC.data() + cellWiseCStartOffset : xCellValues.data();
 
-              utils::MemoryStorage<size_type, memorySpace> mSizes(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> nSizes(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> kSizes(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> strideA(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> strideB(
-                numCellsInBlock);
-              utils::MemoryStorage<size_type, memorySpace> strideC(
-                numCellsInBlock);
-
-              KohnShamOperatorContextFEInternal::storeSizes(
-                mSizes,
-                nSizes,
-                kSizes,
-                ldaSizes,
-                ldbSizes,
-                ldcSizes,
-                strideA,
-                strideB,
-                strideC,
-                cellsInBlockNumDoFsSTL,
-                numVecs);
-
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                      ValueTypeOperand>
-                alpha = 1.0;
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                      ValueTypeOperand>
-                beta = 0.0;
-
-              const ValueTypeOperator *B =
-                hamiltonianInAllCells.data() + BStartOffset;
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                      ValueTypeOperand> *C =
-                yCellValues.begin();
-              linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
-                                                                ValueTypeOperand,
-                                                                memorySpace>(
-                layout,
-                numCellsInBlock,
-                transA.data(),
-                transB.data(),
-                strideA.data(),
-                strideB.data(),
-                strideC.data(),
-                mSizes.data(),
-                nSizes.data(),
-                kSizes.data(),
-                alpha,
-                xCellValues.data(),
-                ldaSizes.data(),
-                B,
-                ldbSizes.data(),
-                beta,
-                C,
-                ldcSizes.data(),
-                linAlgOpContext);
-
-              basis::FECellWiseDataOperations<
                 linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                        ValueTypeOperand>,
-                memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                          numVecs,
-                                                          cellLocalIdsStartPtrY +
-                                                            cellLocalIdsOffset,
-                                                          cellsInBlockNumDoFs,
-                                                          y);
+                                                        ValueTypeOperand> *C =
+                  yCellValues.begin();
 
-              for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-                {
-                  BStartOffset +=
-                    cellsInBlockNumDoFsSTL[iCell] * cellsInBlockNumDoFsSTL[iCell];
-                  cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
-                }
+                linearAlgebra::blasLapack::gemm<ValueTypeOperator,
+                                                ValueTypeOperand,
+                                                utils::MemorySpace::HOST>(
+                  layout,
+                  transA,
+                  transB,
+                  m,
+                  n,
+                  k,
+                  (ValueType)1.0,
+                  A,
+                  ldaSize,
+                  B,
+                  ldbSize,
+                  (ValueType)0.0,
+                  C,
+                  ldcSize,
+                  linAlgOpContext);                
+
+                basis::FECellWiseDataOperations<
+                  linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                          ValueTypeOperand>,
+                  memorySpace>::addCellWiseDataToFieldData(yCellValues,
+                                                            numVecs,
+                                                            cellLocalIdsStartPtrY +
+                                                              cellLocalIdsOffset,
+                                                            cellsNumContractIds,
+                                                            y);
+
+                cellWiseCStartOffset +=
+                  numCellProjectors[iCell] * numCellDofs[iCell];
+                cellLocalIdsOffset += cellsNumContractIds[0];
+              }
             }
+          }
+          else if(memorySpace == utils::MemorySpace::DEVICE) 
+          {
+            utils::throwException(
+              false, "computeCXCellWiseLocal not implemented in DEVICE.");
+          }
         }
      }
  
@@ -405,6 +374,22 @@
 
       // Create mpiPatternP2P for locOwned and ghost Projectors 
 
+      // create the d_locallyOwnedCellLocalProjectorIds
+
+      size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
+      size_type cumulativeProjectors       = 0;
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+        {
+          const size_type numCellProjectors = d_numProjInCells[iCell];
+          for (size_type iProj = 0; iProj < numCellProjectors; ++iProj)
+            {
+              const global_size_type globalProjId = d_overlappingProjectorIdsInCells[iProj];
+              d_locallyOwnedCellLocalProjectorIds[cumulativeProjectors + iProj] =
+                d_mpiPatternP2P->globalToLocal(globalProjId);
+            }
+          cumulativeProjectors += numCellProjectors;
+        }
+
       // Initilize the d_CX
       d_CX = linearAlgebra::MultiVector<ValueType, memorySpace>(
                                               d_mpiPatternP2P,
@@ -430,18 +415,104 @@
                    bool            updateGhostX,
                    bool            updateGhostY) const
      {
+        const size_type numLocallyOwnedCells =
+          d_feBasisManager->nLocallyOwnedCells();
+        std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+        for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+          {
+            numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+          }
+
+        const size_type numVecs = X.getNumberComponents();
+
+        // get handle to constraints
+        const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsX =
+          d_feBasisManager->getConstraints();
+
+        const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsY =
+          d_feBasisManager->getConstraints();
+
         // Do CVC^T X 
         if (updateGhostX)
           X.updateGhostValues();
+        constraintsX.distributeParentToChild(X, numVecs);
+
+        Y.setValue(0.0);
+
+        const size_type cellBlockSize =
+          (d_maxCellBlock * d_maxWaveFnBatch) / numVecs;
 
         // Do d_CX = d_cellWiseC * X cellwise (field to cellwise data)
 
+        auto itCellLocalIdsBeginX =
+          d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+
+        auto itCellLocalIdsBeginY =
+          d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+
+        AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
+          d_cellWiseC.data(),
+          X.begin(),
+          d_CX.begin(),
+          false,
+          numVecs,
+          numLocallyOwnedCells,
+          numCellDofs,
+          itCellLocalIdsBeginX,
+          itCellLocalIdsBeginY,
+          cellBlockSize,
+          *(X.getLinAlgOpContext()));
+
         // acumulate add, update ghost of d_CX
 
+        d_CX.accumulateAddLocallyOwned();
+        d_CX.updateGhostValues();
+
         // Do d_CX = d_V * d_CX
+        size_type stride = 0;
+        size_type m = 1, n = numVec, k = d_CX.localSize();
+
+        linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+                                                          ValueTypeOperator,
+                                                          memorySpace>(
+          1,
+          linearAlgebra::blasLapack::Layout::RowMajor,
+          linearAlgebra::blasLapack::ScalarOp::Identity,
+          linearAlgebra::blasLapack::ScalarOp::Identity,
+          &stride,
+          &stride,
+          &stride,
+          &m,
+          &n,
+          &k,
+          d_V.data(),
+          d_CX.data(),
+          d_CX.data(),
+          linAlgOpContext);
 
         // Do Y = d_cellwiseC * d_CX cellwise (field to cellwise data)
 
+        itCellLocalIdsBeginX =
+          d_locallyOwnedCellLocalProjectorIds.begin();
+
+        itCellLocalIdsBeginY =
+          d_locallyOwnedCellLocalProjectorIds.begin();
+
+        AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
+          d_cellWiseC.data(),
+          d_CX.begin(),
+          Y.begin(),
+          true,
+          numVecs,
+          numLocallyOwnedCells,
+          numCellDofs,
+          itCellLocalIdsBeginX,
+          itCellLocalIdsBeginY,
+          cellBlockSize,
+          *(X.getLinAlgOpContext()));
+
+        constraintsY.distributeChildToParent(Y, numVecs);
+        Y.accumulateAddLocallyOwned();
         if (updateGhostY)
           Y.updateGhostValues();
      }
