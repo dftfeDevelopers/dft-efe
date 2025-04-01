@@ -187,11 +187,12 @@
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinatesVec,
         const std::string                fieldNameProjector,
+        const std::string                fieldNameCouplingConst,
         const size_type maxCellBlock,
         const size_type maxFieldBlock,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
-        const utils::mpi::MPIComm &comm)
+        const utils::mpi::MPIComm &mpiComm)
        : d_feBasisManager(&feBasisManager)
        , d_maxCellBlock(maxCellBlock)
        , d_maxFieldBlock(maxFieldBlock)
@@ -199,8 +200,7 @@
       // Construct C_cell = \integral_\omega \beta_lp * Y_lm 
       // * N_j
 
-      // Create enrichmentIdsPartition for non-local projectors
-
+      // Create Partition for non-local projectors
       int rank;
       utils::mpi::MPICommRank(comm, &rank);
       utils::ConditionalOStream rootCout(std::cout);
@@ -241,7 +241,7 @@
       utils::throwException(
         feBasisDofHandler->nLocallyOwnedCells() ==
           locallyOwnedCellsInTriangulation,
-        "locallyOwnedCellsInTriangulation does not match to that in dofhandler in EnrichmentClassicalInterface()");
+        "locallyOwnedCellsInTriangulation does not match to that in dofhandler in AtomCenterNonLocalOpContext()");
 
       std::vector<double> minbound;
       std::vector<double> maxbound;
@@ -276,7 +276,7 @@
                                                       atomPartitionTolerance,
                                                       comm);
 
-      // Create enrichmentIdsPartition Object.
+      // Create projectorIdsPartition Object.
       d_projectorIdsPartition = std::make_shared<EnrichmentIdsPartition<dim>>(
         atomSphericalDataContainer,
         d_atomIdsPartition,
@@ -294,9 +294,14 @@
       d_overlappingProjectorIdsInCells =
         d_projectorIdsPartition->overlappingEnrichmentIdsInCells();
 
+      std::pair<global_size_type, global_size_type> locOwnPair =
+        d_projectorIdsPartition->locallyOwnedEnrichmentIds();
+
+      std::vector<global_size_type> ghostVec =
+        d_projectorIdsPartition->ghostEnrichmentIds();
+
       // C_cell is N_projectors_val(r, theta, phi) * 
       // N_dofs which is got by contraction over a cell of quadpoints 
-
       size_type cellWiseCSize = 0;
       auto locallyOwnedCellIter = feBasisDofHandler->beginLocallyOwnedCells();
       int cellIndex = 0;
@@ -323,19 +328,17 @@
           size_type numProjsInCell = d_numProjsInCells[cellIndex];
           size_type numDofsInCell = feBasisDofHandler->nCellDofs(cellIndex);
           
-          utils::MemoryStorage<ValueTypeOperator, utils::memorySpace::HOST> 
-            projectorQuadStorageJxW(numProjsInCell * nQuadsInCell);
           std::vector<double> &cellJxW = quadratureRuleContainer->getCellJxW(cellIndex);
 
-          const std::vector<double> &projValAtQuadPts = getProjectorValues(cellIndex);
+          std::vector<double> projectorQuadStorageJxW(numProjsInCell * nQuadsInCell);
+          getProjectorValues(cellIndex, projectorQuadStorageJxW);
 
           for (unsigned int iProj = 0 ; iProj < numProjsInCell; iProj++)
             {
               for (unsigned int qPoint = 0; qPoint < nQuadsInCell;
                     qPoint++)
                 {
-                  *(projectorQuadStorageJxW.data() + qPoint * numProjsInCell; + iProj) +=
-                    *(projValAtQuadPts.data() + nQuadsInCell * iProj + qPoint) * cellJxW[qPoint];
+                  *(projectorQuadStorageJxW.data() + nQuadsInCell * iProj + qPoint) *= cellJxW[qPoint];
                 }
             }
 
@@ -351,14 +354,14 @@
                                             ValueTypeOperator,
                                             utils::MemorySpace::HOST>(
               linearAlgebra::blasLapack::Layout::ColMajor,
-              linearAlgebra::blasLapack::Op::NoTrans,
+              linearAlgebra::blasLapack::Op::Trans,
               linearAlgebra::blasLapack::Op::Trans,
               numProjsInCell,
               numDofsInCell,
               nQuadsInCell,
               (ValueTypeOperator)1.0,
               projectorQuadStorageJxW.data(),
-              numProjsInCell,
+              nQuadsInCell,
               basisData.data(),
               numDofsInCell,
               (ValueTypeOperator)0.0,
@@ -369,13 +372,40 @@
           cumulativeDofxProj += numDofsInCell * nQuadsInCell;
           cellIndex++;
         }
-      
-      // Get the coupling matrix V = D_ij 
 
       // Create mpiPatternP2P for locOwned and ghost Projectors 
+      d_mpiPatternP2PProj =
+        std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
+          std::vector<std::pair<global_size_type, 
+          global_size_type>>{locOwnPair}, ghostVec, mpiComm);
+
+      // Get the coupling matrix d_V = D_ij 
+      std::vector<ValueTypeOperator> V(d_mpiPatternP2PProj->localOwnedSize(), 0.);
+
+      for(size_type iProjLocal = 0 ; iProjLocal < d_mpiPatternP2PProj->localOwnedSize() ; iProjLocal++)
+      {
+        global_size_type iProjGlobal = d_mpiPatternP2PProj->localToglobal(iProjLocal);
+
+        basis::EnrichmentIdAttribute pIdAttr =
+          d_projectorIdsPartition->getEnrichmentIdAttribute(iProjGlobal);
+
+        size_type atomId  = pIdAttr.atomId;
+        size_type localId = pIdAttr.localIdInAtom;
+
+        auto quantumNoVec =
+          d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+                                                    fieldNameCouplingConst);
+
+        std::string couplingConstantString = 
+          d_atomSphericalDataContainer->getMetadata(d_atomSymbolVec[atomId], 
+                                                    fieldNameCouplingConst);
+
+        size_type l = quantumNoVec[0], p = quantumNoVec[1];                                            
+
+      }
+      d_V.copyFrom(V);
 
       // create the d_locallyOwnedCellLocalProjectorIds
-
       size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
       size_type cumulativeProjectors       = 0;
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
@@ -385,19 +415,99 @@
             {
               const global_size_type globalProjId = d_overlappingProjectorIdsInCells[iProj];
               d_locallyOwnedCellLocalProjectorIds[cumulativeProjectors + iProj] =
-                d_mpiPatternP2P->globalToLocal(globalProjId);
+                d_mpiPatternP2PProj->globalToLocal(globalProjId);
             }
           cumulativeProjectors += numCellProjectors;
         }
 
       // Initilize the d_CX
       d_CX = linearAlgebra::MultiVector<ValueType, memorySpace>(
-                                              d_mpiPatternP2P,
+                                              d_mpiPatternP2PProj,
                                               d_linAlgOpContext,
                                               d_numComponents);
 
      }
  
+     template <typename ValueTypeOperator,
+               typename ValueTypeOperand,
+               utils::MemorySpace memorySpace,
+               size_type          dim>
+     void
+     AtomCenterNonLocalOpContextFE<ValueTypeOperator,
+                               ValueTypeOperand,
+                               memorySpace,
+                               dim>::
+      getProjectorValues(const size_type                          cellId,
+                         const std::vector<dftefe::utils::Point> &points) const
+    {
+      // Assumption for each l,p pair the m values are consecutive
+      std::vector<global_size_type> projIdVec =
+        d_overlappingProjectorIdsInCells[cellId];
+      unsigned int        numProjIdsInCell = projIdVec.size();
+      unsigned int        numPoints          = points.size();
+      std::vector<double> retValue(dim * numPoints * numProjIdsInCell, 0),
+        rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
+      std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
+      DFTEFE_AssertWithMsg(
+        !projIdVec.empty(),
+        "The requested cell does not have any proj ids.");
+      unsigned int numProjIdsSkipped = 0;
+      unsigned int l                     = 0;
+
+      for (int iProj = 0; iProj < numProjIdsInCell;
+           iProj += numProjIdsSkipped)
+        {
+          basis::EnrichmentIdAttribute pIdAttr =
+            d_projectorIdsPartition->getEnrichmentIdAttribute(
+              projIdVec[iProj]);
+
+          size_type atomId  = pIdAttr.atomId;
+          size_type localId = pIdAttr.localIdInAtom;
+
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          std::transform(points.begin(),
+                         points.end(),
+                         x.begin(),
+                         [origin](utils::Point p) { return p - origin; });
+
+          atoms::convertCartesianToSpherical(
+            x,
+            rVec,
+            thetaVec,
+            phiVec,
+            atoms::SphericalDataDefaults::POL_ANG_TOL);
+
+          auto sphericalDataVec =
+            d_atomSphericalDataContainer->getSphericalData(
+              d_atomSymbolVec[atomId], d_fieldName);
+
+          auto quantumNoVec =
+            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+                                                      d_fieldName);
+
+          l = quantumNoVec[localId][0];
+
+          auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
+
+          for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+            {
+              auto angularValue = (sphericalDataVec[localId + mCount])
+                                ->getAngularValue(rVec, thetaVec, phiVec);
+
+              linearAlgebra::blasLapack::hadamardProduct<ValueTypeBasisData,
+                                                     ValueTypeBasisData,
+                                                     utils::MemorySpace::HOST>(
+                numPoints,
+                radialValue.data(),
+                angularValue.data(),
+                retValue.data() + (iProj + mCount) * numPoints,
+                *getLinAlgOpContext());
+            }
+          numProjIdsSkipped = (2 * l + 1);
+        }
+      return retValue;
+    }
+
      template <typename ValueTypeOperator,
                typename ValueTypeOperand,
                utils::MemorySpace memorySpace,
