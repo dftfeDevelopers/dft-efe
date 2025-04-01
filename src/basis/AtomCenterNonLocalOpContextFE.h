@@ -77,6 +77,13 @@
               MultiVector<ValueTypeUnion, memorySpace> & Y) const override;
 
       private:
+
+        // gets the projector values with quad pts as fastest index 
+        // and proj Id as second index in a cell. Assumption:
+        //  m values ar consecutive for all l,p pairs.
+        void
+        getProjectorValues(const size_type                          cellId,
+                         const std::vector<dftefe::utils::Point> &points) const;
         
         // // size is  proj x nProj accumulated overcells
         // utils::MemoryStorage<ValueTypeBasisData, utils::memorySpace::HOST> 
@@ -95,6 +102,9 @@
         //num proj in cells and max proj in cell
         std::vector<size_type> d_numProjInCells;
         size_type d_maxProjInCell;
+
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2PProj;
      };
    } // end of namespace linearAlgebra
  } // end of namespace dftefe
