@@ -957,7 +957,8 @@ int main(int argc, char** argv)
                                                         *cfeBasisDataStorageGLLEigen,
                                                         *efeBasisDataAdaptiveOrbital,
                                                         *cfeBasisDataStorageGLLEigen,
-                                                        linAlgOpContext);  
+                                                        linAlgOpContext,
+                                                        true);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
     p.registerStart("Hamiltonian Basis overlap inverse eval");
@@ -1062,8 +1063,7 @@ int main(int argc, char** argv)
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext,
-                                          false);
+                                          *MInvContext);
 
   p.registerEnd("Kohn Sham DFT Class Init"); 
   p.print();

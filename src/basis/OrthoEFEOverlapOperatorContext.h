@@ -156,8 +156,8 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext,
-        const bool isEnrichAtomBlockDiagonalApprox = true);
+                   linAlgOpContext,
+        const bool isEnrichAtomBlockDiagonalApprox = false);
 
       /**
        * @brief Constructor where the classical dofs have a different quadrature rule than that of the enrichment dofs.
@@ -183,8 +183,8 @@ namespace dftefe
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &enrichmentBlockClassicalBasisDataStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-          linAlgOpContext,
-        const bool isEnrichAtomBlockDiagonalApprox = true);
+                   linAlgOpContext,
+        const bool isEnrichAtomBlockDiagonalApprox = false);
 
       ~OrthoEFEOverlapOperatorContext() = default;
 
@@ -233,11 +233,9 @@ namespace dftefe
                                memorySpace,
                                dim> *d_efebasisDofHandler;
       size_type                      d_nglobalEnrichmentIds;
-      bool d_isEnrichAtomBlockDiagonalApprox;
+      bool                           d_isEnrichAtomBlockDiagonalApprox;
       utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        d_residualEnrichOverlapEigenVec,
-        d_residualEnrichOverlapEigenVal, d_atomBlockEnrichmentOverlap;
-      size_type d_rank;
+        d_atomBlockEnrichmentOverlap;
 
     }; // end of class OrthoEFEOverlapOperatorContext
   }    // end of namespace basis
