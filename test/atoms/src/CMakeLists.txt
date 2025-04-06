@@ -10,9 +10,9 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/atoms ${MAIN_PROJECT_DIR}/test/atoms/li
 include_directories(${MAIN_PROJECT_DIR}/src)
 
 #### Add individual tests below ####
-add_executable(TestAtomSphericalData TestAtomSphericalData.cpp)
-target_link_libraries(TestAtomSphericalData PUBLIC dft-efe-atoms dft-efe-utils)
-set_target_properties(TestAtomSphericalData PROPERTIES OUTPUT_NAME "TestAtomSphericalData")
+add_executable(TestAtomSphericalDataPSP TestAtomSphericalDataPSP.cpp)
+target_link_libraries(TestAtomSphericalDataPSP PUBLIC dft-efe-atoms dft-efe-utils)
+set_target_properties(TestAtomSphericalDataPSP PROPERTIES OUTPUT_NAME "TestAtomSphericalDataPSP")
 
 #add_executable(TestAtomSphericalElectronicData TestAtomSphericalElectronicData.cpp)
 #target_link_libraries(TestAtomSphericalElectronicData PUBLIC dft-efe-atoms)

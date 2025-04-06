@@ -304,7 +304,7 @@ namespace dftefe
       //	  {
       //	    std::vector<double> vals(0);
       //	    convSuccess =
-      //utils::stringOps::splitStringToDoubles(nodeStrings[0], vals,
+      // utils::stringOps::splitStringToDoubles(nodeStrings[0], vals,
       // numPoints);
       //      	    utils::throwException(convSuccess,
       //	  	"Error while converting values in " + xPathInfo.xpath + " element

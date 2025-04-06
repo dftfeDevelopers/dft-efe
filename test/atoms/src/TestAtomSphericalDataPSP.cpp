@@ -25,18 +25,15 @@
 
  #include<utils/Exceptions.h>
  #include<atoms/AtomSphericalDataPSP.h>
+ #include<atoms/SphericalHarmonicFunctions.h>
  #include<string>
  #include<iostream>
  int main()
  {
    std::string atomFileName = "Cu.upf";
-   std::vector<std::string> fieldNames{ "PP_LOCAL", "PP_NONLOCAL", "PP_PSWFC", "PP_NLCC", "PP_RHOATOM"};
-   std::vector<std::string> metadataNames{ "PP_HEADER" };
-   std::vector<int> qNumbers{1, 0, 0};
-   dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-   auto sphericalDataObj = atomTest.getSphericalData("vnuclear", qNumbers);
-   std::vector<double> pointvec{0, 0, 2.};
-   std::vector<double> originvec{0. ,0. ,0.};
-   std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
+   const dftefe::atoms::SphericalHarmonicFunctions sphericalHarmonicFunctions(false);
+   std::vector<std::string> fieldNames{ "vlocal", "beta", "chi", "nlcc", "rhoatom"};
+   std::vector<std::string> metadataNames = dftefe::atoms::AtomSphDataPSPDefaults::METADATANAMES;
+   dftefe::atoms::AtomSphericalDataPSP atomTest(atomFileName, fieldNames, metadataNames, sphericalHarmonicFunctions);
  }
  
