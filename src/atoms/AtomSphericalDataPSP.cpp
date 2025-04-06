@@ -87,6 +87,7 @@ namespace dftefe
                      std::vector<std::string> &             nodeStrings)
       {
         nodeStrings.resize(0);
+        nodeNames.resize(0);
         xmlNodeSetPtr     ptrToXmlNodeSet;
         xmlXPathObjectPtr ptrToXmlXPathObject;
         xmlChar *         keyword;
@@ -96,13 +97,15 @@ namespace dftefe
                                          xPathInfo.nsHRef);
         ptrToXmlNodeSet     = ptrToXmlXPathObject->nodesetval;
         nodeStrings.resize(ptrToXmlNodeSet->nodeNr);
+        nodeNames.resize(ptrToXmlNodeSet->nodeNr);
         for (size_type i = 0; i < ptrToXmlNodeSet->nodeNr; i++)
           {
             xmlNodePtr ptrToXmlNode = ptrToXmlNodeSet->nodeTab[i];
             keyword                 = xmlNodeListGetString(xPathInfo.doc,
                                            ptrToXmlNode->xmlChildrenNode,
                                            1);
-            nodeStrings[i]          = std::string((char *)keyword);
+            keyword != NULL ? nodeStrings[i] = std::string((char *)keyword) :
+                                              nodeStrings[i] = "";
             utils::stringOps::trim(nodeStrings[i]);
             xmlFree(keyword);
             const xmlChar *name = ptrToXmlNode->name;
@@ -121,6 +124,7 @@ namespace dftefe
       {
         nodeStrings.resize(0);
         attrStrings.resize(0);
+        nodeNames.resize(0);
         xmlNodeSetPtr     ptrToXmlNodeSet;
         xmlXPathObjectPtr ptrToXmlXPathObject;
         xmlChar *         keyword;
@@ -138,7 +142,8 @@ namespace dftefe
             keyword                 = xmlNodeListGetString(xPathInfo.doc,
                                            ptrToXmlNode->xmlChildrenNode,
                                            1);
-            nodeStrings[i]          = std::string((char *)keyword);
+            keyword != NULL ? nodeStrings[i] = std::string((char *)keyword) :
+                                              nodeStrings[i] = "";
             utils::stringOps::trim(nodeStrings[i]);
             xmlFree(keyword);
             // loop over attributes
@@ -152,7 +157,7 @@ namespace dftefe
                                                           attribute->children,
                                                           1);
                 std::string name((const char *)attrName);
-                std::string value((char *)attrValue);
+                std::string value(attrValue != NULL ? (char *)attrValue : "");
                 utils::stringOps::trim(value);
                 attrPairs.push_back(std::make_pair(name, value));
                 xmlFree(attrValue);
@@ -160,6 +165,91 @@ namespace dftefe
               }
             const xmlChar *name = ptrToXmlNode->name;
             nodeNames[i]        = std::string((char *)name);
+          }
+        xmlXPathFreeObject(ptrToXmlXPathObject);
+      }
+
+      void
+      getChildrenNodeStrings(
+        const AtomSphericalDataPSP::XPathInfo &xPathInfo,
+        std::vector<std::string> &             nodeNames,
+        std::vector<std::string> &             nodeStrings,
+        std::vector<std::vector<std::pair<std::string, std::string>>>
+          &attrStrings)
+      {
+        nodeStrings.resize(0);
+        attrStrings.resize(0);
+        nodeNames.resize(0);
+        xmlNodeSetPtr     ptrToXmlNodeSet;
+        xmlXPathObjectPtr ptrToXmlXPathObject;
+        xmlChar *         keyword;
+        ptrToXmlXPathObject = getNodeSet(xPathInfo.doc,
+                                         xPathInfo.xpath,
+                                         xPathInfo.ns,
+                                         xPathInfo.nsHRef);
+        ptrToXmlNodeSet     = ptrToXmlXPathObject->nodesetval;
+        utils::throwException(
+          ptrToXmlNodeSet->nodeNr == 1,
+          "Found more than one " + xPathInfo.xpath + " element in " +
+            xPathInfo.fileName +
+            " while getting children nodes. Extend the function to handle this. ");
+        for (size_type i = 0; i < ptrToXmlNodeSet->nodeNr; i++)
+          {
+            int countChildren = 0;
+            for (xmlNodePtr ptrToXmlNode =
+                   ptrToXmlNodeSet->nodeTab[i]->children;
+                 ptrToXmlNode;
+                 ptrToXmlNode = ptrToXmlNode->next)
+              {
+                if (ptrToXmlNode->type == XML_ELEMENT_NODE)
+                  {
+                    countChildren += 1;
+                  }
+              }
+            nodeStrings.resize(countChildren);
+            attrStrings.resize(countChildren);
+            nodeNames.resize(countChildren);
+            int count = 0;
+            for (xmlNodePtr ptrToXmlNode =
+                   ptrToXmlNodeSet->nodeTab[i]->children;
+                 ptrToXmlNode;
+                 ptrToXmlNode = ptrToXmlNode->next)
+              {
+                if (ptrToXmlNode->type == XML_ELEMENT_NODE)
+                  {
+                    keyword =
+                      xmlNodeListGetString(xPathInfo.doc,
+                                           ptrToXmlNode->xmlChildrenNode,
+                                           1);
+                    keyword != NULL ?
+                      nodeStrings[count] = std::string((char *)keyword) :
+                      nodeStrings[count] = "";
+                    utils::stringOps::trim(nodeStrings[count]);
+                    xmlFree(keyword);
+                    // loop over attributes
+                    xmlAttr *attribute = ptrToXmlNode->properties;
+                    std::vector<std::pair<std::string, std::string>>
+                      &attrPairs = attrStrings[count];
+                    while (attribute)
+                      {
+                        const xmlChar *attrName = attribute->name;
+                        xmlChar *      attrValue =
+                          xmlNodeListGetString(ptrToXmlNode->doc,
+                                               attribute->children,
+                                               1);
+                        std::string name((const char *)attrName);
+                        std::string value(
+                          attrValue != NULL ? (char *)attrValue : "");
+                        utils::stringOps::trim(value);
+                        attrPairs.push_back(std::make_pair(name, value));
+                        xmlFree(attrValue);
+                        attribute = attribute->next;
+                      }
+                    const xmlChar *name = ptrToXmlNode->name;
+                    nodeNames[count]    = std::string((char *)name);
+                    count += 1;
+                  }
+              }
           }
         xmlXPathFreeObject(ptrToXmlXPathObject);
       }
@@ -175,7 +265,8 @@ namespace dftefe
           AtomSphDataPSPDefaults::UPF_PARENT_PATH_LOOKUP.find(elementName);
         utils::throwException(
           it != AtomSphDataPSPDefaults::UPF_PARENT_PATH_LOOKUP.end(),
-          "No element name found in UPF_PARENT_PATH_LOOKUP");
+          "No element name '" + elementName +
+            "' found in UPF_PARENT_PATH_LOOKUP. The fieldNames vector for UPF are standarized by authors.");
         return rootElementName + "/" + it->second;
       }
 
@@ -203,7 +294,7 @@ namespace dftefe
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr ptrToXmlDoc;
-      d_rootElementName  = "UPF";
+      d_rootElementName  = "/UPF";
       std::string ns     = "dummy";
       std::string nsHRef = "dummy";
       ptrToXmlDoc        = AtomSphericalDataPSPXMLLocal::getDoc(fileName);
@@ -250,17 +341,31 @@ namespace dftefe
                                       xPathInfo.xpath + " element in " +
                                       fileName);
             }
-          for (int j = 0; j < d_metadataNames.size(); j++)
+        }
+      for (int j = 0; j < d_metadataNames.size(); j++)
+        {
+          bool foundMetaData = false;
+          for (int i = 0; i < attrStrings[0].size(); i++)
             {
               if (attrStrings[0][i].first == d_metadataNames[j])
-                d_metadata[d_metadataNames[j]] = attrStrings[0][i].second;
+                {
+                  d_metadata[d_metadataNames[j]] = attrStrings[0][i].second;
+                  foundMetaData                  = true;
+                  break;
+                }
               else if ("dij" == d_metadataNames[j])
-                d_metadata["dij"] = std::string(0);
+                {
+                  d_metadata["dij"] = "";
+                  foundMetaData     = true;
+                  break;
+                }
               else
-                utils::throwException(
-                  false,
-                  "No metadata name found matching with the given metadata vector.");
+                continue;
             }
+          utils::throwException(
+            foundMetaData == true,
+            "No metadata name '" + d_metadataNames[j] +
+              "' found matching with the given metadata vector. The metadatanames vector for UPF are standarized by authors.");
         }
 
       std::vector<double> radialPoints;
@@ -332,17 +437,17 @@ namespace dftefe
 
       sphericalDataVec.resize(0);
 
-      std::vector<std::vector<int>> qNumbersVec;
+      std::vector<std::vector<int>> qNumbersVec(0);
       bool                          convSuccess = false;
 
       // get quantum Numbers vec
       std::vector<int> nodeIndex(0);
       if (fieldName == "beta")
         {
-          AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
-                                                       nodeNames,
-                                                       nodeStrings,
-                                                       attrStrings);
+          AtomSphericalDataPSPXMLLocal::getChildrenNodeStrings(xPathInfo,
+                                                               nodeNames,
+                                                               nodeStrings,
+                                                               attrStrings);
           N     = nodeStrings.size();
           int l = 0, p = 0, lPrev = 0;
           for (size_type i = 0; i < N; ++i)
@@ -386,10 +491,10 @@ namespace dftefe
         }
       else if (fieldName == "chi")
         {
-          AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
-                                                       nodeNames,
-                                                       nodeStrings,
-                                                       attrStrings);
+          AtomSphericalDataPSPXMLLocal::getChildrenNodeStrings(xPathInfo,
+                                                               nodeNames,
+                                                               nodeStrings,
+                                                               attrStrings);
           N = nodeStrings.size();
           int n, l;
           for (size_type i = 0; i < N; ++i)
@@ -448,8 +553,7 @@ namespace dftefe
           qNumbersVec.push_back(qNumbers);
         }
 
-      N             = qNumbersVec.size();
-      double cutoff = 1e6;
+      N = qNumbersVec.size();
       for (size_type i = 0; i < N; ++i)
         {
           std::vector<double> radialValues(0);
@@ -469,12 +573,18 @@ namespace dftefe
 
           // get cutoff from the radial values
           // if(val < 1e-8 cutoff else cutoff = 1e6)
-          for (int j = 0; j < radialValues.size(); j++)
-            if (radialValues[j] <= 1e-8)
+          double cutoff = 1.0e6;
+          for (int j = radialValues.size() - 1; j > 0; j--)
+            if (radialValues[j] >= 1e-8)
               {
-                cutoff = radialPoints[j];
+                (j != radialValues.size() - 1) ? cutoff = radialPoints[j] :
+                                                 cutoff = 1.0e6;
                 break;
               }
+
+          std::cout << fieldName << " : " << qNumbersVec[i][0] << ","
+                    << qNumbersVec[i][1] << "," << qNumbersVec[i][2] << " ; "
+                    << cutoff << "\n";
 
           double smoothness = 0.0;
           // create spherical data vec
