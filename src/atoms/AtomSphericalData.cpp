@@ -303,7 +303,8 @@ namespace dftefe
       //	  for(size_type i = 0; i < N; ++i)
       //	  {
       //	    std::vector<double> vals(0);
-      //	    convSuccess = utils::stringOps::splitStringToDoubles(nodeStrings[0], vals,
+      //	    convSuccess =
+      //utils::stringOps::splitStringToDoubles(nodeStrings[0], vals,
       // numPoints);
       //      	    utils::throwException(convSuccess,
       //	  	"Error while converting values in " + xPathInfo.xpath + " element
@@ -375,9 +376,10 @@ namespace dftefe
         for (size_type i = 0; i < N; ++i)
           {
             std::vector<double> radialValues(0);
-            convSuccess = utils::stringOps::splitStringToDoubles(radialValueStrings[i],
-                                               radialValues,
-                                               numPoints);
+            convSuccess =
+              utils::stringOps::splitStringToDoubles(radialValueStrings[i],
+                                                     radialValues,
+                                                     numPoints);
             utils::throwException(convSuccess,
                                   "Error while converting values in " +
                                     xPathInfo.xpath + " element in " +
@@ -389,7 +391,9 @@ namespace dftefe
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
 
             std::vector<int> qNumbers(0);
-            convSuccess = utils::stringOps::splitStringToInts(qNumberStrings[i], qNumbers, 3);
+            convSuccess = utils::stringOps::splitStringToInts(qNumberStrings[i],
+                                                              qNumbers,
+                                                              3);
             utils::throwException(convSuccess,
                                   "Error while converting quantum numbers in " +
                                     xPathInfo.xpath + " element in " +
@@ -420,7 +424,9 @@ namespace dftefe
 
             std::vector<double> cutoffInfo(0);
             convSuccess =
-            utils::stringOps::splitStringToDoubles(cutOffInfoStrings[i], cutoffInfo, 2);
+              utils::stringOps::splitStringToDoubles(cutOffInfoStrings[i],
+                                                     cutoffInfo,
+                                                     2);
             utils::throwException(convSuccess,
                                   "Error while converting cutoff info in " +
                                     xPathInfo.xpath + " element in " +
@@ -446,6 +452,28 @@ namespace dftefe
           qNumbersSet.size() == N,
           "Found repeated quantum numbers while processing " + xPathInfo.xpath +
             " element in " + xPathInfo.fileName);
+
+        // Check if the m's for the quantum numbers are in ascending order.
+        int i = 0;
+        while (i < N)
+          {
+            auto it = qNumbersSet.begin();
+            std::advance(it, i);
+            int l     = *(it->data() + 1);
+            int count = 0;
+            for (int m = -l; m <= l; m++)
+              {
+                it = qNumbersSet.begin();
+                std::advance(it, i + count);
+                utils::throwException(
+                  m == *(it->data() + 2),
+                  "The quantum number m for " + xPathInfo.xpath +
+                    " in the xml file " + xPathInfo.fileName +
+                    " are not in correct order (ascending m).");
+                count += 1;
+              }
+            i += count;
+          }
       }
 
     } // namespace AtomSphericalDataXMLLocal
@@ -572,10 +600,9 @@ namespace dftefe
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
       radialPoints.resize(0);
-      convSuccess =
-      utils::stringOps::splitStringToDoubles(nodeStrings[0],
-                                                        radialPoints,
-                                                        numRadialPoints);
+      convSuccess = utils::stringOps::splitStringToDoubles(nodeStrings[0],
+                                                           radialPoints,
+                                                           numRadialPoints);
       utils::throwException(convSuccess,
                             "Error while converting " + xPathInfo.xpath +
                               " element in " + fileName + " to double");

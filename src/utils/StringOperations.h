@@ -25,6 +25,8 @@
 
 #ifndef dftefeStringOperations_h
 #define dftefeStringOperations_h
+#include <utils/TypeConfig.h>
+#include <vector>
 
 namespace dftefe
 {

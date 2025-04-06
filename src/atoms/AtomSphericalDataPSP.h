@@ -23,8 +23,8 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeAtomSphericalData_h
-#define dftefeAtomSphericalData_h
+#ifndef dftefeAtomSphericalDataPSP_h
+#define dftefeAtomSphericalDataPSP_h
 
 #include <utils/TypeConfig.h>
 #include <atoms/SphericalData.h>
@@ -32,6 +32,10 @@
 #include <memory>
 #include <unordered_map>
 #include <map>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/tree.h>
+#include <libxml/xpathInternals.h>
 #include <vector>
 #include <string>
 namespace dftefe
@@ -53,16 +57,26 @@ namespace dftefe
      * \f$m\f$. See https://en.wikipedia.org/wiki/Spherical_harmonics for more
      * details on spherical harmonics.
      */
-    class AtomSphericalData
+    class AtomSphericalDataPSP
     {
     public:
-      AtomSphericalData(
+      struct XPathInfo
+      {
+        xmlDocPtr   doc;
+        std::string fileName;
+        std::string xpath;
+        std::string ns;
+        std::string nsHRef;
+      };
+
+    public:
+      AtomSphericalDataPSP(
         const std::string                 fileName,
         const std::vector<std::string> &  fieldNames,
         const std::vector<std::string> &  metadataNames,
         const SphericalHarmonicFunctions &sphericalHarmonicFunc);
 
-      ~AtomSphericalData() = default;
+      ~AtomSphericalDataPSP() = default;
 
       std::string
       getFileName() const;
@@ -81,14 +95,6 @@ namespace dftefe
                        const std::vector<int> &qNumbers) const;
 
       std::string
-      getAttributeFieldData(const std::string fieldName,
-                       const std::string attributeName) const;
-
-      std::string
-      getAttributeMetaData(const std::string metaDataName,
-                       const std::string attributeName) const;
-
-      std::string
       getMetadata(const std::string metadataName) const;
 
       size_type
@@ -99,7 +105,15 @@ namespace dftefe
       nSphericalData(std::string fieldName) const;
 
     private:
-      std::string              d_fileName;
+      void
+      getSphericalDataFromXMLNode(
+        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
+        const std::vector<double> &                  radialPoints,
+        XPathInfo &                                  xPathInfo,
+        const std::string &                          fieldName,
+        const SphericalHarmonicFunctions &           sphericalHarmonicFunc);
+
+      std::string              d_fileName, d_rootElementName;
       std::vector<std::string> d_fieldNames;
       std::vector<std::string> d_metadataNames;
       std::unordered_map<std::string,
@@ -108,13 +122,7 @@ namespace dftefe
       std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
                                                    d_qNumbersToIdMap;
       std::unordered_map<std::string, std::string> d_metadata;
-      
-      std::unordered_map<std::string, std::pair<std::string, std::string>>
-        d_attributeMetaData;
-      std::unordered_map<std::string, std::pair<std::string, std::string>>
-        d_attributeFieldData;
-
     };
   } // end of namespace atoms
 } // end of namespace dftefe
-#endif // dftefeAtomSphericalData_h
+#endif // dftefeAtomSphericalDataPSP_h

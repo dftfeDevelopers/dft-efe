@@ -26,27 +26,14 @@
 #include <atoms/AtomSphericalDataPSP.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
-#include <libxml/parser.h>
-#include <libxml/xpath.h>
-#include <libxml/tree.h>
-#include <libxml/xpathInternals.h>
 #include <sstream>
-#include <set>
+#include <vector>
 namespace dftefe
 {
   namespace atoms
   {
-    namespace AtomSphericalDataXMLLocal
+    namespace AtomSphericalDataPSPXMLLocal
     {
-      struct XPathInfo
-      {
-        xmlDocPtr   doc;
-        std::string fileName;
-        std::string xpath;
-        std::string ns;
-        std::string nsHRef;
-      };
-
       xmlDocPtr
       getDoc(const std::string fileName)
       {
@@ -95,8 +82,9 @@ namespace dftefe
       }
 
       void
-      getNodeStrings(const XPathInfo &         xPathInfo,
-                     std::vector<std::string> &nodeStrings)
+      getNodeStrings(const AtomSphericalDataPSP::XPathInfo &xPathInfo,
+                     std::vector<std::string> &             nodeNames,
+                     std::vector<std::string> &             nodeStrings)
       {
         nodeStrings.resize(0);
         xmlNodeSetPtr     ptrToXmlNodeSet;
@@ -110,20 +98,24 @@ namespace dftefe
         nodeStrings.resize(ptrToXmlNodeSet->nodeNr);
         for (size_type i = 0; i < ptrToXmlNodeSet->nodeNr; i++)
           {
-            keyword =
-              xmlNodeListGetString(xPathInfo.doc,
-                                   ptrToXmlNodeSet->nodeTab[i]->xmlChildrenNode,
-                                   1);
-            nodeStrings[i] = std::string((char *)keyword);
+            xmlNodePtr ptrToXmlNode = ptrToXmlNodeSet->nodeTab[i];
+            keyword                 = xmlNodeListGetString(xPathInfo.doc,
+                                           ptrToXmlNode->xmlChildrenNode,
+                                           1);
+            nodeStrings[i]          = std::string((char *)keyword);
+            utils::stringOps::trim(nodeStrings[i]);
             xmlFree(keyword);
+            const xmlChar *name = ptrToXmlNode->name;
+            nodeNames[i]        = std::string((char *)name);
           }
         xmlXPathFreeObject(ptrToXmlXPathObject);
       }
 
       void
       getNodeStrings(
-        const XPathInfo &         xPathInfo,
-        std::vector<std::string> &nodeStrings,
+        const AtomSphericalDataPSP::XPathInfo &xPathInfo,
+        std::vector<std::string> &             nodeNames,
+        std::vector<std::string> &             nodeStrings,
         std::vector<std::vector<std::pair<std::string, std::string>>>
           &attrStrings)
       {
@@ -139,6 +131,7 @@ namespace dftefe
         ptrToXmlNodeSet     = ptrToXmlXPathObject->nodesetval;
         nodeStrings.resize(ptrToXmlNodeSet->nodeNr);
         attrStrings.resize(ptrToXmlNodeSet->nodeNr);
+        nodeNames.resize(ptrToXmlNodeSet->nodeNr);
         for (size_type i = 0; i < ptrToXmlNodeSet->nodeNr; i++)
           {
             xmlNodePtr ptrToXmlNode = ptrToXmlNodeSet->nodeTab[i];
@@ -146,6 +139,7 @@ namespace dftefe
                                            ptrToXmlNode->xmlChildrenNode,
                                            1);
             nodeStrings[i]          = std::string((char *)keyword);
+            utils::stringOps::trim(nodeStrings[i]);
             xmlFree(keyword);
             // loop over attributes
             xmlAttr *attribute = ptrToXmlNode->properties;
@@ -159,228 +153,30 @@ namespace dftefe
                                                           1);
                 std::string name((const char *)attrName);
                 std::string value((char *)attrValue);
+                utils::stringOps::trim(value);
                 attrPairs.push_back(std::make_pair(name, value));
                 xmlFree(attrValue);
                 attribute = attribute->next;
               }
+            const xmlChar *name = ptrToXmlNode->name;
+            nodeNames[i]        = std::string((char *)name);
           }
         xmlXPathFreeObject(ptrToXmlXPathObject);
       }
-
-      void
-      readSphericalDataFromXMLNodeData(
-        std::vector<std::string> &radialValuesStrings,
-        std::vector<std::string> &qNumbersStrings,
-        std::vector<std::string> &cutOffInfoStrings,
-        const XPathInfo &         xPathInfo)
-      {
-        radialValuesStrings.resize(0);
-        qNumbersStrings.resize(0);
-        cutOffInfoStrings.resize(0);
-        xmlNodeSetPtr     ptrToXmlNodeSet;
-        xmlXPathObjectPtr ptrToXmlXPathObject;
-        xmlChar *         keyword;
-        std::string xpathPrefix = xPathInfo.xpath + "/" + xPathInfo.ns + ":";
-        int         numNodes    = 0;
-
-        // get the values
-        std::string valuesTag = "values";
-        ptrToXmlXPathObject   = getNodeSet(xPathInfo.doc,
-                                         xpathPrefix + valuesTag,
-                                         xPathInfo.ns,
-                                         xPathInfo.nsHRef);
-        ptrToXmlNodeSet       = ptrToXmlXPathObject->nodesetval;
-        numNodes              = ptrToXmlNodeSet->nodeNr;
-        radialValuesStrings.resize(numNodes);
-        for (size_type i = 0; i < numNodes; i++)
-          {
-            xmlNodePtr ptrToXmlNode = ptrToXmlNodeSet->nodeTab[i];
-            keyword                 = xmlNodeListGetString(xPathInfo.doc,
-                                           ptrToXmlNode->xmlChildrenNode,
-                                           1);
-            radialValuesStrings[i]  = std::string((char *)keyword);
-            xmlFree(keyword);
-          }
-        xmlXPathFreeObject(ptrToXmlXPathObject);
-
-        // get the qNumbers
-        std::string qNumbersTag = "qNumbers";
-        ptrToXmlXPathObject     = getNodeSet(xPathInfo.doc,
-                                         xpathPrefix + qNumbersTag,
-                                         xPathInfo.ns,
-                                         xPathInfo.nsHRef);
-        ptrToXmlNodeSet         = ptrToXmlXPathObject->nodesetval;
-        numNodes                = ptrToXmlNodeSet->nodeNr;
-        qNumbersStrings.resize(numNodes);
-        for (size_type i = 0; i < numNodes; i++)
-          {
-            xmlNodePtr ptrToXmlNode = ptrToXmlNodeSet->nodeTab[i];
-            keyword                 = xmlNodeListGetString(xPathInfo.doc,
-                                           ptrToXmlNode->xmlChildrenNode,
-                                           1);
-            qNumbersStrings[i]      = std::string((char *)keyword);
-            xmlFree(keyword);
-          }
-        xmlXPathFreeObject(ptrToXmlXPathObject);
-
-        // get the cutoff infor
-        std::string cutOffInfoTag = "cutoffInfo";
-        ptrToXmlXPathObject       = getNodeSet(xPathInfo.doc,
-                                         xpathPrefix + cutOffInfoTag,
-                                         xPathInfo.ns,
-                                         xPathInfo.nsHRef);
-        ptrToXmlNodeSet           = ptrToXmlXPathObject->nodesetval;
-        numNodes                  = ptrToXmlNodeSet->nodeNr;
-        cutOffInfoStrings.resize(numNodes);
-        for (size_type i = 0; i < numNodes; i++)
-          {
-            xmlNodePtr ptrToXmlNode = ptrToXmlNodeSet->nodeTab[i];
-            keyword                 = xmlNodeListGetString(xPathInfo.doc,
-                                           ptrToXmlNode->xmlChildrenNode,
-                                           1);
-            cutOffInfoStrings[i]    = std::string((char *)keyword);
-            xmlFree(keyword);
-          }
-        xmlXPathFreeObject(ptrToXmlXPathObject);
-      }
-
-      void
-      processSphericalDataFromXMLNodeData(
-        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
-        const std::vector<std::string> &             radialValueStrings,
-        const std::vector<std::string> &             qNumberStrings,
-        const std::vector<std::string> &             cutOffInfoStrings,
-        const std::vector<double> &                  radialPoints,
-        const XPathInfo &                            xPathInfo,
-        const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
-      {
-        const size_type numPoints = radialPoints.size();
-        const size_type N         = radialValueStrings.size();
-        utils::throwException(
-          N == qNumberStrings.size(),
-          "Mismatch in number of \"values\" and \"qNumbers\" child "
-          "elements found for element " +
-            xPathInfo.xpath + " in file " + xPathInfo.fileName);
-        utils::throwException(
-          N == cutOffInfoStrings.size(),
-          "Mismatch in number of \"values\" and \"cutoffInfo\" child "
-          "elements found for element " +
-            xPathInfo.xpath + " in file " + xPathInfo.fileName);
-
-        sphericalDataVec.resize(N);
-
-        // Make enum classes for analytial and numerical sphericalData ?
-
-        std::set<std::vector<int>> qNumbersSet;
-        bool                       convSuccess = false;
-        for (size_type i = 0; i < N; ++i)
-          {
-            std::vector<double> radialValues(0);
-            convSuccess = utils::stringOps::splitStringToDoubles(radialValueStrings[i],
-                                               radialValues,
-                                               numPoints);
-            utils::throwException(convSuccess,
-                                  "Error while converting values in " +
-                                    xPathInfo.xpath + " element in " +
-                                    xPathInfo.fileName + " to double");
-            utils::throwException(
-              radialValues.size() == numPoints,
-              "Mismatch in number of points specified and number of points "
-              "provided in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-
-            std::vector<int> qNumbers(0);
-            convSuccess = utils::stringOps::splitStringToInts(qNumberStrings[i], qNumbers, 3);
-            utils::throwException(convSuccess,
-                                  "Error while converting quantum numbers in " +
-                                    xPathInfo.xpath + " element in " +
-                                    xPathInfo.fileName + " to double");
-            utils::throwException(
-              qNumbers.size() == 3,
-              "Expected three quantum number (i.e., n, l, m) in \"qNumbers\" "
-              "child element in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            int n = qNumbers[0];
-            int l = qNumbers[1];
-            int m = qNumbers[2];
-            utils::throwException(
-              n > 0,
-              "Principal (n) quantum number less than 1 found in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            utils::throwException(
-              l < n,
-              "Angular quantum number (l) greater than or equal to principal quantum "
-              " (n) found in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            utils::throwException(
-              m >= -l && m <= l,
-              "Magnetic quantum number (m) found outside of -l and +l "
-              "(l = angular quantum number) in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            qNumbersSet.insert(qNumbers);
-
-            std::vector<double> cutoffInfo(0);
-            convSuccess =
-            utils::stringOps::splitStringToDoubles(cutOffInfoStrings[i], cutoffInfo, 2);
-            utils::throwException(convSuccess,
-                                  "Error while converting cutoff info in " +
-                                    xPathInfo.xpath + " element in " +
-                                    xPathInfo.fileName + " to double");
-            utils::throwException(
-              cutoffInfo.size() == 2,
-              "Expected two values (cutoff and smoothness factor) in "
-              " \"cutoffInfo\" child element in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            double cutoff     = cutoffInfo[0];
-            double smoothness = cutoffInfo[1];
-
-            sphericalDataVec[i] =
-              std::make_shared<SphericalDataNumerical>(qNumbers,
-                                                       radialPoints,
-                                                       radialValues,
-                                                       cutoff,
-                                                       smoothness,
-                                                       sphericalHarmonicFunc);
-          }
-
-        utils::throwException(
-          qNumbersSet.size() == N,
-          "Found repeated quantum numbers while processing " + xPathInfo.xpath +
-            " element in " + xPathInfo.fileName);
-      }
-
-    } // namespace AtomSphericalDataXMLLocal
+    } // namespace AtomSphericalDataPSPXMLLocal
 
     namespace
     {
       std::string
       getXPath(const std::string &rootElementName,
-               const std::string &ns,
-               const std::string  elementName)
+               const std::string &elementName)
       {
-        return "/" + ns + ":" + rootElementName + "/" + ns + ":" + elementName;
-      }
-
-      void
-      getSphericalDataFromXMLNode(
-        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
-        const std::vector<double> &                  radialPoints,
-        const AtomSphericalDataXMLLocal::XPathInfo & xPathInfo,
-        const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
-      {
-        std::vector<std::string> radialValuesStrings(0);
-        std::vector<std::string> qNumbersStrings(0);
-        std::vector<std::string> cutOffInfoStrings(0);
-        AtomSphericalDataXMLLocal::readSphericalDataFromXMLNodeData(
-          radialValuesStrings, qNumbersStrings, cutOffInfoStrings, xPathInfo);
-        AtomSphericalDataXMLLocal::processSphericalDataFromXMLNodeData(
-          sphericalDataVec,
-          radialValuesStrings,
-          qNumbersStrings,
-          cutOffInfoStrings,
-          radialPoints,
-          xPathInfo,
-          sphericalHarmonicFunc);
+        auto it =
+          AtomSphDataPSPDefaults::UPF_PARENT_PATH_LOOKUP.find(elementName);
+        utils::throwException(
+          it != AtomSphDataPSPDefaults::UPF_PARENT_PATH_LOOKUP.end(),
+          "No element name found in UPF_PARENT_PATH_LOOKUP");
+        return rootElementName + "/" + it->second;
       }
 
       void
@@ -398,7 +194,7 @@ namespace dftefe
 
     AtomSphericalDataPSP::AtomSphericalDataPSP(
       const std::string                 fileName,
-      const std::vector<std::string> &  fieldNames, // local, beta, pspwfc, nlcc,
+      const std::vector<std::string> &  fieldNames,
       const std::vector<std::string> &  metadataNames,
       const SphericalHarmonicFunctions &sphericalHarmonicFunc)
       : d_fileName(fileName)
@@ -406,74 +202,81 @@ namespace dftefe
       , d_metadataNames(metadataNames)
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
-      xmlDocPtr   ptrToXmlDoc;
-      std::string rootElementName = "atom";
-      std::string ns              = "dft-efe";
-      std::string nsHRef          = "http://www.dft-efe.com/dft-efe";
-      ptrToXmlDoc                 = AtomSphericalDataXMLLocal::getDoc(fileName);
+      xmlDocPtr ptrToXmlDoc;
+      d_rootElementName  = "UPF";
+      std::string ns     = "dummy";
+      std::string nsHRef = "dummy";
+      ptrToXmlDoc        = AtomSphericalDataPSPXMLLocal::getDoc(fileName);
 
-      AtomSphericalDataXMLLocal::XPathInfo xPathInfo;
+      XPathInfo xPathInfo;
       xPathInfo.fileName = fileName;
       xPathInfo.doc      = ptrToXmlDoc;
       xPathInfo.ns       = ns;
       xPathInfo.nsHRef   = nsHRef;
 
       std::vector<std::string> nodeStrings(0);
-      //
-      // storing meta data
-      //
-      for (size_type iMeta = 0; iMeta < metadataNames.size(); ++iMeta)
-        {
-          const std::string metadataName = metadataNames[iMeta];
-          // get symbol
-          xPathInfo.xpath = getXPath(rootElementName, ns, metadataName);
-          AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
-          utils::throwException(nodeStrings.size() == 1,
-                                "Found more than one " + xPathInfo.xpath +
-                                  " element in " + fileName);
-          // remove leading or trailing whitespace
-          d_metadata[metadataName] = utils::stringOps::trimCopy(nodeStrings[0]);
-        }
-
-
+      std::vector<std::string> nodeNames(0);
       std::vector<std::vector<std::pair<std::string, std::string>>> attrStrings(
         0);
 
       bool convSuccess = false;
 
-      int                 numRadialPoints;
-      std::vector<double> radialPoints;
+      int numRadialPoints = 0;
 
       //
-      // get number of radial points
+      // get metadata in PP_HEADER
       //
-      xPathInfo.xpath = getXPath(rootElementName, ns, "NR");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
-      utils::throwException(nodeStrings.size() == 1,
+      xPathInfo.xpath = d_rootElementName + "/PP_HEADER";
+      AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
+                                                   nodeNames,
+                                                   nodeStrings,
+                                                   attrStrings);
+      utils::throwException(attrStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
-      // remove leading or trailing whitespace
-      utils::stringOps::trim(nodeStrings[0]);
-      convSuccess = utils::stringOps::strToInt(nodeStrings[0], numRadialPoints);
-      utils::throwException(convSuccess,
-                            "Error while converting " + xPathInfo.xpath +
-                              " element in " + fileName + " to int");
-      utils::throwException(numRadialPoints > 0,
-                            "Non-positive integer found for" + xPathInfo.xpath +
-                              " element in " + fileName);
 
+      for (int i = 0; i < attrStrings[0].size(); i++)
+        {
+          if (attrStrings[0][i].first == "mesh_size")
+            {
+              convSuccess = utils::stringOps::strToInt(attrStrings[0][i].second,
+                                                       numRadialPoints);
+              utils::throwException(convSuccess,
+                                    "Error while converting " +
+                                      xPathInfo.xpath + " element in " +
+                                      fileName + " to int");
+              utils::throwException(numRadialPoints > 0,
+                                    "Non-positive integer found for" +
+                                      xPathInfo.xpath + " element in " +
+                                      fileName);
+            }
+          for (int j = 0; j < d_metadataNames.size(); j++)
+            {
+              if (attrStrings[0][i].first == d_metadataNames[j])
+                d_metadata[d_metadataNames[j]] = attrStrings[0][i].second;
+              else if ("dij" == d_metadataNames[j])
+                d_metadata["dij"] = std::string(0);
+              else
+                utils::throwException(
+                  false,
+                  "No metadata name found matching with the given metadata vector.");
+            }
+        }
+
+      std::vector<double> radialPoints;
       // get radial points
       //
-      xPathInfo.xpath = getXPath(rootElementName, ns, "r");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      xPathInfo.xpath = getXPath(d_rootElementName, "r") + "/PP_R";
+      AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
+                                                   nodeNames,
+                                                   nodeStrings);
       utils::throwException(nodeStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
       radialPoints.resize(0);
-      convSuccess =
-      utils::stringOps::splitStringToDoubles(nodeStrings[0],
-                                                        radialPoints,
-                                                        numRadialPoints);
+      convSuccess = utils::stringOps::splitStringToDoubles(nodeStrings[0],
+                                                           radialPoints,
+                                                           numRadialPoints);
       utils::throwException(convSuccess,
                             "Error while converting " + xPathInfo.xpath +
                               " element in " + fileName + " to double");
@@ -489,12 +292,12 @@ namespace dftefe
       for (size_type iField = 0; iField < fieldNames.size(); ++iField)
         {
           const std::string fieldName = fieldNames[iField];
-          xPathInfo.xpath = getXPath(rootElementName, ns, fieldName);
           std::vector<std::shared_ptr<SphericalData>> sphericalDataVec(0);
           std::map<std::vector<int>, size_type>       qNumbersToIdMap;
           getSphericalDataFromXMLNode(sphericalDataVec,
                                       radialPoints,
                                       xPathInfo,
+                                      fieldName,
                                       sphericalHarmonicFunc);
           storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
           d_sphericalData[fieldName]   = sphericalDataVec;
@@ -507,6 +310,191 @@ namespace dftefe
       utils::throwException(
         false, "Support for LIBXML XPATH and LIBXML SAX1 not found");
 #endif // defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
+    }
+
+    void
+    AtomSphericalDataPSP::getSphericalDataFromXMLNode(
+      std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
+      const std::vector<double> &                  radialPoints,
+      XPathInfo &                                  xPathInfo,
+      const std::string &                          fieldName,
+      const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
+    {
+      const size_type numPoints = radialPoints.size();
+      size_type       N;
+
+      xPathInfo.xpath = getXPath(d_rootElementName, fieldName);
+
+      std::vector<std::string> nodeStrings(0);
+      std::vector<std::string> nodeNames(0);
+      std::vector<std::vector<std::pair<std::string, std::string>>> attrStrings(
+        0); // numNodes x numAttrInEachNode x attrPair
+
+      sphericalDataVec.resize(0);
+
+      std::vector<std::vector<int>> qNumbersVec;
+      bool                          convSuccess = false;
+
+      // get quantum Numbers vec
+      std::vector<int> nodeIndex(0);
+      if (fieldName == "beta")
+        {
+          AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
+                                                       nodeNames,
+                                                       nodeStrings,
+                                                       attrStrings);
+          N     = nodeStrings.size();
+          int l = 0, p = 0, lPrev = 0;
+          for (size_type i = 0; i < N; ++i)
+            {
+              if (nodeNames[i].find("PP_BETA") != std::string::npos)
+                {
+                  for (auto &attrId : attrStrings[i])
+                    {
+                      if (attrId.first == "angular_momentum")
+                        {
+                          utils::stringOps::strToInt(attrId.second, l);
+                          break;
+                        }
+                    }
+
+                  if (i != 0)
+                    {
+                      p     = (l != lPrev) ? p = 0 : p += 1;
+                      lPrev = l;
+                    }
+
+                  for (int m = -l; m <= l; m++)
+                    {
+                      nodeIndex.push_back(i);
+                      std::vector<int> qNumbers = {p, l, m};
+                      utils::throwException(
+                        find(qNumbersVec.begin(),
+                             qNumbersVec.end(),
+                             qNumbers) == qNumbersVec.end(),
+                        "Trying to enter more than one " + xPathInfo.xpath +
+                          " of same quantum number vector from " +
+                          xPathInfo.fileName);
+                      qNumbersVec.push_back(qNumbers);
+                    }
+                }
+              else if (nodeNames[i].find("PP_DIJ") != std::string::npos)
+                {
+                  d_metadata["dij"] = nodeStrings[i];
+                }
+            }
+        }
+      else if (fieldName == "chi")
+        {
+          AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
+                                                       nodeNames,
+                                                       nodeStrings,
+                                                       attrStrings);
+          N = nodeStrings.size();
+          int n, l;
+          for (size_type i = 0; i < N; ++i)
+            {
+              if (nodeNames[i].find("PP_CHI") != std::string::npos)
+                {
+                  for (auto &attrId : attrStrings[i])
+                    {
+                      if (attrId.first == "l")
+                        {
+                          utils::stringOps::strToInt(attrId.second, l);
+                          break;
+                        }
+                    }
+                  for (auto attrId : attrStrings[i])
+                    {
+                      if (attrId.first == "label")
+                        {
+                          utils::stringOps::strToInt(
+                            std::string(1, attrId.second[0]), n);
+                          break;
+                        }
+                    }
+                  for (int m = -l; m <= l; m++)
+                    {
+                      nodeIndex.push_back(i);
+                      std::vector<int> qNumbers = {n, l, m};
+                      utils::throwException(
+                        find(qNumbersVec.begin(),
+                             qNumbersVec.end(),
+                             qNumbers) == qNumbersVec.end(),
+                        "Trying to enter more than one " + xPathInfo.xpath +
+                          " of same quantum number vector from " +
+                          xPathInfo.fileName);
+                      qNumbersVec.push_back(qNumbers);
+                    }
+                }
+            }
+        }
+      else
+        {
+          AtomSphericalDataPSPXMLLocal::getNodeStrings(xPathInfo,
+                                                       nodeNames,
+                                                       nodeStrings);
+          N = nodeStrings.size();
+          utils::throwException(N == 1,
+                                "Found more than one " + xPathInfo.xpath +
+                                  " element in " + xPathInfo.fileName);
+          nodeIndex.push_back(0);
+          std::vector<int> qNumbers = {0, 0, 0};
+          utils::throwException(
+            find(qNumbersVec.begin(), qNumbersVec.end(), qNumbers) ==
+              qNumbersVec.end(),
+            "Trying to enter more than one " + xPathInfo.xpath +
+              " of same quantum number vector from " + xPathInfo.fileName);
+          qNumbersVec.push_back(qNumbers);
+        }
+
+      N             = qNumbersVec.size();
+      double cutoff = 1e6;
+      for (size_type i = 0; i < N; ++i)
+        {
+          std::vector<double> radialValues(0);
+          convSuccess =
+            utils::stringOps::splitStringToDoubles(nodeStrings[nodeIndex[i]],
+                                                   radialValues,
+                                                   numPoints);
+          utils::throwException(convSuccess,
+                                "Error while converting values in " +
+                                  xPathInfo.xpath + " element in " +
+                                  xPathInfo.fileName + " to double");
+          utils::throwException(
+            radialValues.size() == numPoints,
+            "Mismatch in number of points specified and number of points "
+            "provided in " +
+              xPathInfo.xpath + " element in " + xPathInfo.fileName);
+
+          // get cutoff from the radial values
+          // if(val < 1e-8 cutoff else cutoff = 1e6)
+          for (int j = 0; j < radialValues.size(); j++)
+            if (radialValues[j] <= 1e-8)
+              {
+                cutoff = radialPoints[j];
+                break;
+              }
+
+          double smoothness = 0.0;
+          // create spherical data vec
+          if (fieldName == "vlocal")
+            sphericalDataVec.push_back(
+              std::make_shared<SphericalDataNumerical>(qNumbersVec[i],
+                                                       radialPoints,
+                                                       radialValues,
+                                                       cutoff,
+                                                       smoothness,
+                                                       sphericalHarmonicFunc));
+          else
+            sphericalDataVec.push_back(
+              std::make_shared<SphericalDataNumerical>(qNumbersVec[i],
+                                                       radialPoints,
+                                                       radialValues,
+                                                       cutoff,
+                                                       smoothness,
+                                                       sphericalHarmonicFunc));
+        }
     }
 
     std::string
@@ -540,8 +528,9 @@ namespace dftefe
 
 
     const std::shared_ptr<SphericalData>
-    AtomSphericalDataPSP::getSphericalData(const std::string       fieldName,
-                                        const std::vector<int> &qNumbers) const
+    AtomSphericalDataPSP::getSphericalData(
+      const std::string       fieldName,
+      const std::vector<int> &qNumbers) const
     {
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
@@ -585,7 +574,7 @@ namespace dftefe
 
     size_type
     AtomSphericalDataPSP::getQNumberID(const std::string       fieldName,
-                                    const std::vector<int> &qNumbers) const
+                                       const std::vector<int> &qNumbers) const
     {
       auto it = d_qNumbersToIdMap.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
