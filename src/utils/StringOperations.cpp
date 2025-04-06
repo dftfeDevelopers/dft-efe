@@ -75,7 +75,7 @@ namespace dftefe
       bool
       splitStringToInts(const std::string s,
                         std::vector<int> &vals,
-                        size_type         reserveSize = 0)
+                        size_type         reserveSize)
       {
         std::istringstream ss(s);
         std::string        word;
@@ -97,7 +97,7 @@ namespace dftefe
       bool
       splitStringToDoubles(const std::string    s,
                            std::vector<double> &vals,
-                           size_type            reserveSize = 0)
+                           size_type            reserveSize)
       {
         std::istringstream ss(s);
         std::string        word;

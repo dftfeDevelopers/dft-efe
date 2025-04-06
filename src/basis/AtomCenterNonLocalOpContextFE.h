@@ -23,90 +23,87 @@
  * @author Avirup Sircar
  */
 
- #ifndef dftefeAtomCenterNonLocalOpContextFE_h
- #define dftefeAtomCenterNonLocalOpContextFE_h
- 
- namespace dftefe
- {
-   namespace linearAlgebra
-   {
-     template <typename ValueTypeOperator,
-               typename ValueTypeOperand,
-               utils::MemorySpace memorySpace,
-               size_type          dim>
-     class AtomCenterNonLocalOpContextFE ::
-       public linearAlgebra::OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-     {
-      public:
-        using ValueType =
-          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
-        using RealType = blasLapack::real_type<ValueType>;
+#ifndef dftefeAtomCenterNonLocalOpContextFE_h
+#define dftefeAtomCenterNonLocalOpContextFE_h
 
-      public:
-        /**
-          * @brief Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix
-          * C_lpm,j = \integral_\omega \beta_lp Y_lm N_j 
-          */
-          AtomCenterNonLocalOpContextFE(
-          const FEBasisManager<ValueTypeOperand,
-                                ValueTypeOperator,
-                                memorySpace,
-                                dim> &feBasisManager,
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
-            &feBasisDataStorage,
-          std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                          atomSphericalDataContainer,
-          const double                     atomPartitionTolerance,
-          const std::vector<std::string> & atomSymbolVec,
-          const std::vector<utils::Point> &atomCoordinatesVec,
-          const std::string                fieldName,
-          const size_type maxCellBlock,
-          const size_type maxFieldBlock,
-          std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                                    linAlgOpContext,
-          const utils::mpi::MPIComm &comm);
-  
-        /**
-          *@brief Default Destructor
-          *
-          */
-        ~AtomCenterNonLocalOpContextFE() = default;
-  
-        void
-        apply(MultiVector<ValueTypeOperand, memorySpace> &X,
-              MultiVector<ValueTypeUnion, memorySpace> & Y) const override;
+namespace dftefe
+{
+  namespace linearAlgebra
+  {
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    class AtomCenterNonLocalOpContextFE ::public linearAlgebra::
+      OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    {
+    public:
+      using ValueType =
+        blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
 
-      private:
+    public:
+      /**
+       * @brief Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix
+       * C_lpm,j = \integral_\omega \beta_lp Y_lm N_j
+       */
+      AtomCenterNonLocalOpContextFE(
+        const FEBasisManager<ValueTypeOperand,
+                             ValueTypeOperator,
+                             memorySpace,
+                             dim> &feBasisManager,
+        const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &feBasisDataStorage,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const double                     atomPartitionTolerance,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<utils::Point> &atomCoordinatesVec,
+        const std::string                fieldName,
+        const size_type                  maxCellBlock,
+        const size_type                  maxFieldBlock,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                   linAlgOpContext,
+        const utils::mpi::MPIComm &comm);
 
-        // gets the projector values with quad pts as fastest index 
-        // and proj Id as second index in a cell. Assumption:
-        //  m values ar consecutive for all l,p pairs.
-        void
-        getProjectorValues(const size_type                          cellId,
-                         const std::vector<dftefe::utils::Point> &points) const;
-        
-        // // size is  proj x nProj accumulated overcells
-        // utils::MemoryStorage<ValueTypeBasisData, utils::memorySpace::HOST> 
-        //   d_projectorQuadStorage; // cell->quad->proj 
-  
-        // size is proj x nDofs accumulated over cells
-        utils::MemoryStorage<ValueTypeBasisData, memorySpace> 
-          d_cellWiseC; // cell->dofs->kpt->proj
-        
-        // size is localProjNum(numDofs partiitoned) x numVec(numComp)
-        linearAlgebra::MultiVector<> d_CX;
+      /**
+       *@brief Default Destructor
+       *
+       */
+      ~AtomCenterNonLocalOpContextFE() = default;
 
-        // size id localProjNum x localProjNum
-        utils::MemoryStorage<ValueTypeBasisData, memorySpace> d_V;
+      void apply(MultiVector<ValueTypeOperand, memorySpace> & X,
+                 MultiVector<ValueTypeUnion, memorySpace> & Y) const override;
 
-        //num proj in cells and max proj in cell
-        std::vector<size_type> d_numProjInCells;
-        size_type d_maxProjInCell;
+    private:
+      // gets the projector values with quad pts as fastest index
+      // and proj Id as second index in a cell. Assumption:
+      //  m values ar consecutive for all l,p pairs.
+      void getProjectorValues(const size_type                          cellId,
+                              const std::vector<dftefe::utils::Point> &points)
+        const;
 
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+      // // size is  proj x nProj accumulated overcells
+      // utils::MemoryStorage<ValueTypeBasisData, utils::memorySpace::HOST>
+      //   d_projectorQuadStorage; // cell->quad->proj
+
+      // size is proj x nDofs accumulated over cells
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        d_cellWiseC; // cell->dofs->kpt->proj
+
+      // size is localProjNum(numDofs partiitoned) x numVec(numComp)
+      linearAlgebra::MultiVector<> d_CX;
+
+      // size id localProjNum x localProjNum
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace> d_V;
+
+      // num proj in cells and max proj in cell
+      std::vector<size_type> d_numProjInCells;
+      size_type              d_maxProjInCell;
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2PProj;
-     };
-   } // end of namespace linearAlgebra
- } // end of namespace dftefe
- #endif // dftefeAtomCenterNonLocalOpContextFE_h
- 
+    };
+  } // end of namespace linearAlgebra
+} // end of namespace dftefe
+#endif // dftefeAtomCenterNonLocalOpContextFE_h
