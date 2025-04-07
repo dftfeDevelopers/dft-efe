@@ -291,6 +291,7 @@ namespace dftefe
       : d_fileName(fileName)
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
+      , d_scalarSpatialFnAfterRadialGrid(nullptr)
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr ptrToXmlDoc;
@@ -313,6 +314,7 @@ namespace dftefe
       bool convSuccess = false;
 
       int numRadialPoints = 0;
+      d_zvalance          = 0.;
 
       //
       // get metadata in PP_HEADER
@@ -338,6 +340,20 @@ namespace dftefe
                                       fileName + " to int");
               utils::throwException(numRadialPoints > 0,
                                     "Non-positive integer found for" +
+                                      xPathInfo.xpath + " element in " +
+                                      fileName);
+            }
+          if (attrStrings[0][i].first == "z_valence")
+            {
+              convSuccess =
+                utils::stringOps::strToDouble(attrStrings[0][i].second,
+                                              d_zvalance);
+              utils::throwException(convSuccess,
+                                    "Error while converting " +
+                                      xPathInfo.xpath + " element in " +
+                                      fileName + " to int");
+              utils::throwException(d_zvalance > 0,
+                                    "Non-positive z valance found for" +
                                       xPathInfo.xpath + " element in " +
                                       fileName);
             }
@@ -489,7 +505,7 @@ namespace dftefe
                 }
             }
         }
-      else if (fieldName == "chi")
+      else if (fieldName == "pswfc")
         {
           AtomSphericalDataPSPXMLLocal::getChildrenNodeStrings(xPathInfo,
                                                                nodeNames,
@@ -571,39 +587,107 @@ namespace dftefe
             "provided in " +
               xPathInfo.xpath + " element in " + xPathInfo.fileName);
 
+          // transform the radialValues by the following constants based on UPF
+          // format
+          if (fieldName == "vlocal") // multiply by 0.5
+            {
+              double constant = 0.5;
+              std::transform(radialValues.begin(),
+                             radialValues.end(),
+                             radialValues.begin(),
+                             [constant](double element) {
+                               return element * constant;
+                             });
+            }
+          else if (fieldName == "beta" ||
+                   fieldName ==
+                     "pswfc") // divide by rGrid ; rGridVal(0) = rGridVal(1)
+            {
+              for (int i = 1; i < radialValues.size(); i++)
+                {
+                  radialValues[i] = radialValues[i] / radialPoints[i];
+                }
+              radialValues[0] = radialValues[1];
+            }
+          else if (fieldName ==
+                   "rhoatom") // divide by 4pir^2 ; rGridVal(0) = rGridVal(1)
+            {
+              for (int i = 1; i < radialValues.size(); i++)
+                {
+                  radialValues[i] =
+                    radialValues[i] / (4 * utils::mathConstants::pi *
+                                       radialPoints[i] * radialPoints[i]);
+                }
+              radialValues[0] = radialValues[1];
+            }
+
           // get cutoff from the radial values
-          // if(val < 1e-8 cutoff else cutoff = 1e6)
-          double cutoff = 1.0e6;
+          // if(val < 1e-10 cutoff else cutoff = 1e10)
+          double cutoff = 1.0e10;
           for (int j = radialValues.size() - 1; j > 0; j--)
-            if (radialValues[j] >= 1e-8)
+            if (radialValues[j] >= 1e-10)
               {
                 (j != radialValues.size() - 1) ? cutoff = radialPoints[j] :
-                                                 cutoff = 1.0e6;
+                                                 cutoff = 1.0e10;
                 break;
               }
 
-          std::cout << fieldName << " : " << qNumbersVec[i][0] << ","
-                    << qNumbersVec[i][1] << "," << qNumbersVec[i][2] << " ; "
-                    << cutoff << "\n";
+          // std::cout << fieldName << " : " << qNumbersVec[i][0] << ","
+          //           << qNumbersVec[i][1] << "," << qNumbersVec[i][2] << " ; "
+          //           << cutoff << "\n";
 
-          double smoothness = 0.0;
+          // multiply by 1/y_00 to get rid of the constant in f(r)*Y_lm
+          double constant =
+            1. / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0));
+          if (fieldName != "beta" || fieldName != "pswfc")
+            std::transform(radialValues.begin(),
+                           radialValues.end(),
+                           radialValues.begin(),
+                           [constant](double element) {
+                             return element * constant;
+                           });
+          // NOTE : for vlocal the function is mixed, modify accordingly
+
+          double smoothness = 1.e10;
           // create spherical data vec
           if (fieldName == "vlocal")
-            sphericalDataVec.push_back(
-              std::make_shared<SphericalDataNumerical>(qNumbersVec[i],
-                                                       radialPoints,
-                                                       radialValues,
-                                                       cutoff,
-                                                       smoothness,
-                                                       sphericalHarmonicFunc));
+            {
+              d_scalarSpatialFnAfterRadialGrid =
+                std::make_shared<utils::PointChargePotentialFunction>(
+                  utils::Point({0, 0, 0}),
+                  -1.0 * constant * std::abs(d_zvalance));
+
+              double val =
+                (-1.0) * std::abs(radialValues.back() / radialValues.back());
+
+              utils::Spline::bd_type left = utils::Spline::bd_type::first_deriv;
+              double                 leftValue = 0.0;
+              utils::Spline::bd_type right =
+                utils::Spline::bd_type::first_deriv;
+              double rightValue = val;
+
+              sphericalDataVec.push_back(std::make_shared<SphericalDataMixed>(
+                qNumbersVec[i],
+                radialPoints,
+                radialValues,
+                left,
+                leftValue,
+                right,
+                rightValue,
+                *d_scalarSpatialFnAfterRadialGrid,
+                sphericalHarmonicFunc));
+            }
           else
-            sphericalDataVec.push_back(
-              std::make_shared<SphericalDataNumerical>(qNumbersVec[i],
-                                                       radialPoints,
-                                                       radialValues,
-                                                       cutoff,
-                                                       smoothness,
-                                                       sphericalHarmonicFunc));
+            {
+              sphericalDataVec.push_back(
+                std::make_shared<SphericalDataNumerical>(
+                  qNumbersVec[i],
+                  radialPoints,
+                  radialValues,
+                  cutoff,
+                  smoothness,
+                  sphericalHarmonicFunc));
+            }
         }
     }
 

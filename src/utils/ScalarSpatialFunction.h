@@ -15,6 +15,7 @@ namespace dftefe
     using ScalarSpatialFunctionComplex =
       Function<utils::Point, std::complex<double>>;
 
+    using ScalarSpatialFunctionReal1D = Function<double, double>;
   } // end of namespace utils
 
 } // end of namespace dftefe

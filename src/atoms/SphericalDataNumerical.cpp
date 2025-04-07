@@ -36,7 +36,7 @@ namespace dftefe
 {
   namespace atoms
   {
-    namespace SphericalDataInternal
+    namespace SphericalDataNumericalInternal
     {
       void
       getValueAnalytical(
@@ -287,7 +287,7 @@ namespace dftefe
                                                m,
                                                polarAngleTolerance);
       }
-    } // namespace SphericalDataInternal
+    } // namespace SphericalDataNumericalInternal
 
     SphericalDataNumerical::SphericalDataNumerical(
       const std::vector<int>            qNumbers,
@@ -333,15 +333,16 @@ namespace dftefe
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getValueAnalytical(point,
-                                                origin,
-                                                d_cutoff,
-                                                d_smoothness,
-                                                d_sphericalHarmonicFunc,
-                                                d_qNumbers,
-                                                d_spline,
-                                                d_polarAngleTolerance,
-                                                value);
+      SphericalDataNumericalInternal::getValueAnalytical(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_sphericalHarmonicFunc,
+        d_qNumbers,
+        d_spline,
+        d_polarAngleTolerance,
+        value);
 
       return value;
     }
@@ -356,17 +357,18 @@ namespace dftefe
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getGradientValueAnalytical(point,
-                                                        origin,
-                                                        d_cutoff,
-                                                        d_smoothness,
-                                                        d_sphericalHarmonicFunc,
-                                                        d_qNumbers,
-                                                        d_spline,
-                                                        d_polarAngleTolerance,
-                                                        d_cutoffTolerance,
-                                                        d_radiusTolerance,
-                                                        gradient);
+      SphericalDataNumericalInternal::getGradientValueAnalytical(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_sphericalHarmonicFunc,
+        d_qNumbers,
+        d_spline,
+        d_polarAngleTolerance,
+        d_cutoffTolerance,
+        d_radiusTolerance,
+        gradient);
 
       DFTEFE_AssertWithMsg(gradient.size() == d_dim * point.size(),
                            "Gradient vector should be of length dim");
@@ -387,15 +389,16 @@ namespace dftefe
 
       for (int i = 0; i < point.size(); i++)
         {
-          SphericalDataInternal::getHessianValueAutoDiff(point[i],
-                                                         origin,
-                                                         d_cutoff,
-                                                         d_smoothness,
-                                                         d_qNumbers,
-                                                         d_spline,
-                                                         d_polarAngleTolerance,
-                                                         d_radiusTolerance,
-                                                         hessian);
+          SphericalDataNumericalInternal::getHessianValueAutoDiff(
+            point[i],
+            origin,
+            d_cutoff,
+            d_smoothness,
+            d_qNumbers,
+            d_spline,
+            d_polarAngleTolerance,
+            d_radiusTolerance,
+            hessian);
           DFTEFE_AssertWithMsg(hessian.size() == d_dim * d_dim,
                                "Hessian vector should be of length dim*dim");
           std::copy(hessian.begin(),
@@ -414,7 +417,7 @@ namespace dftefe
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getValueAnalytical(
+      SphericalDataNumericalInternal::getValueAnalytical(
         std::vector<utils::Point>{point},
         origin,
         d_cutoff,
@@ -437,7 +440,7 @@ namespace dftefe
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getGradientValueAnalytical(
+      SphericalDataNumericalInternal::getGradientValueAnalytical(
         std::vector<utils::Point>{point},
         origin,
         d_cutoff,
@@ -465,15 +468,16 @@ namespace dftefe
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
 
-      SphericalDataInternal::getHessianValueAutoDiff(point,
-                                                     origin,
-                                                     d_cutoff,
-                                                     d_smoothness,
-                                                     d_qNumbers,
-                                                     d_spline,
-                                                     d_polarAngleTolerance,
-                                                     d_radiusTolerance,
-                                                     hessian);
+      SphericalDataNumericalInternal::getHessianValueAutoDiff(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_qNumbers,
+        d_spline,
+        d_polarAngleTolerance,
+        d_radiusTolerance,
+        hessian);
       DFTEFE_AssertWithMsg(hessian.size() == d_dim * d_dim,
                            "Hessian vector should be of length dim*dim");
       return hessian;
