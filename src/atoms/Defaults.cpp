@@ -42,7 +42,7 @@ namespace dftefe
         {"r", "PP_MESH"}, //{fieldname/metadataname, approx. path}
         {"vlocal", "PP_LOCAL"},
         {"beta", "PP_NONLOCAL"},
-        {"chi", "PP_PSWFC"},
+        {"pswfc", "PP_PSWFC"},
         {"nlcc", "PP_NLCC"},
         {"rhoatom", "PP_RHOATOM"}};
 

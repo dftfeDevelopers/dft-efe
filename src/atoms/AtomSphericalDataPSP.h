@@ -29,6 +29,8 @@
 #include <utils/TypeConfig.h>
 #include <atoms/SphericalData.h>
 #include <atoms/SphericalDataNumerical.h>
+#include <atoms/SphericalDataMixed.h>
+#include <utils/PointChargePotentialFunction.h>
 #include <memory>
 #include <unordered_map>
 #include <map>
@@ -122,6 +124,9 @@ namespace dftefe
       std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
                                                    d_qNumbersToIdMap;
       std::unordered_map<std::string, std::string> d_metadata;
+      double                                       d_zvalance;
+      std::shared_ptr<utils::ScalarSpatialFunctionReal>
+        d_scalarSpatialFnAfterRadialGrid;
     };
   } // end of namespace atoms
 } // end of namespace dftefe
