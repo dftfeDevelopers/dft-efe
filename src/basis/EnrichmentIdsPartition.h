@@ -111,6 +111,12 @@ namespace dftefe
       size_type
       getAtomId(const global_size_type enrichmentId) const;
 
+      std::vector<size_type>
+      getAtomIdsForLocalEnrichments() const;
+
+      std::vector<std::string>
+      getAtomSymbolsForLocalEnrichments() const;
+
       EnrichmentIdAttribute
       getEnrichmentIdAttribute(const global_size_type enrichmentId) const;
 
@@ -153,13 +159,16 @@ namespace dftefe
       std::unordered_map<global_size_type, size_type>
         d_enrichmentIdToOldAtomIdMap;
       std::unordered_map<global_size_type, size_type>
-                                                   d_enrichmentIdToQuantumIdMap;
-      std::vector<size_type>                       d_oldAtomIdsVec;
-      std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                               d_atomSphericalDataContainer;
-      std::string              d_fieldName;
-      std::vector<std::string> d_atomSymbol;
+                             d_enrichmentIdToQuantumIdMap;
+      std::vector<size_type> d_oldAtomIdsVec;
+      const std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
+      const std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                      d_atomSphericalDataContainer;
+      std::string                     d_fieldName;
+      const std::vector<std::string> &d_atomSymbol;
+
+      std::vector<size_type>   d_atomIdsForLocalEnrichments;
+      std::vector<std::string> d_atomSymbolsForLocalEnrichments;
 
       // std::vector<global_size_type> d_enrichmentIdsVec;
       // std::vector<size_type> d_oldAtomIdsFromEnrichIdsVec;

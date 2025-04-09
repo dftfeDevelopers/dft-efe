@@ -36,6 +36,7 @@ set(DFT-EFE-BASIS-SOURCES
 	GenerateMesh.cpp
 	DealiiFEEvaluationWrapper.cpp
 	OEFEAtomBlockOverlapInvOpContextGLL.cpp
+	AtomCenterNonLocalOpContextFE.cpp
 	)
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
