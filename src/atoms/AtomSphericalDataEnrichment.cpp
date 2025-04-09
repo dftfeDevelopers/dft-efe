@@ -23,7 +23,7 @@
  * @author Bikash Kanungo
  */
 
-#include <atoms/AtomSphericalData.h>
+#include <atoms/AtomSphericalDataEnrichment.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
 #include <libxml/parser.h>
@@ -36,7 +36,7 @@ namespace dftefe
 {
   namespace atoms
   {
-    namespace AtomSphericalDataXMLLocal
+    namespace AtomSphericalDataEnrichmentXMLLocal
     {
       struct XPathInfo
       {
@@ -476,7 +476,7 @@ namespace dftefe
           }
       }
 
-    } // namespace AtomSphericalDataXMLLocal
+    } // namespace AtomSphericalDataEnrichmentXMLLocal
 
     namespace
     {
@@ -490,24 +490,24 @@ namespace dftefe
 
       void
       getSphericalDataFromXMLNode(
-        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
-        const std::vector<double> &                  radialPoints,
-        const AtomSphericalDataXMLLocal::XPathInfo & xPathInfo,
-        const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
+        std::vector<std::shared_ptr<SphericalData>> &         sphericalDataVec,
+        const std::vector<double> &                           radialPoints,
+        const AtomSphericalDataEnrichmentXMLLocal::XPathInfo &xPathInfo,
+        const SphericalHarmonicFunctions &sphericalHarmonicFunc)
       {
         std::vector<std::string> radialValuesStrings(0);
         std::vector<std::string> qNumbersStrings(0);
         std::vector<std::string> cutOffInfoStrings(0);
-        AtomSphericalDataXMLLocal::readSphericalDataFromXMLNodeData(
+        AtomSphericalDataEnrichmentXMLLocal::readSphericalDataFromXMLNodeData(
           radialValuesStrings, qNumbersStrings, cutOffInfoStrings, xPathInfo);
-        AtomSphericalDataXMLLocal::processSphericalDataFromXMLNodeData(
-          sphericalDataVec,
-          radialValuesStrings,
-          qNumbersStrings,
-          cutOffInfoStrings,
-          radialPoints,
-          xPathInfo,
-          sphericalHarmonicFunc);
+        AtomSphericalDataEnrichmentXMLLocal::
+          processSphericalDataFromXMLNodeData(sphericalDataVec,
+                                              radialValuesStrings,
+                                              qNumbersStrings,
+                                              cutOffInfoStrings,
+                                              radialPoints,
+                                              xPathInfo,
+                                              sphericalHarmonicFunc);
       }
 
       void
@@ -523,7 +523,7 @@ namespace dftefe
       }
     } // namespace
 
-    AtomSphericalData::AtomSphericalData(
+    AtomSphericalDataEnrichment::AtomSphericalDataEnrichment(
       const std::string                 fileName,
       const std::vector<std::string> &  fieldNames,
       const std::vector<std::string> &  metadataNames,
@@ -537,9 +537,9 @@ namespace dftefe
       std::string rootElementName = "atom";
       std::string ns              = "dft-efe";
       std::string nsHRef          = "http://www.dft-efe.com/dft-efe";
-      ptrToXmlDoc                 = AtomSphericalDataXMLLocal::getDoc(fileName);
+      ptrToXmlDoc = AtomSphericalDataEnrichmentXMLLocal::getDoc(fileName);
 
-      AtomSphericalDataXMLLocal::XPathInfo xPathInfo;
+      AtomSphericalDataEnrichmentXMLLocal::XPathInfo xPathInfo;
       xPathInfo.fileName = fileName;
       xPathInfo.doc      = ptrToXmlDoc;
       xPathInfo.ns       = ns;
@@ -554,7 +554,8 @@ namespace dftefe
           const std::string metadataName = metadataNames[iMeta];
           // get symbol
           xPathInfo.xpath = getXPath(rootElementName, ns, metadataName);
-          AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+          AtomSphericalDataEnrichmentXMLLocal::getNodeStrings(xPathInfo,
+                                                              nodeStrings);
           utils::throwException(nodeStrings.size() == 1,
                                 "Found more than one " + xPathInfo.xpath +
                                   " element in " + fileName);
@@ -578,7 +579,8 @@ namespace dftefe
       // get number of radial points
       //
       xPathInfo.xpath = getXPath(rootElementName, ns, "NR");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalDataEnrichmentXMLLocal::getNodeStrings(xPathInfo,
+                                                          nodeStrings);
       utils::throwException(nodeStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
@@ -595,7 +597,8 @@ namespace dftefe
       // get radial points
       //
       xPathInfo.xpath = getXPath(rootElementName, ns, "r");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalDataEnrichmentXMLLocal::getNodeStrings(xPathInfo,
+                                                          nodeStrings);
       utils::throwException(nodeStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
@@ -639,25 +642,26 @@ namespace dftefe
     }
 
     std::string
-    AtomSphericalData::getFileName() const
+    AtomSphericalDataEnrichment::getFileName() const
     {
       return d_fileName;
     }
 
     std::vector<std::string>
-    AtomSphericalData::getFieldNames() const
+    AtomSphericalDataEnrichment::getFieldNames() const
     {
       return d_fieldNames;
     }
 
     std::vector<std::string>
-    AtomSphericalData::getMetadataNames() const
+    AtomSphericalDataEnrichment::getMetadataNames() const
     {
       return d_metadataNames;
     }
 
     const std::vector<std::shared_ptr<SphericalData>> &
-    AtomSphericalData::getSphericalData(const std::string fieldName) const
+    AtomSphericalDataEnrichment::getSphericalData(
+      const std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
@@ -669,8 +673,9 @@ namespace dftefe
 
 
     const std::shared_ptr<SphericalData>
-    AtomSphericalData::getSphericalData(const std::string       fieldName,
-                                        const std::vector<int> &qNumbers) const
+    AtomSphericalDataEnrichment::getSphericalData(
+      const std::string       fieldName,
+      const std::vector<int> &qNumbers) const
     {
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
@@ -701,7 +706,8 @@ namespace dftefe
     }
 
     std::string
-    AtomSphericalData::getMetadata(const std::string metadataName) const
+    AtomSphericalDataEnrichment::getMetadata(
+      const std::string metadataName) const
     {
       auto it = d_metadata.find(metadataName);
       utils::throwException(it != d_metadata.end(),
@@ -713,27 +719,28 @@ namespace dftefe
 
 
     size_type
-    AtomSphericalData::getQNumberID(const std::string       fieldName,
-                                    const std::vector<int> &qNumbers) const
+    AtomSphericalDataEnrichment::getQNumberID(
+      const std::string       fieldName,
+      const std::vector<int> &qNumbers) const
     {
       auto it = d_qNumbersToIdMap.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
         it != d_qNumbersToIdMap.end(),
-        "Cannot find the atom symbol provided to AtomSphericalData::getQNumberID");
+        "Cannot find the atom symbol provided to AtomSphericalDataEnrichment::getQNumberID");
       auto it1 = (it->second).find(qNumbers);
       utils::throwException<utils::InvalidArgument>(
         it1 != (it->second).end(),
-        "Cannot find the qnumbers provided to AtomSphericalData::getQNumberID");
+        "Cannot find the qnumbers provided to AtomSphericalDataEnrichment::getQNumberID");
       return (it1)->second;
     }
 
     size_type
-    AtomSphericalData::nSphericalData(std::string fieldName) const
+    AtomSphericalDataEnrichment::nSphericalData(std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
         it != d_sphericalData.end(),
-        "Cannot find the atom symbol provided to AtomSphericalData::nSphericalData");
+        "Cannot find the atom symbol provided to AtomSphericalDataEnrichment::nSphericalData");
       return (it->second).size();
     }
 

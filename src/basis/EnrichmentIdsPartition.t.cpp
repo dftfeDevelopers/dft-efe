@@ -371,6 +371,7 @@ namespace dftefe
         // std::vector<size_type> &oldAtomIdsFromEnrichIdsVec,
         // std::vector<size_type> &quantumIdsFromEnrichIdsVec,
         std::vector<global_size_type> &ghostEnrichmentIds,
+        std::vector<size_type> &       atomIdsForLocalEnrichments,
         const std::pair<global_size_type, global_size_type>
           &locallyOwnedEnrichmentIds,
         const std::vector<std::vector<global_size_type>>
@@ -381,7 +382,10 @@ namespace dftefe
         enrichmentIdToOldAtomIdMap.clear();
         enrichmentIdToQuantumIdMap.clear();
         enrichmentIdsInProcessor.clear();
+        atomIdsForLocalEnrichments.clear();
+
         std::vector<size_type>     oldAtomIds = atomIdsPartition->oldAtomIds();
+        std::set<size_type>        atomIdsForLocalEnrichmentsSet;
         std::set<global_size_type> enrichmentIdsInProcessorTmp;
         size_type                  newAtomId, qIdPosition;
         auto iter = overlappingEnrichmentIdsInCells.begin();
@@ -441,7 +445,11 @@ namespace dftefe
               {
                 ghostEnrichmentIds.push_back(i);
               }
+            atomIdsForLocalEnrichmentsSet.insert(oldAtomIds[newAtomId]);
           }
+        std::copy(atomIdsForLocalEnrichmentsSet.begin(),
+                  atomIdsForLocalEnrichmentsSet.end(),
+                  std::back_inserter(atomIdsForLocalEnrichments));
       }
     } // end of namespace EnrichmentIdsPartitionInternal
 
@@ -549,11 +557,23 @@ namespace dftefe
         // d_oldAtomIdsFromEnrichIdsVec,
         // d_quantumIdsFromEnrichIdsVec,
         d_ghostEnrichmentIds,
+        d_atomIdsForLocalEnrichments,
         d_locallyOwnedEnrichmentIds,
         d_overlappingEnrichmentIdsInCells,
         d_newAtomIdToEnrichmentIdOffset);
 
       d_oldAtomIdsVec = atomIdsPartition->oldAtomIds();
+
+      for (auto i : d_atomIdsForLocalEnrichments)
+        {
+          if (std::find(d_atomSymbolsForLocalEnrichments.begin(),
+                        d_atomSymbolsForLocalEnrichments.end(),
+                        d_atomSymbol[i]) ==
+              d_atomSymbolsForLocalEnrichments.end())
+            {
+              d_atomSymbolsForLocalEnrichments.push_back(d_atomSymbol[i]);
+            }
+        }
     }
 
     template <unsigned int dim>
@@ -571,9 +591,21 @@ namespace dftefe
         d_enrichmentIdToOldAtomIdMap,
         d_enrichmentIdToQuantumIdMap,
         d_ghostEnrichmentIds,
+        d_atomIdsForLocalEnrichments,
         d_locallyOwnedEnrichmentIds,
         d_overlappingEnrichmentIdsInCells,
         d_newAtomIdToEnrichmentIdOffset);
+
+      for (auto i : d_atomIdsForLocalEnrichments)
+        {
+          if (std::find(d_atomSymbolsForLocalEnrichments.begin(),
+                        d_atomSymbolsForLocalEnrichments.end(),
+                        d_atomSymbol[i]) ==
+              d_atomSymbolsForLocalEnrichments.end())
+            {
+              d_atomSymbolsForLocalEnrichments.push_back(d_atomSymbol[i]);
+            }
+        }
     }
 
     template <unsigned int dim>
@@ -702,6 +734,20 @@ namespace dftefe
     {
       return d_atomSphericalDataContainer->nSphericalData(d_atomSymbol[atomId],
                                                           d_fieldName);
+    }
+
+    template <unsigned int dim>
+    std::vector<size_type>
+    EnrichmentIdsPartition<dim>::getAtomIdsForLocalEnrichments() const
+    {
+      return d_atomIdsForLocalEnrichments;
+    }
+
+    template <unsigned int dim>
+    std::vector<std::string>
+    EnrichmentIdsPartition<dim>::getAtomSymbolsForLocalEnrichments() const
+    {
+      return d_atomSymbolsForLocalEnrichments;
     }
 
     // template <unsigned int dim>

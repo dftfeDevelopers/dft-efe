@@ -24,9 +24,11 @@
  */
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/Vector.h>
+#include <utils/ConditionalOStream.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FECellWiseDataOperations.h>
+#include <utils/StringOperations.h>
 
 namespace dftefe
 {
@@ -53,6 +55,10 @@ namespace dftefe
         const size_type                              cellBlockSize,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
+        using ValueType =
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>;
+
         if (memorySpace == utils::MemorySpace::HOST)
           cellBlockSize = 1;
 
@@ -196,8 +202,6 @@ namespace dftefe
         const double                     atomPartitionTolerance,
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinatesVec,
-        const std::string                fieldNameProjector,
-        const std::string                fieldNameCouplingConst,
         const size_type                  maxCellBlock,
         const size_type                  maxFieldBlock,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -205,33 +209,42 @@ namespace dftefe
         const utils::mpi::MPIComm &mpiComm)
       : d_feBasisManager(&feBasisManager)
       , d_maxCellBlock(maxCellBlock)
-      , d_maxFieldBlock(maxFieldBlock)
+      , d_maxWaveFnBatch(maxFieldBlock)
+      , d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbolVec)
+      , d_atomCoordinatesVec(atomCoordinatesVec)
+      , d_linAlgOpContext(linAlgOpContext)
     {
+      d_fieldNameProjector                        = "beta";
+      const std::string metadataNameCouplingConst = "dij";
+      const std::string metadataNameNumProj       = "number_of_proj";
       // Construct C_cell = \integral_\omega \beta_lp * Y_lm
       // * N_j
 
       // Create Partition for non-local projectors
       int rank;
-      utils::mpi::MPICommRank(comm, &rank);
+      utils::mpi::MPICommRank(mpiComm, &rank);
       utils::ConditionalOStream rootCout(std::cout);
       rootCout.setCondition(rank == 0);
 
       int numProcs;
-      utils::mpi::MPICommSize(comm, &numProcs);
+      utils::mpi::MPICommSize(mpiComm, &numProcs);
 
       if (dim != 3)
         utils::throwException(
           false, "Dimension should be 3 for Spherical Projector Dofs.");
 
-      feBasisDofHandler = std::dynamic_pointer_cast<
-        const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
-        feBasisDataStorage->getBasisDofHandler());
+      FEBasisDofHandler<ValueTypeOperator, memorySpace, dim> feBasisDofHandler =
+        std::dynamic_pointer_cast<
+          const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
+          feBasisDataStorage->getBasisDofHandler());
       utils::throwException(
         feBasisDofHandler != nullptr,
         "Could not cast BasisDofHandler to FEBasisDofHandler "
         "in AtomCenterNonLocalOpContextFE");
 
-      triangulation = feBasisDofHandler->getTriangulation();
+      std::shared_ptr<const TriangulationBase> triangulation =
+        feBasisDofHandler->getTriangulation();
 
       std::vector<utils::Point> cellVertices(0, utils::Point(dim, 0.0));
       std::vector<std::vector<utils::Point>> cellVerticesVector(0);
@@ -278,28 +291,28 @@ namespace dftefe
         }
 
       // Create atomIdsPartition Object.
-      d_atomIdsPartition =
+      std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition =
         std::make_shared<const AtomIdsPartition<dim>>(atomCoordinatesVec,
                                                       minbound,
                                                       maxbound,
                                                       cellVerticesVector,
                                                       atomPartitionTolerance,
-                                                      comm);
+                                                      mpiComm);
 
       // Create projectorIdsPartition Object.
       d_projectorIdsPartition = std::make_shared<EnrichmentIdsPartition<dim>>(
         atomSphericalDataContainer,
-        d_atomIdsPartition,
+        atomIdsPartition,
         atomSymbolVec,
         atomCoordinatesVec,
-        fieldNameProjector,
+        d_fieldNameProjector,
         minbound,
         maxbound,
         0,
         triangulation->getDomainVectors(),
         triangulation->getPeriodicFlags(),
         cellVerticesVector,
-        comm);
+        mpiComm);
 
       d_overlappingProjectorIdsInCells =
         d_projectorIdsPartition->overlappingEnrichmentIdsInCells();
@@ -314,7 +327,7 @@ namespace dftefe
       // N_dofs which is got by contraction over a cell of quadpoints
       size_type cellWiseCSize   = 0;
       auto locallyOwnedCellIter = feBasisDofHandler->beginLocallyOwnedCells();
-      int  cellIndex            = 0;
+      cellIndex                 = 0;
 
       for (; locallyOwnedCellIter != feBasisDofHandler->endLocallyOwnedCells();
            ++locallyOwnedCellIter)
@@ -329,20 +342,24 @@ namespace dftefe
 
       d_maxProjInCell =
         *std::max_element(d_numProjsInCells.begin(), d_numProjsInCells.end());
+      d_totProjInProc =
+        std::accumulate(d_numProjsInCells.begin(), d_numProjsInCells.end(), 0);
 
-      cellIndex                    = 0;
-      size_type cumulativeDofxProj = 0;
+      cellIndex                                                    = 0;
+      size_type                                 cumulativeDofxProj = 0;
+      const quadrature::QuadratureRuleContainer quadratureRuleContainer =
+        *feBasisDataStorage->getQuadratureRuleContainer();
       locallyOwnedCellIter = feBasisDofHandler->beginLocallyOwnedCells();
       for (; locallyOwnedCellIter != feBasisDofHandler->endLocallyOwnedCells();
            ++locallyOwnedCellIter)
         {
           size_type nQuadsInCell =
-            quadratureRuleContainer->nCellQuadraturePoints(cellIndex);
+            quadratureRuleContainer.nCellQuadraturePoints(cellIndex);
           size_type numProjsInCell = d_numProjsInCells[cellIndex];
           size_type numDofsInCell  = feBasisDofHandler->nCellDofs(cellIndex);
 
           std::vector<double> &cellJxW =
-            quadratureRuleContainer->getCellJxW(cellIndex);
+            quadratureRuleContainer.getCellJxW(cellIndex);
 
           std::vector<double> projectorQuadStorageJxW(numProjsInCell *
                                                       nQuadsInCell);
@@ -359,11 +376,11 @@ namespace dftefe
 
           if (numProjsInCell > 0)
             {
-              utils::MemoryStorage<ValueTypeOperator, utils::memorySpace::HOST>
+              utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
                 basisData(numDofsInCell * nQuadsInCell);
 
               feBasisDataStorage->getBasisDataInCellRange(
-                std::make_pair<size_type, size_type>{cellIndex}, basisData);
+                std::make_pair(cellIndex, cellIndex + 1), basisData);
 
               linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                               ValueTypeOperator,
@@ -382,7 +399,7 @@ namespace dftefe
                 (ValueTypeOperator)0.0,
                 d_cellWiseC.data() + cumulativeDofxProj,
                 numProjsInCell,
-                linAlgOpContext);
+                *linAlgOpContext);
             }
           cumulativeDofxProj += numDofsInCell * nQuadsInCell;
           cellIndex++;
@@ -397,6 +414,45 @@ namespace dftefe
           mpiComm);
 
       // Get the coupling matrix d_V = D_ij
+      for (auto atomSymbol :
+           d_projectorIdsPartition->getAtomSymbolsForLocalEnrichments())
+        {
+          utils::stringOps::strToInt(atomSphericalDataContainer->getMetadata(
+                                       atomSymbol, metadataNameNumProj),
+                                     d_atomSymbolToNumProjMap[atomSymbol]);
+
+          bool convSuccess = utils::stringOps::splitStringToDoubles(
+            atomSphericalDataContainer->getMetadata(atomSymbol,
+                                                    metadataNameCouplingConst),
+            d_atomSymbolToCouplingConstVecMap[atomSymbol],
+            d_atomSymbolToNumProjMap[atomSymbol] *
+              d_atomSymbolToNumProjMap[atomSymbol]);
+          utils::throwException(
+            convSuccess,
+            "Error while converting Coupling Constant Vector to double vector in AtomCenterNonLocalOpContext");
+
+          std::vector<std::vector<int>> qNumbers =
+            d_projectorIdsPartition->getQNumbers(atomSymbol,
+                                                 d_fieldNameProjector);
+
+          d_atomSymbolToPMaxForEachLMap[atomSymbol].resize(0);
+          int lPrev    = 0;
+          int mCount   = 0;
+          int pMaxForL = 0;
+          for (int i = 0; i < qNumbers.size(); i += mCount)
+            {
+              size_type p = qNumbers[i][0], l = qNumbers[i][1];
+              if (l != lPrev)
+                {
+                  d_atomSymbolToPMaxForEachLMap[atomSymbol].push_back(pMaxForL);
+                  pMaxForL = 0;
+                }
+              else
+                pMaxForL += 1;
+              mCount += 2 * l + 1;
+            }
+        }
+
       std::vector<ValueTypeOperator> V(d_mpiPatternP2PProj->localOwnedSize(),
                                        0.);
 
@@ -413,24 +469,31 @@ namespace dftefe
           size_type atomId  = pIdAttr.atomId;
           size_type localId = pIdAttr.localIdInAtom;
 
+          std::string atomSymbol = atomSymbolVec[atomId];
+
           auto quantumNoVec =
-            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-                                                      fieldNameCouplingConst);
+            d_atomSphericalDataContainer->getQNumbers(atomSymbol,
+                                                      d_fieldNameProjector);
 
-          std::string couplingConstantString =
-            d_atomSphericalDataContainer->getMetadata(d_atomSymbolVec[atomId],
-                                                      fieldNameCouplingConst);
-
-          size_type l = quantumNoVec[0], p = quantumNoVec[1];
+          size_type p = quantumNoVec[0], l = quantumNoVec[1];
+          size_type index = 0;
+          for (size_type lCount = 0; lCount < l; lCount++)
+            index += d_atomSymbolToPMaxForEachLMap[atomSymbol][lCount];
+          index += p;
+          // Coupling const is diagonal
+          V[iProjLocal] =
+            *(d_atomSymbolToCouplingConstVecMap[atomSymbol].data() +
+              index * d_atomSymbolToNumProjMap[atomSymbol] + index);
         }
       d_V.copyFrom(V);
 
       // create the d_locallyOwnedCellLocalProjectorIds
-      size_type numLocallyOwnedCells = feBDH->nLocallyOwnedCells();
+      d_locallyOwnedCellLocalProjectorIds.resize(d_totProjInProc);
+      size_type numLocallyOwnedCells = feBasisDofHandler->nLocallyOwnedCells();
       size_type cumulativeProjectors = 0;
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         {
-          const size_type numCellProjectors = d_numProjInCells[iCell];
+          const size_type numCellProjectors = d_numProjsInCells[iCell];
           for (size_type iProj = 0; iProj < numCellProjectors; ++iProj)
             {
               const global_size_type globalProjId =
@@ -445,15 +508,15 @@ namespace dftefe
       // Initilize the d_CX
       d_CX =
         linearAlgebra::MultiVector<ValueType, memorySpace>(d_mpiPatternP2PProj,
-                                                           d_linAlgOpContext,
-                                                           d_numComponents);
+                                                           *linAlgOpContext,
+                                                           d_maxWaveFnBatch);
     }
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    void
+    std::vector<double>
     AtomCenterNonLocalOpContextFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -497,13 +560,13 @@ namespace dftefe
 
           auto sphericalDataVec =
             d_atomSphericalDataContainer->getSphericalData(
-              d_atomSymbolVec[atomId], d_fieldName);
+              d_atomSymbolVec[atomId], d_fieldNameProjector);
 
           auto quantumNoVec =
             d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-                                                      d_fieldName);
+                                                      d_fieldNameProjector);
 
-          l = quantumNoVec[localId][0];
+          l = quantumNoVec[localId][1];
 
           auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
 
@@ -513,14 +576,14 @@ namespace dftefe
                                     ->getAngularValue(rVec, thetaVec, phiVec);
 
               linearAlgebra::blasLapack::hadamardProduct<
-                ValueTypeBasisData,
-                ValueTypeBasisData,
+                ValueTypeOperator,
+                ValueTypeOperator,
                 utils::MemorySpace::HOST>(numPoints,
                                           radialValue.data(),
                                           angularValue.data(),
                                           retValue.data() +
                                             (iProj + mCount) * numPoints,
-                                          *getLinAlgOpContext());
+                                          *d_linAlgOpContext);
             }
           numProjIdsSkipped = (2 * l + 1);
         }
@@ -599,7 +662,7 @@ namespace dftefe
 
       // Do d_CX = d_V * d_CX
       size_type stride = 0;
-      size_type m = 1, n = numVec, k = d_CX.localSize();
+      size_type m = 1, n = numVecs, k = d_CX.localSize();
 
       linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
                                                         ValueTypeOperator,
@@ -617,7 +680,7 @@ namespace dftefe
         d_V.data(),
         d_CX.data(),
         d_CX.data(),
-        linAlgOpContext);
+        *X.getLinAlgOpContext());
 
       // Do Y = d_cellwiseC * d_CX cellwise (field to cellwise data)
 
