@@ -437,20 +437,21 @@ namespace dftefe
         size_type cumulativeC = 0;
         for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
           {
-            blas::gemm(layout,
-                       *(transA + ibatch),
-                       *(transB + ibatch),
-                       *(m + ibatch),
-                       *(n + ibatch),
-                       *(k + ibatch),
-                       alpha,
-                       dA + cumulativeA,
-                       *(ldda + ibatch),
-                       dB + cumulativeB,
-                       *(lddb + ibatch),
-                       beta,
-                       dC + cumulativeC,
-                       *(lddc + ibatch));
+            if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
+              blas::gemm(layout,
+                         *(transA + ibatch),
+                         *(transB + ibatch),
+                         *(m + ibatch),
+                         *(n + ibatch),
+                         *(k + ibatch),
+                         alpha,
+                         dA + cumulativeA,
+                         *(ldda + ibatch),
+                         dB + cumulativeB,
+                         *(lddb + ibatch),
+                         beta,
+                         dC + cumulativeC,
+                         *(lddc + ibatch));
 
             cumulativeA += *(stridea + ibatch);
             cumulativeB += *(strideb + ibatch);
@@ -486,21 +487,22 @@ namespace dftefe
         size_type cumulativeC = 0;
         for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
           {
-            blas::gemm(layout,
-                       *(transA + ibatch),
-                       *(transB + ibatch),
-                       *(m + ibatch),
-                       *(n + ibatch),
-                       *(k + ibatch),
-                       alpha,
-                       dA + cumulativeA,
-                       *(ldda + ibatch),
-                       dB + cumulativeB,
-                       *(lddb + ibatch),
-                       beta,
-                       dC + cumulativeC,
-                       *(lddc + ibatch),
-                       context.getBlasQueue());
+            if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
+              blas::gemm(layout,
+                         *(transA + ibatch),
+                         *(transB + ibatch),
+                         *(m + ibatch),
+                         *(n + ibatch),
+                         *(k + ibatch),
+                         alpha,
+                         dA + cumulativeA,
+                         *(ldda + ibatch),
+                         dB + cumulativeB,
+                         *(lddb + ibatch),
+                         beta,
+                         dC + cumulativeC,
+                         *(lddc + ibatch),
+                         context.getBlasQueue());
 
 
             cumulativeA += *(stridea + ibatch);
