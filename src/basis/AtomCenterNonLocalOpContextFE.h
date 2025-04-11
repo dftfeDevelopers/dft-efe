@@ -106,12 +106,13 @@ namespace dftefe
         d_cellWiseC; // cell->dofs->kpt->proj
 
       // size is localProjNum(numDofs partiitoned) x numVec(numComp)
-      linearAlgebra::MultiVector<ValueType, memorySpace> d_CX;
+      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_CX;
 
       // size id localProjNum x localProjNum
       utils::MemoryStorage<ValueTypeOperator, memorySpace> d_V;
 
-      std::vector<size_type> d_locallyOwnedCellLocalProjectorIds;
+      dftefe::utils::MemoryStorage<size_type, memorySpace>
+        d_locallyOwnedCellLocalProjectorIds;
 
       // num proj in cells and max proj in cell
       std::vector<size_type> d_numProjsInCells;
