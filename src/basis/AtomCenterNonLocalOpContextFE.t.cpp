@@ -48,8 +48,8 @@ namespace dftefe
         bool                                         isCConjTransX,
         const size_type                              numVecs,
         const size_type                              numLocallyOwnedCells,
-        const std::vector<size_type> &               numCellDofs,
-        const std::vector<size_type> &               numCellProjectors,
+        const std::vector<size_type> &               numCellXLocalIds,
+        const std::vector<size_type> &               numCellYLocalIds,
         const size_type *                            cellLocalIdsStartPtrX,
         const size_type *                            cellLocalIdsStartPtrY,
         const size_type                              cellBlockSize,
@@ -63,17 +63,17 @@ namespace dftefe
           linearAlgebra::blasLapack::Layout::ColMajor;
 
         size_type cellWiseCStartOffset = 0;
-        size_type cellLocalIdsOffset   = 0;
+        size_type cellLocalIdsOffsetX  = 0;
+        size_type cellLocalIdsOffsetY  = 0;
 
-        const std::vector<size_type> &numCellContractingIds =
-          isCConjTransX ? numCellProjectors : numCellDofs;
+        size_type maxXLocalIdsInCell =
+          *std::max_element(numCellXLocalIds.begin(), numCellXLocalIds.end());
 
-        size_type maxContractingIdsInCell =
-          *std::max_element(numCellContractingIds.begin(),
-                            numCellContractingIds.end());
+        size_type maxYLocalIdsInCell =
+          *std::max_element(numCellYLocalIds.begin(), numCellYLocalIds.end());
 
         utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
-          cellBlockSize * numVecs * maxContractingIdsInCell,
+          cellBlockSize * numVecs * maxXLocalIdsInCell,
           utils::Types<
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                    ValueTypeOperand>>::zero);
@@ -82,43 +82,51 @@ namespace dftefe
                                scalar_type<ValueTypeOperator, ValueTypeOperand>,
                              memorySpace>
           yCellValues(
-            cellBlockSize * numVecs * maxContractingIdsInCell,
+            cellBlockSize * numVecs * maxYLocalIdsInCell,
             utils::Types<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>>::zero);
 
         for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-          cellStartId += cellBlockSize)
+             cellStartId += cellBlockSize)
           {
             const size_type cellEndId =
-            std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
-            const size_type        numCellsInBlock = cellEndId - cellStartId;   
-                    
-            std::vector<size_type> cellsInBlockNumContractIdsSTL(
-              numCellsInBlock);
-            std::copy(numCellContractingIds.begin() + cellStartId,
-                      numCellContractingIds.begin() + cellEndId,
-                      cellsInBlockNumContractIdsSTL.begin());    
-                      
-            utils::MemoryStorage<size_type, memorySpace> cellsInBlockNumContractIds(
-              numCellsInBlock);
-            cellsInBlockNumContractIds.copyFrom(cellsInBlockNumContractIdsSTL);
+              std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
+            const size_type numCellsInBlock = cellEndId - cellStartId;
+
+            std::vector<size_type> cellsInBlockNumXLocalIdsSTL(numCellsInBlock);
+            std::copy(numCellXLocalIds.begin() + cellStartId,
+                      numCellXLocalIds.begin() + cellEndId,
+                      cellsInBlockNumXLocalIdsSTL.begin());
+
+            std::vector<size_type> cellsInBlockNumYLocalIdsSTL(numCellsInBlock);
+            std::copy(numCellYLocalIds.begin() + cellStartId,
+                      numCellYLocalIds.begin() + cellEndId,
+                      cellsInBlockNumYLocalIdsSTL.begin());
+
+            utils::MemoryStorage<size_type, memorySpace>
+              cellsInBlockNumXLocalIds(numCellsInBlock);
+            cellsInBlockNumXLocalIds.copyFrom(cellsInBlockNumXLocalIdsSTL);
+
+            utils::MemoryStorage<size_type, memorySpace>
+              cellsInBlockNumYLocalIds(numCellsInBlock);
+            cellsInBlockNumYLocalIds.copyFrom(cellsInBlockNumYLocalIdsSTL);
 
             // copy x to cell-wise data
-            basis::FECellWiseDataOperations<ValueTypeOperand,
-                                            memorySpace>::
+            basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
               copyFieldToCellWiseData(x,
                                       numVecs,
                                       cellLocalIdsStartPtrX +
-                                        cellLocalIdsOffset,
-                                      cellsInBlockNumContractIds,
+                                        cellLocalIdsOffsetX,
+                                      cellsInBlockNumXLocalIds,
                                       xCellValues);
 
-            std::vector<linearAlgebra::blasLapack::Op> transA(numCellsInBlock,
-              isCConjTransX ? linearAlgebra::blasLapack::Op::Trans :
-                              linearAlgebra::blasLapack::Op::NoTrans);
-            std::vector<linearAlgebra::blasLapack::Op> transB(numCellsInBlock,
-              linearAlgebra::blasLapack::Op::NoTrans);
+            std::vector<linearAlgebra::blasLapack::Op> transA(
+              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+            std::vector<linearAlgebra::blasLapack::Op> transB(
+              numCellsInBlock,
+              isCConjTransX ? linearAlgebra::blasLapack::Op::NoTrans :
+                              linearAlgebra::blasLapack::Op::ConjTrans);
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -148,20 +156,27 @@ namespace dftefe
             std::vector<size_type> strideASTL(numCellsInBlock, 0);
             std::vector<size_type> strideBSTL(numCellsInBlock, 0);
             std::vector<size_type> strideCSTL(numCellsInBlock, 0);
-    
+
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
-                mSizesSTL[iCell]   = isCConjTransX ? numVecs : numCellProjectors[iCell];
-                nSizesSTL[iCell]   = isCConjTransX ? numCellDofs[iCell] : numVecs;
-                kSizesSTL[iCell]   = isCConjTransX ? numCellProjectors[iCell] : numCellDofs[iCell];
+                mSizesSTL[iCell] = numVecs;
+                nSizesSTL[iCell] = numCellYLocalIds
+                  [iCell + cellStartId]; // isCConjTransX ? numCellDofs[iCell] :
+                                         // numCellProjectors[iCell] ;
+                kSizesSTL[iCell] =
+                  numCellXLocalIds[iCell +
+                                   cellStartId]; // isCConjTransX ?
+                                                 // numCellProjectors[iCell]
+                                                 // : numCellDofs[iCell];
                 ldaSizesSTL[iCell] = mSizesSTL[iCell];
-                ldbSizesSTL[iCell] = isCConjTransX ? nSizesSTL[iCell] : kSizesSTL[iCell];
+                ldbSizesSTL[iCell] =
+                  isCConjTransX ? kSizesSTL[iCell] : nSizesSTL[iCell];
                 ldcSizesSTL[iCell] = mSizesSTL[iCell];
                 strideASTL[iCell]  = mSizesSTL[iCell] * kSizesSTL[iCell];
                 strideBSTL[iCell]  = kSizesSTL[iCell] * nSizesSTL[iCell];
                 strideCSTL[iCell]  = mSizesSTL[iCell] * nSizesSTL[iCell];
               }
-    
+
             mSizes.copyFrom(mSizesSTL);
             nSizes.copyFrom(nSizesSTL);
             kSizes.copyFrom(kSizesSTL);
@@ -172,58 +187,55 @@ namespace dftefe
             strideB.copyFrom(strideBSTL);
             strideC.copyFrom(strideCSTL);
 
-            const ValueTypeOperator *A =
-              isCConjTransX ? xCellValues.data() :
-                              cellWiseC.data() + cellWiseCStartOffset;
+            const ValueTypeOperator *A = xCellValues.data();
 
             const ValueTypeOperator *B =
-              isCConjTransX ? cellWiseC.data() + cellWiseCStartOffset :
-                              xCellValues.data();
+              cellWiseC.data() + cellWiseCStartOffset;
 
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                    ValueTypeOperand>
-              *C = yCellValues.begin();
+                                                   ValueTypeOperand> *C =
+              yCellValues.begin();
 
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
-                                            ValueTypeOperand,
-                                            utils::MemorySpace::HOST>(
-              layout,
-              numCellsInBlock,
-              transA.data(),
-              transB.data(),
-              strideA.data(),
-              strideB.data(),
-              strideC.data(),
-              mSizes.data(),
-              nSizes.data(),
-              kSizes.data(),
-              (ValueType)1.0,
-              A,
-              ldaSizes.data(),
-              B,
-              ldbSizes.data(),
-              (ValueType)0.0,
-              C,
-              ldcSizes.data(),
-              linAlgOpContext);
+            linearAlgebra::blasLapack::gemmStridedVarBatched<
+              ValueTypeOperator,
+              ValueTypeOperand,
+              utils::MemorySpace::HOST>(layout,
+                                        numCellsInBlock,
+                                        transA.data(),
+                                        transB.data(),
+                                        strideA.data(),
+                                        strideB.data(),
+                                        strideC.data(),
+                                        mSizes.data(),
+                                        nSizes.data(),
+                                        kSizes.data(),
+                                        (ValueType)1.0,
+                                        A,
+                                        ldaSizes.data(),
+                                        B,
+                                        ldbSizes.data(),
+                                        (ValueType)0.0,
+                                        C,
+                                        ldcSizes.data(),
+                                        linAlgOpContext);
 
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                      ValueTypeOperand>,
-              memorySpace>::
-              addCellWiseDataToFieldData(yCellValues,
-                                          numVecs,
-                                          cellLocalIdsStartPtrY +
-                                            cellLocalIdsOffset,
-                                          cellsInBlockNumContractIds,
-                                          y);
+                                                     ValueTypeOperand>,
+              memorySpace>::addCellWiseDataToFieldData(yCellValues,
+                                                       numVecs,
+                                                       cellLocalIdsStartPtrY +
+                                                         cellLocalIdsOffsetY,
+                                                       cellsInBlockNumYLocalIds,
+                                                       y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
-                cellWiseCStartOffset +=
-                  numCellProjectors[iCell + cellStartId] * numCellDofs[iCell + cellStartId];
-                  cellLocalIdsOffset += cellsInBlockNumContractIdsSTL[iCell];
-              }                                                
+                cellWiseCStartOffset += numCellXLocalIds[iCell + cellStartId] *
+                                        numCellYLocalIds[iCell + cellStartId];
+                cellLocalIdsOffsetX += cellsInBlockNumXLocalIdsSTL[iCell];
+                cellLocalIdsOffsetY += cellsInBlockNumYLocalIdsSTL[iCell];
+              }
           }
       }
     } // namespace AtomCenterNonLocalOpContextFEInternal
@@ -280,8 +292,9 @@ namespace dftefe
         utils::throwException(
           false, "Dimension should be 3 for Spherical Projector Dofs.");
 
-      std::shared_ptr<const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>> feBasisDofHandler =
-        std::dynamic_pointer_cast<
+      std::shared_ptr<
+        const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>
+        feBasisDofHandler = std::dynamic_pointer_cast<
           const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
           feBasisDataStorage.getBasisDofHandler());
       utils::throwException(
@@ -374,6 +387,7 @@ namespace dftefe
       size_type cellWiseCSize   = 0;
       auto locallyOwnedCellIter = feBasisDofHandler->beginLocallyOwnedCells();
       cellIndex                 = 0;
+      d_numProjsInCells.resize(feBasisDofHandler->nLocallyOwnedCells());
 
       for (; locallyOwnedCellIter != feBasisDofHandler->endLocallyOwnedCells();
            ++locallyOwnedCellIter)
@@ -449,7 +463,7 @@ namespace dftefe
                 numProjsInCell,
                 *linAlgOpContext);
             }
-          cumulativeDofxProj += numDofsInCell * nQuadsInCell;
+          cumulativeDofxProj += numDofsInCell * numProjsInCell;
           cellIndex++;
         }
 
@@ -460,6 +474,29 @@ namespace dftefe
             locOwnPair},
           ghostVec,
           mpiComm);
+
+      // create the d_locallyOwnedCellLocalProjectorIds
+      d_locallyOwnedCellLocalProjectorIds.resize(d_totProjInProc);
+      size_type *ptr = d_locallyOwnedCellLocalProjectorIds.data();
+      size_type  numLocallyOwnedCells = feBasisDofHandler->nLocallyOwnedCells();
+      size_type  cumulativeProjectors = 0;
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+        {
+          const size_type numCellProjectors = d_numProjsInCells[iCell];
+          for (size_type iProj = 0; iProj < numCellProjectors; ++iProj)
+            {
+              const global_size_type globalProjId =
+                d_overlappingProjectorIdsInCells[iCell][iProj];
+              *(ptr + cumulativeProjectors + iProj) =
+                d_mpiPatternP2PProj->globalToLocal(globalProjId);
+            }
+          cumulativeProjectors += numCellProjectors;
+        }
+
+      // Initilize the d_CX
+      d_CX =
+        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+          d_mpiPatternP2PProj, linAlgOpContext, d_maxWaveFnBatch);
 
       // Get the coupling matrix d_V = D_ij
       for (auto atomSymbol :
@@ -481,7 +518,7 @@ namespace dftefe
 
           std::vector<std::vector<int>> qNumbers =
             d_atomSphericalDataContainer->getQNumbers(atomSymbol,
-                                                 d_fieldNameProjector);
+                                                      d_fieldNameProjector);
 
           d_atomSymbolToPMaxForEachLMap[atomSymbol].resize(0);
           int lPrev    = 0;
@@ -503,6 +540,7 @@ namespace dftefe
 
       std::vector<ValueTypeOperator> V(d_mpiPatternP2PProj->localOwnedSize(),
                                        0.);
+      d_V.resize(V.size());
 
       for (size_type iProjLocal = 0;
            iProjLocal < d_mpiPatternP2PProj->localOwnedSize();
@@ -534,30 +572,6 @@ namespace dftefe
               index * d_atomSymbolToNumProjMap[atomSymbol] + index);
         }
       d_V.copyFrom(V);
-
-      // create the d_locallyOwnedCellLocalProjectorIds
-      d_locallyOwnedCellLocalProjectorIds.resize(d_totProjInProc);
-      size_type *ptr = d_locallyOwnedCellLocalProjectorIds.data();
-      size_type numLocallyOwnedCells = feBasisDofHandler->nLocallyOwnedCells();
-      size_type cumulativeProjectors = 0;
-      for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-        {
-          const size_type numCellProjectors = d_numProjsInCells[iCell];
-          for (size_type iProj = 0; iProj < numCellProjectors; ++iProj)
-            {
-              const global_size_type globalProjId =
-                d_overlappingProjectorIdsInCells[iCell][iProj];
-              *(ptr + cumulativeProjectors + iProj) =
-                d_mpiPatternP2PProj->globalToLocal(globalProjId);
-            }
-          cumulativeProjectors += numCellProjectors;
-        }
-
-      // Initilize the d_CX
-      d_CX =
-        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(d_mpiPatternP2PProj,
-                                                           linAlgOpContext,
-                                                           d_maxWaveFnBatch);
     }
 
     template <typename ValueTypeOperator,
@@ -687,8 +701,7 @@ namespace dftefe
       auto itCellLocalIdsBeginX =
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
-      auto itCellLocalIdsBeginY =
-        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+      auto itCellLocalIdsBeginY = d_locallyOwnedCellLocalProjectorIds.begin();
 
       AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
         d_cellWiseC,
@@ -735,7 +748,8 @@ namespace dftefe
 
       itCellLocalIdsBeginX = d_locallyOwnedCellLocalProjectorIds.begin();
 
-      itCellLocalIdsBeginY = d_locallyOwnedCellLocalProjectorIds.begin();
+      itCellLocalIdsBeginY =
+        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
       AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
         d_cellWiseC,
@@ -744,8 +758,8 @@ namespace dftefe
         true,
         numVecs,
         numLocallyOwnedCells,
-        numCellDofs,
         d_numProjsInCells,
+        numCellDofs,
         itCellLocalIdsBeginX,
         itCellLocalIdsBeginY,
         cellBlockSize,
