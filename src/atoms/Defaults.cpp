@@ -49,6 +49,7 @@ namespace dftefe
     const std::vector<std::string> AtomSphDataPSPDefaults::METADATANAMES{
       "element",
       "z_valence",
+      "l_max",
       "number_of_wfc",
       "number_of_proj",
       "core_correction",

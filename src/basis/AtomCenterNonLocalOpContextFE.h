@@ -138,8 +138,7 @@ namespace dftefe
       std::unordered_map<std::string, std::vector<double>>
                                            d_atomSymbolToCouplingConstVecMap;
       std::unordered_map<std::string, int> d_atomSymbolToNumProjMap;
-      std::unordered_map<std::string, std::vector<int>>
-        d_atomSymbolToPMaxForEachLMap;
+      std::unordered_map<std::string, std::vector<int>> d_atomSymbolToBetaIndexVecMap;      
 
       const std::vector<std::string> & d_atomSymbolVec;
       const std::vector<utils::Point> &d_atomCoordinatesVec;
