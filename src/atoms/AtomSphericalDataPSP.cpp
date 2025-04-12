@@ -315,6 +315,7 @@ namespace dftefe
 
       int numRadialPoints = 0;
       d_zvalance          = 0.;
+      d_lmax          = 0.;
 
       //
       // get metadata in PP_HEADER
@@ -339,7 +340,7 @@ namespace dftefe
                                       xPathInfo.xpath + " element in " +
                                       fileName + " to int");
               utils::throwException(numRadialPoints > 0,
-                                    "Non-positive integer found for" +
+                                    "Non-positive numRadial points found for" +
                                       xPathInfo.xpath + " element in " +
                                       fileName);
             }
@@ -354,6 +355,19 @@ namespace dftefe
                                       fileName + " to int");
               utils::throwException(d_zvalance > 0,
                                     "Non-positive z valance found for" +
+                                      xPathInfo.xpath + " element in " +
+                                      fileName);
+            }
+            if (attrStrings[0][i].first == "l_max")
+            {
+              convSuccess = utils::stringOps::strToInt(attrStrings[0][i].second,
+                                                       d_lmax);
+              utils::throwException(convSuccess,
+                                    "Error while converting " +
+                                      xPathInfo.xpath + " element in " +
+                                      fileName + " to int");
+              utils::throwException(d_lmax >= 0,
+                                    "Non-positive lmax found for" +
                                       xPathInfo.xpath + " element in " +
                                       fileName);
             }
@@ -466,6 +480,7 @@ namespace dftefe
                                                                attrStrings);
           N     = nodeStrings.size();
           int l = 0, p = 0, lPrev = 0;
+          int maxlFromBeta = 0;
           for (size_type i = 0; i < N; ++i)
             {
               if (nodeNames[i].find("PP_BETA") != std::string::npos)
@@ -475,6 +490,10 @@ namespace dftefe
                       if (attrId.first == "angular_momentum")
                         {
                           utils::stringOps::strToInt(attrId.second, l);
+                          utils::throwException(l >= 0,
+                                                "Non-positive l found for" +
+                                                  xPathInfo.xpath + " element in " +
+                                                  xPathInfo.fileName);    
                           break;
                         }
                     }
@@ -498,12 +517,18 @@ namespace dftefe
                           xPathInfo.fileName);
                       qNumbersVec.push_back(qNumbers);
                     }
+                    if(maxlFromBeta < l)
+                      maxlFromBeta = l;
                 }
               else if (nodeNames[i].find("PP_DIJ") != std::string::npos)
                 {
                   d_metadata["dij"] = nodeStrings[i];
                 }
             }
+            utils::throwException(maxlFromBeta == d_lmax, 
+              "The lmax from PSP HEADER does not match from" +
+                xPathInfo.xpath + " element in " +
+                xPathInfo.fileName);
         }
       else if (fieldName == "pswfc")
         {
@@ -625,7 +650,7 @@ namespace dftefe
           // if(val < 1e-10 cutoff else cutoff = 1e10)
           double cutoff = 1.0e10;
           for (int j = radialValues.size() - 1; j > 0; j--)
-            if (radialValues[j] >= 1e-10)
+            if (std::abs(radialValues[j]) >= 1e-10)
               {
                 (j != radialValues.size() - 1) ? cutoff = radialPoints[j] :
                                                  cutoff = 1.0e10;

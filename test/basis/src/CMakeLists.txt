@@ -93,4 +93,8 @@ if(ENABLE_MPI)
 	target_link_libraries(TestBasisDataStorageMemOpt PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestBasisDataStorageMemOpt PROPERTIES OUTPUT_NAME "TestBasisDataStorageMemOpt" SUFFIX ".x")
 
+	add_executable(TestAtomCenterNonLocalOpContextFE TestAtomCenterNonLocalOpContextFE.cpp )
+	target_link_libraries(TestAtomCenterNonLocalOpContextFE PUBLIC dft-efe-basis dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	set_target_properties(TestAtomCenterNonLocalOpContextFE PROPERTIES OUTPUT_NAME "TestAtomCenterNonLocalOpContextFE" SUFFIX ".x")
+
 endif()
