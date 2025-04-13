@@ -106,7 +106,8 @@ namespace dftefe
         d_cellWiseC; // cell->dofs->kpt->proj
 
       // size is localProjNum(numDofs partiitoned) x numVec(numComp)
-      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_CX;
+      // mutable so that it can be reinited inside apply if block size changes
+      mutable std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_CX;
 
       // size id localProjNum x localProjNum
       utils::MemoryStorage<ValueTypeOperator, memorySpace> d_V;
