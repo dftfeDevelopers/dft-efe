@@ -127,8 +127,8 @@ namespace dftefe
               numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
             std::vector<linearAlgebra::blasLapack::Op> transB(
               numCellsInBlock,
-              isCConjTransX ? linearAlgebra::blasLapack::Op::NoTrans :
-                              linearAlgebra::blasLapack::Op::ConjTrans);
+              isCConjTransX ? linearAlgebra::blasLapack::Op::ConjTrans :
+                              linearAlgebra::blasLapack::Op::NoTrans);
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -163,16 +163,16 @@ namespace dftefe
               {
                 mSizesSTL[iCell] = numVecs;
                 nSizesSTL[iCell] = numCellYLocalIds
-                  [iCell + cellStartId]; // isCConjTransX ? numCellDofs[iCell] :
+                  [iCell + cellStartId]; // !isCConjTransX ? numCellDofs[iCell] :
                                          // numCellProjectors[iCell] ;
                 kSizesSTL[iCell] =
                   numCellXLocalIds[iCell +
-                                   cellStartId]; // isCConjTransX ?
+                                   cellStartId]; // !isCConjTransX ?
                                                  // numCellProjectors[iCell]
                                                  // : numCellDofs[iCell];
                 ldaSizesSTL[iCell] = mSizesSTL[iCell];
                 ldbSizesSTL[iCell] =
-                  isCConjTransX ? kSizesSTL[iCell] : nSizesSTL[iCell];
+                  isCConjTransX ? nSizesSTL[iCell] : kSizesSTL[iCell];
                 ldcSizesSTL[iCell] = mSizesSTL[iCell];
                 strideASTL[iCell]  = mSizesSTL[iCell] * kSizesSTL[iCell];
                 strideBSTL[iCell]  = kSizesSTL[iCell] * nSizesSTL[iCell];
@@ -698,14 +698,11 @@ namespace dftefe
 
       const size_type numVecs = X.getNumberComponents();
 
-      // TODO : remove CX and use d_CX using the condition below
-      linearAlgebra::MultiVector<ValueType, memorySpace> CX(d_mpiPatternP2PProj, d_linAlgOpContext, numVecs);
-
-      // if(d_CX->getNumberComponents() != numVecs)
-      // {
-      //   d_CX = std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>
-      //     (d_mpiPatternP2PProj, d_linAlgOpContext, numVecs);
-      // }
+      if(d_CX->getNumberComponents() != numVecs)
+      {
+        d_CX = std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>
+          (d_mpiPatternP2PProj, d_linAlgOpContext, numVecs);
+      }
 
       // get handle to constraints
       const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsX =
@@ -734,8 +731,8 @@ namespace dftefe
       AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
         d_cellWiseC,
         X.begin(),
-        CX.begin(),
-        false,
+        d_CX->begin(),
+        true,
         numVecs,
         numLocallyOwnedCells,
         numCellDofs,
@@ -747,12 +744,12 @@ namespace dftefe
 
       // acumulate add, update ghost of d_CX
 
-      CX.accumulateAddLocallyOwned();
-      CX.updateGhostValues();
+      d_CX->accumulateAddLocallyOwned();
+      d_CX->updateGhostValues();
 
       // Do d_CX = d_V * d_CX
       size_type stride = 0;
-      size_type m = 1, n = numVecs, k = CX.localSize();
+      size_type m = 1, n = numVecs, k = d_CX->localSize();
 
       linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
                                                         ValueTypeOperator,
@@ -768,8 +765,8 @@ namespace dftefe
         &n,
         &k,
         d_V.data(),
-        CX.data(),
-        CX.data(),
+        d_CX->data(),
+        d_CX->data(),
         *X.getLinAlgOpContext());
 
       // Do Y = d_cellwiseC * d_CX cellwise (field to cellwise data)
@@ -794,9 +791,9 @@ namespace dftefe
 
       AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
         d_cellWiseC,
-        CX.begin(),
+        d_CX->begin(),
         Y.begin(),
-        true,
+        false,
         numVecs,
         numLocallyOwnedCells,
         d_numProjsInCells,
