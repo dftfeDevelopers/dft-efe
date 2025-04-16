@@ -16,7 +16,8 @@ set(DFT-EFE-KSDFT-SOURCES
 	ExchangeCorrelationFE.cpp
 	DensityCalculator.cpp
   MixingScheme.cpp
-  KohnShamDFT.cpp)
+  KohnShamDFT.cpp
+  ElectrostaticONCVNonLocFE.cpp)
 
 add_library(dft-efe-ksdft SHARED ${DFT-EFE-KSDFT-SOURCES})
 

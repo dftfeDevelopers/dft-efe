@@ -23,30 +23,4 @@
  * @author Avirup Sircar
  */
 
-#ifndef dftefeHamiltonian_h
-#define dftefeHamiltonian_h
-
-namespace dftefe
-{
-  namespace ksdft
-  {
-    template <typename ValueTypeOperator, utils::MemorySpace memorySpace>
-    class Hamiltonian
-    {
-    public:
-      virtual ~Hamiltonian() = default;
-      virtual void
-      getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace>
-                 &cellWiseStorage) const = 0;
-      // virtual void
-      // applyNonLocal(linearAlgebra::MultiVector<ValueType, memorySpace> &X, 
-      //   linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const = 0;
-      // virtual bool
-      // hasLocalComponent() const = 0;
-      // virtual bool
-      // hasNonLocalComponent() const = 0;
-
-    }; // end of Hamiltonian
-  }    // end of namespace ksdft
-} // end of namespace dftefe
-#endif // dftefeHamiltonian_h
+#include <ksdft/ElectrostaticONCVNonLocFE.h>

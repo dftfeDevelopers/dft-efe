@@ -292,6 +292,7 @@ namespace dftefe
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
       , d_scalarSpatialFnAfterRadialGrid(nullptr)
+      , d_sphericalHarmonicFunc(sphericalHarmonicFunc)
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr ptrToXmlDoc;
@@ -441,6 +442,8 @@ namespace dftefe
 
       xmlFreeDoc(ptrToXmlDoc);
       xmlCleanupParser();
+
+      d_radialPoints = radialPoints;
 #else
       utils::throwException(
         false, "Support for LIBXML XPATH and LIBXML SAX1 not found");
@@ -714,6 +717,45 @@ namespace dftefe
                   sphericalHarmonicFunc));
             }
         }
+    }
+
+    void
+    AtomSphericalDataPSP::addFieldName(const std::string fieldName)
+    {
+      if (std::find(d_fieldNames.begin(), d_fieldNames.end(), fieldName) != d_fieldNames.end()) 
+      {
+        utils::throwException(false,
+        "Field " + fieldName +
+          " is already given to AtomSphericalDataPSP " + d_fileName);
+      }
+      else
+      {
+        xmlDocPtr ptrToXmlDoc;
+        d_rootElementName  = "/UPF";
+        std::string ns     = "dummy";
+        std::string nsHRef = "dummy";
+        ptrToXmlDoc        = AtomSphericalDataPSPXMLLocal::getDoc(d_fileName);
+  
+        XPathInfo xPathInfo;
+        xPathInfo.fileName = d_fileName;
+        xPathInfo.doc      = ptrToXmlDoc;
+        xPathInfo.ns       = ns;
+        xPathInfo.nsHRef   = nsHRef;
+
+        std::vector<std::shared_ptr<SphericalData>> sphericalDataVec(0);
+        std::map<std::vector<int>, size_type>       qNumbersToIdMap;
+        getSphericalDataFromXMLNode(sphericalDataVec,
+                                    d_radialPoints,
+                                    xPathInfo,
+                                    fieldName,
+                                    d_sphericalHarmonicFunc);
+        storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
+        d_sphericalData[fieldName]   = sphericalDataVec;
+        d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;
+
+        xmlFreeDoc(ptrToXmlDoc);
+        xmlCleanupParser();
+      }
     }
 
     std::string
