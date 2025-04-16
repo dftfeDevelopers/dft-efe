@@ -81,6 +81,9 @@ namespace dftefe
 
       ~AtomSphericalDataPSP() = default;
 
+      void
+      addFieldName(const std::string fieldName) override;
+
       std::string
       getFileName() const override;
 
@@ -129,6 +132,9 @@ namespace dftefe
       int d_lmax;
       std::shared_ptr<utils::ScalarSpatialFunctionReal>
         d_scalarSpatialFnAfterRadialGrid;
+
+      std::vector<double> d_radialPoints;
+      const SphericalHarmonicFunctions &d_sphericalHarmonicFunc;
     };
   } // end of namespace atoms
 } // end of namespace dftefe

@@ -64,6 +64,9 @@ namespace dftefe
 
       ~AtomSphericalDataEnrichment() = default;
 
+      void
+      addFieldName(const std::string fieldName) override;
+
       std::string
       getFileName() const override;
 

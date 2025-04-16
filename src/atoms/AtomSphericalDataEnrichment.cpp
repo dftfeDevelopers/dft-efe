@@ -641,6 +641,13 @@ namespace dftefe
 #endif // defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
 
+    void
+    AtomSphericalDataEnrichment::addFieldName(const std::string fieldName)
+    {
+      utils::throwException(false,
+        "addFieldName() not yet implemented in AtomSphericalDataEnrichment class.");
+    }
+
     std::string
     AtomSphericalDataEnrichment::getFileName() const
     {

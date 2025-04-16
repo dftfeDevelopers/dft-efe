@@ -83,6 +83,16 @@ namespace dftefe
           "AtomSphericalDataType can only be of types ENRICHMENT and PSEUDOPOTENTIAL.");
     }
 
+    void
+    AtomSphericalDataContainer::addFieldName(
+      const std::string fieldName)
+    {
+      for(auto &pair : d_mapAtomSymbolToAtomSphericalData)
+      {
+        pair.second->addFieldName(fieldName);
+      }
+    }
+
     const std::vector<std::shared_ptr<SphericalData>> &
     AtomSphericalDataContainer::getSphericalData(
       std::string       atomSymbol,

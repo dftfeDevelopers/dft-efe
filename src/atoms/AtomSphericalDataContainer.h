@@ -82,6 +82,9 @@ namespace dftefe
        */
       ~AtomSphericalDataContainer() = default;
 
+      void
+      addFieldName(const std::string fieldName);
+
       /**
        * @brief Returns the spherical data for a given atom and quantum numbers
        *

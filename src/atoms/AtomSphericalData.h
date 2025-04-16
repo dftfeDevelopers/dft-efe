@@ -58,6 +58,9 @@ namespace dftefe
     public:
       virtual ~AtomSphericalData() = default;
 
+      virtual void
+      addFieldName(const std::string fieldName) = 0;
+
       virtual std::string
       getFileName() const = 0;
 
