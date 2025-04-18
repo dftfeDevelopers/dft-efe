@@ -183,7 +183,6 @@ namespace dftefe
       , d_energy((RealType)0)
       , d_nuclearChargesPotential(d_numAtoms, nullptr)
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
-      , d_externalPotentialFunction(externalPotentialFunction)
       , d_maxCellBlock(maxCellBlock)
       , d_isDeltaRhoSolve(false)
       , d_rootCout(std::cout)
@@ -200,7 +199,8 @@ namespace dftefe
                   feBDTotalChargeStiffnessMatrix,
                   feBDNuclearChargeRhs,
                   feBDElectronicChargeRhs,
-                  feBDHamiltonian);
+                  feBDHamiltonian,
+                  externalPotentialFunction);
 
       reinitField(electronChargeDensity);
     }
@@ -256,7 +256,6 @@ namespace dftefe
       , d_energy((RealType)0)
       , d_nuclearChargesPotential(d_numAtoms, nullptr)
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
-      , d_externalPotentialFunction(externalPotentialFunction)
       , d_maxCellBlock(maxCellBlock)
       , d_isDeltaRhoSolve(false)
       , d_rootCout(std::cout)
@@ -275,7 +274,8 @@ namespace dftefe
                   feBDElectronicChargeRhs,
                   feBDNuclChargeStiffnessMatrixNumSol,
                   feBDNuclChargeRhsNumSol,
-                  feBDHamiltonian);
+                  feBDHamiltonian,
+                  externalPotentialFunction);
 
       reinitField(electronChargeDensity);
     }
@@ -334,7 +334,6 @@ namespace dftefe
       , d_energy((RealType)0)
       , d_nuclearChargesPotential(d_numAtoms, nullptr)
       , d_feBMNuclearCharge(d_numAtoms, nullptr)
-      , d_externalPotentialFunction(externalPotentialFunction)
       , d_maxCellBlock(maxCellBlock)
       , d_isDeltaRhoSolve(true)
       , d_rootCout(std::cout)
@@ -354,7 +353,8 @@ namespace dftefe
                   feBDTotalChargeStiffnessMatrix,
                   feBDNuclearChargeRhs,
                   feBDElectronicChargeRhs,
-                  feBDHamiltonian);
+                  feBDHamiltonian,
+                  externalPotentialFunction);
 
       reinitField(atomicElectronChargeDensity);
     }
@@ -445,7 +445,8 @@ namespace dftefe
           feBDNuclChargeRhsNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction                                    
         /*std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData,
                                           memorySpace>> feBDHamiltonianElec*/)
@@ -635,7 +636,7 @@ namespace dftefe
               std::vector<RealType> a(d_numComponents);
               for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                 {
-                  a[iComp] = (ValueType)(d_externalPotentialFunction)(j);
+                  a[iComp] = (ValueType)(externalPotentialFunction)(j);
                 }
               RealType *b = a.data();
               d_scratchPotHamQuad
@@ -677,7 +678,7 @@ namespace dftefe
                     std::vector<RealType> a(d_numComponents);
                     for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                       {
-                        a[iComp] = (ValueType)(d_externalPotentialFunction)(j);
+                        a[iComp] = (ValueType)(externalPotentialFunction)(j);
                       }
                     RealType *b = a.data();
                     d_correctionPotRhoQuad
@@ -760,7 +761,8 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian)
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction)
     {
       utils::throwException(
         !d_isDeltaRhoSolve,
@@ -919,7 +921,7 @@ namespace dftefe
               std::vector<RealType> a(d_numComponents);
               for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                 {
-                  a[iComp] = (ValueType)(d_externalPotentialFunction)(j) -
+                  a[iComp] = (ValueType)(externalPotentialFunction)(j) -
                              (ValueType)(smfuncPot)(j);
                 }
               RealType *b = a.data();
@@ -940,7 +942,7 @@ namespace dftefe
                     std::vector<RealType> a(d_numComponents);
                     for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                       {
-                        a[iComp] = (ValueType)(d_externalPotentialFunction)(j) -
+                        a[iComp] = (ValueType)(externalPotentialFunction)(j) -
                                    (ValueType)(smfuncPot)(j);
                       }
                     RealType *b = a.data();
@@ -1025,7 +1027,8 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian)
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction)
     {
       utils::throwException(
         d_isDeltaRhoSolve,
@@ -1183,7 +1186,7 @@ namespace dftefe
               std::vector<RealType> a(d_numComponents);
               for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                 {
-                  a[iComp] = (ValueType)(d_externalPotentialFunction)(j) -
+                  a[iComp] = (ValueType)(externalPotentialFunction)(j) -
                              (ValueType)(smfuncPot)(j);
                 }
               RealType *b = a.data();

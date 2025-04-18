@@ -83,5 +83,10 @@ namespace dftefe
     const size_type KSDFTDefaults::CELL_BATCH_SIZE              = 1;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL    = 1;
 
+    /**
+     * @brief Setting all the ElectroHamiltonianDefaults
+     */
+     const double ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA        = 1e-6;
+
   } // end of namespace ksdft
 } // end of namespace dftefe

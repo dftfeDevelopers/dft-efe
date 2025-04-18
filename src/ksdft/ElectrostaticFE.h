@@ -84,13 +84,13 @@ namespace dftefe
       virtual const quadrature::QuadratureValuesContainer<ValueType,
                                                           memorySpace> &
       getFunctionalDerivative() const = 0;
-      // virtual void
-      // applyNonLocal(linearAlgebra::MultiVector<ValueType, memorySpace> &X, 
-      //   linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const = 0;
-      // virtual bool
-      // hasLocalComponent() const = 0;
-      // virtual bool
-      // hasNonLocalComponent() const = 0;
+      virtual void
+      applyNonLocal(linearAlgebra::MultiVector<ValueType, memorySpace> &X, 
+        linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const = 0;
+      virtual bool
+      hasLocalComponent() const = 0;
+      virtual bool
+      hasNonLocalComponent() const = 0;
 
     }; // end of class ElectrostaticFE
   }    // end of namespace ksdft
