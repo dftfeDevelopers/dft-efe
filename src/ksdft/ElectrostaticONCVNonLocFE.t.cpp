@@ -79,6 +79,9 @@
        , d_numComponents(1)
        , d_rootCout(std::cout)
        , d_mpiComm(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator())
+       , d_atomSymbolVec(atomSymbolVec)
+       , d_maxCellBlock(maxCellBlock)
+       , d_maxWaveFnBlock(maxWaveFnBlock)
      {
        int rank;
        utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -86,6 +89,7 @@
        d_rootCout.setCondition(rank == 0);
 
       const std::vector<std::string> metadataNames = atoms::AtomSphDataPSPDefaults::METADATANAMES;
+      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
 
       d_atomSphericalDataContainerPSP = 
         std::make_shared<const atoms::AtomSphericalDataContainer>(
@@ -93,17 +97,53 @@
                                   atomSymbolToPSPFilename,
                                   fieldNamesPSP, metadataNames);
 
+      bool isNonLocPSP = false, isNlcc = false;                           
+      for(int atomSymbolId = 0 ; atomSymbolId < atomSymbolVec.size() ; atomSymbolId++) 
+      {   
+        int numProj = 0;         
+        utils::stringOps::strToInt(d_atomSphericalDataContainerPSP->getMetadata(atomSymbolVec[atomSymbolId], "number_of_proj"),
+                                                       numProj);               
+        if(numProj > 0)
+        {
+          isNonLocPSP = true;
+          bool coreCorrect = false;
+          utils::stringOps::strToBool(d_atomSphericalDataContainerPSP->getMetadata(atomSymbolVec[atomSymbolId] ,"core_correction"),
+                                                        coreCorrect);       
+          if(coreCorrect)
+          {
+            isNlcc = true;
+          }
+          else if(isNlcc && !coreCorrect)
+          {
+            utils::throwException(false, "Some atoms do not have NLCC parts in UPF files while some have.");
+          }
+        }
+        else if(!(numProj > 0) && isNlcc)
+        {
+          utils::throwException(false, "Some atoms do not have NONLOCAL parts in UPF files while some have.");
+        }
+      }
+
+      if(isNonLocPSP)
+      {
+        d_atomSphericalDataContainerPSP->addFieldName("beta");
+        if(isNlcc)
+        {
+          d_atomSphericalDataContainerPSP->addFieldName("nlcc");
+        }
+      }
+
       d_atomNonLocOpContext =
         std::make_shared<const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                       ValueTypeWaveFnCoeff,
                                                       memorySpace,
                                                       dim>>(
                                                           feBMWaveFn,
-                                                          feBDElectrostaticsHamiltonian,
-                                                          d_atomSphericalDataContainer,
-                                                          atomPartitionTolONCV,
+                                                          feBDHamiltonian,
+                                                          d_atomSphericalDataContainerPSP,
+                                                          ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA ,
                                                           atomSymbolVec,
-                                                          atomCoordinatesVec,
+                                                          atomCoordinates,
                                                           maxCellBlock,
                                                           maxWaveFnBlock,
                                                           linAlgOpContext,
@@ -111,16 +151,16 @@
 
       d_atomVLocFunction =     
         std::make_shared<const atoms::AtomSevereFunction<dim>>(
-                                d_atomSphericalDataContainer,
+                                d_atomSphericalDataContainerPSP,
                                 atomSymbolVec,
-                                atomCoordinatesVec,
+                                atomCoordinates,
                                 "vlocal",
                                 0,
                                 1);
  
        d_electrostaticLocal = 
-        std::make_shared<const ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                                              ValueTypeElectrostaticsCoeff,
+        std::make_shared<const ElectrostaticLocalFE<ValueTypeBasisData,
+                                              ValueTypeBasisCoeff,
                                               ValueTypeWaveFnBasis,
                                               memorySpace,
                                               dim>>(atomCoordinates,
@@ -131,13 +171,13 @@
                                                     feBDTotalChargeStiffnessMatrix,
                                                     feBDNuclearChargeRhs,
                                                     feBDElectronicChargeRhs,
-                                                    feBDElectrostaticsHamiltonian,
-                                                    d_atomVLocFunction,
+                                                    feBDHamiltonian,
+                                                    *d_atomVLocFunction,
                                                     linAlgOpContext,
                                                     maxCellBlock,
                                                     useDealiiMatrixFreePoissonSolve);
      }
- 
+
      template <typename ValueTypeBasisData,
                typename ValueTypeBasisCoeff,
                typename ValueTypeWaveFnBasis,
@@ -151,195 +191,152 @@
                           memorySpace,
                           dim>::
        ElectrostaticONCVNonLocFE(
-         const std::vector<utils::Point> &atomCoordinates,
-         const std::vector<double> &      atomCharges,
-         const std::vector<double> &      smearedChargeRadius,
-         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-           &                                               electronChargeDensity,
-         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>> feBMTotalCharge,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDTotalChargeStiffnessMatrix,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclearChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDElectronicChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclChargeStiffnessMatrixNumSol,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclChargeRhsNumSol,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
-                                           memorySpace>> feBDHamiltonian,
-         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                         linAlgOpContext,
-         const size_type maxCellBlock,
-         const size_type maxWaveFnBlock,
-         const bool      useDealiiMatrixFreePoissonSolve)
-       : d_atomCharges(atomCharges)
-       , d_numAtoms(atomCoordinates.size())
-       , d_smearedChargeRadius(smearedChargeRadius)
-       , d_linAlgOpContext(linAlgOpContext)
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::map<std::string, std::string> &atomSymbolToPSPFilename,        
+        const std::vector<double> &      smearedChargeRadius,
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &atomicElectronChargeDensity,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotNuclearQuad,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotElectronicQuad,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>
+          feBMTotalCharge, // will be same as bc of totalCharge -
+                           // atomicTotalCharge
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                    ValueTypeWaveFnBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,                              
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDElectronicChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
+                                          memorySpace>> feBDHamiltonian,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellBlock,
+        const size_type maxWaveFnBlock,        
+        const bool      useDealiiMatrixFreePoissonSolve)
+       : d_linAlgOpContext(linAlgOpContext)
        , d_numComponents(1)
-       , d_energy((RealType)0)
-       , d_nuclearChargesPotential(d_numAtoms, nullptr)
-       , d_feBMNuclearCharge(d_numAtoms, nullptr)
-       , d_externalPotentialFunction(externalPotentialFunction)
-       , d_maxCellBlock(maxCellBlock)
-       , d_isDeltaRhoSolve(false)
        , d_rootCout(std::cout)
-       , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
+       , d_mpiComm(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator())
+       , d_atomSymbolVec(atomSymbolVec)
+       , d_maxCellBlock(maxCellBlock)
+       , d_maxWaveFnBlock(maxWaveFnBlock)
      {
        int rank;
-       utils::mpi::MPICommRank(
-         feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(), &rank);
+       utils::mpi::MPICommRank(d_mpiComm, &rank);
  
        d_rootCout.setCondition(rank == 0);
- 
-       const std::vector<std::string> metadataNames = atoms::AtomSphDataPSPDefaults::METADATANAMES;
 
-       d_atomSphericalDataContainerPSP = 
-         std::make_shared<const atoms::AtomSphericalDataContainer>(
-                                   atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
-                                   atomSymbolToPSPFilename,
-                                   fieldNamesPSP, metadataNames);
+      const std::vector<std::string> metadataNames = atoms::AtomSphDataPSPDefaults::METADATANAMES;
+      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
+
+      d_atomSphericalDataContainerPSP = 
+        std::make_shared<const atoms::AtomSphericalDataContainer>(
+                                  atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
+                                  atomSymbolToPSPFilename,
+                                  fieldNamesPSP, metadataNames);
+
+      bool isNonLocPSP = false, isNlcc = false;                           
+      for(int atomSymbolId = 0 ; atomSymbolId < atomSymbolVec.size() ; atomSymbolId++) 
+      {   
+        int numProj = 0;         
+        utils::stringOps::strToInt(d_atomSphericalDataContainerPSP->getMetadata(atomSymbolVec[atomSymbolId], "number_of_proj"),
+                                                       numProj);               
+        if(numProj > 0)
+        {
+          isNonLocPSP = true;
+          bool coreCorrect = false;
+          utils::stringOps::strToBool(d_atomSphericalDataContainerPSP->getMetadata(atomSymbolVec[atomSymbolId] ,"core_correction"),
+                                                        coreCorrect);       
+          if(coreCorrect)
+          {
+            isNlcc = true;
+          }
+          else if(isNlcc && !coreCorrect)
+          {
+            utils::throwException(false, "Some atoms do not have NLCC parts in UPF files while some have.");
+          }
+        }
+        else if(!(numProj > 0) && isNlcc)
+        {
+          utils::throwException(false, "Some atoms do not have NONLOCAL parts in UPF files while some have.");
+        }
+      }
+
+      if(isNonLocPSP)
+      {
+        d_atomSphericalDataContainerPSP->addFieldName("beta");
+        if(isNlcc)
+        {
+          d_atomSphericalDataContainerPSP->addFieldName("nlcc");
+        }
+      }
+
+      d_atomNonLocOpContext =
+        std::make_shared<const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                      ValueTypeWaveFnCoeff,
+                                                      memorySpace,
+                                                      dim>>(
+                                                          feBMWaveFn,
+                                                          feBDHamiltonian,
+                                                          d_atomSphericalDataContainerPSP,
+                                                          ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA ,
+                                                          atomSymbolVec,
+                                                          atomCoordinates,
+                                                          maxCellBlock,
+                                                          maxWaveFnBlock,
+                                                          linAlgOpContext,
+                                                          d_mpiComm);
+
+      d_atomVLocFunction =     
+        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+                                d_atomSphericalDataContainerPSP,
+                                atomSymbolVec,
+                                atomCoordinates,
+                                "vlocal",
+                                0,
+                                1);
  
-       d_atomNonLocOpContext =
-         std::make_shared<const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                       ValueTypeWaveFnCoeff,
-                                                       memorySpace,
-                                                       dim>>(
-                                                           feBMWaveFn,
-                                                           feBDElectrostaticsHamiltonian,
-                                                           d_atomSphericalDataContainer,
-                                                           atomPartitionTolONCV,
-                                                           atomSymbolVec,
-                                                           atomCoordinatesVec,
-                                                           maxCellBlock,
-                                                           maxWaveFnBlock,
-                                                           linAlgOpContext,
-                                                           d_mpiComm);
- 
-       d_atomVLocFunction =     
-         std::make_shared<const atoms::AtomSevereFunction<dim>>(
-                                 d_atomSphericalDataContainer,
-                                 atomSymbolVec,
-                                 atomCoordinatesVec,
-                                 "vlocal",
-                                 0,
-                                 1);
+       d_electrostaticLocal = 
+        std::make_shared<const ElectrostaticLocalFE<ValueTypeBasisData,
+                                              ValueTypeBasisCoeff,
+                                              ValueTypeWaveFnBasis,
+                                              memorySpace,
+                                              dim>>(atomCoordinates,
+                                                atomCharges,
+                                                smearedChargeRadius,
+                                                atomicElectronChargeDensity,
+                                                atomicTotalElecPotNuclearQuad,
+                                                atomicTotalElecPotElectronicQuad,
+                                                feBMTotalCharge, // will be same as bc of totalCharge -
+                                                                   // atomicTotalCharge
+                                                feBDTotalChargeStiffnessMatrix,
+                                                feBDNuclearChargeRhs,
+                                                feBDElectronicChargeRhs,
+                                                feBDHamiltonian,
+                                                *d_atomVLocFunction,
+                                                linAlgOpContext,
+                                                maxCellBlock,
+                                                useDealiiMatrixFreePoissonSolve);
      }
- 
-     template <typename ValueTypeBasisData,
-               typename ValueTypeBasisCoeff,
-               typename ValueTypeWaveFnBasis,
-               typename ValueTypeWaveFnCoeff,
-               utils::MemorySpace memorySpace,
-               size_type          dim>
-     ElectrostaticONCVNonLocFE<ValueTypeBasisData,
-                          ValueTypeBasisCoeff,
-                          ValueTypeWaveFnBasis,
-                          ValueTypeWaveFnCoeff,
-                          memorySpace,
-                          dim>::
-       ElectrostaticONCVNonLocFE(
-         const std::vector<utils::Point> &atomCoordinates,
-         const std::vector<double> &      atomCharges,
-         const std::vector<double> &      smearedChargeRadius,
-         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-           &atomicElectronChargeDensity,
-         const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                     memorySpace>
-           &atomicTotalElecPotNuclearQuad,
-         const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                     memorySpace>
-           &atomicTotalElecPotElectronicQuad,
-         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
-           feBMTotalCharge, // will be same as bc of totalCharge -
-                            // atomicTotalCharge
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDTotalChargeStiffnessMatrix,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclearChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDElectronicChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
-                                           memorySpace>> feBDHamiltonian,
-         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
-         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                         linAlgOpContext,
-         const size_type maxCellBlock,
-         const bool      useDealiiMatrixFreePoissonSolve)
-       : d_atomCoordinates(atomCoordinates)
-       , d_atomCharges(atomCharges)
-       , d_numAtoms(atomCoordinates.size())
-       , d_smearedChargeRadius(smearedChargeRadius)
-       , d_linAlgOpContext(linAlgOpContext)
-       , d_numComponents(1)
-       , d_energy((RealType)0)
-       , d_nuclearChargesPotential(d_numAtoms, nullptr)
-       , d_feBMNuclearCharge(d_numAtoms, nullptr)
-       , d_externalPotentialFunction(externalPotentialFunction)
-       , d_maxCellBlock(maxCellBlock)
-       , d_isDeltaRhoSolve(true)
-       , d_rootCout(std::cout)
-       , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
-     {
-       int rank;
-       utils::mpi::MPICommRank(
-         feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(), &rank);
- 
-       d_rootCout.setCondition(rank == 0);
- 
-       const std::vector<std::string> metadataNames = atoms::AtomSphDataPSPDefaults::METADATANAMES;
 
-       d_atomSphericalDataContainerPSP = 
-         std::make_shared<const atoms::AtomSphericalDataContainer>(
-                                   atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
-                                   atomSymbolToPSPFilename,
-                                   fieldNamesPSP, metadataNames);
- 
-       d_atomNonLocOpContext =
-         std::make_shared<const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                       ValueTypeWaveFnCoeff,
-                                                       memorySpace,
-                                                       dim>>(
-                                                           feBMWaveFn,
-                                                           feBDElectrostaticsHamiltonian,
-                                                           d_atomSphericalDataContainer,
-                                                           atomPartitionTolONCV,
-                                                           atomSymbolVec,
-                                                           atomCoordinatesVec,
-                                                           maxCellBlock,
-                                                           maxWaveFnBlock,
-                                                           linAlgOpContext,
-                                                           d_mpiComm);
- 
-       d_atomVLocFunction =     
-         std::make_shared<const atoms::AtomSevereFunction<dim>>(
-                                 d_atomSphericalDataContainer,
-                                 atomSymbolVec,
-                                 atomCoordinatesVec,
-                                 "vlocal",
-                                 0,
-                                 1);
-
-     }
- 
      template <typename ValueTypeBasisData,
                typename ValueTypeBasisCoeff,
                typename ValueTypeWaveFnBasis,
@@ -359,24 +356,22 @@
                                                      ValueTypeBasisData,
                                                      memorySpace,
                                                      dim>> feBMTotalCharge,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDTotalChargeStiffnessMatrix,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclearChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDElectronicChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclChargeStiffnessMatrixNumSol,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclChargeRhsNumSol,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
-                                           memorySpace>> feBDHamiltonian)
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                    ValueTypeWaveFnBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDElectronicChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
+                                          memorySpace>> feBDHamiltonian)
      {
         d_atomNonLocOpContext =
           std::make_shared<const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
@@ -384,28 +379,35 @@
                                                         memorySpace,
                                                         dim>>(
                                                             feBMWaveFn,
-                                                            feBDElectrostaticsHamiltonian,
-                                                            d_atomSphericalDataContainer,
-                                                            atomPartitionTolONCV,
-                                                            atomSymbolVec,
-                                                            atomCoordinatesVec,
-                                                            maxCellBlock,
-                                                            maxWaveFnBlock,
-                                                            linAlgOpContext,
+                                                            feBDHamiltonian,
+                                                            d_atomSphericalDataContainerPSP,
+                                                            ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA ,
+                                                            d_atomSymbolVec,
+                                                            atomCoordinates,
+                                                            d_maxCellBlock,
+                                                            d_maxWaveFnBlock,
+                                                            d_linAlgOpContext,
                                                             d_mpiComm);
 
         d_atomVLocFunction = 
           std::make_shared<const atoms::AtomSevereFunction<dim>>(
-                                  d_atomSphericalDataContainer,
-                                  atomSymbolVec,
-                                  atomCoordinatesVec,
+                                  d_atomSphericalDataContainerPSP,
+                                  d_atomSymbolVec,
+                                  atomCoordinates,
                                   "vlocal",
                                   0,
                                   1);
 
-        d_electrostaticLocal->reinitBasis();
+        d_electrostaticLocal->reinitBasis(atomCoordinates,
+                                          feBMTotalCharge,
+                                          feBDTotalChargeStiffnessMatrix,
+                                          feBDNuclearChargeRhs,
+                                          feBDElectronicChargeRhs,
+                                          feBDHamiltonian,
+                                          *d_atomVLocFunction);
      }
  
+
      template <typename ValueTypeBasisData,
                typename ValueTypeBasisCoeff,
                typename ValueTypeWaveFnBasis,
@@ -420,70 +422,73 @@
                           memorySpace,
                           dim>::
        reinitBasis(
-         const std::vector<utils::Point> &                 atomCoordinates,
-         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>> feBMTotalCharge,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDTotalChargeStiffnessMatrix,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclearChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDElectronicChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
-                                           memorySpace>> feBDHamiltonian)
+        const std::vector<utils::Point> &atomCoordinates,
+        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &atomicElectronChargeDensity,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotNuclearQuad,
+        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                                    memorySpace>
+          &atomicTotalElecPotElectronicQuad,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>> feBMTotalCharge,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                    ValueTypeWaveFnBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,                                                    
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBDElectronicChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
+                                          memorySpace>> feBDHamiltonian)
      {
-      
+        d_atomNonLocOpContext =
+          std::make_shared<const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                        ValueTypeWaveFnCoeff,
+                                                        memorySpace,
+                                                        dim>>(
+                                                            feBMWaveFn,
+                                                            feBDHamiltonian,
+                                                            d_atomSphericalDataContainerPSP,
+                                                            ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA ,
+                                                            d_atomSymbolVec,
+                                                            atomCoordinates,
+                                                            d_maxCellBlock,
+                                                            d_maxWaveFnBlock,
+                                                            d_linAlgOpContext,
+                                                            d_mpiComm);
+
+        d_atomVLocFunction = 
+          std::make_shared<const atoms::AtomSevereFunction<dim>>(
+                                  d_atomSphericalDataContainerPSP,
+                                  d_atomSymbolVec,
+                                  atomCoordinates,
+                                  "vlocal",
+                                  0,
+                                  1);
+
+        d_electrostaticLocal->reinitBasis(atomCoordinates,
+                                          atomicElectronChargeDensity,
+                                          atomicTotalElecPotNuclearQuad,
+                                          atomicTotalElecPotElectronicQuad,
+                                          feBMTotalCharge,
+                                          feBDTotalChargeStiffnessMatrix,
+                                          feBDNuclearChargeRhs,
+                                          feBDElectronicChargeRhs,
+                                          feBDHamiltonian,
+                                          *d_atomVLocFunction);
      }
- 
-     template <typename ValueTypeBasisData,
-               typename ValueTypeBasisCoeff,
-               typename ValueTypeWaveFnBasis,
-               typename ValueTypeWaveFnCoeff,
-               utils::MemorySpace memorySpace,
-               size_type          dim>
-     void
-     ElectrostaticONCVNonLocFE<ValueTypeBasisData,
-                          ValueTypeBasisCoeff,
-                          ValueTypeWaveFnBasis,
-                          ValueTypeWaveFnCoeff,
-                          memorySpace,
-                          dim>::
-       reinitBasis(
-         const std::vector<utils::Point> &atomCoordinates,
-         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-           &atomicElectronChargeDensity,
-         const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                     memorySpace>
-           &atomicTotalElecPotNuclearQuad,
-         const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                     memorySpace>
-           &atomicTotalElecPotElectronicQuad,
-         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>> feBMTotalCharge,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDTotalChargeStiffnessMatrix,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDNuclearChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-           feBDElectronicChargeRhs,
-         std::shared_ptr<
-           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis,
-                                           memorySpace>> feBDHamiltonian)
-     {
-       
-     }
- 
+     
      template <typename ValueTypeBasisData,
                typename ValueTypeBasisCoeff,
                typename ValueTypeWaveFnBasis,
@@ -552,7 +557,7 @@
                           ValueTypeWaveFnBasis,
                           ValueTypeWaveFnCoeff,
                           memorySpace,
-                          dim>::hasLocalComponent()
+                          dim>::hasLocalComponent() const
      {
         return true;
      }
@@ -569,7 +574,7 @@
                           ValueTypeWaveFnBasis,
                           ValueTypeWaveFnCoeff,
                           memorySpace,
-                          dim>::hasNonLocalComponent()
+                          dim>::hasNonLocalComponent() const
      {
         return true;
      }
@@ -593,7 +598,7 @@
      {
         d_electrostaticLocal->evalEnergy();
         d_energy = d_electrostaticLocal->getEnergy();
-        std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> dotPords(waveFn.getNumberComponents());
+        std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff, ValueTypeWaveFnCoeff>> dotProds(waveFn.getNumberComponents());
         linearAlgebra::dot(waveFn,
                           VnonLocxWaveFn,
                           dotProds,
@@ -601,8 +606,8 @@
                           linearAlgebra::blasLapack::ScalarOp::Identity);
 
         RealType nonLocEnergy = 0;                  
-        for(int i = 0 ; i< dotPords.size() ; i++)
-          nonLocEnergy +=  dotPords[i] * occupation[i]; 
+        for(int i = 0 ; i< dotProds.size() ; i++)
+          nonLocEnergy +=  dotProds[i] * occupation[i]; 
         
         d_energy += nonLocEnergy;
      }

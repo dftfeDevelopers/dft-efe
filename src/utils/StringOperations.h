@@ -40,6 +40,9 @@ namespace dftefe
       bool
       strToDouble(const std::string s, double &x);
 
+      bool
+      strToBool(const std::string s, bool &i);
+
       void
       trim(std::string &s);
 

@@ -60,6 +60,20 @@ namespace dftefe
         return true;
       }
 
+      bool
+      strToBool(const std::string s, bool &x)
+      {
+        try
+          {
+            x = boost::lexical_cast<bool>(s);
+          }
+        catch (const boost::bad_lexical_cast &e)
+          {
+            return false;
+          }
+        return true;
+      }
+
       void
       trim(std::string &s)
       {

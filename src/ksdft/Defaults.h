@@ -152,6 +152,15 @@ namespace dftefe
       static const size_type CELL_BATCH_SIZE_GRAD_EVAL;
     };
 
+    class ElectroHamiltonianDefaults
+    {
+    public:
+      //
+      // AatomPartitionTolONCV
+      //
+      static const double ATOM_PARTITION_TOL_BETA;
+    };
+
   } // end of namespace ksdft
 } // end of namespace dftefe
 #endif // dftefeDFTDefaults_h

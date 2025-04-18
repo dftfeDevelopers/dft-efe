@@ -76,6 +76,7 @@ namespace dftefe
       /**
        * @brief Constructor
        */
+      // used if analytical vself canellation route taken
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
@@ -104,6 +105,7 @@ namespace dftefe
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true);
 
+      // used if numerical poisson solve vself canellation route taken
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
@@ -138,7 +140,7 @@ namespace dftefe
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true);
 
-      // used if delta rho approach is taken with phi total from 1D KS solve
+      // used if delta rho approach is taken with phi total from 1D KS solve with analytical vself energy cancellation
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
@@ -178,6 +180,7 @@ namespace dftefe
 
       ~ElectrostaticLocalFE();
 
+      // used if analytical vself canellation route taken
       void
       reinitBasis(
         const std::vector<utils::Point> &                 atomCoordinates,
@@ -196,8 +199,10 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian);
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
+      // used if numerical poisson solve vself canellation route taken                                    
       void
       reinitBasis(
         const std::vector<utils::Point> &                 atomCoordinates,
@@ -222,9 +227,10 @@ namespace dftefe
           feBDNuclChargeRhsNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian);
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
-      // used if delta rho approach is taken with phi total from 1D KS solve
+      // used if delta rho approach is taken with phi total from 1D KS solve with analytical vself energy cancellation
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
@@ -251,7 +257,8 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian);
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);                                          
 
       void
       reinitField(
@@ -293,7 +300,6 @@ namespace dftefe
       const std::vector<double>               d_atomCharges;
       const std::vector<double>               d_smearedChargeRadius;
       RealType                                d_energy;
-      const utils::ScalarSpatialFunctionReal &d_externalPotentialFunction;
 
       // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
