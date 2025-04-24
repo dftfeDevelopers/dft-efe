@@ -129,6 +129,7 @@ namespace dftefe
                                                    d_qNumbersToIdMap;
       std::unordered_map<std::string, std::string> d_metadata;
       double                                       d_zvalance;
+      const double                                 d_PSPVLocalCutoff;
       int d_lmax;
       std::shared_ptr<utils::ScalarSpatialFunctionReal>
         d_scalarSpatialFnAfterRadialGrid;

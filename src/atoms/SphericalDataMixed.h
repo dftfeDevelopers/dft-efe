@@ -117,8 +117,6 @@ namespace dftefe
       std::vector<int>                     d_qNumbers;
       std::vector<double>                  d_radialPoints;
       std::vector<double>                  d_radialValues;
-      double                               d_cutoff;
-      double                               d_smoothness;
       std::shared_ptr<const utils::Spline> d_spline;
       double                               d_polarAngleTolerance;
       double                               d_cutoffTolerance;

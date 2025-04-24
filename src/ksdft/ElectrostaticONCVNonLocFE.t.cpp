@@ -82,6 +82,7 @@
        , d_atomSymbolVec(atomSymbolVec)
        , d_maxCellBlock(maxCellBlock)
        , d_maxWaveFnBlock(maxWaveFnBlock)
+       , d_energy((RealType)0)
      {
        int rank;
        utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -238,6 +239,7 @@
        , d_atomSymbolVec(atomSymbolVec)
        , d_maxCellBlock(maxCellBlock)
        , d_maxWaveFnBlock(maxWaveFnBlock)
+       , d_energy((RealType)0)
      {
        int rank;
        utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -539,9 +541,11 @@
                           ValueTypeWaveFnCoeff,
                           memorySpace,
                           dim>::applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X, 
-                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &Y) const
+                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &Y,
+                    bool updateGhostX,
+                    bool updateGhostY) const
      {
-        d_atomNonLocOpContext->apply(X,Y);
+        d_atomNonLocOpContext->apply(X,Y,updateGhostX,updateGhostY);
      }
      
  
@@ -593,23 +597,90 @@
                           ValueTypeWaveFnCoeff,
                           memorySpace,
                           dim>::evalEnergy(const std::vector<RealType> &                  occupation,
-                            const linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &waveFn, 
-                            const linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &VnonLocxWaveFn)
+                            linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X)
      {
+        d_energy = (RealType)0;
         d_electrostaticLocal->evalEnergy();
         d_energy = d_electrostaticLocal->getEnergy();
-        std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff, ValueTypeWaveFnCoeff>> dotProds(waveFn.getNumberComponents());
-        linearAlgebra::dot(waveFn,
-                          VnonLocxWaveFn,
-                          dotProds,
-                          linearAlgebra::blasLapack::ScalarOp::Conj,
-                          linearAlgebra::blasLapack::ScalarOp::Identity);
 
-        RealType nonLocEnergy = 0;                  
-        for(int i = 0 ; i< dotProds.size() ; i++)
-          nonLocEnergy +=  dotProds[i] * occupation[i]; 
-        
-        d_energy += nonLocEnergy;
+        RealType nonLocEnergy = (RealType)0;                  
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> psiBatch(
+          X.getMPIPatternP2P(),
+          d_linAlgOpContext,
+          d_maxWaveFnBlock,
+          ValueTypeWaveFnCoeff());
+
+         linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> Y(psiBatch, (ValueTypeWaveFnCoeff)0);
+        utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+
+        for (size_type psiStartId = 0;
+            psiStartId < X.getNumberComponents();
+            psiStartId += d_maxWaveFnBlock)
+          {
+            const size_type psiEndId = std::min(psiStartId + d_maxWaveFnBlock,
+                                                X.getNumberComponents());
+            const size_type numPsiInBatch = psiEndId - psiStartId;
+
+            std::vector<RealType> occupationInBatch(numPsiInBatch, (RealType)0);
+            RealType              energyBatchSum = 0;
+
+            std::copy(occupation.begin() + psiStartId,
+                      occupation.begin() + psiEndId,
+                      occupationInBatch.begin());
+
+            std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff, ValueTypeWaveFnCoeff>> 
+              dotProds(numPsiInBatch);
+
+            if (numPsiInBatch < d_maxWaveFnBlock)
+              {
+                linearAlgebra::MultiVector<ValueType, memorySpace> psiBatchSmall(
+                  X.getMPIPatternP2P(),
+                  d_linAlgOpContext,
+                  numPsiInBatch,
+                  ValueType());
+
+                linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> YSmall(psiBatchSmall, (ValueTypeWaveFnCoeff)0);
+
+                for (size_type iSize = 0; iSize < X.localSize(); iSize++)
+                  memoryTransfer.copy(numPsiInBatch,
+                                      psiBatchSmall.data() +
+                                        numPsiInBatch * iSize,
+                                      X.data() +
+                                        iSize * X.getNumberComponents() +
+                                        psiStartId);
+
+                d_atomNonLocOpContext->apply(psiBatchSmall,Y,true,false);
+                std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff, ValueTypeWaveFnCoeff>> dotProds(d_maxWaveFnBlock);
+                linearAlgebra::dot(psiBatchSmall,
+                                  YSmall,
+                                  dotProds,
+                                  linearAlgebra::blasLapack::ScalarOp::Conj,
+                                  linearAlgebra::blasLapack::ScalarOp::Identity);
+              }
+            else
+              {
+                std::vector<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff, ValueTypeWaveFnCoeff>> 
+                  dotProds(numPsiInBatch);
+
+                for (size_type iSize = 0; iSize < X.localSize(); iSize++)
+                  memoryTransfer.copy(numPsiInBatch,
+                                      psiBatch.data() + numPsiInBatch * iSize,
+                                      X.data() +
+                                        iSize * X.getNumberComponents() +
+                                        psiStartId);
+
+                d_atomNonLocOpContext->apply(psiBatch,Y,true,false);
+                linearAlgebra::dot(psiBatch,
+                                  Y,
+                                  dotProds,
+                                  linearAlgebra::blasLapack::ScalarOp::Conj,
+                                  linearAlgebra::blasLapack::ScalarOp::Identity);
+              }
+
+              for(int i = 0 ; i< dotProds.size() ; i++)
+                nonLocEnergy +=  dotProds[i] * 2 * occupationInBatch[i]; 
+            }
+          d_energy += nonLocEnergy;
      }
  
      template <typename ValueTypeBasisData,

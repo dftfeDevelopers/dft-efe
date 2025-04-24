@@ -293,6 +293,7 @@ namespace dftefe
       , d_metadataNames(metadataNames)
       , d_scalarSpatialFnAfterRadialGrid(nullptr)
       , d_sphericalHarmonicFunc(sphericalHarmonicFunc)
+      , d_PSPVLocalCutoff(10.0001) //bohr
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr ptrToXmlDoc;
@@ -680,24 +681,43 @@ namespace dftefe
           // create spherical data vec
           if (fieldName == "vlocal")
             {
+              std::vector<double> radialPointsWithCutoff(0);
+              std::vector<double> radialValuesWithCutoff(0);
+
+              // Larger max allowed Tail is important for pseudo-dojo database ONCV
+              // pseudopotential local potentials which have a larger data range
+              // with slow convergence to -Z/r
+              // Same value of 10.0 used as rcut in QUANTUM ESPRESSO
+              // (cf. Modules/read_pseudo.f90)
+
+              for(int i = 0 ; i < radialValues.size() ; i++)
+              {
+                if(radialPoints[i] <= d_PSPVLocalCutoff)
+                {
+                  radialPointsWithCutoff.push_back(radialPoints[i]);
+                  radialValuesWithCutoff.push_back(radialValues[i]);
+                }
+              }
+                
               d_scalarSpatialFnAfterRadialGrid =
                 std::make_shared<utils::PointChargePotentialFunction>(
                   utils::Point({0, 0, 0}),
                   -1.0 * constant * std::abs(d_zvalance));
 
-              double val =
-                (-1.0) * std::abs(radialValues.back() / radialValues.back());
+
+              double leftValue = (radialValuesWithCutoff[1] - radialValuesWithCutoff[0]) /
+                            (radialPointsWithCutoff[1] - radialPointsWithCutoff[0]);
+              double rightValue =
+                (-1.0) * std::abs(radialValuesWithCutoff.back() / radialPointsWithCutoff.back());
 
               utils::Spline::bd_type left = utils::Spline::bd_type::first_deriv;
-              double                 leftValue = 0.0;
               utils::Spline::bd_type right =
                 utils::Spline::bd_type::first_deriv;
-              double rightValue = val;
 
               sphericalDataVec.push_back(std::make_shared<SphericalDataMixed>(
                 qNumbersVec[i],
-                radialPoints,
-                radialValues,
+                radialPointsWithCutoff,
+                radialValuesWithCutoff,
                 left,
                 leftValue,
                 right,

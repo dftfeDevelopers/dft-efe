@@ -86,7 +86,9 @@ namespace dftefe
       getFunctionalDerivative() const = 0;
       virtual void
       applyNonLocal(linearAlgebra::MultiVector<ValueType, memorySpace> &X, 
-        linearAlgebra::MultiVector<ValueType, memorySpace> &Y) const = 0;
+        linearAlgebra::MultiVector<ValueType, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const = 0;
       virtual bool
       hasLocalComponent() const = 0;
       virtual bool

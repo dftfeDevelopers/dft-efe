@@ -1668,6 +1668,7 @@ namespace dftefe
                          memorySpace,
                          dim>::evalEnergy()
     {
+      d_energy = (RealType)0;
       d_feBasisOpNuclear->interpolate(*d_totalChargePotential,
                                       *d_feBMTotalCharge,
                                       *d_scratchPotNuclearQuad);
@@ -1967,6 +1968,55 @@ namespace dftefe
                       *d_linAlgOpContext);
 
       return *d_scratchPotHamQuad;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    ElectrostaticLocalFE<ValueTypeBasisData,
+                         ValueTypeBasisCoeff,
+                         ValueTypeWaveFnBasisData,
+                         memorySpace,
+                         dim>::applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X, 
+                          linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
+                          bool updateGhostX,
+                          bool updateGhostY) const
+    {
+      utils::throwException(false,
+        "Non-Local component not present to call in ElectrostaticLocalFE.h");
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    ElectrostaticLocalFE<ValueTypeBasisData,
+                         ValueTypeBasisCoeff,
+                         ValueTypeWaveFnBasisData,
+                         memorySpace,
+                         dim>::hasLocalComponent() const
+    {
+      return true;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    ElectrostaticLocalFE<ValueTypeBasisData,
+                         ValueTypeBasisCoeff,
+                         ValueTypeWaveFnBasisData,
+                         memorySpace,
+                         dim>::hasNonLocalComponent() const
+    {
+      return false;
     }
 
   } // end of namespace ksdft

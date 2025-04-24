@@ -36,11 +36,11 @@ namespace dftefe
     namespace
     {
       template <typename ValueTypeOperator, utils::MemorySpace memorySpace>
-      class hamiltonianComponentsOperations
+      class HamiltonianComponentsOperations
       {
       public:
         static void
-        addComponent(
+        addLocalComponent(
           utils::MemoryStorage<ValueTypeOperator, memorySpace>
             &localHamiltonianCumulative,
           std::variant<Hamiltonian<float, memorySpace> *,
@@ -59,11 +59,11 @@ namespace dftefe
       //--------float----------
 
       template <utils::MemorySpace memorySpace>
-      class hamiltonianComponentsOperations<float, memorySpace>
+      class HamiltonianComponentsOperations<float, memorySpace>
       {
       public:
         static void
-        addComponent(
+        addLocalComponent(
           utils::MemoryStorage<float, memorySpace> &localHamiltonianCumulative,
           std::variant<Hamiltonian<float, memorySpace> *,
                        Hamiltonian<double, memorySpace> *,
@@ -78,6 +78,8 @@ namespace dftefe
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<Hamiltonian<float, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {
               utils::MemoryStorage<float, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -94,6 +96,7 @@ namespace dftefe
                 temp.data(),
                 localHamiltonianCumulative.data(),
                 linAlgOpContext);
+              }
             }
         }
       };
@@ -101,11 +104,11 @@ namespace dftefe
       //-----------double-------
 
       template <utils::MemorySpace memorySpace>
-      class hamiltonianComponentsOperations<double, memorySpace>
+      class HamiltonianComponentsOperations<double, memorySpace>
       {
       public:
         static void
-        addComponent(
+        addLocalComponent(
           utils::MemoryStorage<double, memorySpace> &localHamiltonianCumulative,
           std::variant<Hamiltonian<float, memorySpace> *,
                        Hamiltonian<double, memorySpace> *,
@@ -120,6 +123,8 @@ namespace dftefe
               const Hamiltonian<double, memorySpace> &b =
                 *(std::get<Hamiltonian<double, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {
               utils::MemoryStorage<double, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -136,6 +141,7 @@ namespace dftefe
                 temp.data(),
                 localHamiltonianCumulative.data(),
                 linAlgOpContext);
+              }
             }
           else if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
                      hamiltonianComponent))
@@ -143,6 +149,8 @@ namespace dftefe
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<Hamiltonian<float, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {
               utils::MemoryStorage<float, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -159,6 +167,7 @@ namespace dftefe
                 temp.data(),
                 localHamiltonianCumulative.data(),
                 linAlgOpContext);
+              }
             }
           else
             {
@@ -172,11 +181,11 @@ namespace dftefe
       //----------complex float--------
 
       template <utils::MemorySpace memorySpace>
-      class hamiltonianComponentsOperations<std::complex<float>, memorySpace>
+      class HamiltonianComponentsOperations<std::complex<float>, memorySpace>
       {
       public:
         static void
-        addComponent(
+        addLocalComponent(
           utils::MemoryStorage<std::complex<float>, memorySpace>
             &localHamiltonianCumulative,
           std::variant<Hamiltonian<float, memorySpace> *,
@@ -192,6 +201,8 @@ namespace dftefe
               const Hamiltonian<double, memorySpace> &b =
                 *(std::get<Hamiltonian<double, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {
               utils::MemoryStorage<double, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -209,6 +220,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
                      hamiltonianComponent))
@@ -216,6 +228,8 @@ namespace dftefe
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<Hamiltonian<float, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {
               utils::MemoryStorage<float, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -233,6 +247,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else if (std::holds_alternative<
                      Hamiltonian<std::complex<float>, memorySpace> *>(
@@ -241,6 +256,8 @@ namespace dftefe
               const Hamiltonian<std::complex<float>, memorySpace> &b =
                 *(std::get<Hamiltonian<std::complex<float>, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {                  
               utils::MemoryStorage<std::complex<float>, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -258,6 +275,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else
             {
@@ -271,11 +289,11 @@ namespace dftefe
       //--------------complex double---------
 
       template <utils::MemorySpace memorySpace>
-      class hamiltonianComponentsOperations<std::complex<double>, memorySpace>
+      class HamiltonianComponentsOperations<std::complex<double>, memorySpace>
       {
       public:
         static void
-        addComponent(
+        addLocalComponent(
           utils::MemoryStorage<std::complex<double>, memorySpace>
             &localHamiltonianCumulative,
           std::variant<Hamiltonian<float, memorySpace> *,
@@ -291,6 +309,8 @@ namespace dftefe
               const Hamiltonian<double, memorySpace> &b =
                 *(std::get<Hamiltonian<double, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {                  
               utils::MemoryStorage<double, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -308,6 +328,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
                      hamiltonianComponent))
@@ -315,6 +336,8 @@ namespace dftefe
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<Hamiltonian<float, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {                  
               utils::MemoryStorage<float, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -332,6 +355,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else if (std::holds_alternative<
                      Hamiltonian<std::complex<float>, memorySpace> *>(
@@ -340,6 +364,8 @@ namespace dftefe
               const Hamiltonian<std::complex<float>, memorySpace> &b =
                 *(std::get<Hamiltonian<std::complex<float>, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {                  
               utils::MemoryStorage<std::complex<float>, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -357,6 +383,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else if (std::holds_alternative<
                      Hamiltonian<std::complex<double>, memorySpace> *>(
@@ -365,6 +392,8 @@ namespace dftefe
               const Hamiltonian<std::complex<double>, memorySpace> &b =
                 *(std::get<Hamiltonian<std::complex<double>, memorySpace> *>(
                   hamiltonianComponent));
+              if(b.hasLocalComponent())
+              {                 
               utils::MemoryStorage<std::complex<double>, memorySpace> temp(0);
               b.getLocal(temp);
 
@@ -382,6 +411,7 @@ namespace dftefe
                   temp.data(),
                   localHamiltonianCumulative.data(),
                   linAlgOpContext);
+              }
             }
           else
             {
@@ -656,7 +686,7 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
             &                                        feBasisManager,
-        std::vector<HamiltonianPtrVariant>           hamiltonianComponentsVec,
+        const std::vector<HamiltonianPtrVariant>           &hamiltonianComponentsVec,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const size_type                              maxCellBlock,
         const size_type                              maxWaveFnBatch)
@@ -683,8 +713,10 @@ namespace dftefe
                                                ValueTypeBasisData,
                                                memorySpace,
                                                dim> & feBasisManager,
-                   std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec)
+                  const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec)
     {
+      d_hamiltonianComponentsVec = hamiltonianComponentsVec;
+      
       const size_type numLocallyOwnedCells =
         feBasisManager.nLocallyOwnedCells();
 
@@ -699,17 +731,17 @@ namespace dftefe
 
       d_hamiltonianInAllCells.resize(cellWiseDataSize, (ValueTypeOperator)0);
 
-      hamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
+      HamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
 
       for (unsigned int i = 0; i < hamiltonianComponentsVec.size(); ++i)
         {
-          op.addComponent(d_hamiltonianInAllCells,
+          op.addLocalComponent(d_hamiltonianInAllCells,
                           hamiltonianComponentsVec[i],
                           d_linAlgOpContext);
         }
 
       /**
-        //------------------------ print EE block---------------------------
+        //------------------------ print Hamiltonian EE block---------------------------
         const basis::BasisDofHandler &basisDofHandler =
           feBasisManager.getBasisDofHandler();
 
@@ -788,7 +820,7 @@ namespace dftefe
           rootCout << "]" <<std::endl;
         }
 
-        //------------------------ print EC block to
+        //------------------------ print Hamiltonian EC block to
       file--------------------------- std::vector<ValueTypeOperator>
       hamECBlockSTL( (nglobalClassicalIds + nglobalEnrichmentIds) *
       nglobalEnrichmentIds, 0), hamECBlockSTLTmp((nglobalClassicalIds +
@@ -932,6 +964,28 @@ namespace dftefe
       Y.accumulateAddLocallyOwned();
       if (updateGhostY)
         Y.updateGhostValues();
+
+      HamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
+
+      for (unsigned int i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
+      {
+        const Hamiltonian<ValueTypeOperand, memorySpace> &b =
+        *(std::get<Hamiltonian<ValueTypeOperand, memorySpace> *>(
+          d_hamiltonianComponentsVec[i]));
+        if(b.hasNonLocalComponent())
+        {
+          linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> temp(X, (ValueTypeOperator)0);
+          b.applyNonLocal(X, temp, updateGhostX, updateGhostY);
+          linearAlgebra::blasLapack::axpby<ValueTypeOperator, ValueTypeOperator, memorySpace>(
+            Y.getNumberComponents()*Y.localSize(),
+            (ValueTypeOperator)1.0,
+            Y.data(),
+            (ValueTypeOperator)1.0,
+            temp.data(),
+            Y.data(),
+            *X.getLinAlgOpContext());
+        }
+      }
     }
 
   } // end of namespace ksdft

@@ -228,7 +228,9 @@ namespace dftefe
 
       void
       applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X, 
-                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &Y) const override;
+                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &Y,
+                    bool updateGhostX,
+                    bool updateGhostY) const override;
 
       bool
       hasLocalComponent() const override;
@@ -238,8 +240,7 @@ namespace dftefe
 
       void
       evalEnergy(const std::vector<RealType> &                  occupation,
-        const linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &waveFn, 
-        const linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &VnonLocxWaveFn);
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X);
 
       RealType
       getEnergy() const override;
@@ -256,7 +257,7 @@ namespace dftefe
                                                       ValueTypeWaveFnCoeff,
                                                       memorySpace,
                                                       dim>> d_atomNonLocOpContext;
-      std::shared_ptr<const ElectrostaticLocalFE<ValueTypeBasisData,
+      std::shared_ptr<ElectrostaticLocalFE<ValueTypeBasisData,
                                                     ValueTypeBasisCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
