@@ -140,7 +140,8 @@ namespace dftefe
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true);
 
-      // used if delta rho approach is taken with phi total from 1D KS solve with analytical vself energy cancellation
+      // used if delta rho approach is taken with phi total from 1D KS solve
+      // with analytical vself energy cancellation
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
@@ -202,7 +203,7 @@ namespace dftefe
                                           memorySpace>> feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
-      // used if numerical poisson solve vself canellation route taken                                    
+      // used if numerical poisson solve vself canellation route taken
       void
       reinitBasis(
         const std::vector<utils::Point> &                 atomCoordinates,
@@ -230,7 +231,8 @@ namespace dftefe
                                           memorySpace>> feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
-      // used if delta rho approach is taken with phi total from 1D KS solve with analytical vself energy cancellation
+      // used if delta rho approach is taken with phi total from 1D KS solve
+      // with analytical vself energy cancellation
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
@@ -258,7 +260,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);                                          
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
       void
       reinitField(
@@ -278,7 +280,8 @@ namespace dftefe
       getFunctionalDerivative() const override;
 
       void
-      applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X, 
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X,
         linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const override;
@@ -302,16 +305,16 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclearChargeRhs);
 
-      const bool                              d_useDealiiMatrixFreePoissonSolve;
-      bool                                    d_isNumericalVSelfSolve;
-      bool                                    d_isDeltaRhoSolve;
-      const size_type                         d_maxCellBlock;
-      const size_type                         d_numComponents;
-      std::vector<utils::Point>               d_atomCoordinates;
-      const size_type                         d_numAtoms;
-      const std::vector<double>               d_atomCharges;
-      const std::vector<double>               d_smearedChargeRadius;
-      RealType                                d_energy;
+      const bool                d_useDealiiMatrixFreePoissonSolve;
+      bool                      d_isNumericalVSelfSolve;
+      bool                      d_isDeltaRhoSolve;
+      const size_type           d_maxCellBlock;
+      const size_type           d_numComponents;
+      std::vector<utils::Point> d_atomCoordinates;
+      const size_type           d_numAtoms;
+      const std::vector<double> d_atomCharges;
+      const std::vector<double> d_smearedChargeRadius;
+      RealType                  d_energy;
 
       // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpace>

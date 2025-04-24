@@ -98,7 +98,8 @@ namespace dftefe
       getFunctionalDerivative() const;
 
       void
-      applyNonLocal(linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X, 
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const override;
@@ -108,7 +109,7 @@ namespace dftefe
 
       bool
       hasNonLocalComponent() const override;
-      
+
       std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                      ValueTypeBasisData,
                                                      memorySpace,

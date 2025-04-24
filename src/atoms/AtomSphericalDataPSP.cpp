@@ -293,7 +293,7 @@ namespace dftefe
       , d_metadataNames(metadataNames)
       , d_scalarSpatialFnAfterRadialGrid(nullptr)
       , d_sphericalHarmonicFunc(sphericalHarmonicFunc)
-      , d_PSPVLocalCutoff(10.0001) //bohr
+      , d_PSPVLocalCutoff(10.0001) // bohr
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr ptrToXmlDoc;
@@ -317,7 +317,7 @@ namespace dftefe
 
       int numRadialPoints = 0;
       d_zvalance          = 0.;
-      d_lmax          = 0.;
+      d_lmax              = 0.;
 
       //
       // get metadata in PP_HEADER
@@ -360,10 +360,10 @@ namespace dftefe
                                       xPathInfo.xpath + " element in " +
                                       fileName);
             }
-            if (attrStrings[0][i].first == "l_max")
+          if (attrStrings[0][i].first == "l_max")
             {
-              convSuccess = utils::stringOps::strToInt(attrStrings[0][i].second,
-                                                       d_lmax);
+              convSuccess =
+                utils::stringOps::strToInt(attrStrings[0][i].second, d_lmax);
               utils::throwException(convSuccess,
                                     "Error while converting " +
                                       xPathInfo.xpath + " element in " +
@@ -496,8 +496,9 @@ namespace dftefe
                           utils::stringOps::strToInt(attrId.second, l);
                           utils::throwException(l >= 0,
                                                 "Non-positive l found for" +
-                                                  xPathInfo.xpath + " element in " +
-                                                  xPathInfo.fileName);    
+                                                  xPathInfo.xpath +
+                                                  " element in " +
+                                                  xPathInfo.fileName);
                           break;
                         }
                     }
@@ -521,18 +522,18 @@ namespace dftefe
                           xPathInfo.fileName);
                       qNumbersVec.push_back(qNumbers);
                     }
-                    if(maxlFromBeta < l)
-                      maxlFromBeta = l;
+                  if (maxlFromBeta < l)
+                    maxlFromBeta = l;
                 }
               else if (nodeNames[i].find("PP_DIJ") != std::string::npos)
                 {
                   d_metadata["dij"] = nodeStrings[i];
                 }
             }
-            utils::throwException(maxlFromBeta == d_lmax, 
-              "The lmax from PSP HEADER does not match from" +
-                xPathInfo.xpath + " element in " +
-                xPathInfo.fileName);
+          utils::throwException(maxlFromBeta == d_lmax,
+                                "The lmax from PSP HEADER does not match from" +
+                                  xPathInfo.xpath + " element in " +
+                                  xPathInfo.fileName);
         }
       else if (fieldName == "pswfc")
         {
@@ -684,31 +685,32 @@ namespace dftefe
               std::vector<double> radialPointsWithCutoff(0);
               std::vector<double> radialValuesWithCutoff(0);
 
-              // Larger max allowed Tail is important for pseudo-dojo database ONCV
-              // pseudopotential local potentials which have a larger data range
-              // with slow convergence to -Z/r
-              // Same value of 10.0 used as rcut in QUANTUM ESPRESSO
-              // (cf. Modules/read_pseudo.f90)
+              // Larger max allowed Tail is important for pseudo-dojo database
+              // ONCV pseudopotential local potentials which have a larger data
+              // range with slow convergence to -Z/r Same value of 10.0 used as
+              // rcut in QUANTUM ESPRESSO (cf. Modules/read_pseudo.f90)
 
-              for(int i = 0 ; i < radialValues.size() ; i++)
-              {
-                if(radialPoints[i] <= d_PSPVLocalCutoff)
+              for (int i = 0; i < radialValues.size(); i++)
                 {
-                  radialPointsWithCutoff.push_back(radialPoints[i]);
-                  radialValuesWithCutoff.push_back(radialValues[i]);
+                  if (radialPoints[i] <= d_PSPVLocalCutoff)
+                    {
+                      radialPointsWithCutoff.push_back(radialPoints[i]);
+                      radialValuesWithCutoff.push_back(radialValues[i]);
+                    }
                 }
-              }
-                
+
               d_scalarSpatialFnAfterRadialGrid =
                 std::make_shared<utils::PointChargePotentialFunction>(
                   utils::Point({0, 0, 0}),
                   -1.0 * constant * std::abs(d_zvalance));
 
 
-              double leftValue = (radialValuesWithCutoff[1] - radialValuesWithCutoff[0]) /
-                            (radialPointsWithCutoff[1] - radialPointsWithCutoff[0]);
+              double leftValue =
+                (radialValuesWithCutoff[1] - radialValuesWithCutoff[0]) /
+                (radialPointsWithCutoff[1] - radialPointsWithCutoff[0]);
               double rightValue =
-                (-1.0) * std::abs(radialValuesWithCutoff.back() / radialPointsWithCutoff.back());
+                (-1.0) * std::abs(radialValuesWithCutoff.back() /
+                                  radialPointsWithCutoff.back());
 
               utils::Spline::bd_type left = utils::Spline::bd_type::first_deriv;
               utils::Spline::bd_type right =
@@ -742,40 +744,42 @@ namespace dftefe
     void
     AtomSphericalDataPSP::addFieldName(const std::string fieldName)
     {
-      if (std::find(d_fieldNames.begin(), d_fieldNames.end(), fieldName) != d_fieldNames.end()) 
-      {
-        utils::throwException(false,
-        "Field " + fieldName +
-          " is already given to AtomSphericalDataPSP " + d_fileName);
-      }
+      if (std::find(d_fieldNames.begin(), d_fieldNames.end(), fieldName) !=
+          d_fieldNames.end())
+        {
+          utils::throwException(false,
+                                "Field " + fieldName +
+                                  " is already given to AtomSphericalDataPSP " +
+                                  d_fileName);
+        }
       else
-      {
-        xmlDocPtr ptrToXmlDoc;
-        d_rootElementName  = "/UPF";
-        std::string ns     = "dummy";
-        std::string nsHRef = "dummy";
-        ptrToXmlDoc        = AtomSphericalDataPSPXMLLocal::getDoc(d_fileName);
-  
-        XPathInfo xPathInfo;
-        xPathInfo.fileName = d_fileName;
-        xPathInfo.doc      = ptrToXmlDoc;
-        xPathInfo.ns       = ns;
-        xPathInfo.nsHRef   = nsHRef;
+        {
+          xmlDocPtr ptrToXmlDoc;
+          d_rootElementName  = "/UPF";
+          std::string ns     = "dummy";
+          std::string nsHRef = "dummy";
+          ptrToXmlDoc        = AtomSphericalDataPSPXMLLocal::getDoc(d_fileName);
 
-        std::vector<std::shared_ptr<SphericalData>> sphericalDataVec(0);
-        std::map<std::vector<int>, size_type>       qNumbersToIdMap;
-        getSphericalDataFromXMLNode(sphericalDataVec,
-                                    d_radialPoints,
-                                    xPathInfo,
-                                    fieldName,
-                                    d_sphericalHarmonicFunc);
-        storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
-        d_sphericalData[fieldName]   = sphericalDataVec;
-        d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;
+          XPathInfo xPathInfo;
+          xPathInfo.fileName = d_fileName;
+          xPathInfo.doc      = ptrToXmlDoc;
+          xPathInfo.ns       = ns;
+          xPathInfo.nsHRef   = nsHRef;
 
-        xmlFreeDoc(ptrToXmlDoc);
-        xmlCleanupParser();
-      }
+          std::vector<std::shared_ptr<SphericalData>> sphericalDataVec(0);
+          std::map<std::vector<int>, size_type>       qNumbersToIdMap;
+          getSphericalDataFromXMLNode(sphericalDataVec,
+                                      d_radialPoints,
+                                      xPathInfo,
+                                      fieldName,
+                                      d_sphericalHarmonicFunc);
+          storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
+          d_sphericalData[fieldName]   = sphericalDataVec;
+          d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;
+
+          xmlFreeDoc(ptrToXmlDoc);
+          xmlCleanupParser();
+        }
     }
 
     std::string

@@ -46,8 +46,9 @@ namespace dftefe
                          const std::vector<std::string> & atomSymbol,
                          const std::vector<utils::Point> &atomCoordinates,
                          const std::string                fieldName,
-                         const size_type derivativeType,
-                         const size_type sphericalValPower = 2 /* for Adaptive Quad */); // give arguments here
+                         const size_type                  derivativeType,
+                         const size_type                  sphericalValPower =
+                           2 /* for Adaptive Quad */); // give arguments here
       double
       operator()(const utils::Point &point) const override;
       std::vector<double>
@@ -55,12 +56,12 @@ namespace dftefe
 
     private:
       const std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                d_atomSphericalDataContainer;
-      const std::vector<std::string>  d_atomSymbolVec;
-      std::vector<utils::Point> d_atomCoordinatesVec;
-      const std::string               d_fieldName;
-      const size_type                 d_derivativeType;
-      const size_type                 d_sphericalValPower;
+                                     d_atomSphericalDataContainer;
+      const std::vector<std::string> d_atomSymbolVec;
+      std::vector<utils::Point>      d_atomCoordinatesVec;
+      const std::string              d_fieldName;
+      const size_type                d_derivativeType;
+      const size_type                d_sphericalValPower;
     };
 
   } // namespace atoms

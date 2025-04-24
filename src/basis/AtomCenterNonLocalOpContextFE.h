@@ -107,7 +107,9 @@ namespace dftefe
 
       // size is localProjNum(numDofs partiitoned) x numVec(numComp)
       // mutable so that it can be reinited inside apply if block size changes
-      mutable std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_CX;
+      mutable std::shared_ptr<
+        linearAlgebra::MultiVector<ValueType, memorySpace>>
+        d_CX;
 
       // size id localProjNum x localProjNum
       utils::MemoryStorage<ValueTypeOperator, memorySpace> d_V;
@@ -139,7 +141,8 @@ namespace dftefe
       std::unordered_map<std::string, std::vector<double>>
                                            d_atomSymbolToCouplingConstVecMap;
       std::unordered_map<std::string, int> d_atomSymbolToNumProjMap;
-      std::unordered_map<std::string, std::vector<int>> d_atomSymbolToBetaIndexVecMap;      
+      std::unordered_map<std::string, std::vector<int>>
+        d_atomSymbolToBetaIndexVecMap;
 
       const std::vector<std::string> & d_atomSymbolVec;
       const std::vector<utils::Point> &d_atomCoordinatesVec;

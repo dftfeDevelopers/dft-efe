@@ -446,7 +446,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction                                    
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction
         /*std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData,
                                           memorySpace>> feBDHamiltonianElec*/)
@@ -1980,12 +1980,15 @@ namespace dftefe
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
                          memorySpace,
-                         dim>::applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X, 
-                          linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
-                          bool updateGhostX,
-                          bool updateGhostY) const
+                         dim>::
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const
     {
-      utils::throwException(false,
+      utils::throwException(
+        false,
         "Non-Local component not present to call in ElectrostaticLocalFE.h");
     }
 

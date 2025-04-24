@@ -74,11 +74,11 @@ namespace dftefe
 
       using Storage = utils::MemoryStorage<ValueTypeOperator, memorySpace>;
 
-      using HamiltonianPtrVariant =
-        std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                     std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                     std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
+      using HamiltonianPtrVariant = std::variant<
+        std::shared_ptr<Hamiltonian<float, memorySpace>>,
+        std::shared_ptr<Hamiltonian<double, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
 
     public:
       /**
@@ -88,7 +88,7 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
             &                                        feBasisManager,
-        const std::vector<HamiltonianPtrVariant>     &hamiltonianComponentsVec,
+        const std::vector<HamiltonianPtrVariant> &   hamiltonianComponentsVec,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const size_type                              maxCellBlock,
         const size_type                              maxWaveFnBatch);
@@ -99,7 +99,7 @@ namespace dftefe
       reinit(const basis::FEBasisManager<ValueTypeOperand,
                                          ValueTypeBasisData,
                                          memorySpace,
-                                         dim> & feBasisManager,
+                                         dim> &        feBasisManager,
              const std::vector<HamiltonianPtrVariant> &hamiltonianVec);
 
       void

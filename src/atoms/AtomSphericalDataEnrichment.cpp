@@ -644,7 +644,8 @@ namespace dftefe
     void
     AtomSphericalDataEnrichment::addFieldName(const std::string fieldName)
     {
-      utils::throwException(false,
+      utils::throwException(
+        false,
         "addFieldName() not yet implemented in AtomSphericalDataEnrichment class.");
     }
 
