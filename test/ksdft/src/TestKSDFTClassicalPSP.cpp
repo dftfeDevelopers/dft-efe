@@ -123,11 +123,10 @@ int main()
 
   double    smearingTemperature = 500.0;
   double    fermiEnergyTolerance = 1e-10;
-  double    fracOccupancyTolerance = 1e-7;
-  double    eigenSolveResidualTolerance = 1e-7;
-  size_type chebyshevPolynomialDegree = 40;
-  size_type maxChebyshevFilterPass = 100;
-  size_type numWantedEigenvalues = 15;
+  double    fracOccupancyTolerance = 1e-3;
+  double    eigenSolveResidualTolerance = 1e-2;
+  size_type maxChebyshevFilterPass = 10;
+  size_type numWantedEigenvalues = 4;
   size_type numElectrons = 1;
   double nuclearCharge = -1.0;
 
@@ -345,7 +344,9 @@ int main()
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBasisData,
-                                                      50);
+                                                      50,
+                                                      50,
+                                                      linAlgOpContext);
 
   // Set up the quadrature rule
 
@@ -413,7 +414,6 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         fracOccupancyTolerance,
                                         eigenSolveResidualTolerance,
                                         scfDensityResidualNormTolerance,
-                                        chebyshevPolynomialDegree,
                                         maxChebyshevFilterPass,
                                         maxSCFIter,
                                         evaluateEnergyEverySCF,
@@ -429,11 +429,10 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         feBasisData, 
                                         feBasisData,        
                                         feBasisData, 
-                                        feBasisData,                                                                                                                      
+                                        feBasisData,    
+                                        feBasisData,                                                                                                                   
                                         *externalPotentialFunction,
                                         linAlgOpContext,
-                                        50,
-                                        50,
                                         *MContextForInv,
                                         *MContextForInv,
                                         *MInvContext);
