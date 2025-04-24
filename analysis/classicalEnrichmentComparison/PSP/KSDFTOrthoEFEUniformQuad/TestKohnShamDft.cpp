@@ -29,6 +29,7 @@
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
+#include <basis/OEFEAtomBlockOverlapInvOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
@@ -1266,7 +1267,8 @@ int main(int argc, char** argv)
                                                         *cfeBasisDataStorageGLLEigen,
                                                         *efeBasisDataAdaptiveOrbital,
                                                         *cfeBasisDataStorageGLLEigen,
-                                                        linAlgOpContext);  
+                                                        linAlgOpContext,
+                                                        true);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
     p.registerStart("Hamiltonian Basis overlap inverse eval");
@@ -1274,7 +1276,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
                                                    Host>> MInvContext =
-    std::make_shared<basis::OrthoEFEOverlapInverseOpContextGLL<double,
+    std::make_shared<basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<double,
                                                    double,
                                                    Host,
                                                    dim>>

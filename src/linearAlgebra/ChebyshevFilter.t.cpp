@@ -319,8 +319,8 @@ namespace dftefe
       // eigenValuesFiltered1 * eigenValuesFiltered
       linearAlgebra::blasLapack::
         axpbyBlocked<ValueType, ValueType, memorySpace>(
-          eigenValuesFiltered2.size(),
           1,
+          eigenValuesFiltered2.size(),
           1,
           ones.data(),
           eigenValuesFiltered2.data(),
@@ -404,8 +404,8 @@ namespace dftefe
           // eigenValuesFiltered2 * eigenValuesFiltered
           linearAlgebra::blasLapack::
             axpbyBlocked<ValueType, ValueType, memorySpace>(
-              eigenValuesFiltered1.size(),
               1,
+              eigenValuesFiltered1.size(),
               1,
               ones.data(),
               eigenValuesFiltered1.data(),
