@@ -319,7 +319,7 @@ namespace dftefe
                                                  memorySpace>(),
         bool isResidualChebyshevFilter = true);
 
-      //// used if analytical vself canellation route taken
+      //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
