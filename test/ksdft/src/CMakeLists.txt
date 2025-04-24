@@ -41,4 +41,9 @@ if(ENABLE_MPI)
 	add_executable(TestHXOrthoEFE TestHXOrthoEFE.cpp )
 	target_link_libraries(TestHXOrthoEFE PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms dft-efe-ksdft)
 	set_target_properties(TestHXOrthoEFE PROPERTIES OUTPUT_NAME "TestHXOrthoEFE" SUFFIX ".x")		
+
+	add_executable(TestKSDFTClassicalPSP TestKSDFTClassicalPSP.cpp )
+	target_link_libraries(TestKSDFTClassicalPSP PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms dft-efe-ksdft)
+	set_target_properties(TestKSDFTClassicalPSP PROPERTIES OUTPUT_NAME "TestKSDFTClassicalPSP" SUFFIX ".x")	
+
 endif()

@@ -53,10 +53,10 @@ namespace dftefe
     {
     public:
       using HamiltonianPtrVariant =
-        std::variant<Hamiltonian<float, memorySpace> *,
-                     Hamiltonian<double, memorySpace> *,
-                     Hamiltonian<std::complex<float>, memorySpace> *,
-                     Hamiltonian<std::complex<double>, memorySpace> *>;
+        std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
+                     std::shared_ptr<Hamiltonian<double, memorySpace>>,
+                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+                     std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
 
       using ValueTypeOperator =
         linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
