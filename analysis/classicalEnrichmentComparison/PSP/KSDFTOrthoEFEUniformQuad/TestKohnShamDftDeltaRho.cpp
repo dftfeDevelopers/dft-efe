@@ -579,7 +579,9 @@ int main(int argc, char** argv)
   std::vector<std::string> fieldNames{"density","vtotal","orbital"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
   std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
-      std::make_shared<atoms::AtomSphericalDataContainer>(atomSymbolToFilename,
+      std::make_shared<atoms::AtomSphericalDataContainer>(
+                                                      atoms::AtomSphericalDataType::ENRICHMENT,
+                                                      atomSymbolToFilename,
                                                       fieldNames,
                                                       metadataNames);
 

@@ -97,6 +97,18 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
       getFunctionalDerivative() const;
 
+      void
+      applyNonLocal(linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X, 
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const override;
+
+      bool
+      hasLocalComponent() const override;
+
+      bool
+      hasNonLocalComponent() const override;
+      
       std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                      ValueTypeBasisData,
                                                      memorySpace,

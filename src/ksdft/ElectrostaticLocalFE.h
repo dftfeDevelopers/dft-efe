@@ -277,6 +277,18 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
       getFunctionalDerivative() const override;
 
+      void
+      applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X, 
+        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const override;
+
+      bool
+      hasLocalComponent() const override;
+
+      bool
+      hasNonLocalComponent() const override;
+
     private:
       /* Solves the nuclear potential problem, gets \sum \integral b_sm*V_sm ,
        * gets \sum \integral V_sm * rho, \sum V_smAtRhoQuadPts
