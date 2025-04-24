@@ -43,10 +43,10 @@ namespace dftefe
         addLocalComponent(
           utils::MemoryStorage<ValueTypeOperator, memorySpace>
             &localHamiltonianCumulative,
-          std::variant<Hamiltonian<float, memorySpace> *,
-                       Hamiltonian<double, memorySpace> *,
-                       Hamiltonian<std::complex<float>, memorySpace> *,
-                       Hamiltonian<std::complex<double>, memorySpace> *>
+          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
@@ -65,18 +65,18 @@ namespace dftefe
         static void
         addLocalComponent(
           utils::MemoryStorage<float, memorySpace> &localHamiltonianCumulative,
-          std::variant<Hamiltonian<float, memorySpace> *,
-                       Hamiltonian<double, memorySpace> *,
-                       Hamiltonian<std::complex<float>, memorySpace> *,
-                       Hamiltonian<std::complex<double>, memorySpace> *>
+          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
+          if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
-                *(std::get<Hamiltonian<float, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {
@@ -110,18 +110,18 @@ namespace dftefe
         static void
         addLocalComponent(
           utils::MemoryStorage<double, memorySpace> &localHamiltonianCumulative,
-          std::variant<Hamiltonian<float, memorySpace> *,
-                       Hamiltonian<double, memorySpace> *,
-                       Hamiltonian<std::complex<float>, memorySpace> *,
-                       Hamiltonian<std::complex<double>, memorySpace> *>
+          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<Hamiltonian<double, memorySpace> *>(
+          if (std::holds_alternative<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<double, memorySpace> &b =
-                *(std::get<Hamiltonian<double, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {
@@ -143,11 +143,11 @@ namespace dftefe
                 linAlgOpContext);
               }
             }
-          else if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
+          else if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
-                *(std::get<Hamiltonian<float, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {
@@ -188,18 +188,18 @@ namespace dftefe
         addLocalComponent(
           utils::MemoryStorage<std::complex<float>, memorySpace>
             &localHamiltonianCumulative,
-          std::variant<Hamiltonian<float, memorySpace> *,
-                       Hamiltonian<double, memorySpace> *,
-                       Hamiltonian<std::complex<float>, memorySpace> *,
-                       Hamiltonian<std::complex<double>, memorySpace> *>
+          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<Hamiltonian<double, memorySpace> *>(
+          if (std::holds_alternative<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<double, memorySpace> &b =
-                *(std::get<Hamiltonian<double, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {
@@ -222,11 +222,11 @@ namespace dftefe
                   linAlgOpContext);
               }
             }
-          else if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
+          else if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
-                *(std::get<Hamiltonian<float, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {
@@ -250,11 +250,11 @@ namespace dftefe
               }
             }
           else if (std::holds_alternative<
-                     Hamiltonian<std::complex<float>, memorySpace> *>(
+                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<std::complex<float>, memorySpace> &b =
-                *(std::get<Hamiltonian<std::complex<float>, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {                  
@@ -296,18 +296,18 @@ namespace dftefe
         addLocalComponent(
           utils::MemoryStorage<std::complex<double>, memorySpace>
             &localHamiltonianCumulative,
-          std::variant<Hamiltonian<float, memorySpace> *,
-                       Hamiltonian<double, memorySpace> *,
-                       Hamiltonian<std::complex<float>, memorySpace> *,
-                       Hamiltonian<std::complex<double>, memorySpace> *>
+          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<Hamiltonian<double, memorySpace> *>(
+          if (std::holds_alternative<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<double, memorySpace> &b =
-                *(std::get<Hamiltonian<double, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {                  
@@ -330,11 +330,11 @@ namespace dftefe
                   linAlgOpContext);
               }
             }
-          else if (std::holds_alternative<Hamiltonian<float, memorySpace> *>(
+          else if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
-                *(std::get<Hamiltonian<float, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {                  
@@ -358,11 +358,11 @@ namespace dftefe
               }
             }
           else if (std::holds_alternative<
-                     Hamiltonian<std::complex<float>, memorySpace> *>(
+                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<std::complex<float>, memorySpace> &b =
-                *(std::get<Hamiltonian<std::complex<float>, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {                  
@@ -386,11 +386,11 @@ namespace dftefe
               }
             }
           else if (std::holds_alternative<
-                     Hamiltonian<std::complex<double>, memorySpace> *>(
+                     std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<std::complex<double>, memorySpace> &b =
-                *(std::get<Hamiltonian<std::complex<double>, memorySpace> *>(
+                *(std::get<std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>(
                   hamiltonianComponent));
               if(b.hasLocalComponent())
               {                 
@@ -970,7 +970,7 @@ namespace dftefe
       for (unsigned int i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
       {
         const Hamiltonian<ValueTypeOperand, memorySpace> &b =
-        *(std::get<Hamiltonian<ValueTypeOperand, memorySpace> *>(
+        *(std::get<std::shared_ptr<Hamiltonian<ValueTypeOperand, memorySpace>>>(
           d_hamiltonianComponentsVec[i]));
         if(b.hasNonLocalComponent())
         {

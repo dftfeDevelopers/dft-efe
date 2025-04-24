@@ -398,7 +398,7 @@ namespace dftefe
                                                   d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+        d_hamitonianKin, d_hamiltonianElectroExc};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -692,7 +692,7 @@ namespace dftefe
                                                   d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+        d_hamitonianKin, d_hamiltonianElectroExc};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -997,7 +997,7 @@ namespace dftefe
                                                   d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+        d_hamitonianKin, d_hamiltonianElectroExc};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -1186,17 +1186,12 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
-      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                      ValueTypeWaveFunctionBasis,
-                                      memorySpace,
-                                      dim> &feDofHandlerWF =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                                     ValueTypeWaveFunctionBasis,
-                                                     memorySpace,
-                                                     dim> &>(
-          feBMWaveFn->getBasisDofHandler());
-
-      if (&feDofHandlerWF != nullptr)
+      if (dynamic_cast<
+            const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim> *>(
+            &feBMWaveFn->getBasisDofHandler()) != nullptr)
         d_isOEFEBasis = true;
       else
         d_isOEFEBasis = false;
@@ -1294,7 +1289,7 @@ namespace dftefe
                                                   d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+        d_hamitonianKin, d_hamiltonianElectroExc};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -1484,17 +1479,12 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
-      const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                      ValueTypeWaveFunctionBasis,
-                                      memorySpace,
-                                      dim> &feDofHandlerWF =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-                                                     ValueTypeWaveFunctionBasis,
-                                                     memorySpace,
-                                                     dim> &>(
-          feBMWaveFn->getBasisDofHandler());
-
-      if (&feDofHandlerWF != nullptr)
+      if (dynamic_cast<
+            const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim> *>(
+            &feBMWaveFn->getBasisDofHandler()) != nullptr)
         d_isOEFEBasis = true;
       else
         d_isOEFEBasis = false;
@@ -1594,7 +1584,7 @@ namespace dftefe
                                                   d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+        d_hamitonianKin, d_hamiltonianElectroExc};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -1823,7 +1813,7 @@ namespace dftefe
               d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
 
               std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-                d_hamitonianKin.get(), d_hamiltonianElectroExc.get()};
+                d_hamitonianKin, d_hamiltonianElectroExc};
 
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
