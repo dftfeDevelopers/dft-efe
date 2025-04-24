@@ -1,0 +1,13 @@
+<map id="dftefe::basis::EnrichmentClassicalInterfaceSpherical::EnrichmentClassicalInterfaceSpherical" name="dftefe::basis::EnrichmentClassicalInterfaceSpherical::EnrichmentClassicalInterfaceSpherical">
+<area shape="rect" id="node1" title="This Constructor for augmenting the orthogonalized EFE basis with classical FE basis...." alt="" coords="5,206,256,261"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra.html#a766e66f0b452363ea0cee6a1f9f1a3a9" title="A class that implements the Conjugate&#45;Gradient (CG) based Krylov subspace algorithm to solve a linear..." alt="" coords="329,5,465,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="304,69,489,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a3afc485855e7db0eb90818d6dfb8380c" title=" " alt="" coords="307,134,487,189"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1utils_1_1mpi.html#a3b05e5595a7722e00fd818e897c76e1d" title=" " alt="" coords="337,213,457,253"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1utils_1_1mpi.html#a711d95924eb30eaf8755518cfcb77be1" title=" " alt="" coords="339,277,454,317"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1utils_1_1ConditionalOStream.html#a53f4faa0e39e019a0f329bd39cfa8cc2" title="Function to set the condition for printing to the output stream associated with this object." alt="" coords="319,341,474,381"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="307,406,486,431"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1atoms.html#a99121cbfcff880402eeb4b43b1c21871" title=" " alt="" coords="538,109,739,149"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a2dbdf6ba043739168fe1b8dc13ca9f91" title="Template for performing &#160;alpha &#160;z_i = x_i * y_i$." alt="" coords="537,173,740,213"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a5997fb179977b61e130ab5b6492527e1" title="Template for performing &#160;z_i = x_i * y_i$." alt="" coords="788,166,991,221"/>
+</map>

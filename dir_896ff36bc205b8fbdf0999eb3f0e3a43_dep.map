@@ -1,0 +1,12 @@
+<map id="src/electrostatics" name="src/electrostatics">
+<area shape="rect" id="node1" href="dir_18c000f29810c4cebb9ce27f7da24743.html" title="basis" alt="" coords="27,125,80,151"/>
+<area shape="rect" id="node2" href="dir_21fb54afea63b47fb6e7e0b55bb2b7a3.html" title="linearAlgebra" alt="" coords="105,125,202,151"/>
+<area shape="rect" id="node3" href="dir_264321be3574e3b1cf375050e213576e.html" title="quadrature" alt="" coords="227,125,309,151"/>
+<area shape="rect" id="node4" href="dir_313caf1132e152dd9b58bea13a4052ca.html" title="utils" alt="" coords="334,125,381,151"/>
+<area shape="rect" id="node5" href="dir_896ff36bc205b8fbdf0999eb3f0e3a43.html" title="electrostatics" alt="" coords="161,52,261,77"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000002_000001.html" title="14" alt="" coords="92,118,107,132"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000002_000004.html" title="13" alt="" coords="174,109,188,123"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000002_000005.html" title="3" alt="" coords="249,98,257,113"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000002_000007.html" title="8" alt="" coords="317,103,325,117"/>
+<area shape="rect" id="clust1" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html" title="src" alt="" coords="16,16,392,161"/>
+</map>

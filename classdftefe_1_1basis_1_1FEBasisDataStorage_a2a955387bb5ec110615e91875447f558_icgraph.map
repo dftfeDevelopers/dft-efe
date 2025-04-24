@@ -1,0 +1,13 @@
+<map id="dftefe::basis::FEBasisDataStorage::getBasisDofHandler" name="dftefe::basis::FEBasisDataStorage::getBasisDofHandler">
+<area shape="rect" id="node1" title=" " alt="" coords="615,249,804,289"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="317,5,545,60"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#ae1ec3b8ed7ad7102971db8615b79d1ef" title=" " alt="" coords="332,84,531,139"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#ab959c37f2267a1543c9edba1421f0369" title=" " alt="" coords="307,163,555,217"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a11dd09df323caf7b6bc541b969271eb0" title=" " alt="" coords="336,241,527,296"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLL.html#aa2bfaccb251079725142675d7e4437e2" title=" " alt="" coords="296,320,567,375"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a41d13bfdd3ee7fcdddfaa539df5284dc" title=" " alt="" coords="302,399,561,453"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a5939179aaaad0c8ab9e485585dc7845b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="320,477,543,532"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a9b2035250e2ffc9b1333a0c3b3aa012b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="15,84,238,139"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a69807721f1faac6867753922da46653d" title="Constructor for getting the overlap matrix operator." alt="" coords="9,163,244,217"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a9a32b16b766a0442bead8f19040ddf68" title="Constructor." alt="" coords="5,241,248,296"/>
+</map>
