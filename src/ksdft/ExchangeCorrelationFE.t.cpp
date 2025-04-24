@@ -418,12 +418,15 @@ namespace dftefe
     ExchangeCorrelationFE<ValueTypeBasisData,
                           ValueTypeBasisCoeff,
                           memorySpace,
-                          dim>::applyNonLocal(linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X, 
-                            linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
-                            bool updateGhostX,
-                            bool updateGhostY) const
+                          dim>::
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const
     {
-      utils::throwException(false,
+      utils::throwException(
+        false,
         "Non-Local component not present to call in ExchangeCorrelationFE.h");
     }
 

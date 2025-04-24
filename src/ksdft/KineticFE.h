@@ -89,7 +89,8 @@ namespace dftefe
       getEnergy() const override;
 
       void
-      applyNonLocal(linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X, 
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const override;
@@ -99,7 +100,7 @@ namespace dftefe
 
       bool
       hasNonLocalComponent() const override;
-      
+
     private:
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>

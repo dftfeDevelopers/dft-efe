@@ -52,11 +52,11 @@ namespace dftefe
     class KohnShamDFT
     {
     public:
-      using HamiltonianPtrVariant =
-        std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                     std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                     std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
+      using HamiltonianPtrVariant = std::variant<
+        std::shared_ptr<Hamiltonian<float, memorySpace>>,
+        std::shared_ptr<Hamiltonian<double, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
 
       using ValueTypeOperator =
         linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
@@ -236,7 +236,8 @@ namespace dftefe
                                                  memorySpace>(),
         bool isResidualChebyshevFilter = true);
 
-      // used if delta rho approach is taken with phi total from 1D KS solve with analytical vself energy cancellation
+      // used if delta rho approach is taken with phi total from 1D KS solve
+      // with analytical vself energy cancellation
       KohnShamDFT(
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
@@ -398,7 +399,8 @@ namespace dftefe
         bool isResidualChebyshevFilter = true);
 
 
-      // used if delta rho with PSP approach is taken with phi total from 1D KS solve with analytical vself energy cancellation
+      // used if delta rho with PSP approach is taken with phi total from 1D KS
+      // solve with analytical vself energy cancellation
       KohnShamDFT(
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
@@ -515,10 +517,10 @@ namespace dftefe
                                             dim>>
         d_hamitonianXC;
       std::shared_ptr<ElectrostaticFE<ValueTypeElectrostaticsBasis,
-                                           ValueTypeElectrostaticsCoeff,
-                                           ValueTypeWaveFunctionBasis,
-                                           memorySpace,
-                                           dim>>
+                                      ValueTypeElectrostaticsCoeff,
+                                      ValueTypeWaveFunctionBasis,
+                                      memorySpace,
+                                      dim>>
         d_hamitonianElec;
       std::shared_ptr<KineticFE<ValueTypeWaveFunctionBasis,
                                 ValueTypeWaveFunctionCoeff,

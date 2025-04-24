@@ -84,13 +84,12 @@ namespace dftefe
     }
 
     void
-    AtomSphericalDataContainer::addFieldName(
-      const std::string fieldName)
+    AtomSphericalDataContainer::addFieldName(const std::string fieldName)
     {
-      for(auto &pair : d_mapAtomSymbolToAtomSphericalData)
-      {
-        pair.second->addFieldName(fieldName);
-      }
+      for (auto &pair : d_mapAtomSymbolToAtomSphericalData)
+        {
+          pair.second->addFieldName(fieldName);
+        }
     }
 
     const std::vector<std::shared_ptr<SphericalData>> &

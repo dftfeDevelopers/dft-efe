@@ -102,7 +102,8 @@ namespace dftefe
       getEnergy() const override;
 
       void
-      applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &X, 
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &X,
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const override;

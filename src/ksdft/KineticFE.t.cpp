@@ -255,13 +255,14 @@ namespace dftefe
               size_type          dim>
     void
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      applyNonLocal(linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X, 
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const
     {
-      utils::throwException(false,
-                            "Non-Local component not present to call in KineticFE.h");
+      utils::throwException(
+        false, "Non-Local component not present to call in KineticFE.h");
     }
 
     template <typename ValueTypeBasisData,

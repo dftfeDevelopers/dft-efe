@@ -306,13 +306,15 @@ namespace dftefe
                                             memorySpace,
                                             dim> *>(
             &feBMWaveFn->getBasisDofHandler()) != nullptr)
-      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
-        ValueTypeWaveFunctionBasis,
-        memorySpace,
-        dim> *>(&feBMWaveFn->getBasisDofHandler()) != nullptr)
-        d_isOEFEBasis = true;
-      else
-        d_isOEFEBasis = false;
+        if (dynamic_cast<
+              const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
+                                              ValueTypeWaveFunctionBasis,
+                                              memorySpace,
+                                              dim> *>(
+              &feBMWaveFn->getBasisDofHandler()) != nullptr)
+          d_isOEFEBasis = true;
+        else
+          d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
@@ -1087,7 +1089,7 @@ namespace dftefe
         }
     }
 
-    
+
     template <typename ValueTypeElectrostaticsCoeff,
               typename ValueTypeElectrostaticsBasis,
               typename ValueTypeWaveFunctionCoeff,
@@ -1149,7 +1151,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDEXCHamiltonian,
-        const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        const std::map<std::string, std::string> &      atomSymbolToPSPFilename,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
         const OpContext &MContextForInv,
@@ -1251,26 +1253,26 @@ namespace dftefe
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                                              ValueTypeElectrostaticsCoeff,
-                                              ValueTypeWaveFunctionBasis,
-                                              ValueTypeWaveFunctionCoeff,
-                                              memorySpace,
-                                              dim>>(
-        atomCoordinates,
-        atomCharges,
-        atomSymbolVec,
-        atomSymbolToPSPFilename,
-        smearedChargeRadius,
-        d_densityInQuadValues,
-        feBMTotalCharge,
-        feBMWaveFn,                                                     
-        feBDTotalChargeStiffnessMatrix,
-        feBDNuclearChargeRhs,
-        feBDElectronicChargeRhs,
-        feBDElectrostaticsHamiltonian,
-        linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE,
-        numWantedEigenvalues);
+                                                   ValueTypeElectrostaticsCoeff,
+                                                   ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(
+          atomCoordinates,
+          atomCharges,
+          atomSymbolVec,
+          atomSymbolToPSPFilename,
+          smearedChargeRadius,
+          d_densityInQuadValues,
+          feBMTotalCharge,
+          feBMWaveFn,
+          feBDTotalChargeStiffnessMatrix,
+          feBDNuclearChargeRhs,
+          feBDElectronicChargeRhs,
+          feBDElectrostaticsHamiltonian,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          numWantedEigenvalues);
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1442,7 +1444,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDEXCHamiltonian,
-        const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        const std::map<std::string, std::string> &      atomSymbolToPSPFilename,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
         const OpContext &MContextForInv,
@@ -1544,28 +1546,28 @@ namespace dftefe
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                                              ValueTypeElectrostaticsCoeff,
-                                              ValueTypeWaveFunctionBasis,
-                                              ValueTypeWaveFunctionCoeff,
-                                              memorySpace,
-                                              dim>>(
-        atomCoordinates,
-        atomCharges,
-        atomSymbolVec,
-        atomSymbolToPSPFilename,
-        smearedChargeRadius,
-        d_densityInQuadValues,
-        atomicTotalElecPotNuclearQuad,
-        atomicTotalElecPotElectronicQuad,
-        feBMTotalCharge,
-        feBMWaveFn,                                                     
-        feBDTotalChargeStiffnessMatrix,
-        feBDNuclearChargeRhs,
-        feBDElectronicChargeRhs,
-        feBDElectrostaticsHamiltonian,
-        linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE,
-        numWantedEigenvalues);
+                                                   ValueTypeElectrostaticsCoeff,
+                                                   ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(
+          atomCoordinates,
+          atomCharges,
+          atomSymbolVec,
+          atomSymbolToPSPFilename,
+          smearedChargeRadius,
+          d_densityInQuadValues,
+          atomicTotalElecPotNuclearQuad,
+          atomicTotalElecPotElectronicQuad,
+          feBMTotalCharge,
+          feBMWaveFn,
+          feBDTotalChargeStiffnessMatrix,
+          feBDNuclearChargeRhs,
+          feBDElectronicChargeRhs,
+          feBDElectrostaticsHamiltonian,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          numWantedEigenvalues);
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1686,25 +1688,25 @@ namespace dftefe
     {
       d_isSolved = true;
 
-      if(auto hamiltonian = std::dynamic_pointer_cast<
-          ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-            ValueTypeElectrostaticsCoeff,
-            ValueTypeWaveFunctionBasis,
-            memorySpace,
-            dim>>(d_hamitonianElec))
-      {
-        hamiltonian->evalEnergy();
-      }
-      else if(auto hamiltonian = std::dynamic_pointer_cast<
-        ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-          ValueTypeElectrostaticsCoeff,
-          ValueTypeWaveFunctionBasis,
-          ValueTypeWaveFunctionCoeff,
-          memorySpace,
-          dim>>(d_hamitonianElec))
-      {
-        hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
-      }
+      if (auto hamiltonian = std::dynamic_pointer_cast<
+            ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                 ValueTypeElectrostaticsCoeff,
+                                 ValueTypeWaveFunctionBasis,
+                                 memorySpace,
+                                 dim>>(d_hamitonianElec))
+        {
+          hamiltonian->evalEnergy();
+        }
+      else if (auto hamiltonian = std::dynamic_pointer_cast<
+                 ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                           ValueTypeElectrostaticsCoeff,
+                                           ValueTypeWaveFunctionBasis,
+                                           ValueTypeWaveFunctionCoeff,
+                                           memorySpace,
+                                           dim>>(d_hamitonianElec))
+        {
+          hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
+        }
 
       RealType elecEnergy = d_hamitonianElec->getEnergy();
       d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
@@ -1792,26 +1794,26 @@ namespace dftefe
               d_rootCout << "Electron density in : " << totalDensityInQuad
                          << "\n";
 
-              if(auto hamiltonian = std::dynamic_pointer_cast<
-                  ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                    ValueTypeElectrostaticsCoeff,
-                    ValueTypeWaveFunctionBasis,
-                    memorySpace,
-                    dim>>(d_hamitonianElec))
-              {
-                hamiltonian->reinitField(d_densityInQuadValues);
-              }
-              else if(auto hamiltonian = std::dynamic_pointer_cast<
-                ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                  ValueTypeElectrostaticsCoeff,
-                  ValueTypeWaveFunctionBasis,
-                  ValueTypeWaveFunctionCoeff,
-                  memorySpace,
-                  dim>>(d_hamitonianElec))
-              {
-                hamiltonian->reinitField(d_densityInQuadValues);
-              }              
-              
+              if (auto hamiltonian = std::dynamic_pointer_cast<
+                    ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                         ValueTypeElectrostaticsCoeff,
+                                         ValueTypeWaveFunctionBasis,
+                                         memorySpace,
+                                         dim>>(d_hamitonianElec))
+                {
+                  hamiltonian->reinitField(d_densityInQuadValues);
+                }
+              else if (auto hamiltonian = std::dynamic_pointer_cast<
+                         ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                                   ValueTypeElectrostaticsCoeff,
+                                                   ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(d_hamitonianElec))
+                {
+                  hamiltonian->reinitField(d_densityInQuadValues);
+                }
+
               d_hamitonianXC->reinitField(d_densityInQuadValues);
 
               d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
@@ -1989,25 +1991,25 @@ namespace dftefe
           // check residual in density if else
           if (d_evaluateEnergyEverySCF)
             {
-              if(auto hamiltonian = std::dynamic_pointer_cast<
-                  ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                    ValueTypeElectrostaticsCoeff,
-                    ValueTypeWaveFunctionBasis,
-                    memorySpace,
-                    dim>>(d_hamitonianElec))
-              {
-                hamiltonian->reinitField(d_densityOutQuadValues);
-              }
-              else if(auto hamiltonian = std::dynamic_pointer_cast<
-                ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                  ValueTypeElectrostaticsCoeff,
-                  ValueTypeWaveFunctionBasis,
-                  ValueTypeWaveFunctionCoeff,
-                  memorySpace,
-                  dim>>(d_hamitonianElec))
-              {
-                hamiltonian->reinitField(d_densityOutQuadValues);
-              }            
+              if (auto hamiltonian = std::dynamic_pointer_cast<
+                    ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                         ValueTypeElectrostaticsCoeff,
+                                         ValueTypeWaveFunctionBasis,
+                                         memorySpace,
+                                         dim>>(d_hamitonianElec))
+                {
+                  hamiltonian->reinitField(d_densityOutQuadValues);
+                }
+              else if (auto hamiltonian = std::dynamic_pointer_cast<
+                         ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                                   ValueTypeElectrostaticsCoeff,
+                                                   ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(d_hamitonianElec))
+                {
+                  hamiltonian->reinitField(d_densityOutQuadValues);
+                }
 
               d_hamitonianKin->evalEnergy(d_occupation,
                                           *d_feBMWaveFn,
@@ -2015,25 +2017,26 @@ namespace dftefe
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
-              if(auto hamiltonian = std::dynamic_pointer_cast<
-                  ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                    ValueTypeElectrostaticsCoeff,
-                    ValueTypeWaveFunctionBasis,
-                    memorySpace,
-                    dim>>(d_hamitonianElec))
-              {
-                hamiltonian->evalEnergy();
-              }
-              else if(auto hamiltonian = std::dynamic_pointer_cast<
-                ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                  ValueTypeElectrostaticsCoeff,
-                  ValueTypeWaveFunctionBasis,
-                  ValueTypeWaveFunctionCoeff,
-                  memorySpace,
-                  dim>>(d_hamitonianElec))
-              {
-                hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
-              }
+              if (auto hamiltonian = std::dynamic_pointer_cast<
+                    ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                         ValueTypeElectrostaticsCoeff,
+                                         ValueTypeWaveFunctionBasis,
+                                         memorySpace,
+                                         dim>>(d_hamitonianElec))
+                {
+                  hamiltonian->evalEnergy();
+                }
+              else if (auto hamiltonian = std::dynamic_pointer_cast<
+                         ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                                   ValueTypeElectrostaticsCoeff,
+                                                   ValueTypeWaveFunctionBasis,
+                                                   ValueTypeWaveFunctionCoeff,
+                                                   memorySpace,
+                                                   dim>>(d_hamitonianElec))
+                {
+                  hamiltonian->evalEnergy(d_occupation,
+                                          *d_kohnShamWaveFunctions);
+                }
 
               RealType elecEnergy = d_hamitonianElec->getEnergy();
               d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -2067,25 +2070,25 @@ namespace dftefe
 
       if (!d_evaluateEnergyEverySCF)
         {
-          if(auto hamiltonian = std::dynamic_pointer_cast<
-              ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                ValueTypeElectrostaticsCoeff,
-                ValueTypeWaveFunctionBasis,
-                memorySpace,
-                dim>>(d_hamitonianElec))
-          {
-            hamiltonian->reinitField(d_densityOutQuadValues);
-          }
-          else if(auto hamiltonian = std::dynamic_pointer_cast<
-            ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-              ValueTypeElectrostaticsCoeff,
-              ValueTypeWaveFunctionBasis,
-              ValueTypeWaveFunctionCoeff,
-              memorySpace,
-              dim>>(d_hamitonianElec))
-          {
-            hamiltonian->reinitField(d_densityOutQuadValues);
-          }   
+          if (auto hamiltonian = std::dynamic_pointer_cast<
+                ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                     ValueTypeElectrostaticsCoeff,
+                                     ValueTypeWaveFunctionBasis,
+                                     memorySpace,
+                                     dim>>(d_hamitonianElec))
+            {
+              hamiltonian->reinitField(d_densityOutQuadValues);
+            }
+          else if (auto hamiltonian = std::dynamic_pointer_cast<
+                     ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                               ValueTypeElectrostaticsCoeff,
+                                               ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(d_hamitonianElec))
+            {
+              hamiltonian->reinitField(d_densityOutQuadValues);
+            }
 
           d_hamitonianKin->evalEnergy(d_occupation,
                                       *d_feBMWaveFn,
@@ -2093,26 +2096,26 @@ namespace dftefe
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
-          if(auto hamiltonian = std::dynamic_pointer_cast<
-            ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-              ValueTypeElectrostaticsCoeff,
-              ValueTypeWaveFunctionBasis,
-              memorySpace,
-              dim>>(d_hamitonianElec))
-          {
-            hamiltonian->evalEnergy();
-          }
-          else if(auto hamiltonian = std::dynamic_pointer_cast<
-            ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-              ValueTypeElectrostaticsCoeff,
-              ValueTypeWaveFunctionBasis,
-              ValueTypeWaveFunctionCoeff,
-              memorySpace,
-              dim>>(d_hamitonianElec))
-          {
-            hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
-          }
-  
+          if (auto hamiltonian = std::dynamic_pointer_cast<
+                ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                     ValueTypeElectrostaticsCoeff,
+                                     ValueTypeWaveFunctionBasis,
+                                     memorySpace,
+                                     dim>>(d_hamitonianElec))
+            {
+              hamiltonian->evalEnergy();
+            }
+          else if (auto hamiltonian = std::dynamic_pointer_cast<
+                     ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                               ValueTypeElectrostaticsCoeff,
+                                               ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(d_hamitonianElec))
+            {
+              hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
+            }
+
           RealType elecEnergy = d_hamitonianElec->getEnergy();
           d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 

@@ -113,8 +113,8 @@ namespace dftefe
                     enrichmentObjId->getValue(points, origin);
                   for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
                     {
-                      retValue[iPoint] =
-                        retValue[iPoint] + pow(val[iPoint], d_sphericalValPower);
+                      retValue[iPoint] = retValue[iPoint] +
+                                         pow(val[iPoint], d_sphericalValPower);
                     }
                 }
             }
@@ -136,7 +136,8 @@ namespace dftefe
                       for (size_type iDim = 0; iDim < dim; iDim++)
                         {
                           retValue[iPoint] =
-                            retValue[iPoint] + pow(val[iPoint * dim + iDim], d_sphericalValPower);
+                            retValue[iPoint] +
+                            pow(val[iPoint * dim + iDim], d_sphericalValPower);
                         }
                     }
                 }

@@ -39,7 +39,8 @@ namespace dftefe
       getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace>
                  &cellWiseStorage) const = 0;
       virtual void
-      applyNonLocal(linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &X, 
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &X,
         linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const = 0;

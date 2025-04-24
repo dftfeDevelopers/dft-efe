@@ -73,8 +73,7 @@ namespace dftefe
           *std::max_element(numCellYLocalIds.begin(), numCellYLocalIds.end());
 
         utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
-          cellBlockSize * numVecs * maxXLocalIdsInCell,
-          (ValueTypeOperand)0.);
+          cellBlockSize * numVecs * maxXLocalIdsInCell, (ValueTypeOperand)0.);
 
         utils::MemoryStorage<linearAlgebra::blasLapack::
                                scalar_type<ValueTypeOperator, ValueTypeOperand>,
@@ -89,9 +88,10 @@ namespace dftefe
              cellStartId += cellBlockSize)
           {
             xCellValues.setValue((ValueTypeOperand)0.);
-            yCellValues.setValue(utils::Types<
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                     ValueTypeOperand>>::zero);
+            yCellValues.setValue(
+              utils::Types<linearAlgebra::blasLapack::scalar_type<
+                ValueTypeOperator,
+                ValueTypeOperand>>::zero);
             const size_type cellEndId =
               std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
             const size_type numCellsInBlock = cellEndId - cellStartId;
@@ -163,8 +163,8 @@ namespace dftefe
               {
                 mSizesSTL[iCell] = numVecs;
                 nSizesSTL[iCell] = numCellYLocalIds
-                  [iCell + cellStartId]; // !isCConjTransX ? numCellDofs[iCell] :
-                                         // numCellProjectors[iCell] ;
+                  [iCell + cellStartId]; // !isCConjTransX ? numCellDofs[iCell]
+                                         // : numCellProjectors[iCell] ;
                 kSizesSTL[iCell] =
                   numCellXLocalIds[iCell +
                                    cellStartId]; // !isCConjTransX ?
@@ -362,19 +362,20 @@ namespace dftefe
                                                       mpiComm);
 
       // Create projectorIdsPartition Object.
-      d_projectorIdsPartition = std::make_shared<const EnrichmentIdsPartition<dim>>(
-        atomSphericalDataContainer,
-        atomIdsPartition,
-        atomSymbolVec,
-        atomCoordinatesVec,
-        d_fieldNameProjector,
-        minbound,
-        maxbound,
-        0,
-        triangulation->getDomainVectors(),
-        triangulation->getPeriodicFlags(),
-        cellVerticesVector,
-        mpiComm);
+      d_projectorIdsPartition =
+        std::make_shared<const EnrichmentIdsPartition<dim>>(
+          atomSphericalDataContainer,
+          atomIdsPartition,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          d_fieldNameProjector,
+          minbound,
+          maxbound,
+          0,
+          triangulation->getDomainVectors(),
+          triangulation->getPeriodicFlags(),
+          cellVerticesVector,
+          mpiComm);
 
       d_overlappingProjectorIdsInCells =
         d_projectorIdsPartition->overlappingEnrichmentIdsInCells();
@@ -523,49 +524,47 @@ namespace dftefe
             d_atomSphericalDataContainer->getQNumbers(atomSymbol,
                                                       d_fieldNameProjector);
 
-          int lMax = 0;                                            
+          int lMax = 0;
           utils::stringOps::strToInt(atomSphericalDataContainer->getMetadata(
                                        atomSymbol, metadataNamelMax),
                                      lMax);
 
-          // TODO: best way to get the num projectors for each l ?                         
-          // assumption m is the fastest index                           
+          // TODO: best way to get the num projectors for each l ?
+          // assumption m is the fastest index
           std::vector<int> numProj(lMax);
-          for(int lId = 0 ; lId <= lMax ; lId++)   
-          {      
-            int count = 0, mCount = 0;
-            for (int i = 0; i < qNumbers.size(); i += mCount)
-              {
-                int p = qNumbers[i][0], l = qNumbers[i][1];
-                if(l == lId)
+          for (int lId = 0; lId <= lMax; lId++)
+            {
+              int count = 0, mCount = 0;
+              for (int i = 0; i < qNumbers.size(); i += mCount)
                 {
-                  count += 1;
+                  int p = qNumbers[i][0], l = qNumbers[i][1];
+                  if (l == lId)
+                    {
+                      count += 1;
+                    }
+                  mCount = 2 * l + 1;
                 }
-                mCount = 2 * l + 1;
-              }
-            numProj[lId] = count;
-          }
+              numProj[lId] = count;
+            }
 
           std::vector<int> betaIndexVec(qNumbers.size());
           for (int i = 0; i < qNumbers.size(); i += 1)
             {
               int p = qNumbers[i][0], l = qNumbers[i][1];
               int index = 0;
-              for(int lId = 0 ; lId < l ; lId++)
-              {
-                index += numProj[lId];
-              }
+              for (int lId = 0; lId < l; lId++)
+                {
+                  index += numProj[lId];
+                }
               betaIndexVec[i] = index + p;
             }
           d_atomSymbolToBetaIndexVecMap[atomSymbol] = betaIndexVec;
         }
 
-      std::vector<ValueTypeOperator> V(d_CX->localSize(),
-                                       0.);
+      std::vector<ValueTypeOperator> V(d_CX->localSize(), 0.);
       d_V.resize(V.size());
 
-      for (size_type iProjLocal = 0;
-           iProjLocal < d_CX->localSize();
+      for (size_type iProjLocal = 0; iProjLocal < d_CX->localSize();
            iProjLocal++)
         {
           global_size_type iProjGlobal =
@@ -578,7 +577,7 @@ namespace dftefe
           size_type localId = pIdAttr.localIdInAtom;
 
           std::string atomSymbol = atomSymbolVec[atomId];
-          
+
           size_type index = d_atomSymbolToBetaIndexVecMap[atomSymbol][localId];
 
           // Coupling const is diagonal
@@ -650,7 +649,7 @@ namespace dftefe
 
           auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
 
-          // assumption m is the fastest index   
+          // assumption m is the fastest index
           for (int mCount = 0; mCount < 2 * l + 1; mCount++)
             {
               auto angularValue = (sphericalDataVec[localId + mCount])
@@ -698,11 +697,12 @@ namespace dftefe
 
       const size_type numVecs = X.getNumberComponents();
 
-      if(d_CX->getNumberComponents() != numVecs)
-      {
-        d_CX = std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>
-          (d_mpiPatternP2PProj, d_linAlgOpContext, numVecs);
-      }
+      if (d_CX->getNumberComponents() != numVecs)
+        {
+          d_CX = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2PProj, d_linAlgOpContext, numVecs);
+        }
 
       // get handle to constraints
       const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsX =
@@ -780,13 +780,17 @@ namespace dftefe
       // for(int i = 0 ; i < d_mpiPatternP2PProj->localOwnedSize() ; i++)
       // {
       //   //*(d_CX->data()+i) = 1.0;
-      //   std::cout << d_mpiPatternP2PProj->localToGlobal(i) << " - " << *(d_CX->data()+i) << "\t" ;
+      //   std::cout << d_mpiPatternP2PProj->localToGlobal(i) << " - " <<
+      //   *(d_CX->data()+i) << "\t" ;
       // }
       // std::cout << "Ghost : \n";
       // for(int i = 0 ; i < d_mpiPatternP2PProj->localGhostSize() ; i++)
       // {
       //   //*(d_CX->data()+i) = 1.0;
-      //   std::cout << d_mpiPatternP2PProj->localToGlobal(i+d_mpiPatternP2PProj->localOwnedSize()) << " - " << *(d_CX->data()+i+d_mpiPatternP2PProj->localOwnedSize()) << "\t" ;
+      //   std::cout <<
+      //   d_mpiPatternP2PProj->localToGlobal(i+d_mpiPatternP2PProj->localOwnedSize())
+      //   << " - " << *(d_CX->data()+i+d_mpiPatternP2PProj->localOwnedSize())
+      //   << "\t" ;
       // }
 
       AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(

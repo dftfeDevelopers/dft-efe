@@ -130,11 +130,11 @@ namespace dftefe
       std::unordered_map<std::string, std::string> d_metadata;
       double                                       d_zvalance;
       const double                                 d_PSPVLocalCutoff;
-      int d_lmax;
+      int                                          d_lmax;
       std::shared_ptr<utils::ScalarSpatialFunctionReal>
         d_scalarSpatialFnAfterRadialGrid;
 
-      std::vector<double> d_radialPoints;
+      std::vector<double>               d_radialPoints;
       const SphericalHarmonicFunctions &d_sphericalHarmonicFunc;
     };
   } // end of namespace atoms

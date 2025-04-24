@@ -99,33 +99,36 @@ namespace dftefe
                        memorySpace,
                        dim>::getLocal(Storage &cellWiseStorage) const
     {
-      std::shared_ptr<quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
         elextroxcPotentialQuad = nullptr;
 
-      if(d_electroHamiltonian->hasLocalComponent() && !d_excHamiltonian->hasLocalComponent())
-      {
-        elextroxcPotentialQuad  =
-          std::make_shared<quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
-            (d_electroHamiltonian->getFunctionalDerivative());
-      }
-      else if(!d_electroHamiltonian->hasLocalComponent() && d_excHamiltonian->hasLocalComponent())
-      {
-        elextroxcPotentialQuad  =
-          std::make_shared<quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
-            (d_excHamiltonian->getFunctionalDerivative());
-      }
+      if (d_electroHamiltonian->hasLocalComponent() &&
+          !d_excHamiltonian->hasLocalComponent())
+        {
+          elextroxcPotentialQuad = std::make_shared<
+            quadrature::QuadratureValuesContainer<ValueType, memorySpace>>(
+            d_electroHamiltonian->getFunctionalDerivative());
+        }
+      else if (!d_electroHamiltonian->hasLocalComponent() &&
+               d_excHamiltonian->hasLocalComponent())
+        {
+          elextroxcPotentialQuad = std::make_shared<
+            quadrature::QuadratureValuesContainer<ValueType, memorySpace>>(
+            d_excHamiltonian->getFunctionalDerivative());
+        }
       else
-      {
-        elextroxcPotentialQuad  =
-          std::make_shared<quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
-            (d_electroHamiltonian->getFunctionalDerivative());
+        {
+          elextroxcPotentialQuad = std::make_shared<
+            quadrature::QuadratureValuesContainer<ValueType, memorySpace>>(
+            d_electroHamiltonian->getFunctionalDerivative());
 
-        quadrature::add((ValueType)1.0,
-                      d_excHamiltonian->getFunctionalDerivative(),
-                      (ValueType)1.0,
-                      *elextroxcPotentialQuad,
-                      *d_excHamiltonian->getLinAlgOpContext());
-      }
+          quadrature::add((ValueType)1.0,
+                          d_excHamiltonian->getFunctionalDerivative(),
+                          (ValueType)1.0,
+                          *elextroxcPotentialQuad,
+                          *d_excHamiltonian->getLinAlgOpContext());
+        }
 
       d_excHamiltonian->getHamiltonianFEBasisOperations()->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
@@ -171,28 +174,36 @@ namespace dftefe
                        ValueTypeWaveFunctionCoeff,
                        ValueTypeWaveFunctionBasis,
                        memorySpace,
-                       dim>::applyNonLocal(linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &X, 
-                    linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &Y,
-                    bool updateGhostX,
-                    bool updateGhostY) const
-     {
-        if(d_excHamiltonian->hasNonLocalComponent() && !d_electroHamiltonian->hasNonLocalComponent())
-          d_excHamiltonian->applyNonLocal(X,Y,updateGhostX,updateGhostY);
-        if(!d_excHamiltonian->hasNonLocalComponent() && d_electroHamiltonian->hasNonLocalComponent())
-          d_electroHamiltonian->applyNonLocal(X,Y,updateGhostX,updateGhostY);
-        else
+                       dim>::
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const
+    {
+      if (d_excHamiltonian->hasNonLocalComponent() &&
+          !d_electroHamiltonian->hasNonLocalComponent())
+        d_excHamiltonian->applyNonLocal(X, Y, updateGhostX, updateGhostY);
+      if (!d_excHamiltonian->hasNonLocalComponent() &&
+          d_electroHamiltonian->hasNonLocalComponent())
+        d_electroHamiltonian->applyNonLocal(X, Y, updateGhostX, updateGhostY);
+      else
         {
-          linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> Z(X, (ValueTypeWaveFunctionCoeff)0);
-          d_excHamiltonian->applyNonLocal(X,Z,updateGhostX,updateGhostY);
-          d_electroHamiltonian->applyNonLocal(X,Y,updateGhostX,updateGhostY);
-          linearAlgebra::add<ValueTypeWaveFunctionCoeff, 
-          ValueTypeWaveFunctionCoeff, 
-            memorySpace>((ValueTypeWaveFunctionCoeff)1.0, Y, 
-                          (ValueTypeWaveFunctionCoeff)1.0, Z, Y);
+          linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> Z(
+            X, (ValueTypeWaveFunctionCoeff)0);
+          d_excHamiltonian->applyNonLocal(X, Z, updateGhostX, updateGhostY);
+          d_electroHamiltonian->applyNonLocal(X, Y, updateGhostX, updateGhostY);
+          linearAlgebra::add<ValueTypeWaveFunctionCoeff,
+                             ValueTypeWaveFunctionCoeff,
+                             memorySpace>((ValueTypeWaveFunctionCoeff)1.0,
+                                          Y,
+                                          (ValueTypeWaveFunctionCoeff)1.0,
+                                          Z,
+                                          Y);
         }
-     }
-     
- 
+    }
+
+
     template <typename ValueTypeElectrostaticsCoeff,
               typename ValueTypeElectrostaticsBasis,
               typename ValueTypeWaveFunctionCoeff,
@@ -206,10 +217,10 @@ namespace dftefe
                        ValueTypeWaveFunctionBasis,
                        memorySpace,
                        dim>::hasLocalComponent() const
-     {
-        return (bool)(d_excHamiltonian->hasLocalComponent() || 
-          d_electroHamiltonian->hasLocalComponent());
-     }
+    {
+      return (bool)(d_excHamiltonian->hasLocalComponent() ||
+                    d_electroHamiltonian->hasLocalComponent());
+    }
 
     template <typename ValueTypeElectrostaticsCoeff,
               typename ValueTypeElectrostaticsBasis,
@@ -224,10 +235,10 @@ namespace dftefe
                        ValueTypeWaveFunctionBasis,
                        memorySpace,
                        dim>::hasNonLocalComponent() const
-     {
-        return (bool)(d_excHamiltonian->hasNonLocalComponent() || 
-          d_electroHamiltonian->hasNonLocalComponent());
-     }
+    {
+      return (bool)(d_excHamiltonian->hasNonLocalComponent() ||
+                    d_electroHamiltonian->hasNonLocalComponent());
+    }
 
   } // end of namespace ksdft
 } // end of namespace dftefe

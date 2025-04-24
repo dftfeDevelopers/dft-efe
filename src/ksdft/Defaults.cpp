@@ -86,7 +86,7 @@ namespace dftefe
     /**
      * @brief Setting all the ElectroHamiltonianDefaults
      */
-     const double ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA        = 1e-6;
+    const double ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA = 1e-6;
 
   } // end of namespace ksdft
 } // end of namespace dftefe

@@ -43,10 +43,11 @@ namespace dftefe
         addLocalComponent(
           utils::MemoryStorage<ValueTypeOperator, memorySpace>
             &localHamiltonianCumulative,
-          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
+          std::variant<
+            std::shared_ptr<Hamiltonian<float, memorySpace>>,
+            std::shared_ptr<Hamiltonian<double, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
@@ -65,38 +66,40 @@ namespace dftefe
         static void
         addLocalComponent(
           utils::MemoryStorage<float, memorySpace> &localHamiltonianCumulative,
-          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
+          std::variant<
+            std::shared_ptr<Hamiltonian<float, memorySpace>>,
+            std::shared_ptr<Hamiltonian<double, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
+          if (std::holds_alternative<
+                std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {
-              utils::MemoryStorage<float, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<float, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::axpby<float, float, memorySpace>(
-                localHamiltonianCumulative.size(),
-                (float)1.0,
-                localHamiltonianCumulative.data(),
-                (float)1.0,
-                temp.data(),
-                localHamiltonianCumulative.data(),
-                linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::axpby<float, float, memorySpace>(
+                    localHamiltonianCumulative.size(),
+                    (float)1.0,
+                    localHamiltonianCumulative.data(),
+                    (float)1.0,
+                    temp.data(),
+                    localHamiltonianCumulative.data(),
+                    linAlgOpContext);
+                }
             }
         }
       };
@@ -110,64 +113,67 @@ namespace dftefe
         static void
         addLocalComponent(
           utils::MemoryStorage<double, memorySpace> &localHamiltonianCumulative,
-          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
+          std::variant<
+            std::shared_ptr<Hamiltonian<float, memorySpace>>,
+            std::shared_ptr<Hamiltonian<double, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
+          if (std::holds_alternative<
+                std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<double, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {
-              utils::MemoryStorage<double, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<double, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::axpby<double, double, memorySpace>(
-                localHamiltonianCumulative.size(),
-                (double)1.0,
-                localHamiltonianCumulative.data(),
-                (double)1.0,
-                temp.data(),
-                localHamiltonianCumulative.data(),
-                linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::axpby<double, double, memorySpace>(
+                    localHamiltonianCumulative.size(),
+                    (double)1.0,
+                    localHamiltonianCumulative.data(),
+                    (double)1.0,
+                    temp.data(),
+                    localHamiltonianCumulative.data(),
+                    linAlgOpContext);
+                }
             }
-          else if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
+          else if (std::holds_alternative<
+                     std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {
-              utils::MemoryStorage<float, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<float, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::axpby<double, float, memorySpace>(
-                localHamiltonianCumulative.size(),
-                (double)1.0,
-                localHamiltonianCumulative.data(),
-                (float)1.0,
-                temp.data(),
-                localHamiltonianCumulative.data(),
-                linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::axpby<double, float, memorySpace>(
+                    localHamiltonianCumulative.size(),
+                    (double)1.0,
+                    localHamiltonianCumulative.data(),
+                    (float)1.0,
+                    temp.data(),
+                    localHamiltonianCumulative.data(),
+                    linAlgOpContext);
+                }
             }
           else
             {
@@ -188,94 +194,100 @@ namespace dftefe
         addLocalComponent(
           utils::MemoryStorage<std::complex<float>, memorySpace>
             &localHamiltonianCumulative,
-          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
+          std::variant<
+            std::shared_ptr<Hamiltonian<float, memorySpace>>,
+            std::shared_ptr<Hamiltonian<double, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
+          if (std::holds_alternative<
+                std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<double, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {
-              utils::MemoryStorage<double, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<double, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<float>, double, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<float>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (double)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::
+                    axpby<std::complex<float>, double, memorySpace>(
+                      localHamiltonianCumulative.size(),
+                      (std::complex<float>)1.0,
+                      localHamiltonianCumulative.data(),
+                      (double)1.0,
+                      temp.data(),
+                      localHamiltonianCumulative.data(),
+                      linAlgOpContext);
+                }
             }
-          else if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
+          else if (std::holds_alternative<
+                     std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {
-              utils::MemoryStorage<float, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<float, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<float>, float, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<float>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (float)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::
+                    axpby<std::complex<float>, float, memorySpace>(
+                      localHamiltonianCumulative.size(),
+                      (std::complex<float>)1.0,
+                      localHamiltonianCumulative.data(),
+                      (float)1.0,
+                      temp.data(),
+                      localHamiltonianCumulative.data(),
+                      linAlgOpContext);
+                }
             }
-          else if (std::holds_alternative<
-                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
+          else if (std::holds_alternative<std::shared_ptr<
+                     Hamiltonian<std::complex<float>, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<std::complex<float>, memorySpace> &b =
-                *(std::get<std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
+                *(std::get<std::shared_ptr<
+                    Hamiltonian<std::complex<float>, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {                  
-              utils::MemoryStorage<std::complex<float>, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<std::complex<float>, memorySpace> temp(
+                    0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<float>, std::complex<float>, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<float>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (std::complex<float>)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::axpby<std::complex<float>,
+                                                   std::complex<float>,
+                                                   memorySpace>(
+                    localHamiltonianCumulative.size(),
+                    (std::complex<float>)1.0,
+                    localHamiltonianCumulative.data(),
+                    (std::complex<float>)1.0,
+                    temp.data(),
+                    localHamiltonianCumulative.data(),
+                    linAlgOpContext);
+                }
             }
           else
             {
@@ -296,122 +308,131 @@ namespace dftefe
         addLocalComponent(
           utils::MemoryStorage<std::complex<double>, memorySpace>
             &localHamiltonianCumulative,
-          std::variant<std::shared_ptr<Hamiltonian<float, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<double, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-                       std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
+          std::variant<
+            std::shared_ptr<Hamiltonian<float, memorySpace>>,
+            std::shared_ptr<Hamiltonian<double, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+            std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>
                                                        hamiltonianComponent,
           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
         {
-          if (std::holds_alternative<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
+          if (std::holds_alternative<
+                std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                 hamiltonianComponent))
             {
               const Hamiltonian<double, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<double, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {                  
-              utils::MemoryStorage<double, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<double, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<double>, double, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<double>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (double)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::
+                    axpby<std::complex<double>, double, memorySpace>(
+                      localHamiltonianCumulative.size(),
+                      (std::complex<double>)1.0,
+                      localHamiltonianCumulative.data(),
+                      (double)1.0,
+                      temp.data(),
+                      localHamiltonianCumulative.data(),
+                      linAlgOpContext);
+                }
             }
-          else if (std::holds_alternative<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
+          else if (std::holds_alternative<
+                     std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<float, memorySpace> &b =
                 *(std::get<std::shared_ptr<Hamiltonian<float, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {                  
-              utils::MemoryStorage<float, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<float, memorySpace> temp(0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<double>, float, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<double>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (float)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::
+                    axpby<std::complex<double>, float, memorySpace>(
+                      localHamiltonianCumulative.size(),
+                      (std::complex<double>)1.0,
+                      localHamiltonianCumulative.data(),
+                      (float)1.0,
+                      temp.data(),
+                      localHamiltonianCumulative.data(),
+                      linAlgOpContext);
+                }
             }
-          else if (std::holds_alternative<
-                     std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
+          else if (std::holds_alternative<std::shared_ptr<
+                     Hamiltonian<std::complex<float>, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<std::complex<float>, memorySpace> &b =
-                *(std::get<std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>>(
+                *(std::get<std::shared_ptr<
+                    Hamiltonian<std::complex<float>, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {                  
-              utils::MemoryStorage<std::complex<float>, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<std::complex<float>, memorySpace> temp(
+                    0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<double>, std::complex<float>, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<double>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (std::complex<float>)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::axpby<std::complex<double>,
+                                                   std::complex<float>,
+                                                   memorySpace>(
+                    localHamiltonianCumulative.size(),
+                    (std::complex<double>)1.0,
+                    localHamiltonianCumulative.data(),
+                    (std::complex<float>)1.0,
+                    temp.data(),
+                    localHamiltonianCumulative.data(),
+                    linAlgOpContext);
+                }
             }
-          else if (std::holds_alternative<
-                     std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>(
+          else if (std::holds_alternative<std::shared_ptr<
+                     Hamiltonian<std::complex<double>, memorySpace>>>(
                      hamiltonianComponent))
             {
               const Hamiltonian<std::complex<double>, memorySpace> &b =
-                *(std::get<std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>(
+                *(std::get<std::shared_ptr<
+                    Hamiltonian<std::complex<double>, memorySpace>>>(
                   hamiltonianComponent));
-              if(b.hasLocalComponent())
-              {                 
-              utils::MemoryStorage<std::complex<double>, memorySpace> temp(0);
-              b.getLocal(temp);
+              if (b.hasLocalComponent())
+                {
+                  utils::MemoryStorage<std::complex<double>, memorySpace> temp(
+                    0);
+                  b.getLocal(temp);
 
-              utils::throwException(
-                temp.size() == localHamiltonianCumulative.size(),
-                "size of hamiltonian does not match with number"
-                " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
+                  utils::throwException(
+                    temp.size() == localHamiltonianCumulative.size(),
+                    "size of hamiltonian does not match with number"
+                    " cumulative dofxdofs in locally owned cells in KohnShamOperatorContextFE");
 
-              linearAlgebra::blasLapack::
-                axpby<std::complex<double>, std::complex<double>, memorySpace>(
-                  localHamiltonianCumulative.size(),
-                  (std::complex<double>)1.0,
-                  localHamiltonianCumulative.data(),
-                  (std::complex<double>)1.0,
-                  temp.data(),
-                  localHamiltonianCumulative.data(),
-                  linAlgOpContext);
-              }
+                  linearAlgebra::blasLapack::axpby<std::complex<double>,
+                                                   std::complex<double>,
+                                                   memorySpace>(
+                    localHamiltonianCumulative.size(),
+                    (std::complex<double>)1.0,
+                    localHamiltonianCumulative.data(),
+                    (std::complex<double>)1.0,
+                    temp.data(),
+                    localHamiltonianCumulative.data(),
+                    linAlgOpContext);
+                }
             }
           else
             {
@@ -686,7 +707,7 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
             &                                        feBasisManager,
-        const std::vector<HamiltonianPtrVariant>           &hamiltonianComponentsVec,
+        const std::vector<HamiltonianPtrVariant> &   hamiltonianComponentsVec,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const size_type                              maxCellBlock,
         const size_type                              maxWaveFnBatch)
@@ -704,19 +725,19 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    KohnShamOperatorContextFE<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      ValueTypeBasisData,
-      memorySpace,
-      dim>::reinit(const basis::FEBasisManager<ValueTypeOperand,
-                                               ValueTypeBasisData,
-                                               memorySpace,
-                                               dim> & feBasisManager,
-                  const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec)
+    KohnShamOperatorContextFE<ValueTypeOperator,
+                              ValueTypeOperand,
+                              ValueTypeBasisData,
+                              memorySpace,
+                              dim>::
+      reinit(const basis::FEBasisManager<ValueTypeOperand,
+                                         ValueTypeBasisData,
+                                         memorySpace,
+                                         dim> &        feBasisManager,
+             const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec)
     {
       d_hamiltonianComponentsVec = hamiltonianComponentsVec;
-      
+
       const size_type numLocallyOwnedCells =
         feBasisManager.nLocallyOwnedCells();
 
@@ -736,14 +757,14 @@ namespace dftefe
       for (unsigned int i = 0; i < hamiltonianComponentsVec.size(); ++i)
         {
           op.addLocalComponent(d_hamiltonianInAllCells,
-                          hamiltonianComponentsVec[i],
-                          d_linAlgOpContext);
+                               hamiltonianComponentsVec[i],
+                               d_linAlgOpContext);
         }
 
       /**
-        //------------------------ print Hamiltonian EE block---------------------------
-        const basis::BasisDofHandler &basisDofHandler =
-          feBasisManager.getBasisDofHandler();
+        //------------------------ print Hamiltonian EE
+      block--------------------------- const basis::BasisDofHandler
+      &basisDofHandler = feBasisManager.getBasisDofHandler();
 
         const basis::EFEBasisDofHandler<ValueTypeOperand,
                                 ValueTypeOperator,
@@ -968,24 +989,27 @@ namespace dftefe
       HamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
 
       for (unsigned int i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
-      {
-        const Hamiltonian<ValueTypeOperand, memorySpace> &b =
-        *(std::get<std::shared_ptr<Hamiltonian<ValueTypeOperand, memorySpace>>>(
-          d_hamiltonianComponentsVec[i]));
-        if(b.hasNonLocalComponent())
         {
-          linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> temp(X, (ValueTypeOperator)0);
-          b.applyNonLocal(X, temp, updateGhostX, updateGhostY);
-          linearAlgebra::blasLapack::axpby<ValueTypeOperator, ValueTypeOperator, memorySpace>(
-            Y.getNumberComponents()*Y.localSize(),
-            (ValueTypeOperator)1.0,
-            Y.data(),
-            (ValueTypeOperator)1.0,
-            temp.data(),
-            Y.data(),
-            *X.getLinAlgOpContext());
+          const Hamiltonian<ValueTypeOperand, memorySpace> &b =
+            *(std::get<
+              std::shared_ptr<Hamiltonian<ValueTypeOperand, memorySpace>>>(
+              d_hamiltonianComponentsVec[i]));
+          if (b.hasNonLocalComponent())
+            {
+              linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> temp(
+                X, (ValueTypeOperator)0);
+              b.applyNonLocal(X, temp, updateGhostX, updateGhostY);
+              linearAlgebra::blasLapack::
+                axpby<ValueTypeOperator, ValueTypeOperator, memorySpace>(
+                  Y.getNumberComponents() * Y.localSize(),
+                  (ValueTypeOperator)1.0,
+                  Y.data(),
+                  (ValueTypeOperator)1.0,
+                  temp.data(),
+                  Y.data(),
+                  *X.getLinAlgOpContext());
+            }
         }
-      }
     }
 
   } // end of namespace ksdft
