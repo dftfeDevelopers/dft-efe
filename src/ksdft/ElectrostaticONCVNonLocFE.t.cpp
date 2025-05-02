@@ -94,7 +94,7 @@ namespace dftefe
       std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
 
       d_atomSphericalDataContainerPSP =
-        std::make_shared<const atoms::AtomSphericalDataContainer>(
+        std::make_shared<atoms::AtomSphericalDataContainer>(
           atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
           atomSymbolToPSPFilename,
           fieldNamesPSP,
@@ -136,6 +136,8 @@ namespace dftefe
             }
         }
 
+      d_isNonLocPSP = isNonLocPSP;
+
       if (isNonLocPSP)
         {
           d_atomSphericalDataContainerPSP->addFieldName("beta");
@@ -145,13 +147,15 @@ namespace dftefe
             }
         }
 
+      if (isNonLocPSP)
+      {
       d_atomNonLocOpContext = std::make_shared<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                    ValueTypeWaveFnCoeff,
                                                    memorySpace,
                                                    dim>>(
-        feBMWaveFn,
-        feBDHamiltonian,
+        *feBMWaveFn,
+        *feBDHamiltonian,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         atomSymbolVec,
@@ -160,6 +164,7 @@ namespace dftefe
         maxWaveFnBlock,
         linAlgOpContext,
         d_mpiComm);
+      }
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<dim>>(
@@ -171,7 +176,7 @@ namespace dftefe
           1);
 
       d_electrostaticLocal =
-        std::make_shared<const ElectrostaticLocalFE<ValueTypeBasisData,
+        std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
                                                     ValueTypeBasisCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
@@ -263,7 +268,7 @@ namespace dftefe
       std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
 
       d_atomSphericalDataContainerPSP =
-        std::make_shared<const atoms::AtomSphericalDataContainer>(
+        std::make_shared<atoms::AtomSphericalDataContainer>(
           atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
           atomSymbolToPSPFilename,
           fieldNamesPSP,
@@ -305,6 +310,8 @@ namespace dftefe
             }
         }
 
+      d_isNonLocPSP = isNonLocPSP;
+
       if (isNonLocPSP)
         {
           d_atomSphericalDataContainerPSP->addFieldName("beta");
@@ -314,13 +321,15 @@ namespace dftefe
             }
         }
 
+      if (isNonLocPSP)
+      {
       d_atomNonLocOpContext = std::make_shared<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                    ValueTypeWaveFnCoeff,
                                                    memorySpace,
                                                    dim>>(
-        feBMWaveFn,
-        feBDHamiltonian,
+        *feBMWaveFn,
+        *feBDHamiltonian,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         atomSymbolVec,
@@ -329,6 +338,7 @@ namespace dftefe
         maxWaveFnBlock,
         linAlgOpContext,
         d_mpiComm);
+      }
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<dim>>(
@@ -340,7 +350,7 @@ namespace dftefe
           1);
 
       d_electrostaticLocal =
-        std::make_shared<const ElectrostaticLocalFE<ValueTypeBasisData,
+        std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
                                                     ValueTypeBasisCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
@@ -399,13 +409,15 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
           feBDHamiltonian)
     {
+      if(d_isNonLocPSP)
+      {
       d_atomNonLocOpContext = std::make_shared<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                    ValueTypeWaveFnCoeff,
                                                    memorySpace,
                                                    dim>>(
-        feBMWaveFn,
-        feBDHamiltonian,
+        *feBMWaveFn,
+        *feBDHamiltonian,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         d_atomSymbolVec,
@@ -414,6 +426,7 @@ namespace dftefe
         d_maxWaveFnBlock,
         d_linAlgOpContext,
         d_mpiComm);
+      }
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<dim>>(
@@ -478,13 +491,15 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
           feBDHamiltonian)
     {
+      if(d_isNonLocPSP)
+      {
       d_atomNonLocOpContext = std::make_shared<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                    ValueTypeWaveFnCoeff,
                                                    memorySpace,
                                                    dim>>(
-        feBMWaveFn,
-        feBDHamiltonian,
+        *feBMWaveFn,
+        *feBDHamiltonian,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         d_atomSymbolVec,
@@ -493,6 +508,7 @@ namespace dftefe
         d_maxWaveFnBlock,
         d_linAlgOpContext,
         d_mpiComm);
+      }
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<dim>>(
@@ -571,7 +587,12 @@ namespace dftefe
         bool updateGhostX,
         bool updateGhostY) const
     {
-      d_atomNonLocOpContext->apply(X, Y, updateGhostX, updateGhostY);
+      if(d_isNonLocPSP)
+        d_atomNonLocOpContext->apply(X, Y, updateGhostX, updateGhostY);
+      else
+      utils::throwException(
+        false,
+        "applyNonLocal cannot be called as number of Projectors in UPF is = 0");
     }
 
 
@@ -606,7 +627,7 @@ namespace dftefe
                               memorySpace,
                               dim>::hasNonLocalComponent() const
     {
-      return true;
+      return d_isNonLocPSP ? true : false ;
     }
 
 
@@ -632,6 +653,8 @@ namespace dftefe
       d_energy = d_electrostaticLocal->getEnergy();
 
       RealType nonLocEnergy = (RealType)0;
+      if(d_isNonLocPSP)
+      {
       linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> psiBatch(
         X.getMPIPatternP2P(),
         d_linAlgOpContext,
@@ -712,6 +735,7 @@ namespace dftefe
 
           for (int i = 0; i < dotProds.size(); i++)
             nonLocEnergy += dotProds[i] * 2 * occupationInBatch[i];
+        }
         }
       d_energy += nonLocEnergy;
     }

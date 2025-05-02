@@ -417,31 +417,34 @@ namespace dftefe
       for (; locallyOwnedCellIter != feBasisDofHandler->endLocallyOwnedCells();
            ++locallyOwnedCellIter)
         {
-          size_type nQuadsInCell =
-            quadratureRuleContainer.nCellQuadraturePoints(cellIndex);
-          size_type numProjsInCell = d_numProjsInCells[cellIndex];
-          size_type numDofsInCell  = feBasisDofHandler->nCellDofs(cellIndex);
+              size_type nQuadsInCell =
+                quadratureRuleContainer.nCellQuadraturePoints(cellIndex);
+              size_type numProjsInCell = d_numProjsInCells[cellIndex];
+              size_type numDofsInCell  = feBasisDofHandler->nCellDofs(cellIndex);
 
-          const std::vector<double> &cellJxW =
-            quadratureRuleContainer.getCellJxW(cellIndex);
+              if (numProjsInCell > 0)
+              {
+                
+              const std::vector<double> &cellJxW =
+                quadratureRuleContainer.getCellJxW(cellIndex);
 
-          std::vector<utils::Point> quadRealPointsVec =
-            quadratureRuleContainer.getCellRealPoints(cellIndex);
+              std::vector<utils::Point> quadRealPointsVec =
+                quadratureRuleContainer.getCellRealPoints(cellIndex);
 
-          std::vector<double> projectorQuadStorageJxW =
-            getProjectorValues(cellIndex, quadRealPointsVec);
+              std::vector<double> projectorQuadStorageJxW =
+                getProjectorValues(cellIndex, quadRealPointsVec);
 
-          for (unsigned int iProj = 0; iProj < numProjsInCell; iProj++)
-            {
-              for (unsigned int qPoint = 0; qPoint < nQuadsInCell; qPoint++)
+              for (unsigned int iProj = 0; iProj < numProjsInCell; iProj++)
                 {
-                  *(projectorQuadStorageJxW.data() + nQuadsInCell * iProj +
-                    qPoint) *= cellJxW[qPoint];
+                  for (unsigned int qPoint = 0; qPoint < nQuadsInCell; qPoint++)
+                    {
+                      // std::cout << quadRealPointsVec[qPoint][0] <<quadRealPointsVec[qPoint][1] <<quadRealPointsVec[qPoint][2] <<*(projectorQuadStorageJxW.data() + nQuadsInCell * iProj +
+                      // qPoint) << "\n";
+                      *(projectorQuadStorageJxW.data() + nQuadsInCell * iProj +
+                        qPoint) *= cellJxW[qPoint];
+                    }
                 }
-            }
 
-          if (numProjsInCell > 0)
-            {
               utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
                 basisData(numDofsInCell * nQuadsInCell);
 
@@ -466,6 +469,10 @@ namespace dftefe
                 d_cellWiseC.data() + cumulativeDofxProj,
                 numProjsInCell,
                 *linAlgOpContext);
+
+                // //std::cout << cellIndex<<" -> ";
+                // for(int iDof = 0 ; iDof < numDofsInCell ; iDof++)
+                //   std::cout << *(d_cellWiseC.data() + cumulativeDofxProj + iDof) << "\n";
             }
           cumulativeDofxProj += numDofsInCell * numProjsInCell;
           cellIndex++;
@@ -531,7 +538,7 @@ namespace dftefe
 
           // TODO: best way to get the num projectors for each l ?
           // assumption m is the fastest index
-          std::vector<int> numProj(lMax);
+          std::vector<int> numProj(lMax+1);
           for (int lId = 0; lId <= lMax; lId++)
             {
               int count = 0, mCount = 0;
@@ -608,7 +615,7 @@ namespace dftefe
         d_overlappingProjectorIdsInCells[cellId];
       unsigned int        numProjIdsInCell = projIdVec.size();
       unsigned int        numPoints        = points.size();
-      std::vector<double> retValue(dim * numPoints * numProjIdsInCell, 0),
+      std::vector<double> retValue(numPoints * numProjIdsInCell, 0),
         rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
       DFTEFE_AssertWithMsg(!projIdVec.empty(),
@@ -717,6 +724,7 @@ namespace dftefe
       constraintsX.distributeParentToChild(X, numVecs);
 
       Y.setValue(0.0);
+      d_CX->setValue(0.0);
 
       const size_type cellBlockSize =
         (d_maxCellBlock * d_maxWaveFnBatch) / numVecs;
@@ -755,7 +763,7 @@ namespace dftefe
                                                         ValueTypeOperator,
                                                         memorySpace>(
         1,
-        linearAlgebra::blasLapack::Layout::RowMajor,
+        linearAlgebra::blasLapack::Layout::ColMajor,
         linearAlgebra::blasLapack::ScalarOp::Identity,
         linearAlgebra::blasLapack::ScalarOp::Identity,
         &stride,

@@ -30,10 +30,14 @@
  #include<iostream>
  int main()
  {
-   std::string atomFileName = "Cu.upf";
-   const dftefe::atoms::SphericalHarmonicFunctions sphericalHarmonicFunctions(false);
-   std::vector<std::string> fieldNames{ "vlocal", "beta", "chi", "nlcc", "rhoatom"};
-   std::vector<std::string> metadataNames = dftefe::atoms::AtomSphDataPSPDefaults::METADATANAMES;
-   dftefe::atoms::AtomSphericalDataPSP atomTest(atomFileName, fieldNames, metadataNames, sphericalHarmonicFunctions);
+  std::string atomFileName = "Cu.upf";
+  const dftefe::atoms::SphericalHarmonicFunctions sphericalHarmonicFunctions(false);
+  std::vector<std::string> fieldNames{}; // "vlocal", "beta", "pswfc", "nlcc", "rhoatom"
+  std::vector<std::string> metadataNames = dftefe::atoms::AtomSphDataPSPDefaults::METADATANAMES;
+  dftefe::atoms::AtomSphericalDataPSP atomTest(atomFileName, fieldNames, metadataNames, sphericalHarmonicFunctions);
+  atomTest.addFieldName("vlocal");
+  for(int i = 0 ; i < 50 ; i++)
+   std::cout << i*0.5 << "\t" << atomTest.getSphericalData("vlocal",{0,0,0})->getValue(dftefe::utils::Point({0,0,0}),
+     dftefe::utils::Point({i*0.5,0,0}))<<std::endl;
  }
  

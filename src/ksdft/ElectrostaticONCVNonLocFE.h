@@ -277,6 +277,7 @@ namespace dftefe
       const size_type                d_maxCellBlock;
       const size_type                d_maxWaveFnBlock;
       const std::vector<std::string> d_atomSymbolVec;
+      bool                           d_isNonLocPSP;
 
 
     }; // end of class ElectrostaticONCVNonLocFE

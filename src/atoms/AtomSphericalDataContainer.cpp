@@ -48,7 +48,7 @@ namespace dftefe
       , d_isAssocLegendreSplineEval(isAssocLegendreSplineEval)
     {
       d_SphericalHarmonicFunctions =
-        std::make_shared<const SphericalHarmonicFunctions>(false);
+        std::make_shared<const SphericalHarmonicFunctions>(d_isAssocLegendreSplineEval);
       auto iter = d_atomSymbolToFilename.begin();
 
       if (atomSphericalDataType == AtomSphericalDataType::ENRICHMENT)

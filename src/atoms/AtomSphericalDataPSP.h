@@ -131,6 +131,7 @@ namespace dftefe
       double                                       d_zvalance;
       const double                                 d_PSPVLocalCutoff;
       int                                          d_lmax;
+      int                                          d_numProj;
       std::shared_ptr<utils::ScalarSpatialFunctionReal>
         d_scalarSpatialFnAfterRadialGrid;
 

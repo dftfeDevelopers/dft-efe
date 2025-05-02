@@ -187,11 +187,13 @@ int main()
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec;
   std::string symbol;
+  int atomicNumber;
   atomSymbolVec.resize(0);
   std::string line;
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
+      ss >> atomicNumber; 
       for(unsigned int i=0 ; i<dim ; i++){
           ss >> coordinates[i]; 
       }
@@ -202,6 +204,8 @@ int main()
 
   std::vector<double> atomChargesVec(atomCoordinatesVec.size(), nuclearCharge);
   std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
+
+  std::cout << atomCoordinatesVec[0][0] << atomCoordinatesVec[0][1] << atomCoordinatesVec[0][2];
 
 
   int flag = 1;
@@ -333,6 +337,8 @@ int main()
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
+  const std::map<std::string, std::string> atomSymbolToPSPFilename = {{"H","H_ONCV_PBE-1.2.upf"}};
+
   // Create OperatorContext for Basisoverlap
   std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
                                                 double,
@@ -406,6 +412,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         dim>>(
                                         atomCoordinatesVec,
                                         atomChargesVec,
+                                        atomSymbolVec,
                                         smearedChargeRadiusVec,
                                         numElectrons,
                                         numWantedEigenvalues,
@@ -428,10 +435,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         feBasisData,
                                         feBasisData, 
                                         feBasisData,        
-                                        feBasisData, 
-                                        feBasisData,    
-                                        feBasisData,                                                                                                                   
-                                        *externalPotentialFunction,
+                                        feBasisData,        
+                                        atomSymbolToPSPFilename,                                                                                                          
+                                        /**externalPotentialFunction, */
                                         linAlgOpContext,
                                         *MContextForInv,
                                         *MContextForInv,

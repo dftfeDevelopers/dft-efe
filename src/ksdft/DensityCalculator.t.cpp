@@ -182,6 +182,11 @@ namespace dftefe
       : d_linAlgOpContext(linAlgOpContext)
       , d_cellBlockSize(cellBlockSize)
       , d_waveFuncBatchSize(waveFuncBatchSize)
+      , d_psiBatchQuad(nullptr)
+      , d_rhoBatch(nullptr)
+      , d_psiBatch(nullptr)
+      , d_psiBatchSmallQuad(nullptr)
+      , d_psiBatchSmall(nullptr)
     {
       reinit(feBasisDataStorage, feBMPsi);
     }
