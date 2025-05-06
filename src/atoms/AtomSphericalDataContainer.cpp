@@ -92,6 +92,18 @@ namespace dftefe
         }
     }
 
+    const std::vector<std::string> &
+    AtomSphericalDataContainer::getFieldNames()
+    {
+      return d_fieldNames;
+    }
+
+    const std::vector<std::string> &
+    AtomSphericalDataContainer::getMetadataNames()
+    {
+      return d_metadataNames;
+    }
+
     const std::vector<std::shared_ptr<SphericalData>> &
     AtomSphericalDataContainer::getSphericalData(
       std::string       atomSymbol,

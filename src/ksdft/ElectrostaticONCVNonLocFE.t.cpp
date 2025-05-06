@@ -46,7 +46,7 @@ namespace dftefe
         const std::vector<utils::Point> &         atomCoordinates,
         const std::vector<double> &               atomCharges,
         const std::vector<std::string> &          atomSymbolVec,
-        const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        const std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerPSP,
         const std::vector<double> &               smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
@@ -83,71 +83,24 @@ namespace dftefe
       , d_maxCellBlock(maxCellBlock)
       , d_maxWaveFnBlock(maxWaveFnBlock)
       , d_energy((RealType)0)
+      , d_atomSphericalDataContainerPSP(atomSphericalDataContainerPSP)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
 
       d_rootCout.setCondition(rank == 0);
 
-      const std::vector<std::string> metadataNames =
-        atoms::AtomSphDataPSPDefaults::METADATANAMES;
-      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
-
-      d_atomSphericalDataContainerPSP =
-        std::make_shared<atoms::AtomSphericalDataContainer>(
-          atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
-          atomSymbolToPSPFilename,
-          fieldNamesPSP,
-          metadataNames);
-
-      bool isNonLocPSP = false, isNlcc = false;
-      for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
-           atomSymbolId++)
+      d_isNonLocPSP = false;
+      for(auto i : d_atomSphericalDataContainerPSP->getFieldNames())
+      {
+        if(i == "beta")
         {
-          int numProj = 0;
-          utils::stringOps::strToInt(
-            d_atomSphericalDataContainerPSP->getMetadata(
-              atomSymbolVec[atomSymbolId], "number_of_proj"),
-            numProj);
-          if (numProj > 0)
-            {
-              isNonLocPSP      = true;
-              bool coreCorrect = false;
-              utils::stringOps::strToBool(
-                d_atomSphericalDataContainerPSP->getMetadata(
-                  atomSymbolVec[atomSymbolId], "core_correction"),
-                coreCorrect);
-              if (coreCorrect)
-                {
-                  isNlcc = true;
-                }
-              else if (isNlcc && !coreCorrect)
-                {
-                  utils::throwException(
-                    false,
-                    "Some atoms do not have NLCC parts in UPF files while some have.");
-                }
-            }
-          else if (!(numProj > 0) && isNlcc)
-            {
-              utils::throwException(
-                false,
-                "Some atoms do not have NONLOCAL parts in UPF files while some have.");
-            }
+          d_isNonLocPSP = true;
+          break;
         }
+      }
 
-      d_isNonLocPSP = isNonLocPSP;
-
-      if (isNonLocPSP)
-        {
-          d_atomSphericalDataContainerPSP->addFieldName("beta");
-          if (isNlcc)
-            {
-              d_atomSphericalDataContainerPSP->addFieldName("nlcc");
-            }
-        }
-
-      if (isNonLocPSP)
+      if (d_isNonLocPSP)
       {
       d_atomNonLocOpContext = std::make_shared<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
@@ -212,7 +165,7 @@ namespace dftefe
         const std::vector<utils::Point> &         atomCoordinates,
         const std::vector<double> &               atomCharges,
         const std::vector<std::string> &          atomSymbolVec,
-        const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        const std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerPSP,
         const std::vector<double> &               smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &atomicElectronChargeDensity,
@@ -257,71 +210,24 @@ namespace dftefe
       , d_maxCellBlock(maxCellBlock)
       , d_maxWaveFnBlock(maxWaveFnBlock)
       , d_energy((RealType)0)
+      , d_atomSphericalDataContainerPSP(atomSphericalDataContainerPSP)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
 
       d_rootCout.setCondition(rank == 0);
 
-      const std::vector<std::string> metadataNames =
-        atoms::AtomSphDataPSPDefaults::METADATANAMES;
-      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
-
-      d_atomSphericalDataContainerPSP =
-        std::make_shared<atoms::AtomSphericalDataContainer>(
-          atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
-          atomSymbolToPSPFilename,
-          fieldNamesPSP,
-          metadataNames);
-
-      bool isNonLocPSP = false, isNlcc = false;
-      for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
-           atomSymbolId++)
+      d_isNonLocPSP = false;
+      for(auto i : d_atomSphericalDataContainerPSP->getFieldNames())
+      {
+        if(i == "beta")
         {
-          int numProj = 0;
-          utils::stringOps::strToInt(
-            d_atomSphericalDataContainerPSP->getMetadata(
-              atomSymbolVec[atomSymbolId], "number_of_proj"),
-            numProj);
-          if (numProj > 0)
-            {
-              isNonLocPSP      = true;
-              bool coreCorrect = false;
-              utils::stringOps::strToBool(
-                d_atomSphericalDataContainerPSP->getMetadata(
-                  atomSymbolVec[atomSymbolId], "core_correction"),
-                coreCorrect);
-              if (coreCorrect)
-                {
-                  isNlcc = true;
-                }
-              else if (isNlcc && !coreCorrect)
-                {
-                  utils::throwException(
-                    false,
-                    "Some atoms do not have NLCC parts in UPF files while some have.");
-                }
-            }
-          else if (!(numProj > 0) && isNlcc)
-            {
-              utils::throwException(
-                false,
-                "Some atoms do not have NONLOCAL parts in UPF files while some have.");
-            }
+          d_isNonLocPSP = true;
+          break;
         }
-
-      d_isNonLocPSP = isNonLocPSP;
-
-      if (isNonLocPSP)
-        {
-          d_atomSphericalDataContainerPSP->addFieldName("beta");
-          if (isNlcc)
-            {
-              d_atomSphericalDataContainerPSP->addFieldName("nlcc");
-            }
-        }
-
-      if (isNonLocPSP)
+      }
+      
+      if (d_isNonLocPSP)
       {
       d_atomNonLocOpContext = std::make_shared<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,

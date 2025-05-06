@@ -1120,8 +1120,6 @@ namespace dftefe
         const size_type                  mixingHistory,
         const double                     mixingParameter,
         const bool                       isAdaptiveAndersonMixingParameter,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
@@ -1163,9 +1161,6 @@ namespace dftefe
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
       , d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
-      , d_densityInQuadValues(electronChargeDensityInput)
-      , d_densityOutQuadValues(electronChargeDensityInput)
-      , d_densityResidualQuadValues(electronChargeDensityInput)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(&MContext)
       , d_MInvContext(&MInvContext)
@@ -1192,6 +1187,71 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
+
+      const std::vector<std::string> metadataNames =
+        atoms::AtomSphDataPSPDefaults::METADATANAMES;
+      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
+
+      std::shared_ptr<atoms::AtomSphericalDataContainer>
+      atomSphericalDataContainerPSP =
+        std::make_shared<atoms::AtomSphericalDataContainer>(
+          atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
+          atomSymbolToPSPFilename,
+          fieldNamesPSP,
+          metadataNames);
+
+      bool isNonLocPSP = false, isNlcc = false;
+      for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+           atomSymbolId++)
+        {
+          int numProj = 0;
+          utils::stringOps::strToInt(
+            atomSphericalDataContainerPSP->getMetadata(
+              atomSymbolVec[atomSymbolId], "number_of_proj"),
+            numProj);
+          if (numProj > 0)
+            {
+              isNonLocPSP      = true;
+              bool coreCorrect = false;
+              utils::stringOps::strToBool(
+                atomSphericalDataContainerPSP->getMetadata(
+                  atomSymbolVec[atomSymbolId], "core_correction"),
+                coreCorrect);
+              if (coreCorrect)
+                {
+                  isNlcc = true;
+                }
+              else if (isNlcc && !coreCorrect)
+                {
+                  utils::throwException(
+                    false,
+                    "Some atoms do not have NLCC parts in UPF files while some have.");
+                }
+            }
+          else if (!(numProj > 0) && isNlcc)
+            {
+              utils::throwException(
+                false,
+                "Some atoms do not have NONLOCAL parts in UPF files while some have.");
+            }
+        }
+
+      if (isNonLocPSP)
+        {
+          atomSphericalDataContainerPSP->addFieldName("beta");
+          if (isNlcc)
+            {
+              atomSphericalDataContainerPSP->addFieldName("nlcc");
+            }
+        }
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace> 
+      d_densityInQuadValues(
+        feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+      d_densityOutQuadValues = d_densityInQuadValues;
+      d_densityResidualQuadValues = d_densityInQuadValues;
+
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
                                             ValueTypeWaveFunctionBasis,
@@ -1204,23 +1264,42 @@ namespace dftefe
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
-      utils::throwException(electronChargeDensityInput.getNumberComponents() ==
+      utils::throwException(d_densityInQuadValues.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
 
       utils::throwException(
         feBDEXCHamiltonian->getQuadratureRuleContainer() ==
-          electronChargeDensityInput.getQuadratureRuleContainer(),
+        d_densityInQuadValues.getQuadratureRuleContainer(),
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerRho =
-          electronChargeDensityInput.getQuadratureRuleContainer();
+        d_densityInQuadValues.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
+      const atoms::AtomSevereFunction<dim> rho(
+          atomSphericalDataContainerPSP,
+          atomSymbolVec,
+          atomCoordinates,
+          "rhoatom",
+          0,
+          1);
+
+      for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<RealType> a(
+              d_densityInQuadValues.nCellQuadraturePoints(iCell));
+            a = (rho)(quadRuleContainerRho->getCellRealPoints(iCell));
+            RealType *b = a.data();
+            d_densityInQuadValues.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+      
       //************* CHANGE THIS **********************
       utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
            memTransfer;
@@ -1261,7 +1340,7 @@ namespace dftefe
           atomCoordinates,
           atomCharges,
           atomSymbolVec,
-          atomSymbolToPSPFilename,
+          atomSphericalDataContainerPSP,
           smearedChargeRadius,
           d_densityInQuadValues,
           feBMTotalCharge,
@@ -1407,14 +1486,7 @@ namespace dftefe
         const size_type                  mixingHistory,
         const double                     mixingParameter,
         const bool                       isAdaptiveAndersonMixingParameter,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
@@ -1456,9 +1528,6 @@ namespace dftefe
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
       , d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
-      , d_densityInQuadValues(electronChargeDensityInput)
-      , d_densityOutQuadValues(electronChargeDensityInput)
-      , d_densityResidualQuadValues(electronChargeDensityInput)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(&MContext)
       , d_MInvContext(&MInvContext)
@@ -1485,6 +1554,71 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
+
+      const std::vector<std::string> metadataNames =
+        atoms::AtomSphDataPSPDefaults::METADATANAMES;
+      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
+
+      std::shared_ptr<atoms::AtomSphericalDataContainer>
+      atomSphericalDataContainerPSP =
+        std::make_shared<atoms::AtomSphericalDataContainer>(
+          atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
+          atomSymbolToPSPFilename,
+          fieldNamesPSP,
+          metadataNames);
+
+      bool isNonLocPSP = false, isNlcc = false;
+      for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+           atomSymbolId++)
+        {
+          int numProj = 0;
+          utils::stringOps::strToInt(
+            atomSphericalDataContainerPSP->getMetadata(
+              atomSymbolVec[atomSymbolId], "number_of_proj"),
+            numProj);
+          if (numProj > 0)
+            {
+              isNonLocPSP      = true;
+              bool coreCorrect = false;
+              utils::stringOps::strToBool(
+                atomSphericalDataContainerPSP->getMetadata(
+                  atomSymbolVec[atomSymbolId], "core_correction"),
+                coreCorrect);
+              if (coreCorrect)
+                {
+                  isNlcc = true;
+                }
+              else if (isNlcc && !coreCorrect)
+                {
+                  utils::throwException(
+                    false,
+                    "Some atoms do not have NLCC parts in UPF files while some have.");
+                }
+            }
+          else if (!(numProj > 0) && isNlcc)
+            {
+              utils::throwException(
+                false,
+                "Some atoms do not have NONLOCAL parts in UPF files while some have.");
+            }
+        }
+
+      if (isNonLocPSP)
+        {
+          atomSphericalDataContainerPSP->addFieldName("beta");
+          if (isNlcc)
+            {
+              atomSphericalDataContainerPSP->addFieldName("nlcc");
+            }
+        }
+
+        quadrature::QuadratureValuesContainer<RealType, memorySpace> 
+        d_densityInQuadValues(
+          feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+  
+        d_densityOutQuadValues = d_densityInQuadValues;
+        d_densityResidualQuadValues = d_densityInQuadValues;
+
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
                                             ValueTypeWaveFunctionBasis,
@@ -1497,22 +1631,71 @@ namespace dftefe
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
-      utils::throwException(electronChargeDensityInput.getNumberComponents() ==
+      utils::throwException(d_densityInQuadValues.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
 
       utils::throwException(
         feBDEXCHamiltonian->getQuadratureRuleContainer() ==
-          electronChargeDensityInput.getQuadratureRuleContainer(),
+        d_densityInQuadValues.getQuadratureRuleContainer(),
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerRho =
-          electronChargeDensityInput.getQuadratureRuleContainer();
+        d_densityInQuadValues.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      const atoms::AtomSevereFunction<dim> rho(
+        atomSphericalDataContainerPSP,
+        atomSymbolVec,
+        atomCoordinates,
+        "rhoatom",
+        0,
+        1);
+
+      for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<RealType> a(
+              d_densityInQuadValues.nCellQuadraturePoints(iCell));
+            a = (rho)(quadRuleContainerRho->getCellRealPoints(iCell));
+            RealType *b = a.data();
+            d_densityInQuadValues.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
+      quadrature::QuadratureValuesContainer<
+        ValueTypeElectrostaticsCoeff,
+        memorySpace> atomicTotalElecPotNuclearQuad(feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+      
+      quadrature::QuadratureValuesContainer<
+        ValueTypeElectrostaticsCoeff,
+        memorySpace> atomicTotalElecPotElectronicQuad(feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+      for (size_type iCell = 0; iCell < atomicTotalElecPotNuclearQuad.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<ValueTypeElectrostaticsCoeff> a(
+              atomicTotalElecPotNuclearQuad.nCellQuadraturePoints(iCell));
+            a = (atomicTotalElectroPotentialFunction)(feBDNuclearChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
+            ValueTypeElectrostaticsCoeff *b = a.data();
+            atomicTotalElecPotNuclearQuad.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
+      for (size_type iCell = 0; iCell < atomicTotalElecPotElectronicQuad.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<ValueTypeElectrostaticsCoeff> a(
+              atomicTotalElecPotElectronicQuad.nCellQuadraturePoints(iCell));
+            a = (atomicTotalElectroPotentialFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
+            ValueTypeElectrostaticsCoeff *b = a.data();
+            atomicTotalElecPotElectronicQuad.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
 
       //************* CHANGE THIS **********************
       utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
@@ -1554,7 +1737,7 @@ namespace dftefe
           atomCoordinates,
           atomCharges,
           atomSymbolVec,
-          atomSymbolToPSPFilename,
+          atomSphericalDataContainerPSP,
           smearedChargeRadius,
           d_densityInQuadValues,
           atomicTotalElecPotNuclearQuad,

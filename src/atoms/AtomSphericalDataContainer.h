@@ -85,6 +85,12 @@ namespace dftefe
       void
       addFieldName(const std::string fieldName);
 
+      const std::vector<std::string> &
+      getFieldNames();
+
+      const std::vector<std::string> &
+      getMetadataNames();
+
       /**
        * @brief Returns the spherical data for a given atom and quantum numbers
        *

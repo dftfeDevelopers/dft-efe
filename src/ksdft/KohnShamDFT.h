@@ -342,9 +342,6 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        /* Electron density related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -422,16 +419,8 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        /* Basis related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
-        /* Atomic Field for delta rho */
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotElectronicQuad,
+        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
@@ -575,6 +564,9 @@ namespace dftefe
            d_hamiltonianElectroExc;
       bool d_isResidualChebyshevFilter;
       bool d_isOEFEBasis;
+
+      std::shared_ptr<atoms::AtomSphericalDataContainer>
+        d_atomSphericalDataContainerPSP;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft
