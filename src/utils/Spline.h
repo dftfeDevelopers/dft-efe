@@ -89,9 +89,9 @@ namespace dftefe
              const bool                 isSubdivPowerLawGrid = false,
              spline_type                type                 = cspline,
              bool                       make_monotonic       = false,
-             bd_type                    left                 = second_deriv,
+             bd_type                    left                 = first_deriv,
              double                     left_value           = 0.0,
-             bd_type                    right                = second_deriv,
+             bd_type                    right                = first_deriv,
              double                     right_value          = 0.0);
 
       // modify boundary conditions: if called it must be before set_points()

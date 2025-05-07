@@ -699,6 +699,9 @@ namespace dftefe
                 break;
               }
 
+          if (fieldName == std::string("rhoatom"))
+              cutoff = radialPoints.back();
+
           // std::cout << fieldName << " : " << qNumbersVec[i][0] << ","
           //           << qNumbersVec[i][1] << "," << qNumbersVec[i][2] << " ; "
           //           << cutoff << "\n";

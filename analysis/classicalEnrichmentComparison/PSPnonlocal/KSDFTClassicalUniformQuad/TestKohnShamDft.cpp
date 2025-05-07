@@ -342,9 +342,9 @@ int main(int argc, char** argv)
   fstream.close();
 
   std::map<std::string, std::string> atomSymbolToPSPFilename;
-  for (auto i:atomSymbolVec )
+  for (int i = 0 ; i < atomSymbolVec.size() ; i++)
   {
-      atomSymbolToPSPFilename[i] = sourceDir + i;
+      atomSymbolToPSPFilename[atomSymbolVec[i]] = sourceDir + pspFilePathVec[i];
   }
 
   size_type numElectrons = 0;

@@ -1192,8 +1192,7 @@ namespace dftefe
         atoms::AtomSphDataPSPDefaults::METADATANAMES;
       std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
 
-      std::shared_ptr<atoms::AtomSphericalDataContainer>
-      atomSphericalDataContainerPSP =
+      d_atomSphericalDataContainerPSP =
         std::make_shared<atoms::AtomSphericalDataContainer>(
           atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
           atomSymbolToPSPFilename,
@@ -1206,7 +1205,7 @@ namespace dftefe
         {
           int numProj = 0;
           utils::stringOps::strToInt(
-            atomSphericalDataContainerPSP->getMetadata(
+            d_atomSphericalDataContainerPSP->getMetadata(
               atomSymbolVec[atomSymbolId], "number_of_proj"),
             numProj);
           if (numProj > 0)
@@ -1214,7 +1213,7 @@ namespace dftefe
               isNonLocPSP      = true;
               bool coreCorrect = false;
               utils::stringOps::strToBool(
-                atomSphericalDataContainerPSP->getMetadata(
+                d_atomSphericalDataContainerPSP->getMetadata(
                   atomSymbolVec[atomSymbolId], "core_correction"),
                 coreCorrect);
               if (coreCorrect)
@@ -1238,16 +1237,15 @@ namespace dftefe
 
       if (isNonLocPSP)
         {
-          atomSphericalDataContainerPSP->addFieldName("beta");
+          d_atomSphericalDataContainerPSP->addFieldName("beta");
           if (isNlcc)
             {
-              atomSphericalDataContainerPSP->addFieldName("nlcc");
+              d_atomSphericalDataContainerPSP->addFieldName("nlcc");
             }
         }
 
-      quadrature::QuadratureValuesContainer<RealType, memorySpace> 
-      d_densityInQuadValues(
-        feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+        d_densityInQuadValues = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+          feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       d_densityOutQuadValues = d_densityInQuadValues;
       d_densityResidualQuadValues = d_densityInQuadValues;
@@ -1282,7 +1280,7 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       const atoms::AtomSevereFunction<dim> rho(
-          atomSphericalDataContainerPSP,
+          d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
           "rhoatom",
@@ -1340,7 +1338,7 @@ namespace dftefe
           atomCoordinates,
           atomCharges,
           atomSymbolVec,
-          atomSphericalDataContainerPSP,
+          d_atomSphericalDataContainerPSP,
           smearedChargeRadius,
           d_densityInQuadValues,
           feBMTotalCharge,
@@ -1559,8 +1557,7 @@ namespace dftefe
         atoms::AtomSphDataPSPDefaults::METADATANAMES;
       std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
 
-      std::shared_ptr<atoms::AtomSphericalDataContainer>
-      atomSphericalDataContainerPSP =
+      d_atomSphericalDataContainerPSP =
         std::make_shared<atoms::AtomSphericalDataContainer>(
           atoms::AtomSphericalDataType::PSEUDOPOTENTIAL,
           atomSymbolToPSPFilename,
@@ -1573,7 +1570,7 @@ namespace dftefe
         {
           int numProj = 0;
           utils::stringOps::strToInt(
-            atomSphericalDataContainerPSP->getMetadata(
+            d_atomSphericalDataContainerPSP->getMetadata(
               atomSymbolVec[atomSymbolId], "number_of_proj"),
             numProj);
           if (numProj > 0)
@@ -1581,7 +1578,7 @@ namespace dftefe
               isNonLocPSP      = true;
               bool coreCorrect = false;
               utils::stringOps::strToBool(
-                atomSphericalDataContainerPSP->getMetadata(
+                d_atomSphericalDataContainerPSP->getMetadata(
                   atomSymbolVec[atomSymbolId], "core_correction"),
                 coreCorrect);
               if (coreCorrect)
@@ -1605,15 +1602,14 @@ namespace dftefe
 
       if (isNonLocPSP)
         {
-          atomSphericalDataContainerPSP->addFieldName("beta");
+          d_atomSphericalDataContainerPSP->addFieldName("beta");
           if (isNlcc)
             {
-              atomSphericalDataContainerPSP->addFieldName("nlcc");
+              d_atomSphericalDataContainerPSP->addFieldName("nlcc");
             }
         }
-
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> 
-        d_densityInQuadValues(
+   
+       d_densityInQuadValues = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
   
         d_densityOutQuadValues = d_densityInQuadValues;
@@ -1649,7 +1645,7 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       const atoms::AtomSevereFunction<dim> rho(
-        atomSphericalDataContainerPSP,
+        d_atomSphericalDataContainerPSP,
         atomSymbolVec,
         atomCoordinates,
         "rhoatom",
@@ -1737,7 +1733,7 @@ namespace dftefe
           atomCoordinates,
           atomCharges,
           atomSymbolVec,
-          atomSphericalDataContainerPSP,
+          d_atomSphericalDataContainerPSP,
           smearedChargeRadius,
           d_densityInQuadValues,
           atomicTotalElecPotNuclearQuad,

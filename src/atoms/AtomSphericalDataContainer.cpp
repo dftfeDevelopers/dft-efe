@@ -90,6 +90,7 @@ namespace dftefe
         {
           pair.second->addFieldName(fieldName);
         }
+      d_fieldNames.push_back(fieldName);
     }
 
     const std::vector<std::string> &

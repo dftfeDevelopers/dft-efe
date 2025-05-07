@@ -607,11 +607,7 @@ namespace dftefe
                                     X.data() + iSize * X.getNumberComponents() +
                                       psiStartId);
 
-              d_atomNonLocOpContext->apply(psiBatchSmall, Y, true, false);
-              std::vector<
-                linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff,
-                                                       ValueTypeWaveFnCoeff>>
-                dotProds(d_maxWaveFnBlock);
+              d_atomNonLocOpContext->apply(psiBatchSmall, YSmall, true, false);
               linearAlgebra::dot(psiBatchSmall,
                                  YSmall,
                                  dotProds,
@@ -620,11 +616,6 @@ namespace dftefe
             }
           else
             {
-              std::vector<
-                linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff,
-                                                       ValueTypeWaveFnCoeff>>
-                dotProds(numPsiInBatch);
-
               for (size_type iSize = 0; iSize < X.localSize(); iSize++)
                 memoryTransfer.copy(numPsiInBatch,
                                     psiBatch.data() + numPsiInBatch * iSize,
