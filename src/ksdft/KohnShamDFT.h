@@ -532,7 +532,7 @@ namespace dftefe
       bool                      d_evaluateEnergyEverySCF;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_densityInQuadValues, d_densityOutQuadValues,
-        d_densityResidualQuadValues;
+        d_densityResidualQuadValues , d_coreCorrDensUPF , d_coreCorrectedDensity;
       size_type                        d_numMaxSCFIter;
       const OpContext *                d_MContext, *d_MInvContext;
       const utils::mpi::MPIComm &      d_mpiCommDomain;
@@ -567,6 +567,8 @@ namespace dftefe
 
       std::shared_ptr<atoms::AtomSphericalDataContainer>
         d_atomSphericalDataContainerPSP;
+
+      bool d_isONCVNonLocPSP, d_isNlcc;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

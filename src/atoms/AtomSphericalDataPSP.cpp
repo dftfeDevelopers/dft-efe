@@ -493,6 +493,10 @@ namespace dftefe
       std::vector<std::vector<int>> qNumbersVec(0);
       bool                          convSuccess = false;
 
+      bool isCoreCorrectAttributePresent = false;
+      utils::stringOps::strToBool(d_metadata["core_correction"],
+        isCoreCorrectAttributePresent);
+
       // get quantum Numbers vec
       std::vector<int> nodeIndex(0);
       if (fieldName == std::string("beta"))
@@ -616,6 +620,20 @@ namespace dftefe
                     }
                 }
             }
+        }
+      else if(fieldName == std::string("nlcc") && !isCoreCorrectAttributePresent)
+        {
+          std::string stringsZero = [numPoints]{ std::string s; for (int i = 0; i < numPoints; ++i) s += (i ? " 0" : "0"); return s; }();
+          nodeStrings.resize(1);
+          nodeStrings[0] = stringsZero;
+          nodeIndex.push_back(0);
+          std::vector<int> qNumbers = {0, 0, 0};
+          utils::throwException(
+            find(qNumbersVec.begin(), qNumbersVec.end(), qNumbers) ==
+              qNumbersVec.end(),
+            "Trying to enter more than one " + xPathInfo.xpath +
+              " of same quantum number vector from " + xPathInfo.fileName);
+          qNumbersVec.push_back(qNumbers);
         }
       else
         {

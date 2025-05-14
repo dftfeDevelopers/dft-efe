@@ -1199,7 +1199,7 @@ namespace dftefe
           fieldNamesPSP,
           metadataNames);
 
-      bool isNonLocPSP = false, isNlcc = false;
+      d_isONCVNonLocPSP = false, d_isNlcc = false;
       for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
            atomSymbolId++)
         {
@@ -1210,7 +1210,7 @@ namespace dftefe
             numProj);
           if (numProj > 0)
             {
-              isNonLocPSP      = true;
+              d_isONCVNonLocPSP      = true;
               bool coreCorrect = false;
               utils::stringOps::strToBool(
                 d_atomSphericalDataContainerPSP->getMetadata(
@@ -1218,27 +1218,16 @@ namespace dftefe
                 coreCorrect);
               if (coreCorrect)
                 {
-                  isNlcc = true;
+                  d_isNlcc = true;
+                  break;
                 }
-              else if (isNlcc && !coreCorrect)
-                {
-                  utils::throwException(
-                    false,
-                    "Some atoms do not have NLCC parts in UPF files while some have.");
-                }
-            }
-          else if (!(numProj > 0) && isNlcc)
-            {
-              utils::throwException(
-                false,
-                "Some atoms do not have NONLOCAL parts in UPF files while some have.");
             }
         }
 
-      if (isNonLocPSP)
+      if (d_isONCVNonLocPSP)
         {
           d_atomSphericalDataContainerPSP->addFieldName("beta");
-          if (isNlcc)
+          if (d_isNlcc)
             {
               d_atomSphericalDataContainerPSP->addFieldName("nlcc");
             }
@@ -1351,6 +1340,51 @@ namespace dftefe
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
 
+      if(d_isNlcc && d_isONCVNonLocPSP)
+      {
+        d_coreCorrDensUPF = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+            feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+        d_coreCorrectedDensity = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+                    feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+        
+        const atoms::AtomSevereFunction<dim> rhoCoreCorrection(
+          d_atomSphericalDataContainerPSP,
+          atomSymbolVec,
+          atomCoordinates,
+          "nlcc",
+          0,
+          1);
+
+        for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+        {
+              size_type             quadId = 0;
+              std::vector<RealType> a(
+                d_densityInQuadValues.nCellQuadraturePoints(iCell));
+              a = (rhoCoreCorrection)(quadRuleContainerRho->getCellRealPoints(iCell));
+              RealType *b = a.data();
+              d_coreCorrDensUPF.template 
+                setCellValues<utils::MemorySpace::HOST>(iCell, b);
+        }
+        quadrature::add((ValueType)1.0,
+                        d_densityInQuadValues,
+                        (ValueType)1.0,
+                        d_coreCorrDensUPF,
+                        d_coreCorrectedDensity,
+                        *d_linAlgOpContext);
+
+      d_hamitonianXC =
+        std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+          d_coreCorrectedDensity,
+          feBDEXCHamiltonian,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE);                        
+      }
+      else
+      {
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1360,6 +1394,7 @@ namespace dftefe
           feBDEXCHamiltonian,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
+      }
       d_p.registerEnd("Hamiltonian Components Initilization");
 
       d_hamiltonianElectroExc =
@@ -1564,7 +1599,7 @@ namespace dftefe
           fieldNamesPSP,
           metadataNames);
 
-      bool isNonLocPSP = false, isNlcc = false;
+      d_isONCVNonLocPSP = false, d_isNlcc = false;
       for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
            atomSymbolId++)
         {
@@ -1575,7 +1610,7 @@ namespace dftefe
             numProj);
           if (numProj > 0)
             {
-              isNonLocPSP      = true;
+              d_isONCVNonLocPSP      = true;
               bool coreCorrect = false;
               utils::stringOps::strToBool(
                 d_atomSphericalDataContainerPSP->getMetadata(
@@ -1583,27 +1618,16 @@ namespace dftefe
                 coreCorrect);
               if (coreCorrect)
                 {
-                  isNlcc = true;
+                  d_isNlcc = true;
+                  break;
                 }
-              else if (isNlcc && !coreCorrect)
-                {
-                  utils::throwException(
-                    false,
-                    "Some atoms do not have NLCC parts in UPF files while some have.");
-                }
-            }
-          else if (!(numProj > 0) && isNlcc)
-            {
-              utils::throwException(
-                false,
-                "Some atoms do not have NONLOCAL parts in UPF files while some have.");
             }
         }
 
-      if (isNonLocPSP)
+      if (d_isONCVNonLocPSP)
         {
           d_atomSphericalDataContainerPSP->addFieldName("beta");
-          if (isNlcc)
+          if (d_isNlcc)
             {
               d_atomSphericalDataContainerPSP->addFieldName("nlcc");
             }
@@ -1748,6 +1772,51 @@ namespace dftefe
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
 
+      if(d_isNlcc && d_isONCVNonLocPSP)
+      {
+        d_coreCorrDensUPF = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+            feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+        d_coreCorrectedDensity = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+                    feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+        
+        const atoms::AtomSevereFunction<dim> rhoCoreCorrection(
+          d_atomSphericalDataContainerPSP,
+          atomSymbolVec,
+          atomCoordinates,
+          "nlcc",
+          0,
+          1);
+
+        for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+        {
+              size_type             quadId = 0;
+              std::vector<RealType> a(
+                d_densityInQuadValues.nCellQuadraturePoints(iCell));
+              a = (rhoCoreCorrection)(quadRuleContainerRho->getCellRealPoints(iCell));
+              RealType *b = a.data();
+              d_coreCorrDensUPF.template 
+                setCellValues<utils::MemorySpace::HOST>(iCell, b);
+        }
+        quadrature::add((ValueType)1.0,
+                        d_densityInQuadValues,
+                        (ValueType)1.0,
+                        d_coreCorrDensUPF,
+                        d_coreCorrectedDensity,
+                        *d_linAlgOpContext);
+
+      d_hamitonianXC =
+        std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+          d_coreCorrectedDensity,
+          feBDEXCHamiltonian,
+          linAlgOpContext,
+          KSDFTDefaults::CELL_BATCH_SIZE);                        
+      }
+      else
+      {
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1757,6 +1826,7 @@ namespace dftefe
           feBDEXCHamiltonian,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
+      }
       d_p.registerEnd("Hamiltonian Components Initilization");
 
       d_hamiltonianElectroExc =
@@ -1993,7 +2063,18 @@ namespace dftefe
                   hamiltonian->reinitField(d_densityInQuadValues);
                 }
 
-              d_hamitonianXC->reinitField(d_densityInQuadValues);
+              if(d_isNlcc && d_isONCVNonLocPSP)
+              {
+                quadrature::add((ValueType)1.0,
+                                d_densityInQuadValues,
+                                (ValueType)1.0,
+                                d_coreCorrDensUPF,
+                                d_coreCorrectedDensity,
+                                *d_linAlgOpContext);
+                d_hamitonianXC->reinitField(d_coreCorrectedDensity);
+              }
+              else
+                d_hamitonianXC->reinitField(d_densityInQuadValues);
 
               d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
 
@@ -2220,7 +2301,19 @@ namespace dftefe
               RealType elecEnergy = d_hamitonianElec->getEnergy();
               d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 
-              d_hamitonianXC->reinitField(d_densityOutQuadValues);
+              if(d_isNlcc && d_isONCVNonLocPSP)
+              {
+                quadrature::add((ValueType)1.0,
+                                d_densityOutQuadValues,
+                                (ValueType)1.0,
+                                d_coreCorrDensUPF,
+                                d_coreCorrectedDensity,
+                                *d_linAlgOpContext);
+                d_hamitonianXC->reinitField(d_coreCorrectedDensity);
+              }
+              else
+                d_hamitonianXC->reinitField(d_densityOutQuadValues);
+
               d_hamitonianXC->evalEnergy(d_mpiCommDomain);
               RealType xcEnergy = d_hamitonianXC->getEnergy();
               d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
@@ -2298,7 +2391,19 @@ namespace dftefe
           RealType elecEnergy = d_hamitonianElec->getEnergy();
           d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 
-          d_hamitonianXC->reinitField(d_densityOutQuadValues);
+          if(d_isNlcc && d_isONCVNonLocPSP)
+          {
+            quadrature::add((ValueType)1.0,
+                            d_densityOutQuadValues,
+                            (ValueType)1.0,
+                            d_coreCorrDensUPF,
+                            d_coreCorrectedDensity,
+                            *d_linAlgOpContext);
+            d_hamitonianXC->reinitField(d_coreCorrectedDensity);
+          }
+          else
+            d_hamitonianXC->reinitField(d_densityOutQuadValues);
+
           d_hamitonianXC->evalEnergy(d_mpiCommDomain);
           RealType xcEnergy = d_hamitonianXC->getEnergy();
           d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";

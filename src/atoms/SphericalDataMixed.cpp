@@ -58,7 +58,7 @@ namespace dftefe
               point[i] - origin, r, theta, phi, polarAngleTolerance);
             int  n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
             auto Ylm = Clm(l, m) * Dm(m) *
-                       sphericalHarmonicFunc.Plm(l, m, theta) * Qm(m, phi);
+                       sphericalHarmonicFunc.Plm(l, std::abs(m), theta) * Qm(m, phi);
             if (r <= lastRadialGridPoint)
               value[i] = (*spline)(r)*Ylm;
             else

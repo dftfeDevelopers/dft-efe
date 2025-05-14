@@ -63,15 +63,18 @@ namespace dftefe
       bool
       strToBool(const std::string s, bool &x)
       {
-        try
-          {
-            x = boost::lexical_cast<bool>(s);
-          }
-        catch (const boost::bad_lexical_cast &e)
-          {
-            return false;
-          }
-        return true;
+        if(s == "t" || s == "T")
+        {
+          x = true;
+          return true;
+        }
+        else if(s == "f" || s == "F")
+        {
+          x = false;
+          return true;
+        }
+        else
+          return false;
       }
 
       void

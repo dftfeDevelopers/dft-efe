@@ -214,6 +214,7 @@ namespace dftefe
       std::vector<RealType> diagonal(0), subDiagonal(0);
       lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
       RealType residual = subDiagonal[subDiagonal.size() - 1];
+      residual = residual/10; // Done in dftfe because the subspace size is 20. TODO.
 
       size_type iPass = 0;
       if (lanczosErr.isSuccess ||

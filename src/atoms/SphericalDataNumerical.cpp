@@ -31,6 +31,7 @@
 #include "BoostAutoDiff.h"
 #include <cmath>
 #include <atoms/SphericalDataNumerical.h>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
 namespace dftefe
 {
@@ -60,7 +61,7 @@ namespace dftefe
               {
                 int  n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
                 auto Ylm = Clm(l, m) * Dm(m) *
-                           sphericalHarmonicFunc.Plm(l, m, theta) * Qm(m, phi);
+                           sphericalHarmonicFunc.Plm(l, std::abs(m), theta) * Qm(m, phi);
                 value[i] =
                   (*spline)(r)*Ylm * smoothCutoffValue(r, cutoff, smoothness);
               }
@@ -125,9 +126,9 @@ namespace dftefe
                 int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
 
                 double constant  = Clm(l, m) * Dm(m);
-                double plm_theta = sphericalHarmonicFunc.Plm(l, m, theta);
+                double plm_theta = sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
                 double dPlmDTheta_theta =
-                  sphericalHarmonicFunc.dPlmDTheta(l, m, theta);
+                  sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
 
                 double qm_mphi    = Qm(m, phi);
                 auto   Ylm        = constant * plm_theta * qm_mphi;
@@ -147,7 +148,7 @@ namespace dftefe
                     phi)/sin(theta) :*/
                       constant *
                       (sin(theta) *
-                         sphericalHarmonicFunc.d2PlmDTheta2(l, m, theta) +
+                         sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta) +
                        cos(theta) * dPlmDTheta_theta +
                        sin(theta) * l * (l + 1) * plm_theta) *
                       (1 / (m * m)) * dQmDPhi(m, phi);
@@ -511,7 +512,7 @@ namespace dftefe
       for (int i = 0; i < r.size(); i++)
         {
           retVal[i] = (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
-                        constant * d_sphericalHarmonicFunc.Plm(l, m, theta[i]) *
+                        constant * d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta[i]) *
                           Qm(m, phi[i]) :
                         0.;
         }
@@ -568,9 +569,9 @@ namespace dftefe
 
               double theta     = thetaVec[i];
               double phi       = phiVec[i];
-              double plm_theta = d_sphericalHarmonicFunc.Plm(l, m, theta);
+              double plm_theta = d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
               double dPlmDTheta_theta =
-                d_sphericalHarmonicFunc.dPlmDTheta(l, m, theta);
+                d_sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
               double qm_mphi    = Qm(m, phi);
               auto   Ylm        = constant * plm_theta * qm_mphi;
               auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
@@ -581,7 +582,7 @@ namespace dftefe
                   dYlmDPhiBysinTheta =
                     constant *
                     (sin(theta) *
-                       d_sphericalHarmonicFunc.d2PlmDTheta2(l, m, theta) +
+                       d_sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta) +
                      cos(theta) * dPlmDTheta_theta +
                      sin(theta) * l * (l + 1) * plm_theta) *
                     (1 / (m * m)) * dQmDPhi(m, phi);
