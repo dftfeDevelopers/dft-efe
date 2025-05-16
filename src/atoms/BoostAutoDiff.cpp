@@ -137,7 +137,7 @@ namespace dftefe
         auto r            = sqrt(x * x + y * y + z * z);
         auto radValue     = radVal(x, y, z, coeffVec);
         auto smoothCutoff = cutOff(x, y, z, smoothness, cutoff);
-        auto lege         = legendre(x, y, z, l, m);
+        auto lege         = legendre(x, y, z, l, std::abs(m));
         auto theta        = acos(z / r);
         auto phi          = atan2(y, x);
         if ((double)x == 0)

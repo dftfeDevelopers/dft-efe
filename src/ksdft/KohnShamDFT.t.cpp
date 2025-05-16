@@ -1222,6 +1222,14 @@ namespace dftefe
                   break;
                 }
             }
+          else
+          {
+            if(d_isONCVNonLocPSP)
+            {
+              utils::throwException(false,
+                                    "All the Atoms should have nonLocal Components in PSP.");
+            }
+          }
         }
 
       if (d_isONCVNonLocPSP)
@@ -1622,6 +1630,14 @@ namespace dftefe
                   break;
                 }
             }
+          else
+          {
+            if(d_isONCVNonLocPSP)
+            {
+              utils::throwException(false,
+                                    "All the Atoms should have nonLocal Components in PSP.");
+            }
+          }
         }
 
       if (d_isONCVNonLocPSP)

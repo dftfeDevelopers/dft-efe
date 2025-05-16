@@ -623,6 +623,7 @@ namespace dftefe
         }
       else if(fieldName == std::string("nlcc") && !isCoreCorrectAttributePresent)
         {
+          // since some PSP files may have core_correction and some may not in a KSDFT calculation
           std::string stringsZero = [numPoints]{ std::string s; for (int i = 0; i < numPoints; ++i) s += (i ? " 0" : "0"); return s; }();
           nodeStrings.resize(1);
           nodeStrings[0] = stringsZero;
