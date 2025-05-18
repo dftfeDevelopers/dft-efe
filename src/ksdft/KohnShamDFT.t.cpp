@@ -1703,33 +1703,33 @@ namespace dftefe
               setCellValues<utils::MemorySpace::HOST>(iCell, b);
       }
 
-      quadrature::QuadratureValuesContainer<
-        ValueTypeElectrostaticsCoeff,
-        memorySpace> atomicTotalElecPotNuclearQuad(feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+      d_atomicTotalElecPotNuclearQuad = quadrature::QuadratureValuesContainer<
+              ValueTypeElectrostaticsCoeff,
+              memorySpace>(feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
       
-      quadrature::QuadratureValuesContainer<
+      d_atomicTotalElecPotElectronicQuad = quadrature::QuadratureValuesContainer<
         ValueTypeElectrostaticsCoeff,
-        memorySpace> atomicTotalElecPotElectronicQuad(feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+        memorySpace>(feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      for (size_type iCell = 0; iCell < atomicTotalElecPotNuclearQuad.nCells(); iCell++)
+      for (size_type iCell = 0; iCell < d_atomicTotalElecPotNuclearQuad.nCells(); iCell++)
       {
             size_type             quadId = 0;
             std::vector<ValueTypeElectrostaticsCoeff> a(
-              atomicTotalElecPotNuclearQuad.nCellQuadraturePoints(iCell));
+              d_atomicTotalElecPotNuclearQuad.nCellQuadraturePoints(iCell));
             a = (atomicTotalElectroPotentialFunction)(feBDNuclearChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
             ValueTypeElectrostaticsCoeff *b = a.data();
-            atomicTotalElecPotNuclearQuad.template 
+            d_atomicTotalElecPotNuclearQuad.template 
               setCellValues<utils::MemorySpace::HOST>(iCell, b);
       }
 
-      for (size_type iCell = 0; iCell < atomicTotalElecPotElectronicQuad.nCells(); iCell++)
+      for (size_type iCell = 0; iCell < d_atomicTotalElecPotElectronicQuad.nCells(); iCell++)
       {
             size_type             quadId = 0;
             std::vector<ValueTypeElectrostaticsCoeff> a(
-              atomicTotalElecPotElectronicQuad.nCellQuadraturePoints(iCell));
+              d_atomicTotalElecPotElectronicQuad.nCellQuadraturePoints(iCell));
             a = (atomicTotalElectroPotentialFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
             ValueTypeElectrostaticsCoeff *b = a.data();
-            atomicTotalElecPotElectronicQuad.template 
+            d_atomicTotalElecPotElectronicQuad.template 
               setCellValues<utils::MemorySpace::HOST>(iCell, b);
       }
 
@@ -1776,8 +1776,8 @@ namespace dftefe
           d_atomSphericalDataContainerPSP,
           smearedChargeRadius,
           d_densityInQuadValues,
-          atomicTotalElecPotNuclearQuad,
-          atomicTotalElecPotElectronicQuad,
+          d_atomicTotalElecPotNuclearQuad,
+          d_atomicTotalElecPotElectronicQuad,
           feBMTotalCharge,
           feBMWaveFn,
           feBDTotalChargeStiffnessMatrix,

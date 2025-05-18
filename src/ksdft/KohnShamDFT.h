@@ -570,6 +570,10 @@ namespace dftefe
 
       bool d_isONCVNonLocPSP, d_isNlcc;
 
+      quadrature::QuadratureValuesContainer<
+              ValueTypeElectrostaticsCoeff,
+              memorySpace> d_atomicTotalElecPotNuclearQuad , d_atomicTotalElecPotElectronicQuad;
+
     }; // end of KohnShamDFT
   }    // end of namespace ksdft
 } // end of namespace dftefe
