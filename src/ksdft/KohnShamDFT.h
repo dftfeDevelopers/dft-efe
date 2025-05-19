@@ -421,6 +421,7 @@ namespace dftefe
         const bool      isAdaptiveAndersonMixingParameter,
         /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
         const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,

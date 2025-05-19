@@ -1528,6 +1528,7 @@ namespace dftefe
         const double                     mixingParameter,
         const bool                       isAdaptiveAndersonMixingParameter,
         const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
@@ -1684,20 +1685,12 @@ namespace dftefe
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
-      const atoms::AtomSevereFunction<dim> rho(
-        d_atomSphericalDataContainerPSP,
-        atomSymbolVec,
-        atomCoordinates,
-        "rhoatom",
-        0,
-        1);
-
       for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
       {
             size_type             quadId = 0;
             std::vector<RealType> a(
               d_densityInQuadValues.nCellQuadraturePoints(iCell));
-            a = (rho)(quadRuleContainerRho->getCellRealPoints(iCell));
+            a = (atomicElectronicChargeDensityFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
             RealType *b = a.data();
             d_densityInQuadValues.template 
               setCellValues<utils::MemorySpace::HOST>(iCell, b);
