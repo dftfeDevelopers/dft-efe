@@ -708,7 +708,7 @@ namespace dftefe
           FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
             &                                        feBasisManager,
         const std::vector<HamiltonianPtrVariant> &   hamiltonianComponentsVec,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
         const size_type                              maxCellBlock,
         const size_type                              maxWaveFnBatch)
       : d_maxCellBlock(maxCellBlock)
@@ -758,8 +758,14 @@ namespace dftefe
         {
           op.addLocalComponent(d_hamiltonianInAllCells,
                                hamiltonianComponentsVec[i],
-                               d_linAlgOpContext);
+                               *d_linAlgOpContext);
         }
+
+      d_scratchNonLocPSPApply = 
+      linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>(
+                                                    feBasisManager.getMPIPatternP2P(),
+                                                    d_linAlgOpContext,
+                                                    d_maxWaveFnBatch);
 
       /**
         //------------------------ print Hamiltonian EE
@@ -936,6 +942,15 @@ namespace dftefe
           numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
         }
 
+      if(d_scratchNonLocPSPApply.getNumberComponents() != X.getNumberComponents())
+      {
+        d_scratchNonLocPSPApply = 
+              linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>(
+                                                            d_feBasisManager->getMPIPatternP2P(),
+                                                            d_linAlgOpContext,
+                                                            X.getNumberComponents());
+      }
+
       auto itCellLocalIdsBeginX =
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
@@ -996,16 +1011,14 @@ namespace dftefe
               d_hamiltonianComponentsVec[i]));
           if (b.hasNonLocalComponent())
             {
-              linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> temp(
-                X, (ValueTypeOperator)0);
-              b.applyNonLocal(X, temp, updateGhostX, updateGhostY);
+              b.applyNonLocal(X, d_scratchNonLocPSPApply, updateGhostX, updateGhostY);
               linearAlgebra::blasLapack::
                 axpby<ValueTypeOperator, ValueTypeOperator, memorySpace>(
                   Y.getNumberComponents() * Y.localSize(),
                   (ValueTypeOperator)1.0,
                   Y.data(),
                   (ValueTypeOperator)1.0,
-                  temp.data(),
+                  d_scratchNonLocPSPApply.data(),
                   Y.data(),
                   *X.getLinAlgOpContext());
             }

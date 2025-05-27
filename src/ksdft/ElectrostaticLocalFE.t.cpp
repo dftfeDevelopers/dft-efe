@@ -1691,7 +1691,7 @@ namespace dftefe
                         *d_scratchPotRhoQuad,
                         *d_linAlgOpContext);
 
-      RealType integralPhixRho =
+      RealType integralPhixbSmear =
         ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
@@ -1703,7 +1703,7 @@ namespace dftefe
                d_linAlgOpContext,
                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-      RealType integralPhixbSmear =
+      RealType integralPhixRho =
         ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
           ValueTypeBasisData,
           ValueTypeBasisCoeff,
@@ -1716,6 +1716,107 @@ namespace dftefe
                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
       RealType totalEnergy = (integralPhixRho + integralPhixbSmear) * 0.5;
+      
+      /** 
+      // ------------- DEBUG ------------------------------------------------
+      double  integralPhiAtxbSmear =
+        ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+          ValueTypeBasisData,
+          ValueTypeBasisCoeff,
+          ValueTypeWaveFnBasisData,
+          memorySpace,
+          dim>(*d_atomicTotalElecPotNuclearQuad,
+               *d_nuclearChargesDensity,
+               d_feBDNuclearChargeRhs->getJxWInAllCells(),
+               d_linAlgOpContext,
+               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+      d_rootCout <<  "integralPhiAtxbSmear: " << 0.5 * integralPhiAtxbSmear << "\n";           
+
+      d_feBasisOpNuclear->interpolate(*d_totalChargePotential,
+                                      *d_feBMTotalCharge,
+                                      *d_scratchPotNuclearQuad);
+
+      double  integralDelPhixbSmear =
+        ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+          ValueTypeBasisData,
+          ValueTypeBasisCoeff,
+          ValueTypeWaveFnBasisData,
+          memorySpace,
+          dim>(*d_scratchPotNuclearQuad,
+               *d_nuclearChargesDensity,
+               d_feBDNuclearChargeRhs->getJxWInAllCells(),
+               d_linAlgOpContext,
+               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+      d_rootCout <<  "integralDelPhixbSmear: " << 0.5 * integralDelPhixbSmear << "\n";   
+
+      double intRhoAtPhiAt =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                ValueTypeBasisData,
+                ValueTypeBasisCoeff,
+                ValueTypeWaveFnBasisData,
+                memorySpace,
+                dim>(*d_atomicTotalElecPotElectronicQuad,
+                    d_atomicElectronChargeDensity,
+                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                    d_linAlgOpContext,
+                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+      d_rootCout << "\n\n";
+      d_rootCout <<  "intRhoAtPhiAt: " << 0.5 * intRhoAtPhiAt << "\n";            
+
+      d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
+                                         *d_feBMTotalCharge,
+                                         *d_scratchPotRhoQuad);
+
+       double  intRhoAtDelPhi =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                ValueTypeBasisData,
+                ValueTypeBasisCoeff,
+                ValueTypeWaveFnBasisData,
+                memorySpace,
+                dim>(*d_scratchPotRhoQuad,
+                    d_atomicElectronChargeDensity,
+                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                    d_linAlgOpContext,
+                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());  
+                    
+      d_rootCout << "intRhoAtDelPhi: " <<  0.5 * intRhoAtDelPhi << "\n";  
+                    
+      quadrature::QuadratureValuesContainer<RealType , memorySpace> delRho(d_atomicElectronChargeDensity);
+
+      for(int i = 0 ; i < delRho.nEntries() ; i++)
+      {
+        *(delRho.data() + i) = *(d_electronChargeDensity->data() + i) - 
+          *(d_atomicElectronChargeDensity.data() + i);
+      }
+
+       double intDelRhoPhiAt =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                ValueTypeBasisData,
+                ValueTypeBasisCoeff,
+                ValueTypeWaveFnBasisData,
+                memorySpace,
+                dim>(*d_atomicTotalElecPotElectronicQuad,
+                    delRho,
+                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                    d_linAlgOpContext,
+                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());  
+                    
+      d_rootCout << "intDelRhoPhiAt: " <<  0.5 * intDelRhoPhiAt << "\n"; 
+
+       double intDelRhoDelPhi =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                ValueTypeBasisData,
+                ValueTypeBasisCoeff,
+                ValueTypeWaveFnBasisData,
+                memorySpace,
+                dim>(*d_scratchPotRhoQuad,
+                    delRho,
+                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                    d_linAlgOpContext,
+                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator()); 
+                    
+       d_rootCout << "intDelRhoDelPhi: " <<  0.5 * intDelRhoDelPhi << "\n\n";               
+      // ------------- DEBUG ------------------------------------------------
+       **/
 
       // self energy computation // TODO : Do this only once in reinitBasis
       RealType selfEnergy = 0;

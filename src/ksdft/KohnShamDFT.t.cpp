@@ -416,7 +416,7 @@ namespace dftefe
                                                    dim>>(
           *feBMWaveFn,
           hamiltonianComponentsVec,
-          *linAlgOpContext,
+          linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
@@ -710,7 +710,7 @@ namespace dftefe
                                                    dim>>(
           *feBMWaveFn,
           hamiltonianComponentsVec,
-          *linAlgOpContext,
+          linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
@@ -1015,7 +1015,7 @@ namespace dftefe
                                                    dim>>(
           *feBMWaveFn,
           hamiltonianComponentsVec,
-          *linAlgOpContext,
+          linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
@@ -1149,6 +1149,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDEXCHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,                                                
         const std::map<std::string, std::string> &      atomSymbolToPSPFilename,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
@@ -1344,6 +1347,7 @@ namespace dftefe
           feBDNuclearChargeRhs,
           feBDElectronicChargeRhs,
           feBDElectrostaticsHamiltonian,
+          feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
@@ -1427,7 +1431,7 @@ namespace dftefe
                                                    dim>>(
           *feBMWaveFn,
           hamiltonianComponentsVec,
-          *linAlgOpContext,
+          linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
@@ -1558,6 +1562,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDEXCHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,                                                
         const std::map<std::string, std::string> &      atomSymbolToPSPFilename,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                          linAlgOpContext,
@@ -1777,6 +1784,7 @@ namespace dftefe
           feBDNuclearChargeRhs,
           feBDElectronicChargeRhs,
           feBDElectrostaticsHamiltonian,
+          feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
@@ -1860,7 +1868,7 @@ namespace dftefe
                                                    dim>>(
           *feBMWaveFn,
           hamiltonianComponentsVec,
-          *linAlgOpContext,
+          linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");

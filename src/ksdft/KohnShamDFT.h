@@ -375,7 +375,10 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDEXCHamiltonian,
-        /* PSP/AE related info */
+        /* PSP related info */
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,        
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -454,7 +457,10 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
                                           memorySpace>> feBDEXCHamiltonian,
-        /* PSP/AE related info */
+        /* PSP related info */
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,      
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>

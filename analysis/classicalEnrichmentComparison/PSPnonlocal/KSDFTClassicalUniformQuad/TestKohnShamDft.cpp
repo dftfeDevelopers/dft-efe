@@ -358,6 +358,9 @@ int main(int argc, char** argv)
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
+  unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
+  unsigned int gaussSubdividedCopiesNonLocOperator = 1;
+
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
@@ -589,6 +592,17 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     rootCout << "Maximum Number of quadrature points in a processor eigen: "<< nQuadMax<<"\n";
   rootCout << "Number of quadrature points in gauss subdivided quadrature eigen: "<< nQuad<<"\n";
 
+  std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleNonLocOperator =
+    std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeNonLocOperator, 
+      gaussSubdividedCopiesNonLocOperator);
+
+  std::shared_ptr<quadrature::QuadratureRuleContainer>  quadRuleContainerGaussSubdividedAtomNonLocOp = 
+    std::make_shared<quadrature::QuadratureRuleContainer>
+    (quadAttrGaussSubdivided, 
+    gaussSubdivQuadRuleNonLocOperator, 
+    triangulationBase, 
+    *cellMapping); 
+
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
@@ -605,6 +619,11 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
+                
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDAtomCenterNonLocalOperator = 
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedAtomNonLocOp, basisAttrMap);
                 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
@@ -702,7 +721,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDElecChargeRhs,  
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                                
+                                          feBDEXCHamiltonian,       
+                                          feBDAtomCenterNonLocalOperator,                                                                         
                                           atomSymbolToPSPFilename,
                                           linAlgOpContext,
                                           *MContextForInv,
@@ -767,11 +787,12 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDElecChargeRhs,
+                                          feBDNucChargeRhs,
                                           feBDElecChargeRhs,  
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                                
+                                          feBDEXCHamiltonian,      
+                                          feBDAtomCenterNonLocalOperator,                                                                          
                                           atomSymbolToPSPFilename,
                                           linAlgOpContext,
                                           *MContextForInv,

@@ -367,6 +367,9 @@ int main(int argc, char** argv)
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
+  unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
+  unsigned int gaussSubdividedCopiesNonLocOperator = 1;
+
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
@@ -565,6 +568,17 @@ int main(int argc, char** argv)
     std::make_shared<quadrature::QuadratureRuleContainer>
     (quadAttrGaussSubdivided, 
     gaussSubdivQuadRuleEigen, 
+    triangulationBase, 
+    *cellMapping); 
+
+  std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleNonLocOperator =
+    std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeNonLocOperator, 
+      gaussSubdividedCopiesNonLocOperator);
+
+  std::shared_ptr<quadrature::QuadratureRuleContainer>  quadRuleContainerAdaptiveAtomCenterNonLocalOperator = 
+    std::make_shared<quadrature::QuadratureRuleContainer>
+    (quadAttrGaussSubdivided, 
+    gaussSubdivQuadRuleNonLocOperator, 
     triangulationBase, 
     *cellMapping); 
 
@@ -786,6 +800,19 @@ int main(int argc, char** argv)
 
   efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDAtomCenterNonLocalOperator =
+    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+
+  feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveAtomCenterNonLocalOperator, basisAttrMap);
+
   // basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
   // basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   // basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
@@ -946,7 +973,8 @@ int main(int argc, char** argv)
                                           feBDElecChargeRhs,  
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                                
+                                          feBDEXCHamiltonian,      
+                                          feBDAtomCenterNonLocalOperator,                                                                          
                                           atomSymbolToPSPFilename,
                                           linAlgOpContext,
                                           *MContextForInv,
@@ -1000,7 +1028,8 @@ int main(int argc, char** argv)
                                           feBDElecChargeRhs,  
                                           feBDKineticHamiltonian,     
                                           feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                                
+                                          feBDEXCHamiltonian,  
+                                          feBDAtomCenterNonLocalOperator,                                                                              
                                           atomSymbolToPSPFilename,
                                           linAlgOpContext,
                                           *MContextForInv,

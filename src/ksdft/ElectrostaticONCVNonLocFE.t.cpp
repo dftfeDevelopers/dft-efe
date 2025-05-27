@@ -70,6 +70,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
           feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -108,7 +111,7 @@ namespace dftefe
                                                    memorySpace,
                                                    dim>>(
         *feBMWaveFn,
-        *feBDHamiltonian,
+        *feBDAtomCenterNonLocalOperator,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         atomSymbolVec,
@@ -197,6 +200,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
           feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -235,7 +241,7 @@ namespace dftefe
                                                    memorySpace,
                                                    dim>>(
         *feBMWaveFn,
-        *feBDHamiltonian,
+        *feBDAtomCenterNonLocalOperator,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         atomSymbolVec,
@@ -313,7 +319,10 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian)
+          feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator)
     {
       if(d_isNonLocPSP)
       {
@@ -323,7 +332,7 @@ namespace dftefe
                                                    memorySpace,
                                                    dim>>(
         *feBMWaveFn,
-        *feBDHamiltonian,
+        *feBDAtomCenterNonLocalOperator,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         d_atomSymbolVec,
@@ -395,7 +404,10 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian)
+          feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator)
     {
       if(d_isNonLocPSP)
       {
@@ -405,7 +417,7 @@ namespace dftefe
                                                    memorySpace,
                                                    dim>>(
         *feBMWaveFn,
-        *feBDHamiltonian,
+        *feBDAtomCenterNonLocalOperator,
         d_atomSphericalDataContainerPSP,
         ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
         d_atomSymbolVec,
@@ -607,7 +619,7 @@ namespace dftefe
                                     X.data() + iSize * X.getNumberComponents() +
                                       psiStartId);
 
-              d_atomNonLocOpContext->apply(psiBatchSmall, YSmall, true, false);
+              d_atomNonLocOpContext->apply(psiBatchSmall, YSmall, true, true);
               linearAlgebra::dot(psiBatchSmall,
                                  YSmall,
                                  dotProds,
@@ -622,7 +634,7 @@ namespace dftefe
                                     X.data() + iSize * X.getNumberComponents() +
                                       psiStartId);
 
-              d_atomNonLocOpContext->apply(psiBatch, Y, true, false);
+              d_atomNonLocOpContext->apply(psiBatch, Y, true, true);
               linearAlgebra::dot(psiBatch,
                                  Y,
                                  dotProds,
@@ -634,6 +646,7 @@ namespace dftefe
             nonLocEnergy += dotProds[i] * 2 * occupationInBatch[i];
         }
         }
+      d_rootCout << "\nNonLocal PSP Energy: " << nonLocEnergy << "\n\n";
       d_energy += nonLocEnergy;
     }
 

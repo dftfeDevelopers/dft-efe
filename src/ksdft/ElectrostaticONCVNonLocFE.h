@@ -109,6 +109,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
           feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -153,6 +156,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
           feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -184,7 +190,10 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian);
+          feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -218,7 +227,10 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian);
+          feBDHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
+          feBDAtomCenterNonLocalOperator);
 
       void
       reinitField(
