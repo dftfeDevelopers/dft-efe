@@ -774,10 +774,10 @@ namespace dftefe
                 (radialValuesWithCutoff[1] - radialValuesWithCutoff[0]) /
                 (radialPointsWithCutoff[1] - radialPointsWithCutoff[0]);
               double rightValue =
-                (-1.0) * std::abs(radialValuesWithCutoff.back() /
+                (-1.0) * (radialValuesWithCutoff.back() /
                                   radialPointsWithCutoff.back());
 
-              utils::Spline::bd_type left = utils::Spline::bd_type::first_deriv;
+              utils::Spline::bd_type left = utils::Spline::bd_type::second_deriv;
               utils::Spline::bd_type right =
                 utils::Spline::bd_type::first_deriv;
 

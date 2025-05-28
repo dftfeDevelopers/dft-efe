@@ -875,7 +875,6 @@ namespace dftefe
       , d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_densityInQuadValues(electronChargeDensityInput)
-      , d_densityOutQuadValues(electronChargeDensityInput)
       , d_densityResidualQuadValues(electronChargeDensityInput)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(&MContext)
@@ -939,6 +938,7 @@ namespace dftefe
       d_jxwDataHost.resize(jxwData.size());
       memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
 
+      d_densityOutQuadValues = d_densityInQuadValues;
       // normalize electroncharge density
       RealType totalDensityInQuad =
         KohnShamDFTInternal::normalizeDensityQuadData(d_densityInQuadValues,
@@ -971,7 +971,7 @@ namespace dftefe
           atomCoordinates,
           atomCharges,
           smearedChargeRadius,
-          d_densityInQuadValues,
+          d_densityOutQuadValues,  /*NOTE: Atomic density input should not be normalized*/
           atomicTotalElecPotNuclearQuad,
           atomicTotalElecPotElectronicQuad,
           feBMTotalCharge,
@@ -1606,7 +1606,7 @@ namespace dftefe
 
       const std::vector<std::string> metadataNames =
         atoms::AtomSphDataPSPDefaults::METADATANAMES;
-      std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
+      std::vector<std::string> fieldNamesPSP = {"vlocal"};
 
       d_atomSphericalDataContainerPSP =
         std::make_shared<atoms::AtomSphericalDataContainer>(
@@ -1660,7 +1660,6 @@ namespace dftefe
        d_densityInQuadValues = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
   
-        d_densityOutQuadValues = d_densityInQuadValues;
         d_densityResidualQuadValues = d_densityInQuadValues;
 
       if (dynamic_cast<
@@ -1740,6 +1739,7 @@ namespace dftefe
       d_jxwDataHost.resize(jxwData.size());
       memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
 
+      d_densityOutQuadValues = d_densityInQuadValues;
       // normalize electroncharge density
       RealType totalDensityInQuad =
         KohnShamDFTInternal::normalizeDensityQuadData(d_densityInQuadValues,
@@ -1775,7 +1775,7 @@ namespace dftefe
           atomSymbolVec,
           d_atomSphericalDataContainerPSP,
           smearedChargeRadius,
-          d_densityInQuadValues,
+          d_densityOutQuadValues, /*NOTE: Atomic density input should not be normalized*/
           d_atomicTotalElecPotNuclearQuad,
           d_atomicTotalElecPotElectronicQuad,
           feBMTotalCharge,

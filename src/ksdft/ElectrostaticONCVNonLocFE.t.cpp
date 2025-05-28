@@ -261,6 +261,11 @@ namespace dftefe
           0,
           1);
 
+      ////-------DEBUG V_Local print---------------------
+      // for(int i = 0 ; i < 2000 ; i++)
+      //   d_rootCout << i*0.01 << "\t" << (*d_atomVLocFunction)(dftefe::utils::Point({i*0.01,0,0}))<<std::endl;
+      ////-------DEBUG V_Local print---------------------
+
       d_electrostaticLocal =
         std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
                                                     ValueTypeBasisCoeff,
