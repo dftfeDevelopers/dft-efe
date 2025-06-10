@@ -409,9 +409,10 @@ namespace dftefe
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
-        std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                   ValueTypeOperand,
-                                                   ValueTypeWaveFunctionBasis,
+        std::make_shared<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
+                                                ValueTypeWaveFunctionBasis,
                                                    memorySpace,
                                                    dim>>(
           *feBMWaveFn,
@@ -703,9 +704,10 @@ namespace dftefe
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
-        std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                   ValueTypeOperand,
-                                                   ValueTypeWaveFunctionBasis,
+        std::make_shared<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
+                                                ValueTypeWaveFunctionBasis,
                                                    memorySpace,
                                                    dim>>(
           *feBMWaveFn,
@@ -1008,9 +1010,10 @@ namespace dftefe
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
-        std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                   ValueTypeOperand,
-                                                   ValueTypeWaveFunctionBasis,
+        std::make_shared<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
+                                                ValueTypeWaveFunctionBasis,
                                                    memorySpace,
                                                    dim>>(
           *feBMWaveFn,
@@ -1424,9 +1427,10 @@ namespace dftefe
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
-        std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                   ValueTypeOperand,
-                                                   ValueTypeWaveFunctionBasis,
+        std::make_shared<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
+                                                ValueTypeWaveFunctionBasis,
                                                    memorySpace,
                                                    dim>>(
           *feBMWaveFn,
@@ -1861,9 +1865,10 @@ namespace dftefe
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
-        std::make_shared<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                   ValueTypeOperand,
-                                                   ValueTypeWaveFunctionBasis,
+        std::make_shared<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
+                                                ValueTypeWaveFunctionBasis,
                                                    memorySpace,
                                                    dim>>(
           *feBMWaveFn,

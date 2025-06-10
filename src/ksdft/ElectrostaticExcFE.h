@@ -114,6 +114,19 @@ namespace dftefe
       bool
       hasNonLocalComponent() const override;
 
+      std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
+                                            ValueTypeElectrostaticsCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim>>
+      getElectrostaticFE() const;     
+      
+      std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                                  ValueTypeWaveFunctionCoeff,
+                                                  memorySpace,
+                                                  dim>> 
+      getExchangeCorrelationFE() const;  
+
     private:
       std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                             ValueTypeElectrostaticsCoeff,

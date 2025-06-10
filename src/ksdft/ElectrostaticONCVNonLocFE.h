@@ -264,6 +264,13 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
       getFunctionalDerivative() const override;
 
+      std::shared_ptr<
+        const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                  ValueTypeWaveFnCoeff,
+                                                  memorySpace,
+                                                  dim>>
+      getAtomCenterNonLocalOpContextFE() const;
+
     private:
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;

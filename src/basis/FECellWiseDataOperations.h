@@ -51,6 +51,15 @@ namespace dftefe
           &                                                   numCellDofs,
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
+      static void
+      copyFieldToCellWiseData(
+        const ValueType *data,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+          &                                                   numCellDofs,
+        ValueType *itCellWiseStorageBegin);
+
       // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
       // cells) This also takes the case where numCellDofs = 0
       static void

@@ -88,6 +88,26 @@ namespace dftefe
             linearAlgebra::MultiVector<ValueType, memorySpace> &       Y,
             bool updateGhostX = false,
             bool updateGhostY = false) const override;
+        
+      void 
+      reinitCX(size_type waveFuncBlockSize) const;
+      
+      void 
+      setCXToZero() const;
+
+      void 
+      applyCconjtransOnX(std::pair<size_type, size_type> cellRange , 
+        const ValueTypeOperand *xCellValuesBegin) const;
+
+      void
+      applyAllReduceOnCconjtransX() const;
+
+      void
+      applyVOnCconjtransX() const;
+
+      void
+      applyCOnVCconjtransX(std::pair<size_type, size_type> cellRange , 
+          ValueTypeOperand *yCellValuesBegin) const;
 
     private:
       // gets the projector values with quad pts as fastest index
@@ -149,6 +169,9 @@ namespace dftefe
       const std::string                d_fieldNameProjector;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
+      size_type  d_numLocallyOwnedCells;
+      std::vector<size_type> d_numCellDofs;
+      mutable utils::MemoryStorage<ValueType, memorySpace> d_CXCellValues;
     };
   } // namespace basis
 } // end of namespace dftefe

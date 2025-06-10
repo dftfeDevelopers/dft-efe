@@ -699,5 +699,26 @@ namespace dftefe
       return d_electrostaticLocal->getFunctionalDerivative();
     }
 
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasis,
+              typename ValueTypeWaveFnCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<
+      const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                ValueTypeWaveFnCoeff,
+                                                memorySpace,
+                                                dim>>
+    ElectrostaticONCVNonLocFE<ValueTypeBasisData,
+                              ValueTypeBasisCoeff,
+                              ValueTypeWaveFnBasis,
+                              ValueTypeWaveFnCoeff,
+                              memorySpace,
+                              dim>::getAtomCenterNonLocalOpContextFE() const
+    {
+      return d_atomNonLocOpContext;
+    }
+
   } // end of namespace ksdft
 } // end of namespace dftefe

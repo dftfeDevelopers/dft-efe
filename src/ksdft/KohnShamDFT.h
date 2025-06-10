@@ -501,8 +501,9 @@ namespace dftefe
                                         memorySpace,
                                         dim>>
         d_densCalc;
-      std::shared_ptr<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                ValueTypeOperand,
+      std::shared_ptr<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
                                                 ValueTypeWaveFunctionBasis,
                                                 memorySpace,
                                                 dim>>

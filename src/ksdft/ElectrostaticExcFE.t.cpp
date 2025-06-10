@@ -240,5 +240,46 @@ namespace dftefe
                     d_electroHamiltonian->hasNonLocalComponent());
     }
 
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
+                                          ValueTypeElectrostaticsCoeff,
+                                          ValueTypeWaveFunctionBasis,
+                                          memorySpace,
+                                          dim>>
+    ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                       ValueTypeElectrostaticsBasis,
+                       ValueTypeWaveFunctionCoeff,
+                       ValueTypeWaveFunctionBasis,
+                       memorySpace,
+                       dim>::getElectrostaticFE() const
+    {
+      return d_electroHamiltonian;
+    }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                                ValueTypeWaveFunctionCoeff,
+                                                memorySpace,
+                                                dim>> 
+    ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                       ValueTypeElectrostaticsBasis,
+                       ValueTypeWaveFunctionCoeff,
+                       ValueTypeWaveFunctionBasis,
+                       memorySpace,
+                       dim>::getExchangeCorrelationFE() const
+    {
+      return d_excHamiltonian;
+    }
+
   } // end of namespace ksdft
 } // end of namespace dftefe
