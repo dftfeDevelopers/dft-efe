@@ -146,14 +146,16 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<double> &      smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -236,14 +238,16 @@ namespace dftefe
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -305,6 +309,9 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclearChargeRhs);
 
+      void
+      deleteStorages();
+
       const bool                d_useDealiiMatrixFreePoissonSolve;
       bool                      d_isNumericalVSelfSolve;
       bool                      d_isDeltaRhoSolve;
@@ -321,15 +328,17 @@ namespace dftefe
         *d_nuclearChargesDensity;
       const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_electronChargeDensity;
-      const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
                                                   memorySpace>
         *d_atomicTotalElecPotNuclearQuad, *d_atomicTotalElecPotElectronicQuad;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        d_atomicElectronChargeDensity;
+        d_atomicElectronChargeDensity , d_atomicElectronChargeDensityNucQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotHamQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotRhoQuad;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_correctionPotNucQuad;
 
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_scratchDensNuclearQuad;

@@ -140,11 +140,6 @@ namespace dftefe
 
       mutable utils::MemoryStorage<ValueTypeOperand, memorySpace> d_XCellValues;
 
-      // std::shared_ptr<HamiltonianOperationsFE<ValueTypeElectrostaticsCoeff,
-      //                     ValueTypeElectrostaticsBasis,
-      //                     ValueTypeWaveFunctionCoeff,
-      //                     ValueTypeWaveFunctionBasis, memorySpace, dim>> d_hamiltonianOperationsFE;
-
       mutable std::shared_ptr<const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
                             ValueTypeElectrostaticsCoeff,
                             ValueTypeWaveFunctionBasis,

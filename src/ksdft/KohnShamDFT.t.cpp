@@ -820,15 +820,17 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Basis related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
-        /* Atomic potential for delta rho */
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &electronChargeDensityInput,
+        // /* Atomic potential for delta rho */
+        // const quadrature::QuadratureValuesContainer<
+        //   ValueTypeElectrostaticsCoeff,
+        //   memorySpace> &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<
+        //   ValueTypeElectrostaticsCoeff,
+        //   memorySpace> &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,        
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
@@ -876,8 +878,8 @@ namespace dftefe
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
       , d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
-      , d_densityInQuadValues(electronChargeDensityInput)
-      , d_densityResidualQuadValues(electronChargeDensityInput)
+      // , d_densityInQuadValues(electronChargeDensityInput)
+      // , d_densityResidualQuadValues(electronChargeDensityInput)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(&MContext)
       , d_MInvContext(&MInvContext)
@@ -914,20 +916,23 @@ namespace dftefe
       else
         d_isOEFEBasis = false;
 
+       d_densityInQuadValues = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+          feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+  
       KohnShamDFTInternal::generateRandNormDistMultivec(
         d_waveFunctionSubspaceGuess);
-      utils::throwException(electronChargeDensityInput.getNumberComponents() ==
+      utils::throwException(d_densityInQuadValues.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
 
       utils::throwException(
         feBDEXCHamiltonian->getQuadratureRuleContainer() ==
-          electronChargeDensityInput.getQuadratureRuleContainer(),
+          d_densityInQuadValues.getQuadratureRuleContainer(),
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerRho =
-          electronChargeDensityInput.getQuadratureRuleContainer();
+          d_densityInQuadValues.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -939,6 +944,19 @@ namespace dftefe
       auto jxwData = quadRuleContainerRho->getJxW();
       d_jxwDataHost.resize(jxwData.size());
       memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
+
+      for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<RealType> a(
+              d_densityInQuadValues.nCellQuadraturePoints(iCell));
+            a = (atomicElectronicChargeDensityFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
+            RealType *b = a.data();
+            d_densityInQuadValues.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
+        d_densityResidualQuadValues = d_densityInQuadValues;
 
       d_densityOutQuadValues = d_densityInQuadValues;
       // normalize electroncharge density
@@ -973,9 +991,11 @@ namespace dftefe
           atomCoordinates,
           atomCharges,
           smearedChargeRadius,
-          d_densityOutQuadValues,  /*NOTE: Atomic density input should not be normalized*/
-          atomicTotalElecPotNuclearQuad,
-          atomicTotalElecPotElectronicQuad,
+          // d_densityOutQuadValues,  /*NOTE: Atomic density input should not be normalized*/
+          // atomicTotalElecPotNuclearQuad,
+          // atomicTotalElecPotElectronicQuad,
+          atomicTotalElectroPotentialFunction,
+          atomicElectronicChargeDensityFunction,             
           feBMTotalCharge,
           feBDTotalChargeStiffnessMatrix,
           feBDNuclearChargeRhs,
@@ -1706,36 +1726,6 @@ namespace dftefe
               setCellValues<utils::MemorySpace::HOST>(iCell, b);
       }
 
-      d_atomicTotalElecPotNuclearQuad = quadrature::QuadratureValuesContainer<
-              ValueTypeElectrostaticsCoeff,
-              memorySpace>(feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
-      
-      d_atomicTotalElecPotElectronicQuad = quadrature::QuadratureValuesContainer<
-        ValueTypeElectrostaticsCoeff,
-        memorySpace>(feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
-
-      for (size_type iCell = 0; iCell < d_atomicTotalElecPotNuclearQuad.nCells(); iCell++)
-      {
-            size_type             quadId = 0;
-            std::vector<ValueTypeElectrostaticsCoeff> a(
-              d_atomicTotalElecPotNuclearQuad.nCellQuadraturePoints(iCell));
-            a = (atomicTotalElectroPotentialFunction)(feBDNuclearChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
-            ValueTypeElectrostaticsCoeff *b = a.data();
-            d_atomicTotalElecPotNuclearQuad.template 
-              setCellValues<utils::MemorySpace::HOST>(iCell, b);
-      }
-
-      for (size_type iCell = 0; iCell < d_atomicTotalElecPotElectronicQuad.nCells(); iCell++)
-      {
-            size_type             quadId = 0;
-            std::vector<ValueTypeElectrostaticsCoeff> a(
-              d_atomicTotalElecPotElectronicQuad.nCellQuadraturePoints(iCell));
-            a = (atomicTotalElectroPotentialFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
-            ValueTypeElectrostaticsCoeff *b = a.data();
-            d_atomicTotalElecPotElectronicQuad.template 
-              setCellValues<utils::MemorySpace::HOST>(iCell, b);
-      }
-
       //************* CHANGE THIS **********************
       utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
            memTransfer;
@@ -1779,9 +1769,11 @@ namespace dftefe
           atomSymbolVec,
           d_atomSphericalDataContainerPSP,
           smearedChargeRadius,
-          d_densityOutQuadValues, /*NOTE: Atomic density input should not be normalized*/
-          d_atomicTotalElecPotNuclearQuad,
-          d_atomicTotalElecPotElectronicQuad,
+          // d_densityOutQuadValues, /*NOTE: Atomic density input should not be normalized*/
+          // d_atomicTotalElecPotNuclearQuad,
+          // d_atomicTotalElecPotElectronicQuad,
+          atomicTotalElectroPotentialFunction,
+          atomicElectronicChargeDensityFunction,          
           feBMTotalCharge,
           feBMWaveFn,
           feBDTotalChargeStiffnessMatrix,

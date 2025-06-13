@@ -187,6 +187,14 @@ namespace dftefe
       , d_isDeltaRhoSolve(false)
       , d_rootCout(std::cout)
       , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
+      , d_scratchDensNuclearQuad(nullptr)
+      , d_nuclearChargesDensity(nullptr)
+      , d_scratchPotHamQuad(nullptr)
+      , d_correctionPotHamQuad(nullptr)
+      , d_totalChargePotential(nullptr)
+      , d_atomicTotalElecPotNuclearQuad(nullptr)
+      , d_atomicTotalElecPotElectronicQuad(nullptr)
+      , d_correctionPotNucQuad(nullptr)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -260,6 +268,14 @@ namespace dftefe
       , d_isDeltaRhoSolve(false)
       , d_rootCout(std::cout)
       , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
+      , d_scratchDensNuclearQuad(nullptr)
+      , d_nuclearChargesDensity(nullptr)
+      , d_scratchPotHamQuad(nullptr)
+      , d_correctionPotHamQuad(nullptr)
+      , d_totalChargePotential(nullptr)
+      , d_atomicTotalElecPotNuclearQuad(nullptr)
+      , d_atomicTotalElecPotElectronicQuad(nullptr)
+      , d_correctionPotNucQuad(nullptr)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -294,14 +310,16 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<double> &      smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -338,6 +356,14 @@ namespace dftefe
       , d_isDeltaRhoSolve(true)
       , d_rootCout(std::cout)
       , d_useDealiiMatrixFreePoissonSolve(useDealiiMatrixFreePoissonSolve)
+      , d_scratchDensNuclearQuad(nullptr)
+      , d_nuclearChargesDensity(nullptr)
+      , d_scratchPotHamQuad(nullptr)
+      , d_correctionPotHamQuad(nullptr)
+      , d_totalChargePotential(nullptr)
+      , d_atomicTotalElecPotNuclearQuad(nullptr)
+      , d_atomicTotalElecPotElectronicQuad(nullptr)
+      , d_correctionPotNucQuad(nullptr)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -346,9 +372,11 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       reinitBasis(atomCoordinates,
-                  atomicElectronChargeDensity,
-                  atomicTotalElecPotNuclearQuad,
-                  atomicTotalElecPotElectronicQuad,
+                  // atomicElectronChargeDensity,
+                  // atomicTotalElecPotNuclearQuad,
+                  // atomicTotalElecPotElectronicQuad,
+                  atomicTotalElectroPotentialFunction,
+                  atomicElectronicChargeDensityFunction,                    
                   feBMTotalCharge,
                   feBDTotalChargeStiffnessMatrix,
                   feBDNuclearChargeRhs,
@@ -356,7 +384,7 @@ namespace dftefe
                   feBDHamiltonian,
                   externalPotentialFunction);
 
-      reinitField(atomicElectronChargeDensity);
+      reinitField(d_atomicElectronChargeDensity);
     }
 
     template <typename ValueTypeBasisData,
@@ -369,6 +397,22 @@ namespace dftefe
                          ValueTypeWaveFnBasisData,
                          memorySpace,
                          dim>::~ElectrostaticLocalFE()
+    {
+      deleteStorages();
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    ElectrostaticLocalFE<ValueTypeBasisData,
+                         ValueTypeBasisCoeff,
+                         ValueTypeWaveFnBasisData,
+                         memorySpace,
+                         dim>::
+    deleteStorages()
     {
       if (d_scratchDensNuclearQuad != nullptr)
         {
@@ -407,6 +451,21 @@ namespace dftefe
               delete i;
               i = nullptr;
             }
+        }
+      if (d_atomicTotalElecPotNuclearQuad != nullptr)
+        {
+          delete d_atomicTotalElecPotNuclearQuad;
+          d_atomicTotalElecPotNuclearQuad = nullptr;
+        }
+      if (d_atomicTotalElecPotElectronicQuad != nullptr)
+        {
+          delete d_atomicTotalElecPotElectronicQuad;
+          d_atomicTotalElecPotElectronicQuad = nullptr;
+        }
+      if (d_correctionPotNucQuad != nullptr)
+        {
+          delete d_correctionPotNucQuad;
+          d_correctionPotNucQuad = nullptr;
         }
       d_nuclearChargesPotential.clear();
     }
@@ -451,6 +510,7 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeBasisData,
                                           memorySpace>> feBDHamiltonianElec*/)
     {
+      deleteStorages();
       utils::throwException(
         !d_isDeltaRhoSolve,
         "cannot call this reinitBasis() if Analytical/1D Solve rho, b and PhiTotal is used. Use different reinitBasis() instead.");
@@ -764,6 +824,7 @@ namespace dftefe
                                           memorySpace>> feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction)
     {
+      deleteStorages();
       utils::throwException(
         !d_isDeltaRhoSolve,
         "cannot call this reinitBasis() if Analytical/1D Solve rho, b and PhiTotal is used. Use different reinitBasis() instead.");
@@ -1004,14 +1065,16 @@ namespace dftefe
                          dim>::
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,   
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -1030,6 +1093,7 @@ namespace dftefe
                                           memorySpace>> feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction)
     {
+      deleteStorages();
       utils::throwException(
         d_isDeltaRhoSolve,
         "cannot call this reinitBasis() if Analytical/1D Solve rho, b and PhiTotal is used. Use different reinitBasis() instead.");
@@ -1045,9 +1109,68 @@ namespace dftefe
             feBDHamiltonian->getQuadratureRuleContainer(),
         "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
-      d_atomicTotalElecPotNuclearQuad    = &atomicTotalElecPotNuclearQuad;
-      d_atomicTotalElecPotElectronicQuad = &atomicTotalElecPotElectronicQuad;
-      d_atomicElectronChargeDensity      = atomicElectronChargeDensity;
+      // d_atomicTotalElecPotNuclearQuad    = &atomicTotalElecPotNuclearQuad;
+      // d_atomicTotalElecPotElectronicQuad = &atomicTotalElecPotElectronicQuad;
+      // d_atomicElectronChargeDensity      = atomicElectronChargeDensity;
+
+      d_atomicElectronChargeDensity = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+          feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+      for (size_type iCell = 0; iCell < d_atomicElectronChargeDensity.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<RealType> a(
+              d_atomicElectronChargeDensity.nCellQuadraturePoints(iCell));
+            a = (atomicElectronicChargeDensityFunction)(feBDElectronicChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
+            RealType *b = a.data();
+            d_atomicElectronChargeDensity.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
+      d_atomicElectronChargeDensityNucQuad = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+          feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+      for (size_type iCell = 0; iCell < d_atomicElectronChargeDensityNucQuad.nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<RealType> a(
+              d_atomicElectronChargeDensityNucQuad.nCellQuadraturePoints(iCell));
+            a = (atomicElectronicChargeDensityFunction)(feBDNuclearChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
+            RealType *b = a.data();
+            d_atomicElectronChargeDensityNucQuad.template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
+      d_atomicTotalElecPotNuclearQuad = new quadrature::QuadratureValuesContainer<
+              ValueTypeBasisCoeff,
+              memorySpace>(feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+      
+      d_atomicTotalElecPotElectronicQuad = new quadrature::QuadratureValuesContainer<
+        ValueTypeBasisCoeff,
+        memorySpace>(feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
+      for (size_type iCell = 0; iCell < d_atomicTotalElecPotNuclearQuad->nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<ValueTypeBasisCoeff> a(
+              d_atomicTotalElecPotNuclearQuad->nCellQuadraturePoints(iCell));
+            a = (atomicTotalElectroPotentialFunction)(feBDNuclearChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
+            ValueTypeBasisCoeff *b = a.data();
+            d_atomicTotalElecPotNuclearQuad->template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
+      for (size_type iCell = 0; iCell < d_atomicTotalElecPotElectronicQuad->nCells(); iCell++)
+      {
+            size_type             quadId = 0;
+            std::vector<ValueTypeBasisCoeff> a(
+              d_atomicTotalElecPotElectronicQuad->nCellQuadraturePoints(iCell));
+            a = (atomicTotalElectroPotentialFunction)(feBDElectronicChargeRhs->getQuadratureRuleContainer()->getCellRealPoints(iCell));
+            ValueTypeBasisCoeff *b = a.data();
+            d_atomicTotalElecPotElectronicQuad->template 
+              setCellValues<utils::MemorySpace::HOST>(iCell, b);
+      }
+
       d_isNumericalVSelfSolve            = false;
       d_atomCoordinates                  = atomCoordinates;
       d_feBDNuclearChargeRhs             = feBDNuclearChargeRhs;
@@ -1191,6 +1314,30 @@ namespace dftefe
                 }
               RealType *b = a.data();
               d_correctionPotHamQuad
+                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
+                                                                       quadId,
+                                                                       b);
+              quadId = quadId + 1;
+            }
+        }
+
+      d_correctionPotNucQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainerNucl, d_numComponents);
+        
+      for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells(); iCell++)
+        {
+          size_type quadId = 0;
+          for (auto j : quadRuleContainerNucl->getCellRealPoints(iCell))
+            {
+              std::vector<RealType> a(d_numComponents);
+              for (size_type iComp = 0; iComp < d_numComponents; iComp++)
+                {
+                  a[iComp] = (ValueType)(externalPotentialFunction)(j) -
+                             (ValueType)(smfuncPot)(j);
+                }
+              RealType *b = a.data();
+              d_correctionPotNucQuad
                 ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
                                                                        quadId,
                                                                        b);
@@ -1669,6 +1816,9 @@ namespace dftefe
                          dim>::evalEnergy()
     {
       d_energy = (RealType)0;
+
+      RealType totalEnergy = 0;
+
       d_feBasisOpNuclear->interpolate(*d_totalChargePotential,
                                       *d_feBMTotalCharge,
                                       *d_scratchPotNuclearQuad);
@@ -1678,17 +1828,6 @@ namespace dftefe
                         *d_atomicTotalElecPotNuclearQuad,
                         (ValueType)1.0,
                         *d_scratchPotNuclearQuad,
-                        *d_linAlgOpContext);
-
-      d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
-                                         *d_feBMTotalCharge,
-                                         *d_scratchPotRhoQuad);
-
-      if (d_isDeltaRhoSolve)
-        quadrature::add((ValueType)1.0,
-                        *d_atomicTotalElecPotElectronicQuad,
-                        (ValueType)1.0,
-                        *d_scratchPotRhoQuad,
                         *d_linAlgOpContext);
 
       RealType integralPhixbSmear =
@@ -1703,120 +1842,102 @@ namespace dftefe
                d_linAlgOpContext,
                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-      RealType integralPhixRho =
-        ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-          ValueTypeBasisData,
-          ValueTypeBasisCoeff,
-          ValueTypeWaveFnBasisData,
-          memorySpace,
-          dim>(*d_scratchPotRhoQuad,
-               *d_electronChargeDensity,
-               d_feBDElectronicChargeRhs->getJxWInAllCells(),
-               d_linAlgOpContext,
-               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
-
-      RealType totalEnergy = (integralPhixRho + integralPhixbSmear) * 0.5;
-      
-      /** 
-      // ------------- DEBUG ------------------------------------------------
-      double  integralPhiAtxbSmear =
-        ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-          ValueTypeBasisData,
-          ValueTypeBasisCoeff,
-          ValueTypeWaveFnBasisData,
-          memorySpace,
-          dim>(*d_atomicTotalElecPotNuclearQuad,
-               *d_nuclearChargesDensity,
-               d_feBDNuclearChargeRhs->getJxWInAllCells(),
-               d_linAlgOpContext,
-               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
-
-      d_rootCout <<  "integralPhiAtxbSmear: " << 0.5 * integralPhiAtxbSmear << "\n";           
-
-      d_feBasisOpNuclear->interpolate(*d_totalChargePotential,
-                                      *d_feBMTotalCharge,
-                                      *d_scratchPotNuclearQuad);
-
-      double  integralDelPhixbSmear =
-        ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-          ValueTypeBasisData,
-          ValueTypeBasisCoeff,
-          ValueTypeWaveFnBasisData,
-          memorySpace,
-          dim>(*d_scratchPotNuclearQuad,
-               *d_nuclearChargesDensity,
-               d_feBDNuclearChargeRhs->getJxWInAllCells(),
-               d_linAlgOpContext,
-               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
-
-      d_rootCout <<  "integralDelPhixbSmear: " << 0.5 * integralDelPhixbSmear << "\n";   
-
-      double intRhoAtPhiAt =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-                ValueTypeBasisData,
-                ValueTypeBasisCoeff,
-                ValueTypeWaveFnBasisData,
-                memorySpace,
-                dim>(*d_atomicTotalElecPotElectronicQuad,
-                    d_atomicElectronChargeDensity,
-                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                    d_linAlgOpContext,
-                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
-
-      d_rootCout << "\n\n";
-      d_rootCout <<  "intRhoAtPhiAt: " << 0.5 * intRhoAtPhiAt << "\n";            
-
-      d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
-                                         *d_feBMTotalCharge,
-                                         *d_scratchPotRhoQuad);
-
-       double  intRhoAtDelPhi =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-                ValueTypeBasisData,
-                ValueTypeBasisCoeff,
-                ValueTypeWaveFnBasisData,
-                memorySpace,
-                dim>(*d_scratchPotRhoQuad,
-                    d_atomicElectronChargeDensity,
-                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                    d_linAlgOpContext,
-                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());  
-                    
-      d_rootCout << "intRhoAtDelPhi: " <<  0.5 * intRhoAtDelPhi << "\n";  
-                    
-      quadrature::QuadratureValuesContainer<RealType , memorySpace> delRho(d_atomicElectronChargeDensity);
-
-      for(int i = 0 ; i < delRho.nEntries() ; i++)
+      if (!d_isDeltaRhoSolve)
       {
-        *(delRho.data() + i) = *(d_electronChargeDensity->data() + i) - 
-          *(d_atomicElectronChargeDensity.data() + i);
+        d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
+                                          *d_feBMTotalCharge,
+                                          *d_scratchPotRhoQuad);
+
+        RealType integralPhixRho =
+          ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+            ValueTypeBasisData,
+            ValueTypeBasisCoeff,
+            ValueTypeWaveFnBasisData,
+            memorySpace,
+            dim>(*d_scratchPotRhoQuad,
+                *d_electronChargeDensity,
+                d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                d_linAlgOpContext,
+                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+        totalEnergy = (integralPhixRho + integralPhixbSmear) * 0.5;
       }
+      else
+      {
+      
+        // // ------------- DEBUG ------------------------------------------------
+        // double  integralPhiAtxbSmear =
+        //   ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+        //     ValueTypeBasisData,
+        //     ValueTypeBasisCoeff,
+        //     ValueTypeWaveFnBasisData,
+        //     memorySpace,
+        //     dim>(*d_atomicTotalElecPotNuclearQuad,
+        //          *d_nuclearChargesDensity,
+        //          d_feBDNuclearChargeRhs->getJxWInAllCells(),
+        //          d_linAlgOpContext,
+        //          d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-       double intDelRhoPhiAt =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-                ValueTypeBasisData,
-                ValueTypeBasisCoeff,
-                ValueTypeWaveFnBasisData,
-                memorySpace,
-                dim>(*d_atomicTotalElecPotElectronicQuad,
-                    delRho,
-                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                    d_linAlgOpContext,
-                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());  
-                    
-      d_rootCout << "intDelRhoPhiAt: " <<  0.5 * intDelRhoPhiAt << "\n"; 
+        //// d_rootCout <<  "integralPhiAtxbSmear: " << 0.5 * integralPhiAtxbSmear << "\n";           
 
-       double intDelRhoDelPhi =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-                ValueTypeBasisData,
-                ValueTypeBasisCoeff,
-                ValueTypeWaveFnBasisData,
-                memorySpace,
-                dim>(*d_scratchPotRhoQuad,
-                    delRho,
-                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                    d_linAlgOpContext,
-                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator()); 
-                    
-       d_rootCout << "intDelRhoDelPhi: " <<  0.5 * intDelRhoDelPhi << "\n\n";               
-      // ------------- DEBUG ------------------------------------------------
-       **/
+        // d_feBasisOpNuclear->interpolate(*d_totalChargePotential,
+        //                                 *d_feBMTotalCharge,
+        //                                 *d_scratchPotNuclearQuad);
+
+        // double  integralDelPhixbSmear =
+        //   ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+        //     ValueTypeBasisData,
+        //     ValueTypeBasisCoeff,
+        //     ValueTypeWaveFnBasisData,
+        //     memorySpace,
+        //     dim>(*d_scratchPotNuclearQuad,
+        //          *d_nuclearChargesDensity,
+        //          d_feBDNuclearChargeRhs->getJxWInAllCells(),
+        //          d_linAlgOpContext,
+        //          d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+        //// d_rootCout <<  "integralDelPhixbSmear: " << 0.5 * integralDelPhixbSmear << "\n";   
+        // // ------------- DEBUG ------------------------------------------------
+
+        RealType  intRhoAtPhiTot =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                  ValueTypeBasisData,
+                  ValueTypeBasisCoeff,
+                  ValueTypeWaveFnBasisData,
+                  memorySpace,
+                  dim>(*d_scratchPotNuclearQuad,
+                      d_atomicElectronChargeDensityNucQuad,
+                      d_feBDNuclearChargeRhs->getJxWInAllCells(),
+                      d_linAlgOpContext,
+                      d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());  
+                      
+        for(int i = 0 ; i < d_scratchDensRhoQuad->nEntries() ; i++)
+        {
+          *(d_scratchDensRhoQuad->data() + i) = *(d_electronChargeDensity->data() + i) - 
+            *(d_atomicElectronChargeDensity.data() + i);
+        }
+
+        d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
+                                          *d_feBMTotalCharge,
+                                          *d_scratchPotRhoQuad);
+
+          quadrature::add((ValueType)1.0,
+                          *d_atomicTotalElecPotElectronicQuad,
+                          (ValueType)1.0,
+                          *d_scratchPotRhoQuad,
+                          *d_linAlgOpContext);
+
+        RealType intDelRhoPhiTot =  ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                  ValueTypeBasisData,
+                  ValueTypeBasisCoeff,
+                  ValueTypeWaveFnBasisData,
+                  memorySpace,
+                  dim>(*d_scratchPotRhoQuad,
+                      *d_scratchDensRhoQuad,
+                      d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                      d_linAlgOpContext,
+                      d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());           
+
+        totalEnergy = (integralPhixbSmear + intRhoAtPhiTot + intDelRhoPhiTot) * 0.5;
+      }
 
       // self energy computation // TODO : Do this only once in reinitBasis
       RealType selfEnergy = 0;
@@ -1998,18 +2119,51 @@ namespace dftefe
 
       // correction energy evaluation
 
-      RealType correctionEnergy =
-        ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-          ValueTypeBasisData,
-          ValueTypeBasisCoeff,
-          ValueTypeWaveFnBasisData,
-          memorySpace,
-          dim>(*d_correctionPotRhoQuad,
-               *d_electronChargeDensity,
-               d_feBDElectronicChargeRhs->getJxWInAllCells(),
-               d_linAlgOpContext,
-               d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+      RealType correctionEnergy = 0;
 
+      if(d_isDeltaRhoSolve)
+      {
+        RealType correctionEnergyAtomic =
+          ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+            ValueTypeBasisData,
+            ValueTypeBasisCoeff,
+            ValueTypeWaveFnBasisData,
+            memorySpace,
+            dim>(*d_correctionPotNucQuad,
+                d_atomicElectronChargeDensityNucQuad,
+                d_feBDNuclearChargeRhs->getJxWInAllCells(),
+                d_linAlgOpContext,
+                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+        RealType correctionEnergyDelta =
+          ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+                          ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          ValueTypeWaveFnBasisData,
+                          memorySpace,
+                          dim>(*d_correctionPotRhoQuad,
+                              *d_scratchDensRhoQuad, //delRho from above
+                              d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                              d_linAlgOpContext,
+                              d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());  
+
+        correctionEnergy =  correctionEnergyDelta + correctionEnergyAtomic;   
+      }      
+      else
+      {
+        correctionEnergy =
+          ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+            ValueTypeBasisData,
+            ValueTypeBasisCoeff,
+            ValueTypeWaveFnBasisData,
+            memorySpace,
+            dim>(*d_correctionPotRhoQuad,
+                *d_electronChargeDensity,
+                d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                d_linAlgOpContext,
+                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+      }
+                          
       d_energy = totalEnergy - selfEnergy + correctionEnergy;
     }
 

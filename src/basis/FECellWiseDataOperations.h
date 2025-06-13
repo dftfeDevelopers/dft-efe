@@ -73,6 +73,15 @@ namespace dftefe
         ValueType *data);
 
       static void
+      addCellWiseDataToFieldData(
+        const ValueType *itCellWiseStorageBegin,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+          &        numCellDofs,
+        ValueType *data);        
+
+      static void
       addCellWiseBasisDataToDiagonalData(
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,

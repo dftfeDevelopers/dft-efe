@@ -87,6 +87,39 @@ namespace dftefe
     void
     FECellWiseDataOperations<ValueType, memorySpace>::
       addCellWiseDataToFieldData(
+        const ValueType *itCellWiseStorageBegin,
+        const size_type                                     numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+          &        numCellDofs,
+        ValueType *data)
+    {
+      const size_type numCells               = numCellDofs.size();
+      size_type       cumulativeCellDofs     = 0;
+      for (size_type iCell = 0; iCell < numCells; ++iCell)
+        {
+          const size_type cellDofs = *(numCellDofs.data() + iCell);
+          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
+            {
+              const size_type localId =
+                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
+              auto srcPtr = itCellWiseStorageBegin +
+                            (cumulativeCellDofs + iDof) * numComponents;
+              auto dstPtr = data + localId * numComponents;
+
+              for (size_type iComp = 0; iComp < numComponents; iComp++)
+                {
+                  *(dstPtr + iComp) += *(srcPtr + iComp);
+                }
+            }
+          cumulativeCellDofs += cellDofs;
+        }
+    }
+
+    template <typename ValueType, utils::MemorySpace memorySpace>
+    void
+    FECellWiseDataOperations<ValueType, memorySpace>::
+      addCellWiseDataToFieldData(
         const utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
         const size_type                                     numComponents,
         const size_type *cellLocalIdsStartPtr,

@@ -258,16 +258,19 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        /* Basis related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
-        /* Atomic Field for delta rho */
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotElectronicQuad,
+        // /* Basis related info */
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &electronChargeDensityInput,
+        // /* Atomic Field for delta rho */
+        // const quadrature::QuadratureValuesContainer<
+        //   ValueTypeElectrostaticsCoeff,
+        //   memorySpace> &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<
+        //   ValueTypeElectrostaticsCoeff,
+        //   memorySpace> &atomicTotalElecPotElectronicQuad,
+        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,         
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,

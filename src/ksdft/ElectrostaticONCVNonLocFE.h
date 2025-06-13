@@ -126,14 +126,16 @@ namespace dftefe
         const std::vector<std::string> &          atomSymbolVec,
         const std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerPSP,
         const std::vector<double> &               smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -200,14 +202,16 @@ namespace dftefe
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
