@@ -261,6 +261,8 @@ namespace dftefe
 
       size_type d_feOrder;
 
+      const utils::mpi::MPIComm d_comm;
+
     }; // end of class
   }    // end of namespace basis
 } // end of namespace dftefe

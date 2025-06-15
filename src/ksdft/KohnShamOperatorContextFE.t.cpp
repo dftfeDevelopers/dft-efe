@@ -453,7 +453,7 @@ namespace dftefe
           &                     hamiltonianInAllCells,
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            & feBasisManager)
+            & feBasisManager , bool printEEBlock = true , bool printECWings = false)
       {
         //------------------------ print Hamiltonian EEblock--------------------------- 
         const basis::BasisDofHandler
@@ -525,23 +525,28 @@ namespace dftefe
           utils::ConditionalOStream rootCout(std::cout);
           rootCout.setCondition(rank == 0);
 
-          rootCout << "Hamiltonian Enrichment Block Matrix: "<<std::endl;
-          for(size_type i = 0 ; i < nglobalEnrichmentIds ; i++)
+          if(printEEBlock)
           {
-            rootCout << "[";
-            for(size_type j = 0 ; j < nglobalEnrichmentIds ; j++)
+            rootCout << "Hamiltonian Enrichment Block Matrix: "<<std::endl;
+            for(size_type i = 0 ; i < nglobalEnrichmentIds ; i++)
             {
-              rootCout << *(hamEnrichmentBlockSTL.data() + i*nglobalEnrichmentIds + j) << "\t";
+              rootCout << "[";
+              for(size_type j = 0 ; j < nglobalEnrichmentIds ; j++)
+              {
+                rootCout << *(hamEnrichmentBlockSTL.data() + i*nglobalEnrichmentIds + j) << "\t";
+              }
+              rootCout << "]" <<std::endl;
             }
-            rootCout << "]" <<std::endl;
           }
 
         //------------------------ print Hamiltonian EC block tofile--------------------------- 
         
-        std::vector<ValueTypeOperator>
-        hamECBlockSTL( (nglobalClassicalIds + nglobalEnrichmentIds) *
-        nglobalEnrichmentIds, 0), hamECBlockSTLTmp((nglobalClassicalIds +
-        nglobalEnrichmentIds) * nglobalEnrichmentIds, 0);
+        if(printECWings)
+        {
+          std::vector<ValueTypeOperator>
+          hamECBlockSTL( (nglobalClassicalIds + nglobalEnrichmentIds) *
+          nglobalEnrichmentIds, 0), hamECBlockSTLTmp((nglobalClassicalIds +
+          nglobalEnrichmentIds) * nglobalEnrichmentIds, 0);
 
 
           cumulativeBasisDataInCells = 0;
@@ -588,7 +593,7 @@ namespace dftefe
                                 "MPI Error:" + mpiIsSuccessAndMsg.second);
 
           std::ofstream myfile;
-          myfile.open("wings");
+          myfile.open("ECwingsPrinted.out");
           utils::ConditionalOStream rootCout1(myfile);
           rootCout1.setCondition(rank == 0);
 
@@ -603,6 +608,7 @@ namespace dftefe
             rootCout1 << "]" <<std::endl;
           }
           myfile.close();
+        }
       } 
     } // namespace
 
@@ -1187,6 +1193,9 @@ namespace dftefe
       , d_electroONCVHamiltonian(nullptr)
     {
       reinit(feBasisManager, hamiltonianComponentsVec);
+
+      // printEFEHamiltonian(d_hamiltonianInAllCells,
+      //                     feBasisManager);
     }
 
 

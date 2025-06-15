@@ -106,6 +106,7 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_overlappingEnrichmentIdsInCells(0)
       , d_linAlgOpContext(linAlgOpContext)
+      , d_comm(comm)
     {
       d_isOrthogonalized = true;
 
@@ -605,6 +606,7 @@ namespace dftefe
       , d_overlappingEnrichmentIdsInCells(0)
       , d_linAlgOpContext(nullptr)
       , d_feOrder(feOrder)
+      , d_comm(comm)
     {
       d_isOrthogonalized = false;
 
