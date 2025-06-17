@@ -310,6 +310,9 @@ namespace dftefe
           feBDNuclearChargeRhs);
 
       void
+      computeNuclearSelfEnergy();
+
+      void
       deleteStorages();
 
       const bool                d_useDealiiMatrixFreePoissonSolve;
@@ -322,6 +325,7 @@ namespace dftefe
       const std::vector<double> d_atomCharges;
       const std::vector<double> d_smearedChargeRadius;
       RealType                  d_energy;
+      RealType                  d_nuclearSelfEnergy;
 
       // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpace>

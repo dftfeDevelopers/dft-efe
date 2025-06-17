@@ -305,6 +305,7 @@ int main(int argc, char** argv)
     std::make_shared<linearAlgebra::LinAlgOpContext
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
+  p.registerStart("Reading Parameter file data");
   rootCout<<" Entering test kohn sham dft ortho enrichment \n";
   rootCout << "Number of processes: "<<numProcs<<"\n";
 
@@ -395,6 +396,8 @@ int main(int argc, char** argv)
   // triangulationBase->shiftTriangulation(utils::Point(origin));
   // triangulationBase->finalizeTriangulationConstruction();
 
+  p.registerEnd("Reading Parameter file data");
+  p.registerStart("Reading XML data");
   std::fstream fstream;
   fstream.open(inputFileName, std::fstream::in);
   
@@ -468,10 +471,12 @@ int main(int argc, char** argv)
       rootCout << std::endl;
     }
   }
+  p.registerEnd("Reading XML data");
 
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
 
+  p.registerStart("Create Mesh");
   basis::GenerateMesh adaptiveMesh(atomCoordinatesVec, 
                             domainVectors,
                             radiusAtAtom,
@@ -483,41 +488,12 @@ int main(int argc, char** argv)
                             comm);
 
   adaptiveMesh.createMesh(*triangulationBase); 
+    p.registerEnd("Create Mesh");
 
-  std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
-
-  // Make orthogonalized EFE basis for all the fields
-
-  // 1. Make CFEBDSOnTheFlyComputeDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GLL).
-  // 2. Make EnrichmentClassicalInterface object for Orthogonalized enrichment.
-  // 3. Input to the EFEBasisDofHandler(eci, feOrder).
-  // 4. Make EFEBasisDataStorage with input as quadratureContainer.
-
-    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
-  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
-
-  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerEigen =  
-   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderEigen, comm);
-
-  rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
-  rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
-
-  rootCout << "The Number of classical dofs electrostatics excluding Vacuum: " << 
-    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
-      *cfeBasisDofHandlerElec,
-      comm) << "\n";
-
-  rootCout << "The Number of classical dofs eigenSolve excluding Vacuum: " << 
-    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
-      *cfeBasisDofHandlerEigen,
-      comm) << "\n";
-
+    p.registerStart("Quadrature Rule Creation");
     //quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
 
     quadrature::QuadratureRuleAttributes quadAttrGllElec(quadrature::QuadratureFamily::GLL,true,feOrderElec + 1);
-
-    p.registerStart("Quadrature Rule Creation");
   
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
       std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeElec, gaussSubdividedCopiesElec);
@@ -592,8 +568,6 @@ int main(int argc, char** argv)
     triangulationBase, 
     *cellMapping); 
 
-  p.registerEnd("Quadrature Rule Creation");
-
   nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
   mpierr = utils::mpi::MPIAllreduce<Host>(
     utils::mpi::MPIInPlace,
@@ -605,8 +579,38 @@ int main(int argc, char** argv)
 
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
 
+  p.registerEnd("Quadrature Rule Creation");
   p.registerStart("Ortho EFE basis manager creation");
         
+  std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
+
+  // Make orthogonalized EFE basis for all the fields
+
+  // 1. Make CFEBDSOnTheFlyComputeDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GLL).
+  // 2. Make EnrichmentClassicalInterface object for Orthogonalized enrichment.
+  // 3. Input to the EFEBasisDofHandler(eci, feOrder).
+  // 4. Make EFEBasisDataStorage with input as quadratureContainer.
+
+    // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
+
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerEigen =  
+   std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderEigen, comm);
+
+  rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
+  rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
+
+  rootCout << "The Number of classical dofs electrostatics excluding Vacuum: " << 
+    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
+      *cfeBasisDofHandlerElec,
+      comm) << "\n";
+
+  rootCout << "The Number of classical dofs eigenSolve excluding Vacuum: " << 
+    getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
+      *cfeBasisDofHandlerEigen,
+      comm) << "\n";
+
   basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -716,13 +720,12 @@ int main(int argc, char** argv)
 
   p.registerEnd("Ortho EFE basis manager creation");
 
-  std::map<global_size_type, utils::Point> dofCoords;
-  basisDofHandlerTotalPot->getBasisCenters(dofCoords);
-
   rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
   rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
+
+  p.registerStart("Electrostatics basis grad datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
@@ -743,8 +746,6 @@ int main(int argc, char** argv)
     feBDTotalChargeStiffnessMatrix =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
     (basisDofHandlerTotalPot, quadAttrGaussElectro, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-
-  p.registerStart("Electrostatics basis grad datastorage eval");
 
   if (!isDeltaRhoPoissonSolve)
     feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
@@ -830,7 +831,7 @@ int main(int argc, char** argv)
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   p.registerEnd("Orbital basis datastorage eval");
-  p.registerStart("Grad basis datastorage eval");
+  p.registerStart("Orbital Grad basis datastorage eval");
 
    efeBasisDataAdaptiveGrad->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
 
@@ -838,7 +839,7 @@ int main(int argc, char** argv)
     std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveGrad;
     std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
 
-    p.registerEnd("Grad basis datastorage eval");
+    p.registerEnd("Orbital Grad basis datastorage eval");
     p.print();
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>

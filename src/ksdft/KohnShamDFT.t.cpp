@@ -300,6 +300,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
+      d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
                                             ValueTypeWaveFunctionBasis,
@@ -354,7 +355,7 @@ namespace dftefe
                                                       d_rootCout);
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
-
+      d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
@@ -422,6 +423,7 @@ namespace dftefe
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
+      d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
       d_lanczosGuess.updateGhostValues();
@@ -446,6 +448,8 @@ namespace dftefe
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
+
+      d_p.registerEnd("KS EigenSolver Init");
 
       d_densCalc =
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
@@ -489,6 +493,7 @@ namespace dftefe
                            *d_MContext,
                            *d_MInvContext);
         }
+      d_p.print();
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -599,6 +604,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
+      d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
                                             ValueTypeWaveFunctionBasis,
@@ -648,6 +654,7 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
@@ -718,6 +725,7 @@ namespace dftefe
       d_p.registerEnd("Hamiltonian Operator Creation");
       d_p.print();
 
+      d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
       d_lanczosGuess.updateGhostValues();
@@ -742,6 +750,8 @@ namespace dftefe
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
+
+      d_p.registerEnd("KS EigenSolver Init");
 
       d_densCalc =
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
@@ -785,6 +795,7 @@ namespace dftefe
                            *d_MContext,
                            *d_MInvContext);
         }
+      d_p.print();
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -906,6 +917,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
+      d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
                                             ValueTypeWaveFunctionBasis,
@@ -945,16 +957,22 @@ namespace dftefe
       d_jxwDataHost.resize(jxwData.size());
       memTransfer.copy(jxwData.size(), d_jxwDataHost.data(), jxwData.data());
 
-      for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
-      {
-            size_type             quadId = 0;
-            std::vector<RealType> a(
-              d_densityInQuadValues.nCellQuadraturePoints(iCell));
-            a = (atomicElectronicChargeDensityFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
-            RealType *b = a.data();
-            d_densityInQuadValues.template 
-              setCellValues<utils::MemorySpace::HOST>(iCell, b);
-      }
+      RealType *quadValueIter     = d_densityInQuadValues.begin();
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> 
+        quadRuleContainerVal = quadRuleContainerRho;
+      size_type  cumulativeQuadInCell = 0;
+      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+        {
+          size_type numQuadInCell =
+            quadRuleContainerVal->nCellQuadraturePoints(iCell);
+          std::vector<RealType> valInCellQuad = 
+            (atomicElectronicChargeDensityFunction)(quadRuleContainerVal->getCellRealPoints(iCell));
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              quadValueIter[cumulativeQuadInCell + iQuad] = valInCellQuad[iQuad];
+            }
+          cumulativeQuadInCell += numQuadInCell;
+        }
 
         d_densityResidualQuadValues = d_densityInQuadValues;
 
@@ -971,7 +989,8 @@ namespace dftefe
                                                       d_rootCout);
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
-
+      
+      d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
@@ -1043,6 +1062,7 @@ namespace dftefe
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
+      d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
       d_lanczosGuess.updateGhostValues();
@@ -1067,6 +1087,8 @@ namespace dftefe
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
+
+      d_p.registerEnd("KS EigenSolver Init");
 
       d_densCalc =
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
@@ -1110,6 +1132,7 @@ namespace dftefe
                            *d_MContext,
                            *d_MInvContext);
         }
+      d_p.print();
     }
 
 
@@ -1213,7 +1236,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
-
+      d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
         atoms::AtomSphDataPSPDefaults::METADATANAMES;
       std::vector<std::string> fieldNamesPSP = {"vlocal", "rhoatom"};
@@ -1310,17 +1333,23 @@ namespace dftefe
           0,
           1);
 
-      for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
-      {
-            size_type             quadId = 0;
-            std::vector<RealType> a(
-              d_densityInQuadValues.nCellQuadraturePoints(iCell));
-            a = (rho)(quadRuleContainerRho->getCellRealPoints(iCell));
-            RealType *b = a.data();
-            d_densityInQuadValues.template 
-              setCellValues<utils::MemorySpace::HOST>(iCell, b);
-      }
-      
+      RealType *quadValueIter     = d_densityInQuadValues.begin();
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> 
+        quadRuleContainerVal = quadRuleContainerRho;
+      size_type  cumulativeQuadInCell = 0;
+      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+        {
+          size_type numQuadInCell =
+            quadRuleContainerVal->nCellQuadraturePoints(iCell);
+          std::vector<RealType> valInCellQuad = 
+            (rho)(quadRuleContainerVal->getCellRealPoints(iCell));
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              quadValueIter[cumulativeQuadInCell + iQuad] = valInCellQuad[iQuad];
+            }
+          cumulativeQuadInCell += numQuadInCell;
+        }
+
       //************* CHANGE THIS **********************
       utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
            memTransfer;
@@ -1341,6 +1370,7 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
@@ -1391,15 +1421,21 @@ namespace dftefe
           0,
           1);
 
-        for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+      RealType *quadValueIter     = d_coreCorrDensUPF.begin();
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> 
+        quadRuleContainerVal = quadRuleContainerRho;
+      size_type  cumulativeQuadInCell = 0;
+      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
         {
-              size_type             quadId = 0;
-              std::vector<RealType> a(
-                d_densityInQuadValues.nCellQuadraturePoints(iCell));
-              a = (rhoCoreCorrection)(quadRuleContainerRho->getCellRealPoints(iCell));
-              RealType *b = a.data();
-              d_coreCorrDensUPF.template 
-                setCellValues<utils::MemorySpace::HOST>(iCell, b);
+          size_type numQuadInCell =
+            quadRuleContainerVal->nCellQuadraturePoints(iCell);
+          std::vector<RealType> valInCellQuad = 
+            (rhoCoreCorrection)(quadRuleContainerVal->getCellRealPoints(iCell));
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              quadValueIter[cumulativeQuadInCell + iQuad] = valInCellQuad[iQuad];
+            }
+          cumulativeQuadInCell += numQuadInCell;
         }
         quadrature::add((ValueType)1.0,
                         d_densityInQuadValues,
@@ -1460,6 +1496,7 @@ namespace dftefe
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
+      d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
       d_lanczosGuess.updateGhostValues();
@@ -1484,6 +1521,8 @@ namespace dftefe
         d_numWantedEigenvalues,
         MContextForInv,
         MInvContext);
+        
+      d_p.registerEnd("KS EigenSolver Init");
 
       d_densCalc =
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
@@ -1523,6 +1562,7 @@ namespace dftefe
                            *d_MContext,
                            *d_MInvContext);
         }
+      d_p.print();
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -1627,7 +1667,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
     {
-
+      d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
         atoms::AtomSphDataPSPDefaults::METADATANAMES;
       std::vector<std::string> fieldNamesPSP = {"vlocal"};
@@ -1715,16 +1755,22 @@ namespace dftefe
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
-      for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
-      {
-            size_type             quadId = 0;
-            std::vector<RealType> a(
-              d_densityInQuadValues.nCellQuadraturePoints(iCell));
-            a = (atomicElectronicChargeDensityFunction)(quadRuleContainerRho->getCellRealPoints(iCell));
-            RealType *b = a.data();
-            d_densityInQuadValues.template 
-              setCellValues<utils::MemorySpace::HOST>(iCell, b);
-      }
+      RealType *quadValueIter     = d_densityInQuadValues.begin();
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> 
+        quadRuleContainerVal = quadRuleContainerRho;
+      size_type  cumulativeQuadInCell = 0;
+      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+        {
+          size_type numQuadInCell =
+            quadRuleContainerVal->nCellQuadraturePoints(iCell);
+          std::vector<RealType> valInCellQuad =
+            (atomicElectronicChargeDensityFunction)(quadRuleContainerVal->getCellRealPoints(iCell));
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              quadValueIter[cumulativeQuadInCell + iQuad] = valInCellQuad[iQuad];
+            }
+          cumulativeQuadInCell += numQuadInCell;
+        }
 
       //************* CHANGE THIS **********************
       utils::MemoryTransfer<utils::MemorySpace::HOST, utils::MemorySpace::HOST>
@@ -1747,7 +1793,9 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
+
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
@@ -1801,15 +1849,21 @@ namespace dftefe
           0,
           1);
 
-        for (size_type iCell = 0; iCell < d_densityInQuadValues.nCells(); iCell++)
+      RealType *quadValueIter     = d_coreCorrDensUPF.begin();
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> 
+        quadRuleContainerVal = quadRuleContainerRho;
+      size_type  cumulativeQuadInCell = 0;
+      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
         {
-              size_type             quadId = 0;
-              std::vector<RealType> a(
-                d_densityInQuadValues.nCellQuadraturePoints(iCell));
-              a = (rhoCoreCorrection)(quadRuleContainerRho->getCellRealPoints(iCell));
-              RealType *b = a.data();
-              d_coreCorrDensUPF.template 
-                setCellValues<utils::MemorySpace::HOST>(iCell, b);
+          size_type numQuadInCell =
+            quadRuleContainerVal->nCellQuadraturePoints(iCell);
+          std::vector<RealType> valInCellQuad = 
+            (rhoCoreCorrection)(quadRuleContainerVal->getCellRealPoints(iCell));
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              quadValueIter[cumulativeQuadInCell + iQuad] = valInCellQuad[iQuad];
+            }
+          cumulativeQuadInCell += numQuadInCell;
         }
         quadrature::add((ValueType)1.0,
                         d_densityInQuadValues,
@@ -1840,7 +1894,6 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE);
       }
-      d_p.registerEnd("Hamiltonian Components Initilization");
 
       d_hamiltonianElectroExc =
         std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
@@ -1854,6 +1907,7 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
+      d_p.registerEnd("Hamiltonian Components Initilization");
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -1870,6 +1924,7 @@ namespace dftefe
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
+      d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
       d_lanczosGuess.updateGhostValues();
@@ -1895,6 +1950,8 @@ namespace dftefe
         MContextForInv,
         MInvContext);
 
+      d_p.registerEnd("KS EigenSolver Init");
+      
       d_densCalc =
         std::make_shared<DensityCalculator<ValueTypeWaveFunctionBasis,
                                            ValueTypeWaveFunctionCoeff,
@@ -1933,6 +1990,7 @@ namespace dftefe
                            *d_MContext,
                            *d_MInvContext);
         }
+      d_p.print();
     }
 
     template <typename ValueTypeElectrostaticsCoeff,

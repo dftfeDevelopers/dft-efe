@@ -561,12 +561,10 @@ namespace dftefe
       double                           constant = Clm(l, m) * Dm(m);
       for (int i = 0; i < r.size(); i++)
         {
+          if(!(r[i] < d_radiusTolerance && l > 0))
+          {
           if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
             {
-              DFTEFE_AssertWithMsg(
-                std::abs(r[i]) >= d_radiusTolerance,
-                "Value undefined at nucleus while calling SphericalData::getAngularDerivative()");
-
               double theta     = thetaVec[i];
               double phi       = phiVec[i];
               double plm_theta = d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
@@ -596,6 +594,13 @@ namespace dftefe
               retVal[0][i] = 0.;
               retVal[1][i] = 0.;
             }
+          }
+          else
+          {
+            utils::throwException(
+              false,
+              "Value undefined at nucleus while calling SphericalData::getAngularDerivative(). Distance : " + std::to_string(r[i]));
+          }
         }
       return retVal;
     }
