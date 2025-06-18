@@ -25,6 +25,8 @@
 
 #ifndef dftefeStringOperations_h
 #define dftefeStringOperations_h
+#include <utils/TypeConfig.h>
+#include <vector>
 
 namespace dftefe
 {
@@ -38,11 +40,24 @@ namespace dftefe
       bool
       strToDouble(const std::string s, double &x);
 
+      bool
+      strToBool(const std::string s, bool &i);
+
       void
       trim(std::string &s);
 
       std::string
       trimCopy(const std::string &s);
+
+      bool
+      splitStringToInts(const std::string s,
+                        std::vector<int> &vals,
+                        size_type         reserveSize = 0);
+
+      bool
+      splitStringToDoubles(const std::string    s,
+                           std::vector<double> &vals,
+                           size_type            reserveSize = 0);
 
     } // end of namespace stringOps
   }   // end of namespace utils

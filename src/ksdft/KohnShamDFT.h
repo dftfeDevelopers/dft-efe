@@ -28,6 +28,7 @@
 
 #include <variant>
 #include <ksdft/ElectrostaticLocalFE.h>
+#include <ksdft/ElectrostaticONCVNonLocFE.h>
 #include <ksdft/KineticFE.h>
 #include <ksdft/ExchangeCorrelationFE.h>
 #include <ksdft/KohnShamOperatorContextFE.h>
@@ -51,11 +52,11 @@ namespace dftefe
     class KohnShamDFT
     {
     public:
-      using HamiltonianPtrVariant =
-        std::variant<Hamiltonian<float, memorySpace> *,
-                     Hamiltonian<double, memorySpace> *,
-                     Hamiltonian<std::complex<float>, memorySpace> *,
-                     Hamiltonian<std::complex<double>, memorySpace> *>;
+      using HamiltonianPtrVariant = std::variant<
+        std::shared_ptr<Hamiltonian<float, memorySpace>>,
+        std::shared_ptr<Hamiltonian<double, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
 
       using ValueTypeOperator =
         linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
@@ -73,6 +74,7 @@ namespace dftefe
         memorySpace>::OpContext;
 
     public:
+      // used if analytical vself canellation route taken
       KohnShamDFT(
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
@@ -150,6 +152,7 @@ namespace dftefe
         bool isResidualChebyshevFilter = true);
 
 
+      // used if numerical poisson solve vself canellation route taken
       KohnShamDFT(
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
@@ -233,6 +236,8 @@ namespace dftefe
                                                  memorySpace>(),
         bool isResidualChebyshevFilter = true);
 
+      // used if delta rho approach is taken with phi total from 1D KS solve
+      // with analytical vself energy cancellation
       KohnShamDFT(
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
@@ -253,16 +258,21 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        /* Basis related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensityInput,
-        /* Atomic Field for delta rho */
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<
-          ValueTypeElectrostaticsCoeff,
-          memorySpace> &atomicTotalElecPotElectronicQuad,
+        // /* Basis related info */
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &electronChargeDensityInput,
+        // /* Atomic Field for delta rho */
+        // const quadrature::QuadratureValuesContainer<
+        //   ValueTypeElectrostaticsCoeff,
+        //   memorySpace> &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<
+        //   ValueTypeElectrostaticsCoeff,
+        //   memorySpace> &atomicTotalElecPotElectronicQuad,
+        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
@@ -315,6 +325,170 @@ namespace dftefe
                                                  memorySpace>(),
         bool isResidualChebyshevFilter = true);
 
+      //// used if analytical vself canellation route taken with PSP
+      KohnShamDFT(
+        /* Atom related info */
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<double> &      smearedChargeRadius,
+        const size_type                  numElectrons,
+        /* SCF related info */
+        const size_type numWantedEigenvalues,
+        const double    smearingTemperature,
+        const double    fermiEnergyTolerance,
+        const double    fracOccupancyTolerance,
+        const double    eigenSolveResidualTolerance,
+        const double    scfDensityResidualNormTolerance,
+        const size_type maxChebyshevFilterPass,
+        const size_type maxSCFIter,
+        const bool      evaluateEnergyEverySCF,
+        /* Mixing related info */
+        const size_type mixingHistory,
+        const double    mixingParameter,
+        const bool      isAdaptiveAndersonMixingParameter,
+        /* Basis related info */
+        /* Field boundary */
+        std::shared_ptr<
+          const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
+                                      ValueTypeElectrostaticsBasis,
+                                      memorySpace,
+                                      dim>>               feBMTotalCharge,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                    ValueTypeWaveFunctionBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,
+        /* Field data storages poisson solves*/
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDElectronicChargeRhs,
+        /* Field data storages eigen solve*/
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDKineticHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDElectrostaticsHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDEXCHamiltonian,
+        /* PSP related info */
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDAtomCenterNonLocalOperator,
+        const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        /* linAgOperations Context*/
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext,
+        /* basis overlap related info */
+        const OpContext &MContextForInv =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MInvContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        bool isResidualChebyshevFilter = true);
+
+
+      // used if delta rho with PSP approach is taken with phi total from 1D KS
+      // solve with analytical vself energy cancellation
+      KohnShamDFT(
+        /* Atom related info */
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<double> &      smearedChargeRadius,
+        const size_type                  numElectrons,
+        /* SCF related info */
+        const size_type numWantedEigenvalues,
+        const double    smearingTemperature,
+        const double    fermiEnergyTolerance,
+        const double    fracOccupancyTolerance,
+        const double    eigenSolveResidualTolerance,
+        const double    scfDensityResidualNormTolerance,
+        const size_type maxChebyshevFilterPass,
+        const size_type maxSCFIter,
+        const bool      evaluateEnergyEverySCF,
+        /* Mixing related info */
+        const size_type mixingHistory,
+        const double    mixingParameter,
+        const bool      isAdaptiveAndersonMixingParameter,
+        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
+        /* Field boundary */
+        std::shared_ptr<
+          const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
+                                      ValueTypeElectrostaticsBasis,
+                                      memorySpace,
+                                      dim>>               feBMTotalCharge,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                    ValueTypeWaveFunctionBasis,
+                                                    memorySpace,
+                                                    dim>> feBMWaveFn,
+        /* Field data storages poisson solves*/
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>>
+          feBDTotalChargeStiffnessMatrix,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDNuclearChargeRhs,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
+                                          memorySpace>> feBDElectronicChargeRhs,
+        /* Field data storages eigen solve*/
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDKineticHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDElectrostaticsHamiltonian,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>> feBDEXCHamiltonian,
+        /* PSP related info */
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDAtomCenterNonLocalOperator,
+        const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        /* linAgOperations Context*/
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext,
+        /* basis overlap related info */
+        const OpContext &MContextForInv =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        const OpContext &MInvContext =
+          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                 ValueTypeOperand,
+                                                 memorySpace>(),
+        bool isResidualChebyshevFilter = true);
+
       ~KohnShamDFT() = default;
 
       void
@@ -336,8 +510,9 @@ namespace dftefe
                                         memorySpace,
                                         dim>>
         d_densCalc;
-      std::shared_ptr<KohnShamOperatorContextFE<ValueTypeOperator,
-                                                ValueTypeOperand,
+      std::shared_ptr<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                ValueTypeElectrostaticsBasis,
+                                                ValueTypeWaveFunctionCoeff,
                                                 ValueTypeWaveFunctionBasis,
                                                 memorySpace,
                                                 dim>>
@@ -347,11 +522,11 @@ namespace dftefe
                                             memorySpace,
                                             dim>>
         d_hamitonianXC;
-      std::shared_ptr<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                                           ValueTypeElectrostaticsCoeff,
-                                           ValueTypeWaveFunctionBasis,
-                                           memorySpace,
-                                           dim>>
+      std::shared_ptr<ElectrostaticFE<ValueTypeElectrostaticsBasis,
+                                      ValueTypeElectrostaticsCoeff,
+                                      ValueTypeWaveFunctionBasis,
+                                      memorySpace,
+                                      dim>>
         d_hamitonianElec;
       std::shared_ptr<KineticFE<ValueTypeWaveFunctionBasis,
                                 ValueTypeWaveFunctionCoeff,
@@ -374,7 +549,7 @@ namespace dftefe
       bool                      d_evaluateEnergyEverySCF;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_densityInQuadValues, d_densityOutQuadValues,
-        d_densityResidualQuadValues;
+        d_densityResidualQuadValues, d_coreCorrDensUPF, d_coreCorrectedDensity;
       size_type                        d_numMaxSCFIter;
       const OpContext *                d_MContext, *d_MInvContext;
       const utils::mpi::MPIComm &      d_mpiCommDomain;
@@ -406,6 +581,15 @@ namespace dftefe
            d_hamiltonianElectroExc;
       bool d_isResidualChebyshevFilter;
       bool d_isOEFEBasis;
+
+      std::shared_ptr<atoms::AtomSphericalDataContainer>
+        d_atomSphericalDataContainerPSP;
+
+      bool d_isONCVNonLocPSP, d_isNlcc;
+
+      quadrature::QuadratureValuesContainer<ValueTypeElectrostaticsCoeff,
+                                            memorySpace>
+        d_atomicTotalElecPotNuclearQuad, d_atomicTotalElecPotElectronicQuad;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

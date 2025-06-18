@@ -56,50 +56,36 @@ namespace dftefe
     class AtomSphericalData
     {
     public:
-      AtomSphericalData(
-        const std::string                 fileName,
-        const std::vector<std::string> &  fieldNames,
-        const std::vector<std::string> &  metadataNames,
-        const SphericalHarmonicFunctions &sphericalHarmonicFunc);
+      virtual ~AtomSphericalData() = default;
 
-      ~AtomSphericalData() = default;
+      virtual void
+      addFieldName(const std::string fieldName) = 0;
 
-      std::string
-      getFileName() const;
+      virtual std::string
+      getFileName() const = 0;
 
-      std::vector<std::string>
-      getFieldNames() const;
+      virtual std::vector<std::string>
+      getFieldNames() const = 0;
 
-      std::vector<std::string>
-      getMetadataNames() const;
+      virtual std::vector<std::string>
+      getMetadataNames() const = 0;
 
-      const std::vector<std::shared_ptr<SphericalData>> &
-      getSphericalData(const std::string fieldName) const;
+      virtual const std::vector<std::shared_ptr<SphericalData>> &
+      getSphericalData(const std::string fieldName) const = 0;
 
-      const std::shared_ptr<SphericalData>
+      virtual const std::shared_ptr<SphericalData>
       getSphericalData(const std::string       fieldName,
-                       const std::vector<int> &qNumbers) const;
+                       const std::vector<int> &qNumbers) const = 0;
 
-      std::string
-      getMetadata(const std::string metadataName) const;
+      virtual std::string
+      getMetadata(const std::string metadataName) const = 0;
 
-      size_type
+      virtual size_type
       getQNumberID(const std::string       fieldName,
-                   const std::vector<int> &qNumbers) const;
+                   const std::vector<int> &qNumbers) const = 0;
 
-      size_type
-      nSphericalData(std::string fieldName) const;
-
-    private:
-      std::string              d_fileName;
-      std::vector<std::string> d_fieldNames;
-      std::vector<std::string> d_metadataNames;
-      std::unordered_map<std::string,
-                         std::vector<std::shared_ptr<SphericalData>>>
-        d_sphericalData;
-      std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
-                                                   d_qNumbersToIdMap;
-      std::unordered_map<std::string, std::string> d_metadata;
+      virtual size_type
+      nSphericalData(std::string fieldName) const = 0;
     };
   } // end of namespace atoms
 } // end of namespace dftefe

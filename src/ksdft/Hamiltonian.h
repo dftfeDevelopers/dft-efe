@@ -38,11 +38,16 @@ namespace dftefe
       virtual void
       getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace>
                  &cellWiseStorage) const = 0;
-
-      // virtual void
-      // applyNonLocal(const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-      // memorySpace> &X,const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-      // memorySpace> & Y) const = 0;
+      virtual void
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const = 0;
+      virtual bool
+      hasLocalComponent() const = 0;
+      virtual bool
+      hasNonLocalComponent() const = 0;
 
     }; // end of Hamiltonian
   }    // end of namespace ksdft

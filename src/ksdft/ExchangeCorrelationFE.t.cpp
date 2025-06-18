@@ -414,6 +414,52 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
+    void
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const
+    {
+      utils::throwException(
+        false,
+        "Non-Local component not present to call in ExchangeCorrelationFE.h");
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::hasLocalComponent() const
+    {
+      return true;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
+                          dim>::hasNonLocalComponent() const
+    {
+      return false;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                    ValueTypeBasisData,
                                                    memorySpace,

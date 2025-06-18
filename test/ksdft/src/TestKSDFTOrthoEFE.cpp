@@ -502,7 +502,9 @@ int main()
                                                       *cfeBasisDataStorageAdaptive,
                                                       *efeBasisDataOrbitalAdaptive,
                                                       *cfeBasisDataStorageGLL,
-                                                      50); 
+                                                      50,
+                                                      50,
+                                                      linAlgOpContext); 
 
     std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
                                                   double,
@@ -552,7 +554,6 @@ int main()
                                         fracOccupancyTolerance,
                                         eigenSolveResidualTolerance,
                                         scfDensityResidualNormTolerance,
-                                        chebyshevPolynomialDegree,
                                         maxChebyshevFilterPass,
                                         maxSCFIter,
                                         evaluateEnergyEverySCF,
@@ -566,11 +567,10 @@ int main()
                                         efeBasisDataAdaptive,
                                         efeBasisDataAdaptive,     
                                         efeBasisDataAdaptive,
-                                        efeBasisDataAdaptive,                                                                                                                       
+                                        efeBasisDataAdaptive,   
+                                        efeBasisDataAdaptive,                                                                                                                      
                                         *externalPotentialFunction,
                                         linAlgOpContext,
-                                        50,
-                                        50,
                                         *MContextForInv,
                                         *MContextForInv,
                                         *MInvContext);

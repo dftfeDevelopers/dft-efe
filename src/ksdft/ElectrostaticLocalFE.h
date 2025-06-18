@@ -76,6 +76,7 @@ namespace dftefe
       /**
        * @brief Constructor
        */
+      // used if analytical vself canellation route taken
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
@@ -104,6 +105,7 @@ namespace dftefe
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true);
 
+      // used if numerical poisson solve vself canellation route taken
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
@@ -139,18 +141,23 @@ namespace dftefe
         bool            useDealiiMatrixFreePoissonSolve = true);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
+      // with analytical vself energy cancellation
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<double> &      smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -173,11 +180,13 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const bool      useDealiiMatrixFreePoissonSolve = true);
+        const bool      useDealiiMatrixFreePoissonSolve = true,
+        const bool      calculateIntegralDeltaRho       = false);
 
 
       ~ElectrostaticLocalFE();
 
+      // used if analytical vself canellation route taken
       void
       reinitBasis(
         const std::vector<utils::Point> &                 atomCoordinates,
@@ -196,8 +205,10 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian);
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
+      // used if numerical poisson solve vself canellation route taken
       void
       reinitBasis(
         const std::vector<utils::Point> &                 atomCoordinates,
@@ -222,20 +233,26 @@ namespace dftefe
           feBDNuclChargeRhsNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian);
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
+      // with analytical vself energy cancellation
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &atomicElectronChargeDensity,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotNuclearQuad,
-        const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                    memorySpace>
-          &atomicTotalElecPotElectronicQuad,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        //   &atomicElectronChargeDensity,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotNuclearQuad,
+        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+        //                                             memorySpace>
+        //   &atomicTotalElecPotElectronicQuad,
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -251,7 +268,8 @@ namespace dftefe
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian);
+                                          memorySpace>> feBDHamiltonian,
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
 
       void
       reinitField(
@@ -270,6 +288,19 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
       getFunctionalDerivative() const override;
 
+      void
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const override;
+
+      bool
+      hasLocalComponent() const override;
+
+      bool
+      hasNonLocalComponent() const override;
+
     private:
       /* Solves the nuclear potential problem, gets \sum \integral b_sm*V_sm ,
        * gets \sum \integral V_sm * rho, \sum V_smAtRhoQuadPts
@@ -283,32 +314,40 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
           feBDNuclearChargeRhs);
 
-      const bool                              d_useDealiiMatrixFreePoissonSolve;
-      bool                                    d_isNumericalVSelfSolve;
-      bool                                    d_isDeltaRhoSolve;
-      const size_type                         d_maxCellBlock;
-      const size_type                         d_numComponents;
-      std::vector<utils::Point>               d_atomCoordinates;
-      const size_type                         d_numAtoms;
-      const std::vector<double>               d_atomCharges;
-      const std::vector<double>               d_smearedChargeRadius;
-      RealType                                d_energy;
-      const utils::ScalarSpatialFunctionReal &d_externalPotentialFunction;
+      void
+      computeNuclearSelfEnergy();
+
+      void
+      deleteStorages();
+
+      const bool                d_useDealiiMatrixFreePoissonSolve;
+      const bool                d_isCalculateIntegralDeltaRho;
+      bool                      d_isNumericalVSelfSolve;
+      bool                      d_isDeltaRhoSolve;
+      const size_type           d_maxCellBlock;
+      const size_type           d_numComponents;
+      std::vector<utils::Point> d_atomCoordinates;
+      const size_type           d_numAtoms;
+      const std::vector<double> d_atomCharges;
+      const std::vector<double> d_smearedChargeRadius;
+      RealType                  d_energy;
+      RealType                  d_nuclearSelfEnergy;
 
       // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_nuclearChargesDensity;
       const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_electronChargeDensity;
-      const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                  memorySpace>
+      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
         *d_atomicTotalElecPotNuclearQuad, *d_atomicTotalElecPotElectronicQuad;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        d_atomicElectronChargeDensity;
+        d_atomicElectronChargeDensity, d_atomicElectronChargeDensityNucQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotHamQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotRhoQuad;
+      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+        *d_correctionPotNucQuad;
 
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_scratchDensNuclearQuad;

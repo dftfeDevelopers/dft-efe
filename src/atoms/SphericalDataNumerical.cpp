@@ -31,12 +31,13 @@
 #include "BoostAutoDiff.h"
 #include <cmath>
 #include <atoms/SphericalDataNumerical.h>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
 namespace dftefe
 {
   namespace atoms
   {
-    namespace SphericalDataInternal
+    namespace SphericalDataNumericalInternal
     {
       void
       getValueAnalytical(
@@ -60,7 +61,8 @@ namespace dftefe
               {
                 int  n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
                 auto Ylm = Clm(l, m) * Dm(m) *
-                           sphericalHarmonicFunc.Plm(l, m, theta) * Qm(m, phi);
+                           sphericalHarmonicFunc.Plm(l, std::abs(m), theta) *
+                           Qm(m, phi);
                 value[i] =
                   (*spline)(r)*Ylm * smoothCutoffValue(r, cutoff, smoothness);
               }
@@ -124,10 +126,11 @@ namespace dftefe
 
                 int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
 
-                double constant  = Clm(l, m) * Dm(m);
-                double plm_theta = sphericalHarmonicFunc.Plm(l, m, theta);
+                double constant = Clm(l, m) * Dm(m);
+                double plm_theta =
+                  sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
                 double dPlmDTheta_theta =
-                  sphericalHarmonicFunc.dPlmDTheta(l, m, theta);
+                  sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
 
                 double qm_mphi    = Qm(m, phi);
                 auto   Ylm        = constant * plm_theta * qm_mphi;
@@ -146,8 +149,8 @@ namespace dftefe
                     polarAngleTolerance) ? constant * plm_theta * dQmDPhi(m,
                     phi)/sin(theta) :*/
                       constant *
-                      (sin(theta) *
-                         sphericalHarmonicFunc.d2PlmDTheta2(l, m, theta) +
+                      (sin(theta) * sphericalHarmonicFunc.d2PlmDTheta2(
+                                      l, std::abs(m), theta) +
                        cos(theta) * dPlmDTheta_theta +
                        sin(theta) * l * (l + 1) * plm_theta) *
                       (1 / (m * m)) * dQmDPhi(m, phi);
@@ -287,7 +290,7 @@ namespace dftefe
                                                m,
                                                polarAngleTolerance);
       }
-    } // namespace SphericalDataInternal
+    } // namespace SphericalDataNumericalInternal
 
     SphericalDataNumerical::SphericalDataNumerical(
       const std::vector<int>            qNumbers,
@@ -333,15 +336,16 @@ namespace dftefe
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getValueAnalytical(point,
-                                                origin,
-                                                d_cutoff,
-                                                d_smoothness,
-                                                d_sphericalHarmonicFunc,
-                                                d_qNumbers,
-                                                d_spline,
-                                                d_polarAngleTolerance,
-                                                value);
+      SphericalDataNumericalInternal::getValueAnalytical(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_sphericalHarmonicFunc,
+        d_qNumbers,
+        d_spline,
+        d_polarAngleTolerance,
+        value);
 
       return value;
     }
@@ -356,17 +360,18 @@ namespace dftefe
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getGradientValueAnalytical(point,
-                                                        origin,
-                                                        d_cutoff,
-                                                        d_smoothness,
-                                                        d_sphericalHarmonicFunc,
-                                                        d_qNumbers,
-                                                        d_spline,
-                                                        d_polarAngleTolerance,
-                                                        d_cutoffTolerance,
-                                                        d_radiusTolerance,
-                                                        gradient);
+      SphericalDataNumericalInternal::getGradientValueAnalytical(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_sphericalHarmonicFunc,
+        d_qNumbers,
+        d_spline,
+        d_polarAngleTolerance,
+        d_cutoffTolerance,
+        d_radiusTolerance,
+        gradient);
 
       DFTEFE_AssertWithMsg(gradient.size() == d_dim * point.size(),
                            "Gradient vector should be of length dim");
@@ -387,15 +392,16 @@ namespace dftefe
 
       for (int i = 0; i < point.size(); i++)
         {
-          SphericalDataInternal::getHessianValueAutoDiff(point[i],
-                                                         origin,
-                                                         d_cutoff,
-                                                         d_smoothness,
-                                                         d_qNumbers,
-                                                         d_spline,
-                                                         d_polarAngleTolerance,
-                                                         d_radiusTolerance,
-                                                         hessian);
+          SphericalDataNumericalInternal::getHessianValueAutoDiff(
+            point[i],
+            origin,
+            d_cutoff,
+            d_smoothness,
+            d_qNumbers,
+            d_spline,
+            d_polarAngleTolerance,
+            d_radiusTolerance,
+            hessian);
           DFTEFE_AssertWithMsg(hessian.size() == d_dim * d_dim,
                                "Hessian vector should be of length dim*dim");
           std::copy(hessian.begin(),
@@ -414,7 +420,7 @@ namespace dftefe
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getValueAnalytical(
+      SphericalDataNumericalInternal::getValueAnalytical(
         std::vector<utils::Point>{point},
         origin,
         d_cutoff,
@@ -437,7 +443,7 @@ namespace dftefe
                            "getDerivativeValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataInternal::getGradientValueAnalytical(
+      SphericalDataNumericalInternal::getGradientValueAnalytical(
         std::vector<utils::Point>{point},
         origin,
         d_cutoff,
@@ -465,15 +471,16 @@ namespace dftefe
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
 
-      SphericalDataInternal::getHessianValueAutoDiff(point,
-                                                     origin,
-                                                     d_cutoff,
-                                                     d_smoothness,
-                                                     d_qNumbers,
-                                                     d_spline,
-                                                     d_polarAngleTolerance,
-                                                     d_radiusTolerance,
-                                                     hessian);
+      SphericalDataNumericalInternal::getHessianValueAutoDiff(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_qNumbers,
+        d_spline,
+        d_polarAngleTolerance,
+        d_radiusTolerance,
+        hessian);
       DFTEFE_AssertWithMsg(hessian.size() == d_dim * d_dim,
                            "Hessian vector should be of length dim*dim");
       return hessian;
@@ -506,10 +513,11 @@ namespace dftefe
       std::vector<double> retVal(r.size(), 0.);
       for (int i = 0; i < r.size(); i++)
         {
-          retVal[i] = (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
-                        constant * d_sphericalHarmonicFunc.Plm(l, m, theta[i]) *
-                          Qm(m, phi[i]) :
-                        0.;
+          retVal[i] =
+            (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
+              constant * d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta[i]) *
+                Qm(m, phi[i]) :
+              0.;
         }
       return retVal;
     }
@@ -556,40 +564,47 @@ namespace dftefe
       double                           constant = Clm(l, m) * Dm(m);
       for (int i = 0; i < r.size(); i++)
         {
-          if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
+          if (!(r[i] < d_radiusTolerance && l > 0))
             {
-              DFTEFE_AssertWithMsg(
-                std::abs(r[i]) >= d_radiusTolerance,
-                "Value undefined at nucleus while calling SphericalData::getAngularDerivative()");
-
-              double theta     = thetaVec[i];
-              double phi       = phiVec[i];
-              double plm_theta = d_sphericalHarmonicFunc.Plm(l, m, theta);
-              double dPlmDTheta_theta =
-                d_sphericalHarmonicFunc.dPlmDTheta(l, m, theta);
-              double qm_mphi    = Qm(m, phi);
-              auto   Ylm        = constant * plm_theta * qm_mphi;
-              auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
-
-              double dYlmDPhiBysinTheta = 0.;
-              if (m != 0)
+              if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
                 {
-                  dYlmDPhiBysinTheta =
-                    constant *
-                    (sin(theta) *
-                       d_sphericalHarmonicFunc.d2PlmDTheta2(l, m, theta) +
-                     cos(theta) * dPlmDTheta_theta +
-                     sin(theta) * l * (l + 1) * plm_theta) *
-                    (1 / (m * m)) * dQmDPhi(m, phi);
-                }
+                  double theta = thetaVec[i];
+                  double phi   = phiVec[i];
+                  double plm_theta =
+                    d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
+                  double dPlmDTheta_theta =
+                    d_sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
+                  double qm_mphi    = Qm(m, phi);
+                  auto   Ylm        = constant * plm_theta * qm_mphi;
+                  auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
 
-              retVal[0][i] = dYlmDTheta * (1 / r[i]);
-              retVal[1][i] = dYlmDPhiBysinTheta * (1 / r[i]);
+                  double dYlmDPhiBysinTheta = 0.;
+                  if (m != 0)
+                    {
+                      dYlmDPhiBysinTheta =
+                        constant *
+                        (sin(theta) * d_sphericalHarmonicFunc.d2PlmDTheta2(
+                                        l, std::abs(m), theta) +
+                         cos(theta) * dPlmDTheta_theta +
+                         sin(theta) * l * (l + 1) * plm_theta) *
+                        (1 / (m * m)) * dQmDPhi(m, phi);
+                    }
+
+                  retVal[0][i] = dYlmDTheta * (1 / r[i]);
+                  retVal[1][i] = dYlmDPhiBysinTheta * (1 / r[i]);
+                }
+              else
+                {
+                  retVal[0][i] = 0.;
+                  retVal[1][i] = 0.;
+                }
             }
           else
             {
-              retVal[0][i] = 0.;
-              retVal[1][i] = 0.;
+              utils::throwException(
+                false,
+                "Value undefined at nucleus while calling SphericalData::getAngularDerivative(). Distance : " +
+                  std::to_string(r[i]));
             }
         }
       return retVal;

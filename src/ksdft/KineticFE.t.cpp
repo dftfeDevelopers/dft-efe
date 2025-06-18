@@ -146,7 +146,7 @@ namespace dftefe
                                               waveFunc.getNumberComponents());
           const size_type numPsiInBatch = psiEndId - psiStartId;
 
-          std::vector<RealType> occupationInBatch(numPsiInBatch, (ValueType)0);
+          std::vector<RealType> occupationInBatch(numPsiInBatch, (RealType)0);
           RealType              energyBatchSum = 0;
 
           std::copy(occupation.begin() + psiStartId,
@@ -247,6 +247,44 @@ namespace dftefe
       getEnergy() const
     {
       return d_energy;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const
+    {
+      utils::throwException(
+        false, "Non-Local component not present to call in KineticFE.h");
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      hasLocalComponent() const
+    {
+      return true;
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      hasNonLocalComponent() const
+    {
+      return false;
     }
 
   } // end of namespace ksdft

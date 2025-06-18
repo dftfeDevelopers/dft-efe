@@ -101,6 +101,32 @@ namespace dftefe
       RealType
       getEnergy() const override;
 
+      void
+      applyNonLocal(
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> &Y,
+        bool updateGhostX,
+        bool updateGhostY) const override;
+
+      bool
+      hasLocalComponent() const override;
+
+      bool
+      hasNonLocalComponent() const override;
+
+      std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
+                                            ValueTypeElectrostaticsCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim>>
+      getElectrostaticFE() const;
+
+      std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                                  ValueTypeWaveFunctionCoeff,
+                                                  memorySpace,
+                                                  dim>>
+      getExchangeCorrelationFE() const;
+
     private:
       std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                             ValueTypeElectrostaticsCoeff,

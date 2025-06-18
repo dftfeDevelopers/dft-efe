@@ -39,6 +39,11 @@ namespace dftefe
 {
   namespace atoms
   {
+    enum class AtomSphericalDataType
+    {
+      ENRICHMENT,
+      PSEUDOPOTENTIAL,
+    };
     /**
      * @brief Class to store a field specific data for a given atomic species.
      * It <b> assumes the atomic field data to be spherical in nature</b>, i.e.,
@@ -66,6 +71,7 @@ namespace dftefe
        *
        */
       AtomSphericalDataContainer(
+        const AtomSphericalDataType &             atomSphericalDataType,
         const std::map<std::string, std::string> &atomSymbolToFilename,
         const std::vector<std::string> &          fieldNames,
         const std::vector<std::string> &          metadataNames,
@@ -75,6 +81,15 @@ namespace dftefe
        * @brief Destructor
        */
       ~AtomSphericalDataContainer() = default;
+
+      void
+      addFieldName(const std::string fieldName);
+
+      const std::vector<std::string> &
+      getFieldNames();
+
+      const std::vector<std::string> &
+      getMetadataNames();
 
       /**
        * @brief Returns the spherical data for a given atom and quantum numbers
@@ -116,7 +131,7 @@ namespace dftefe
       std::map<std::string, std::string> d_atomSymbolToFilename;
       std::vector<std::string>           d_fieldNames;
       std::vector<std::string>           d_metadataNames;
-      std::unordered_map<std::string, AtomSphericalData>
+      std::unordered_map<std::string, std::shared_ptr<AtomSphericalData>>
         d_mapAtomSymbolToAtomSphericalData;
 
       std::shared_ptr<const SphericalHarmonicFunctions>

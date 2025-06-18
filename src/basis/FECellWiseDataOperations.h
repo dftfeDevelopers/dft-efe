@@ -39,6 +39,9 @@ namespace dftefe
     class FECellWiseDataOperations
     {
     public:
+      // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
+      // cells) This also takes the case where numCellDofs = 0 Appropriately
+      // change src and dst ptrs
       static void
       copyFieldToCellWiseData(
         const ValueType *data,
@@ -49,9 +52,29 @@ namespace dftefe
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
       static void
+      copyFieldToCellWiseData(
+        const ValueType *data,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+          &        numCellDofs,
+        ValueType *itCellWiseStorageBegin);
+
+      // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
+      // cells) This also takes the case where numCellDofs = 0
+      static void
       addCellWiseDataToFieldData(
         const dftefe::utils::MemoryStorage<ValueType, memorySpace>
           &              cellWiseStorage,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+          &        numCellDofs,
+        ValueType *data);
+
+      static void
+      addCellWiseDataToFieldData(
+        const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
         const typename BasisManager<ValueType, memorySpace>::SizeTypeVector

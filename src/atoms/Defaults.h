@@ -27,6 +27,8 @@
 #define dftefeSphericalDataDefaults_h
 
 #include <utils/TypeConfig.h>
+#include <map>
+#include <vector>
 
 namespace dftefe
 {
@@ -58,6 +60,19 @@ namespace dftefe
       static const size_type DEFAULT_DIM;
 
     }; // end of class SphericalDataDefaults
-  }    // end of namespace atoms
+
+    class AtomSphDataPSPDefaults
+    {
+    public:
+      //
+      // lookup maps for upf file
+      //
+      static const std::map<std::string, std::string> UPF_PARENT_PATH_LOOKUP;
+
+      static const std::vector<std::string> METADATANAMES;
+
+    }; // end of class AtomSphDataPSPDefaults
+
+  } // end of namespace atoms
 } // end of namespace dftefe
 #endif // dftefeSphericalDataDefaults_h

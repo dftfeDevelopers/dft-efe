@@ -34,7 +34,26 @@ namespace dftefe
      */
     const double    SphericalDataDefaults::POL_ANG_TOL = 1e-14;
     const double    SphericalDataDefaults::CUTOFF_TOL  = 1e-14;
-    const double    SphericalDataDefaults::RADIUS_TOL  = 1e-14;
+    const double    SphericalDataDefaults::RADIUS_TOL  = 5e-3;
     const size_type SphericalDataDefaults::DEFAULT_DIM = 3;
+
+    const std::map<std::string, std::string>
+      AtomSphDataPSPDefaults::UPF_PARENT_PATH_LOOKUP{
+        {"r", "PP_MESH"}, //{fieldname/metadataname, approx. path}
+        {"vlocal", "PP_LOCAL"},
+        {"beta", "PP_NONLOCAL"},
+        {"pswfc", "PP_PSWFC"},
+        {"nlcc", "PP_NLCC"},
+        {"rhoatom", "PP_RHOATOM"}};
+
+    const std::vector<std::string> AtomSphDataPSPDefaults::METADATANAMES{
+      "element",
+      "z_valence",
+      "l_max",
+      "number_of_wfc",
+      "number_of_proj",
+      "core_correction",
+      "dij"};
+
   } // end of namespace atoms
 } // end of namespace dftefe

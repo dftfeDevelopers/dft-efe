@@ -60,7 +60,7 @@ The process of building and running a test is as follows
 class BuildOnlyTestAtoms(rfm.CompileOnlyRegressionTest):
     descr = 'A build only test using CMake'
     build_system = 'CMake'
-    make_opts = ['TestAtomSphericalData']
+    make_opts = ['TestAtomSphericalDataPSP']
     tagsDict = {'compileOrRun': 'compile', 'unitOrAggregate':
                 'unit', 'slowOrFast': 'fast', 'arch': 'cpu',
                 'serialOrParallel': 'serial'}
@@ -104,7 +104,7 @@ class BuildOnlyTestAtoms(rfm.CompileOnlyRegressionTest):
 
 @rfm.simple_test
 class BuildAndRunTestAtoms(rfm.RegressionTest):
-    target_name = 'TestAtomSphericalData'
+    target_name = 'TestAtomSphericalDataPSP'
     descr = '''A build and run test for AtomSphericalData.cpp'''
     build_system = 'CMake'
     make_opts = [target_name]
@@ -149,11 +149,11 @@ class BuildAndRunTestAtoms(rfm.RegressionTest):
         hasThrownException = True
         hasError = True
         msgError = '''Found error(s) in
-        BuildAndRunTestAtomSphericalData.'''
+        BuildAndRunTestAtomSphericalDataPSP.'''
         msgThrownException = '''Found exceptions in 
-        BuildAndRunTestAtomSphericalData.'''
+        BuildAndRunTestAtomSphericalDataPSP.'''
         msgAssertFail = '''Found assert fail(s) in
-        BuildAndRunTestAtomSphericalData.'''
+        BuildAndRunTestAtomSphericalDataPSP.'''
         matchesOut = evaluate(sn.findall(r'(?i)error', evaluate(self.stdout)))
         matchesErr = evaluate(sn.findall(r'(?i)error', evaluate(self.stderr)))
         if len(matchesOut) == 0 and len(matchesErr) == 0:

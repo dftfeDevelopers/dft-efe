@@ -36,6 +36,8 @@
 #include <memory>
 #include <variant>
 #include <type_traits>
+#include <ksdft/ElectrostaticONCVNonLocFE.h>
+#include <ksdft/ElectrostaticExcFE.h>
 
 namespace dftefe
 {
@@ -52,14 +54,19 @@ namespace dftefe
      * and its operands reside
      *
      */
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              typename ValueTypeBasisData,
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class KohnShamOperatorContextFE
-      : public linearAlgebra::
-          OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+      : public linearAlgebra::OperatorContext<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
+                                                 ValueTypeWaveFunctionBasis>,
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
+                                                 ValueTypeWaveFunctionCoeff>,
+          memorySpace>
     {
     public:
       /**
@@ -68,39 +75,50 @@ namespace dftefe
        * (e.g., between double and complex<double>, complex<double>
        * is the bigger set)
        */
+
+      using ValueTypeOperator =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
+                                               ValueTypeWaveFunctionBasis>;
+      using ValueTypeOperand =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
+                                               ValueTypeWaveFunctionCoeff>;
+
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
       using Storage = utils::MemoryStorage<ValueTypeOperator, memorySpace>;
 
-      using HamiltonianPtrVariant =
-        std::variant<Hamiltonian<float, memorySpace> *,
-                     Hamiltonian<double, memorySpace> *,
-                     Hamiltonian<std::complex<float>, memorySpace> *,
-                     Hamiltonian<std::complex<double>, memorySpace> *>;
+      using HamiltonianPtrVariant = std::variant<
+        std::shared_ptr<Hamiltonian<float, memorySpace>>,
+        std::shared_ptr<Hamiltonian<double, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
 
     public:
       /**
        * @brief Constructor
        */
       KohnShamOperatorContextFE(
-        const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-            &                                        feBasisManager,
-        std::vector<HamiltonianPtrVariant>           hamiltonianComponentsVec,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
-        const size_type                              maxCellBlock,
-        const size_type                              maxWaveFnBatch);
+        const basis::FEBasisManager<ValueTypeOperand,
+                                    ValueTypeWaveFunctionBasis,
+                                    memorySpace,
+                                    dim> &        feBasisManager,
+        const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellBlock,
+        const size_type maxWaveFnBatch,
+        const bool      useOptimizedImplement = true);
 
       ~KohnShamOperatorContextFE() = default;
 
       void
       reinit(const basis::FEBasisManager<ValueTypeOperand,
-                                         ValueTypeBasisData,
+                                         ValueTypeWaveFunctionBasis,
                                          memorySpace,
-                                         dim> & feBasisManager,
-             std::vector<HamiltonianPtrVariant> hamiltonianVec);
+                                         dim> &        feBasisManager,
+             const std::vector<HamiltonianPtrVariant> &hamiltonianVec);
 
       void
       apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -109,13 +127,33 @@ namespace dftefe
             bool updateGhostY = false) const override;
 
     private:
-      const basis::
-        FEBasisManager<ValueTypeOperand, ValueTypeBasisData, memorySpace, dim>
-          *                                       d_feBasisManager;
-      Storage                                     d_hamiltonianInAllCells;
-      const size_type                             d_maxCellBlock;
-      const size_type                             d_maxWaveFnBatch;
-      linearAlgebra::LinAlgOpContext<memorySpace> d_linAlgOpContext;
+      const basis::FEBasisManager<ValueTypeOperand,
+                                  ValueTypeWaveFunctionBasis,
+                                  memorySpace,
+                                  dim> *d_feBasisManager;
+      Storage                           d_hamiltonianInAllCells;
+      const size_type                   d_maxCellBlock;
+      const size_type                   d_maxWaveFnBatch;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                         d_linAlgOpContext;
+      std::vector<HamiltonianPtrVariant> d_hamiltonianComponentsVec;
+
+      mutable linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>
+        d_scratchNonLocPSPApply;
+
+      const bool d_useOptimizedImplement;
+
+      mutable utils::MemoryStorage<ValueTypeOperand, memorySpace> d_XCellValues;
+
+      mutable std::shared_ptr<
+        const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                        ValueTypeElectrostaticsCoeff,
+                                        ValueTypeWaveFunctionBasis,
+                                        ValueTypeWaveFunctionCoeff,
+                                        memorySpace,
+                                        dim>>
+        d_electroONCVHamiltonian;
+
     }; // end of class KohnShamOperatorContextFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

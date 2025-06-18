@@ -23,6 +23,8 @@
  * @author Avirup Sircar
  */
 
+#include <cmath>
+
 namespace dftefe
 {
   namespace atoms
@@ -34,12 +36,14 @@ namespace dftefe
       const std::vector<std::string> & atomSymbolVec,
       const std::vector<utils::Point> &atomCoordinatesVec,
       const std::string                fieldName,
-      const size_type                  derivativeType)
+      const size_type                  derivativeType,
+      const size_type                  sphericalValPower)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_atomSymbolVec(atomSymbolVec)
       , d_atomCoordinatesVec(atomCoordinatesVec)
       , d_fieldName(fieldName)
       , d_derivativeType(derivativeType)
+      , d_sphericalValPower(sphericalValPower)
     {
       utils::throwException(derivativeType == 0 || derivativeType == 1,
                             "The derivative type can only be 0 or 1");
@@ -61,7 +65,7 @@ namespace dftefe
               for (auto &enrichmentObjId : vec)
                 {
                   double val = enrichmentObjId->getValue(point, origin);
-                  retValue   = retValue + val * val;
+                  retValue   = retValue + pow(val, d_sphericalValPower);
                 }
             }
         }
@@ -79,7 +83,7 @@ namespace dftefe
                     enrichmentObjId->getGradientValue(point, origin);
                   for (size_type iDim = 0; iDim < dim; iDim++)
                     {
-                      retValue = retValue + val[iDim] * val[iDim];
+                      retValue = retValue + pow(val[iDim], d_sphericalValPower);
                     }
                 }
             }
@@ -109,8 +113,8 @@ namespace dftefe
                     enrichmentObjId->getValue(points, origin);
                   for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
                     {
-                      retValue[iPoint] =
-                        retValue[iPoint] + val[iPoint] * val[iPoint];
+                      retValue[iPoint] = retValue[iPoint] +
+                                         pow(val[iPoint], d_sphericalValPower);
                     }
                 }
             }
@@ -133,7 +137,7 @@ namespace dftefe
                         {
                           retValue[iPoint] =
                             retValue[iPoint] +
-                            val[iPoint * dim + iDim] * val[iPoint * dim + iDim];
+                            pow(val[iPoint * dim + iDim], d_sphericalValPower);
                         }
                     }
                 }

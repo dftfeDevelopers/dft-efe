@@ -27,7 +27,8 @@
 #include <utils/Exceptions.h>
 #include <map>
 #include <string>
-#include <atoms/AtomSphericalData.h>
+#include <atoms/AtomSphericalDataEnrichment.h>
+#include <atoms/AtomSphericalDataPSP.h>
 #include <atoms/SphericalData.h>
 #include <atoms/AtomSphericalDataContainer.h>
 namespace dftefe
@@ -36,6 +37,7 @@ namespace dftefe
   {
     // Constructor
     AtomSphericalDataContainer::AtomSphericalDataContainer(
+      const AtomSphericalDataType &             atomSphericalDataType,
       const std::map<std::string, std::string> &atomSymbolToFilename,
       const std::vector<std::string> &          fieldNames,
       const std::vector<std::string> &          metadataNames,
@@ -46,17 +48,62 @@ namespace dftefe
       , d_isAssocLegendreSplineEval(isAssocLegendreSplineEval)
     {
       d_SphericalHarmonicFunctions =
-        std::make_shared<const SphericalHarmonicFunctions>(false);
+        std::make_shared<const SphericalHarmonicFunctions>(
+          d_isAssocLegendreSplineEval);
       auto iter = d_atomSymbolToFilename.begin();
-      for (; iter != d_atomSymbolToFilename.end(); iter++)
+
+      if (atomSphericalDataType == AtomSphericalDataType::ENRICHMENT)
         {
-          d_mapAtomSymbolToAtomSphericalData.insert(
-            {iter->first,
-             AtomSphericalData(iter->second,
-                               d_fieldNames,
-                               d_metadataNames,
-                               *d_SphericalHarmonicFunctions)});
+          for (; iter != d_atomSymbolToFilename.end(); iter++)
+            {
+              d_mapAtomSymbolToAtomSphericalData.insert(
+                {iter->first,
+                 std::make_shared<AtomSphericalDataEnrichment>(
+                   iter->second,
+                   d_fieldNames,
+                   d_metadataNames,
+                   *d_SphericalHarmonicFunctions)});
+            }
         }
+      else if (atomSphericalDataType == AtomSphericalDataType::PSEUDOPOTENTIAL)
+        {
+          for (; iter != d_atomSymbolToFilename.end(); iter++)
+            {
+              d_mapAtomSymbolToAtomSphericalData.insert(
+                {iter->first,
+                 std::make_shared<AtomSphericalDataPSP>(
+                   iter->second,
+                   d_fieldNames,
+                   d_metadataNames,
+                   *d_SphericalHarmonicFunctions)});
+            }
+        }
+      else
+        utils::throwException(
+          false,
+          "AtomSphericalDataType can only be of types ENRICHMENT and PSEUDOPOTENTIAL.");
+    }
+
+    void
+    AtomSphericalDataContainer::addFieldName(const std::string fieldName)
+    {
+      for (auto &pair : d_mapAtomSymbolToAtomSphericalData)
+        {
+          pair.second->addFieldName(fieldName);
+        }
+      d_fieldNames.push_back(fieldName);
+    }
+
+    const std::vector<std::string> &
+    AtomSphericalDataContainer::getFieldNames()
+    {
+      return d_fieldNames;
+    }
+
+    const std::vector<std::string> &
+    AtomSphericalDataContainer::getMetadataNames()
+    {
+      return d_metadataNames;
     }
 
     const std::vector<std::shared_ptr<SphericalData>> &
@@ -68,7 +115,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getSphericalData");
-      return (it->second).getSphericalData(fieldName);
+      return (it->second)->getSphericalData(fieldName);
     }
 
     const std::shared_ptr<SphericalData>
@@ -81,7 +128,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getSphericalData");
-      return (it->second).getSphericalData(fieldName, qNumbers);
+      return (it->second)->getSphericalData(fieldName, qNumbers);
     }
 
     std::string
@@ -92,7 +139,7 @@ namespace dftefe
       utils::throwException<utils::InvalidArgument>(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getMetadata");
-      return (it->second).getMetadata(metadataName);
+      return (it->second)->getMetadata(metadataName);
     }
 
     std::vector<std::vector<int>>
@@ -104,7 +151,7 @@ namespace dftefe
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getQNumbers");
       std::vector<std::shared_ptr<SphericalData>> sphericalDataVec =
-        (it->second).getSphericalData(fieldName);
+        (it->second)->getSphericalData(fieldName);
       std::vector<std::vector<int>> qNumberVec;
       for (auto i : sphericalDataVec)
         qNumberVec.push_back(i->getQNumbers());
@@ -121,7 +168,7 @@ namespace dftefe
       utils::throwException<utils::InvalidArgument>(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::getQNumberID");
-      return (it->second).getQNumberID(fieldName, qNumbers);
+      return (it->second)->getQNumberID(fieldName, qNumbers);
     }
 
     size_type
@@ -133,7 +180,7 @@ namespace dftefe
       utils::throwException<utils::InvalidArgument>(
         it != d_mapAtomSymbolToAtomSphericalData.end(),
         "Cannot find the atom symbol provided to AtomSphericalDataContainer::nSphericalDataContainer");
-      return (it->second).nSphericalData(fieldName);
+      return (it->second)->nSphericalData(fieldName);
     }
 
     std::map<std::string, std::string>

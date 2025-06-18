@@ -16,7 +16,7 @@ namespace dftefe
     class SphericalHarmonicFunctions
     {
     public:
-      SphericalHarmonicFunctions(const bool isAssocLegendreSplineEval = true);
+      SphericalHarmonicFunctions(const bool isAssocLegendreSplineEval);
 
       ~SphericalHarmonicFunctions() = default;
 

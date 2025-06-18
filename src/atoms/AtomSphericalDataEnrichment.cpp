@@ -23,7 +23,7 @@
  * @author Bikash Kanungo
  */
 
-#include <atoms/AtomSphericalData.h>
+#include <atoms/AtomSphericalDataEnrichment.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
 #include <libxml/parser.h>
@@ -36,7 +36,7 @@ namespace dftefe
 {
   namespace atoms
   {
-    namespace AtomSphericalDataXMLLocal
+    namespace AtomSphericalDataEnrichmentXMLLocal
     {
       struct XPathInfo
       {
@@ -47,49 +47,49 @@ namespace dftefe
         std::string nsHRef;
       };
 
-      bool
-      splitStringToInts(const std::string s,
-                        std::vector<int> &vals,
-                        size_type         reserveSize = 0)
-      {
-        std::istringstream ss(s);
-        std::string        word;
-        size_type          wordCount = 0;
-        vals.resize(0);
-        vals.reserve(reserveSize);
-        bool convSuccess = false;
-        int  x;
-        while (ss >> word)
-          {
-            convSuccess = utils::stringOps::strToInt(word, x);
-            if (!convSuccess)
-              break;
-            vals.push_back(x);
-          }
-        return convSuccess;
-      }
+      // bool
+      // splitStringToInts(const std::string s,
+      //                   std::vector<int> &vals,
+      //                   size_type         reserveSize = 0)
+      // {
+      //   std::istringstream ss(s);
+      //   std::string        word;
+      //   size_type          wordCount = 0;
+      //   vals.resize(0);
+      //   vals.reserve(reserveSize);
+      //   bool convSuccess = false;
+      //   int  x;
+      //   while (ss >> word)
+      //     {
+      //       convSuccess = utils::stringOps::strToInt(word, x);
+      //       if (!convSuccess)
+      //         break;
+      //       vals.push_back(x);
+      //     }
+      //   return convSuccess;
+      // }
 
-      bool
-      splitStringToDoubles(const std::string    s,
-                           std::vector<double> &vals,
-                           size_type            reserveSize = 0)
-      {
-        std::istringstream ss(s);
-        std::string        word;
-        size_type          wordCount = 0;
-        vals.resize(0);
-        vals.reserve(reserveSize);
-        bool   convSuccess = false;
-        double x;
-        while (ss >> word)
-          {
-            convSuccess = utils::stringOps::strToDouble(word, x);
-            if (!convSuccess)
-              break;
-            vals.push_back(x);
-          }
-        return convSuccess;
-      }
+      // bool
+      // splitStringToDoubles(const std::string    s,
+      //                      std::vector<double> &vals,
+      //                      size_type            reserveSize = 0)
+      // {
+      //   std::istringstream ss(s);
+      //   std::string        word;
+      //   size_type          wordCount = 0;
+      //   vals.resize(0);
+      //   vals.reserve(reserveSize);
+      //   bool   convSuccess = false;
+      //   double x;
+      //   while (ss >> word)
+      //     {
+      //       convSuccess = utils::stringOps::strToDouble(word, x);
+      //       if (!convSuccess)
+      //         break;
+      //       vals.push_back(x);
+      //     }
+      //   return convSuccess;
+      // }
 
       xmlDocPtr
       getDoc(const std::string fileName)
@@ -303,7 +303,8 @@ namespace dftefe
       //	  for(size_type i = 0; i < N; ++i)
       //	  {
       //	    std::vector<double> vals(0);
-      //	    convSuccess = splitStringToDoubles(nodeStrings[0], vals,
+      //	    convSuccess =
+      // utils::stringOps::splitStringToDoubles(nodeStrings[0], vals,
       // numPoints);
       //      	    utils::throwException(convSuccess,
       //	  	"Error while converting values in " + xPathInfo.xpath + " element
@@ -375,9 +376,10 @@ namespace dftefe
         for (size_type i = 0; i < N; ++i)
           {
             std::vector<double> radialValues(0);
-            convSuccess = splitStringToDoubles(radialValueStrings[i],
-                                               radialValues,
-                                               numPoints);
+            convSuccess =
+              utils::stringOps::splitStringToDoubles(radialValueStrings[i],
+                                                     radialValues,
+                                                     numPoints);
             utils::throwException(convSuccess,
                                   "Error while converting values in " +
                                     xPathInfo.xpath + " element in " +
@@ -389,7 +391,9 @@ namespace dftefe
                 xPathInfo.xpath + " element in " + xPathInfo.fileName);
 
             std::vector<int> qNumbers(0);
-            convSuccess = splitStringToInts(qNumberStrings[i], qNumbers, 3);
+            convSuccess = utils::stringOps::splitStringToInts(qNumberStrings[i],
+                                                              qNumbers,
+                                                              3);
             utils::throwException(convSuccess,
                                   "Error while converting quantum numbers in " +
                                     xPathInfo.xpath + " element in " +
@@ -420,7 +424,9 @@ namespace dftefe
 
             std::vector<double> cutoffInfo(0);
             convSuccess =
-              splitStringToDoubles(cutOffInfoStrings[i], cutoffInfo, 2);
+              utils::stringOps::splitStringToDoubles(cutOffInfoStrings[i],
+                                                     cutoffInfo,
+                                                     2);
             utils::throwException(convSuccess,
                                   "Error while converting cutoff info in " +
                                     xPathInfo.xpath + " element in " +
@@ -446,9 +452,31 @@ namespace dftefe
           qNumbersSet.size() == N,
           "Found repeated quantum numbers while processing " + xPathInfo.xpath +
             " element in " + xPathInfo.fileName);
+
+        // Check if the m's for the quantum numbers are in ascending order.
+        int i = 0;
+        while (i < N)
+          {
+            auto it = qNumbersSet.begin();
+            std::advance(it, i);
+            int l     = *(it->data() + 1);
+            int count = 0;
+            for (int m = -l; m <= l; m++)
+              {
+                it = qNumbersSet.begin();
+                std::advance(it, i + count);
+                utils::throwException(
+                  m == *(it->data() + 2),
+                  "The quantum number m for " + xPathInfo.xpath +
+                    " in the xml file " + xPathInfo.fileName +
+                    " are not in correct order (ascending m).");
+                count += 1;
+              }
+            i += count;
+          }
       }
 
-    } // namespace AtomSphericalDataXMLLocal
+    } // namespace AtomSphericalDataEnrichmentXMLLocal
 
     namespace
     {
@@ -462,24 +490,24 @@ namespace dftefe
 
       void
       getSphericalDataFromXMLNode(
-        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
-        const std::vector<double> &                  radialPoints,
-        const AtomSphericalDataXMLLocal::XPathInfo & xPathInfo,
-        const SphericalHarmonicFunctions &           sphericalHarmonicFunc)
+        std::vector<std::shared_ptr<SphericalData>> &         sphericalDataVec,
+        const std::vector<double> &                           radialPoints,
+        const AtomSphericalDataEnrichmentXMLLocal::XPathInfo &xPathInfo,
+        const SphericalHarmonicFunctions &sphericalHarmonicFunc)
       {
         std::vector<std::string> radialValuesStrings(0);
         std::vector<std::string> qNumbersStrings(0);
         std::vector<std::string> cutOffInfoStrings(0);
-        AtomSphericalDataXMLLocal::readSphericalDataFromXMLNodeData(
+        AtomSphericalDataEnrichmentXMLLocal::readSphericalDataFromXMLNodeData(
           radialValuesStrings, qNumbersStrings, cutOffInfoStrings, xPathInfo);
-        AtomSphericalDataXMLLocal::processSphericalDataFromXMLNodeData(
-          sphericalDataVec,
-          radialValuesStrings,
-          qNumbersStrings,
-          cutOffInfoStrings,
-          radialPoints,
-          xPathInfo,
-          sphericalHarmonicFunc);
+        AtomSphericalDataEnrichmentXMLLocal::
+          processSphericalDataFromXMLNodeData(sphericalDataVec,
+                                              radialValuesStrings,
+                                              qNumbersStrings,
+                                              cutOffInfoStrings,
+                                              radialPoints,
+                                              xPathInfo,
+                                              sphericalHarmonicFunc);
       }
 
       void
@@ -495,7 +523,7 @@ namespace dftefe
       }
     } // namespace
 
-    AtomSphericalData::AtomSphericalData(
+    AtomSphericalDataEnrichment::AtomSphericalDataEnrichment(
       const std::string                 fileName,
       const std::vector<std::string> &  fieldNames,
       const std::vector<std::string> &  metadataNames,
@@ -509,9 +537,9 @@ namespace dftefe
       std::string rootElementName = "atom";
       std::string ns              = "dft-efe";
       std::string nsHRef          = "http://www.dft-efe.com/dft-efe";
-      ptrToXmlDoc                 = AtomSphericalDataXMLLocal::getDoc(fileName);
+      ptrToXmlDoc = AtomSphericalDataEnrichmentXMLLocal::getDoc(fileName);
 
-      AtomSphericalDataXMLLocal::XPathInfo xPathInfo;
+      AtomSphericalDataEnrichmentXMLLocal::XPathInfo xPathInfo;
       xPathInfo.fileName = fileName;
       xPathInfo.doc      = ptrToXmlDoc;
       xPathInfo.ns       = ns;
@@ -526,7 +554,8 @@ namespace dftefe
           const std::string metadataName = metadataNames[iMeta];
           // get symbol
           xPathInfo.xpath = getXPath(rootElementName, ns, metadataName);
-          AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+          AtomSphericalDataEnrichmentXMLLocal::getNodeStrings(xPathInfo,
+                                                              nodeStrings);
           utils::throwException(nodeStrings.size() == 1,
                                 "Found more than one " + xPathInfo.xpath +
                                   " element in " + fileName);
@@ -550,7 +579,8 @@ namespace dftefe
       // get number of radial points
       //
       xPathInfo.xpath = getXPath(rootElementName, ns, "NR");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalDataEnrichmentXMLLocal::getNodeStrings(xPathInfo,
+                                                          nodeStrings);
       utils::throwException(nodeStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
@@ -567,15 +597,15 @@ namespace dftefe
       // get radial points
       //
       xPathInfo.xpath = getXPath(rootElementName, ns, "r");
-      AtomSphericalDataXMLLocal::getNodeStrings(xPathInfo, nodeStrings);
+      AtomSphericalDataEnrichmentXMLLocal::getNodeStrings(xPathInfo,
+                                                          nodeStrings);
       utils::throwException(nodeStrings.size() == 1,
                             "Found more than one " + xPathInfo.xpath +
                               " element in " + fileName);
       radialPoints.resize(0);
-      convSuccess =
-        AtomSphericalDataXMLLocal::splitStringToDoubles(nodeStrings[0],
-                                                        radialPoints,
-                                                        numRadialPoints);
+      convSuccess = utils::stringOps::splitStringToDoubles(nodeStrings[0],
+                                                           radialPoints,
+                                                           numRadialPoints);
       utils::throwException(convSuccess,
                             "Error while converting " + xPathInfo.xpath +
                               " element in " + fileName + " to double");
@@ -611,26 +641,35 @@ namespace dftefe
 #endif // defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
 
+    void
+    AtomSphericalDataEnrichment::addFieldName(const std::string fieldName)
+    {
+      utils::throwException(
+        false,
+        "addFieldName() not yet implemented in AtomSphericalDataEnrichment class.");
+    }
+
     std::string
-    AtomSphericalData::getFileName() const
+    AtomSphericalDataEnrichment::getFileName() const
     {
       return d_fileName;
     }
 
     std::vector<std::string>
-    AtomSphericalData::getFieldNames() const
+    AtomSphericalDataEnrichment::getFieldNames() const
     {
       return d_fieldNames;
     }
 
     std::vector<std::string>
-    AtomSphericalData::getMetadataNames() const
+    AtomSphericalDataEnrichment::getMetadataNames() const
     {
       return d_metadataNames;
     }
 
     const std::vector<std::shared_ptr<SphericalData>> &
-    AtomSphericalData::getSphericalData(const std::string fieldName) const
+    AtomSphericalDataEnrichment::getSphericalData(
+      const std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
@@ -642,8 +681,9 @@ namespace dftefe
 
 
     const std::shared_ptr<SphericalData>
-    AtomSphericalData::getSphericalData(const std::string       fieldName,
-                                        const std::vector<int> &qNumbers) const
+    AtomSphericalDataEnrichment::getSphericalData(
+      const std::string       fieldName,
+      const std::vector<int> &qNumbers) const
     {
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
@@ -674,7 +714,8 @@ namespace dftefe
     }
 
     std::string
-    AtomSphericalData::getMetadata(const std::string metadataName) const
+    AtomSphericalDataEnrichment::getMetadata(
+      const std::string metadataName) const
     {
       auto it = d_metadata.find(metadataName);
       utils::throwException(it != d_metadata.end(),
@@ -686,27 +727,28 @@ namespace dftefe
 
 
     size_type
-    AtomSphericalData::getQNumberID(const std::string       fieldName,
-                                    const std::vector<int> &qNumbers) const
+    AtomSphericalDataEnrichment::getQNumberID(
+      const std::string       fieldName,
+      const std::vector<int> &qNumbers) const
     {
       auto it = d_qNumbersToIdMap.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
         it != d_qNumbersToIdMap.end(),
-        "Cannot find the atom symbol provided to AtomSphericalData::getQNumberID");
+        "Cannot find the atom symbol provided to AtomSphericalDataEnrichment::getQNumberID");
       auto it1 = (it->second).find(qNumbers);
       utils::throwException<utils::InvalidArgument>(
         it1 != (it->second).end(),
-        "Cannot find the qnumbers provided to AtomSphericalData::getQNumberID");
+        "Cannot find the qnumbers provided to AtomSphericalDataEnrichment::getQNumberID");
       return (it1)->second;
     }
 
     size_type
-    AtomSphericalData::nSphericalData(std::string fieldName) const
+    AtomSphericalDataEnrichment::nSphericalData(std::string fieldName) const
     {
       auto it = d_sphericalData.find(fieldName);
       utils::throwException<utils::InvalidArgument>(
         it != d_sphericalData.end(),
-        "Cannot find the atom symbol provided to AtomSphericalData::nSphericalData");
+        "Cannot find the atom symbol provided to AtomSphericalDataEnrichment::nSphericalData");
       return (it->second).size();
     }
 
