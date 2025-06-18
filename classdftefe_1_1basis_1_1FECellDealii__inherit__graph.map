@@ -1,0 +1,5 @@
+<map id="dftefe::basis::FECellDealii&lt; dim &gt;" name="dftefe::basis::FECellDealii&lt; dim &gt;">
+<area shape="rect" id="node1" title=" " alt="" coords="7,167,175,207"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FECellBase.html" title="An abstract class for a finite element cell (can be of any dimension) This is created primarily to be..." alt="" coords="8,93,175,119"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1TriangulationCellBase.html" title="An abstract class for an geometric cell. This is done to prevent the template (as required by deal...." alt="" coords="5,5,177,45"/>
+</map>

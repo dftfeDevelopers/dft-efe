@@ -1,0 +1,18 @@
+<map id="dftefe::atoms::convertCartesianToSpherical" name="dftefe::atoms::convertCartesianToSpherical">
+<area shape="rect" id="node1" title=" " alt="" coords="591,327,792,367"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a1e1322741365a20786fa0e5e47c4a3a2" title=" " alt="" coords="333,5,513,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a3afc485855e7db0eb90818d6dfb8380c" title=" " alt="" coords="333,84,513,139"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1atoms_1_1SphericalDataNumericalInternal.html#a643073dc17abd256dcea161532c6f815" title=" " alt="" coords="331,163,515,217"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1atoms_1_1SphericalDataNumericalInternal.html#ae5892cb2b5f5f88abb970eb8ae8e3c17" title=" " alt="" coords="336,241,511,296"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1atoms_1_1SphericalDataNumericalInternal.html#a29cf033edfe7613fec1c18cb42a516a5" title=" " alt="" coords="337,320,510,375"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a3b70749db77ca3b2e95a3110f8f1d2ba" title=" " alt="" coords="308,399,539,453"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1atoms_1_1SphericalDataNumericalInternal.html#ad58ab4e8f67144b1720e246052d8bbe0" title=" " alt="" coords="345,477,502,532"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1atoms_1_1SphericalDataMixedInternal.html#aa29e3a8b5e019f3c4c742bfa627d2e30" title=" " alt="" coords="304,557,543,597"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1atoms_1_1SphericalDataNumericalInternal.html#aa651c2a99bde6fc5ddeee9de70716ac2" title=" " alt="" coords="345,621,502,676"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a2d62098984754ec665070ae8cdb31073" title="This Constructor for augmenting the orthogonalized EFE basis with classical FE basis...." alt="" coords="5,84,256,139"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1atoms_1_1SphericalDataNumerical.html#af156c6a9f397b78a50ad045c64403438" title=" " alt="" coords="23,170,238,210"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1atoms_1_1SphericalDataNumerical.html#a3e2e2e635e1f3a25492310ee64ce6102" title=" " alt="" coords="24,327,237,367"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="15,399,246,453"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1atoms_1_1SphericalDataNumerical.html#a78a22d81b191cc4afc543d0da3833d84" title=" " alt="" coords="48,485,213,525"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1atoms_1_1SphericalDataMixed.html#ac35b4c585b7fd296c99cc77e62106a5f" title=" " alt="" coords="52,557,209,597"/>
+</map>

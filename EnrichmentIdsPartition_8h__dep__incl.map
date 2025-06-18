@@ -1,0 +1,36 @@
+<map id="src/basis/EnrichmentIdsPartition.h" name="src/basis/EnrichmentIdsPartition.h">
+<area shape="rect" id="node1" title=" " alt="" coords="856,8,1076,34"/>
+<area shape="rect" id="node2" href="$AtomSevereFunction_8h.html" title=" " alt="" coords="258,89,474,114"/>
+<area shape="rect" id="node10" href="$AtomCenterNonLocalOpContextFE_8h.html" title=" " alt="" coords="536,82,740,122"/>
+<area shape="rect" id="node12" href="$EFEBasisDataStorageDealii_8t_8cpp.html" title=" " alt="" coords="619,258,827,298"/>
+<area shape="rect" id="node15" href="$EFEBasisDofHandler_8h.html" title=" " alt="" coords="898,177,1109,202"/>
+<area shape="rect" id="node29" href="$EnrichmentClassicalInterfaceSpherical_8h.html" title=" " alt="" coords="935,82,1133,122"/>
+<area shape="rect" id="node33" href="$EnrichmentIdsPartition_8cpp.html" title=" " alt="" coords="1157,89,1391,114"/>
+<area shape="rect" id="node34" href="$EnrichmentIdsPartition_8t_8cpp.html" title=" " alt="" coords="1416,89,1657,114"/>
+<area shape="rect" id="node3" href="$AtomSevereFunction_8cpp.html" title=" " alt="" coords="5,177,236,202"/>
+<area shape="rect" id="node4" href="$ElectrostaticONCVNonLocFE_8h.html" title=" " alt="" coords="261,170,471,210"/>
+<area shape="rect" id="node5" href="$ElectrostaticONCVNonLocFE_8cpp.html" title=" " alt="" coords="63,258,274,298"/>
+<area shape="rect" id="node6" href="$KohnShamDFT_8h.html" title=" " alt="" coords="149,441,325,466"/>
+<area shape="rect" id="node8" href="$KohnShamOperatorContextFE_8h.html" title=" " alt="" coords="349,346,540,386"/>
+<area shape="rect" id="node7" href="$KohnShamDFT_8cpp.html" title=" " alt="" coords="141,522,332,547"/>
+<area shape="rect" id="node9" href="$KohnShamOperatorContextFE_8cpp.html" title=" " alt="" coords="349,434,540,474"/>
+<area shape="rect" id="node11" href="$AtomCenterNonLocalOpContextFE_8cpp.html" title=" " alt="" coords="536,170,740,210"/>
+<area shape="rect" id="node13" href="$EFEBasisDataStorageDealii_8h.html" title=" " alt="" coords="565,346,773,386"/>
+<area shape="rect" id="node14" href="$EFEBasisDataStorageDealii_8cpp.html" title=" " alt="" coords="565,434,773,474"/>
+<area shape="rect" id="node16" href="$EFEBasisDofHandlerDealii_8h.html" title=" " alt="" coords="903,258,1104,298"/>
+<area shape="rect" id="node20" href="$OEFEAtomBlockOverlapInvOpContextGLL_8h.html" title=" " alt="" coords="1233,346,1456,386"/>
+<area shape="rect" id="node22" href="$OrthoEFEOverlapInverseOpContextGLL_8h.html" title=" " alt="" coords="1480,346,1660,386"/>
+<area shape="rect" id="node24" href="$OrthoEFEOverlapOperatorContext_8h.html" title=" " alt="" coords="1255,258,1435,298"/>
+<area shape="rect" id="node26" href="$PristineEFEOverlapOperatorContext_8h.html" title=" " alt="" coords="1559,258,1751,298"/>
+<area shape="rect" id="node28" href="$KohnShamOperatorContextFE_8t_8cpp.html" title=" " alt="" coords="404,258,595,298"/>
+<area shape="rect" id="node17" href="$EFEBDSOnTheFlyComputeDealii_8h.html" title=" " alt="" coords="797,346,983,386"/>
+<area shape="rect" id="node19" href="$EFEBasisDofHandlerDealii_8cpp.html" title=" " alt="" coords="1008,346,1209,386"/>
+<area shape="rect" id="node18" href="$EFEBDSOnTheFlyComputeDealii_8cpp.html" title=" " alt="" coords="797,434,983,474"/>
+<area shape="rect" id="node21" href="$OEFEAtomBlockOverlapInvOpContextGLL_8cpp.html" title=" " alt="" coords="1233,434,1456,474"/>
+<area shape="rect" id="node23" href="$OrthoEFEOverlapInverseOpContextGLL_8cpp.html" title=" " alt="" coords="1480,434,1660,474"/>
+<area shape="rect" id="node25" href="$OrthoEFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="1684,346,1864,386"/>
+<area shape="rect" id="node27" href="$PristineEFEOverlapOperatorContext_8cpp.html" title=" " alt="" coords="1889,346,2081,386"/>
+<area shape="rect" id="node30" href="$EnrichmentClassicalInterfaceSpherical_8cpp.html" title=" " alt="" coords="1338,170,1535,210"/>
+<area shape="rect" id="node31" href="$OrthoEFEOverlapOperatorContext_8t_8cpp.html" title=" " alt="" coords="1133,170,1313,210"/>
+<area shape="rect" id="node32" href="$PristineEFEOverlapOperatorContext_8t_8cpp.html" title=" " alt="" coords="1559,170,1751,210"/>
+</map>
