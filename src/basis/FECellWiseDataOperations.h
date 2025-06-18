@@ -57,7 +57,7 @@ namespace dftefe
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
         const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &                                                   numCellDofs,
+          &        numCellDofs,
         ValueType *itCellWiseStorageBegin);
 
       // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
@@ -79,7 +79,7 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
           &        numCellDofs,
-        ValueType *data);        
+        ValueType *data);
 
       static void
       addCellWiseBasisDataToDiagonalData(

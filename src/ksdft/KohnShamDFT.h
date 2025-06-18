@@ -269,8 +269,10 @@ namespace dftefe
         //   ValueTypeElectrostaticsCoeff,
         //   memorySpace> &atomicTotalElecPotElectronicQuad,
         /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
-        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,         
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
@@ -380,8 +382,9 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP related info */
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,        
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -426,8 +429,10 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
-        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
@@ -462,8 +467,9 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP related info */
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,      
+          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                          memorySpace>>
+          feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -543,7 +549,7 @@ namespace dftefe
       bool                      d_evaluateEnergyEverySCF;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_densityInQuadValues, d_densityOutQuadValues,
-        d_densityResidualQuadValues , d_coreCorrDensUPF , d_coreCorrectedDensity;
+        d_densityResidualQuadValues, d_coreCorrDensUPF, d_coreCorrectedDensity;
       size_type                        d_numMaxSCFIter;
       const OpContext *                d_MContext, *d_MInvContext;
       const utils::mpi::MPIComm &      d_mpiCommDomain;
@@ -581,9 +587,9 @@ namespace dftefe
 
       bool d_isONCVNonLocPSP, d_isNlcc;
 
-      quadrature::QuadratureValuesContainer<
-              ValueTypeElectrostaticsCoeff,
-              memorySpace> d_atomicTotalElecPotNuclearQuad , d_atomicTotalElecPotElectronicQuad;
+      quadrature::QuadratureValuesContainer<ValueTypeElectrostaticsCoeff,
+                                            memorySpace>
+        d_atomicTotalElecPotNuclearQuad, d_atomicTotalElecPotElectronicQuad;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

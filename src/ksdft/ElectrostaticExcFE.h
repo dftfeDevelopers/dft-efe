@@ -119,13 +119,13 @@ namespace dftefe
                                             ValueTypeWaveFunctionBasis,
                                             memorySpace,
                                             dim>>
-      getElectrostaticFE() const;     
-      
+      getElectrostaticFE() const;
+
       std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                   ValueTypeWaveFunctionCoeff,
                                                   memorySpace,
-                                                  dim>> 
-      getExchangeCorrelationFE() const;  
+                                                  dim>>
+      getExchangeCorrelationFE() const;
 
     private:
       std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,

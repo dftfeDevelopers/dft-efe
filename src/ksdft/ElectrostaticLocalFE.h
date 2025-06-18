@@ -154,8 +154,10 @@ namespace dftefe
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
         //                                             memorySpace>
         //   &atomicTotalElecPotElectronicQuad,
-        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -178,7 +180,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const bool      useDealiiMatrixFreePoissonSolve = true);
+        const bool      useDealiiMatrixFreePoissonSolve = true,
+        const bool      calculateIntegralDeltaRho       = false);
 
 
       ~ElectrostaticLocalFE();
@@ -246,8 +249,10 @@ namespace dftefe
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
         //                                             memorySpace>
         //   &atomicTotalElecPotElectronicQuad,
-        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -316,6 +321,7 @@ namespace dftefe
       deleteStorages();
 
       const bool                d_useDealiiMatrixFreePoissonSolve;
+      const bool                d_isCalculateIntegralDeltaRho;
       bool                      d_isNumericalVSelfSolve;
       bool                      d_isDeltaRhoSolve;
       const size_type           d_maxCellBlock;
@@ -332,11 +338,10 @@ namespace dftefe
         *d_nuclearChargesDensity;
       const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_electronChargeDensity;
-      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                  memorySpace>
+      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
         *d_atomicTotalElecPotNuclearQuad, *d_atomicTotalElecPotElectronicQuad;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        d_atomicElectronChargeDensity , d_atomicElectronChargeDensityNucQuad;
+        d_atomicElectronChargeDensity, d_atomicElectronChargeDensityNucQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotHamQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>

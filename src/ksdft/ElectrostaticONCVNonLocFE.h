@@ -82,11 +82,12 @@ namespace dftefe
        */
       // used if analytical vself canellation route taken
       ElectrostaticONCVNonLocFE(
-        const std::vector<utils::Point> &         atomCoordinates,
-        const std::vector<double> &               atomCharges,
-        const std::vector<std::string> &          atomSymbolVec,
-        const std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerPSP,
-        const std::vector<double> &               smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::shared_ptr<atoms::AtomSphericalDataContainer>
+                                   atomSphericalDataContainerPSP,
+        const std::vector<double> &smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -121,11 +122,12 @@ namespace dftefe
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
       ElectrostaticONCVNonLocFE(
-        const std::vector<utils::Point> &         atomCoordinates,
-        const std::vector<double> &               atomCharges,
-        const std::vector<std::string> &          atomSymbolVec,
-        const std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerPSP,
-        const std::vector<double> &               smearedChargeRadius,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::shared_ptr<atoms::AtomSphericalDataContainer>
+                                   atomSphericalDataContainerPSP,
+        const std::vector<double> &smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -134,8 +136,10 @@ namespace dftefe
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
         //                                             memorySpace>
         //   &atomicTotalElecPotElectronicQuad,
-        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -210,8 +214,10 @@ namespace dftefe
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
         //                                             memorySpace>
         //   &atomicTotalElecPotElectronicQuad,
-        const utils::ScalarSpatialFunctionReal &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal &atomicElectronicChargeDensityFunction,          
+        const utils::ScalarSpatialFunctionReal
+          &atomicTotalElectroPotentialFunction,
+        const utils::ScalarSpatialFunctionReal
+          &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
                                                     memorySpace,
@@ -270,9 +276,9 @@ namespace dftefe
 
       std::shared_ptr<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                  ValueTypeWaveFnCoeff,
-                                                  memorySpace,
-                                                  dim>>
+                                                   ValueTypeWaveFnCoeff,
+                                                   memorySpace,
+                                                   dim>>
       getAtomCenterNonLocalOpContextFE() const;
 
     private:

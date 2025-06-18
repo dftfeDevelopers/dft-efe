@@ -63,16 +63,16 @@ namespace dftefe
       bool
       strToBool(const std::string s, bool &x)
       {
-        if(s == "t" || s == "T")
-        {
-          x = true;
-          return true;
-        }
-        else if(s == "f" || s == "F")
-        {
-          x = false;
-          return true;
-        }
+        if (s == "t" || s == "T")
+          {
+            x = true;
+            return true;
+          }
+        else if (s == "f" || s == "F")
+          {
+            x = false;
+            return true;
+          }
         else
           return false;
       }

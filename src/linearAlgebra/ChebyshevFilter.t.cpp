@@ -349,7 +349,8 @@ namespace dftefe
           sigma2 = 1.0 / (gamma - sigma);
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
 
-          //======Residual = alpha1 * H * M^-1 * ResidualNew + alpha2 * Residual - c *
+          //======Residual = alpha1 * H * M^-1 * ResidualNew + alpha2 * Residual
+          //- c *
           // alpha1 * ResidualNew======
           BInv.apply(ResidualNew, scratch1, true, false);
           A.apply(scratch1, scratch2, false, false);
@@ -371,7 +372,8 @@ namespace dftefe
             Residual.data(),
             Residual.data(),
             linAlgOpContext);
-          //======Residual = alpha1 * H * M^-1 * ResidualNew + alpha2 * Residual - c *
+          //======Residual = alpha1 * H * M^-1 * ResidualNew + alpha2 * Residual
+          //- c *
           // alpha1 * ResidualNew======
 
           // Residual = Residual + alpha1 * Y * eigenValuesFiltered2

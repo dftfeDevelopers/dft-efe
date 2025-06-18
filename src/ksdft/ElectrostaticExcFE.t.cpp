@@ -270,7 +270,7 @@ namespace dftefe
     std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                 ValueTypeWaveFunctionCoeff,
                                                 memorySpace,
-                                                dim>> 
+                                                dim>>
     ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
                        ValueTypeElectrostaticsBasis,
                        ValueTypeWaveFunctionCoeff,

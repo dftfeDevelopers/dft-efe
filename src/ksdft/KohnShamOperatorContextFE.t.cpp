@@ -444,241 +444,272 @@ namespace dftefe
       };
 
       template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace,
-              size_type dim>
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
       void
       printEFEHamiltonian(
         const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &                     hamiltonianInAllCells,
+          &hamiltonianInAllCells,
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
-            & feBasisManager , bool printEEBlock = true , bool printECWings = false)
+            &feBasisManager,
+        bool printEEBlock = true,
+        bool printECWings = false)
       {
-        //------------------------ print Hamiltonian EEblock--------------------------- 
-        const basis::BasisDofHandler
-          &basisDofHandler = feBasisManager.getBasisDofHandler();
+        //------------------------ print Hamiltonian
+        //EEblock---------------------------
+        const basis::BasisDofHandler &basisDofHandler =
+          feBasisManager.getBasisDofHandler();
 
-          const basis::EFEBasisDofHandler<ValueTypeOperand,
-                                  ValueTypeOperator,
-                                  memorySpace,
-                                  dim> &efebasisDofHandler =
-            dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeOperand,
-                                                  ValueTypeOperator,
-                                                  memorySpace,
-                                                  dim> &>(basisDofHandler);
+        const basis::EFEBasisDofHandler<ValueTypeOperand,
+                                        ValueTypeOperator,
+                                        memorySpace,
+                                        dim> &efebasisDofHandler =
+          dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeOperand,
+                                                       ValueTypeOperator,
+                                                       memorySpace,
+                                                       dim> &>(basisDofHandler);
 
-          const size_type numCellClassicalDofs =
-            utils::mathFunctions::sizeTypePow( (efebasisDofHandler.getFEOrder(0) + 1),
-            dim); 
-          const size_type nglobalEnrichmentIds =
-            efebasisDofHandler.nGlobalEnrichmentNodes(); 
-          const size_type
-            nglobalClassicalIds = (efebasisDofHandler.getGlobalRanges())[0].second;
+        const size_type numCellClassicalDofs =
+          utils::mathFunctions::sizeTypePow((efebasisDofHandler.getFEOrder(0) +
+                                             1),
+                                            dim);
+        const size_type nglobalEnrichmentIds =
+          efebasisDofHandler.nGlobalEnrichmentNodes();
+        const size_type nglobalClassicalIds =
+          (efebasisDofHandler.getGlobalRanges())[0].second;
 
-          std::vector<ValueTypeOperator> hamEnrichmentBlockSTL(
-            nglobalEnrichmentIds * nglobalEnrichmentIds, 0),
-            hamEnrichmentBlockSTLTmp(nglobalEnrichmentIds *
-                                                nglobalEnrichmentIds, 0);
+        std::vector<ValueTypeOperator> hamEnrichmentBlockSTL(
+          nglobalEnrichmentIds * nglobalEnrichmentIds, 0),
+          hamEnrichmentBlockSTLTmp(nglobalEnrichmentIds * nglobalEnrichmentIds,
+                                   0);
 
-          size_type cellId                     = 0;
-          size_type cumulativeBasisDataInCells = 0;
-          for (auto enrichmentVecInCell :
-              efebasisDofHandler.getEnrichmentIdsPartition()
-                ->overlappingEnrichmentIdsInCells())
-            {
-              size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
-              for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
-                {
-                  for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
-                    {
-                      *(hamEnrichmentBlockSTLTmp.data() +
-                        enrichmentVecInCell[j] * nglobalEnrichmentIds +
-                        enrichmentVecInCell[k]) +=
-                        *(hamiltonianInAllCells.data() + 
-                        cumulativeBasisDataInCells + 
-                        (numCellClassicalDofs + nCellEnrichmentDofs) * 
-                        (numCellClassicalDofs + j) + numCellClassicalDofs + k);
-                    }
-                }
-              cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
-                (nCellEnrichmentDofs + numCellClassicalDofs), 2);
-              cellId += 1;
-            }
-
-          int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-            hamEnrichmentBlockSTLTmp.data(),
-            hamEnrichmentBlockSTL.data(),
-            hamEnrichmentBlockSTLTmp.size(),
-            utils::mpi::MPIDouble,
-            utils::mpi::MPISum,
-            feBasisManager.getMPIPatternP2P()->mpiCommunicator());
-          std::pair<bool, std::string> mpiIsSuccessAndMsg =
-            utils::mpi::MPIErrIsSuccessAndMsg(err);
-          utils::throwException(mpiIsSuccessAndMsg.first,
-                                "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-          int rank;
-          utils::mpi::MPICommRank(feBasisManager.getMPIPatternP2P()->mpiCommunicator(),
-        &rank);
-
-          utils::ConditionalOStream rootCout(std::cout);
-          rootCout.setCondition(rank == 0);
-
-          if(printEEBlock)
+        size_type cellId                     = 0;
+        size_type cumulativeBasisDataInCells = 0;
+        for (auto enrichmentVecInCell :
+             efebasisDofHandler.getEnrichmentIdsPartition()
+               ->overlappingEnrichmentIdsInCells())
           {
-            rootCout << "Hamiltonian Enrichment Block Matrix: "<<std::endl;
-            for(size_type i = 0 ; i < nglobalEnrichmentIds ; i++)
-            {
-              rootCout << "[";
-              for(size_type j = 0 ; j < nglobalEnrichmentIds ; j++)
+            size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+            for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
               {
-                rootCout << *(hamEnrichmentBlockSTL.data() + i*nglobalEnrichmentIds + j) << "\t";
+                for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                  {
+                    *(hamEnrichmentBlockSTLTmp.data() +
+                      enrichmentVecInCell[j] * nglobalEnrichmentIds +
+                      enrichmentVecInCell[k]) +=
+                      *(hamiltonianInAllCells.data() +
+                        cumulativeBasisDataInCells +
+                        (numCellClassicalDofs + nCellEnrichmentDofs) *
+                          (numCellClassicalDofs + j) +
+                        numCellClassicalDofs + k);
+                  }
               }
-              rootCout << "]" <<std::endl;
-            }
+            cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+              (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+            cellId += 1;
           }
 
-        //------------------------ print Hamiltonian EC block tofile--------------------------- 
-        
-        if(printECWings)
-        {
-          std::vector<ValueTypeOperator>
-          hamECBlockSTL( (nglobalClassicalIds + nglobalEnrichmentIds) *
-          nglobalEnrichmentIds, 0), hamECBlockSTLTmp((nglobalClassicalIds +
-          nglobalEnrichmentIds) * nglobalEnrichmentIds, 0);
+        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          hamEnrichmentBlockSTLTmp.data(),
+          hamEnrichmentBlockSTL.data(),
+          hamEnrichmentBlockSTLTmp.size(),
+          utils::mpi::MPIDouble,
+          utils::mpi::MPISum,
+          feBasisManager.getMPIPatternP2P()->mpiCommunicator());
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(err);
+        utils::throwException(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
+        int rank;
+        utils::mpi::MPICommRank(
+          feBasisManager.getMPIPatternP2P()->mpiCommunicator(), &rank);
 
-          cumulativeBasisDataInCells = 0;
-          for (size_type iCell = 0; iCell < efebasisDofHandler.nLocallyOwnedCells() ; iCell++)
+        utils::ConditionalOStream rootCout(std::cout);
+        rootCout.setCondition(rank == 0);
+
+        if (printEEBlock)
           {
-            // get cell dof global ids
-            std::vector<global_size_type> cellGlobalNodeIds(0);
-            efebasisDofHandler.getCellDofsGlobalIds(iCell, cellGlobalNodeIds);
+            rootCout << "Hamiltonian Enrichment Block Matrix: " << std::endl;
+            for (size_type i = 0; i < nglobalEnrichmentIds; i++)
+              {
+                rootCout << "[";
+                for (size_type j = 0; j < nglobalEnrichmentIds; j++)
+                  {
+                    rootCout << *(hamEnrichmentBlockSTL.data() +
+                                  i * nglobalEnrichmentIds + j)
+                             << "\t";
+                  }
+                rootCout << "]" << std::endl;
+              }
+          }
 
-            std::vector<global_size_type> enrichmentVecInCell =
-              efebasisDofHandler.getEnrichmentIdsPartition()
+        //------------------------ print Hamiltonian EC block
+        //tofile---------------------------
+
+        if (printECWings)
+          {
+            std::vector<ValueTypeOperator> hamECBlockSTL(
+              (nglobalClassicalIds + nglobalEnrichmentIds) *
+                nglobalEnrichmentIds,
+              0),
+              hamECBlockSTLTmp((nglobalClassicalIds + nglobalEnrichmentIds) *
+                                 nglobalEnrichmentIds,
+                               0);
+
+
+            cumulativeBasisDataInCells = 0;
+            for (size_type iCell = 0;
+                 iCell < efebasisDofHandler.nLocallyOwnedCells();
+                 iCell++)
+              {
+                // get cell dof global ids
+                std::vector<global_size_type> cellGlobalNodeIds(0);
+                efebasisDofHandler.getCellDofsGlobalIds(iCell,
+                                                        cellGlobalNodeIds);
+
+                std::vector<global_size_type> enrichmentVecInCell =
+                  efebasisDofHandler.getEnrichmentIdsPartition()
                     ->overlappingEnrichmentIdsInCells()[iCell];
 
-            size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+                size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
 
-            // loop over nodes of a cell
-            for ( size_type iNode = 0 ; iNode < numCellClassicalDofs +
-                    nCellEnrichmentDofs; iNode++)
-            {
-              for ( size_type jNode = 0 ; jNode < nCellEnrichmentDofs ; jNode++)
-              {
-                *(hamECBlockSTLTmp.data() +
-                  cellGlobalNodeIds[iNode] * nglobalEnrichmentIds +
-                    enrichmentVecInCell[jNode]) +=
-                  *(hamiltonianInAllCells.data() + cumulativeBasisDataInCells +
-                    (numCellClassicalDofs + nCellEnrichmentDofs) * iNode + jNode +
-                      numCellClassicalDofs);
+                // loop over nodes of a cell
+                for (size_type iNode = 0;
+                     iNode < numCellClassicalDofs + nCellEnrichmentDofs;
+                     iNode++)
+                  {
+                    for (size_type jNode = 0; jNode < nCellEnrichmentDofs;
+                         jNode++)
+                      {
+                        *(hamECBlockSTLTmp.data() +
+                          cellGlobalNodeIds[iNode] * nglobalEnrichmentIds +
+                          enrichmentVecInCell[jNode]) +=
+                          *(hamiltonianInAllCells.data() +
+                            cumulativeBasisDataInCells +
+                            (numCellClassicalDofs + nCellEnrichmentDofs) *
+                              iNode +
+                            jNode + numCellClassicalDofs);
+                      }
+                  }
+                cumulativeBasisDataInCells +=
+                  utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),
+                                                    2);
               }
-            }
-            cumulativeBasisDataInCells +=
-              utils::mathFunctions::sizeTypePow((cellGlobalNodeIds.size()),2);
+
+            err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+              hamECBlockSTLTmp.data(),
+              hamECBlockSTL.data(),
+              hamECBlockSTLTmp.size(),
+              utils::mpi::MPIDouble,
+              utils::mpi::MPISum,
+              feBasisManager.getMPIPatternP2P()->mpiCommunicator());
+            mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+            utils::throwException(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+            std::ofstream myfile;
+            myfile.open("ECwingsPrinted.out");
+            utils::ConditionalOStream rootCout1(myfile);
+            rootCout1.setCondition(rank == 0);
+
+            for (size_type i = 0;
+                 i < nglobalClassicalIds + nglobalEnrichmentIds;
+                 i++)
+              {
+                rootCout1 << i << ": [";
+                for (size_type j = 0; j < nglobalEnrichmentIds; j++)
+                  {
+                    rootCout1
+                      << *(hamECBlockSTL.data() + i * nglobalEnrichmentIds + j)
+                      << "\t";
+                  }
+                rootCout1 << "]" << std::endl;
+              }
+            myfile.close();
           }
-
-          err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-            hamECBlockSTLTmp.data(),
-            hamECBlockSTL.data(),
-            hamECBlockSTLTmp.size(),
-            utils::mpi::MPIDouble,
-            utils::mpi::MPISum,
-            feBasisManager.getMPIPatternP2P()->mpiCommunicator());
-          mpiIsSuccessAndMsg =
-            utils::mpi::MPIErrIsSuccessAndMsg(err);
-          utils::throwException(mpiIsSuccessAndMsg.first,
-                                "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-          std::ofstream myfile;
-          myfile.open("ECwingsPrinted.out");
-          utils::ConditionalOStream rootCout1(myfile);
-          rootCout1.setCondition(rank == 0);
-
-          for(size_type i = 0 ; i < nglobalClassicalIds + nglobalEnrichmentIds ;
-            i++)
-          {
-            rootCout1 << i <<": [";
-            for(size_type j = 0 ; j < nglobalEnrichmentIds ; j++)
-            {
-              rootCout1 << *(hamECBlockSTL.data() + i*nglobalEnrichmentIds + j) << "\t";
-            }
-            rootCout1 << "]" <<std::endl;
-          }
-          myfile.close();
-        }
-      } 
+      }
     } // namespace
 
     namespace KohnShamOperatorContextFEInternal
     {
       template <typename ValueTypeElectrostaticsCoeff,
-                  typename ValueTypeElectrostaticsBasis,
-                  typename ValueTypeWaveFunctionCoeff,
-                  typename ValueTypeWaveFunctionBasis,
-                  utils::MemorySpace memorySpace,
-                  size_type          dim>
+                typename ValueTypeElectrostaticsBasis,
+                typename ValueTypeWaveFunctionCoeff,
+                typename ValueTypeWaveFunctionBasis,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
       void
-      getElectrostaticONCVHamiltonian(const std::vector<typename KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
-                              ValueTypeElectrostaticsBasis,
-                              ValueTypeWaveFunctionCoeff,
-                              ValueTypeWaveFunctionBasis,
-                              memorySpace,
-                              dim>::HamiltonianPtrVariant> &   hamiltonianComponentsVec,
-          std::shared_ptr<const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                                ValueTypeElectrostaticsCoeff,
-                                ValueTypeWaveFunctionBasis,
-                                ValueTypeWaveFunctionCoeff,
-                                memorySpace,
-                                dim>> &electroONCVHamiltonian)
+      getElectrostaticONCVHamiltonian(
+        const std::vector<
+          typename KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                             ValueTypeElectrostaticsBasis,
+                                             ValueTypeWaveFunctionCoeff,
+                                             ValueTypeWaveFunctionBasis,
+                                             memorySpace,
+                                             dim>::HamiltonianPtrVariant>
+          &hamiltonianComponentsVec,
+        std::shared_ptr<
+          const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                          ValueTypeElectrostaticsCoeff,
+                                          ValueTypeWaveFunctionBasis,
+                                          ValueTypeWaveFunctionCoeff,
+                                          memorySpace,
+                                          dim>> &electroONCVHamiltonian)
       {
-        int  count = 0;
-        for(auto &hamiltonianComponent : hamiltonianComponentsVec)
-        {
-          if (const std::shared_ptr<Hamiltonian<ValueTypeElectrostaticsBasis, memorySpace>>* basePtr = 
-              std::get_if<std::shared_ptr<Hamiltonian<ValueTypeElectrostaticsBasis, memorySpace>>>(&hamiltonianComponent))
+        int count = 0;
+        for (auto &hamiltonianComponent : hamiltonianComponentsVec)
           {
-            if(electroONCVHamiltonian = std::dynamic_pointer_cast<const ElectrostaticONCVNonLocFE<
-                  ValueTypeElectrostaticsBasis,
-                  ValueTypeElectrostaticsCoeff,
-                  ValueTypeWaveFunctionBasis,
-                  ValueTypeWaveFunctionCoeff,
-                  memorySpace,
-                  dim>>(*basePtr))
-            {
-              if(electroONCVHamiltonian->hasNonLocalComponent())
-                break;
-              else
-                electroONCVHamiltonian = nullptr;
-            }
-            else if(auto a = std::dynamic_pointer_cast<const ElectrostaticExcFE<
-                  ValueTypeElectrostaticsCoeff,
-                  ValueTypeElectrostaticsBasis,
-                  ValueTypeWaveFunctionCoeff,
-                  ValueTypeWaveFunctionBasis,
-                  memorySpace,
-                  dim>>(*basePtr))
-            {
-              if(electroONCVHamiltonian = std::dynamic_pointer_cast<const ElectrostaticONCVNonLocFE<
-                  ValueTypeElectrostaticsBasis,
-                  ValueTypeElectrostaticsCoeff,
-                  ValueTypeWaveFunctionBasis,
-                  ValueTypeWaveFunctionCoeff,
-                  memorySpace,
-                  dim>>(a->getElectrostaticFE()))
+            if (const std::shared_ptr<Hamiltonian<ValueTypeElectrostaticsBasis,
+                                                  memorySpace>> *basePtr =
+                  std::get_if<std::shared_ptr<
+                    Hamiltonian<ValueTypeElectrostaticsBasis, memorySpace>>>(
+                    &hamiltonianComponent))
               {
-              if(electroONCVHamiltonian->hasNonLocalComponent())
-                break;
-              else
-                electroONCVHamiltonian = nullptr;
+                if (electroONCVHamiltonian =
+                      std::dynamic_pointer_cast<const ElectrostaticONCVNonLocFE<
+                        ValueTypeElectrostaticsBasis,
+                        ValueTypeElectrostaticsCoeff,
+                        ValueTypeWaveFunctionBasis,
+                        ValueTypeWaveFunctionCoeff,
+                        memorySpace,
+                        dim>>(*basePtr))
+                  {
+                    if (electroONCVHamiltonian->hasNonLocalComponent())
+                      break;
+                    else
+                      electroONCVHamiltonian = nullptr;
+                  }
+                else if (auto a =
+                           std::dynamic_pointer_cast<const ElectrostaticExcFE<
+                             ValueTypeElectrostaticsCoeff,
+                             ValueTypeElectrostaticsBasis,
+                             ValueTypeWaveFunctionCoeff,
+                             ValueTypeWaveFunctionBasis,
+                             memorySpace,
+                             dim>>(*basePtr))
+                  {
+                    if (electroONCVHamiltonian = std::dynamic_pointer_cast<
+                          const ElectrostaticONCVNonLocFE<
+                            ValueTypeElectrostaticsBasis,
+                            ValueTypeElectrostaticsCoeff,
+                            ValueTypeWaveFunctionBasis,
+                            ValueTypeWaveFunctionCoeff,
+                            memorySpace,
+                            dim>>(a->getElectrostaticFE()))
+                      {
+                        if (electroONCVHamiltonian->hasNonLocalComponent())
+                          break;
+                        else
+                          electroONCVHamiltonian = nullptr;
+                      }
+                  }
               }
-            }
           }
-        }
       }
-        
+
       template <utils::MemorySpace memorySpace>
       void
       storeSizes(utils::MemoryStorage<size_type, memorySpace> &mSizes,
@@ -923,32 +954,39 @@ namespace dftefe
           }
       }
 
-   template <typename ValueTypeElectrostaticsCoeff,
-              typename ValueTypeElectrostaticsBasis,
-              typename ValueTypeWaveFunctionCoeff,
-              typename ValueTypeWaveFunctionBasis,
-              utils::MemorySpace memorySpace,
-              size_type          dim>
+      template <typename ValueTypeElectrostaticsCoeff,
+                typename ValueTypeElectrostaticsBasis,
+                typename ValueTypeWaveFunctionCoeff,
+                typename ValueTypeWaveFunctionBasis,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
       void
       computeAxCellWiseOptimized(
-        const utils::MemoryStorage<linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
-                                               ValueTypeWaveFunctionBasis>, memorySpace>
-          &                     hamiltonianInAllCells,
-        std::shared_ptr<const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                            ValueTypeElectrostaticsCoeff,
-                            ValueTypeWaveFunctionBasis,
-                            ValueTypeWaveFunctionCoeff,
-                            memorySpace,
-                            dim>> &electroONCVHamiltonian,
-        const linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
-                                               ValueTypeWaveFunctionCoeff> *x,
-        linearAlgebra::blasLapack::scalar_type<linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
-                                               ValueTypeWaveFunctionBasis>,
-                                               linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
-                                               ValueTypeWaveFunctionCoeff>> *y,
-        utils::MemoryStorage<linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
-                                               ValueTypeWaveFunctionCoeff>, memorySpace> &xCellValues,                                       
-        const size_type                                           numVecs,
+        const utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
+                                                 ValueTypeWaveFunctionBasis>,
+          memorySpace> &hamiltonianInAllCells,
+        std::shared_ptr<
+          const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                          ValueTypeElectrostaticsCoeff,
+                                          ValueTypeWaveFunctionBasis,
+                                          ValueTypeWaveFunctionCoeff,
+                                          memorySpace,
+                                          dim>> &electroONCVHamiltonian,
+        const linearAlgebra::blasLapack::scalar_type<
+          ValueTypeElectrostaticsCoeff,
+          ValueTypeWaveFunctionCoeff> *x,
+        linearAlgebra::blasLapack::scalar_type<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
+                                                 ValueTypeWaveFunctionBasis>,
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
+                                                 ValueTypeWaveFunctionCoeff>>
+          *y,
+        utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
+                                                 ValueTypeWaveFunctionCoeff>,
+          memorySpace> &                             xCellValues,
+        const size_type                              numVecs,
         const size_type                              numLocallyOwnedCells,
         const std::vector<size_type> &               numCellDofs,
         const size_type *                            cellLocalIdsStartPtrX,
@@ -958,10 +996,10 @@ namespace dftefe
       {
         using ValueTypeOperator =
           linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
-                                                ValueTypeWaveFunctionBasis>;
+                                                 ValueTypeWaveFunctionBasis>;
         using ValueTypeOperand =
           linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
-                                                ValueTypeWaveFunctionCoeff>;
+                                                 ValueTypeWaveFunctionCoeff>;
 
         linearAlgebra::blasLapack::Layout layout =
           linearAlgebra::blasLapack::Layout::ColMajor;
@@ -987,16 +1025,18 @@ namespace dftefe
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>>::zero);
 
-          if(electroONCVHamiltonian != nullptr)    
-          {                                   
-            electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()->reinitCX(numVecs);
-            electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()->setCXToZero();
+        if (electroONCVHamiltonian != nullptr)
+          {
+            electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
+              ->reinitCX(numVecs);
+            electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
+              ->setCXToZero();
           }
 
         for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
              cellStartId += cellBlockSize)
           {
-           const size_type cellEndId =
+            const size_type cellEndId =
               std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
 
             const size_type        numCellsInBlock = cellEndId - cellStartId;
@@ -1021,25 +1061,29 @@ namespace dftefe
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
                                       cellsInBlockNumDoFs,
-                                      xCellValues.data() + 
+                                      xCellValues.data() +
                                         cellLocalIdsOffset * numVecs);
 
-            if(electroONCVHamiltonian != nullptr)
-              electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()->applyCconjtransOnX(std::make_pair(cellStartId, cellEndId) , 
-                xCellValues.data() + cellLocalIdsOffset * numVecs);
+            if (electroONCVHamiltonian != nullptr)
+              electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
+                ->applyCconjtransOnX(std::make_pair(cellStartId, cellEndId),
+                                     xCellValues.data() +
+                                       cellLocalIdsOffset * numVecs);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
                 cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
-              }              
+              }
           }
         cellLocalIdsOffset = 0;
 
-        if(electroONCVHamiltonian != nullptr)
-        {
-          electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()->applyAllReduceOnCconjtransX();
-          electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()->applyVOnCconjtransX();
-        }
+        if (electroONCVHamiltonian != nullptr)
+          {
+            electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
+              ->applyAllReduceOnCconjtransX();
+            electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
+              ->applyVOnCconjtransX();
+          }
 
         // d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
         //                         scalarX,
@@ -1130,8 +1174,7 @@ namespace dftefe
               nSizes.data(),
               kSizes.data(),
               alpha,
-              xCellValues.data()
-                + cellLocalIdsOffset * numVecs,
+              xCellValues.data() + cellLocalIdsOffset * numVecs,
               ldaSizes.data(),
               B,
               ldbSizes.data(),
@@ -1140,8 +1183,10 @@ namespace dftefe
               ldcSizes.data(),
               linAlgOpContext);
 
-            if(electroONCVHamiltonian != nullptr)
-              electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()->applyCOnVCconjtransX(std::make_pair(cellStartId, cellEndId) , yCellValues.data());          
+            if (electroONCVHamiltonian != nullptr)
+              electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
+                ->applyCOnVCconjtransX(std::make_pair(cellStartId, cellEndId),
+                                       yCellValues.data());
 
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -1178,14 +1223,16 @@ namespace dftefe
                               memorySpace,
                               dim>::
       KohnShamOperatorContextFE(
-        const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeWaveFunctionBasis, memorySpace, dim>
-            &                                        feBasisManager,
-        const std::vector<HamiltonianPtrVariant> &   hamiltonianComponentsVec,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContext,
-        const size_type                              maxCellBlock,
-        const size_type                              maxWaveFnBatch,
-        const bool                                   useOptimizedImplement)
+        const basis::FEBasisManager<ValueTypeOperand,
+                                    ValueTypeWaveFunctionBasis,
+                                    memorySpace,
+                                    dim> &        feBasisManager,
+        const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type maxCellBlock,
+        const size_type maxWaveFnBatch,
+        const bool      useOptimizedImplement)
       : d_maxCellBlock(maxCellBlock)
       , d_maxWaveFnBatch(maxWaveFnBatch)
       , d_linAlgOpContext(linAlgOpContext)
@@ -1243,30 +1290,33 @@ namespace dftefe
                                *d_linAlgOpContext);
         }
 
-      if(!d_useOptimizedImplement)
-        d_scratchNonLocPSPApply = 
-        linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>(
-                                                      feBasisManager.getMPIPatternP2P(),
-                                                      d_linAlgOpContext,
-                                                      d_maxWaveFnBatch);
+      if (!d_useOptimizedImplement)
+        d_scratchNonLocPSPApply =
+          linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>(
+            feBasisManager.getMPIPatternP2P(),
+            d_linAlgOpContext,
+            d_maxWaveFnBatch);
 
-      if(d_useOptimizedImplement)
-      {
-        KohnShamOperatorContextFEInternal::getElectrostaticONCVHamiltonian(hamiltonianComponentsVec,d_electroONCVHamiltonian);
+      if (d_useOptimizedImplement)
+        {
+          KohnShamOperatorContextFEInternal::getElectrostaticONCVHamiltonian(
+            hamiltonianComponentsVec, d_electroONCVHamiltonian);
 
-        const size_type numLocallyOwnedCells =
-          d_feBasisManager->nLocallyOwnedCells();
-        std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
-        for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-          {
-            numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
-          }
+          const size_type numLocallyOwnedCells =
+            d_feBasisManager->nLocallyOwnedCells();
+          std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
+          for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
+            {
+              numCellDofs[iCell] =
+                d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+            }
 
-        size_type maxDofInCell =
-          *std::max_element(numCellDofs.begin(), numCellDofs.end());
+          size_type maxDofInCell =
+            *std::max_element(numCellDofs.begin(), numCellDofs.end());
 
-        d_XCellValues =  utils::MemoryStorage<ValueTypeOperand, memorySpace>(d_maxWaveFnBatch *  numLocallyOwnedCells  * maxDofInCell);
-      } 
+          d_XCellValues = utils::MemoryStorage<ValueTypeOperand, memorySpace>(
+            d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
+        }
     }
 
     template <typename ValueTypeElectrostaticsCoeff,
@@ -1295,14 +1345,16 @@ namespace dftefe
           numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
         }
 
-      if(!d_useOptimizedImplement && d_scratchNonLocPSPApply.getNumberComponents() != X.getNumberComponents())
-      {
-        d_scratchNonLocPSPApply = 
-              linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>(
-                                                            d_feBasisManager->getMPIPatternP2P(),
-                                                            d_linAlgOpContext,
-                                                            X.getNumberComponents());
-      }
+      if (!d_useOptimizedImplement &&
+          d_scratchNonLocPSPApply.getNumberComponents() !=
+            X.getNumberComponents())
+        {
+          d_scratchNonLocPSPApply =
+            linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>(
+              d_feBasisManager->getMPIPatternP2P(),
+              d_linAlgOpContext,
+              X.getNumberComponents());
+        }
 
       auto itCellLocalIdsBeginX =
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
@@ -1332,7 +1384,7 @@ namespace dftefe
       // perform Ax on the local part of A and x
       // (A = discrete Laplace operator)
       //
-      if(!d_useOptimizedImplement)
+      if (!d_useOptimizedImplement)
         KohnShamOperatorContextFEInternal::computeAxCellWiseLocal(
           d_hamiltonianInAllCells,
           X.begin(),
@@ -1370,30 +1422,33 @@ namespace dftefe
       if (updateGhostY)
         Y.updateGhostValues();
 
-      if(!d_useOptimizedImplement)
-      {
-        // TODO : this will not work for types other than double.
-        for (unsigned int i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
-          {
-            const Hamiltonian<ValueTypeOperand, memorySpace> &b =
-              *(std::get<
-                std::shared_ptr<Hamiltonian<ValueTypeOperand, memorySpace>>>(
-                d_hamiltonianComponentsVec[i]));
-            if (b.hasNonLocalComponent())
-              {
-                b.applyNonLocal(X, d_scratchNonLocPSPApply, updateGhostX, updateGhostY);
-                linearAlgebra::blasLapack::
-                  axpby<ValueTypeOperator, ValueTypeOperator, memorySpace>(
-                    Y.getNumberComponents() * Y.localSize(),
-                    (ValueTypeOperator)1.0,
-                    Y.data(),
-                    (ValueTypeOperator)1.0,
-                    d_scratchNonLocPSPApply.data(),
-                    Y.data(),
-                    *X.getLinAlgOpContext());
-              }
-          }
-      }
+      if (!d_useOptimizedImplement)
+        {
+          // TODO : this will not work for types other than double.
+          for (unsigned int i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
+            {
+              const Hamiltonian<ValueTypeOperand, memorySpace> &b =
+                *(std::get<
+                  std::shared_ptr<Hamiltonian<ValueTypeOperand, memorySpace>>>(
+                  d_hamiltonianComponentsVec[i]));
+              if (b.hasNonLocalComponent())
+                {
+                  b.applyNonLocal(X,
+                                  d_scratchNonLocPSPApply,
+                                  updateGhostX,
+                                  updateGhostY);
+                  linearAlgebra::blasLapack::
+                    axpby<ValueTypeOperator, ValueTypeOperator, memorySpace>(
+                      Y.getNumberComponents() * Y.localSize(),
+                      (ValueTypeOperator)1.0,
+                      Y.data(),
+                      (ValueTypeOperator)1.0,
+                      d_scratchNonLocPSPApply.data(),
+                      Y.data(),
+                      *X.getLinAlgOpContext());
+                }
+            }
+        }
     }
 
   } // end of namespace ksdft

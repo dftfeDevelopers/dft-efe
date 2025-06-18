@@ -61,7 +61,8 @@ namespace dftefe
               {
                 int  n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
                 auto Ylm = Clm(l, m) * Dm(m) *
-                           sphericalHarmonicFunc.Plm(l, std::abs(m), theta) * Qm(m, phi);
+                           sphericalHarmonicFunc.Plm(l, std::abs(m), theta) *
+                           Qm(m, phi);
                 value[i] =
                   (*spline)(r)*Ylm * smoothCutoffValue(r, cutoff, smoothness);
               }
@@ -125,8 +126,9 @@ namespace dftefe
 
                 int n = qNumbers[0], l = qNumbers[1], m = qNumbers[2];
 
-                double constant  = Clm(l, m) * Dm(m);
-                double plm_theta = sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
+                double constant = Clm(l, m) * Dm(m);
+                double plm_theta =
+                  sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
                 double dPlmDTheta_theta =
                   sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
 
@@ -147,8 +149,8 @@ namespace dftefe
                     polarAngleTolerance) ? constant * plm_theta * dQmDPhi(m,
                     phi)/sin(theta) :*/
                       constant *
-                      (sin(theta) *
-                         sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta) +
+                      (sin(theta) * sphericalHarmonicFunc.d2PlmDTheta2(
+                                      l, std::abs(m), theta) +
                        cos(theta) * dPlmDTheta_theta +
                        sin(theta) * l * (l + 1) * plm_theta) *
                       (1 / (m * m)) * dQmDPhi(m, phi);
@@ -511,10 +513,11 @@ namespace dftefe
       std::vector<double> retVal(r.size(), 0.);
       for (int i = 0; i < r.size(); i++)
         {
-          retVal[i] = (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
-                        constant * d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta[i]) *
-                          Qm(m, phi[i]) :
-                        0.;
+          retVal[i] =
+            (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
+              constant * d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta[i]) *
+                Qm(m, phi[i]) :
+              0.;
         }
       return retVal;
     }
@@ -561,46 +564,48 @@ namespace dftefe
       double                           constant = Clm(l, m) * Dm(m);
       for (int i = 0; i < r.size(); i++)
         {
-          if(!(r[i] < d_radiusTolerance && l > 0))
-          {
-          if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
+          if (!(r[i] < d_radiusTolerance && l > 0))
             {
-              double theta     = thetaVec[i];
-              double phi       = phiVec[i];
-              double plm_theta = d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
-              double dPlmDTheta_theta =
-                d_sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
-              double qm_mphi    = Qm(m, phi);
-              auto   Ylm        = constant * plm_theta * qm_mphi;
-              auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
-
-              double dYlmDPhiBysinTheta = 0.;
-              if (m != 0)
+              if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
                 {
-                  dYlmDPhiBysinTheta =
-                    constant *
-                    (sin(theta) *
-                       d_sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta) +
-                     cos(theta) * dPlmDTheta_theta +
-                     sin(theta) * l * (l + 1) * plm_theta) *
-                    (1 / (m * m)) * dQmDPhi(m, phi);
-                }
+                  double theta = thetaVec[i];
+                  double phi   = phiVec[i];
+                  double plm_theta =
+                    d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
+                  double dPlmDTheta_theta =
+                    d_sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
+                  double qm_mphi    = Qm(m, phi);
+                  auto   Ylm        = constant * plm_theta * qm_mphi;
+                  auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
 
-              retVal[0][i] = dYlmDTheta * (1 / r[i]);
-              retVal[1][i] = dYlmDPhiBysinTheta * (1 / r[i]);
+                  double dYlmDPhiBysinTheta = 0.;
+                  if (m != 0)
+                    {
+                      dYlmDPhiBysinTheta =
+                        constant *
+                        (sin(theta) * d_sphericalHarmonicFunc.d2PlmDTheta2(
+                                        l, std::abs(m), theta) +
+                         cos(theta) * dPlmDTheta_theta +
+                         sin(theta) * l * (l + 1) * plm_theta) *
+                        (1 / (m * m)) * dQmDPhi(m, phi);
+                    }
+
+                  retVal[0][i] = dYlmDTheta * (1 / r[i]);
+                  retVal[1][i] = dYlmDPhiBysinTheta * (1 / r[i]);
+                }
+              else
+                {
+                  retVal[0][i] = 0.;
+                  retVal[1][i] = 0.;
+                }
             }
           else
             {
-              retVal[0][i] = 0.;
-              retVal[1][i] = 0.;
+              utils::throwException(
+                false,
+                "Value undefined at nucleus while calling SphericalData::getAngularDerivative(). Distance : " +
+                  std::to_string(r[i]));
             }
-          }
-          else
-          {
-            utils::throwException(
-              false,
-              "Value undefined at nucleus while calling SphericalData::getAngularDerivative(). Distance : " + std::to_string(r[i]));
-          }
         }
       return retVal;
     }

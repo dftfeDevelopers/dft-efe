@@ -55,18 +55,18 @@ namespace dftefe
         }
     }
 
-   template <typename ValueType, utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
     FECellWiseDataOperations<ValueType, memorySpace>::copyFieldToCellWiseData(
       const ValueType *data,
       const size_type  numComponents,
       const size_type *cellLocalIdsStartPtr,
       const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-        &                                           numCellDofs,
+        &        numCellDofs,
       ValueType *itCellWiseStorageBegin)
     {
-      const size_type numCells               = numCellDofs.size();
-      size_type       cumulativeCellDofs     = 0;
+      const size_type numCells           = numCellDofs.size();
+      size_type       cumulativeCellDofs = 0;
       for (size_type iCell = 0; iCell < numCells; ++iCell)
         {
           const size_type cellDofs = *(numCellDofs.data() + iCell);
@@ -88,14 +88,14 @@ namespace dftefe
     FECellWiseDataOperations<ValueType, memorySpace>::
       addCellWiseDataToFieldData(
         const ValueType *itCellWiseStorageBegin,
-        const size_type                                     numComponents,
+        const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
         const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
           &        numCellDofs,
         ValueType *data)
     {
-      const size_type numCells               = numCellDofs.size();
-      size_type       cumulativeCellDofs     = 0;
+      const size_type numCells           = numCellDofs.size();
+      size_type       cumulativeCellDofs = 0;
       for (size_type iCell = 0; iCell < numCells; ++iCell)
         {
           const size_type cellDofs = *(numCellDofs.data() + iCell);

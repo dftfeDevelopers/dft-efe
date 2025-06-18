@@ -379,7 +379,7 @@ namespace dftefe
                                       xPathInfo.xpath + " element in " +
                                       fileName);
             }
-            if (attrStrings[0][i].first == "number_of_proj")
+          if (attrStrings[0][i].first == "number_of_proj")
             {
               convSuccess =
                 utils::stringOps::strToInt(attrStrings[0][i].second, d_numProj);
@@ -495,7 +495,7 @@ namespace dftefe
 
       bool isCoreCorrectAttributePresent = false;
       utils::stringOps::strToBool(d_metadata["core_correction"],
-        isCoreCorrectAttributePresent);
+                                  isCoreCorrectAttributePresent);
 
       // get quantum Numbers vec
       std::vector<int> nodeIndex(0);
@@ -549,26 +549,27 @@ namespace dftefe
                     maxlFromBeta = l;
                 }
               else if (nodeNames[i].find("PP_DIJ") != std::string::npos)
-                {             
+                {
                   std::vector<double> dijs(0);
-                  convSuccess =
-                    utils::stringOps::splitStringToDoubles(nodeStrings[i],
-                                                           dijs,
-                                                           d_numProj*d_numProj);
+                  convSuccess = utils::stringOps::splitStringToDoubles(
+                    nodeStrings[i], dijs, d_numProj * d_numProj);
                   utils::throwException(convSuccess,
                                         "Error while converting values in " +
                                           xPathInfo.xpath + " element in " +
-                                          xPathInfo.fileName + " to double");          
-                  for(auto &i : dijs)
-                  {
-                    i *= 0.5;  // convert from Ry to Ha
-                  }   
+                                          xPathInfo.fileName + " to double");
+                  for (auto &i : dijs)
+                    {
+                      i *= 0.5; // convert from Ry to Ha
+                    }
                   std::stringstream ss;
                   ss << std::fixed << std::setprecision(16);
-                  std::transform(dijs.begin(), dijs.end(), std::ostream_iterator<double>(ss, " "), [](double d){return d;});
+                  std::transform(dijs.begin(),
+                                 dijs.end(),
+                                 std::ostream_iterator<double>(ss, " "),
+                                 [](double d) { return d; });
                   d_metadata["dij"] = ss.str();
 
-                  //d_metadata["dij"] = nodeStrings[i];
+                  // d_metadata["dij"] = nodeStrings[i];
                 }
             }
           utils::throwException(maxlFromBeta == d_lmax,
@@ -621,10 +622,17 @@ namespace dftefe
                 }
             }
         }
-      else if(fieldName == std::string("nlcc") && !isCoreCorrectAttributePresent)
+      else if (fieldName == std::string("nlcc") &&
+               !isCoreCorrectAttributePresent)
         {
-          // since some PSP files may have core_correction and some may not in a KSDFT calculation
-          std::string stringsZero = [numPoints]{ std::string s; for (int i = 0; i < numPoints; ++i) s += (i ? " 0" : "0"); return s; }();
+          // since some PSP files may have core_correction and some may not in a
+          // KSDFT calculation
+          std::string stringsZero = [numPoints] {
+            std::string s;
+            for (int i = 0; i < numPoints; ++i)
+              s += (i ? " 0" : "0");
+            return s;
+          }();
           nodeStrings.resize(1);
           nodeStrings[0] = stringsZero;
           nodeIndex.push_back(0);
@@ -687,7 +695,8 @@ namespace dftefe
             }
           else if ((fieldName == std::string("beta")) ||
                    (fieldName ==
-                     std::string("pswfc"))) // divide by rGrid ; rGridVal(0) = rGridVal(1)
+                    std::string(
+                      "pswfc"))) // divide by rGrid ; rGridVal(0) = rGridVal(1)
             {
               for (int i = 1; i < radialValues.size(); i++)
                 {
@@ -696,7 +705,8 @@ namespace dftefe
               radialValues[0] = radialValues[1];
             }
           else if (fieldName ==
-                   std::string("rhoatom")) // divide by 4pir^2 ; rGridVal(0) = rGridVal(1)
+                   std::string(
+                     "rhoatom")) // divide by 4pir^2 ; rGridVal(0) = rGridVal(1)
             {
               for (int i = 1; i < radialValues.size(); i++)
                 {
@@ -719,7 +729,7 @@ namespace dftefe
               }
 
           if (fieldName == std::string("rhoatom"))
-              cutoff = radialPoints.back();
+            cutoff = radialPoints.back();
 
           // std::cout << fieldName << " : " << qNumbersVec[i][0] << ","
           //           << qNumbersVec[i][1] << "," << qNumbersVec[i][2] << " ; "
@@ -728,16 +738,18 @@ namespace dftefe
           // multiply by 1/y_00 to get rid of the constant in f(r)*Y_lm
           double constant =
             1. / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0));
-          //if (fieldName == "vlocal" || fieldName == "nlcc" || fieldName == "nlcc")
-          if ((fieldName != std::string("beta")) && (fieldName != std::string("pswfc")))
-          {
-            std::transform(radialValues.begin(),
-                           radialValues.end(),
-                           radialValues.begin(),
-                           [constant](double &element) {
-                             return element * constant;
-                           });
-          }
+          // if (fieldName == "vlocal" || fieldName == "nlcc" || fieldName ==
+          // "nlcc")
+          if ((fieldName != std::string("beta")) &&
+              (fieldName != std::string("pswfc")))
+            {
+              std::transform(radialValues.begin(),
+                             radialValues.end(),
+                             radialValues.begin(),
+                             [constant](double &element) {
+                               return element * constant;
+                             });
+            }
           // NOTE : for vlocal the function is mixed, modify accordingly
 
           // if(fieldName == "beta")
@@ -773,11 +785,11 @@ namespace dftefe
               double leftValue =
                 (radialValuesWithCutoff[1] - radialValuesWithCutoff[0]) /
                 (radialPointsWithCutoff[1] - radialPointsWithCutoff[0]);
-              double rightValue =
-                (-1.0) * (radialValuesWithCutoff.back() /
-                                  radialPointsWithCutoff.back());
+              double rightValue = (-1.0) * (radialValuesWithCutoff.back() /
+                                            radialPointsWithCutoff.back());
 
-              utils::Spline::bd_type left = utils::Spline::bd_type::second_deriv;
+              utils::Spline::bd_type left =
+                utils::Spline::bd_type::second_deriv;
               utils::Spline::bd_type right =
                 utils::Spline::bd_type::first_deriv;
 
