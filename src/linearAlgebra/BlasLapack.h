@@ -30,6 +30,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <utils/TypeConfig.h>
+#include <utils/ConditionalOStream.h>
 
 namespace dftefe
 {

@@ -151,14 +151,15 @@ namespace dftefe
           utils::MemoryStorage<ValueType, memorySpace> S(
             numVec * numVec, utils::Types<ValueType>::zero);
 
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
+            S.size());
+
           // compute overlap matrix
 
           const ValueType alpha = 1.0;
           const ValueType beta  = 0.0;
 
-          MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
-
-          B.apply(X, temp, true, false);
+          B.apply(X, orthogonalizedX, true, false);
 
           // Input data is read is X^T (numVec is fastest index and then
           // vecSize) Operation : S^T = ((B*X)^T)*(X^T)^H
@@ -171,7 +172,7 @@ namespace dftefe
             numVec,
             vecSize,
             alpha,
-            temp.data(),
+            orthogonalizedX.data(),
             numVec,
             X.data(),
             numVec,
@@ -217,8 +218,6 @@ namespace dftefe
           // complete the lower triangular part
           // (LInv^C)
 
-          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
-            S.size());
           utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
             S.size(), Shost.data(), S.data());
 
@@ -322,7 +321,10 @@ namespace dftefe
         numVec * numVec, utils::Types<ValueType>::zero);
       utils::MemoryStorage<RealType, memorySpace> sqrtInvShiftedEigenValMatrix(
         numVec * numVec, utils::Types<RealType>::zero);
-      MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
+        S.size());
+      utils::MemoryStorage<RealType, memorySpace> eigenValuesSmemory(
+        numVec);
 
       // compute overlap matrix
 
@@ -354,7 +356,7 @@ namespace dftefe
               // Input data is read is X^T
               // Operation : S^T = ((B*X)^T)*(X^T)^H
 
-              B.apply(X, temp, true, false);
+              B.apply(X, orthogonalizedX, true, false);
 
               blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
                 blasLapack::Layout::ColMajor,
@@ -364,7 +366,7 @@ namespace dftefe
                 numVec,
                 vecSize,
                 alpha,
-                temp.data(),
+                orthogonalizedX.data(),
                 numVec,
                 X.data(),
                 numVec,
@@ -386,8 +388,6 @@ namespace dftefe
               utils::throwException(mpiIsSuccessAndMsg.first,
                                     "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-              utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
-                S.size());
               utils::MemoryTransfer<utils::MemorySpace::HOST,
                                     memorySpace>::copy(S.size(),
                                                        Shost.data(),
@@ -413,14 +413,14 @@ namespace dftefe
               orthoErr =
                 std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
               if (orthoErr < identityTolerance * std::sqrt(numVec))
+              {
+                swap(X , orthogonalizedX);
                 break;
+              }
 
               eigenVectorsS = S;
 
               /* do a eigendecomposition and get min eigenvalue and get shift*/
-
-              utils::MemoryStorage<RealType, memorySpace> eigenValuesSmemory(
-                numVec);
 
               lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
                 blasLapack::Job::Vec,
@@ -436,6 +436,7 @@ namespace dftefe
                   err        = OrthonormalizationErrorCode::LAPACK_ERROR;
                   retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
                   retunValue.msg += lapackReturn.msg;
+                  swap(X , orthogonalizedX);
                   break;
                 }
 
@@ -521,7 +522,7 @@ namespace dftefe
                 numVec,
                 linAlgOpContext);
 
-              X = orthogonalizedX;
+              swap(X , orthogonalizedX);
               iPass++;
             }
 

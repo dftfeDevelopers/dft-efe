@@ -287,7 +287,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess , (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -445,7 +445,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -480,7 +480,7 @@ namespace dftefe
                        d_waveFunctionSubspaceGuess,
                        d_lanczosGuess,
                        false,
-                       d_numWantedEigenvalues,
+                       KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
                        MContextForInv,
                        MInvContext);
 
@@ -488,7 +488,7 @@ namespace dftefe
 
           ksEigSolve.solve(*d_hamitonianOperator,
                            d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
+                           d_kohnShamWaveFunctions,
                            false,
                            *d_MContext,
                            *d_MInvContext);
@@ -591,7 +591,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -747,7 +747,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -782,7 +782,7 @@ namespace dftefe
                        d_waveFunctionSubspaceGuess,
                        d_lanczosGuess,
                        false,
-                       d_numWantedEigenvalues,
+                       KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
                        MContextForInv,
                        MInvContext);
 
@@ -790,7 +790,7 @@ namespace dftefe
 
           ksEigSolve.solve(*d_hamitonianOperator,
                            d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
+                           d_kohnShamWaveFunctions,
                            false,
                            *d_MContext,
                            *d_MInvContext);
@@ -906,7 +906,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1088,7 +1088,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -1123,7 +1123,7 @@ namespace dftefe
                        d_waveFunctionSubspaceGuess,
                        d_lanczosGuess,
                        false,
-                       d_numWantedEigenvalues,
+                       KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
                        MContextForInv,
                        MInvContext);
 
@@ -1131,7 +1131,7 @@ namespace dftefe
 
           ksEigSolve.solve(*d_hamitonianOperator,
                            d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
+                           d_kohnShamWaveFunctions,
                            false,
                            *d_MContext,
                            *d_MInvContext);
@@ -1228,7 +1228,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1528,7 +1528,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -1559,7 +1559,7 @@ namespace dftefe
                        d_waveFunctionSubspaceGuess,
                        d_lanczosGuess,
                        false,
-                       d_numWantedEigenvalues,
+                       KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
                        MContextForInv,
                        MInvContext);
 
@@ -1567,7 +1567,7 @@ namespace dftefe
 
           ksEigSolve.solve(*d_hamitonianOperator,
                            d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
+                           d_kohnShamWaveFunctions,
                            false,
                            *d_MContext,
                            *d_MInvContext);
@@ -1667,7 +1667,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1966,7 +1966,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
         MContextForInv,
         MInvContext);
 
@@ -1997,7 +1997,7 @@ namespace dftefe
                        d_waveFunctionSubspaceGuess,
                        d_lanczosGuess,
                        false,
-                       d_numWantedEigenvalues,
+                       KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE,
                        MContextForInv,
                        MInvContext);
 
@@ -2005,7 +2005,7 @@ namespace dftefe
 
           ksEigSolve.solve(*d_hamitonianOperator,
                            d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
+                           d_kohnShamWaveFunctions,
                            false,
                            *d_MContext,
                            *d_MInvContext);
@@ -2046,7 +2046,7 @@ namespace dftefe
                                            memorySpace,
                                            dim>>(d_hamitonianElec))
         {
-          hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
+          hamiltonian->evalEnergy(d_occupation, d_kohnShamWaveFunctions);
         }
 
       RealType elecEnergy = d_hamitonianElec->getEnergy();
@@ -2194,7 +2194,7 @@ namespace dftefe
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
                                 d_kohnShamEnergies,
-                                *d_kohnShamWaveFunctions,
+                                d_kohnShamWaveFunctions,
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
@@ -2228,7 +2228,7 @@ namespace dftefe
               waveFuncQuad( quadRuleContainer,
           d_kohnShamWaveFunctions->getNumberComponents());
 
-              feBasisOp->interpolate(*d_kohnShamWaveFunctions,
+              feBasisOp->interpolate(d_kohnShamWaveFunctions,
                                         *d_feBMWaveFn,
                                         waveFuncQuad);
 
@@ -2322,7 +2322,7 @@ namespace dftefe
           d_p.registerStart("Density Compute");
           // compute output rho
           d_densCalc->computeRho(d_occupation,
-                                 *d_kohnShamWaveFunctions,
+                                 d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
           d_p.registerEnd("Density Compute");
           d_p.print();
@@ -2365,7 +2365,7 @@ namespace dftefe
 
               d_hamitonianKin->evalEnergy(d_occupation,
                                           *d_feBMWaveFn,
-                                          *d_kohnShamWaveFunctions);
+                                          d_kohnShamWaveFunctions);
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -2387,7 +2387,7 @@ namespace dftefe
                                                    dim>>(d_hamitonianElec))
                 {
                   hamiltonian->evalEnergy(d_occupation,
-                                          *d_kohnShamWaveFunctions);
+                                          d_kohnShamWaveFunctions);
                 }
 
               RealType elecEnergy = d_hamitonianElec->getEnergy();
@@ -2456,7 +2456,7 @@ namespace dftefe
 
           d_hamitonianKin->evalEnergy(d_occupation,
                                       *d_feBMWaveFn,
-                                      *d_kohnShamWaveFunctions);
+                                      d_kohnShamWaveFunctions);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -2477,7 +2477,7 @@ namespace dftefe
                                                memorySpace,
                                                dim>>(d_hamitonianElec))
             {
-              hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
+              hamiltonian->evalEnergy(d_occupation, d_kohnShamWaveFunctions);
             }
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();

@@ -88,7 +88,8 @@ namespace dftefe
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
         bool            isResidualChebyshevFilter = true,
-        const size_type eigenVectorBlockSize      = 0);
+        const size_type eigenVectorBatchSize      = 0,
+        bool  storeIntermediateSubspaces = false);
 
       /**
        *@brief Destructor
@@ -102,8 +103,7 @@ namespace dftefe
              const double unWantedSpectrumUpperBound,
              const double polynomialDegree,
              const double illConditionTolerance,
-             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-             const size_type                             eigenVectorBlockSize);
+             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -131,17 +131,21 @@ namespace dftefe
       double                                      d_polynomialDegree;
       double                                      d_illConditionTolerance;
       MultiVector<ValueTypeOperand, memorySpace> *d_eigenSubspaceGuess;
-      size_type                                   d_eigenVectorBlockSize;
+      const size_type                                   d_eigenVecBatchSize;
+      const bool                                         d_storeIntermediateSubspaces;
 
-      std::shared_ptr<MultiVector<ValueType, memorySpace>>
-        d_filteredSubspaceOrtho;
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_filteredSubspace;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_filteredSubspace , d_filteredSubspaceOrtho;
+
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_eigVecBatchSmall , d_eigVecBatch, d_filSubspaceBatchSmall , d_filSubspaceBatch , d_subspaceBatchIn, d_subspaceBatchOut;
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
                       d_rr;
       utils::Profiler d_p;
       const bool      d_isResidualChebyFilter;
+      size_type       d_batchSizeSmall;
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

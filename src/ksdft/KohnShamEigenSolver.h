@@ -105,7 +105,8 @@ namespace dftefe
         const OpContext &MInvLanczos =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
-                                                 memorySpace>());
+                                                 memorySpace>(),
+        bool  storeIntermediateSubspaces = false);
 
       /**
        *@brief Default Destructor
@@ -207,6 +208,7 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
       utils::Profiler                                     d_p;
       bool d_isResidualChebyFilter;
+      const bool  d_storeIntermediateSubspaces;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

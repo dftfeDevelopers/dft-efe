@@ -63,7 +63,8 @@ namespace dftefe
         bool             isResidualChebyshevFilter,
         const size_type  waveFunctionBlockSize,
         const OpContext &MLanczos,
-        const OpContext &MInvLanczos)
+        const OpContext &MInvLanczos,
+        bool  storeIntermediateSubspaces)
       : d_numWantedEigenvalues(waveFunctionSubspaceGuess.getNumberComponents())
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
       , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
@@ -80,6 +81,9 @@ namespace dftefe
       , d_chebyPolyScalingFactor(1.0)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_setChebyPolDegExternally(false)
+      , d_storeIntermediateSubspaces(storeIntermediateSubspaces)
+      , d_filteredSubspace(nullptr)
+      , d_filteredSubspaceOrtho((nullptr))
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -109,6 +113,20 @@ namespace dftefe
       utils::mpi::MPICommRank(
         lanczosGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);
       d_rootCout.setCondition(rank == 0);
+
+      d_chfsi = std::make_shared<
+        linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                                    ValueTypeOperand,
+                                                    memorySpace>>(
+        0,
+        0,
+        0,
+        0,
+        ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
+        *d_waveFunctionSubspaceGuess,
+        d_isResidualChebyFilter,
+        d_waveFunctionBlockSize,
+        d_storeIntermediateSubspaces);
     }
 
     template <typename ValueTypeOperator,
@@ -259,18 +277,13 @@ namespace dftefe
           d_rootCout << "Chebyshev Polynomial Degree : "
                      << d_chebyshevPolynomialDegree << "\n";
 
-          d_chfsi = std::make_shared<
-            linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
-                                                        ValueTypeOperand,
-                                                        memorySpace>>(
+          d_chfsi->reinit(
             d_wantedSpectrumLowerBound,
             d_wantedSpectrumUpperBound,
             eigenValuesLanczos[1] + residual,
             d_chebyshevPolynomialDegree,
             ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-            *d_waveFunctionSubspaceGuess,
-            d_isResidualChebyFilter,
-            d_waveFunctionBlockSize);
+            *d_waveFunctionSubspaceGuess);
 
           linearAlgebra::MultiVector<ValueType, memorySpace> HX(
             kohnShamWaveFunctions, (ValueType)0.0),
@@ -343,9 +356,12 @@ namespace dftefe
             }
             */
 
+            if(d_storeIntermediateSubspaces)
+            {
               d_filteredSubspace = &d_chfsi->getFilteredSubspace();
               d_filteredSubspaceOrtho =
                 &d_chfsi->getOrthogonalizedFilteredSubspace();
+            }
 
               d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
                          << chfsiErr.msg << std::endl;
@@ -431,13 +447,14 @@ namespace dftefe
                            << d_eigSolveResNorm[i] << "\n";
               d_rootCout << "\n";
 
+              *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
+
               if (numLevelsBelowFermiEnergy ==
                     numLevelsBelowFermiEnergyResidualConverged ||
                   !chfsiErr.isSuccess || !nrErr.isSuccess)
                 break;
               else
                 {
-                  d_waveFunctionSubspaceGuess = &kohnShamWaveFunctions;
                   d_wantedSpectrumLowerBound  = kohnShamEnergies[0];
                   d_wantedSpectrumUpperBound =
                     kohnShamEnergies[d_numWantedEigenvalues - 1];
@@ -447,8 +464,7 @@ namespace dftefe
                     eigenValuesLanczos[1] + residual,
                     d_chebyshevPolynomialDegree,
                     ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-                    *d_waveFunctionSubspaceGuess,
-                    d_waveFunctionBlockSize);
+                    *d_waveFunctionSubspaceGuess);
                 }
             }
           if (!chfsiErr.isSuccess)

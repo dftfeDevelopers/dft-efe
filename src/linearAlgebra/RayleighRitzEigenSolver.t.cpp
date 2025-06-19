@@ -57,14 +57,15 @@ namespace dftefe
 
       size_type                           numVec  = X.getNumberComponents();
       size_type                           vecSize = X.locallyOwnedSize();
-      MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
 
       utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
         numVec * numVec, utils::Types<ValueType>::zero);
+      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
+        numVec);
 
       // Compute projected hamiltonian = X_O^H A X_O
 
-      A.apply(X, temp, true, false);
+      A.apply(X, eigenVectors, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -74,7 +75,7 @@ namespace dftefe
         numVec,
         vecSize,
         (ValueType)1,
-        temp.data(),
+        eigenVectors.data(),
         numVec,
         X.data(),
         numVec,
@@ -105,8 +106,6 @@ namespace dftefe
 
       if (computeEigenVectors)
         {
-          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-            numVec);
 
           lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
             blasLapack::Job::Vec,
@@ -141,9 +140,6 @@ namespace dftefe
         }
       else
         {
-          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-            numVec);
-
           lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
             blasLapack::Job::NoVec,
             blasLapack::Uplo::Lower,
@@ -191,7 +187,7 @@ namespace dftefe
 
       size_type                           numVec  = X.getNumberComponents();
       size_type                           vecSize = X.locallyOwnedSize();
-      MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
+      //MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
 
       // allocate memory for overlap matrix
       utils::MemoryStorage<ValueType, memorySpace> S(
@@ -200,9 +196,12 @@ namespace dftefe
       utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
         numVec * numVec, utils::Types<ValueType>::zero);
 
+      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
+        numVec);
+
       // Compute overlap matrix S = X^H B X
 
-      B.apply(X, temp, true, false);
+      B.apply(X, eigenVectors, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -212,7 +211,7 @@ namespace dftefe
         numVec,
         vecSize,
         (ValueType)1,
-        temp.data(),
+        eigenVectors.data(),
         numVec,
         X.data(),
         numVec,
@@ -242,7 +241,7 @@ namespace dftefe
       // No orthogonalization required
       // Compute projected hamiltonian = X^H A X
 
-      A.apply(X, temp, true, false);
+      A.apply(X, eigenVectors, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -252,7 +251,7 @@ namespace dftefe
         numVec,
         vecSize,
         (ValueType)1,
-        temp.data(),
+        eigenVectors.data(),
         numVec,
         X.data(),
         numVec,
@@ -282,9 +281,6 @@ namespace dftefe
 
       if (computeEigenVectors)
         {
-          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-            numVec);
-
           lapackReturn =
             blasLapack::hegv<ValueType, memorySpace>(1,
                                                      blasLapack::Job::Vec,
@@ -322,9 +318,6 @@ namespace dftefe
         }
       else
         {
-          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-            numVec);
-
           lapackReturn =
             blasLapack::hegv<ValueType, memorySpace>(1,
                                                      blasLapack::Job::NoVec,
