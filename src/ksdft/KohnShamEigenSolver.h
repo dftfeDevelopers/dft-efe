@@ -97,7 +97,7 @@ namespace dftefe
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
         bool             isResidualChebyshevFilter = true,
-        const size_type  waveFunctionBlockSize     = 0,
+        const size_type  waveFunctionBatchSize     = 0,
         const OpContext &MLanczos =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
@@ -172,6 +172,13 @@ namespace dftefe
       getOrthogonalizedFilteredSubspace();
 
     private:
+
+      std::vector<double>
+      getLinearEigenSolveResidual(const OpContext &      kohnShamOperator,
+            const linearAlgebra::MultiVector<ValueType, memorySpace>
+              &              kohnShamWaveFunctions,
+            const OpContext &M);
+
       double    d_smearingTemperature;
       double    d_fermiEnergyTolerance;
       double    d_fracOccupancyTolerance;
@@ -179,7 +186,7 @@ namespace dftefe
       size_type d_maxChebyshevFilterPass;
       size_type d_chebyshevPolynomialDegree;
       size_type d_numWantedEigenvalues;
-      size_type d_waveFunctionBlockSize;
+      size_type d_waveFunctionBatchSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;
       linearAlgebra::Vector<ValueTypeOperand, memorySpace> *d_lanczosGuess;
@@ -209,6 +216,12 @@ namespace dftefe
       utils::Profiler                                     d_p;
       bool d_isResidualChebyFilter;
       const bool  d_storeIntermediateSubspaces;
+
+      size_type d_batchSizeSmall;
+      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_waveFnBatch,
+        d_HXBatch , d_MXBatch , d_waveFnBatchSmall,
+        d_HXBatchSmall , d_MXBatchSmall ;
+      utils::MemoryStorage<ValueType, memorySpace> d_kohnShamEnergiesMemspace , d_nOnes;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft
