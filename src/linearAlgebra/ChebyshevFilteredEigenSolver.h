@@ -42,6 +42,12 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
+    enum class OrthogonalizationType
+    {
+      CHOLESKY_GRAMSCHMIDT,
+      MULTIPASS_LOWDIN
+    };
+
     /**
      *@brief A derived class of OperatorContext to encapsulate
      * the action of a discrete operator on vectors, matrices, etc.
@@ -87,9 +93,11 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        bool            isResidualChebyshevFilter = true,
-        const size_type eigenVectorBatchSize      = 0,
-        bool  storeIntermediateSubspaces = false);
+        bool                  isResidualChebyshevFilter = true,
+        const size_type       eigenVectorBatchSize      = 0,
+        OrthogonalizationType orthoType =
+          OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
+        bool storeIntermediateSubspaces = false);
 
       /**
        *@brief Destructor
@@ -131,12 +139,15 @@ namespace dftefe
       double                                      d_polynomialDegree;
       double                                      d_illConditionTolerance;
       MultiVector<ValueTypeOperand, memorySpace> *d_eigenSubspaceGuess;
-      const size_type                                   d_eigenVecBatchSize;
-      const bool                                         d_storeIntermediateSubspaces;
+      const size_type                             d_eigenVecBatchSize;
+      const bool                                  d_storeIntermediateSubspaces;
 
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_filteredSubspace , d_filteredSubspaceOrtho;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_filteredSubspace,
+        d_filteredSubspaceOrtho;
 
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_eigVecBatchSmall , d_eigVecBatch, d_filSubspaceBatchSmall , d_filSubspaceBatch , d_subspaceBatchIn, d_subspaceBatchOut;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_eigVecBatchSmall,
+        d_eigVecBatch, d_filSubspaceBatchSmall, d_filSubspaceBatch,
+        d_subspaceBatchIn, d_subspaceBatchOut;
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
@@ -145,7 +156,10 @@ namespace dftefe
       const bool      d_isResidualChebyFilter;
       size_type       d_batchSizeSmall;
 
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                            d_mpiPatternP2P;
+      bool                  d_printL2Norms;
+      OrthogonalizationType d_orthoType;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

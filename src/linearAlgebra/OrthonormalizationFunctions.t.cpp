@@ -128,9 +128,11 @@ namespace dftefe
                           MultiVector<ValueType, memorySpace> &orthogonalizedX,
                           const OpContext &                    B)
     {
+      utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+                        "Orthogonalization");
+
       OrthonormalizationErrorCode err;
       OrthonormalizationError     retunValue;
-      orthogonalizedX.setValue((ValueType)0.0);
 
       if (X.globalSize() < X.getNumberComponents())
         {
@@ -147,17 +149,21 @@ namespace dftefe
           const size_type vecSize = X.locallyOwnedSize();
           const size_type numVec  = X.getNumberComponents();
 
+          p.registerStart("MemoryStorage Initialization");
           // allocate memory for overlap matrix
           utils::MemoryStorage<ValueType, memorySpace> S(
             numVec * numVec, utils::Types<ValueType>::zero);
 
           utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
             S.size());
+          p.registerEnd("MemoryStorage Initialization");
 
           // compute overlap matrix
 
           const ValueType alpha = 1.0;
           const ValueType beta  = 0.0;
+
+          p.registerStart("Compute X^T M X");
 
           B.apply(X, orthogonalizedX, true, false);
 
@@ -199,6 +205,9 @@ namespace dftefe
           utils::throwException(mpiIsSuccessAndMsg.first,
                                 "MPI Error:" + mpiIsSuccessAndMsg.second);
 
+          p.registerEnd("Compute X^T M X");
+          p.registerStart("Cholesky factorization");
+
           // cholesky factorization of overlap matrix
           // Operation = S^T = L^C*L^T = (L^C)*(L^C)^H ; Out: L^C
 
@@ -235,6 +244,9 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             Shost.size(), S.data(), Shost.data());
 
+          p.registerEnd("Cholesky factorization");
+          p.registerStart("Cholesky orthogonalize");
+
           // compute orthogonalizedX
           // XOrth^T = (LInv^C)^T*X^T
           // Out data as XOrtho^T
@@ -256,6 +268,8 @@ namespace dftefe
             numVec,
             linAlgOpContext);
 
+          p.registerEnd("Cholesky orthogonalize");
+
           if (lapackReturn1.err ==
               LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION)
             {
@@ -276,6 +290,7 @@ namespace dftefe
               retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
             }
         }
+      p.print();
       return retunValue;
     }
 
@@ -293,6 +308,9 @@ namespace dftefe
                       MultiVector<ValueType, memorySpace> &orthogonalizedX,
                       const OpContext &                    B)
     {
+      utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+                        "Orthogonalization");
+
       OrthonormalizationErrorCode err;
       OrthonormalizationError     retunValue;
       LapackError                 lapackReturn;
@@ -309,9 +327,9 @@ namespace dftefe
       const size_type              vecSize         = X.locallyOwnedSize();
       const size_type              numVec          = X.getNumberComponents();
 
-      orthogonalizedX.setValue((ValueType)0.0);
       /*RealType u = std::numeric_limits<RealType>::epsilon();*/
 
+      p.registerStart("MemoryStorage Initialization");
       // allocate memory for overlap matrix
       utils::MemoryStorage<ValueType, memorySpace> S(
         numVec * numVec, utils::Types<ValueType>::zero);
@@ -321,10 +339,9 @@ namespace dftefe
         numVec * numVec, utils::Types<ValueType>::zero);
       utils::MemoryStorage<RealType, memorySpace> sqrtInvShiftedEigenValMatrix(
         numVec * numVec, utils::Types<RealType>::zero);
-      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(
-        S.size());
-      utils::MemoryStorage<RealType, memorySpace> eigenValuesSmemory(
-        numVec);
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(S.size());
+      utils::MemoryStorage<RealType, memorySpace> eigenValuesSmemory(numVec);
+      p.registerEnd("MemoryStorage Initialization");
 
       // compute overlap matrix
 
@@ -355,6 +372,8 @@ namespace dftefe
 
               // Input data is read is X^T
               // Operation : S^T = ((B*X)^T)*(X^T)^H
+
+              p.registerStart("Compute X^T M X");
 
               B.apply(X, orthogonalizedX, true, false);
 
@@ -393,6 +412,8 @@ namespace dftefe
                                                        Shost.data(),
                                                        S.data());
 
+              p.registerEnd("Compute X^T M X");
+
               ValueType orthoErrValueType = 0;
               // calculate frobenus norm |S - I|
               for (size_type i = 0; i < numVec; i++)
@@ -413,13 +434,14 @@ namespace dftefe
               orthoErr =
                 std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
               if (orthoErr < identityTolerance * std::sqrt(numVec))
-              {
-                swap(X , orthogonalizedX);
-                break;
-              }
+                {
+                  swap(X, orthogonalizedX);
+                  break;
+                }
 
               eigenVectorsS = S;
 
+              p.registerStart("Minimum EigenValue Check");
               /* do a eigendecomposition and get min eigenvalue and get shift*/
 
               lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
@@ -436,7 +458,7 @@ namespace dftefe
                   err        = OrthonormalizationErrorCode::LAPACK_ERROR;
                   retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
                   retunValue.msg += lapackReturn.msg;
-                  swap(X , orthogonalizedX);
+                  swap(X, orthogonalizedX);
                   break;
                 }
 
@@ -468,6 +490,9 @@ namespace dftefe
                      sqrtInvShiftedEigenValMatrix.data(),
                      sqrtInvShiftedEigenValMatrixSTL.data());
 
+              p.registerEnd("Minimum EigenValue Check");
+
+              p.registerStart("Lowdin Orthogonalize");
               /* Do Y = XVD^(-1/2)V^H */
               // S = VD^(-1/2)
               blasLapack::gemm<ValueType, RealType, memorySpace>(
@@ -521,8 +546,9 @@ namespace dftefe
                 orthogonalizedX.data(),
                 numVec,
                 linAlgOpContext);
+              p.registerEnd("Lowdin Orthogonalize");
 
-              swap(X , orthogonalizedX);
+              swap(X, orthogonalizedX);
               iPass++;
             }
 
@@ -561,7 +587,7 @@ namespace dftefe
                 }
             }
         }
-
+      p.print();
       return retunValue;
     }
 

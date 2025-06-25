@@ -134,7 +134,7 @@ namespace dftefe
       eigenSubspaceGuess = filteredSubspace; // remove this and put X (in/out)
     }
 
-    /** 
+    /**
     // filtering for AX = \lambda BX
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,

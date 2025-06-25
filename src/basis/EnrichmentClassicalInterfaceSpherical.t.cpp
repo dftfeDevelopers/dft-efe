@@ -258,7 +258,8 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>
         quadValuesEnrichmentFunction(
           cfeBasisDataStorageRhs->getQuadratureRuleContainer(),
-          nTotalEnrichmentIds);
+          nTotalEnrichmentIds,
+          (ValueTypeBasisData)0.0);
 
       const size_type numLocallyOwnedCells =
         d_cfeBasisDofHandler->nLocallyOwnedCells();
@@ -267,6 +268,9 @@ namespace dftefe
       cellIndex = 0;
       auto locallyOwnedCellIter =
         d_cfeBasisDofHandler->beginLocallyOwnedCells();
+      ValueTypeBasisData *quadValuesEnrichmentFunctionPtr =
+        quadValuesEnrichmentFunction.begin();
+      size_type cumulativeQuadEnrichInCell = 0;
       for (;
            locallyOwnedCellIter != d_cfeBasisDofHandler->endLocallyOwnedCells();
            ++locallyOwnedCellIter)
@@ -277,36 +281,6 @@ namespace dftefe
           std::vector<utils::Point> quadRealPointsVec =
             cfeBasisDataStorageRhs->getQuadratureRuleContainer()
               ->getCellRealPoints(cellIndex);
-
-          // std::vector<ValueTypeBasisData> enrichmentsAtQuadValues(
-          //   nTotalEnrichmentIds * nQuadPointInCell, (ValueTypeBasisData)0);
-          // for (auto enrichmentId :
-          // d_overlappingEnrichmentIdsInCells[cellIndex])
-          //   {
-          //     basis::EnrichmentIdAttribute eIdAttr =
-          //       d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-          //         enrichmentId);
-          //     utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
-          //     auto         sphericalData =
-          //       d_atomSphericalDataContainer->getSphericalData(
-          //         d_atomSymbolVec[eIdAttr.atomId],
-          //         d_fieldName)[eIdAttr.localIdInAtom];
-
-          //     for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
-          //     qPoint++)
-          //       {
-          //         enrichmentsAtQuadValues[qPoint * nTotalEnrichmentIds +
-          //                                 enrichmentId] =
-          //           sphericalData->getValue(quadRealPointsVec[qPoint],
-          //           origin);
-          //       }
-          //     quadValuesEnrichmentFunction
-          //       .template setCellValues<utils::MemorySpace::HOST>(
-          //         cellIndex, enrichmentsAtQuadValues.data());
-          //   }
-
-          std::vector<ValueTypeBasisData> enrichmentsAtQuadValues(
-            nTotalEnrichmentIds * nQuadPointInCell, (ValueTypeBasisData)0);
           if (d_overlappingEnrichmentIdsInCells[cellIndex].size() > 0)
             {
               std::vector<double> val =
@@ -318,18 +292,16 @@ namespace dftefe
                   for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                        qPoint++)
                     {
-                      enrichmentsAtQuadValues[qPoint * nTotalEnrichmentIds +
-                                              enrichmentId] =
-                        *(val.data() + nQuadPointInCell * enrichIdInCell +
-                          qPoint);
+                      quadValuesEnrichmentFunctionPtr
+                        [cumulativeQuadEnrichInCell +
+                         nTotalEnrichmentIds * qPoint + enrichmentId] =
+                          *(val.data() + nQuadPointInCell * enrichIdInCell +
+                            qPoint);
                     }
-                  quadValuesEnrichmentFunction
-                    .template setCellValues<utils::MemorySpace::HOST>(
-                      cellIndex, enrichmentsAtQuadValues.data());
-
                   enrichIdInCell += 1;
                 }
             }
+          cumulativeQuadEnrichInCell += nQuadPointInCell * nTotalEnrichmentIds;
           cellIndex = cellIndex + 1;
         }
 

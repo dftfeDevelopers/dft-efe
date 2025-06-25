@@ -538,8 +538,8 @@ namespace dftefe
                                                   ValueTypeWaveFunctionBasis,
                                                   memorySpace,
                                                   dim>>
-                            d_feBMWaveFn;
-      std::vector<RealType> d_kohnShamEnergies;
+                                d_feBMWaveFn;
+      std::vector<RealType>     d_kohnShamEnergies;
       utils::ConditionalOStream d_rootCout;
       size_type                 d_mixingHistory;
       double                    d_mixingParameter;
@@ -557,7 +557,7 @@ namespace dftefe
       linearAlgebra::Vector<ValueTypeWaveFunctionCoeff, memorySpace>
         d_lanczosGuess;
       linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>
-                      d_waveFunctionSubspaceGuess , d_kohnShamWaveFunctions;
+                      d_waveFunctionSubspaceGuess, d_kohnShamWaveFunctions;
       const size_type d_numElectrons;
 
       std::shared_ptr<

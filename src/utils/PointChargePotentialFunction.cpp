@@ -45,10 +45,9 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);
-      for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+      for (unsigned int i = 0; i < d_atomCoordinates.size(); i++)
         {
-          double ret = 0;
-          for (unsigned int i = 0; i < d_atomCoordinates.size(); i++)
+          for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
             {
               double r = 0;
               for (unsigned int j = 0; j < points[iPoint].size(); j++)
@@ -60,9 +59,8 @@ namespace dftefe
               DFTEFE_AssertWithMsg(
                 std::abs(r) >= 1e-12,
                 "Value undefined at nucleus for 1/r potential");
-              ret += 1 / r * d_z[i];
+              returnValue[iPoint] += 1 / r * d_z[i];
             }
-          returnValue[iPoint] = ret;
         }
       return returnValue;
     }

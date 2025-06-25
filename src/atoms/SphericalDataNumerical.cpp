@@ -564,47 +564,48 @@ namespace dftefe
       double                           constant = Clm(l, m) * Dm(m);
       for (int i = 0; i < r.size(); i++)
         {
-          if (!(r[i] < d_radiusTolerance && l > 0))
+          if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
             {
-              if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
+              DFTEFE_AssertWithMsg(std::abs(r[i]) >= d_radiusTolerance,
+                                   "Value undefined at nucleus");
+              double theta = thetaVec[i];
+              double phi   = phiVec[i];
+              double plm_theta =
+                d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
+              double dPlmDTheta_theta =
+                d_sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
+              double qm_mphi    = Qm(m, phi);
+              auto   Ylm        = constant * plm_theta * qm_mphi;
+              auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
+
+              double dYlmDPhiBysinTheta = 0.;
+              if (m != 0)
                 {
-                  double theta = thetaVec[i];
-                  double phi   = phiVec[i];
-                  double plm_theta =
-                    d_sphericalHarmonicFunc.Plm(l, std::abs(m), theta);
-                  double dPlmDTheta_theta =
-                    d_sphericalHarmonicFunc.dPlmDTheta(l, std::abs(m), theta);
-                  double qm_mphi    = Qm(m, phi);
-                  auto   Ylm        = constant * plm_theta * qm_mphi;
-                  auto   dYlmDTheta = constant * dPlmDTheta_theta * qm_mphi;
+                  dYlmDPhiBysinTheta =
+                    constant *
+                    (sin(theta) * d_sphericalHarmonicFunc.d2PlmDTheta2(
+                                    l, std::abs(m), theta) +
+                     cos(theta) * dPlmDTheta_theta +
+                     sin(theta) * l * (l + 1) * plm_theta) *
+                    (1 / (m * m)) * dQmDPhi(m, phi);
+                }
 
-                  double dYlmDPhiBysinTheta = 0.;
-                  if (m != 0)
-                    {
-                      dYlmDPhiBysinTheta =
-                        constant *
-                        (sin(theta) * d_sphericalHarmonicFunc.d2PlmDTheta2(
-                                        l, std::abs(m), theta) +
-                         cos(theta) * dPlmDTheta_theta +
-                         sin(theta) * l * (l + 1) * plm_theta) *
-                        (1 / (m * m)) * dQmDPhi(m, phi);
-                    }
-
+              if (!(r[i] < d_radiusTolerance && l > 0))
+                {
                   retVal[0][i] = dYlmDTheta * (1 / r[i]);
                   retVal[1][i] = dYlmDPhiBysinTheta * (1 / r[i]);
                 }
               else
                 {
-                  retVal[0][i] = 0.;
-                  retVal[1][i] = 0.;
+                  retVal[0][i] = dYlmDTheta * (1 / (r[i] + d_radiusTolerance));
+                  retVal[1][i] =
+                    dYlmDPhiBysinTheta * (1 / (r[i] + d_radiusTolerance));
                 }
             }
           else
             {
-              utils::throwException(
-                false,
-                "Value undefined at nucleus while calling SphericalData::getAngularDerivative(). Distance : " +
-                  std::to_string(r[i]));
+              retVal[0][i] = 0.;
+              retVal[1][i] = 0.;
             }
         }
       return retVal;

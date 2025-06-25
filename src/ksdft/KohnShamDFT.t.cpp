@@ -287,7 +287,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess , (ValueType)0.0)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,

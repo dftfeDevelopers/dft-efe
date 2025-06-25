@@ -106,7 +106,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool  storeIntermediateSubspaces = false);
+        linearAlgebra::OrthogonalizationType orthoType =
+          linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
+        bool storeIntermediateSubspaces = false);
 
       /**
        *@brief Default Destructor
@@ -172,12 +174,12 @@ namespace dftefe
       getOrthogonalizedFilteredSubspace();
 
     private:
-
       std::vector<double>
-      getLinearEigenSolveResidual(const OpContext &      kohnShamOperator,
-            const linearAlgebra::MultiVector<ValueType, memorySpace>
-              &              kohnShamWaveFunctions,
-            const OpContext &M);
+      getLinearEigenSolveResidual(
+        const OpContext &kohnShamOperator,
+        const linearAlgebra::MultiVector<ValueType, memorySpace>
+          &              kohnShamWaveFunctions,
+        const OpContext &M);
 
       double    d_smearingTemperature;
       double    d_fermiEnergyTolerance;
@@ -214,14 +216,17 @@ namespace dftefe
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
       utils::Profiler                                     d_p;
-      bool d_isResidualChebyFilter;
-      const bool  d_storeIntermediateSubspaces;
+      bool       d_isResidualChebyFilter;
+      const bool d_storeIntermediateSubspaces;
 
       size_type d_batchSizeSmall;
-      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_waveFnBatch,
-        d_HXBatch , d_MXBatch , d_waveFnBatchSmall,
-        d_HXBatchSmall , d_MXBatchSmall ;
-      utils::MemoryStorage<ValueType, memorySpace> d_kohnShamEnergiesMemspace , d_nOnes;
+      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
+        d_waveFnBatch, d_HXBatch, d_MXBatch, d_waveFnBatchSmall, d_HXBatchSmall,
+        d_MXBatchSmall;
+      utils::MemoryStorage<ValueType, memorySpace> d_kohnShamEnergiesMemspace,
+        d_nOnes;
+
+      linearAlgebra::OrthogonalizationType d_orthoType;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

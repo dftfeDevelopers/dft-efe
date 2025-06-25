@@ -658,19 +658,6 @@ int main(int argc, char** argv)
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
         enrichClassIntfceTotalPot = nullptr;
-  if (!isDeltaRhoPoissonSolve)
-    // Create the enrichmentClassicalInterface object for vtotal
-    enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                        <double, Host, dim>>
-                        (cfeBasisDataStorageGLLElec,
-                        cfeBasisDataStorageGaussSubdividedElec,
-                        atomSphericalDataContainer,
-                        atomPartitionTolerance,
-                        atomSymbolVec,
-                        atomCoordinatesVec,
-                        "vtotal",
-                        linAlgOpContext,
-                        comm);
 
     // Create the enrichmentClassicalInterface object for wavefn
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
@@ -691,9 +678,22 @@ int main(int argc, char** argv)
 
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot = nullptr;
   if (!isDeltaRhoPoissonSolve)
+  {
+    enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                        <double, Host, dim>>
+                        (cfeBasisDataStorageGLLElec,
+                        cfeBasisDataStorageGaussSubdividedElec,
+                        atomSphericalDataContainer,
+                        atomPartitionTolerance,
+                        atomSymbolVec,
+                        atomCoordinatesVec,
+                        "vtotal",
+                        linAlgOpContext,
+                        comm);
      basisDofHandlerTotalPot =  
       std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
         enrichClassIntfceTotalPot, comm);
+  }
   else
     basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
 

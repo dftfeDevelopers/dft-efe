@@ -51,19 +51,25 @@ namespace dftefe
             MultiVector<ValueType, memorySpace> &       eigenVectors,
             bool                                        computeEigenVectors)
     {
+      utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+                        "Rayleigh-Ritz EigenSolver");
+
       EigenSolverError     retunValue;
       EigenSolverErrorCode err;
       LapackError          lapackReturn;
 
-      size_type                           numVec  = X.getNumberComponents();
-      size_type                           vecSize = X.locallyOwnedSize();
+      size_type numVec  = X.getNumberComponents();
+      size_type vecSize = X.locallyOwnedSize();
 
+      p.registerStart("Memory Storage");
       utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
         numVec * numVec, utils::Types<ValueType>::zero);
-      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-        numVec);
+      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(numVec);
+      p.registerEnd("Memory Storage");
 
       // Compute projected hamiltonian = X_O^H A X_O
+
+      p.registerStart("Compute X^T H X");
 
       A.apply(X, eigenVectors, true, false);
 
@@ -102,10 +108,13 @@ namespace dftefe
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
+      p.registerEnd("Compute X^T H X");
+
       // Solve the standard eigenvalue problem
 
       if (computeEigenVectors)
         {
+          p.registerStart("LAPACK Eigendecomposition");
 
           lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
             blasLapack::Job::Vec,
@@ -119,7 +128,11 @@ namespace dftefe
           eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
             eigenValues.data(), numVec, 0, 0);
 
+          p.registerEnd("LAPACK Eigendecomposition");
+
           // Rotation X_febasis = X_O Q.
+
+          p.registerStart("Subspace Rotation");
 
           blasLapack::gemm<ValueType, ValueType, memorySpace>(
             blasLapack::Layout::ColMajor,
@@ -137,9 +150,13 @@ namespace dftefe
             eigenVectors.data(),
             numVec,
             *X.getLinAlgOpContext());
+
+          p.registerEnd("Subspace Rotation");
         }
       else
         {
+          p.registerStart("LAPACK Eigendecomposition");
+
           lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
             blasLapack::Job::NoVec,
             blasLapack::Uplo::Lower,
@@ -151,6 +168,8 @@ namespace dftefe
 
           eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
             eigenValues.data(), numVec, 0, 0);
+
+          p.registerEnd("LAPACK Eigendecomposition");
         }
 
       if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
@@ -164,7 +183,7 @@ namespace dftefe
           err        = EigenSolverErrorCode::SUCCESS;
           retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
         }
-
+      p.print();
       return retunValue;
     }
 
@@ -185,9 +204,9 @@ namespace dftefe
       EigenSolverErrorCode err;
       LapackError          lapackReturn;
 
-      size_type                           numVec  = X.getNumberComponents();
-      size_type                           vecSize = X.locallyOwnedSize();
-      //MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
+      size_type numVec  = X.getNumberComponents();
+      size_type vecSize = X.locallyOwnedSize();
+      // MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
 
       // allocate memory for overlap matrix
       utils::MemoryStorage<ValueType, memorySpace> S(
@@ -196,8 +215,7 @@ namespace dftefe
       utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
         numVec * numVec, utils::Types<ValueType>::zero);
 
-      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-        numVec);
+      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(numVec);
 
       // Compute overlap matrix S = X^H B X
 
