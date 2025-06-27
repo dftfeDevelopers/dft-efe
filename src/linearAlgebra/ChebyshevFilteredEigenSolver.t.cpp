@@ -54,12 +54,10 @@ namespace dftefe
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_storeIntermediateSubspaces(storeIntermediateSubspaces)
       , d_eigenVecBatchSize(eigenVectorBatchSize)
-      , d_eigVecBatchSmall(nullptr)
-      , d_eigVecBatch(nullptr)
-      , d_subspaceBatchIn(nullptr)
-      , d_subspaceBatchOut(nullptr)
-      , d_filSubspaceBatchSmall(nullptr)
-      , d_filSubspaceBatch(nullptr)
+      , d_XinBatchSmall(nullptr)
+      , d_XinBatch(nullptr)
+      , d_XoutBatchSmall(nullptr)
+      , d_XoutBatch(nullptr)
       , d_filteredSubspace(nullptr)
       , d_filteredSubspaceOrtho(nullptr)
       , d_batchSizeSmall(0)
@@ -77,19 +75,26 @@ namespace dftefe
               eigenSubspaceGuess, (ValueType)0);
         }
 
-      d_eigVecBatch =
+      d_XinBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           d_mpiPatternP2P,
           eigenSubspaceGuess.getLinAlgOpContext(),
           eigenVectorBatchSize,
           ValueType());
 
-      d_filSubspaceBatch =
+      d_XoutBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           d_mpiPatternP2P,
           eigenSubspaceGuess.getLinAlgOpContext(),
           eigenVectorBatchSize,
           ValueType());
+
+      d_ortho = std::make_shared<OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>(
+                  eigenVectorBatchSize,
+                  d_mpiPatternP2P,
+                  eigenSubspaceGuess.getLinAlgOpContext());
+
+      d_rr = std::make_shared<RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>();
 
       reinit(wantedSpectrumLowerBound,
              wantedSpectrumUpperBound,
@@ -119,9 +124,6 @@ namespace dftefe
       d_wantedSpectrumUpperBound   = wantedSpectrumUpperBound;
       d_unWantedSpectrumUpperBound = unWantedSpectrumUpperBound;
 
-      d_rr = std::make_shared<
-        RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>();
-
       /*create filtered subspace vec after calling isCompatible*/
 
       if (d_storeIntermediateSubspaces)
@@ -141,19 +143,26 @@ namespace dftefe
             *eigenSubspaceGuess.getMPIPatternP2P()))
         {
           d_mpiPatternP2P = eigenSubspaceGuess.getMPIPatternP2P();
-          d_eigVecBatch   = std::make_shared<
+          d_XinBatch   = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
             d_mpiPatternP2P,
             eigenSubspaceGuess.getLinAlgOpContext(),
             d_eigenVecBatchSize,
             ValueType());
 
-          d_filSubspaceBatch = std::make_shared<
+          d_XoutBatch = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
             d_mpiPatternP2P,
             eigenSubspaceGuess.getLinAlgOpContext(),
             d_eigenVecBatchSize,
             ValueType());
+
+          d_ortho = std::make_shared<OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>(
+                      d_eigenVecBatchSize,
+                      d_mpiPatternP2P,
+                      eigenSubspaceGuess.getLinAlgOpContext());
+
+          d_rr = std::make_shared<RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>();
         }
     }
 
@@ -197,7 +206,7 @@ namespace dftefe
       size_type numEigenVectors   = eigenVectors.getNumberComponents();
       size_type eigenVecLocalSize = eigenVectors.localSize();
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
-
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_subspaceBatchIn = nullptr, d_subspaceBatchOut = nullptr;
       for (size_type eigVecStartId = 0; eigVecStartId < numEigenVectors;
            eigVecStartId += d_eigenVecBatchSize)
         {
@@ -215,38 +224,38 @@ namespace dftefe
             {
               for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
-                                    d_eigVecBatch->data() +
+                                    d_XinBatch->data() +
                                       numEigVecInBatch * iSize,
                                     d_eigenSubspaceGuess->data() +
                                       iSize * numEigenVectors + eigVecStartId);
 
-              d_subspaceBatchIn  = d_eigVecBatch;
-              d_subspaceBatchOut = d_filSubspaceBatch;
+              d_subspaceBatchIn  = d_XinBatch;
+              d_subspaceBatchOut = d_XoutBatch;
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
               for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
-                                    d_eigVecBatchSmall->data() +
+                                    d_XinBatchSmall->data() +
                                       numEigVecInBatch * iSize,
                                     d_eigenSubspaceGuess->data() +
                                       iSize * numEigenVectors + eigVecStartId);
 
-              d_subspaceBatchIn  = d_eigVecBatchSmall;
-              d_subspaceBatchOut = d_filSubspaceBatchSmall;
+              d_subspaceBatchIn  = d_XinBatchSmall;
+              d_subspaceBatchOut = d_XoutBatchSmall;
             }
           else
             {
               d_batchSizeSmall = numEigVecInBatch;
 
-              d_eigVecBatchSmall = std::make_shared<
+              d_XinBatchSmall = std::make_shared<
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 d_mpiPatternP2P,
                 eigenVectors.getLinAlgOpContext(),
                 numEigVecInBatch,
                 ValueType());
 
-              d_filSubspaceBatchSmall = std::make_shared<
+              d_XoutBatchSmall = std::make_shared<
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 d_mpiPatternP2P,
                 eigenVectors.getLinAlgOpContext(),
@@ -255,13 +264,13 @@ namespace dftefe
 
               for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
-                                    d_eigVecBatchSmall->data() +
+                                    d_XinBatchSmall->data() +
                                       numEigVecInBatch * iSize,
                                     d_eigenSubspaceGuess->data() +
                                       iSize * numEigenVectors + eigVecStartId);
 
-              d_subspaceBatchIn  = d_eigVecBatchSmall;
-              d_subspaceBatchOut = d_filSubspaceBatchSmall;
+              d_subspaceBatchIn  = d_XinBatchSmall;
+              d_subspaceBatchOut = d_XoutBatchSmall;
             }
           if (d_isResidualChebyFilter)
             ResidualChebyshevFilterGEP<ValueTypeOperator,
@@ -312,18 +321,13 @@ namespace dftefe
 
       if (d_orthoType == OrthogonalizationType::CHOLESKY_GRAMSCHMIDT)
         {
-          orthoerr = OrthonormalizationFunctions<
-            ValueTypeOperator,
-            ValueTypeOperand,
-            memorySpace>::CholeskyGramSchmidt(eigenVectors,
+          orthoerr = d_ortho->CholeskyGramSchmidt(eigenVectors,
                                               *d_eigenSubspaceGuess,
                                               B);
         }
       else if (d_orthoType == OrthogonalizationType::MULTIPASS_LOWDIN)
         {
-          orthoerr = linearAlgebra::
-            OrthonormalizationFunctions<ValueType, ValueType, memorySpace>::
-              MultipassLowdin(
+          orthoerr = d_ortho->MultipassLowdin(
                 eigenVectors, /*in/out, eigenvector*/
                 linearAlgebra::MultiPassLowdinDefaults::MAX_PASS,
                 linearAlgebra::MultiPassLowdinDefaults::SHIFT_TOL,

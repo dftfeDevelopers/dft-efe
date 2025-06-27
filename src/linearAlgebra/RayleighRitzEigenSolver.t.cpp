@@ -64,6 +64,8 @@ namespace dftefe
       p.registerStart("Memory Storage");
       utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
         numVec * numVec, utils::Types<ValueType>::zero);
+      utils::MemoryStorage<ValueType, memorySpace> eigenVectorsXSubspace(
+        numVec * numVec, utils::Types<ValueType>::zero);        
       utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(numVec);
       p.registerEnd("Memory Storage");
 
@@ -105,7 +107,7 @@ namespace dftefe
 
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
         utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
-      utils::throwException(mpiIsSuccessAndMsg.first,
+      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
       p.registerEnd("Compute X^T H X");
@@ -116,13 +118,38 @@ namespace dftefe
         {
           p.registerStart("LAPACK Eigendecomposition");
 
-          lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+          // lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+          //   blasLapack::Job::Vec,
+          //   blasLapack::Uplo::Lower,
+          //   numVec,
+          //   XprojectedA.data(),
+          //   numVec,
+          //   eigenValuesMemSpace.data(),
+          //   *X.getLinAlgOpContext());
+
+          RealType  	vl = 0;
+          RealType  	vu = 0;
+          size_type  	il = 0;
+          size_type  	iu = 0;
+          RealType  	abstol = 0;
+          size_type   nfound = 0;
+
+          lapackReturn = blasLapack::heevr<ValueType, memorySpace>(
             blasLapack::Job::Vec,
+            blasLapack::Range::All,
             blasLapack::Uplo::Lower,
             numVec,
             XprojectedA.data(),
             numVec,
+		        vl,
+		        vu,
+		        il,
+		        iu,
+		        abstol,
+            nfound,
             eigenValuesMemSpace.data(),
+            eigenVectorsXSubspace.data(),
+            numVec,
             *X.getLinAlgOpContext());
 
           eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
@@ -142,7 +169,7 @@ namespace dftefe
             vecSize,
             numVec,
             (ValueType)1,
-            XprojectedA.data(),
+            eigenVectorsXSubspace.data(),
             numVec,
             X.data(),
             numVec,
@@ -253,7 +280,7 @@ namespace dftefe
 
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
         utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
-      utils::throwException(mpiIsSuccessAndMsg.first,
+      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
       // No orthogonalization required
@@ -292,7 +319,7 @@ namespace dftefe
         X.getMPIPatternP2P()->mpiCommunicator());
 
       mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
-      utils::throwException(mpiIsSuccessAndMsg.first,
+      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
       // Solve generalized eigenvalue problem

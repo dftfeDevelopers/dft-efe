@@ -145,13 +145,15 @@ namespace dftefe
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_filteredSubspace,
         d_filteredSubspaceOrtho;
 
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_eigVecBatchSmall,
-        d_eigVecBatch, d_filSubspaceBatchSmall, d_filSubspaceBatch,
-        d_subspaceBatchIn, d_subspaceBatchOut;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
+        d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
                       d_rr;
+
+      std::shared_ptr<OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>> d_ortho;
+      
       utils::Profiler d_p;
       const bool      d_isResidualChebyFilter;
       size_type       d_batchSizeSmall;
