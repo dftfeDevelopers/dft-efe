@@ -53,8 +53,9 @@ namespace dftefe
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
 
       OrthonormalizationFunctions(
-        const size_type       eigenVectorBatchSize,
-        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
+        const size_type eigenVectorBatchSize,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
@@ -90,16 +91,16 @@ namespace dftefe
                                                      ValueTypeOperand,
                                                      memorySpace>());
 
-      private:
+    private:
+      void
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
+                       utils::MemoryStorage<ValueType, memorySpace> &S,
+                       const OpContext &                             Op);
 
-        void computeXTransBX(MultiVector<ValueTypeOperand, memorySpace> &X, 
-            utils::MemoryStorage<ValueType, memorySpace> &S,
-            const OpContext &B);
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
+        d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
-        std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
-          d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
-
-        size_type d_eigenVecBatchSize , d_batchSizeSmall;
+      size_type d_eigenVecBatchSize, d_batchSizeSmall;
 
     }; // end of class OrthonormalizationFunctions
   }    // end of namespace linearAlgebra

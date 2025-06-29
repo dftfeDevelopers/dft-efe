@@ -150,10 +150,12 @@ namespace dftefe
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
-                      d_rr;
+        d_rr;
 
-      std::shared_ptr<OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>> d_ortho;
-      
+      std::shared_ptr<
+        OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>
+        d_ortho;
+
       utils::Profiler d_p;
       const bool      d_isResidualChebyFilter;
       size_type       d_batchSizeSmall;

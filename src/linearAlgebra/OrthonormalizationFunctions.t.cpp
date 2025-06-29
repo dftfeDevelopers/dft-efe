@@ -88,7 +88,7 @@ namespace dftefe
         std::pair<bool, std::string> mpiIsSuccessAndMsg =
           utils::mpi::MPIErrIsSuccessAndMsg(err);
         DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
         linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
           linearAlgebra::blasLapack::Layout::ColMajor,
@@ -125,27 +125,23 @@ namespace dftefe
     OrthonormalizationFunctions<ValueTypeOperator,
                                 ValueTypeOperand,
                                 memorySpace>::
-    OrthonormalizationFunctions(const size_type       eigenVectorBatchSize,
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>> mpiPatternP2P,
-      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
-    : d_eigenVecBatchSize(eigenVectorBatchSize)
-    , d_batchSizeSmall(0)
-    , d_XinBatchSmall(nullptr)
-    , d_XoutBatchSmall(nullptr)
+      OrthonormalizationFunctions(
+        const size_type eigenVectorBatchSize,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
+      : d_eigenVecBatchSize(eigenVectorBatchSize)
+      , d_batchSizeSmall(0)
+      , d_XinBatchSmall(nullptr)
+      , d_XoutBatchSmall(nullptr)
     {
       d_XinBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P,
-          linAlgOpContext,
-          eigenVectorBatchSize,
-          ValueType());
+          mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
 
       d_XoutBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P,
-          linAlgOpContext,
-          eigenVectorBatchSize,
-          ValueType());
+          mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
     }
 
     template <typename ValueTypeOperator,
@@ -196,8 +192,10 @@ namespace dftefe
 
           p.registerStart("Compute X^T M X");
 
-          //computeXTransBX(X, S, B);
-          
+          computeXTransOpX(X, S, B);
+
+          /**
+          //--------------- Debug implementation ---------------
           B.apply(X, orthogonalizedX, true, false);
 
           // Input data is read is X^T (numVec is fastest index and then
@@ -241,9 +239,9 @@ namespace dftefe
           utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
             S.size(), Shost.data(), S.data());
 
-          for (size_type i = 0; i < numVec; i++) // column 
+          for (size_type i = 0; i < numVec; i++) // column
             {
-              for (size_type j = 0; j < numVec; j++) // row 
+              for (size_type j = 0; j < numVec; j++) // row
                 {
                   if (i < j) // if colid < rowid i.e. upper tri
                     {
@@ -252,21 +250,28 @@ namespace dftefe
                 }
             }
 
-          // for (size_type i = 0; i < numVec; i++) // column 
+          int rank;
+          utils::mpi::MPICommRank(X.getMPIPatternP2P()->mpiCommunicator(),
+          &rank); utils::ConditionalOStream rootCout(std::cout);
+          rootCout.setCondition(rank == 0);
+
+          // for (size_type i = 0; i < numVec; i++) // column
           //   {
-          //     for (size_type j = 0; j < numVec; j++) // row 
+          //     for (size_type j = 0; j < numVec; j++) // row
           //       {
           //         if (i < j) // if colid < rowid i.e. upper tri
           //           {
           //             *(Shost.data() + j * numVec + i) = (ValueType)0.0;
           //           }
-          //         std::cout << *(Shost.data() + j * numVec + i) << "\t";
+          //         rootCout << *(Shost.data() + j * numVec + i) << "\t";
           //       }
           //     std::cout << "\n";
           //   }
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             Shost.size(), S.data(), Shost.data());
+          //--------------- Debug implementation ---------------
+          **/
 
           p.registerEnd("Compute X^T M X");
           p.registerStart("Cholesky factorization");
@@ -334,19 +339,19 @@ namespace dftefe
             }
         }
 
-        //--------------------------DEBUG ONLY------------------------------
-        /**linearAlgebra::MultiVector<ValueType, memorySpace> copyX(X, 0.0);
-        copyX = X;
-        double norm = OrthonormalizationFunctionsInternal::
-          doesOrthogonalizationPreserveSubspace<ValueTypeOperator,
-                                                ValueTypeOperand,
-                                                memorySpace>(copyX,
-                                                              orthogonalizedX,
-                                                              B);
-        std::stringstream ss; 
-        ss << norm; 
-        retunValue.msg += " Max LInf norm |(I-QQ^HM)U|: " + ss.str();**/
-        //--------------------------DEBUG ONLY------------------------------
+      //--------------------------DEBUG ONLY------------------------------
+      /**linearAlgebra::MultiVector<ValueType, memorySpace> copyX(X, 0.0);
+      copyX = X;
+      double norm = OrthonormalizationFunctionsInternal::
+        doesOrthogonalizationPreserveSubspace<ValueTypeOperator,
+                                              ValueTypeOperand,
+                                              memorySpace>(copyX,
+                                                            orthogonalizedX,
+                                                            B);
+      std::stringstream ss;
+      ss << norm;
+      retunValue.msg += " Max LInf norm |(I-QQ^HM)U|: " + ss.str();**/
+      //--------------------------DEBUG ONLY------------------------------
 
       p.print();
       return retunValue;
@@ -465,7 +470,7 @@ namespace dftefe
               std::pair<bool, std::string> mpiIsSuccessAndMsg =
                 utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
               DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                                    "MPI Error:" + mpiIsSuccessAndMsg.second);
+                                   "MPI Error:" + mpiIsSuccessAndMsg.second);
 
               utils::MemoryTransfer<utils::MemorySpace::HOST,
                                     memorySpace>::copy(S.size(),
@@ -632,12 +637,15 @@ namespace dftefe
                   retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
                   retunValue.msg += "Maximum number of Lowdin passes are " +
                                     std::to_string(iPass) + ".";
-                /**
-                //--------------------------DEBUG ONLY------------------------------ 
-                // std::stringstream ss; 
-                // ss << norm; retunValue.msg += " Max LInf norm |(I-QQ^HM)U|: " + ss.str();
-                //--------------------------DEBUG ONLY------------------------------
-                **/
+                  /**
+                  //--------------------------DEBUG
+                  ONLY------------------------------
+                  // std::stringstream ss;
+                  // ss << norm; retunValue.msg += " Max LInf norm |(I-QQ^HM)U|:
+                  " + ss.str();
+                  //--------------------------DEBUG
+                  ONLY------------------------------
+                  **/
                 }
             }
         }
@@ -745,23 +753,29 @@ namespace dftefe
     OrthonormalizationFunctions<ValueTypeOperator,
                                 ValueTypeOperand,
                                 memorySpace>::
-    computeXTransBX(MultiVector<ValueTypeOperand, memorySpace> &X, 
-                utils::MemoryStorage<ValueType, memorySpace> &S,
-                const OpContext &B)
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
+                       utils::MemoryStorage<ValueType, memorySpace> &S,
+                       const OpContext &                             Op)
     {
-      const utils::mpi::MPIComm comm =
-        X.getMPIPatternP2P()->mpiCommunicator();
-      LinAlgOpContext<memorySpace> linAlgOpContext =
-        *X.getLinAlgOpContext();
-      const size_type vecSize = X.locallyOwnedSize();
-      const size_type numVec  = X.getNumberComponents();
-      utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> subspaceBatchIn = nullptr, subspaceBatchOut = nullptr;
+      const utils::mpi::MPIComm comm = X.getMPIPatternP2P()->mpiCommunicator();
+      LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
+      const size_type              vecSize         = X.locallyOwnedSize();
+      const size_type              vecLocalSize    = X.localSize();
+      const size_type              numVec          = X.getNumberComponents();
+      utils::MemoryTransfer<memorySpace, memorySpace>      memoryTransfer;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> subspaceBatchIn =
+                                                             nullptr,
+                                                           subspaceBatchOut =
+                                                             nullptr;
 
-      utils::MemoryStorage<ValueType, memorySpace> SBlock(numVec * d_eigenVecBatchSize, ValueType(0));
-      // utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> SBlockHost(numVec * d_eigenVecBatchSize);
+      utils::MemoryStorage<ValueType, memorySpace> SBlock(numVec *
+                                                            d_eigenVecBatchSize,
+                                                          ValueType(0));
+      // utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+      // SBlockHost(numVec * d_eigenVecBatchSize);
 
-      for (size_type eigVecStartId = 0; eigVecStartId < numVec; eigVecStartId += d_eigenVecBatchSize)
+      for (size_type eigVecStartId = 0; eigVecStartId < numVec;
+           eigVecStartId += d_eigenVecBatchSize)
         {
           const size_type eigVecEndId =
             std::min(eigVecStartId + d_eigenVecBatchSize, numVec);
@@ -769,24 +783,22 @@ namespace dftefe
 
           if (numEigVecInBatch % d_eigenVecBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < vecSize; iSize++)
+              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
                                     d_XinBatch->data() +
                                       numEigVecInBatch * iSize,
-                                    X.data() +
-                                      iSize * numVec + eigVecStartId);
+                                    X.data() + iSize * numVec + eigVecStartId);
 
               subspaceBatchIn  = d_XinBatch;
               subspaceBatchOut = d_XoutBatch;
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < vecSize; iSize++)
+              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
                                     d_XinBatchSmall->data() +
                                       numEigVecInBatch * iSize,
-                                    X.data() +
-                                      iSize * numVec + eigVecStartId);
+                                    X.data() + iSize * numVec + eigVecStartId);
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -809,18 +821,17 @@ namespace dftefe
                 numEigVecInBatch,
                 ValueType());
 
-              for (size_type iSize = 0; iSize < vecSize; iSize++)
+              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
                                     d_XinBatchSmall->data() +
                                       numEigVecInBatch * iSize,
-                                    X.data() +
-                                      iSize * numVec + eigVecStartId);
+                                    X.data() + iSize * numVec + eigVecStartId);
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
             }
-         
-          B.apply(*subspaceBatchIn, *subspaceBatchOut, true, false);
+
+          Op.apply(*subspaceBatchIn, *subspaceBatchOut, true, false);
 
           // Input data is read is X^T (numVec is fastest index and then
           // vecSize) Operation : S = (X)^H * ((B*X)). S^T = ((B*X)^T)*(X^T)^H
@@ -850,7 +861,7 @@ namespace dftefe
 
           int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
             utils::mpi::MPIInPlace,
-            SBlock/*Host*/.data(),
+            SBlock /*Host*/.data(),
             (numVec - eigVecStartId) * numEigVecInBatch,
             utils::mpi::Types<ValueType>::getMPIDatatype(),
             utils::mpi::MPISum,
@@ -859,13 +870,21 @@ namespace dftefe
           std::pair<bool, std::string> mpiIsSuccessAndMsg =
             utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
           DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                                "MPI Error:" + mpiIsSuccessAndMsg.second);
+                               "MPI Error:" + mpiIsSuccessAndMsg.second);
 
           // Copying only the lower triangular part to projected matrix
           for (size_type iSize = 0; iSize < numEigVecInBatch; iSize++)
             memoryTransfer.copy(numVec - eigVecStartId - iSize,
-                                S.data() + (eigVecStartId + iSize) * numVec + (eigVecStartId + iSize),
-                                SBlock.data() + iSize * (numVec - eigVecStartId) + iSize);
+                                S.data() + (eigVecStartId + iSize) * numVec +
+                                  (eigVecStartId + iSize),
+                                SBlock.data() +
+                                  iSize * (numVec - eigVecStartId) + iSize);
+
+          for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+            memoryTransfer.copy(numEigVecInBatch,
+                                X.data() + iSize * numVec + eigVecStartId,
+                                subspaceBatchIn->data() +
+                                  numEigVecInBatch * iSize);
         }
     }
   } // end of namespace linearAlgebra
