@@ -16,6 +16,8 @@ set(DFT-EFE-ATOMS-SOURCES
     AtomSevereFunction.cpp
     AtomSphericalDataPSP.cpp
     SphericalDataMixed.cpp
+    SphericalDataAnalytical.cpp
+    AtomSphericalDataAnalytical.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})
