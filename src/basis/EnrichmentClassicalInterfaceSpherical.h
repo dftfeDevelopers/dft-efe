@@ -47,6 +47,7 @@
 #include <basis/EnrichmentIdsPartition.h>
 #include <basis/TriangulationBase.h>
 #include <linearAlgebra/LinAlgOpContext.h>
+#include <basis/Defaults.h>
 
 namespace dftefe
 {
@@ -121,7 +122,8 @@ namespace dftefe
         const std::string                fieldName,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
-        const utils::mpi::MPIComm &comm);
+        const utils::mpi::MPIComm &comm,
+        const size_type enrichmentBatchSize = ECIDefaults::ENRICHMENT_BATCH_SIZE);
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.
@@ -262,6 +264,8 @@ namespace dftefe
       size_type d_feOrder;
 
       const utils::mpi::MPIComm d_comm;
+
+      size_type d_enrichBatchSize;
 
     }; // end of class
   }    // end of namespace basis

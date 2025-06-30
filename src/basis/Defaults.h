@@ -78,7 +78,18 @@ namespace dftefe
       //
       static const size_type MAX_REFINEMENT_STEPS;
 
-    }; // end of class L2ProjectionDefaults
+    }; // end of class GenerateMeshDefaults
+
+    class ECIDefaults
+    {
+    public:
+      //
+      // The maximum refinement steps used for adaptive mesh generation
+      // algorithm.
+      //
+      static const size_type ENRICHMENT_BATCH_SIZE;
+
+    }; // end of class ECIDefaults
 
   } // end of namespace basis
 } // end of namespace dftefe

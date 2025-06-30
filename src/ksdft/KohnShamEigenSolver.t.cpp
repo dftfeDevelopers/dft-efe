@@ -428,31 +428,38 @@ namespace dftefe
                                   d_kohnShamEnergiesMemspace.data(),
                                   kohnShamEnergies.data());
 
-              d_eigSolveResNorm =
-                getLinearEigenSolveResidual(kohnShamOperator,
-                                            kohnShamWaveFunctions,
-                                            M);
-
               size_type numLevelsBelowFermiEnergyResidualConverged = 0;
-              for (size_type i = 0; i < d_numWantedEigenvalues; i++)
-                {
-                  if (d_fracOccupancy[i] > d_fracOccupancyTolerance &&
-                      d_eigSolveResNorm[i] <= d_eigenSolveResidualTolerance)
-                    numLevelsBelowFermiEnergyResidualConverged += 1;
-                }
+              if(computeWaveFunctions)
+              {
+                d_eigSolveResNorm =
+                  getLinearEigenSolveResidual(kohnShamOperator,
+                                              kohnShamWaveFunctions,
+                                              M);
 
-              d_rootCout << "*****************The CHFSI results are: "
-                            "******************\n";
-              d_rootCout << "Fermi Energy is : " << d_fermiEnergy << "\n";
-              d_rootCout << "Fermi Energy residual is : " << nrs.getResidual()
-                         << "\n";
-              d_rootCout
-                << "Kohn Sham Energy\t\tFractional Occupancy\t\tEigen Solve Residual Norm\n";
-              for (size_type i = 0; i < d_numWantedEigenvalues; i++)
-                d_rootCout << kohnShamEnergies[i] << "\t\t"
-                           << d_fracOccupancy[i] << "\t\t"
-                           << d_eigSolveResNorm[i] << "\n";
-              d_rootCout << "\n";
+                for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+                  {
+                    if (d_fracOccupancy[i] > d_fracOccupancyTolerance &&
+                        d_eigSolveResNorm[i] <= d_eigenSolveResidualTolerance)
+                      numLevelsBelowFermiEnergyResidualConverged += 1;
+                  }
+
+                d_rootCout << "*****************The CHFSI results are: "
+                              "******************\n";
+                d_rootCout << "Fermi Energy is : " << d_fermiEnergy << "\n";
+                d_rootCout << "Fermi Energy residual is : " << nrs.getResidual()
+                          << "\n";
+                d_rootCout
+                  << "EigenVector No.\t\tKohn Sham Energy\t\tFractional Occupancy\t\tEigen Solve Residual Norm\n";
+                for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+                  d_rootCout << i+1 << "\t\t" << kohnShamEnergies[i] << "\t\t"
+                            << d_fracOccupancy[i] << "\t\t"
+                            << d_eigSolveResNorm[i] << "\n";
+                d_rootCout << "\n";
+              }
+              else
+              {
+                d_rootCout << "Not Computing EigenVectors. Linear Eigensolve break condition only satisfied by Max Cheby Filter Pass.";
+              }
 
               *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
 
