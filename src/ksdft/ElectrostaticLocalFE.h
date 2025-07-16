@@ -339,15 +339,13 @@ namespace dftefe
       const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_electronChargeDensity;
       quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpace>
-        *d_atomicTotalElecPotNuclearQuad, *d_atomicTotalElecPotElectronicQuad;
+         *d_atomicTotalElecPotElectronicQuad;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         d_atomicElectronChargeDensity, d_atomicElectronChargeDensityNucQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotHamQuad;
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_correctionPotRhoQuad;
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        *d_correctionPotNucQuad;
 
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_scratchDensNuclearQuad;
@@ -429,6 +427,8 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
         d_feBasisDataStorageRhsMap;
+
+      RealType d_integralPhiAtxbSmear , d_intRhoAtPhiAt , d_correctionEnergyAtomic;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

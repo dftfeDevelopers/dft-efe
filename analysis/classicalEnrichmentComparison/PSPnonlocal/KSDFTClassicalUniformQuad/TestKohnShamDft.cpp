@@ -351,12 +351,15 @@ int main(int argc, char** argv)
   const size_type dim = 3;
 
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
-  unsigned int num1DGaussSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeElec", rootCout);
+  unsigned int num1DGaussSubdividedSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
   unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
-  unsigned int num1DGaussSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSizeEigen", rootCout);
+  unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
   unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
+
+  unsigned int num1DGaussSubdividedSizeGrad = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
+  unsigned int gaussSubdividedCopiesGrad = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
 
   unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
   unsigned int gaussSubdividedCopiesNonLocOperator = 1;
@@ -531,10 +534,10 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                   linAlgOpContext);
   
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
-      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSizeElec, gaussSubdividedCopiesElec);
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeElec, gaussSubdividedCopiesElec);
 
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleEigen =
-      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSizeEigen, gaussSubdividedCopiesEigen);
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeEigen, gaussSubdividedCopiesEigen);
 
     quadrature::QuadratureRuleAttributes quadAttrGaussSubdivided(quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,true);
 
@@ -625,6 +628,16 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedAtomNonLocOp, basisAttrMap);
                 
+  std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleGrad =
+    std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeGrad, gaussSubdividedCopiesGrad);
+
+  std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveGrad =  
+    std::make_shared<quadrature::QuadratureRuleContainer>
+    (quadAttrGaussSubdivided, 
+    gaussSubdivQuadRuleGrad, 
+    triangulationBase, 
+    *cellMapping); 
+
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
@@ -632,15 +645,13 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  quadrature::QuadratureRuleAttributes quadAttrEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen+1);
-
   // Set up the FE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDHamStiffnessMatrix =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-    (basisDofHandlerWaveFn, quadAttrEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+    (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   // evaluate basis data
-  feBDHamStiffnessMatrix->evaluateBasisData(quadAttrEigen, basisAttrMap);
+  feBDHamStiffnessMatrix->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
                 
   std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDHamStiffnessMatrix;
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;

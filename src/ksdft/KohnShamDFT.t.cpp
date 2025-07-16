@@ -420,7 +420,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -721,7 +721,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Operator Creation");
       d_p.print();
 
@@ -1063,7 +1063,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -1409,7 +1409,7 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {
@@ -1503,7 +1503,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -1847,7 +1847,7 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {
@@ -1941,7 +1941,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");

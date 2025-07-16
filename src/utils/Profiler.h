@@ -85,6 +85,13 @@ namespace dftefe
       std::string                    d_profileName;
 
     }; // end of class Profiler
+
+    //
+    // helper function
+    //
+    void printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm, 
+            const std::string message);
+
   }    // end of namespace utils
 } // end of namespace dftefe
 #endif // dftefeProfiler_h

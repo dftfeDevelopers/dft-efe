@@ -103,7 +103,7 @@ namespace dftefe
       d_spline = std::make_shared<const utils::Spline>(
         this->d_radialPoints,
         this->d_radialValues,
-        true,
+        false,
         utils::Spline::spline_type::cspline,
         false,
         left,
