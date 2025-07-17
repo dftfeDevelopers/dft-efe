@@ -45,6 +45,7 @@ namespace dftefe
       : d_maxCellBlock(maxCellBlock)
       , d_linAlgOpContext(linAlgOpContext)
       , d_waveFuncBatchSize(waveFuncBatchSize)
+      , d_mpiPatternP2P(nullptr)
     {
       reinit(feBasisDataStorage);
     }
@@ -130,11 +131,25 @@ namespace dftefe
 
       d_energy = 0;
 
-      linearAlgebra::MultiVector<ValueType, memorySpace> psiBatch(
-        waveFunc.getMPIPatternP2P(),
-        d_linAlgOpContext,
-        d_waveFuncBatchSize,
-        ValueType());
+      if ((d_mpiPatternP2P == nullptr) || 
+          (d_mpiPatternP2P != nullptr && 
+          !d_mpiPatternP2P->isCompatible(*waveFunc.getMPIPatternP2P())))
+        {
+          d_mpiPatternP2P = waveFunc.getMPIPatternP2P();
+          d_psiBatch =
+            std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+              d_mpiPatternP2P,
+              waveFunc.getLinAlgOpContext(),
+              d_waveFuncBatchSize,
+              ValueType());
+          if(waveFunc.getNumberComponents() > d_waveFuncBatchSize)
+            d_psiBatchSmall =
+              std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                waveFunc.getLinAlgOpContext(),
+                waveFunc.getNumberComponents() % d_waveFuncBatchSize,
+                ValueType());  
+        }
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
@@ -153,25 +168,20 @@ namespace dftefe
                     occupation.begin() + psiEndId,
                     occupationInBatch.begin());
 
+          if(d_gradPsi->getNumberComponents() != numPsiInBatch*dim) 
+            d_gradPsi->reinit(quadRuleContainer, numPsiInBatch * dim);   
+
           if (numPsiInBatch < d_waveFuncBatchSize)
             {
-              d_gradPsi->reinit(quadRuleContainer, numPsiInBatch * dim);
-
-              linearAlgebra::MultiVector<ValueType, memorySpace> psiBatchSmall(
-                waveFunc.getMPIPatternP2P(),
-                d_linAlgOpContext,
-                numPsiInBatch,
-                ValueType());
-
               for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
                 memoryTransfer.copy(numPsiInBatch,
-                                    psiBatchSmall.data() +
+                                    d_psiBatchSmall->data() +
                                       numPsiInBatch * iSize,
                                     waveFunc.data() +
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
-              d_feBasisOp->interpolateWithBasisGradient(psiBatchSmall,
+              d_feBasisOp->interpolateWithBasisGradient(*d_psiBatchSmall,
                                                         feBMPsi,
                                                         *d_gradPsi);
             }
@@ -179,12 +189,12 @@ namespace dftefe
             {
               for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
                 memoryTransfer.copy(numPsiInBatch,
-                                    psiBatch.data() + numPsiInBatch * iSize,
+                                    d_psiBatch->data() + numPsiInBatch * iSize,
                                     waveFunc.data() +
                                       iSize * waveFunc.getNumberComponents() +
                                       psiStartId);
 
-              d_feBasisOp->interpolateWithBasisGradient(psiBatch,
+              d_feBasisOp->interpolateWithBasisGradient(*d_psiBatch,
                                                         feBMPsi,
                                                         *d_gradPsi);
             }

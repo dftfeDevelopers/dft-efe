@@ -308,6 +308,10 @@ namespace dftefe
       const std::vector<std::string> d_atomSymbolVec;
       bool                           d_isNonLocPSP;
 
+      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_psiBatchSmall,
+        d_psiBatch , d_YBatch , d_YBatchSmall;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                            d_mpiPatternP2P;
 
     }; // end of class ElectrostaticONCVNonLocFE
   }    // end of namespace ksdft

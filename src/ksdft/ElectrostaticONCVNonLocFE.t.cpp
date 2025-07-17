@@ -593,14 +593,40 @@ namespace dftefe
       RealType nonLocEnergy = (RealType)0;
       if (d_isNonLocPSP)
         {
-          linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>
-            psiBatch(X.getMPIPatternP2P(),
-                     d_linAlgOpContext,
-                     d_maxWaveFnBlock,
-                     ValueTypeWaveFnCoeff());
+          if ((d_mpiPatternP2P == nullptr) || 
+              (d_mpiPatternP2P != nullptr && 
+              !d_mpiPatternP2P->isCompatible(*X.getMPIPatternP2P())))
+            {
+              d_mpiPatternP2P = X.getMPIPatternP2P();
+              d_psiBatch =
+                std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                  d_mpiPatternP2P,
+                  X.getLinAlgOpContext(),
+                  d_maxWaveFnBlock,
+                  ValueTypeWaveFnCoeff());
+              d_YBatch =
+                std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                  d_mpiPatternP2P,
+                  X.getLinAlgOpContext(),
+                  d_maxWaveFnBlock,
+                  ValueTypeWaveFnCoeff());
+              if(X.getNumberComponents() > d_maxWaveFnBlock)
+                {
+                  d_psiBatchSmall =
+                    std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                      d_mpiPatternP2P,
+                      X.getLinAlgOpContext(),
+                      X.getNumberComponents() % d_maxWaveFnBlock,
+                      ValueTypeWaveFnCoeff());  
+                  d_YBatchSmall =
+                    std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                      d_mpiPatternP2P,
+                      X.getLinAlgOpContext(),
+                      X.getNumberComponents() % d_maxWaveFnBlock,
+                      ValueTypeWaveFnCoeff());                        
+                }
+            }
 
-          linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> Y(
-            psiBatch, (ValueTypeWaveFnCoeff)0);
           utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
           for (size_type psiStartId = 0; psiStartId < X.getNumberComponents();
@@ -625,28 +651,19 @@ namespace dftefe
 
               if (numPsiInBatch < d_maxWaveFnBlock)
                 {
-                  linearAlgebra::MultiVector<ValueType, memorySpace>
-                    psiBatchSmall(X.getMPIPatternP2P(),
-                                  d_linAlgOpContext,
-                                  numPsiInBatch,
-                                  ValueType());
-
-                  linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>
-                    YSmall(psiBatchSmall, (ValueTypeWaveFnCoeff)0);
-
                   for (size_type iSize = 0; iSize < X.localSize(); iSize++)
                     memoryTransfer.copy(
                       numPsiInBatch,
-                      psiBatchSmall.data() + numPsiInBatch * iSize,
+                      d_psiBatchSmall->data() + numPsiInBatch * iSize,
                       X.data() + iSize * X.getNumberComponents() + psiStartId);
 
-                  d_atomNonLocOpContext->apply(psiBatchSmall,
-                                               YSmall,
+                  d_atomNonLocOpContext->apply(*d_psiBatchSmall,
+                                               *d_YBatchSmall,
                                                true,
                                                true);
                   linearAlgebra::dot(
-                    psiBatchSmall,
-                    YSmall,
+                    *d_psiBatchSmall,
+                    *d_YBatchSmall,
                     dotProds,
                     linearAlgebra::blasLapack::ScalarOp::Conj,
                     linearAlgebra::blasLapack::ScalarOp::Identity);
@@ -655,15 +672,15 @@ namespace dftefe
                 {
                   for (size_type iSize = 0; iSize < X.localSize(); iSize++)
                     memoryTransfer.copy(numPsiInBatch,
-                                        psiBatch.data() + numPsiInBatch * iSize,
+                                        d_psiBatch->data() + numPsiInBatch * iSize,
                                         X.data() +
                                           iSize * X.getNumberComponents() +
                                           psiStartId);
 
-                  d_atomNonLocOpContext->apply(psiBatch, Y, true, true);
+                  d_atomNonLocOpContext->apply(*d_psiBatch, *d_YBatch, true, true);
                   linearAlgebra::dot(
-                    psiBatch,
-                    Y,
+                    *d_psiBatch,
+                    *d_YBatch,
                     dotProds,
                     linearAlgebra::blasLapack::ScalarOp::Conj,
                     linearAlgebra::blasLapack::ScalarOp::Identity);
