@@ -412,8 +412,8 @@ namespace dftefe
             //     xPathInfo.xpath + " element in " + xPathInfo.fileName);
             // utils::throwException(
             //   l < n,
-            //   "Angular quantum number (l) greater than or equal to principal quantum "
-            //   " (n) found in " +
+            //   "Angular quantum number (l) greater than or equal to principal
+            //   quantum " " (n) found in " +
             //     xPathInfo.xpath + " element in " + xPathInfo.fileName);
             utils::throwException(
               m >= -l && m <= l,

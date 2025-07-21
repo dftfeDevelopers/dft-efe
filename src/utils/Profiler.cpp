@@ -330,11 +330,10 @@ namespace dftefe
           virtualMemUsed, mpiComm);
       const double maxBytes = minMaxAvg.max;
       cout << std::endl
-                << message +
-                      ", Current maximum memory usage across all processors: "
-                << maxBytes / 1024.0 / 1024.0 / 1024.0 << " GB out of "
-                << totalVirtualMem / 1024.0 / 1024.0 / 1024.0 << std::endl
-                << std::endl;
+           << message + ", Current maximum memory usage across all processors: "
+           << maxBytes / 1024.0 / 1024.0 / 1024.0 << " GB out of "
+           << totalVirtualMem / 1024.0 / 1024.0 / 1024.0 << std::endl
+           << std::endl;
       mpi::MPIBarrier(mpiComm);
     }
   } // namespace utils

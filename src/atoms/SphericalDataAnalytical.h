@@ -44,7 +44,8 @@ namespace dftefe
     class SphericalDataAnalytical : public SphericalData
     {
     public:
-    //Assumption ScalarSpatialFunctionReal is spherically symmetric . TODO : enforce this
+      // Assumption ScalarSpatialFunctionReal is spherically symmetric . TODO :
+      // enforce this
       SphericalDataAnalytical(
         const std::vector<int>                  qNumbers,
         const utils::ScalarSpatialFunctionReal &function,
@@ -105,13 +106,13 @@ namespace dftefe
       getSmoothness() const override;
 
     private:
-      std::vector<int>                     d_qNumbers;
-      double                               d_polarAngleTolerance;
-      double                               d_cutoffTolerance;
-      double                               d_radiusTolerance;
-      size_type                            d_dim;
-      double                               d_cutoff;
-      double                               d_smoothness;
+      std::vector<int> d_qNumbers;
+      double           d_polarAngleTolerance;
+      double           d_cutoffTolerance;
+      double           d_radiusTolerance;
+      size_type        d_dim;
+      double           d_cutoff;
+      double           d_smoothness;
 
       const SphericalHarmonicFunctions &      d_sphericalHarmonicFunc;
       const utils::ScalarSpatialFunctionReal &d_func;

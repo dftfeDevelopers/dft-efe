@@ -123,7 +123,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm,
-        const size_type enrichmentBatchSize = ECIDefaults::ENRICHMENT_BATCH_SIZE);
+        const size_type            enrichmentBatchSize =
+          ECIDefaults::ENRICHMENT_BATCH_SIZE);
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.

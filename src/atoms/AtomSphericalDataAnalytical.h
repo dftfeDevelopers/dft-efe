@@ -57,8 +57,12 @@ namespace dftefe
     {
     public:
       AtomSphericalDataAnalytical(
-        const std::map<std::string , std::vector<std::vector<int>>> &fieldToQuantumNumbersVec,
-        const std::map<std::string , std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>> &fieldToScalarSpatialFnRealVec,
+        const std::map<std::string, std::vector<std::vector<int>>>
+          &fieldToQuantumNumbersVec,
+        const std::map<
+          std::string,
+          std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>>
+          &                               fieldToScalarSpatialFnRealVec,
         const std::vector<std::string> &  fieldNames,
         const SphericalHarmonicFunctions &sphericalHarmonicFunc);
 
@@ -97,18 +101,22 @@ namespace dftefe
       void
       getSphericalDataFromSpatialFn(
         std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
-        const std::map<std::string , std::vector<std::vector<int>>> &fieldToQuantumNumbersVec,
-        const std::map<std::string , std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>> &fieldToScalarSpatialFnRealVec,
-        const std::string &                          fieldName,
-        const SphericalHarmonicFunctions &           sphericalHarmonicFunc);
+        const std::map<std::string, std::vector<std::vector<int>>>
+          &fieldToQuantumNumbersVec,
+        const std::map<
+          std::string,
+          std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>>
+          &                               fieldToScalarSpatialFnRealVec,
+        const std::string &               fieldName,
+        const SphericalHarmonicFunctions &sphericalHarmonicFunc);
 
       std::vector<std::string> d_fieldNames;
-      const double d_radialPointMax;
+      const double             d_radialPointMax;
       std::unordered_map<std::string,
                          std::vector<std::shared_ptr<SphericalData>>>
         d_sphericalData;
       std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
-                                                   d_qNumbersToIdMap;
+                                        d_qNumbersToIdMap;
       const SphericalHarmonicFunctions &d_sphericalHarmonicFunc;
     };
   } // end of namespace atoms

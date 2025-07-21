@@ -86,28 +86,30 @@ namespace dftefe
 
     std::vector<double>
     SphericalDataAnalytical::getValue(const std::vector<utils::Point> &point,
-                                 const utils::Point &             origin)
+                                      const utils::Point &             origin)
     {
       std::vector<double> value(point.size(), 0.);
       DFTEFE_AssertWithMsg(point[0].size() == d_dim && origin.size() == d_dim,
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataAnalyticalInternal::getValueAnalytical(point,
-                                                     origin,
-                                                     d_cutoff,
-                                                     d_smoothness,
-                                                     d_func,
-                                                     d_sphericalHarmonicFunc,
-                                                     d_qNumbers,
-                                                     d_polarAngleTolerance,
-                                                     value);
+      SphericalDataAnalyticalInternal::getValueAnalytical(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_func,
+        d_sphericalHarmonicFunc,
+        d_qNumbers,
+        d_polarAngleTolerance,
+        value);
       return value;
     }
 
     std::vector<double>
-    SphericalDataAnalytical::getGradientValue(const std::vector<utils::Point> &point,
-                                         const utils::Point &origin)
+    SphericalDataAnalytical::getGradientValue(
+      const std::vector<utils::Point> &point,
+      const utils::Point &             origin)
     {
       std::vector<double> gradient(d_dim * point.size(), 0.);
       utils::throwException(
@@ -117,8 +119,9 @@ namespace dftefe
     }
 
     std::vector<double>
-    SphericalDataAnalytical::getHessianValue(const std::vector<utils::Point> &point,
-                                        const utils::Point &             origin)
+    SphericalDataAnalytical::getHessianValue(
+      const std::vector<utils::Point> &point,
+      const utils::Point &             origin)
     {
       std::vector<double> hessian(d_dim * d_dim, 0.),
         ret(d_dim * d_dim * point.size(), 0.);
@@ -130,7 +133,7 @@ namespace dftefe
 
     double
     SphericalDataAnalytical::getValue(const utils::Point &point,
-                                 const utils::Point &origin)
+                                      const utils::Point &origin)
     {
       std::vector<double> value(1, 0);
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
@@ -153,7 +156,7 @@ namespace dftefe
 
     std::vector<double>
     SphericalDataAnalytical::getGradientValue(const utils::Point &point,
-                                         const utils::Point &origin)
+                                              const utils::Point &origin)
     {
       std::vector<double> gradient(d_dim, 0.);
       utils::throwException(
@@ -164,7 +167,7 @@ namespace dftefe
 
     std::vector<double>
     SphericalDataAnalytical::getHessianValue(const utils::Point &point,
-                                        const utils::Point &origin)
+                                             const utils::Point &origin)
     {
       std::vector<double> hessian(d_dim * d_dim, 0.);
       utils::throwException(
@@ -185,8 +188,8 @@ namespace dftefe
 
     std::vector<double>
     SphericalDataAnalytical::getAngularValue(const std::vector<double> &r,
-                                        const std::vector<double> &theta,
-                                        const std::vector<double> &phi)
+                                             const std::vector<double> &theta,
+                                             const std::vector<double> &phi)
     {
       std::vector<double> retVal(r.size(), 0.);
       utils::throwException(

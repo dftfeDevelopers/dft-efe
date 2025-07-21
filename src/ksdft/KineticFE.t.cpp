@@ -131,24 +131,24 @@ namespace dftefe
 
       d_energy = 0;
 
-      if ((d_mpiPatternP2P == nullptr) || 
-          (d_mpiPatternP2P != nullptr && 
-          !d_mpiPatternP2P->isCompatible(*waveFunc.getMPIPatternP2P())))
+      if ((d_mpiPatternP2P == nullptr) ||
+          (d_mpiPatternP2P != nullptr &&
+           !d_mpiPatternP2P->isCompatible(*waveFunc.getMPIPatternP2P())))
         {
           d_mpiPatternP2P = waveFunc.getMPIPatternP2P();
-          d_psiBatch =
-            std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+          d_psiBatch      = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P,
+            waveFunc.getLinAlgOpContext(),
+            d_waveFuncBatchSize,
+            ValueType());
+          if (waveFunc.getNumberComponents() > d_waveFuncBatchSize)
+            d_psiBatchSmall = std::make_shared<
+              linearAlgebra::MultiVector<ValueType, memorySpace>>(
               d_mpiPatternP2P,
               waveFunc.getLinAlgOpContext(),
-              d_waveFuncBatchSize,
+              waveFunc.getNumberComponents() % d_waveFuncBatchSize,
               ValueType());
-          if(waveFunc.getNumberComponents() > d_waveFuncBatchSize)
-            d_psiBatchSmall =
-              std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                waveFunc.getLinAlgOpContext(),
-                waveFunc.getNumberComponents() % d_waveFuncBatchSize,
-                ValueType());  
         }
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
@@ -168,8 +168,8 @@ namespace dftefe
                     occupation.begin() + psiEndId,
                     occupationInBatch.begin());
 
-          if(d_gradPsi->getNumberComponents() != numPsiInBatch*dim) 
-            d_gradPsi->reinit(quadRuleContainer, numPsiInBatch * dim);   
+          if (d_gradPsi->getNumberComponents() != numPsiInBatch * dim)
+            d_gradPsi->reinit(quadRuleContainer, numPsiInBatch * dim);
 
           if (numPsiInBatch < d_waveFuncBatchSize)
             {

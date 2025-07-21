@@ -89,9 +89,10 @@ namespace dftefe
     //
     // helper function
     //
-    void printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm, 
-            const std::string message);
+    void
+    printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm,
+                            const std::string          message);
 
-  }    // end of namespace utils
+  } // end of namespace utils
 } // end of namespace dftefe
 #endif // dftefeProfiler_h

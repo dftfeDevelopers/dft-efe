@@ -407,7 +407,10 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
-      size_type waveFnBatch = numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ? KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE : numWantedEigenvalues;
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -460,7 +463,7 @@ namespace dftefe
                            *d_MContext,
                            *d_MInvContext);
         }
-        
+
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
@@ -710,7 +713,10 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
-      size_type waveFnBatch = numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ? KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE : numWantedEigenvalues;
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -1054,7 +1060,10 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
-      size_type waveFnBatch = numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ? KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE : numWantedEigenvalues;
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -1393,7 +1402,10 @@ namespace dftefe
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
-      size_type waveFnBatch = numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ? KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE : numWantedEigenvalues;
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
@@ -1829,8 +1841,11 @@ namespace dftefe
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
-      size_type waveFnBatch = numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ? KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE : numWantedEigenvalues;
-      
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
+
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
                                                    ValueTypeElectrostaticsCoeff,

@@ -117,10 +117,10 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace> *d_gradPsi;
       Storage d_cellWiseStorageKineticEnergy;
 
-      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>> d_psiBatchSmall,
-        d_psiBatch;
+      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
+        d_psiBatchSmall, d_psiBatch;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                            d_mpiPatternP2P;
+        d_mpiPatternP2P;
 
     }; // end of class KineticFE
   }    // end of namespace ksdft

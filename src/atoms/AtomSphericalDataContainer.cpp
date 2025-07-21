@@ -85,14 +85,19 @@ namespace dftefe
           "AtomSphericalDataType can only be of types ENRICHMENT and PSEUDOPOTENTIAL.");
     }
 
-   // Constructor
+    // Constructor
     AtomSphericalDataContainer::AtomSphericalDataContainer(
-      const std::map<std::string, std::map<std::string , std::vector<std::vector<int>>>>
+      const std::map<std::string,
+                     std::map<std::string, std::vector<std::vector<int>>>>
         &atomSymbolToFieldToQuantumNumVec,
-      const std::map<std::string, std::map<std::string , std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>>>
-        &atomSymbolToFieldToScalarSpatialFnRealVec,
-      const std::vector<std::string> &          fieldNames,
-      const bool                                isAssocLegendreSplineEval)
+      const std::map<
+        std::string,
+        std::map<
+          std::string,
+          std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>>>
+        &                             atomSymbolToFieldToScalarSpatialFnRealVec,
+      const std::vector<std::string> &fieldNames,
+      const bool                      isAssocLegendreSplineEval)
       : d_atomSymbolToFilename(std::map<std::string, std::string>())
       , d_fieldNames(fieldNames)
       , d_metadataNames(std::vector<std::string>(0))
@@ -101,17 +106,18 @@ namespace dftefe
       d_SphericalHarmonicFunctions =
         std::make_shared<const SphericalHarmonicFunctions>(
           d_isAssocLegendreSplineEval);
-      auto iterFun = atomSymbolToFieldToScalarSpatialFnRealVec.begin();
+      auto iterFun  = atomSymbolToFieldToScalarSpatialFnRealVec.begin();
       auto iterQNum = atomSymbolToFieldToQuantumNumVec.begin();
-      for (; iterFun != atomSymbolToFieldToScalarSpatialFnRealVec.end(); iterFun++)
+      for (; iterFun != atomSymbolToFieldToScalarSpatialFnRealVec.end();
+           iterFun++)
         {
           d_mapAtomSymbolToAtomSphericalData.insert(
             {iterFun->first,
-              std::make_shared<AtomSphericalDataAnalytical>(
-                iterQNum->second,
-                iterFun->second,
-                d_fieldNames,
-                *d_SphericalHarmonicFunctions)});
+             std::make_shared<AtomSphericalDataAnalytical>(
+               iterQNum->second,
+               iterFun->second,
+               d_fieldNames,
+               *d_SphericalHarmonicFunctions)});
           iterQNum++;
         }
     }

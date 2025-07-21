@@ -1105,8 +1105,7 @@ namespace dftefe
             feBDHamiltonian->getQuadratureRuleContainer(),
         "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
-      utils::Profiler p(
-        feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+      utils::Profiler p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
       // d_atomicTotalElecPotElectronicQuad = &atomicTotalElecPotElectronicQuad;
       // d_atomicElectronChargeDensity      = atomicElectronChargeDensity;
@@ -1194,9 +1193,9 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      d_atomicElectronChargeDensityNucQuad =
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-          feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+      // d_atomicElectronChargeDensityNucQuad =
+      //   quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+      //     feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       d_atomicTotalElecPotElectronicQuad =
         new quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -1241,8 +1240,8 @@ namespace dftefe
                                                          d_atomCharges,
                                                          d_smearedChargeRadius);
 
-      quadValueIter1 = d_atomicElectronChargeDensityNucQuad.begin();
-      RealType *           quadValueIter3 = d_nuclearChargesDensity->begin();
+      // quadValueIter1 = d_atomicElectronChargeDensityNucQuad.begin();
+      RealType *quadValueIter3 = d_nuclearChargesDensity->begin();
 
       quadRuleContainerVal = feBDNuclearChargeRhs->getQuadratureRuleContainer();
 
@@ -1254,17 +1253,17 @@ namespace dftefe
             quadRuleContainerVal->nCellQuadraturePoints(iCell);
           std::vector<double> jxw = quadRuleContainerVal->getCellJxW(iCell);
 
-          std::vector<RealType> valInCellQuad1 =
-            (atomicElectronicChargeDensityFunction)(
-              quadRuleContainerVal->getCellRealPoints(iCell));
+          // std::vector<RealType> valInCellQuad1 =
+          //   (atomicElectronicChargeDensityFunction)(
+          //     quadRuleContainerVal->getCellRealPoints(iCell));
 
           std::vector<RealType> valInCellQuad3 =
             (smfuncDens)(quadRuleContainerVal->getCellRealPoints(iCell));
 
           for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
             {
-              quadValueIter1[cumulativeQuadInCell + iQuad] =
-                valInCellQuad1[iQuad];
+              // quadValueIter1[cumulativeQuadInCell + iQuad] =
+              //   valInCellQuad1[iQuad];
               quadValueIter3[cumulativeQuadInCell + iQuad] =
                 valInCellQuad3[iQuad];
               totNuclearChargeQuad += valInCellQuad3[iQuad] * jxw[iQuad];
@@ -1320,43 +1319,49 @@ namespace dftefe
 
       computeNuclearSelfEnergy();
 
-      /* Compute energy of d_integralPhiAtxbSmear , d_intRhoAtPhiAt , d_correctionEnergyAtomic*/
+      /* Compute energy of d_integralPhiAtxbSmear , d_intRhoAtPhiAt ,
+       * d_correctionEnergyAtomic*/
 
-      d_integralPhiAtxbSmear = 0;
-      d_intRhoAtPhiAt = 0;
+      d_integralPhiAtxbSmear   = 0;
+      d_intRhoAtPhiAt          = 0;
       d_correctionEnergyAtomic = 0;
-      
+
       auto jxwStorageNucl = d_feBDNuclearChargeRhs->getJxWInAllCells();
 
-      RealType        value                = 0;
-      const RealType *jxwStorageIter       = jxwStorageNucl.data();
+      RealType        value              = 0;
+      const RealType *jxwStorageIter     = jxwStorageNucl.data();
       const RealType *nuclChargeDensIter = d_nuclearChargesDensity->data();
-      const RealType *atomicElecChargeDensIter = d_atomicElectronChargeDensityNucQuad.data();
+      // const RealType *atomicElecChargeDensIter =
+      // d_atomicElectronChargeDensityNucQuad.data();
       cumulativeQuadInCell = 0;
 
       for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
-            iCell++)
+           iCell++)
         {
           size_type numQuadInCell =
             quadRuleContainerNucl->nCellQuadraturePoints(iCell);
 
-          std::vector<RealType>  atomicTotalElecPot = (atomicTotalElectroPotentialFunction)(
-                        quadRuleContainerNucl->getCellRealPoints(iCell));
-          std::vector<RealType>  vext = (externalPotentialFunction)(
-                        quadRuleContainerNucl->getCellRealPoints(iCell));
-          std::vector<RealType>  vsmear = (smfuncPot)(
-                        quadRuleContainerNucl->getCellRealPoints(iCell));
+          std::vector<RealType> atomicTotalElecPot =
+            (atomicTotalElectroPotentialFunction)(
+              quadRuleContainerNucl->getCellRealPoints(iCell));
+          std::vector<RealType> vext = (externalPotentialFunction)(
+            quadRuleContainerNucl->getCellRealPoints(iCell));
+          std::vector<RealType> vsmear =
+            (smfuncPot)(quadRuleContainerNucl->getCellRealPoints(iCell));
+          std::vector<RealType> atomicRho =
+            (atomicElectronicChargeDensityFunction)(
+              quadRuleContainerNucl->getCellRealPoints(iCell));
 
           for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
             {
               d_integralPhiAtxbSmear +=
-                nuclChargeDensIter[cumulativeQuadInCell + iQuad] * atomicTotalElecPot[iQuad] *
+                nuclChargeDensIter[cumulativeQuadInCell + iQuad] *
+                atomicTotalElecPot[iQuad] *
                 jxwStorageIter[cumulativeQuadInCell + iQuad];
-              d_intRhoAtPhiAt +=
-                atomicElecChargeDensIter[cumulativeQuadInCell + iQuad] * atomicTotalElecPot[iQuad] *
-                jxwStorageIter[cumulativeQuadInCell + iQuad];
+              d_intRhoAtPhiAt += atomicRho[iQuad] * atomicTotalElecPot[iQuad] *
+                                 jxwStorageIter[cumulativeQuadInCell + iQuad];
               d_correctionEnergyAtomic +=
-                atomicElecChargeDensIter[cumulativeQuadInCell + iQuad] * (vext[iQuad] - vsmear[iQuad]) *
+                atomicRho[iQuad] * (vext[iQuad] - vsmear[iQuad]) *
                 jxwStorageIter[cumulativeQuadInCell + iQuad];
             }
           cumulativeQuadInCell += numQuadInCell;
@@ -2085,10 +2090,10 @@ namespace dftefe
               ValueTypeWaveFnBasisData,
               memorySpace,
               dim>(*d_scratchPotNuclearQuad,
-                  *d_nuclearChargesDensity,
-                  d_feBDNuclearChargeRhs->getJxWInAllCells(),
-                  d_linAlgOpContext,
-                  d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+                   *d_nuclearChargesDensity,
+                   d_feBDNuclearChargeRhs->getJxWInAllCells(),
+                   d_linAlgOpContext,
+                   d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           totalEnergy = (integralPhixRho + integralPhixbSmear) * 0.5;
         }
@@ -2101,22 +2106,22 @@ namespace dftefe
               ValueTypeWaveFnBasisData,
               memorySpace,
               dim>(*d_scratchPotNuclearQuad,
-                  *d_nuclearChargesDensity,
-                  d_feBDNuclearChargeRhs->getJxWInAllCells(),
-                  d_linAlgOpContext,
-                  d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
-
-          RealType intRhoAtDelPhi =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpace,
-              dim>(*d_scratchPotNuclearQuad,
-                   d_atomicElectronChargeDensityNucQuad,
+                   *d_nuclearChargesDensity,
                    d_feBDNuclearChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContext,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+          // RealType intRhoAtDelPhi =
+          //   ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+          //     ValueTypeBasisData,
+          //     ValueTypeBasisCoeff,
+          //     ValueTypeWaveFnBasisData,
+          //     memorySpace,
+          //     dim>(*d_scratchPotNuclearQuad,
+          //          d_atomicElectronChargeDensityNucQuad,
+          //          d_feBDNuclearChargeRhs->getJxWInAllCells(),
+          //          d_linAlgOpContext,
+          //          d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           quadrature::add((ValueType)1.0,
                           *d_electronChargeDensity,
@@ -2128,6 +2133,18 @@ namespace dftefe
           d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
                                              *d_feBMTotalCharge,
                                              *d_scratchPotRhoQuad);
+
+          RealType intRhoAtDelPhi =
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
+              ValueTypeBasisData,
+              ValueTypeBasisCoeff,
+              ValueTypeWaveFnBasisData,
+              memorySpace,
+              dim>(*d_scratchPotRhoQuad,
+                   d_atomicElectronChargeDensity,
+                   d_feBDElectronicChargeRhs->getJxWInAllCells(),
+                   d_linAlgOpContext,
+                   d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           quadrature::add((ValueType)1.0,
                           *d_atomicTotalElecPotElectronicQuad,
@@ -2147,8 +2164,16 @@ namespace dftefe
                    d_linAlgOpContext,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-          totalEnergy =
-            (d_integralPhiAtxbSmear + integralDelPhixbSmear + d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot) * 0.5;
+          totalEnergy = (d_integralPhiAtxbSmear + integralDelPhixbSmear +
+                         d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot) *
+                        0.5;
+
+          // d_rootCout << "integralPhiAtxbSmear : " << d_integralPhiAtxbSmear
+          // << "\n"; d_rootCout << "integralDelPhixbSmear : " <<
+          // integralDelPhixbSmear << "\n"; d_rootCout << "intRhoAtPhiAt : " <<
+          // d_intRhoAtPhiAt << "\n"; d_rootCout << "intRhoAtDelPhi : " <<
+          // intRhoAtDelPhi << "\n"; d_rootCout << "intDelRhoPhiTot : " <<
+          // intDelRhoPhiTot << "\n";
         }
 
       // correction energy evaluation
@@ -2170,6 +2195,10 @@ namespace dftefe
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           correctionEnergy = correctionEnergyDelta + d_correctionEnergyAtomic;
+
+          // d_rootCout << "correctionEnergyAtomic: " <<
+          // d_correctionEnergyAtomic << "\n"; d_rootCout <<
+          // "correctionEnergyDelta: " << correctionEnergyDelta << "\n";
         }
       else
         {
