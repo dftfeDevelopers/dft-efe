@@ -46,9 +46,10 @@ namespace dftefe
       using Layout = blas::Layout;
 
       // lapack
-      using Job  = lapack::Job;  // Job::Vec, Job::NoVec
-      using Uplo = lapack::Uplo; // Uplo::Lower, Uplo::Upper
-      using Diag = lapack::Diag; // Diag::NonUnit, Diag::Unit
+      using Job   = lapack::Job;   // Job::Vec, Job::NoVec
+      using Uplo  = lapack::Uplo;  // Uplo::Lower, Uplo::Upper
+      using Diag  = lapack::Diag;  // Diag::NonUnit, Diag::Unit
+      using Range = lapack::Range; // Range::All , Range::Value , Range::Index
 
       using LapackInt = int64_t;
 

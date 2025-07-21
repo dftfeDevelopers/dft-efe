@@ -287,7 +287,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -407,6 +407,11 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
+
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -420,7 +425,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -432,6 +437,32 @@ namespace dftefe
       d_waveFunctionSubspaceGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
         d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+
+      if (isResidualChebyshevFilter)
+        {
+          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       d_waveFunctionSubspaceGuess,
+                       d_lanczosGuess,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext);
+
+          ksEigSolve.setChebyshevPolynomialDegree(1);
+
+          ksEigSolve.solve(*d_hamitonianOperator,
+                           d_kohnShamEnergies,
+                           d_kohnShamWaveFunctions,
+                           false,
+                           *d_MContext,
+                           *d_MInvContext);
+        }
 
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
@@ -445,7 +476,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        waveFnBatch,
         MContextForInv,
         MInvContext);
 
@@ -460,39 +491,13 @@ namespace dftefe
           *feBMWaveFn,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       if (dynamic_cast<const utils::PointChargePotentialFunction *>(
             &externalPotentialFunction) != nullptr)
         d_isPSPCalculation = false;
       else
         d_isPSPCalculation = true;
-
-      if (isResidualChebyshevFilter)
-        {
-          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       d_waveFunctionSubspaceGuess,
-                       d_lanczosGuess,
-                       false,
-                       d_numWantedEigenvalues,
-                       MContextForInv,
-                       MInvContext);
-
-          ksEigSolve.setChebyshevPolynomialDegree(1);
-
-          ksEigSolve.solve(*d_hamitonianOperator,
-                           d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
-                           false,
-                           *d_MContext,
-                           *d_MInvContext);
-        }
       d_p.print();
     }
 
@@ -591,7 +596,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -708,6 +713,11 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
+
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -721,7 +731,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
       d_p.print();
 
@@ -735,6 +745,32 @@ namespace dftefe
       feBMWaveFn->getConstraints().distributeParentToChild(
         d_waveFunctionSubspaceGuess, numWantedEigenvalues);
 
+      if (isResidualChebyshevFilter)
+        {
+          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       d_waveFunctionSubspaceGuess,
+                       d_lanczosGuess,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext);
+
+          ksEigSolve.setChebyshevPolynomialDegree(1);
+
+          ksEigSolve.solve(*d_hamitonianOperator,
+                           d_kohnShamEnergies,
+                           d_kohnShamWaveFunctions,
+                           false,
+                           *d_MContext,
+                           *d_MInvContext);
+        }
+
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
@@ -747,7 +783,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        waveFnBatch,
         MContextForInv,
         MInvContext);
 
@@ -762,39 +798,13 @@ namespace dftefe
           *feBMWaveFn,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       if (dynamic_cast<const utils::PointChargePotentialFunction *>(
             &externalPotentialFunction) != nullptr)
         d_isPSPCalculation = false;
       else
         d_isPSPCalculation = true;
-
-      if (isResidualChebyshevFilter)
-        {
-          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       d_waveFunctionSubspaceGuess,
-                       d_lanczosGuess,
-                       false,
-                       d_numWantedEigenvalues,
-                       MContextForInv,
-                       MInvContext);
-
-          ksEigSolve.setChebyshevPolynomialDegree(1);
-
-          ksEigSolve.solve(*d_hamitonianOperator,
-                           d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
-                           false,
-                           *d_MContext,
-                           *d_MInvContext);
-        }
       d_p.print();
     }
 
@@ -906,7 +916,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1050,6 +1060,11 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
+
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -1063,7 +1078,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -1075,6 +1090,32 @@ namespace dftefe
       d_waveFunctionSubspaceGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
         d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+
+      if (isResidualChebyshevFilter)
+        {
+          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       d_waveFunctionSubspaceGuess,
+                       d_lanczosGuess,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext);
+
+          ksEigSolve.setChebyshevPolynomialDegree(1);
+
+          ksEigSolve.solve(*d_hamitonianOperator,
+                           d_kohnShamEnergies,
+                           d_kohnShamWaveFunctions,
+                           false,
+                           *d_MContext,
+                           *d_MInvContext);
+        }
 
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
@@ -1088,7 +1129,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        waveFnBatch,
         MContextForInv,
         MInvContext);
 
@@ -1103,39 +1144,13 @@ namespace dftefe
           *feBMWaveFn,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       if (dynamic_cast<const utils::PointChargePotentialFunction *>(
             &externalPotentialFunction) != nullptr)
         d_isPSPCalculation = false;
       else
         d_isPSPCalculation = true;
-
-      if (isResidualChebyshevFilter)
-        {
-          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       d_waveFunctionSubspaceGuess,
-                       d_lanczosGuess,
-                       false,
-                       d_numWantedEigenvalues,
-                       MContextForInv,
-                       MInvContext);
-
-          ksEigSolve.setChebyshevPolynomialDegree(1);
-
-          ksEigSolve.solve(*d_hamitonianOperator,
-                           d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
-                           false,
-                           *d_MContext,
-                           *d_MInvContext);
-        }
       d_p.print();
     }
 
@@ -1228,7 +1243,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1387,6 +1402,11 @@ namespace dftefe
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
+
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
                                                    ValueTypeElectrostaticsCoeff,
@@ -1409,7 +1429,7 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {
@@ -1503,7 +1523,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -1515,6 +1535,32 @@ namespace dftefe
       d_waveFunctionSubspaceGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
         d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+
+      if (isResidualChebyshevFilter)
+        {
+          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       d_waveFunctionSubspaceGuess,
+                       d_lanczosGuess,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext);
+
+          ksEigSolve.setChebyshevPolynomialDegree(1);
+
+          ksEigSolve.solve(*d_hamitonianOperator,
+                           d_kohnShamEnergies,
+                           d_kohnShamWaveFunctions,
+                           false,
+                           *d_MContext,
+                           *d_MInvContext);
+        }
 
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
@@ -1528,7 +1574,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        waveFnBatch,
         MContextForInv,
         MInvContext);
 
@@ -1543,35 +1589,9 @@ namespace dftefe
           *feBMWaveFn,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       d_isPSPCalculation = true;
-
-      if (isResidualChebyshevFilter)
-        {
-          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       d_waveFunctionSubspaceGuess,
-                       d_lanczosGuess,
-                       false,
-                       d_numWantedEigenvalues,
-                       MContextForInv,
-                       MInvContext);
-
-          ksEigSolve.setChebyshevPolynomialDegree(1);
-
-          ksEigSolve.solve(*d_hamitonianOperator,
-                           d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
-                           false,
-                           *d_MContext,
-                           *d_MInvContext);
-        }
       d_p.print();
     }
 
@@ -1667,7 +1687,7 @@ namespace dftefe
       , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
                                     linAlgOpContext,
                                     numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(&d_waveFunctionSubspaceGuess)
+      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1821,6 +1841,11 @@ namespace dftefe
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
+      size_type waveFnBatch =
+        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues;
+
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
                                                    ValueTypeElectrostaticsCoeff,
@@ -1847,7 +1872,7 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {
@@ -1941,7 +1966,7 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          numWantedEigenvalues);
+          waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -1953,6 +1978,32 @@ namespace dftefe
       d_waveFunctionSubspaceGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
         d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+
+      if (isResidualChebyshevFilter)
+        {
+          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       d_waveFunctionSubspaceGuess,
+                       d_lanczosGuess,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext);
+
+          ksEigSolve.setChebyshevPolynomialDegree(1);
+
+          ksEigSolve.solve(*d_hamitonianOperator,
+                           d_kohnShamEnergies,
+                           d_kohnShamWaveFunctions,
+                           false,
+                           *d_MContext,
+                           *d_MInvContext);
+        }
 
       // form the kohn sham operator
       d_ksEigSolve = std::make_shared<
@@ -1966,7 +2017,7 @@ namespace dftefe
         d_waveFunctionSubspaceGuess,
         d_lanczosGuess,
         isResidualChebyshevFilter,
-        d_numWantedEigenvalues,
+        waveFnBatch,
         MContextForInv,
         MInvContext);
 
@@ -1981,35 +2032,9 @@ namespace dftefe
           *feBMWaveFn,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       d_isPSPCalculation = true;
-
-      if (isResidualChebyshevFilter)
-        {
-          KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       d_waveFunctionSubspaceGuess,
-                       d_lanczosGuess,
-                       false,
-                       d_numWantedEigenvalues,
-                       MContextForInv,
-                       MInvContext);
-
-          ksEigSolve.setChebyshevPolynomialDegree(1);
-
-          ksEigSolve.solve(*d_hamitonianOperator,
-                           d_kohnShamEnergies,
-                           *d_kohnShamWaveFunctions,
-                           false,
-                           *d_MContext,
-                           *d_MInvContext);
-        }
       d_p.print();
     }
 
@@ -2046,7 +2071,7 @@ namespace dftefe
                                            memorySpace,
                                            dim>>(d_hamitonianElec))
         {
-          hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
+          hamiltonian->evalEnergy(d_occupation, d_kohnShamWaveFunctions);
         }
 
       RealType elecEnergy = d_hamitonianElec->getEnergy();
@@ -2194,7 +2219,7 @@ namespace dftefe
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
                                 d_kohnShamEnergies,
-                                *d_kohnShamWaveFunctions,
+                                d_kohnShamWaveFunctions,
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
@@ -2228,7 +2253,7 @@ namespace dftefe
               waveFuncQuad( quadRuleContainer,
           d_kohnShamWaveFunctions->getNumberComponents());
 
-              feBasisOp->interpolate(*d_kohnShamWaveFunctions,
+              feBasisOp->interpolate(d_kohnShamWaveFunctions,
                                         *d_feBMWaveFn,
                                         waveFuncQuad);
 
@@ -2322,7 +2347,7 @@ namespace dftefe
           d_p.registerStart("Density Compute");
           // compute output rho
           d_densCalc->computeRho(d_occupation,
-                                 *d_kohnShamWaveFunctions,
+                                 d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
           d_p.registerEnd("Density Compute");
           d_p.print();
@@ -2365,7 +2390,7 @@ namespace dftefe
 
               d_hamitonianKin->evalEnergy(d_occupation,
                                           *d_feBMWaveFn,
-                                          *d_kohnShamWaveFunctions);
+                                          d_kohnShamWaveFunctions);
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -2387,7 +2412,7 @@ namespace dftefe
                                                    dim>>(d_hamitonianElec))
                 {
                   hamiltonian->evalEnergy(d_occupation,
-                                          *d_kohnShamWaveFunctions);
+                                          d_kohnShamWaveFunctions);
                 }
 
               RealType elecEnergy = d_hamitonianElec->getEnergy();
@@ -2456,7 +2481,7 @@ namespace dftefe
 
           d_hamitonianKin->evalEnergy(d_occupation,
                                       *d_feBMWaveFn,
-                                      *d_kohnShamWaveFunctions);
+                                      d_kohnShamWaveFunctions);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -2477,7 +2502,7 @@ namespace dftefe
                                                memorySpace,
                                                dim>>(d_hamitonianElec))
             {
-              hamiltonian->evalEnergy(d_occupation, *d_kohnShamWaveFunctions);
+              hamiltonian->evalEnergy(d_occupation, d_kohnShamWaveFunctions);
             }
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();

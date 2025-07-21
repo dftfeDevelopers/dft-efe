@@ -31,6 +31,7 @@
 #include <utils/Point.h>
 #include <utils/Spline.h>
 #include <memory>
+#include <utils/ScalarSpatialFunction.h>
 
 namespace dftefe
 {

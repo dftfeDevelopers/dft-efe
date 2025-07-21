@@ -27,6 +27,8 @@
 #include <mutex>
 #include <utils/Profiler.h>
 #include <boost/io/ios_state.hpp>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
 
 namespace dftefe
 {
@@ -307,5 +309,32 @@ namespace dftefe
       d_totalTime.restart();
     }
 
+    void
+    printCurrentMemoryUsage(const MPI_Comm &mpiComm, const std::string message)
+    {
+      int rank;
+      mpi::MPICommRank(mpiComm, &rank);
+      ConditionalOStream cout(ConditionalOStream(std::cout));
+      cout.setCondition(rank == 0);
+      mpi::MPIBarrier(mpiComm);
+      struct sysinfo memInfo;
+      sysinfo(&memInfo);
+      double totalVirtualMem = memInfo.totalram;
+      totalVirtualMem += memInfo.totalswap;
+      totalVirtualMem *= memInfo.mem_unit;
+      double virtualMemUsed = memInfo.totalram - memInfo.freeram;
+      virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+      virtualMemUsed *= memInfo.mem_unit;
+      auto minMaxAvg =
+        mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(
+          virtualMemUsed, mpiComm);
+      const double maxBytes = minMaxAvg.max;
+      cout << std::endl
+           << message + ", Current maximum memory usage across all processors: "
+           << maxBytes / 1024.0 / 1024.0 / 1024.0 << " GB out of "
+           << totalVirtualMem / 1024.0 / 1024.0 / 1024.0 << std::endl
+           << std::endl;
+      mpi::MPIBarrier(mpiComm);
+    }
   } // namespace utils
 } // end of namespace dftefe

@@ -52,13 +52,19 @@ namespace dftefe
       using OpContext =
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
 
+      OrthonormalizationFunctions(
+        const size_type eigenVectorBatchSize,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+
       /**
        *@brief Default Destructor
        *
        */
       ~OrthonormalizationFunctions() = default;
 
-      static OrthonormalizationError
+      OrthonormalizationError
       CholeskyGramSchmidt(
         MultiVector<ValueTypeOperand, memorySpace> &X,
         MultiVector<ValueType, memorySpace> &       orthogonalizedX,
@@ -66,7 +72,7 @@ namespace dftefe
                                                      ValueTypeOperand,
                                                      memorySpace>());
 
-      static OrthonormalizationError
+      OrthonormalizationError
       MultipassLowdin(
         MultiVector<ValueTypeOperand, memorySpace> &X,
         size_type                                   maxPass,
@@ -84,6 +90,17 @@ namespace dftefe
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,
                                                      memorySpace>());
+
+    private:
+      void
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
+                       utils::MemoryStorage<ValueType, memorySpace> &S,
+                       const OpContext &                             Op);
+
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
+        d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
+
+      size_type d_eigenVecBatchSize, d_batchSizeSmall;
 
     }; // end of class OrthonormalizationFunctions
   }    // end of namespace linearAlgebra

@@ -77,6 +77,19 @@ namespace dftefe
         const std::vector<std::string> &          metadataNames,
         const bool                                isSplineHarmonicEval = true);
 
+      AtomSphericalDataContainer(
+        const std::map<std::string,
+                       std::map<std::string, std::vector<std::vector<int>>>>
+          &atomSymbolToFieldToQuantumNumVec,
+        const std::map<
+          std::string,
+          std::map<
+            std::string,
+            std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>>>
+          &atomSymbolToFieldToScalarSpatialFnRealVec,
+        const std::vector<std::string> &fieldNames,
+        const bool                      isSplineHarmonicEval = true);
+
       /**
        * @brief Destructor
        */

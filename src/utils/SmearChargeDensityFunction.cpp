@@ -52,10 +52,9 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);
-      for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+      for (unsigned int i = 0; i < d_atomCoordinates.size(); i++)
         {
-          double ret = 0;
-          for (unsigned int i = 0; i < d_atomCoordinates.size(); i++)
+          for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
             {
               double r = 0;
               for (unsigned int j = 0; j < points[iPoint].size(); j++)
@@ -64,14 +63,12 @@ namespace dftefe
                     std::pow((points[iPoint][j] - d_atomCoordinates[i][j]), 2);
                 }
               r = std::sqrt(r);
-              if (r > d_rc[i])
-                ret += 0;
-              else
-                ret += d_z[i] * -21 * std::pow((r - d_rc[i]), 3) *
-                       (6 * r * r + 3 * r * d_rc[i] + d_rc[i] * d_rc[i]) /
-                       (5 * M_PI * std::pow(d_rc[i], 8));
+              if (r < d_rc[i])
+                returnValue[iPoint] +=
+                  d_z[i] * -21 * std::pow((r - d_rc[i]), 3) *
+                  (6 * r * r + 3 * r * d_rc[i] + d_rc[i] * d_rc[i]) /
+                  (5 * M_PI * std::pow(d_rc[i], 8));
             }
-          returnValue[iPoint] = ret;
         }
       return returnValue;
     }

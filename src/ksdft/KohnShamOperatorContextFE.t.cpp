@@ -458,7 +458,7 @@ namespace dftefe
         bool printECWings = false)
       {
         //------------------------ print Hamiltonian
-        //EEblock---------------------------
+        // EEblock---------------------------
         const basis::BasisDofHandler &basisDofHandler =
           feBasisManager.getBasisDofHandler();
 
@@ -547,7 +547,7 @@ namespace dftefe
           }
 
         //------------------------ print Hamiltonian EC block
-        //tofile---------------------------
+        // tofile---------------------------
 
         if (printECWings)
           {

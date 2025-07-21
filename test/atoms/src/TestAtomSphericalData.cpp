@@ -42,4 +42,16 @@ int main()
   std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
   // std::cout<<sphericalDataObj->getGradientValue(point,origin)[1]<<"\n";
   // std::cout<<sphericalDataObj->getGradientValue(point,origin)[2]<<"\n";
+
+      fieldNames.clear();
+    fieldNames.push_back("exp");
+    std::map<std::string , std::vector<std::vector<int>>> fieldToQuantumNumbersVec{{"exp" , {{1,0,0}}}};
+    std::map<std::string , std::vector<std::shared_ptr<dftefe::utils::ScalarSpatialFunctionReal>>> 
+      fieldToScalarSpatialFnRealVec{{"exp" , {std::make_shared<dftefe::utils::ExpModX>(0 , -1)}}};
+  dftefe::atoms::AtomSphericalDataAnalytical atomTest1
+    (fieldToQuantumNumbersVec, fieldToScalarSpatialFnRealVec , fieldNames, sphericalHarmonicFunctions);
+  for(int i = 0 ; i < 50 ; i++)
+   std::cout << i*0.5 << "\t" << atomTest1.getSphericalData("exp",{1,0,0})->getValue(dftefe::utils::Point({i*0.5,0,0}),
+     dftefe::utils::Point({0,0,0}))<<std::endl;
+
 }

@@ -35,6 +35,21 @@ namespace dftefe
   {
     namespace GenerateMeshInternal
     {
+      int
+      customRound(double value)
+      {
+        int    intPart        = static_cast<int>(value);
+        double fractionalPart = value - intPart;
+
+        if (fractionalPart >= 0.4)
+          {
+            return intPart + 1;
+          }
+        else
+          {
+            return intPart;
+          }
+      }
       void
       checkTriangulationEqualityAcrossProcessorPools(
         const TriangulationBase &triangulation,
@@ -204,7 +219,7 @@ namespace dftefe
             {
               i =
                 std::pow(2,
-                         round(log2(
+                         GenerateMeshInternal::customRound(log2(
                            (std::max(4.0, largestMeshSizeAroundAtom) /*4.0*/) /
                            largestMeshSizeAroundAtom))) *
                 largestMeshSizeAroundAtom;

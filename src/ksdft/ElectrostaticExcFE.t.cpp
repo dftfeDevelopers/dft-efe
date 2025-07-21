@@ -189,6 +189,7 @@ namespace dftefe
         d_electroHamiltonian->applyNonLocal(X, Y, updateGhostX, updateGhostY);
       else
         {
+          // TODO : Make the Z to be data member
           linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace> Z(
             X, (ValueTypeWaveFunctionCoeff)0);
           d_excHamiltonian->applyNonLocal(X, Z, updateGhostX, updateGhostY);

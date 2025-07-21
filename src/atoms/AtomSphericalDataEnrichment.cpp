@@ -406,15 +406,15 @@ namespace dftefe
             int n = qNumbers[0];
             int l = qNumbers[1];
             int m = qNumbers[2];
-            utils::throwException(
-              n > 0,
-              "Principal (n) quantum number less than 1 found in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
-            utils::throwException(
-              l < n,
-              "Angular quantum number (l) greater than or equal to principal quantum "
-              " (n) found in " +
-                xPathInfo.xpath + " element in " + xPathInfo.fileName);
+            // utils::throwException(
+            //   n > 0,
+            //   "Principal (n) quantum number less than 1 found in " +
+            //     xPathInfo.xpath + " element in " + xPathInfo.fileName);
+            // utils::throwException(
+            //   l < n,
+            //   "Angular quantum number (l) greater than or equal to principal
+            //   quantum " " (n) found in " +
+            //     xPathInfo.xpath + " element in " + xPathInfo.fileName);
             utils::throwException(
               m >= -l && m <= l,
               "Magnetic quantum number (m) found outside of -l and +l "

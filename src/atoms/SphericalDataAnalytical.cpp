@@ -30,30 +30,28 @@
 #include <utils/Spline.h>
 #include "BoostAutoDiff.h"
 #include <cmath>
-#include <atoms/SphericalDataMixed.h>
+#include <atoms/SphericalDataAnalytical.h>
 
 namespace dftefe
 {
   namespace atoms
   {
-    namespace SphericalDataMixedInternal
+    namespace SphericalDataAnalyticalInternal
     {
-      // TODO : Add cutoof and smoothness
       void
       getValueAnalytical(
         const std::vector<utils::Point> &       point,
         const utils::Point &                    origin,
-        const double                            lastRadialGridPoint,
-        const utils::ScalarSpatialFunctionReal &funcAfterRadialGrid,
+        const double                            cutoff,
+        const double                            smoothness,
+        const utils::ScalarSpatialFunctionReal &function,
         const SphericalHarmonicFunctions &      sphericalHarmonicFunc,
         const std::vector<int> &                qNumbers,
-        std::shared_ptr<const utils::Spline>    spline,
         const double                            polarAngleTolerance,
         std::vector<double> &                   value)
       {
         for (int i = 0; i < point.size(); i++)
           {
-            // do the spline interpolation in the radial points
             double r, theta, phi;
             convertCartesianToSpherical(
               point[i] - origin, r, theta, phi, polarAngleTolerance);
@@ -61,119 +59,95 @@ namespace dftefe
             auto Ylm = Clm(l, m) * Dm(m) *
                        sphericalHarmonicFunc.Plm(l, std::abs(m), theta) *
                        Qm(m, phi);
-            if (r <= lastRadialGridPoint)
-              value[i] = (*spline)(r)*Ylm;
-            else
-              value[i] = funcAfterRadialGrid(point[i] - origin) * Ylm;
+            value[i] = function(point[i] - origin) * Ylm;
           }
       }
-    } // namespace SphericalDataMixedInternal
+    } // namespace SphericalDataAnalyticalInternal
 
-    SphericalDataMixed::SphericalDataMixed(
+    SphericalDataAnalytical::SphericalDataAnalytical(
       const std::vector<int>                  qNumbers,
-      const std::vector<double>               radialPoints,
-      const std::vector<double>               radialValues,
-      utils::Spline::bd_type                  left,
-      double                                  leftValue,
-      utils::Spline::bd_type                  right,
-      double                                  rightValue,
-      const utils::ScalarSpatialFunctionReal &funcAfterRadialGrid,
+      const utils::ScalarSpatialFunctionReal &function,
+      const double                            cutoff,
+      const double                            smoothness,
       const SphericalHarmonicFunctions &      sphericalHarmonicFunc,
       const double                            polarAngleTolerance,
       const size_type                         dim)
       : d_qNumbers(qNumbers)
-      , d_radialPoints(radialPoints)
-      , d_radialValues(radialValues)
       , d_polarAngleTolerance(polarAngleTolerance)
-      , d_funcAfterRadialGrid(funcAfterRadialGrid)
+      , d_func(function)
       , d_dim(dim)
+      , d_cutoff(cutoff)
+      , d_smoothness(smoothness)
       , d_sphericalHarmonicFunc(sphericalHarmonicFunc)
     {
       utils::throwException<utils::InvalidArgument>(d_dim == 3,
                                                     "Dimension has to be 3.");
-      initSpline(left, leftValue, right, rightValue);
-    }
-
-    void
-    SphericalDataMixed::initSpline(utils::Spline::bd_type left,
-                                   double                 leftValue,
-                                   utils::Spline::bd_type right,
-                                   double                 rightValue)
-    {
-      d_spline = std::make_shared<const utils::Spline>(
-        this->d_radialPoints,
-        this->d_radialValues,
-        false,
-        utils::Spline::spline_type::cspline,
-        false,
-        left,
-        leftValue,
-        right,
-        rightValue);
     }
 
     std::vector<double>
-    SphericalDataMixed::getValue(const std::vector<utils::Point> &point,
-                                 const utils::Point &             origin)
+    SphericalDataAnalytical::getValue(const std::vector<utils::Point> &point,
+                                      const utils::Point &             origin)
     {
       std::vector<double> value(point.size(), 0.);
       DFTEFE_AssertWithMsg(point[0].size() == d_dim && origin.size() == d_dim,
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataMixedInternal::getValueAnalytical(point,
-                                                     origin,
-                                                     d_radialPoints.back(),
-                                                     d_funcAfterRadialGrid,
-                                                     d_sphericalHarmonicFunc,
-                                                     d_qNumbers,
-                                                     d_spline,
-                                                     d_polarAngleTolerance,
-                                                     value);
-
+      SphericalDataAnalyticalInternal::getValueAnalytical(
+        point,
+        origin,
+        d_cutoff,
+        d_smoothness,
+        d_func,
+        d_sphericalHarmonicFunc,
+        d_qNumbers,
+        d_polarAngleTolerance,
+        value);
       return value;
     }
 
     std::vector<double>
-    SphericalDataMixed::getGradientValue(const std::vector<utils::Point> &point,
-                                         const utils::Point &origin)
+    SphericalDataAnalytical::getGradientValue(
+      const std::vector<utils::Point> &point,
+      const utils::Point &             origin)
     {
       std::vector<double> gradient(d_dim * point.size(), 0.);
       utils::throwException(
         false,
-        "getGradientValue() function in SphericalDataMixed is not yet implemented.");
+        "getGradientValue() function in SphericalDataAnalytical is not yet implemented.");
       return gradient;
     }
 
     std::vector<double>
-    SphericalDataMixed::getHessianValue(const std::vector<utils::Point> &point,
-                                        const utils::Point &             origin)
+    SphericalDataAnalytical::getHessianValue(
+      const std::vector<utils::Point> &point,
+      const utils::Point &             origin)
     {
       std::vector<double> hessian(d_dim * d_dim, 0.),
         ret(d_dim * d_dim * point.size(), 0.);
       utils::throwException(
         false,
-        "getHessianValue() function in SphericalDataMixed is not yet implemented.");
+        "getHessianValue() function in SphericalDataAnalytical is not yet implemented.");
       return ret;
     }
 
     double
-    SphericalDataMixed::getValue(const utils::Point &point,
-                                 const utils::Point &origin)
+    SphericalDataAnalytical::getValue(const utils::Point &point,
+                                      const utils::Point &origin)
     {
       std::vector<double> value(1, 0);
       DFTEFE_AssertWithMsg(point.size() == d_dim && origin.size() == d_dim,
                            "getValue() has a dimension mismatch");
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
-      SphericalDataMixedInternal::getValueAnalytical(
+      SphericalDataAnalyticalInternal::getValueAnalytical(
         std::vector<utils::Point>{point},
         origin,
-        d_radialPoints.back(),
-        d_funcAfterRadialGrid,
+        d_cutoff,
+        d_smoothness,
+        d_func,
         d_sphericalHarmonicFunc,
         d_qNumbers,
-        d_spline,
         d_polarAngleTolerance,
         value);
 
@@ -181,61 +155,61 @@ namespace dftefe
     }
 
     std::vector<double>
-    SphericalDataMixed::getGradientValue(const utils::Point &point,
-                                         const utils::Point &origin)
+    SphericalDataAnalytical::getGradientValue(const utils::Point &point,
+                                              const utils::Point &origin)
     {
       std::vector<double> gradient(d_dim, 0.);
       utils::throwException(
         false,
-        "getGradientValue() function in SphericalDataMixed is not yet implemented.");
+        "getGradientValue() function in SphericalDataAnalytical is not yet implemented.");
       return gradient;
     }
 
     std::vector<double>
-    SphericalDataMixed::getHessianValue(const utils::Point &point,
-                                        const utils::Point &origin)
+    SphericalDataAnalytical::getHessianValue(const utils::Point &point,
+                                             const utils::Point &origin)
     {
       std::vector<double> hessian(d_dim * d_dim, 0.);
       utils::throwException(
         false,
-        "hessian() function in SphericalDataMixed is not yet implemented.");
+        "hessian() function in SphericalDataAnalytical is not yet implemented.");
       return hessian;
     }
 
     std::vector<double>
-    SphericalDataMixed::getRadialValue(const std::vector<double> &r)
+    SphericalDataAnalytical::getRadialValue(const std::vector<double> &r)
     {
       std::vector<double> retVal(r.size(), 0.);
       utils::throwException(
         false,
-        "getRadialValue() function in SphericalDataMixed is not yet implemented.");
+        "getRadialValue() function in SphericalDataAnalytical is not yet implemented.");
       return retVal;
     }
 
     std::vector<double>
-    SphericalDataMixed::getAngularValue(const std::vector<double> &r,
-                                        const std::vector<double> &theta,
-                                        const std::vector<double> &phi)
+    SphericalDataAnalytical::getAngularValue(const std::vector<double> &r,
+                                             const std::vector<double> &theta,
+                                             const std::vector<double> &phi)
     {
       std::vector<double> retVal(r.size(), 0.);
       utils::throwException(
         false,
-        "getRadialDerivative() function in SphericalDataMixed is not yet implemented.");
+        "getRadialDerivative() function in SphericalDataAnalytical is not yet implemented.");
       return retVal;
     }
 
     std::vector<double>
-    SphericalDataMixed::getRadialDerivative(const std::vector<double> &r)
+    SphericalDataAnalytical::getRadialDerivative(const std::vector<double> &r)
     {
       std::vector<double> retVal(r.size(), 0.);
       utils::throwException(
         false,
-        "getRadialDerivative() function in SphericalDataMixed is not yet implemented.");
+        "getRadialDerivative() function in SphericalDataAnalytical is not yet implemented.");
       return retVal;
     }
 
     std::vector<std::vector<double>>
-    SphericalDataMixed::getAngularDerivative(
+    SphericalDataAnalytical::getAngularDerivative(
       const std::vector<double> &r,
       const std::vector<double> &thetaVec,
       const std::vector<double> &phiVec)
@@ -245,30 +219,26 @@ namespace dftefe
                                                                   0.));
       utils::throwException(
         false,
-        "getAngularDerivative() function in SphericalDataMixed is not yet implemented.");
+        "getAngularDerivative() function in SphericalDataAnalytical is not yet implemented.");
       return retVal;
     }
 
     std::vector<int>
-    SphericalDataMixed::getQNumbers() const
+    SphericalDataAnalytical::getQNumbers() const
     {
       return d_qNumbers;
     }
 
     double
-    SphericalDataMixed::getCutoff() const
+    SphericalDataAnalytical::getCutoff() const
     {
-      utils::throwException(
-        false, "Cannot call getCutoff() function in SphericalDataMixed.");
-      return 0;
+      return d_cutoff;
     }
 
     double
-    SphericalDataMixed::getSmoothness() const
+    SphericalDataAnalytical::getSmoothness() const
     {
-      utils::throwException(
-        false, "Cannot call getSmoothness() function in SphericalDataMixed.");
-      return 0;
+      return d_smoothness;
     }
 
   } // namespace atoms
