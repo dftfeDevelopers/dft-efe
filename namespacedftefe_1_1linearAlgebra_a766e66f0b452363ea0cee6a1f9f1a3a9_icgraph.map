@@ -1,0 +1,9 @@
+<map id="dftefe::linearAlgebra::CGLinearSolver" name="dftefe::linearAlgebra::CGLinearSolver">
+<area shape="rect" id="node1" title="A class that implements the Conjugate&#45;Gradient (CG) based Krylov subspace algorithm to solve a linear..." alt="" coords="556,163,692,203"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aae4a66d4cf3dc0370f62cd972a808b59" title=" " alt="" coords="265,5,493,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a488809c252b3bda5ee02fcae0f2e1ca5" title="This Constructor for augmenting the orthogonalized EFE basis with classical FE basis...." alt="" coords="253,84,504,139"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#af7761e5217ee731483325e0eaedbf5b7" title=" " alt="" coords="277,163,480,203"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a8b8e5e08a8df2c8063425f4450dc7b92" title=" " alt="" coords="249,228,508,283"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a92dfa92add7a9babe5d8466d378de5f3" title=" " alt="" coords="295,307,463,347"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#ae7bee1fc5fda06b0efef5f49b82d2dde" title="Constructor." alt="" coords="5,307,201,347"/>
+</map>

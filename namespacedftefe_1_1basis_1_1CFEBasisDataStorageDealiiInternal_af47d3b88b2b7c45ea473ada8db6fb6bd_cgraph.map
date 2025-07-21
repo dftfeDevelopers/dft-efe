@@ -1,0 +1,14 @@
+<map id="dftefe::basis::CFEBasisDataStorageDealiiInternal::storeGradNiGradNjHRefinedSameQuadEveryCell" name="dftefe::basis::CFEBasisDataStorageDealiiInternal::storeGradNiGradNjHRefinedSameQuadEveryCell">
+<area shape="rect" id="node1" title=" " alt="" coords="5,267,253,322"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="309,5,494,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#ac288b5cd682450eaf23bb836fbbdfc56" title=" " alt="" coords="314,70,489,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#af7382ec374a9f5fab9163364333a92ed" title=" " alt="" coords="314,149,489,203"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#a1fd4f7ee0cc7fc4855c5c3b52e9cb00d" title=" " alt="" coords="305,227,498,282"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1quadrature_1_1QuadratureRuleGaussIterated.html#ab15134ea8d22ec285ea02583d4e272b6" title=" " alt="" coords="301,306,501,361"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureRuleGaussIterated.html#a646ffc075a5d462e55f6287e6bbf81cb" title=" " alt="" coords="301,385,501,439"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="310,464,493,504"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="312,529,491,554"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1utils_1_1MemoryManager.html#a5b70ed03cd2d2b274182f8c7c2b4738b" title=" " alt="" coords="561,400,748,440"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1utils_1_1MemoryManager.html#aca93dde952680d547c2e2534382a29da" title=" " alt="" coords="561,464,748,504"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1utils_1_1MemoryManager.html#a8bcc70cc31721152c6e120e8010fe288" title=" " alt="" coords="549,529,760,554"/>
+</map>

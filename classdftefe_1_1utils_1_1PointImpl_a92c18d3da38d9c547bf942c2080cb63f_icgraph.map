@@ -1,0 +1,9 @@
+<map id="dftefe::utils::PointImpl::end" name="dftefe::utils::PointImpl::end">
+<area shape="rect" id="node1" title="Return iterator pointing to the end of PointImpl data." alt="" coords="209,145,383,170"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis.html#ab24d5f88db3262260dae6200d3f72e48" title=" " alt="" coords="5,5,161,45"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1utils.html#a11545dcaf4487ec73f720bbf116f6255" title="In&#45;plance multiplication of the point by a scalar p&#45;&gt;p*a." alt="" coords="8,70,159,95"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1utils.html#ab75f3700b3c3bcbb268181d55ed97679" title="In&#45;place addition of two pointts p&#45;&gt; p + q." alt="" coords="6,119,161,145"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1utils.html#a347ac002846f0c6175eb0bc43a1dad85" title="In&#45;place subtraction of two points p &#45;&gt; p &#45; q;." alt="" coords="8,169,159,194"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1PointImpl.html#a6de0949aeb8fe94bb89516b267eae7c5" title="Operator overload for assignment q=p." alt="" coords="10,219,157,259"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1utils_1_1PointImpl.html#a509611951fbba54d440cb3fd8c461d4e" title="Copy constructor for a point." alt="" coords="10,283,157,323"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="dftefe::ksdft::KohnShamDFTInternal::computeResidualQuadData" name="dftefe::ksdft::KohnShamDFTInternal::computeResidualQuadData">
+<area shape="rect" id="node1" title=" " alt="" coords="5,197,233,237"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="281,5,468,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="283,85,466,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ae89c95f45fe94d1a710c9ec0122588c0" title=" " alt="" coords="281,149,468,204"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a595c6da2b6aeb503e6f3aa53f457bbcf" title=" " alt="" coords="281,228,468,283"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a03c3af9e737371a8525d3d782034e448" title=" " alt="" coords="281,307,468,361"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#aefd1fcbcb409e5d32560592d7959c7dc" title=" " alt="" coords="281,385,468,440"/>
+</map>

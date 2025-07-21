@@ -1,0 +1,30 @@
+<map id="dftefe::linearAlgebra::blasLapack::gemmStridedVarBatched" name="dftefe::linearAlgebra::blasLapack::gemmStridedVarBatched">
+<area shape="rect" id="node1" title=" " alt="" coords="964,573,1163,627"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1FEBasisOperationsInternal.html#a99236ec69c6017edb9f0915599d7e584" title=" " alt="" coords="671,36,882,76"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1FEBasisOperationsInternal.html#a852995748568ce77570057dda08476b9" title=" " alt="" coords="647,113,906,153"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#aa2f734a1810c783df37ce4d6273bf24f" title=" " alt="" coords="677,206,876,261"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a87efd15a3d0fe3daaf3c78dc0e1272d6" title=" " alt="" coords="689,301,865,355"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#a57e7e88ca503cdea90a0ee89353d183b" title=" " alt="" coords="677,379,876,434"/>
+<area shape="rect" id="node15" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#a61d5c8948af5f63ecabdd258b6a86b16" title=" " alt="" coords="651,458,903,513"/>
+<area shape="rect" id="node17" href="$namespacedftefe_1_1electrostatics_1_1LaplaceOperatorContextFEInternal.html#aa67f94f03296f4b354dbc0dc165f1657" title=" " alt="" coords="663,537,890,591"/>
+<area shape="rect" id="node19" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#a7af61cf776f7f56107fbbda17f468114" title=" " alt="" coords="637,616,916,656"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#a0916fe3a682c4d8b30cd308b36b51e6d" title=" " alt="" coords="653,681,900,735"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#a85829b6146e6e1902baa47d4ec6ec990" title=" " alt="" coords="657,759,896,814"/>
+<area shape="rect" id="node25" href="$namespacedftefe_1_1basis_1_1CFEBDSOnTheFlyComputeDealiiInternal.html#ab0798344aa784b55e152636aea9e5484" title=" " alt="" coords="657,838,896,893"/>
+<area shape="rect" id="node26" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="671,917,882,957"/>
+<area shape="rect" id="node27" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="671,981,882,1021"/>
+<area shape="rect" id="node28" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4" title=" " alt="" coords="671,1045,882,1085"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#aa0e170b2bc6afa9c781121ef379ae0d8" title=" " alt="" coords="335,5,546,45"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a73fce936022cbc5afb423befe26f20d6" title=" " alt="" coords="335,69,546,109"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a572bc13a493dd8d25263a4583dd54fde" title=" " alt="" coords="301,133,580,173"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a443c8ed3667073dbbe64d82e711694c1" title=" " alt="" coords="292,197,589,237"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#a05b00a2a6db3b63c57ce0f46b6efcf07" title=" " alt="" coords="341,262,540,317"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a15f1cad6ace2ff2da04a6566835a7d45" title=" " alt="" coords="29,269,220,309"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a868f5a8d9850c4a88b99a91f034b505b" title=" " alt="" coords="357,341,525,381"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a8f18379728c0217f62847973c015bf64" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="341,405,540,445"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a8f0464047d4a0c282b7ca3b3264246ed" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="335,469,546,509"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1electrostatics_1_1LaplaceOperatorContextFE.html#a3db38f60ab07a6aea3a37e4b447736f5" title=" " alt="" coords="349,537,533,591"/>
+<area shape="rect" id="node20" href="$classdftefe_1_1ksdft_1_1KohnShamOperatorContextFE.html#aa17228af948ba388a4f2d4c8bf7953b8" title=" " alt="" coords="335,652,546,692"/>
+<area shape="rect" id="node23" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#ae23ee05528294db10fcac757d11c1d1b" title=" " alt="" coords="306,759,575,814"/>
+<area shape="rect" id="node24" href="$classdftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealii.html#a8606ebcadc4014efbe301c39fc356bfa" title=" " alt="" coords="5,767,244,807"/>
+</map>

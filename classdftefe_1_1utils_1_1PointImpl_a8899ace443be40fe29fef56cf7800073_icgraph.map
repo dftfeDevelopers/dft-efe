@@ -1,0 +1,18 @@
+<map id="dftefe::utils::PointImpl::size" name="dftefe::utils::PointImpl::size">
+<area shape="rect" id="node1" title="Returns the dimension of the point." alt="" coords="268,453,415,493"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis.html#ab24d5f88db3262260dae6200d3f72e48" title=" " alt="" coords="35,5,191,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1atoms_1_1SphericalDataNumerical.html#af156c6a9f397b78a50ad045c64403438" title=" " alt="" coords="5,69,220,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1atoms_1_1SphericalDataNumerical.html#a3e2e2e635e1f3a25492310ee64ce6102" title=" " alt="" coords="6,133,219,173"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1atoms_1_1SphericalDataAnalytical.html#a183fb5f23949f3773b9bf7ffbc8fdfb4" title=" " alt="" coords="31,197,194,237"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1atoms_1_1SphericalDataMixed.html#ac35b4c585b7fd296c99cc77e62106a5f" title=" " alt="" coords="34,261,191,301"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1atoms_1_1SphericalDataNumerical.html#a78a22d81b191cc4afc543d0da3833d84" title=" " alt="" coords="30,325,195,365"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1utils_1_1PointChargePotentialFunction.html#af3bd38bfc50b77d84374afd1669059b5" title=" " alt="" coords="21,389,205,429"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1utils_1_1SmearChargeDensityFunction.html#a94b9bc6232971c3129dbc945673a0be2" title=" " alt="" coords="25,453,201,493"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1utils_1_1SmearChargePotentialFunction.html#ad869e88effa9e01a7cc3cbc1199b2212" title=" " alt="" coords="21,517,205,557"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1utils.html#ab75f3700b3c3bcbb268181d55ed97679" title="In&#45;place addition of two pointts p&#45;&gt; p + q." alt="" coords="35,582,190,607"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1utils.html#a347ac002846f0c6175eb0bc43a1dad85" title="In&#45;place subtraction of two points p &#45;&gt; p &#45; q;." alt="" coords="37,631,188,657"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1utils.html#a458eeed28f0cc336f081d535fb340d3f" title="Output perator." alt="" coords="35,681,190,706"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1utils_1_1PointImpl.html#a6de0949aeb8fe94bb89516b267eae7c5" title="Operator overload for assignment q=p." alt="" coords="39,731,186,771"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1TriangulationDealiiParallel.html#a062edb9380bf2aa8cefed74b1f5bf9c7" title=" " alt="" coords="11,795,214,835"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1basis_1_1TriangulationDealiiSerial.html#a3204fe8942f251fa751483a9c9f0fcd1" title=" " alt="" coords="17,859,209,899"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="dftefe::basis::FECellWiseDataOperations::addCellWiseBasisDataToDiagonalData" name="dftefe::basis::FECellWiseDataOperations::addCellWiseBasisDataToDiagonalData">
+<area shape="rect" id="node1" title=" " alt="" coords="324,241,547,296"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="27,5,255,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#afacd3f53936471456f3334151fbe6afa" title=" " alt="" coords="19,84,262,139"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1electrostatics_1_1PoissonLinearSolverFunctionFEInternal.html#ab8ae4b8a95b87bd649b328bc96767ff2" title=" " alt="" coords="41,163,240,217"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1basis_1_1L2ProjectionLinearSolverFunctionInternal.html#aa2ebd70cdc9925c23e04ec3f7e283a2f" title=" " alt="" coords="47,241,235,296"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLL.html#aa2bfaccb251079725142675d7e4437e2" title=" " alt="" coords="5,320,276,375"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a41d13bfdd3ee7fcdddfaa539df5284dc" title=" " alt="" coords="11,399,270,453"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a5939179aaaad0c8ab9e485585dc7845b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="29,477,252,532"/>
+</map>

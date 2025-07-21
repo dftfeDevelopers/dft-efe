@@ -1,0 +1,16 @@
+<map id="src/electrostatics/LaplaceOperatorContextFE.h" name="src/electrostatics/LaplaceOperatorContextFE.h">
+<area shape="rect" id="node1" title=" " alt="" coords="207,5,399,45"/>
+<area shape="rect" id="node2" href="$LaplaceOperatorContextFE_8cpp.html" title=" " alt="" coords="81,93,287,133"/>
+<area shape="rect" id="node3" href="$PoissonLinearSolverFunctionFE_8h.html" title=" " alt="" coords="311,93,534,133"/>
+<area shape="rect" id="node4" href="$PoissonLinearSolverFunctionFE_8cpp.html" title=" " alt="" coords="99,181,295,236"/>
+<area shape="rect" id="node5" href="$ElectrostaticLocalFE_8h.html" title=" " alt="" coords="319,196,526,221"/>
+<area shape="rect" id="node13" href="$ElectrostaticONCVNonLocFE_8h.html" title=" " alt="" coords="545,284,756,324"/>
+<area shape="rect" id="node6" href="$ElectrostaticExcFE_8h.html" title=" " alt="" coords="325,291,521,317"/>
+<area shape="rect" id="node8" href="$KohnShamDFT_8h.html" title=" " alt="" coords="381,467,557,493"/>
+<area shape="rect" id="node12" href="$ElectrostaticLocalFE_8cpp.html" title=" " alt="" coords="5,284,187,324"/>
+<area shape="rect" id="node7" href="$ElectrostaticExcFE_8cpp.html" title=" " alt="" coords="261,372,432,412"/>
+<area shape="rect" id="node10" href="$KohnShamOperatorContextFE_8h.html" title=" " alt="" coords="507,372,698,412"/>
+<area shape="rect" id="node9" href="$KohnShamDFT_8cpp.html" title=" " alt="" coords="374,548,565,573"/>
+<area shape="rect" id="node11" href="$KohnShamOperatorContextFE_8cpp.html" title=" " alt="" coords="582,460,773,500"/>
+<area shape="rect" id="node14" href="$ElectrostaticONCVNonLocFE_8cpp.html" title=" " alt="" coords="773,372,984,412"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classdftefe_1_1basis_1_1TriangulationCellBase.html" title="An abstract class for an geometric cell. This is done to prevent the template (as required by deal...." alt="" coords="5,35,177,75"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FECellBase.html" title="An abstract class for a finite element cell (can be of any dimension) This is created primarily to be..." alt="" coords="228,13,395,38"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1TriangulationCellDealii.html" title="An interface to deal.ii geometric cell." alt="" coords="225,63,397,103"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FECellDealii.html" title=" " alt="" coords="445,5,613,45"/>
+</map>

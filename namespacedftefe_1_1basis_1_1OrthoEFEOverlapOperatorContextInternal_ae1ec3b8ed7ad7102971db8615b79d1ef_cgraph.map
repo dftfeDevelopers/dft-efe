@@ -1,0 +1,13 @@
+<map id="dftefe::basis::OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix" name="dftefe::basis::OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix">
+<area shape="rect" id="node1" title=" " alt="" coords="5,190,204,245"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="277,5,463,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="279,69,461,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html#ab94bc83e660a3648cf67d5a15d904b05" title=" " alt="" coords="278,133,462,173"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html#a2a955387bb5ec110615e91875447f558" title=" " alt="" coords="275,197,465,237"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html#ac00ff6f47c6817c7310cc52f5a8828e2" title=" " alt="" coords="252,261,488,301"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="279,325,461,365"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="281,390,459,415"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1utils_1_1MemoryManager.html#a5b70ed03cd2d2b274182f8c7c2b4738b" title=" " alt="" coords="548,261,735,301"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1utils_1_1MemoryManager.html#aca93dde952680d547c2e2534382a29da" title=" " alt="" coords="548,325,735,365"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1utils_1_1MemoryManager.html#a8bcc70cc31721152c6e120e8010fe288" title=" " alt="" coords="536,390,747,415"/>
+</map>
