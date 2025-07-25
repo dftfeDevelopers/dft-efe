@@ -61,5 +61,8 @@ if (NOT TARGET dft-efe-linalg)
     target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
     target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
+    find_package(ELPA 2023 REQUIRED)
+    target_link_libraries(dft-efe-linalg PUBLIC ELPA::ELPA)
+
     target_link_libraries(dft-efe-linalg PUBLIC blaspp lapackpp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()

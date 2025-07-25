@@ -33,7 +33,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/b
 
 export DFTEFE_PATH= <path to dftefe project> (eg: /global/homes/a/$USER/dft-efe)
 
-python configure.py  --CMAKE_BUILD_TYPE=Release --CMAKE_C_COMPILER=cc --CMAKE_CXX_COMPILER=CC --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --BOOST_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/boost/install" --SLATE_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/slate/install" --DEALII_PATH="/pscratch/sd/a/avirup/DFTEFE-softwares-new/dealii/install" --ENABLE_MPI=ON --ENABLE_CUDA=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so" --LIBXC_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install" --LIBXC_LIBRARY="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install/lib64/libxc.so"
+python configure.py  --CMAKE_BUILD_TYPE=Release --CMAKE_C_COMPILER=cc --CMAKE_CXX_COMPILER=CC --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --BOOST_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/boost/install" --ELPA_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/elpa/install" --SLATE_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/slate/install" --DEALII_PATH="/pscratch/sd/a/avirup/DFTEFE-softwares-new/dealii/install" --ENABLE_MPI=ON --ENABLE_CUDA=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so" --LIBXC_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install" --LIBXC_LIBRARY="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install/lib64/libxc.so"
 
 python install.py
 

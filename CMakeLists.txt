@@ -19,6 +19,8 @@ if(ENABLE_CUDA)
 	enable_language(CUDA)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR}/cmake)
+
 target_link_libraries(dft-efe PUBLIC ${DFTEFE_MPI_LIBRARIES})
 
 add_subdirectory(src/utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
