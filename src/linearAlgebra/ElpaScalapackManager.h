@@ -20,12 +20,14 @@
 #ifndef elpaScalaManager_h
 #define elpaScalaManager_h
 
-#include "process_grid.h"
+#include "ProcessGrid.h"
 #include <vector>
 #include <elpa/elpa.h>
 
 namespace dftfe
 {
+  namespace linearAlgebra
+  {
   /**
    * @brief Manager class for ELPA and ScaLAPACK
    *
@@ -40,7 +42,7 @@ namespace dftfe
     unsigned int
     getScalapackBlockSize() const;
 
-    std::shared_ptr<const dftfe::ProcessGrid>
+    std::shared_ptr<const ProcessGrid>
     getProcessGridDftfeScalaWrapper() const;
 
     void
@@ -100,19 +102,18 @@ namespace dftfe
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
 
-    std::shared_ptr<const dftfe::ProcessGrid> d_processGridDftfeWrapper;
+    std::shared_ptr<const ProcessGrid> d_processGridDftfeWrapper;
   };
 
   /*--------------------- Inline functions --------------------------------*/
 
-#ifndef DOXYGEN
   inline unsigned int
   elpaScalaManager::getScalapackBlockSize() const
   {
     return d_scalapackBlockSize;
   }
 
-  inline std::shared_ptr<const dftfe::ProcessGrid>
+  inline std::shared_ptr<const ProcessGrid>
   elpaScalaManager::getProcessGridDftfeScalaWrapper() const
   {
     return d_processGridDftfeWrapper;
@@ -136,7 +137,6 @@ namespace dftfe
   {
     return d_elpaAutoTuneHandle;
   }
-#endif // ifndef DOXYGEN
-
+} // namespace linearAlgebra 
 } // namespace dftfe
 #endif

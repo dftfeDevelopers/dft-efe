@@ -22,13 +22,6 @@
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
 #include <BLASWrapper.h>
-#ifdef DFTFE_WITH_DEVICE
-#  include <DeviceAPICalls.h>
-#endif
-/** @file linearAlgebraOperationsInternal.cc
- *  @brief Contains small internal functions used in linearAlgebraOperations
- *
- */
 namespace dftfe
 {
   namespace linearAlgebraOperations

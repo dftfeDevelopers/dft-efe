@@ -18,10 +18,13 @@
 //
 
 #include "scalapackWrapper.h"
-#include "scalapack.templates.h"
+#include "scalapackTemplates.h"
+#include <mutex>
 
 namespace dftfe
 {
+    namespace linearAlgebra
+  {
   template <typename NumberType>
   ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
     const size_type                                  n_rows_,
@@ -183,7 +186,7 @@ namespace dftfe
   {
     DFTEFE_AssertWithMsg(n_local_rows >= 0 &&
              loc_row < static_cast<unsigned int>(n_local_rows),
-           dealii::ExcIndexRange(loc_row, 0, n_local_rows));
+             "Exceeding index id: " + loc_row + ", Range is: (" + 0 + "," + n_local_rows + ")");
     const int i = loc_row + 1;
     return indxl2g_(&i,
                     &row_block_size,
@@ -202,14 +205,13 @@ namespace dftfe
   {
     DFTEFE_AssertWithMsg(n_local_columns >= 0 &&
              loc_column < static_cast<unsigned int>(n_local_columns),
-           dealii::ExcIndexRange(loc_column, 0, n_local_columns));
+           "Exceeding index id: " + loc_column + ", Range is: (" + 0 + "," + n_local_columns + ")");
     const int j = loc_column + 1;
     return indxl2g_(&j,
                     &column_block_size,
                     &(grid->this_process_column),
                     &first_process_column,
-                    &(grid->n_process_columns)) -
-           1;
+                    &(grid->n_process_columns)) - 1;
   }
 
   template <typename NumberType>
@@ -240,9 +242,9 @@ namespace dftfe
   ScaLAPACKMatrix<NumberType>::copy_to(ScaLAPACKMatrix<NumberType> &dest) const
   {
     DFTEFE_AssertWithMsg(n_rows == dest.n_rows,
-           dealii::ExcDimensionMismatch(n_rows, dest.n_rows));
+           ("Dimension mismatch between " + n_rows + " and " + dest.n_rows));
     DFTEFE_AssertWithMsg(n_columns == dest.n_columns,
-           dealii::ExcDimensionMismatch(n_columns, dest.n_columns));
+           ("Dimension mismatch between " + n_columns + " and " +  dest.n_columns));
 
     if (this->grid->mpi_process_is_active)
       AssertThrow(
@@ -267,12 +269,12 @@ namespace dftfe
          * destination MPI communicator
          */
         int       ierr = 0;
-        MPI_Group group_source, group_dest, group_union;
-        ierr = MPI_Comm_group(this->grid->mpi_communicator, &group_source);
+        utils::mpi::MPIGroup group_source, group_dest, group_union;
+        ierr = utils::mpi::MPICommGroup(this->grid->mpi_communicator, &group_source);
         AssertThrowMPI(ierr);
-        ierr = MPI_Comm_group(dest.grid->mpi_communicator, &group_dest);
+        ierr = utils::mpi::MPICommGroup(dest.grid->mpi_communicator, &group_dest);
         AssertThrowMPI(ierr);
-        ierr = MPI_Group_union(group_source, group_dest, &group_union);
+        ierr = utils::mpi::MPICommGroup(group_source, group_dest, &group_union);
         AssertThrowMPI(ierr);
         utils::mpi::MPIComm mpi_communicator_union;
 
@@ -290,7 +292,7 @@ namespace dftfe
 
         const int mpi_tag =
           dealii::Utilities::MPI::internal::Tags::scalapack_copy_to2;
-        ierr = dealii::Utilities::MPI::create_group(MPI_COMM_WORLD,
+        ierr = utils::mpi::MPICommCreateGroup(utils::mpi::MPICommWorld,
                                                     group_union,
                                                     mpi_tag,
                                                     &mpi_communicator_union);
@@ -304,8 +306,8 @@ namespace dftfe
          */
         int union_blacs_context = Csys2blacs_handle(mpi_communicator_union);
         const char *order       = "Col";
-        int         union_n_process_rows =
-          dealii::Utilities::MPI::n_mpi_processes(mpi_communicator_union);
+        int         union_n_process_rows;
+        utils::mpi::MPICommSize(mpi_communicator_union, &union_n_process_rows);
         int union_n_process_columns = 1;
         Cblacs_gridinit(&union_blacs_context,
                         order,
@@ -342,16 +344,16 @@ namespace dftfe
 
         Cblacs_gridexit(union_blacs_context);
 
-        if (mpi_communicator_union != MPI_COMM_NULL)
+        if (mpi_communicator_union != utils::mpi::MPICommNull)
           {
-            ierr = MPI_Comm_free(&mpi_communicator_union);
+            ierr = utils::mpi::MPICommFree(&mpi_communicator_union);
             AssertThrowMPI(ierr);
           }
-        ierr = MPI_Group_free(&group_source);
+        ierr = utils::mpi::MPIGroupFree(&group_source);
         AssertThrowMPI(ierr);
-        ierr = MPI_Group_free(&group_dest);
+        ierr = utils::mpi::MPIGroupFree(&group_dest);
         AssertThrowMPI(ierr);
-        ierr = MPI_Group_free(&group_union);
+        ierr = utils::mpi::MPIGroupFree(&group_union);
         AssertThrowMPI(ierr);
       }
     else
@@ -373,27 +375,27 @@ namespace dftfe
     if (transpose_B)
       {
         DFTEFE_AssertWithMsg(n_rows == B.n_columns,
-               dealii::ExcDimensionMismatch(n_rows, B.n_columns));
+               ("Dimension mismatch between " + n_rows + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(n_columns == B.n_rows,
-               dealii::ExcDimensionMismatch(n_columns, B.n_rows));
+               ("Dimension mismatch between " + n_columns + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(column_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(column_block_size,
+               ("Dimension mismatch between " + column_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(row_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(row_block_size,
+               ("Dimension mismatch between " + row_block_size + " and " + 
                                             B.column_block_size));
       }
     else
       {
         DFTEFE_AssertWithMsg(n_rows == B.n_rows,
-               dealii::ExcDimensionMismatch(n_rows, B.n_rows));
+               ("Dimension mismatch between " + n_rows + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(n_columns == B.n_columns,
-               dealii::ExcDimensionMismatch(n_columns, B.n_columns));
+               ("Dimension mismatch between " + n_columns + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(column_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(column_block_size,
+               ("Dimension mismatch between " + column_block_size + " and " + 
                                             B.column_block_size));
         DFTEFE_AssertWithMsg(row_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(row_block_size, B.row_block_size));
+               ("Dimension mismatch between " + row_block_size + " and " +  B.row_block_size));
       }
     DFTEFE_AssertWithMsg(this->grid == B.grid,
              "The matrices A and B need to have the same process grid");
@@ -433,27 +435,27 @@ namespace dftfe
     if (conjugate_transpose_B)
       {
         DFTEFE_AssertWithMsg(n_rows == B.n_columns,
-               dealii::ExcDimensionMismatch(n_rows, B.n_columns));
+               ("Dimension mismatch between " + n_rows + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(n_columns == B.n_rows,
-               dealii::ExcDimensionMismatch(n_columns, B.n_rows));
+               ("Dimension mismatch between " + n_columns + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(column_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(column_block_size,
+               ("Dimension mismatch between " + column_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(row_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(row_block_size,
+               ("Dimension mismatch between " + row_block_size + " and " + 
                                             B.column_block_size));
       }
     else
       {
         DFTEFE_AssertWithMsg(n_rows == B.n_rows,
-               dealii::ExcDimensionMismatch(n_rows, B.n_rows));
+               ("Dimension mismatch between " + n_rows + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(n_columns == B.n_columns,
-               dealii::ExcDimensionMismatch(n_columns, B.n_columns));
+               ("Dimension mismatch between " + n_columns + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(column_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(column_block_size,
+               ("Dimension mismatch between " + column_block_size + " and " + 
                                             B.column_block_size));
         DFTEFE_AssertWithMsg(row_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(row_block_size, B.row_block_size));
+               ("Dimension mismatch between " + row_block_size + " and " +  B.row_block_size));
       }
     DFTEFE_AssertWithMsg(this->grid == B.grid,
              "The matrices A and B need to have the same process grid");
@@ -522,73 +524,73 @@ namespace dftfe
     if (!transpose_A && !transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_columns == B.n_rows,
-               dealii::ExcDimensionMismatch(this->n_columns, B.n_rows));
+               ("Dimension mismatch between " + this->n_columns + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
+               ("Dimension mismatch between " + this->n_rows + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
+               ("Dimension mismatch between " + B.n_columns + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->column_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.column_block_size,
+               ("Dimension mismatch between " + B.column_block_size + " and " + 
                                             C.column_block_size));
       }
     else if (transpose_A && !transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_rows == B.n_rows,
-               dealii::ExcDimensionMismatch(this->n_rows, B.n_rows));
+               ("Dimension mismatch between " + this->n_rows + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
+               ("Dimension mismatch between " + this->n_columns + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
+               ("Dimension mismatch between " + B.n_columns + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             C.row_block_size));
-        DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+        DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size + " and " + 
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             B.row_block_size));
-        DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.column_block_size,
+        DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size + " and " + 
+               ("Dimension mismatch between " + B.column_block_size,
                                             C.column_block_size));
       }
     else if (!transpose_A && transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_columns == B.n_columns,
-               dealii::ExcDimensionMismatch(this->n_columns, B.n_columns));
+               ("Dimension mismatch between " + this->n_columns + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
+               ("Dimension mismatch between " + this->n_rows + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
+               ("Dimension mismatch between " + B.n_rows + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->column_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             B.column_block_size));
         DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.row_block_size,
+               ("Dimension mismatch between " + B.row_block_size + " and " + 
                                             C.column_block_size));
       }
     else // if (transpose_A && transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_rows == B.n_columns,
-               dealii::ExcDimensionMismatch(this->n_rows, B.n_columns));
+               ("Dimension mismatch between " + this->n_rows + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
+               ("Dimension mismatch between " + this->n_columns + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
+               ("Dimension mismatch between " + B.n_rows + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->row_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.column_block_size,
+               ("Dimension mismatch between " + B.column_block_size + " and " + 
                                             C.column_block_size));
       }
 
@@ -648,73 +650,73 @@ namespace dftfe
     if (!conjugate_transpose_A && !conjugate_transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_columns == B.n_rows,
-               dealii::ExcDimensionMismatch(this->n_columns, B.n_rows));
+               ("Dimension mismatch between " + this->n_columns + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
+               ("Dimension mismatch between " + this->n_rows + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
+               ("Dimension mismatch between " + B.n_columns + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->column_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.column_block_size,
+               ("Dimension mismatch between " + B.column_block_size + " and " + 
                                             C.column_block_size));
       }
     else if (conjugate_transpose_A && !conjugate_transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_rows == B.n_rows,
-               dealii::ExcDimensionMismatch(this->n_rows, B.n_rows));
+               ("Dimension mismatch between " + this->n_rows + " and " +  B.n_rows));
         DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
+               ("Dimension mismatch between " + this->n_columns + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
+               ("Dimension mismatch between " + B.n_columns + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.column_block_size,
+               ("Dimension mismatch between " + B.column_block_size + " and " + 
                                             C.column_block_size));
       }
     else if (!conjugate_transpose_A && conjugate_transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_columns == B.n_columns,
-               dealii::ExcDimensionMismatch(this->n_columns, B.n_columns));
+               ("Dimension mismatch between " + this->n_columns + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
+               ("Dimension mismatch between " + this->n_rows + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
+               ("Dimension mismatch between " + B.n_rows + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->column_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             B.column_block_size));
         DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.row_block_size,
+               ("Dimension mismatch between " + B.row_block_size + " and " + 
                                             C.column_block_size));
       }
     else // if (transpose_A && transpose_B)
       {
         DFTEFE_AssertWithMsg(this->n_rows == B.n_columns,
-               dealii::ExcDimensionMismatch(this->n_rows, B.n_columns));
+               ("Dimension mismatch between " + this->n_rows + " and " +  B.n_columns));
         DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
+               ("Dimension mismatch between " + this->n_columns + " and " +  C.n_rows));
         DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
+               ("Dimension mismatch between " + B.n_rows + " and " +  C.n_columns));
         DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-               dealii::ExcDimensionMismatch(this->row_block_size,
+               ("Dimension mismatch between " + this->row_block_size + " and " + 
                                             C.row_block_size));
         DFTEFE_AssertWithMsg(this->row_block_size == B.column_block_size,
-               dealii::ExcDimensionMismatch(this->column_block_size,
+               ("Dimension mismatch between " + this->column_block_size + " and " + 
                                             B.row_block_size));
         DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-               dealii::ExcDimensionMismatch(B.column_block_size,
+               ("Dimension mismatch between " + B.column_block_size + " and " + 
                                             C.column_block_size));
       }
 
@@ -1091,15 +1093,15 @@ namespace dftfe
     DFTEFE_AssertWithMsg(property == dftfe::LAPACKSupport::hermitian,
              "Matrix has to be hermitian for this operation.");
 
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(std::mutex);
 
     const bool use_values = (std::isnan(eigenvalue_limits.first) ||
                              std::isnan(eigenvalue_limits.second)) ?
                               false :
                               true;
     const bool use_indices =
-      ((eigenvalue_idx.first == dealii::numbers::invalid_unsigned_int) ||
-       (eigenvalue_idx.second == dealii::numbers::invalid_unsigned_int)) ?
+      ((eigenvalue_idx.first == std::numeric_limits<unsigned int>::max()) ||
+       (eigenvalue_idx.second == std::numeric_limits<unsigned int>::max())) ?
         false :
         true;
 
@@ -1415,8 +1417,8 @@ namespace dftfe
                               false :
                               true;
     const bool use_indices =
-      ((eigenvalue_idx.first == dealii::numbers::invalid_unsigned_int) ||
-       (eigenvalue_idx.second == dealii::numbers::invalid_unsigned_int)) ?
+      ((eigenvalue_idx.first == std::numeric_limits<unsigned int>::max()) ||
+       (eigenvalue_idx.second == std::numeric_limits<unsigned int>::max())) ?
         false :
         true;
 
@@ -1613,7 +1615,7 @@ namespace dftfe
     if (grid->mpi_process_is_active)
       {
         DFTEFE_AssertWithMsg(this->n() == factors.size(),
-               dealii::ExcDimensionMismatch(this->n(), factors.size()));
+               ("Dimension mismatch between " + this->n() + " and " +  factors.size()));
 
         for (unsigned int i = 0; i < this->local_n(); ++i)
           {
@@ -1632,7 +1634,7 @@ namespace dftfe
     if (grid->mpi_process_is_active)
       {
         DFTEFE_AssertWithMsg(this->m() == factors.size(),
-               dealii::ExcDimensionMismatch(this->m(), factors.size()));
+               ("Dimension mismatch between " + this->m() + " and " +  factors.size()));
         for (unsigned int i = 0; i < this->local_m(); ++i)
           {
             const NumberType s = factors[this->global_row(i)];
@@ -1650,7 +1652,7 @@ namespace dftfe
     if (grid->mpi_process_is_active)
       {
         DFTEFE_AssertWithMsg(this->n() == factors.size(),
-               dealii::ExcDimensionMismatch(this->n(), factors.size()));
+               ("Dimension mismatch between " + this->n() + " and " +  factors.size()));
 
         for (unsigned int i = 0; i < this->local_n(); ++i)
           {
@@ -1669,7 +1671,7 @@ namespace dftfe
     if (grid->mpi_process_is_active)
       {
         DFTEFE_AssertWithMsg(this->m() == factors.size(),
-               dealii::ExcDimensionMismatch(this->m(), factors.size()));
+               ("Dimension mismatch between " + this->m() + " and " +  factors.size()));
         for (unsigned int i = 0; i < this->local_m(); ++i)
           {
             const NumberType s = NumberType(factors[this->global_row(i)]);
@@ -1681,4 +1683,5 @@ namespace dftfe
 
   template class ScaLAPACKMatrix<double>;
   template class ScaLAPACKMatrix<std::complex<double>>;
+}//namespace linearAlgebra
 } // namespace dftfe

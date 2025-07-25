@@ -13,11 +13,15 @@
 //
 // ---------------------------------------------------------------------
 
-#ifndef dftfeProcessGrid_h
-#define dftfeProcessGrid_h
+#ifndef dftefeProcessGrid_h
+#define dftefeProcessGrid_h
+
+#include <utils/MPIWrapper.h>
 
 namespace dftefe
 {
+  namespace linearAlgebra
+  {
 // Forward declaration of class ScaLAPACKMatrix for ProcessGrid
   // template <typename NumberType>
   // class ScaLAPACKMatrix;
@@ -49,7 +53,7 @@ namespace dftefe
   public:
     // // Declare class ScaLAPACK as friend to provide access to private members.
     // template <typename NumberType>
-    // friend class dftefe::ScaLAPACKMatrix;
+    // friend class ScaLAPACKMatrix;
 
     /**
      * Constructor for a process grid with @p n_rows and @p n_columns for a given @p mpi_communicator.
@@ -241,6 +245,7 @@ namespace dftefe
   {
     return mpi_process_is_active;
   }
+  }// end of namespace processGrid
 } // end of namespace dftefe
 
 #endif

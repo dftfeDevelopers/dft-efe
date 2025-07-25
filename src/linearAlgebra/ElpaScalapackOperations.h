@@ -14,29 +14,26 @@
 //
 // ---------------------------------------------------------------------
 
-#ifndef linearAlgebraOperationsInternal_h
-#define linearAlgebraOperationsInternal_h
+#ifndef elpaScalapackOperations_h
+#define elpaScalapackOperations_h
 
 #include <headers.h>
 #include <operator.h>
-#include "process_grid.h"
-#include "scalapackWrapper.h"
-#include "dftParameters.h"
+#include "ProcessGrid.h"
+#include "ScalapackWrapper.h"
 #include <BLASWrapper.h>
 #include <elpa/elpa.h>
 #include <unordered_map>
 #include <dftUtils.h>
 namespace dftfe
 {
-  namespace linearAlgebraOperations
+  namespace linearAlgebra
   {
     /**
-     *  @brief Contains internal functions used in linearAlgebraOperations
+     *  @brief Contains internal functions used in linearAlgebra
      *
      *  @author Sambit Das
      */
-    namespace internal
-    {
       /** @brief setup ELPA parameters.
        *
        */
@@ -175,7 +172,6 @@ namespace dftfe
         const utils::mpi::MPIComm                                  &mpiComm,
         dftfe::ScaLAPACKMatrix<T>                       &overlapMatPar,
         const dftParameters                             &dftParams);
-    } // namespace internal
-  }   // namespace linearAlgebraOperations
+  }   // namespace linearAlgebra
 } // namespace dftfe
 #endif

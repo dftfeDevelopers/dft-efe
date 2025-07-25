@@ -13,12 +13,10 @@
 //
 // ---------------------------------------------------------------------
 
-#ifndef dftfe_scalapack_templates_h
-#define dftfe_scalapack_templates_h
+#ifndef dftefeScalapackTemplates_h
+#define dftefeScalapackTemplates_h
 
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-#  include <cfenv>
-#endif
+#include<vector>
 
 // useful examples:
 // https://stackoverflow.com/questions/14147705/cholesky-decomposition-scalapack-error/14203864
@@ -35,8 +33,10 @@
 // http://www.netlib.org/scalapack/slug/node135.html // How to Measure Errors
 // NOTE: Non-templated functions are chosen over templated functions if their
 // names match and template function is not explicitly called
-namespace dftfe
+namespace dftefe
 {
+  namespace linearAlgebra
+  {
   extern "C"
   {
     /* Basic Linear Algebra Communication Subprograms (BLACS) declarations */
@@ -1116,7 +1116,7 @@ namespace dftfe
           int /*rsrc*/,
           int /*csrc*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1142,7 +1142,7 @@ namespace dftfe
           int /*rdest*/,
           int /*cdest*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1187,7 +1187,7 @@ namespace dftfe
          const int * /*DESCA*/,
          int * /*INFO*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1237,7 +1237,7 @@ namespace dftfe
          int * /*ipiv*/,
          int * /*INFO*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1289,7 +1289,7 @@ namespace dftfe
          const int * /*DESCA*/,
          int * /*INFO*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1342,7 +1342,7 @@ namespace dftfe
          int * /*liwork*/,
          int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1406,7 +1406,7 @@ namespace dftfe
          const int * /*DESCA*/,
          int * /*INFO*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1464,7 +1464,7 @@ namespace dftfe
          const int * /*LIWORK*/,
          int * /*INFO*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1539,7 +1539,7 @@ namespace dftfe
          const int * /*DESCA*/,
          number * /*work*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline double
@@ -1584,7 +1584,7 @@ namespace dftfe
         const int * /*descb*/,
         int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1644,7 +1644,7 @@ namespace dftfe
         const int * /*JC*/,
         const int * /*DESCC*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1785,7 +1785,7 @@ namespace dftfe
          const int * /*desca*/,
          number * /*work*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline double
@@ -1833,7 +1833,7 @@ namespace dftfe
         const int * /*lwork*/,
         int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1913,7 +1913,7 @@ namespace dftfe
          const int * /*jb*/,
          const int * /*descb*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -1963,7 +1963,7 @@ namespace dftfe
           const int * /*descb*/,
           const int * /*ictxt*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2003,7 +2003,7 @@ namespace dftfe
   inline void
   plamch(const int * /*ictxt*/, const char * /*cmach*/, number & /*val*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2051,7 +2051,7 @@ namespace dftfe
          number * /*gap*/,
          int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2263,7 +2263,7 @@ namespace dftfe
          int * /*lwork*/,
          int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2373,7 +2373,7 @@ namespace dftfe
         int * /*lwork*/,
         int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2435,7 +2435,7 @@ namespace dftfe
          const int * /*JC*/,
          const int * /*DESCC*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2507,7 +2507,7 @@ namespace dftfe
         const int * /*JC*/,
         const int * /*DESCC*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2572,7 +2572,7 @@ namespace dftfe
          int * /*liwork*/,
          int * /*info*/)
   {
-    AssertThrow(false, dealii::ExcNotImplemented());
+    utils::throwException(false,"Function in ScalapackTemplates.h not implemented");
   }
 
   inline void
@@ -2601,17 +2601,6 @@ namespace dftfe
          int          *liwork,
          int          *info)
   {
-    /*
-     * Netlib ScaLAPACK performs floating point tests (e.g. divide-by-zero)
-     * within the call to pdsyevr causing floating point exceptions to be thrown
-     * (at least in debug mode). Therefore, we wrap the calls to pdsyevr into
-     * the following code to suppress the exception.
-     */
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-    fenv_t fp_exceptions;
-    feholdexcept(&fp_exceptions);
-#endif
-
     pdsyevr_(jobz,
              range,
              uplo,
@@ -2636,10 +2625,6 @@ namespace dftfe
              iwork,
              liwork,
              info);
-
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-    fesetenv(&fp_exceptions);
-#endif
   }
 
   inline void
@@ -2668,17 +2653,6 @@ namespace dftfe
          int         *liwork,
          int         *info)
   {
-    /*
-     * Netlib ScaLAPACK performs floating point tests (e.g. divide-by-zero)
-     * within the call to pssyevr causing floating point exceptions to be thrown
-     * (at least in debug mode). Therefore, we wrap the calls to pssyevr into
-     * the following code to suppress the exception.
-     */
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-    fenv_t fp_exceptions;
-    feholdexcept(&fp_exceptions);
-#endif
-
     pssyevr_(jobz,
              range,
              uplo,
@@ -2703,10 +2677,6 @@ namespace dftfe
              iwork,
              liwork,
              info);
-
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-    fesetenv(&fp_exceptions);
-#endif
   }
 
   inline void
@@ -2735,17 +2705,6 @@ namespace dftfe
          int                  *liwork,
          int                  *info)
   {
-    /*
-     * Netlib ScaLAPACK performs floating point tests (e.g. divide-by-zero)
-     * within the call to pdsyevr causing floating point exceptions to be thrown
-     * (at least in debug mode). Therefore, we wrap the calls to pdsyevr into
-     * the following code to suppress the exception.
-     */
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-    fenv_t fp_exceptions;
-    feholdexcept(&fp_exceptions);
-#endif
-
     pzheevr_(jobz,
              range,
              uplo,
@@ -2770,10 +2729,6 @@ namespace dftfe
              iwork,
              liwork,
              info);
-
-#ifdef DEAL_II_HAVE_FP_EXCEPTIONS
-    fesetenv(&fp_exceptions);
-#endif
   }
 
   inline int
@@ -2793,5 +2748,6 @@ namespace dftfe
   {
     return static_cast<int>(work[0].real());
   }
-} // namespace dftfe
-#endif // dftfe_scalapack_templates_h
+} // namespace linearAlgebra
+} // namespace dftefe
+#endif // dftefeScalapackTemplates_h

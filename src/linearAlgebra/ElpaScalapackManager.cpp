@@ -26,6 +26,8 @@
 //
 namespace dftfe
 {
+  namespace linearAlgebra
+  {
   elpaScalaManager::elpaScalaManager(const utils::mpi::MPIComm &mpi_comm_replica)
     : d_mpi_communicator(mpi_comm_replica)
     , d_processGridCommunicatorActive(MPI_COMM_NULL)
@@ -108,4 +110,5 @@ namespace dftfe
           }
       }
   }
+} // namespace linearAlgebra
 } // namespace dftfe

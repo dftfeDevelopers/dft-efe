@@ -17,14 +17,16 @@
 
 
 
-#ifndef ScaLAPACKMatrix_H_
-#define ScaLAPACKMatrix_H_
+#ifndef ScaLAPACKMatrix_h
+#define ScaLAPACKMatrix_h
 
-#include "process_grid.h"
+#include "ProcessGrid.h"
 #include "lapack_support.h"
 
-namespace dftfe
+namespace dftefe
 {
+  namespace linearAlgebra
+  {
   /**
    * @brief Scalapack wrapper adapted from dealii library and extended implementation to complex datatype
    *
@@ -51,11 +53,11 @@ namespace dftfe
     ScaLAPACKMatrix(
       const size_type                                  n_rows,
       const size_type                                  n_columns,
-      const std::shared_ptr<const dftfe::ProcessGrid> &process_grid,
+      const std::shared_ptr<const ProcessGrid> &process_grid,
       const size_type                                  row_block_size    = 32,
       const size_type                                  column_block_size = 32,
-      const dftfe::LAPACKSupport::Property             property =
-        dftfe::LAPACKSupport::Property::general);
+      const LAPACKSupport::Property             property =
+        LAPACKSupport::Property::general);
 
     /**
      * Constructor for a square matrix of size @p size, and distributed
@@ -68,10 +70,10 @@ namespace dftfe
      */
     ScaLAPACKMatrix(
       const size_type                                  size,
-      const std::shared_ptr<const dftfe::ProcessGrid> &process_grid,
+      const std::shared_ptr<const ProcessGrid> &process_grid,
       const size_type                                  block_size = 32,
-      const dftfe::LAPACKSupport::Property             property =
-        dftfe::LAPACKSupport::Property::hermitian);
+      const LAPACKSupport::Property             property =
+        LAPACKSupport::Property::hermitian);
 
 
     /**
@@ -86,11 +88,11 @@ namespace dftfe
     void
     reinit(const size_type                                  n_rows,
            const size_type                                  n_columns,
-           const std::shared_ptr<const dftfe::ProcessGrid> &process_grid,
+           const std::shared_ptr<const ProcessGrid> &process_grid,
            const size_type                                  row_block_size = 32,
            const size_type                      column_block_size          = 32,
-           const dftfe::LAPACKSupport::Property property =
-             dftfe::LAPACKSupport::Property::general);
+           const LAPACKSupport::Property property =
+             LAPACKSupport::Property::general);
 
     /**
      * Initialize the square matrix of size @p size and distributed using the grid @p process_grid.
@@ -102,28 +104,28 @@ namespace dftfe
      */
     void
     reinit(const size_type                                  size,
-           const std::shared_ptr<const dftfe::ProcessGrid> &process_grid,
+           const std::shared_ptr<const ProcessGrid> &process_grid,
            const size_type                                  block_size = 32,
-           const dftfe::LAPACKSupport::Property             property =
-             dftfe::LAPACKSupport::Property::hermitian);
+           const LAPACKSupport::Property             property =
+             LAPACKSupport::Property::hermitian);
 
 
     /**
      * Assign @p property to this matrix.
      */
     void
-    set_property(const dftfe::LAPACKSupport::Property property);
+    set_property(const LAPACKSupport::Property property);
 
     /**
      * Return current @p property of this matrix
      */
-    dftfe::LAPACKSupport::Property
+    LAPACKSupport::Property
     get_property() const;
 
     /**
      * Return current @p state of this matrix
      */
-    dftfe::LAPACKSupport::State
+    LAPACKSupport::State
     get_state() const;
 
 
@@ -623,8 +625,8 @@ namespace dftfe
     eigenpairs_hermitian(
       const bool                                   compute_eigenvectors,
       const std::pair<unsigned int, unsigned int> &index_limits =
-        std::make_pair(dealii::numbers::invalid_unsigned_int,
-                       dealii::numbers::invalid_unsigned_int),
+        std::make_pair(std::numeric_limits<unsigned int>::max(),
+                       std::numeric_limits<unsigned int>::max()),
       const std::pair<double, double> &value_limits =
         std::make_pair(std::numeric_limits<double>::quiet_NaN(),
                        std::numeric_limits<double>::quiet_NaN()));
@@ -652,8 +654,8 @@ namespace dftfe
     eigenpairs_hermitian_MRRR(
       const bool                                   compute_eigenvectors,
       const std::pair<unsigned int, unsigned int> &index_limits =
-        std::make_pair(dealii::numbers::invalid_unsigned_int,
-                       dealii::numbers::invalid_unsigned_int),
+        std::make_pair(std::numeric_limits<unsigned int>::max(),
+                       std::numeric_limits<unsigned int>::max()),
       const std::pair<double, double> &value_limits =
         std::make_pair(std::numeric_limits<double>::quiet_NaN(),
                        std::numeric_limits<double>::quiet_NaN()));
@@ -668,20 +670,20 @@ namespace dftfe
      * Since ScaLAPACK operations notoriously change the meaning of the matrix
      * entries, we record the current state after the last operation here.
      */
-    dftfe::LAPACKSupport::State state;
+    LAPACKSupport::State state;
 
     /**
      * Additional property of the matrix which may help to select more
      * efficient ScaLAPACK functions.
      */
-    dftfe::LAPACKSupport::Property property;
+    LAPACKSupport::Property property;
 
     /**
-     * A shared pointer to a dealii::Utilities::MPI::ProcessGrid object which
+     * A shared pointer to a MPI::ProcessGrid object which
      * contains a BLACS context and a MPI communicator, as well as other
      * necessary data structures.
      */
-    std::shared_ptr<const dftfe::ProcessGrid> grid;
+    std::shared_ptr<const ProcessGrid> grid;
 
     /**
      * Number of rows in the matrix.
@@ -763,16 +765,9 @@ namespace dftfe
      * Currently this equals unity, as we don't use submatrices.
      */
     const int submatrix_column;
-
-    /**
-     * Thread mutex.
-     */
-    mutable dealii::Threads::Mutex mutex;
   };
 
   // ----------------------- inline functions ----------------------------
-
-#ifndef DOXYGEN
 
   template <typename NumberType>
   inline NumberType
@@ -829,9 +824,6 @@ namespace dftfe
     return n_local_columns;
   }
 
-
-#endif // DOXYGEN
-
-
-} // namespace dftfe
-#endif // ScaLAPACKMatrix_H_
+} // namespace linearAlgebra
+} // namespace dftefe
+#endif // ScaLAPACKMatrix_h
