@@ -126,7 +126,7 @@ namespace linearAlgebra
             return "Hessenberg";
         }
 
-      Assert(false, dealii::ExcNotImplemented());
+      DFTEFE_Assert(false);
       return "invalid";
     }
 
@@ -165,11 +165,11 @@ namespace linearAlgebra
     /**
      * Integer constant.
      */
-    static const LapackInt zero = 0;
+    static const types::LapackInt zero = 0;
     /**
      * Integer constant.
      */
-    static const LapackInt one = 1;
+    static const types::LapackInt one = 1;
 
   } // namespace LAPACKSupport
 } // namespace linearAlgebra

@@ -26,7 +26,9 @@ if (NOT TARGET dft-efe-linalg)
         ChebyshevFilter.cpp
         RayleighRitzEigenSolver.cpp
         ChebyshevFilteredEigenSolver.cpp
-        NewtonRaphsonSolver.cpp)
+        NewtonRaphsonSolver.cpp
+        ProcessGrid.cpp
+        ScalapackWrapper.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

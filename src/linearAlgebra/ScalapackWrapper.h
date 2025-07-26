@@ -21,7 +21,8 @@
 #define ScaLAPACKMatrix_h
 
 #include "ProcessGrid.h"
-#include "lapack_support.h"
+#include "LapackSupport.h"
+#include <memory>
 
 namespace dftefe
 {
@@ -36,11 +37,6 @@ namespace dftefe
   class ScaLAPACKMatrix
   {
   public:
-    /**
-     * Declare the type for container size.
-     */
-    using size_type = unsigned int;
-
     /**
      * Constructor for a rectangular matrix with @p n_rows and @p n_cols
      * and distributed using the grid @p process_grid.
@@ -826,4 +822,5 @@ namespace dftefe
 
 } // namespace linearAlgebra
 } // namespace dftefe
+#include <linearAlgebra/ScalapackWrapper.t.cpp>
 #endif // ScaLAPACKMatrix_h

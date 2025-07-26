@@ -96,20 +96,20 @@ namespace dftefe
     /**
      * Return the blacs_context.
      */
-    int
+    const int&
     get_blacs_context() const;
 
 
     /**
      * Return the number of rows in the processes grid.
      */
-    unsigned int
+    const int&
     get_process_grid_rows() const;
 
     /**
      * Return the number of columns in the processes grid.
      */
-    unsigned int
+    const int&
     get_process_grid_columns() const;
 
     /**
@@ -117,7 +117,7 @@ namespace dftefe
      *
      * It's negative for inactive processes.
      */
-    int
+    const int&
     get_this_process_row() const;
 
     /**
@@ -125,7 +125,7 @@ namespace dftefe
      *
      * It's negative for inactive processes.
      */
-    int
+    const int&
     get_this_process_column() const;
 
     /**
@@ -140,8 +140,11 @@ namespace dftefe
     /**
      * Return <code>true</code> if the process is active within the grid.
      */
-    bool
+    const bool&
     is_process_active() const;
+
+    const utils::mpi::MPIComm &
+    get_mpi_communicator() const;
 
   private:
     /**
@@ -210,41 +213,48 @@ namespace dftefe
 
   /*--------------------- Inline functions --------------------------------*/
 
-  inline int
+  inline const int&
   ProcessGrid::get_blacs_context() const
   {
     return blacs_context;
   }
 
-  inline unsigned int
+  inline const int&
   ProcessGrid::get_process_grid_rows() const
   {
     return n_process_rows;
   }
 
-  inline unsigned int
+  inline const int&
   ProcessGrid::get_process_grid_columns() const
   {
     return n_process_columns;
   }
 
-  inline int
+  inline const int&
   ProcessGrid::get_this_process_row() const
   {
     return this_process_row;
   }
 
-  inline int
+  inline const int&
   ProcessGrid::get_this_process_column() const
   {
     return this_process_column;
   }
 
-  inline bool
+  inline const bool&
   ProcessGrid::is_process_active() const
   {
     return mpi_process_is_active;
   }
+
+  inline const utils::mpi::MPIComm &
+  ProcessGrid::get_mpi_communicator() const
+  {
+    return mpi_communicator;
+  }
+
   }// end of namespace processGrid
 } // end of namespace dftefe
 

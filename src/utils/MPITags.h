@@ -48,7 +48,9 @@ namespace dftefe
 
         MPI_P2P_COMMUNICATOR_SCATTER_TAG,
 
-        MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200
+        MPI_P2P_COMMUNICATOR_GATHER_TAG = MPI_P2P_COMMUNICATOR_SCATTER_TAG + 200,
+
+        SCALAPACK_PROCESS_GRID_CONSTRUCTOR,
       };
     } // end of namespace mpi
   }   // end of namespace utils

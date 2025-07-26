@@ -31,6 +31,7 @@
 #endif // DFTEFE_WITH_MPI
 
 #include <complex>
+#include "MPITags.h"
 
 namespace dftefe
 {

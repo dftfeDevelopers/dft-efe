@@ -103,8 +103,8 @@ namespace dftefe
     : mpi_communicator(mpi_comm)
     , n_process_rows(grid_dimensions.first)
     , n_process_columns(grid_dimensions.second)
-    , this_mpi_process(utils::mpi::MPICommRank(mpi_communicator, &this_mpi_process))
-    , n_mpi_processes(utils::mpi::MPICommSize(mpi_communicator, &n_mpi_processes))
+    , this_mpi_process(utils::mpi::thisMPIProcess(mpi_communicator))
+    , n_mpi_processes(utils::mpi::numMPIProcesses(mpi_communicator))
   {
     DFTEFE_AssertWithMsg(grid_dimensions.first > 0,
            (
@@ -161,42 +161,56 @@ namespace dftefe
 
     // Get the group of processes in mpi_communicator
     int       ierr = 0;
-    MPI_Group all_group;
-    ierr = MPI_Comm_group(mpi_communicator, &all_group);
-    AssertThrowMPI(ierr);
+    utils::mpi::MPIGroup all_group;
+    ierr = utils::mpi::MPICommGroup(mpi_communicator, &all_group);
+    std::pair<bool, std::string> mpiIsSuccessAndMsg =
+      utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+    DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
     // Construct the group containing all ranks we need:
-    MPI_Group inactive_with_root_group;
+    utils::mpi::MPIGroup inactive_with_root_group;
     const int n = inactive_with_root_ranks.size();
-    ierr        = MPI_Group_incl(all_group,
+    ierr        = utils::mpi::MPIGroupIncl(all_group,
                           n,
                           inactive_with_root_ranks.data(),
                           &inactive_with_root_group);
-    AssertThrowMPI(ierr);
+    mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
 
     // Create the communicator based on inactive_with_root_group.
     // Note that on all the active MPI processes (except for the one with
     // rank 0) the resulting utils::mpi::MPIComm mpi_communicator_inactive_with_root
-    // will be MPI_COMM_NULL.
-    const int mpi_tag =
-      dealii::Utilities::MPI::internal::Tags::process_grid_constructor;
+    // will be utils::mpi::MPICommNull.
+    const int mpi_tag = static_cast<int>(utils::mpi::MPITags::SCALAPACK_PROCESS_GRID_CONSTRUCTOR);
 
     ierr = utils::mpi::MPICommCreateGroup(
       mpi_communicator,
       inactive_with_root_group,
       mpi_tag,
       &mpi_communicator_inactive_with_root);
-    AssertThrowMPI(ierr);
+    mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-    ierr = MPI_Group_free(&all_group);
-    AssertThrowMPI(ierr);
-    ierr = MPI_Group_free(&inactive_with_root_group);
-    AssertThrowMPI(ierr);
+    ierr = utils::mpi::MPIGroupFree(&all_group);
+    mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
+    ierr = utils::mpi::MPIGroupFree(&inactive_with_root_group);
+    mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
 
     // Double check that the process with rank 0 in subgroup is active:
 #ifdef DEBUG
-    if (mpi_communicator_inactive_with_root != MPI_COMM_NULL &&
-        dealii::Utilities::MPI::this_mpi_process(
+    if (mpi_communicator_inactive_with_root != utils::mpi::MPICommNull &&
+        utils::mpi::thisMPIProcess(
           mpi_communicator_inactive_with_root) == 0)
       DFTEFE_Assert(mpi_process_is_active);
 #endif
@@ -232,7 +246,7 @@ namespace dftefe
     if (mpi_process_is_active)
       Cblacs_gridexit(blacs_context);
 
-    if (mpi_communicator_inactive_with_root != MPI_COMM_NULL)
+    if (mpi_communicator_inactive_with_root != utils::mpi::MPICommNull)
       MPI_Comm_free(&mpi_communicator_inactive_with_root);
   }
 
@@ -243,14 +257,17 @@ namespace dftefe
   ProcessGrid::send_to_inactive(NumberType *value, const int count) const
   {
     DFTEFE_Assert(count > 0);
-    if (mpi_communicator_inactive_with_root != MPI_COMM_NULL)
+    if (mpi_communicator_inactive_with_root != utils::mpi::MPICommNull)
       {
         const int ierr = utils::mpi::MPIBcast<utils::MemorySpace::HOST>(value,
                                    count,
                                    utils::mpi::Types<NumberType>::getMPIDatatype(),
                                    0 /*from root*/,
                                    mpi_communicator_inactive_with_root);
-        AssertThrowMPI(ierr);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
       }
   }
 // instantiations

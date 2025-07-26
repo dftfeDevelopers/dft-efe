@@ -509,6 +509,30 @@ namespace dftefe
       }
 
 #endif // DFTEFE_WITH_MPI
+
+      unsigned int
+      numMPIProcesses(const MPIComm mpi_communicator)
+      {
+        int       n_jobs = 1;
+        int ierr = MPICommSize(mpi_communicator, &n_jobs);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
+        return n_jobs;                                
+      }
+
+      unsigned int
+      thisMPIProcess(const MPIComm mpi_communicator)
+      {
+        int       rank = 0;
+        int ierr = MPICommRank(mpi_communicator, &rank);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                  "MPI Error:" + mpiIsSuccessAndMsg.second);
+        return rank;  
+      }
     }  // end of namespace mpi
   }    // end of namespace utils
 } // end of namespace dftefe
