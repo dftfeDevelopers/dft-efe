@@ -84,9 +84,9 @@ namespace dftefe
        */
       ~RayleighRitzEigenSolver() = default;
 
-      // In this case we can solve the KohnSham GHEP if the X's are B orthogonalized.
-      // X_MO^T H X_MO Q = \lambda X_MO^T M X_MO Q , or,
-      // H X = \lambda M X if X = X_MO Q
+      // In this case we can solve the KohnSham GHEP if the X's are B
+      // orthogonalized. X_MO^T H X_MO Q = \lambda X_MO^T M X_MO Q , or, H X =
+      // \lambda M X if X = X_MO Q
       EigenSolverError
       solve(const OpContext &                           A,
             MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -105,7 +105,7 @@ namespace dftefe
             MultiVector<ValueType, memorySpace> &       eigenVectors,
             bool computeEigenVectors = false);
 
-      // /**  In this case we solve the Kohn Sham GHEP for any general X 
+      // /**  In this case we solve the Kohn Sham GHEP for any general X
       // * Performs cholesky factorization for orthogonalization internally.
       // * SConj = X^T M X
       // * SConj=LConj*L^{T}
@@ -118,7 +118,8 @@ namespace dftefe
       // * X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, stored in the column major
       // *     format In the above we use Q^{T}={QConjPrime}^{C}*LConj^{-1}
       // * In other words, X_O^T H X_O Q = \lambda X_O^T M X_O Q , or,
-      // * H X = \lambda M X if X = X_O Q where X_O = X((LInv)^C) (C is conj trans) 
+      // * H X = \lambda M X if X = X_O Q where X_O = X((LInv)^C) (C is conj
+      // trans)
       // **/
       // EigenSolverError
       // solveGEPNoOrtho(const OpContext &                 A,

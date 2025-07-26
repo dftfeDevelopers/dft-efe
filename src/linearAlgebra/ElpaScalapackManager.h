@@ -28,115 +28,115 @@ namespace dftfe
 {
   namespace linearAlgebra
   {
-  /**
-   * @brief Manager class for ELPA and ScaLAPACK
-   *
-   * @author Sambit Das
-   */
-  class elpaScalaManager
-  {
-    //
-    // methods
-    //
-  public:
-    unsigned int
-    getScalapackBlockSize() const;
-
-    std::shared_ptr<const ProcessGrid>
-    getProcessGridDftfeScalaWrapper() const;
-
-    void
-    processGridELPASetup(const unsigned int na);
-    void
-    elpaDeallocateHandles();
-
-    elpa_t &
-    getElpaHandle();
-
-    elpa_t &
-    getElpaHandlePartialEigenVec();
-
-    elpa_autotune_t &
-    getElpaAutoTuneHandle();
-
-
     /**
-     * @brief Get relevant mpi communicator
+     * @brief Manager class for ELPA and ScaLAPACK
      *
-     * @return mpi communicator
+     * @author Sambit Das
      */
-    const utils::mpi::MPIComm &
-    getMPICommunicator() const;
+    class elpaScalaManager
+    {
+      //
+      // methods
+      //
+    public:
+      unsigned int
+      getScalapackBlockSize() const;
+
+      std::shared_ptr<const ProcessGrid>
+      getProcessGridDftfeScalaWrapper() const;
+
+      void
+      processGridELPASetup(const unsigned int na);
+      void
+      elpaDeallocateHandles();
+
+      elpa_t &
+      getElpaHandle();
+
+      elpa_t &
+      getElpaHandlePartialEigenVec();
+
+      elpa_autotune_t &
+      getElpaAutoTuneHandle();
 
 
-    /**
-     * @brief Constructor.
-     */
-    elpaScalaManager(const utils::mpi::MPIComm &mpi_comm_replica);
-
-    /**
-     * @brief Destructor.
-     */
-    ~elpaScalaManager();
-
-    //
-    // mpi communicator
-    //
-    utils::mpi::MPIComm d_mpi_communicator;
-
-    /// ELPA handle
-    elpa_t d_elpaHandle;
-
-    /// ELPA handle for partial eigenvectors of full proj ham
-    elpa_t d_elpaHandlePartialEigenVec;
-
-    /// ELPA autotune handle
-    elpa_autotune_t d_elpaAutoTuneHandle;
-
-    /// processGrid mpi communicator
-    utils::mpi::MPIComm d_processGridCommunicatorActive;
-
-    utils::mpi::MPIComm d_processGridCommunicatorActivePartial;
+      /**
+       * @brief Get relevant mpi communicator
+       *
+       * @return mpi communicator
+       */
+      const utils::mpi::MPIComm &
+      getMPICommunicator() const;
 
 
-    /// ScaLAPACK distributed format block size
-    unsigned int d_scalapackBlockSize;
+      /**
+       * @brief Constructor.
+       */
+      elpaScalaManager(const utils::mpi::MPIComm &mpi_comm_replica);
 
-    std::shared_ptr<const ProcessGrid> d_processGridDftfeWrapper;
-  };
+      /**
+       * @brief Destructor.
+       */
+      ~elpaScalaManager();
 
-  /*--------------------- Inline functions --------------------------------*/
+      //
+      // mpi communicator
+      //
+      utils::mpi::MPIComm d_mpi_communicator;
 
-  inline unsigned int
-  elpaScalaManager::getScalapackBlockSize() const
-  {
-    return d_scalapackBlockSize;
-  }
+      /// ELPA handle
+      elpa_t d_elpaHandle;
 
-  inline std::shared_ptr<const ProcessGrid>
-  elpaScalaManager::getProcessGridDftfeScalaWrapper() const
-  {
-    return d_processGridDftfeWrapper;
-  }
+      /// ELPA handle for partial eigenvectors of full proj ham
+      elpa_t d_elpaHandlePartialEigenVec;
 
-  inline elpa_t &
-  elpaScalaManager::getElpaHandle()
-  {
-    return d_elpaHandle;
-  }
+      /// ELPA autotune handle
+      elpa_autotune_t d_elpaAutoTuneHandle;
 
-  inline elpa_t &
-  elpaScalaManager::getElpaHandlePartialEigenVec()
-  {
-    return d_elpaHandlePartialEigenVec;
-  }
+      /// processGrid mpi communicator
+      utils::mpi::MPIComm d_processGridCommunicatorActive;
+
+      utils::mpi::MPIComm d_processGridCommunicatorActivePartial;
 
 
-  inline elpa_autotune_t &
-  elpaScalaManager::getElpaAutoTuneHandle()
-  {
-    return d_elpaAutoTuneHandle;
-  }
-} // namespace linearAlgebra 
+      /// ScaLAPACK distributed format block size
+      unsigned int d_scalapackBlockSize;
+
+      std::shared_ptr<const ProcessGrid> d_processGridDftfeWrapper;
+    };
+
+    /*--------------------- Inline functions --------------------------------*/
+
+    inline unsigned int
+    elpaScalaManager::getScalapackBlockSize() const
+    {
+      return d_scalapackBlockSize;
+    }
+
+    inline std::shared_ptr<const ProcessGrid>
+    elpaScalaManager::getProcessGridDftfeScalaWrapper() const
+    {
+      return d_processGridDftfeWrapper;
+    }
+
+    inline elpa_t &
+    elpaScalaManager::getElpaHandle()
+    {
+      return d_elpaHandle;
+    }
+
+    inline elpa_t &
+    elpaScalaManager::getElpaHandlePartialEigenVec()
+    {
+      return d_elpaHandlePartialEigenVec;
+    }
+
+
+    inline elpa_autotune_t &
+    elpaScalaManager::getElpaAutoTuneHandle()
+    {
+      return d_elpaAutoTuneHandle;
+    }
+  } // namespace linearAlgebra
 } // namespace dftfe
 #endif

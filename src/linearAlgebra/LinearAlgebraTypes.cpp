@@ -47,6 +47,21 @@ namespace dftefe
        "Linear System Solve with lapackpp gesv failed with error code: "},
       {LapackErrorCode::OTHER_ERROR, "Other Error. "}};
 
+    const std::map<ScalapackErrorCode, std::string>
+      ScalapackErrorMsg::d_errToMsgMap = {
+        {ScalapackErrorCode::SUCCESS, "Success. "},
+        {ScalapackErrorCode::FAILED_LU_FACTORIZATION,
+         "LU factorization failed with error code: "},
+        {ScalapackErrorCode::FAILED_CHOLESKY_FACTORIZATION,
+         "Cholesky factorization failed with error code: "},
+        {ScalapackErrorCode::FAILED_MATRIX_INVERT,
+         "Matrix Invert failed with error code: "},
+        {ScalapackErrorCode::FAILED_STANDARD_HERMITIAN_EIGENPROBLEM,
+         "Standard hermitian eigenproblem decomposition failed with error code: "},
+        {ScalapackErrorCode::FAILED_STANDARD_HERMITIAN_EIGENPROBLEM_MRRR,
+         "Standard hermitian eigenproblem decomposition with MRRR failed with error code: "},
+        {ScalapackErrorCode::OTHER_ERROR, "Other Error. "}};
+
     const std::map<LinearSolverErrorCode, std::string>
       LinearSolverErrorMsg::d_errToMsgMap = {
         {LinearSolverErrorCode::SUCCESS, "Success. "},
@@ -136,6 +151,28 @@ namespace dftefe
         {
           utils::throwException<utils::InvalidArgument>(
             false, "Invalid linearAlgebra::LapackErrorCode passed.");
+        }
+      return ret;
+    }
+
+    ScalapackError
+    ScalapackErrorMsg::isSuccessAndMsg(const ScalapackErrorCode &error)
+    {
+      ScalapackError ret;
+      auto           it = d_errToMsgMap.find(error);
+      if (it != d_errToMsgMap.end())
+        {
+          if (error == ScalapackErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false, "Invalid linearAlgebra::ScalapackErrorCode passed.");
         }
       return ret;
     }

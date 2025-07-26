@@ -69,6 +69,17 @@ namespace dftefe
       OTHER_ERROR
     };
 
+    enum class ScalapackErrorCode
+    {
+      SUCCESS,
+      FAILED_LU_FACTORIZATION,
+      FAILED_CHOLESKY_FACTORIZATION,
+      FAILED_MATRIX_INVERT,
+      FAILED_STANDARD_HERMITIAN_EIGENPROBLEM,
+      FAILED_STANDARD_HERMITIAN_EIGENPROBLEM_MRRR,
+      OTHER_ERROR
+    };
+
     enum class LinearSolverErrorCode
     {
       SUCCESS,
@@ -116,6 +127,13 @@ namespace dftefe
       std::string     msg;
     };
 
+    struct ScalapackError
+    {
+      bool               isSuccess;
+      ScalapackErrorCode err;
+      std::string        msg;
+    };
+
     struct LinearSolverError
     {
       bool                  isSuccess;
@@ -156,6 +174,20 @@ namespace dftefe
 
     private:
       static const std::map<LapackErrorCode, std::string> d_errToMsgMap;
+    }; // end of class LapackErrorMsg
+
+    /**
+     * @brief A class to map Error to a message.
+     * @note: This class only has static const data members.
+     */
+    class ScalapackErrorMsg
+    {
+    public:
+      static ScalapackError
+      isSuccessAndMsg(const ScalapackErrorCode &errorCode);
+
+    private:
+      static const std::map<ScalapackErrorCode, std::string> d_errToMsgMap;
     }; // end of class LapackErrorMsg
 
     /**

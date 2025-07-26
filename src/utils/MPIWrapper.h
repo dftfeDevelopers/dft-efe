@@ -123,6 +123,9 @@ namespace dftefe
                              int       ranks2[]);
 
       int
+      MPIGroupUnion(MPIGroup group1, MPIGroup group2, MPIGroup *newgroup);
+
+      int
       MPIInit(int *argc, char ***argv);
 
       int
