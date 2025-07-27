@@ -18,34 +18,32 @@
 //
 // @author Sambit Das
 //
-#include <elpaScalaManager.h>
-#include <linearAlgebraOperationsInternal.h>
-
+#include "ElpaScalapackManager.h"
 //
 // Constructor.
 //
-namespace dftfe
+namespace dftefe
 {
   namespace linearAlgebra
   {
-    elpaScalaManager::elpaScalaManager(
+    ElpaScalapackManager::ElpaScalapackManager(
       const utils::mpi::MPIComm &mpi_comm_replica)
       : d_mpi_communicator(mpi_comm_replica)
-      , d_processGridCommunicatorActive(MPI_COMM_NULL)
-      , d_processGridCommunicatorActivePartial(MPI_COMM_NULL)
+      , d_processGridCommunicatorActive(utils::mpi::MPICommNull)
+      , d_processGridCommunicatorActivePartial(utils::mpi::MPICommNull)
     {}
 
 
     //
     // Destructor.
     //
-    elpaScalaManager::~elpaScalaManager()
+    ElpaScalapackManager::~ElpaScalapackManager()
     {
-      if (d_processGridCommunicatorActive != MPI_COMM_NULL)
-        MPI_Comm_free(&d_processGridCommunicatorActive);
+      if (d_processGridCommunicatorActive != utils::mpi::MPICommNull)
+        utils::mpi::MPICommFree(&d_processGridCommunicatorActive);
 
-      if (d_processGridCommunicatorActivePartial != MPI_COMM_NULL)
-        MPI_Comm_free(&d_processGridCommunicatorActivePartial);
+      if (d_processGridCommunicatorActivePartial != utils::mpi::MPICommNull)
+        utils::mpi::MPICommFree(&d_processGridCommunicatorActivePartial);
       //
       //
       //
@@ -55,14 +53,14 @@ namespace dftfe
     // Get relevant mpi communicator
     //
     const utils::mpi::MPIComm &
-    elpaScalaManager::getMPICommunicator() const
+    ElpaScalapackManager::getMPICommunicator() const
     {
       return d_mpi_communicator;
     }
 
 
     void
-    elpaScalaManager::processGridELPASetup(const unsigned int na)
+    ElpaScalapackManager::processGridELPASetup(const unsigned int na)
     {
       linearAlgebraOperations::internal::createProcessGridSquareMatrix(
         getMPICommunicator(), na, d_processGridDftfeWrapper, dftParams);
@@ -92,25 +90,25 @@ namespace dftfe
     }
 
     void
-    elpaScalaManager::elpaDeallocateHandles()
+    ElpaScalapackManager::elpaDeallocateHandles()
     {
       if (dftParams.useELPA)
         {
           int error;
-          if (d_processGridCommunicatorActive != MPI_COMM_NULL)
+          if (d_processGridCommunicatorActive != utils::mpi::MPICommNull)
             {
               elpa_deallocate(d_elpaHandle, &error);
-              AssertThrow(error == ELPA_OK,
-                          dealii::ExcMessage("DFT-FE Error: elpa error."));
+              DFTEFE_AssertWithMsg(error == ELPA_OK,
+                          "DFT-EFE Error: elpa error.");
             }
 
-          if (d_processGridCommunicatorActivePartial != MPI_COMM_NULL)
+          if (d_processGridCommunicatorActivePartial != utils::mpi::MPICommNull)
             {
               elpa_deallocate(d_elpaHandlePartialEigenVec, &error);
-              AssertThrow(error == ELPA_OK,
-                          dealii::ExcMessage("DFT-FE Error: elpa error."));
+              DFTEFE_AssertWithMsg(error == ELPA_OK,
+                          "DFT-EFE Error: elpa error.");
             }
         }
     }
   } // namespace linearAlgebra
-} // namespace dftfe
+} // namespace dftefe

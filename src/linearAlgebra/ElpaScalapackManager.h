@@ -23,8 +23,9 @@
 #include "ProcessGrid.h"
 #include <vector>
 #include <elpa/elpa.h>
+#include "ScalapackWrapper.h"
 
-namespace dftfe
+namespace dftefe
 {
   namespace linearAlgebra
   {
@@ -33,7 +34,7 @@ namespace dftfe
      *
      * @author Sambit Das
      */
-    class elpaScalaManager
+    class ElpaScalapackManager
     {
       //
       // methods
@@ -72,12 +73,12 @@ namespace dftfe
       /**
        * @brief Constructor.
        */
-      elpaScalaManager(const utils::mpi::MPIComm &mpi_comm_replica);
+      ElpaScalapackManager(const utils::mpi::MPIComm &mpi_comm_replica);
 
       /**
        * @brief Destructor.
        */
-      ~elpaScalaManager();
+      ~ElpaScalapackManager();
 
       //
       // mpi communicator
@@ -108,35 +109,35 @@ namespace dftfe
     /*--------------------- Inline functions --------------------------------*/
 
     inline unsigned int
-    elpaScalaManager::getScalapackBlockSize() const
+    ElpaScalapackManager::getScalapackBlockSize() const
     {
       return d_scalapackBlockSize;
     }
 
     inline std::shared_ptr<const ProcessGrid>
-    elpaScalaManager::getProcessGridDftfeScalaWrapper() const
+    ElpaScalapackManager::getProcessGridDftfeScalaWrapper() const
     {
       return d_processGridDftfeWrapper;
     }
 
     inline elpa_t &
-    elpaScalaManager::getElpaHandle()
+    ElpaScalapackManager::getElpaHandle()
     {
       return d_elpaHandle;
     }
 
     inline elpa_t &
-    elpaScalaManager::getElpaHandlePartialEigenVec()
+    ElpaScalapackManager::getElpaHandlePartialEigenVec()
     {
       return d_elpaHandlePartialEigenVec;
     }
 
 
     inline elpa_autotune_t &
-    elpaScalaManager::getElpaAutoTuneHandle()
+    ElpaScalapackManager::getElpaAutoTuneHandle()
     {
       return d_elpaAutoTuneHandle;
     }
   } // namespace linearAlgebra
-} // namespace dftfe
+} // namespace dftefe
 #endif

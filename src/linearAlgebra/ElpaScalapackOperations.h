@@ -17,15 +17,12 @@
 #ifndef elpaScalapackOperations_h
 #define elpaScalapackOperations_h
 
-#include <headers.h>
-#include <operator.h>
 #include "ProcessGrid.h"
 #include "ScalapackWrapper.h"
-#include <BLASWrapper.h>
 #include <elpa/elpa.h>
 #include <unordered_map>
-#include <dftUtils.h>
-namespace dftfe
+#include <iostream>
+namespace dftefe
 {
   namespace linearAlgebra
   {
@@ -41,48 +38,48 @@ namespace dftfe
     setupELPAHandleParameters(
       const utils::mpi::MPIComm &mpi_communicator,
       utils::mpi::MPIComm &      processGridCommunicatorActive,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const dftfe::uInt                                na,
-      const dftfe::uInt                                nev,
-      const dftfe::uInt                                blockSize,
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      const size_type                                na,
+      const size_type                                nev,
+      const size_type                                blockSize,
       elpa_t &                                         elpaHandle,
       const dftParameters &                            dftParams);
 
     /** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
-     * dftfe::ScaLAPACKMatrix storage format.
+     * ScaLAPACKMatrix storage format.
      *
      */
     void
     createProcessGridSquareMatrix(
       const utils::mpi::MPIComm &                mpi_communicator,
-      const dftfe::uInt                          size,
-      std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const size_type                          size,
+      std::shared_ptr<const ProcessGrid> &processGrid,
       const dftParameters &                      dftParams,
       const bool                                 useOnlyThumbRule = false);
 
     /** @brief Wrapper function to create a two dimensional processor grid for a rectangular matrix in
-     * dftfe::ScaLAPACKMatrix storage format.
+     * ScaLAPACKMatrix storage format.
      *
      */
     void
     createProcessGridRectangularMatrix(
       const utils::mpi::MPIComm &                mpi_communicator,
-      const dftfe::uInt                          sizeRows,
-      const dftfe::uInt                          sizeColumns,
-      std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const size_type                          sizeRows,
+      const size_type                          sizeColumns,
+      std::shared_ptr<const ProcessGrid> &processGrid,
       const dftParameters &                      dftParams);
 
 
-    /** @brief Creates global row/column id to local row/column ids for dftfe::ScaLAPACKMatrix
+    /** @brief Creates global row/column id to local row/column ids for ScaLAPACKMatrix
      *
      */
     template <typename T>
     void
     createGlobalToLocalIdMapsScaLAPACKMat(
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const dftfe::ScaLAPACKMatrix<T> &                mat,
-      std::unordered_map<dftfe::uInt, dftfe::uInt> &   globalToLocalRowIdMap,
-      std::unordered_map<dftfe::uInt, dftfe::uInt> &globalToLocalColumnIdMap);
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      const ScaLAPACKMatrix<T> &                mat,
+      std::unordered_map<size_type, size_type> &   globalToLocalRowIdMap,
+      std::unordered_map<size_type, size_type> &globalToLocalColumnIdMap);
 
 
     /** @brief Mpi all reduce of ScaLAPACKMat across a given inter communicator.
@@ -92,8 +89,8 @@ namespace dftfe
     template <typename T>
     void
     sumAcrossInterCommScaLAPACKMat(
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<T> &                      mat,
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      ScaLAPACKMatrix<T> &                      mat,
       const utils::mpi::MPIComm &                      interComm);
 
 
@@ -104,11 +101,11 @@ namespace dftfe
     template <typename T>
     void
     scaleScaLAPACKMat(
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const std::shared_ptr<
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      /*const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                        BLASWrapperPtr,
-      dftfe::ScaLAPACKMatrix<T> &mat,
+        &                        BLASWrapperPtr,*/
+      ScaLAPACKMatrix<T> &mat,
       const T                    scalar);
 
 
@@ -119,10 +116,10 @@ namespace dftfe
     template <typename T>
     void
     broadcastAcrossInterCommScaLAPACKMat(
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<T> &                      mat,
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      ScaLAPACKMatrix<T> &                      mat,
       const utils::mpi::MPIComm &                      interComm,
-      const dftfe::uInt                                broadcastRoot);
+      const size_type                                broadcastRoot);
 
     /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
      * X^{T} is the subspaceVectorsArray stored in the column major format (N
@@ -137,15 +134,14 @@ namespace dftfe
     void
     fillParallelOverlapMatrix(
       const T *X,
-      const std::shared_ptr<
+      /*const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                              BLASWrapperPtr,
-      const dftfe::uInt                                XLocalSize,
-      const dftfe::uInt                                numberVectors,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const utils::mpi::MPIComm &                      interBandGroupComm,
+        &                                              BLASWrapperPtr,*/
+      const size_type                                XLocalSize,
+      const size_type                                numberVectors,
+      const std::shared_ptr<const ProcessGrid> &processGrid,
       const utils::mpi::MPIComm &                      mpiComm,
-      dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+      ScaLAPACKMatrix<T> &                      overlapMatPar,
       const dftParameters &                            dftParams);
 
 
@@ -162,16 +158,15 @@ namespace dftfe
     void
     fillParallelOverlapMatrixMixedPrec(
       const T *X,
-      const std::shared_ptr<
+      /*const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                              BLASWrapperPtr,
-      const dftfe::uInt                                XLocalSize,
-      const dftfe::uInt                                numberVectors,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const utils::mpi::MPIComm &                      interBandGroupComm,
+        &                                              BLASWrapperPtr,*/
+      const size_type                                XLocalSize,
+      const size_type                                numberVectors,
+      const std::shared_ptr<const ProcessGrid> &processGrid,
       const utils::mpi::MPIComm &                      mpiComm,
-      dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+      ScaLAPACKMatrix<T> &                      overlapMatPar,
       const dftParameters &                            dftParams);
   } // namespace linearAlgebra
-} // namespace dftfe
+} // namespace dftefe
 #endif

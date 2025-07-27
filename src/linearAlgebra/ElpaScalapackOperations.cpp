@@ -16,15 +16,12 @@
 //
 // @author Sambit Das
 //
+#include "ElpaScalapackOperations.h"
+#include <utils/ConditionalOStream.h>
 
-
-#include <dftUtils.h>
-#include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsInternal.h>
-#include <BLASWrapper.h>
-namespace dftfe
+namespace dftefe
 {
-  namespace linearAlgebraOperations
+  namespace linearAlgebra
   {
     namespace internal
     {
@@ -32,10 +29,10 @@ namespace dftfe
       setupELPAHandleParameters(
         const utils::mpi::MPIComm &mpi_communicator,
         utils::mpi::MPIComm &      processGridCommunicatorActive,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const dftfe::uInt                                na,
-        const dftfe::uInt                                nev,
-        const dftfe::uInt                                blockSize,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        const size_type                                na,
+        const size_type                                nev,
+        const size_type                                blockSize,
         elpa_t &                                         elpaHandle,
         const dftParameters &                            dftParams)
       {
@@ -44,66 +41,81 @@ namespace dftfe
         if (processGrid->is_process_active())
           {
             elpaHandle = elpa_allocate(&error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
           }
 
         // Get the group of processes in mpi_communicator
         int       ierr = 0;
-        MPI_Group all_group;
-        ierr = MPI_Comm_group(mpi_communicator, &all_group);
-        AssertThrowMPI(ierr);
+        utils::mpi::MPIGroup all_group;
+        ierr = utils::mpi::MPICommGroup(mpi_communicator, &all_group);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
         // Construct the group containing all ranks we need:
-        const dftfe::uInt n_active_mpi_processes =
+        const size_type n_active_mpi_processes =
           processGrid->get_process_grid_rows() *
           processGrid->get_process_grid_columns();
         std::vector<int> active_ranks;
-        for (dftfe::uInt i = 0; i < n_active_mpi_processes; ++i)
+        for (size_type i = 0; i < n_active_mpi_processes; ++i)
           active_ranks.push_back(i);
 
-        MPI_Group active_group;
+        utils::mpi::MPIGroup active_group;
         const int n = active_ranks.size();
-        ierr = MPI_Group_incl(all_group, n, active_ranks.data(), &active_group);
-        AssertThrowMPI(ierr);
+        ierr = utils::mpi::MPIGroupIncl(all_group, n, active_ranks.data(), &active_group);
+        mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
         // Create the communicator based on active_group.
         // Note that on all the inactive processs the resulting
         // utils::mpi::MPIComm processGridCommunicatorActive will be
-        // MPI_COMM_NULL. utils::mpi::MPIComm processGridCommunicatorActive;
-        ierr = dealii::Utilities::MPI::create_group(
+        // utils::mpi::MPICommNull. utils::mpi::MPIComm processGridCommunicatorActive;
+        ierr = utils::mpi::MPICommCreateGroup(
           mpi_communicator, active_group, 50, &processGridCommunicatorActive);
-        AssertThrowMPI(ierr);
+        mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-        ierr = MPI_Group_free(&all_group);
-        AssertThrowMPI(ierr);
-        ierr = MPI_Group_free(&active_group);
-        AssertThrowMPI(ierr);
+        ierr = utils::mpi::MPIGroupFree(&all_group);
+        mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+        ierr = utils::mpi::MPIGroupFree(&active_group);
+        mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
 
-        dftfe::ScaLAPACKMatrix<double> tempMat(na, processGrid, blockSize);
+        ScaLAPACKMatrix<double> tempMat(na, processGrid, blockSize);
         if (processGrid->is_process_active())
           {
             /* Set parameters the matrix and it's MPI distribution */
             elpa_set_integer(elpaHandle, "na", na, &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
 
             elpa_set_integer(elpaHandle, "nev", nev, &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set_integer(elpaHandle, "nblk", blockSize, &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set_integer(elpaHandle,
                              "mpi_comm_parent",
                              MPI_Comm_c2f(processGridCommunicatorActive),
                              &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
 
             // std::cout<<"local_nrows: "<<tempMat.local_m() <<std::endl;
@@ -117,44 +129,44 @@ namespace dftfe
                              "local_nrows",
                              tempMat.local_m(),
                              &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set_integer(elpaHandle,
                              "local_ncols",
                              tempMat.local_n(),
                              &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set_integer(elpaHandle,
                              "process_row",
                              processGrid->get_this_process_row(),
                              &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set_integer(elpaHandle,
                              "process_col",
                              processGrid->get_this_process_column(),
                              &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set(elpaHandle,
                      "blacs_context",
                      processGrid->get_blacs_context(),
                      &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             elpa_set(elpaHandle, "cannon_for_generalized", 0, &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
             /* Setup */
-            AssertThrow(elpa_setup(elpaHandle) == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(elpa_setup(elpaHandle) == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 
 #ifdef DFTFE_WITH_DEVICE
 
@@ -162,30 +174,30 @@ namespace dftfe
               {
 #  ifdef DFTFE_WITH_DEVICE_NVIDIA
                 elpa_set_integer(elpaHandle, "nvidia-gpu", 1, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                DFTEFE_AssertWithMsg(error == ELPA_OK,
+                            ("DFT-EFE Error: ELPA Error."));
 #  elif DFTFE_WITH_DEVICE_AMD
                 elpa_set_integer(elpaHandle, "amd-gpu", 1, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                DFTEFE_AssertWithMsg(error == ELPA_OK,
+                            ("DFT-EFE Error: ELPA Error."));
 #  endif
                 elpa_set_integer(elpaHandle,
                                  "solver",
                                  ELPA_SOLVER_1STAGE,
                                  &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                DFTEFE_AssertWithMsg(error == ELPA_OK,
+                            ("DFT-EFE Error: ELPA Error."));
 
                 int gpuID = 0;
                 dftfe::utils::getDevice(&gpuID);
 
                 elpa_set_integer(elpaHandle, "use_gpu_id", gpuID, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                DFTEFE_AssertWithMsg(error == ELPA_OK,
+                            ("DFT-EFE Error: ELPA Error."));
 
                 error = elpa_setup_gpu(elpaHandle);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                DFTEFE_AssertWithMsg(error == ELPA_OK,
+                            ("DFT-EFE Error: ELPA Error."));
               }
             else
               {
@@ -193,24 +205,24 @@ namespace dftfe
                                  "solver",
                                  ELPA_SOLVER_2STAGE,
                                  &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+                DFTEFE_AssertWithMsg(error == ELPA_OK,
+                            ("DFT-EFE Error: ELPA Error."));
               }
 #else
             elpa_set_integer(elpaHandle, "solver", ELPA_SOLVER_2STAGE, &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 #endif
 
               // elpa_set_integer(elpaHandle,
               // "real_kernel",ELPA_2STAGE_REAL_AVX512_BLOCK6, &error);
-              // AssertThrow(error==ELPA_OK,
-              //   dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+              // DFTEFE_AssertWithMsg(error==ELPA_OK,
+              //   ("DFT-EFE Error: ELPA Error."));
 
 #ifdef DEBUG
             elpa_set_integer(elpaHandle, "debug", 1, &error);
-            AssertThrow(error == ELPA_OK,
-                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+            DFTEFE_AssertWithMsg(error == ELPA_OK,
+                        ("DFT-EFE Error: ELPA Error."));
 #endif
           }
 
@@ -222,60 +234,40 @@ namespace dftfe
       void
       createProcessGridSquareMatrix(
         const utils::mpi::MPIComm &                mpi_communicator,
-        const dftfe::uInt                          size,
-        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const size_type                          size,
+        std::shared_ptr<const ProcessGrid> &processGrid,
         const dftParameters &                      dftParams,
         const bool                                 useOnlyThumbRule)
       {
-        const dftfe::uInt numberProcs =
-          dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+        const size_type numberProcs =
+          utils::mpi::numMPIProcesses(mpi_communicator);
 
         // Rule of thumb from
         // http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
-        dftfe::uInt rowProcs =
+        size_type rowProcs =
           (dftParams.scalapackParalProcs == 0 || useOnlyThumbRule) ?
             std::min(std::floor(std::sqrt(numberProcs)),
                      std::ceil((double)size / (double)(1000))) :
-            std::min((dftfe::uInt)std::floor(std::sqrt(numberProcs)),
+            std::min((size_type)std::floor(std::sqrt(numberProcs)),
                      dftParams.scalapackParalProcs);
 
         rowProcs = ((dftParams.scalapackParalProcs == 0 || useOnlyThumbRule) &&
                     dftParams.useELPA) ?
-                     std::min((dftfe::uInt)std::floor(std::sqrt(numberProcs)),
-                              (dftfe::uInt)std::floor(rowProcs * 3.0)) :
+                     std::min((size_type)std::floor(std::sqrt(numberProcs)),
+                              (size_type)std::floor(rowProcs * 3.0)) :
                      rowProcs;
-        if (!dftParams.useDevice)
-          {
-            if (!dftParams.reproducible_output)
-              rowProcs =
-                std::min(rowProcs,
-                         (dftfe::uInt)std::ceil((double)size / (double)(100)));
 
-            else
-              rowProcs =
-                std::min(rowProcs,
-                         (dftfe::uInt)std::ceil((double)size / (double)(10)));
-          }
-        else
-          {
-            rowProcs =
-              std::min(rowProcs,
-                       (dftfe::uInt)std::ceil((double)size / (double)(100)));
-          }
+        rowProcs =
+          std::min(rowProcs,
+                    (size_type)std::ceil((double)size / (double)(100)));
 
-
-        if (dftParams.verbosity >= 4)
-          {
-            dealii::ConditionalOStream pcout(
-              std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
-               0));
-            pcout << "Scalapack Matrix created, row procs: " << rowProcs
-                  << std::endl;
-          }
+        utils::ConditionalOStream rootCout(std::cout);
+        rootCout.setCondition(utils::mpi::thisMPIProcess(mpi_communicator) == 0);
+        rootCout << "Scalapack Matrix created, row procs: " << rowProcs
+              << std::endl;
 
         processGrid =
-          std::make_shared<const dftfe::ProcessGrid>(mpi_communicator,
+          std::make_shared<const ProcessGrid>(mpi_communicator,
                                                      rowProcs,
                                                      rowProcs);
       }
@@ -284,35 +276,30 @@ namespace dftfe
       void
       createProcessGridRectangularMatrix(
         const utils::mpi::MPIComm &                mpi_communicator,
-        const dftfe::uInt                          sizeRows,
-        const dftfe::uInt                          sizeColumns,
-        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const size_type                          sizeRows,
+        const size_type                          sizeColumns,
+        std::shared_ptr<const ProcessGrid> &processGrid,
         const dftParameters &                      dftParams)
       {
-        const dftfe::uInt numberProcs =
-          dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+        const size_type numberProcs =
+          utils::mpi::numMPIProcesses(mpi_communicator);
 
         // Rule of thumb from
         // http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
-        const dftfe::uInt rowProcs =
+        const size_type rowProcs =
           std::min(std::floor(std::sqrt(numberProcs)),
                    std::ceil((double)sizeRows / (double)(1000)));
-        const dftfe::uInt columnProcs =
+        const size_type columnProcs =
           std::min(std::floor(std::sqrt(numberProcs)),
                    std::ceil((double)sizeColumns / (double)(1000)));
 
-        if (dftParams.verbosity >= 4)
-          {
-            dealii::ConditionalOStream pcout(
-              std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
-               0));
-            pcout << "Scalapack Matrix created, row procs x column procs: "
-                  << rowProcs << " x " << columnProcs << std::endl;
-          }
+        utils::ConditionalOStream rootCout(std::cout);
+        rootCout.setCondition(utils::mpi::thisMPIProcess(mpi_communicator) == 0);
+        rootCout << "Scalapack Matrix created, row procs x column procs: "
+              << rowProcs << " x " << columnProcs << std::endl;
 
         processGrid =
-          std::make_shared<const dftfe::ProcessGrid>(mpi_communicator,
+          std::make_shared<const ProcessGrid>(mpi_communicator,
                                                      rowProcs,
                                                      columnProcs);
       }
@@ -321,19 +308,19 @@ namespace dftfe
       template <typename T>
       void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const dftfe::ScaLAPACKMatrix<T> &                mat,
-        std::unordered_map<dftfe::uInt, dftfe::uInt> &   globalToLocalRowIdMap,
-        std::unordered_map<dftfe::uInt, dftfe::uInt> &globalToLocalColumnIdMap)
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        const ScaLAPACKMatrix<T> &                mat,
+        std::unordered_map<size_type, size_type> &   globalToLocalRowIdMap,
+        std::unordered_map<size_type, size_type> &globalToLocalColumnIdMap)
       {
         globalToLocalRowIdMap.clear();
         globalToLocalColumnIdMap.clear();
         if (processGrid->is_process_active())
           {
-            for (dftfe::uInt i = 0; i < mat.local_m(); ++i)
+            for (size_type i = 0; i < mat.local_m(); ++i)
               globalToLocalRowIdMap[mat.global_row(i)] = i;
 
-            for (dftfe::uInt j = 0; j < mat.local_n(); ++j)
+            for (size_type j = 0; j < mat.local_n(); ++j)
               globalToLocalColumnIdMap[mat.global_column(j)] = j;
           }
       }
@@ -342,19 +329,19 @@ namespace dftfe
       template <typename T>
       void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<T> &                      mat,
         const utils::mpi::MPIComm &                      interComm)
       {
         // sum across all inter communicator groups
         if (processGrid->is_process_active() &&
-            dealii::Utilities::MPI::n_mpi_processes(interComm) > 1)
+            utils::mpi::numMPIProcesses(interComm) > 1)
           {
-            MPI_Allreduce(MPI_IN_PLACE,
+            utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(utils::mpi::MPIInPlace,
                           &mat.local_el(0, 0),
                           mat.local_m() * mat.local_n(),
-                          dataTypes::mpi_type_id(&mat.local_el(0, 0)),
-                          MPI_SUM,
+                          utils::mpi::Types<T>::getMPIDatatype(),
+                          utils::mpi::MPISum,
                           interComm);
           }
       }
@@ -362,17 +349,14 @@ namespace dftfe
       template <typename T>
       void
       scaleScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                        BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<T> &mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<T> &mat,
         const T                    scalar)
       {
         // if (processGrid->is_process_active())
         //   {
-        //     const dftfe::uInt numberComponents = mat.local_m() *
-        //     mat.local_n(); const dftfe::uInt inc              = 1;
+        //     const size_type numberComponents = mat.local_m() *
+        //     mat.local_n(); const size_type inc              = 1;
         //     xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
         //   }
       }
@@ -382,16 +366,16 @@ namespace dftfe
       template <typename T>
       void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<T> &                      mat,
         const utils::mpi::MPIComm &                      interComm,
-        const dftfe::uInt                                broadcastRoot)
+        const size_type                                broadcastRoot)
       {
         // sum across all inter communicator groups
         if (processGrid->is_process_active() &&
-            dealii::Utilities::MPI::n_mpi_processes(interComm) > 1)
+            utils::mpi::numMPIProcesses(interComm) > 1)
           {
-            MPI_Bcast(&mat.local_el(0, 0),
+            utils::mpi::MPIBcast(&mat.local_el(0, 0),
                       mat.local_m() * mat.local_n(),
                       dataTypes::mpi_type_id(&mat.local_el(0, 0)),
                       broadcastRoot,
@@ -403,31 +387,27 @@ namespace dftfe
       void
       fillParallelOverlapMatrixMixedPrec(
         const T *subspaceVectorsArray,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &               BLASWrapperPtr,
-        const dftfe::uInt subspaceVectorsArrayLocalSize,
-        const dftfe::uInt N,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &                      interBandGroupComm,
+        const size_type subspaceVectorsArrayLocalSize,
+        const size_type N,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
         const utils::mpi::MPIComm &                      mpiComm,
-        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+        ScaLAPACKMatrix<T> &                      overlapMatPar,
         const dftParameters &                            dftParams)
       {
-        const dftfe::uInt numLocalDofs = subspaceVectorsArrayLocalSize / N;
+        const size_type numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
-        // band group parallelization data structures
-        const dftfe::uInt numberBandGroups =
-          dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-        const dftfe::uInt bandGroupTaskId =
-          dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-        std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
-        dftUtils::createBandParallelizationIndices(
-          interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
+        // // band group parallelization data structures
+        // const size_type numberBandGroups =
+        //   utils::mpi::numMPIProcesses(interBandGroupComm);
+        // const size_type bandGroupTaskId =
+        //   utils::mpi::thisMPIProcess(interBandGroupComm);
+        // std::vector<size_type> bandGroupLowHighPlusOneIndices;
+        // dftUtils::createBandParallelizationIndices(
+        //   interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
         // get global to local index maps for Scalapack matrix
-        std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
-        std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
+        std::unordered_map<size_type, size_type> globalToLocalColumnIdMap;
+        std::unordered_map<size_type, size_type> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           overlapMatPar,
@@ -453,8 +433,7 @@ namespace dftfe
          * ScaLapack overlap matrix is directly filled from the
          * XTrunc^{T}*XcBlock result
          */
-        const dftfe::uInt vectorsBlockSize =
-          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
+        const size_type vectorsBlockSize = dftParams.wfcBlockSize ;  //, bandGroupLowHighPlusOneIndices[1]);
 
         std::vector<T>        overlapMatrixBlock(N * vectorsBlockSize, T(0.0));
         std::vector<TLowPrec> overlapMatrixBlockLowPrec(N * vectorsBlockSize,
@@ -466,20 +445,20 @@ namespace dftfe
         std::vector<TLowPrec> subspaceVectorsArrayLowPrec(
           subspaceVectorsArray,
           subspaceVectorsArray + subspaceVectorsArrayLocalSize);
-        for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
+        for (size_type ivec = 0; ivec < N; ivec += vectorsBlockSize)
           {
             // Correct block dimensions if block "goes off edge of" the matrix
-            const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
+            const size_type B = std::min(vectorsBlockSize, N - ivec);
 
-            // If one plus the ending index of a block lies within a band
-            // parallelization group do computations for that block within the
-            // band group, otherwise skip that block. This is only activated if
-            // NPBAND>1
-            if ((ivec + B) <=
-                  bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-                (ivec + B) >
-                  bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
-              {
+            // // If one plus the ending index of a block lies within a band
+            // // parallelization group do computations for that block within the
+            // // band group, otherwise skip that block. This is only activated if
+            // // NPBAND>1
+            // if ((ivec + B) <=
+            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
+            //     (ivec + B) >
+            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
+            //   {
                 const char transA = 'N',
                            transB =
                              std::is_same<T, std::complex<double>>::value ?
@@ -496,71 +475,69 @@ namespace dftfe
                           overlapMatrixBlockLowPrec.end(),
                           0.);
 
-                const dftfe::uInt D = N - ivec;
+                const size_type D = N - ivec;
 
-                BLASWrapperPtr->xgemm(transA,
-                                      transB,
-                                      B,
-                                      B,
-                                      numLocalDofs,
-                                      &scalarCoeffAlpha,
-                                      subspaceVectorsArray + ivec,
-                                      N,
-                                      subspaceVectorsArray + ivec,
-                                      N,
-                                      &scalarCoeffBeta,
-                                      &overlapMatrixBlockDoublePrec[0],
-                                      B);
+                xgemm(transA,
+                      transB,
+                      B,
+                      B,
+                      numLocalDofs,
+                      &scalarCoeffAlpha,
+                      subspaceVectorsArray + ivec,
+                      N,
+                      subspaceVectorsArray + ivec,
+                      N,
+                      &scalarCoeffBeta,
+                      &overlapMatrixBlockDoublePrec[0],
+                      B);
 
-                const dftfe::uInt DRem = D - B;
+                const size_type DRem = D - B;
                 if (DRem != 0)
                   {
-                    BLASWrapperPtr->xgemm(transA,
-                                          transB,
-                                          DRem,
-                                          B,
-                                          numLocalDofs,
-                                          &scalarCoeffAlphaLowPrec,
-                                          &subspaceVectorsArrayLowPrec[0] +
-                                            ivec + B,
-                                          N,
-                                          &subspaceVectorsArrayLowPrec[0] +
-                                            ivec,
-                                          N,
-                                          &scalarCoeffBetaLowPrec,
-                                          &overlapMatrixBlockLowPrec[0],
-                                          DRem);
+                    xgemm(transA,
+                          transB,
+                          DRem,
+                          B,
+                          numLocalDofs,
+                          &scalarCoeffAlphaLowPrec,
+                          &subspaceVectorsArrayLowPrec[0] +
+                            ivec + B,
+                          N,
+                          &subspaceVectorsArrayLowPrec[0] +
+                            ivec,
+                          N,
+                          &scalarCoeffBetaLowPrec,
+                          &overlapMatrixBlockLowPrec[0],
+                          DRem);
                   }
 
-                MPI_Barrier(mpiComm);
+                utils::mpi::MPIBarrier(mpiComm);
                 // Sum local XTrunc^{T}*XcBlock for double precision across
                 // domain decomposition processors
-                MPI_Allreduce(MPI_IN_PLACE,
+                utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(utils::mpi::MPIInPlace,
                               &overlapMatrixBlockDoublePrec[0],
                               B * B,
-                              dataTypes::mpi_type_id(
-                                &overlapMatrixBlockDoublePrec[0]),
-                              MPI_SUM,
+                              utils::mpi::Types<T>::getMPIDatatype(),
+                              utils::mpi::MPISum,
                               mpiComm);
 
-                MPI_Barrier(mpiComm);
+                utils::mpi::MPIBarrier(mpiComm);
                 // Sum local XTrunc^{T}*XcBlock for single precision across
                 // domain decomposition processors
-                MPI_Allreduce(MPI_IN_PLACE,
+                utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(utils::mpi::MPIInPlace,
                               &overlapMatrixBlockLowPrec[0],
                               DRem * B,
-                              dataTypes::mpi_type_id(
-                                &overlapMatrixBlockLowPrec[0]),
-                              MPI_SUM,
+                              utils::mpi::Types<T>::getMPIDatatype(),
+                              utils::mpi::MPISum,
                               mpiComm);
 
-                for (dftfe::uInt i = 0; i < B; ++i)
+                for (size_type i = 0; i < B; ++i)
                   {
-                    for (dftfe::uInt j = 0; j < B; ++j)
+                    for (size_type j = 0; j < B; ++j)
                       overlapMatrixBlock[i * D + j] =
                         overlapMatrixBlockDoublePrec[i * B + j];
 
-                    for (dftfe::uInt j = 0; j < DRem; ++j)
+                    for (size_type j = 0; j < DRem; ++j)
                       overlapMatrixBlock[i * D + j + B] =
                         overlapMatrixBlockLowPrec[i * DRem + j];
                   }
@@ -568,16 +545,16 @@ namespace dftfe
                 // Copying only the lower triangular part to the ScaLAPACK
                 // overlap matrix
                 if (processGrid->is_process_active())
-                  for (dftfe::uInt i = 0; i < B; ++i)
+                  for (size_type i = 0; i < B; ++i)
                     if (globalToLocalColumnIdMap.find(i + ivec) !=
                         globalToLocalColumnIdMap.end())
                       {
-                        const dftfe::uInt localColumnId =
+                        const size_type localColumnId =
                           globalToLocalColumnIdMap[i + ivec];
-                        for (dftfe::uInt j = ivec + i; j < N; ++j)
+                        for (size_type j = ivec + i; j < N; ++j)
                           {
-                            std::unordered_map<dftfe::uInt,
-                                               dftfe::uInt>::iterator it =
+                            std::unordered_map<size_type,
+                                               size_type>::iterator it =
                               globalToLocalRowIdMap.find(j);
                             if (it != globalToLocalRowIdMap.end())
                               overlapMatPar.local_el(it->second,
@@ -585,13 +562,13 @@ namespace dftfe
                                 overlapMatrixBlock[i * D + j - ivec];
                           }
                       }
-              } // band parallelization
+              // } // band parallelization
           }     // block loop
 
 
         // accumulate contribution from all band parallelization groups
-        linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
-          processGrid, overlapMatPar, interBandGroupComm);
+        // linearAlgebra::internal::sumAcrossInterCommScaLAPACKMat(
+        //   processGrid, overlapMatPar, interBandGroupComm);
       }
 
 
@@ -599,31 +576,27 @@ namespace dftfe
       void
       fillParallelOverlapMatrix(
         const T *subspaceVectorsArray,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &               BLASWrapperPtr,
-        const dftfe::uInt subspaceVectorsArrayLocalSize,
-        const dftfe::uInt N,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &                      interBandGroupComm,
+        const size_type subspaceVectorsArrayLocalSize,
+        const size_type N,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
         const utils::mpi::MPIComm &                      mpiComm,
-        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+        ScaLAPACKMatrix<T> &                      overlapMatPar,
         const dftParameters &                            dftParams)
       {
-        const dftfe::uInt numLocalDofs = subspaceVectorsArrayLocalSize / N;
+        const size_type numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
-        // band group parallelization data structures
-        const dftfe::uInt numberBandGroups =
-          dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-        const dftfe::uInt bandGroupTaskId =
-          dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-        std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
-        dftUtils::createBandParallelizationIndices(
-          interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
+        // // band group parallelization data structures
+        // const size_type numberBandGroups =
+        //   utils::mpi::numMPIProcesses(interBandGroupComm);
+        // const size_type bandGroupTaskId =
+        //   utils::mpi::thisMPIProcess(interBandGroupComm);
+        // std::vector<size_type> bandGroupLowHighPlusOneIndices;
+        // dftUtils::createBandParallelizationIndices(
+        //   interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
         // get global to local index maps for Scalapack matrix
-        std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
-        std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
+        std::unordered_map<size_type, size_type> globalToLocalColumnIdMap;
+        std::unordered_map<size_type, size_type> globalToLocalRowIdMap;
         internal::createGlobalToLocalIdMapsScaLAPACKMat(
           processGrid,
           overlapMatPar,
@@ -649,25 +622,24 @@ namespace dftfe
          * ScaLapack overlap matrix is directly filled from the
          * XTrunc^{T}*XcBlock result
          */
-        const dftfe::uInt vectorsBlockSize =
-          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
+        const size_type vectorsBlockSize = dftParams.wfcBlockSize ; //, bandGroupLowHighPlusOneIndices[1]);
 
         std::vector<T> overlapMatrixBlock(N * vectorsBlockSize, 0.0);
 
-        for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
+        for (size_type ivec = 0; ivec < N; ivec += vectorsBlockSize)
           {
             // Correct block dimensions if block "goes off edge of" the matrix
-            const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
+            const size_type B = std::min(vectorsBlockSize, N - ivec);
 
-            // If one plus the ending index of a block lies within a band
-            // parallelization group do computations for that block within the
-            // band group, otherwise skip that block. This is only activated if
-            // NPBAND>1
-            if ((ivec + B) <=
-                  bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-                (ivec + B) >
-                  bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
-              {
+            // // If one plus the ending index of a block lies within a band
+            // // parallelization group do computations for that block within the
+            // // band group, otherwise skip that block. This is only activated if
+            // // NPBAND>1
+            // if ((ivec + B) <=
+            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
+            //     (ivec + B) >
+            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
+            //   {
                 const char transA = 'N',
                            transB =
                              std::is_same<T, std::complex<double>>::value ?
@@ -679,46 +651,46 @@ namespace dftfe
                           overlapMatrixBlock.end(),
                           0.);
 
-                const dftfe::uInt D = N - ivec;
+                const size_type D = N - ivec;
 
                 // Comptute local XTrunc^{T}*XcBlock.
-                BLASWrapperPtr->xgemm(transA,
-                                      transB,
-                                      D,
-                                      B,
-                                      numLocalDofs,
-                                      &scalarCoeffAlpha,
-                                      subspaceVectorsArray + ivec,
-                                      N,
-                                      subspaceVectorsArray + ivec,
-                                      N,
-                                      &scalarCoeffBeta,
-                                      &overlapMatrixBlock[0],
-                                      D);
+                xgemm(transA,
+                      transB,
+                      D,
+                      B,
+                      numLocalDofs,
+                      &scalarCoeffAlpha,
+                      subspaceVectorsArray + ivec,
+                      N,
+                      subspaceVectorsArray + ivec,
+                      N,
+                      &scalarCoeffBeta,
+                      &overlapMatrixBlock[0],
+                      D);
 
-                MPI_Barrier(mpiComm);
+                utils::mpi::MPIBarrier(mpiComm);
                 // Sum local XTrunc^{T}*XcBlock across domain decomposition
                 // processors
-                MPI_Allreduce(MPI_IN_PLACE,
+                utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(utils::mpi::MPIInPlace,
                               &overlapMatrixBlock[0],
                               D * B,
-                              dataTypes::mpi_type_id(&overlapMatrixBlock[0]),
-                              MPI_SUM,
+                              utils::mpi::Types<T>::getMPIDatatype(),
+                              utils::mpi::MPISum,
                               mpiComm);
 
                 // Copying only the lower triangular part to the ScaLAPACK
                 // overlap matrix
                 if (processGrid->is_process_active())
-                  for (dftfe::uInt i = 0; i < B; ++i)
+                  for (size_type i = 0; i < B; ++i)
                     if (globalToLocalColumnIdMap.find(i + ivec) !=
                         globalToLocalColumnIdMap.end())
                       {
-                        const dftfe::uInt localColumnId =
+                        const size_type localColumnId =
                           globalToLocalColumnIdMap[i + ivec];
-                        for (dftfe::uInt j = ivec + i; j < N; ++j)
+                        for (size_type j = ivec + i; j < N; ++j)
                           {
-                            std::unordered_map<dftfe::uInt,
-                                               dftfe::uInt>::iterator it =
+                            std::unordered_map<size_type,
+                                               size_type>::iterator it =
                               globalToLocalRowIdMap.find(j);
                             if (it != globalToLocalRowIdMap.end())
                               overlapMatPar.local_el(it->second,
@@ -726,130 +698,108 @@ namespace dftfe
                                 overlapMatrixBlock[i * D + j - ivec];
                           }
                       }
-              } // band parallelization
+              // } // band parallelization
           }     // block loop
 
 
         // accumulate contribution from all band parallelization groups
-        linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
-          processGrid, overlapMatPar, interBandGroupComm);
+        // linearAlgebra::internal::sumAcrossInterCommScaLAPACKMat(
+        //   processGrid, overlapMatPar, interBandGroupComm);
       }
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const dftfe::ScaLAPACKMatrix<double> &           mat,
-        std::unordered_map<dftfe::uInt, dftfe::uInt> &   globalToLocalRowIdMap,
-        std::unordered_map<dftfe::uInt, dftfe::uInt> &globalToLocalColumnIdMap);
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        const ScaLAPACKMatrix<double> &           mat,
+        std::unordered_map<size_type, size_type> &   globalToLocalRowIdMap,
+        std::unordered_map<size_type, size_type> &globalToLocalColumnIdMap);
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
-        const dftfe::ScaLAPACKMatrix<std::complex<double>> &mat,
-        std::unordered_map<dftfe::uInt, dftfe::uInt> &globalToLocalRowIdMap,
-        std::unordered_map<dftfe::uInt, dftfe::uInt> &globalToLocalColumnIdMap);
+        const std::shared_ptr<const ProcessGrid> &   processGrid,
+        const ScaLAPACKMatrix<std::complex<double>> &mat,
+        std::unordered_map<size_type, size_type> &globalToLocalRowIdMap,
+        std::unordered_map<size_type, size_type> &globalToLocalColumnIdMap);
 
       template void
       fillParallelOverlapMatrix(
         const double *X,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                                              BLASWrapperPtr,
-        const dftfe::uInt                                XLocalSize,
-        const dftfe::uInt                                numberVectors,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &                      interBandGroupComm,
+        const size_type                                XLocalSize,
+        const size_type                                numberVectors,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
         const utils::mpi::MPIComm &                      mpiComm,
-        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+        ScaLAPACKMatrix<double> &                 overlapMatPar,
         const dftParameters &                            dftParams);
 
       template void
       fillParallelOverlapMatrix(
         const std::complex<double> *X,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                                              BLASWrapperPtr,
-        const dftfe::uInt                                XLocalSize,
-        const dftfe::uInt                                numberVectors,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &                      interBandGroupComm,
+        const size_type                                XLocalSize,
+        const size_type                                numberVectors,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
         const utils::mpi::MPIComm &                      mpiComm,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar,
+        ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar,
         const dftParameters &                            dftParams);
 
 
       template void
       fillParallelOverlapMatrixMixedPrec<double, float>(
         const double *X,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                                              BLASWrapperPtr,
-        const dftfe::uInt                                XLocalSize,
-        const dftfe::uInt                                numberVectors,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &                      interBandGroupComm,
+        const size_type                                XLocalSize,
+        const size_type                                numberVectors,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
         const utils::mpi::MPIComm &                      mpiComm,
-        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+        ScaLAPACKMatrix<double> &                 overlapMatPar,
         const dftParameters &                            dftParams);
 
       template void
       fillParallelOverlapMatrixMixedPrec<std::complex<double>,
                                          std::complex<float>>(
         const std::complex<double> *X,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                                              BLASWrapperPtr,
-        const dftfe::uInt                                XLocalSize,
-        const dftfe::uInt                                numberVectors,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &                      interBandGroupComm,
+        const size_type                                XLocalSize,
+        const size_type                                numberVectors,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
         const utils::mpi::MPIComm &                      mpiComm,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar,
+        ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar,
         const dftParameters &                            dftParams);
 
       template void
       scaleScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                             BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<double> &mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<double> &mat,
         const double                    scalar);
 
       template void
       scaleScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                                           BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<std::complex<double>> &mat,
         const std::complex<double>                    scalar);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<double> &                 mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<double> &                 mat,
         const utils::mpi::MPIComm &                      interComm);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<std::complex<double>> &   mat,
         const utils::mpi::MPIComm &                      interComm);
 
       template void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<double> &                 mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<double> &                 mat,
         const utils::mpi::MPIComm &                      interComm,
-        const dftfe::uInt                                broadcastRoot);
+        const size_type                                broadcastRoot);
 
       template void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        ScaLAPACKMatrix<std::complex<double>> &   mat,
         const utils::mpi::MPIComm &                      interComm,
-        const dftfe::uInt                                broadcastRoot);
+        const size_type                                broadcastRoot);
     } // namespace internal
-  }   // namespace linearAlgebraOperations
-} // namespace dftfe
+  }   // namespace linearAlgebra
+} // namespace dftefe

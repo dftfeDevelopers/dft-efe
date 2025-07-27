@@ -28,7 +28,8 @@ if (NOT TARGET dft-efe-linalg)
         ChebyshevFilteredEigenSolver.cpp
         NewtonRaphsonSolver.cpp
         ProcessGrid.cpp
-        ScalapackWrapper.cpp)
+        ScalapackWrapper.cpp
+        ElpaScalapackOperations.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
