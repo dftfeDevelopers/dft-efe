@@ -34,6 +34,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <memory>
+#include <linearAlgebra/ElpaScalapackManager.h>
 
 namespace dftefe
 {
@@ -73,10 +74,12 @@ namespace dftefe
        * @brief Constructor
        */
       RayleighRitzEigenSolver(
-        const size_type eigenVectorBatchSize,
+        const size_type             eigenVectorBatchSize,
+        const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const bool                                    useELPA = true);
 
       /**
        *@brief Default Destructor
@@ -139,6 +142,9 @@ namespace dftefe
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
       size_type d_eigenVecBatchSize, d_batchSizeSmall;
+
+      ElpaScalapackManager *d_elpaScala;
+      const bool            d_useELPA;
 
     }; // end of class RayleighRitzEigenSolver
   }    // end of namespace linearAlgebra

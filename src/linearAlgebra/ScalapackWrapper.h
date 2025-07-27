@@ -36,7 +36,7 @@ namespace dftefe
     /**
      * @brief Scalapack wrapper adapted from dealii library and extended implementation to complex datatype
      *
-     * @author Sambit Das
+     * @author Sambit Das , Avirup Sircar
      */
     template <typename NumberType>
     class ScaLAPACKMatrix

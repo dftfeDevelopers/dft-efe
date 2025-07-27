@@ -49,7 +49,7 @@ namespace dftefe
       getScalapackBlockSize() const;
 
       std::shared_ptr<const ProcessGrid>
-      getProcessGridDftfeScalaWrapper() const;
+      getProcessGridDftefeScalaWrapper() const;
 
       void
       processGridELPASetup(const unsigned int na);
@@ -78,7 +78,11 @@ namespace dftefe
       /**
        * @brief Constructor.
        */
-      ElpaScalapackManager(const utils::mpi::MPIComm &mpi_comm_replica);
+      ElpaScalapackManager(const utils::mpi::MPIComm &mpi_comm_replica,
+                           const size_type            scalapackParalProcs,
+                           const bool                 useELPA,
+                           const size_type            scalapackBlockSize,
+                           const bool                 useELPADeviceKernel);
 
       /**
        * @brief Destructor.
@@ -104,11 +108,15 @@ namespace dftefe
 
       utils::mpi::MPIComm d_processGridCommunicatorActivePartial;
 
+      const size_type d_scalapackBlockSizeInp;
+      const bool      d_useELPA;
+      const size_type d_scalapackParalProcs;
+      const bool      d_useELPADeviceKernel;
 
       /// ScaLAPACK distributed format block size
       unsigned int d_scalapackBlockSize;
 
-      std::shared_ptr<const ProcessGrid> d_processGridDftfeWrapper;
+      std::shared_ptr<const ProcessGrid> d_processGridDftefeWrapper;
     };
 
     /*--------------------- Inline functions --------------------------------*/
@@ -120,9 +128,9 @@ namespace dftefe
     }
 
     inline std::shared_ptr<const ProcessGrid>
-    ElpaScalapackManager::getProcessGridDftfeScalaWrapper() const
+    ElpaScalapackManager::getProcessGridDftefeScalaWrapper() const
     {
-      return d_processGridDftfeWrapper;
+      return d_processGridDftefeWrapper;
     }
 
     inline elpa_t &

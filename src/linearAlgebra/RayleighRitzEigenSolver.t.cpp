@@ -38,14 +38,18 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       RayleighRitzEigenSolver(
-        const size_type eigenVectorBatchSize,
+        const size_type             eigenVectorBatchSize,
+        const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const bool                                    useELPA)
       : d_eigenVecBatchSize(eigenVectorBatchSize)
       , d_batchSizeSmall(0)
       , d_XinBatchSmall(nullptr)
       , d_XoutBatchSmall(nullptr)
+      , d_elpaScala(&elpaScala)
+      , d_useELPA(useELPA)
     {
       d_XinBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
@@ -134,52 +138,146 @@ namespace dftefe
 
       // Solve the standard eigenvalue problem
 
+      /**
+      p.registerStart("LAPACK Eigendecomposition");
+
+      lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+        computeEigenVectors ? blasLapack::Job::Vec : blasLapack::Job::NoVec,
+        blasLapack::Uplo::Lower,
+        numVec,
+        XprojectedA.data(),
+        numVec,
+        eigenValuesMemSpace.data(),
+        *X.getLinAlgOpContext());
+
+      eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
+        eigenValues.data(), numVec, 0, 0);
+
+      p.registerEnd("LAPACK Eigendecomposition");
+      **/
+
+      const size_type rowsBlockSize = d_elpaScala->getScalapackBlockSize();
+      std::shared_ptr<const ProcessGrid> processGrid =
+        d_elpaScala->getProcessGridDftefeScalaWrapper();
+
+      ScaLAPACKMatrix<ValueType> projHamPar(numVec, processGrid, rowsBlockSize);
+      if (processGrid->is_process_active())
+        std::fill(&projHamPar.local_el(0, 0),
+                  &projHamPar.local_el(0, 0) +
+                    projHamPar.local_m() * projHamPar.local_n(),
+                  ValueType(0.0));
+
+      if (processGrid->is_process_active())
+        for (size_type i = 0; i < projHamPar.local_n(); ++i)
+          {
+            const size_type glob_i = projHamPar.global_column(i);
+            for (size_type j = 0; j < projHamPar.local_m(); ++j)
+              {
+                const size_type glob_j = projHamPar.global_row(j);
+                projHamPar.local_el(j, i) =
+                  *(XprojectedA.data() + glob_j * numVec + glob_i);
+              }
+          }
+
+      //
+      // compute eigendecomposition of ProjHam HConjProj= QConj*D*QConj^{C} (C
+      // denotes conjugate transpose LAPACK notation)
+      //
+      if (d_useELPA)
+        {
+          p.registerStart("ELPA eigen decomp, RR step");
+          ScaLAPACKMatrix<ValueType> eigenVectorsPar(numVec,
+                                                     processGrid,
+                                                     rowsBlockSize);
+
+          if (processGrid->is_process_active())
+            std::fill(&eigenVectorsPar.local_el(0, 0),
+                      &eigenVectorsPar.local_el(0, 0) +
+                        eigenVectorsPar.local_m() * eigenVectorsPar.local_n(),
+                      ValueType(0.0));
+
+          // For ELPA eigendecomposition the full matrix is required unlike
+          // ScaLAPACK which can work with only the lower triangular part
+          ScaLAPACKMatrix<ValueType> projHamParConjTrans(numVec,
+                                                         processGrid,
+                                                         rowsBlockSize);
+
+          if (processGrid->is_process_active())
+            std::fill(&projHamParConjTrans.local_el(0, 0),
+                      &projHamParConjTrans.local_el(0, 0) +
+                        projHamParConjTrans.local_m() *
+                          projHamParConjTrans.local_n(),
+                      ValueType(0.0));
+
+          projHamParConjTrans.copy_conjugate_transposed(projHamPar);
+          projHamPar.add(projHamParConjTrans, ValueType(1.0), ValueType(1.0));
+
+          if (processGrid->is_process_active())
+            for (size_type i = 0; i < projHamPar.local_n(); ++i)
+              {
+                const size_type glob_i = projHamPar.global_column(i);
+                for (size_type j = 0; j < projHamPar.local_m(); ++j)
+                  {
+                    const size_type glob_j = projHamPar.global_row(j);
+                    if (glob_i == glob_j)
+                      projHamPar.local_el(j, i) *= ValueType(0.5);
+                  }
+              }
+
+          if (processGrid->is_process_active())
+            {
+              int error;
+              elpa_eigenvectors(d_elpaScala->getElpaHandle(),
+                                &projHamPar.local_el(0, 0),
+                                &eigenValues[0],
+                                &eigenVectorsPar.local_el(0, 0),
+                                &error);
+              DFTEFE_AssertWithMsg(error == ELPA_OK,
+                                   "DFT-FE Error: elpa_eigenvectors error.");
+            }
+
+          utils::mpi::MPIBcast(&eigenValues[0],
+                               eigenValues.size(),
+                               utils::mpi::Types<RealType>::getMPIDatatype(),
+                               0,
+                               X.getMPIPatternP2P()->mpiCommunicator());
+
+
+          eigenVectorsPar.copy_to(projHamPar);
+
+          p.registerEnd("ELPA eigen decomp, RR step");
+        }
+      else
+        {
+          p.registerStart("ScaLAPACK eigen decomp, RR step");
+          eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
+            std::make_pair(0, numVec - 1), true);
+          p.registerEnd("ScaLAPACK eigen decomp, RR step");
+        }
+
+      if (processGrid->is_process_active())
+        for (size_type i = 0; i < projHamPar.local_n(); ++i)
+          {
+            const size_type glob_i = projHamPar.global_column(i);
+            for (size_type j = 0; j < projHamPar.local_m(); ++j)
+              {
+                const size_type glob_j = projHamPar.global_row(j);
+                *(eigenVectorsXSubspace.data() + glob_j * numVec + glob_i) =
+                  projHamPar.local_el(j, i);
+              }
+          }
+
       if (computeEigenVectors)
         {
-          p.registerStart("LAPACK Eigendecomposition");
-
-          // lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
-          //   blasLapack::Job::Vec,
-          //   blasLapack::Uplo::Lower,
-          //   numVec,
-          //   XprojectedA.data(),
-          //   numVec,
-          //   eigenValuesMemSpace.data(),
-          //   *X.getLinAlgOpContext());
-
-          RealType  vl     = 0;
-          RealType  vu     = 0;
-          size_type il     = 0;
-          size_type iu     = 0;
-          RealType  abstol = 0;
-          size_type nfound = 0;
-
-          lapackReturn = blasLapack::heevr<ValueType, memorySpace>(
-            blasLapack::Job::Vec,
-            blasLapack::Range::All,
-            blasLapack::Uplo::Lower,
-            numVec,
-            XprojectedA.data(),
-            numVec,
-            vl,
-            vu,
-            il,
-            iu,
-            abstol,
-            nfound,
-            eigenValuesMemSpace.data(),
-            eigenVectorsXSubspace.data(),
-            numVec,
-            *X.getLinAlgOpContext());
-
-          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
-            eigenValues.data(), numVec, 0, 0);
-
-          p.registerEnd("LAPACK Eigendecomposition");
-
           // Rotation X_febasis = X_O Q.
+          // X^{T}=Qc^{C}*X^{T} with X^{T} stored in the column major format
 
           p.registerStart("Subspace Rotation");
+
+          // ScaLAPACKMatrix<ValueType> projHamParCopy(numVec,
+          //                                         processGrid,
+          //                                         rowsBlockSize);
+          // projHamParCopy.copy_conjugate_transposed(projHamPar);
 
           blasLapack::gemm<ValueType, ValueType, memorySpace>(
             blasLapack::Layout::ColMajor,
@@ -199,24 +297,6 @@ namespace dftefe
             *X.getLinAlgOpContext());
 
           p.registerEnd("Subspace Rotation");
-        }
-      else
-        {
-          p.registerStart("LAPACK Eigendecomposition");
-
-          lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
-            blasLapack::Job::NoVec,
-            blasLapack::Uplo::Lower,
-            numVec,
-            XprojectedA.data(),
-            numVec,
-            eigenValuesMemSpace.data(),
-            *X.getLinAlgOpContext());
-
-          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
-            eigenValues.data(), numVec, 0, 0);
-
-          p.registerEnd("LAPACK Eigendecomposition");
         }
 
       if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)

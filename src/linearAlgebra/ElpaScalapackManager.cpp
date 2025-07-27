@@ -30,10 +30,18 @@ namespace dftefe
   namespace linearAlgebra
   {
     ElpaScalapackManager::ElpaScalapackManager(
-      const utils::mpi::MPIComm &mpi_comm_replica)
+      const utils::mpi::MPIComm &mpi_comm_replica,
+      const size_type            scalapackParalProcs,
+      const bool                 useELPA,
+      const size_type            scalapackBlockSize,
+      const bool                 useELPADeviceKernel)
       : d_mpi_communicator(mpi_comm_replica)
       , d_processGridCommunicatorActive(utils::mpi::MPICommNull)
       , d_processGridCommunicatorActivePartial(utils::mpi::MPICommNull)
+      , d_scalapackBlockSizeInp(scalapackBlockSize)
+      , d_useELPA(useELPA)
+      , d_scalapackParalProcs(scalapackParalProcs)
+      , d_useELPADeviceKernel(useELPADeviceKernel)
     {}
 
 
@@ -66,27 +74,31 @@ namespace dftefe
     ElpaScalapackManager::processGridELPASetup(const unsigned int na)
     {
       linearAlgebra::elpaScalaOpInternal::createProcessGridSquareMatrix(
-        getMPICommunicator(), na, d_processGridDftfeWrapper, dftParams);
+        getMPICommunicator(),
+        na,
+        d_processGridDftefeWrapper,
+        d_scalapackParalProcs,
+        d_useELPA);
 
 
       d_scalapackBlockSize =
-        std::min(dftParams.scalapackBlockSize,
-                 size_type((na +
-                            d_processGridDftfeWrapper->get_process_grid_rows() -
-                            1) /
-                           d_processGridDftfeWrapper->get_process_grid_rows()));
+        std::min(d_scalapackBlockSizeInp,
+                 size_type(
+                   (na + d_processGridDftefeWrapper->get_process_grid_rows() -
+                    1) /
+                   d_processGridDftefeWrapper->get_process_grid_rows()));
 
-      if (dftParams.useELPA)
+      if (d_useELPA)
         {
           linearAlgebra::elpaScalaOpInternal::setupELPAHandleParameters(
             getMPICommunicator(),
             d_processGridCommunicatorActive,
-            d_processGridDftfeWrapper,
+            d_processGridDftefeWrapper,
             na,
             na,
             d_scalapackBlockSize,
             d_elpaHandle,
-            dftParams);
+            d_useELPADeviceKernel);
         }
 
       // std::cout<<"nblk: "<<d_scalapackBlockSize<<std::endl;
@@ -95,7 +107,7 @@ namespace dftefe
     void
     ElpaScalapackManager::elpaDeallocateHandles()
     {
-      if (dftParams.useELPA)
+      if (d_useELPA)
         {
           int error;
           if (d_processGridCommunicatorActive != utils::mpi::MPICommNull)
