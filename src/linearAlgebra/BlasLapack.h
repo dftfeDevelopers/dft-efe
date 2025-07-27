@@ -32,6 +32,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/ConditionalOStream.h>
 #include <utils/Profiler.h>
+#include "Defaults.h"
 
 namespace dftefe
 {

@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 /*
- * @author Bikash Kanungo
+ * @author Bikash Kanungo , Avirup Sircar
  */
 
 #ifndef dftefeLinearAlgebraDefaults_h
@@ -29,6 +29,9 @@
 #include <utils/TypeConfig.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <string>
+#include <memory>
+#include "LinAlgOpContext.h"
+#include <utils/MemoryStorage.h>
 
 namespace dftefe
 {
@@ -115,6 +118,15 @@ namespace dftefe
       // calculate frobenus norm |S - I| < this tolerance
       static const double IDENTITY_TOL;
     }; // end of class MultiPassLowdinDefaults
-  }    // end of namespace linearAlgebra
+
+    class LinAlgOpContextDefaults
+    {
+    public:
+      static const std::shared_ptr<
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
+        LINALG_OP_CONTXT_HOST;
+    }; // end of class LinAlgOpContextHost
+
+  } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeLinearAlgebraDefaults_h

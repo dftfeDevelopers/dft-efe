@@ -29,7 +29,8 @@ if (NOT TARGET dft-efe-linalg)
         NewtonRaphsonSolver.cpp
         ProcessGrid.cpp
         ScalapackWrapper.cpp
-        ElpaScalapackOperations.cpp)
+        ElpaScalapackOperations.cpp
+        ElpaScalapackManager.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
